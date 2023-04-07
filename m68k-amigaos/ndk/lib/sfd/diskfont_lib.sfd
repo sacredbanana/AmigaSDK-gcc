@@ -1,0 +1,43 @@
+==id $VER: diskfont_lib.sfd 47.1 (30.11.2021)
+* "diskfont.library"
+==base _DiskfontBase
+==basetype struct Library *
+==libname diskfont.library
+==include <exec/libraries.h>
+==include <dos/dos.h>
+==include <diskfont/diskfont.h>
+==bias 30
+==public
+
+struct TextFont *OpenDiskFont( struct TextAttr *textAttr ) (A0)
+LONG AvailFonts( struct AvailFontsHeader *buffer, LONG bufBytes, ULONG flags ) (A0,D0,D1)
+==version 34
+struct FontContentsHeader *NewFontContents( BPTR fontsLock, CONST_STRPTR fontName ) (A0,A1)
+VOID DisposeFontContents( struct FontContentsHeader *fontContentsHeader ) (A1)
+==version 36
+struct DiskFont *NewScaledDiskFont( struct TextFont *sourceFont, struct TextAttr *destTextAttr ) (A0,A1)
+==version 45
+LONG GetDiskFontCtrl( LONG tagid ) (D0)
+VOID SetDiskFontCtrlA( CONST struct TagItem * taglist ) (A0)
+==varargs
+VOID SetDiskFontCtrl( Tag tag1, ... ) (A0)
+==version 47
+LONG EOpenEngine( struct EGlyphEngine *EEngine ) (A0)
+VOID ECloseEngine( struct EGlyphEngine *EEngine ) (A0)
+ULONG ESetInfoA( struct EGlyphEngine *EEngine, CONST struct TagItem *taglist ) (A0,A1)
+==varargs
+ULONG ESetInfo( struct EGlyphEngine *EEngine, ... ) (A0,A1)
+ULONG EObtainInfoA( struct EGlyphEngine *EEngine, CONST struct TagItem *taglist ) (A0,A1)
+==varargs
+ULONG EObtainInfo( struct EGlyphEngine *EEngine, ... ) (A0,A1)
+ULONG EReleaseInfoA( struct EGlyphEngine *EEngine, CONST struct TagItem *taglist ) (A0,A1)
+==varargs
+ULONG EReleaseInfo( struct EGlyphEngine *EEngine, ... ) (A0,A1)
+struct OutlineFont *OpenOutlineFont( CONST_STRPTR name, struct List *list, ULONG flags ) (A0,A1,D0)
+VOID CloseOutlineFont( struct OutlineFont *olf, struct List *list ) (A0,A1)
+LONG WriteFontContents( BPTR fontsLock, CONST_STRPTR fontName, CONST struct FontContentsHeader *fontContentsHeader ) (A0,A1,A2)
+LONG WriteDiskFontHeaderA( CONST struct TextFont *font, CONST_STRPTR fileName, CONST struct TagItem *tagList ) (A0,A1,A2)
+==varargs
+LONG WriteDiskFontHeader( CONST struct TextFont *font, CONST_STRPTR fileName, ... ) (A0,A1,A2)
+ULONG ObtainCharsetInfo( ULONG knownTag, ULONG knownValue, ULONG wantedTag ) (D0,D1,D2)
+==end

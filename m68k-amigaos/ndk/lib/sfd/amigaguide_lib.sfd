@@ -1,0 +1,74 @@
+==id $VER: amigaguide_lib.sfd 47.1 (30.11.2021)
+* "amigaguide.library"
+==base _AmigaGuideBase
+==basetype struct Library *
+==libname amigaguide.library
+==bias 30
+==public
+==include <exec/libraries.h>
+==include <dos/dos.h>
+==include <libraries/amigaguide.h>
+==include <utility/tagitem.h>
+==include <utility/hooks.h>
+==include <rexx/storage.h>
+==version 40
+==private
+* ARexx function host entry point
+LONG AGARexxHost (struct RexxMsg *rmsg, STRPTR *result)(A0,A1)
+==public
+*
+* Public entries
+*
+LONG LockAmigaGuideBase (APTR handle)(A0)
+VOID UnlockAmigaGuideBase (LONG key)(D0)
+==private
+VOID ExpungeDataBases (BOOL flush)(D0)
+==public
+APTR OpenAmigaGuideA (struct NewAmigaGuide *nag, CONST struct TagItem *attrs)(A0,A1)
+==varargs
+APTR OpenAmigaGuide (struct NewAmigaGuide *nag, ...)(A0,A1)
+APTR OpenAmigaGuideAsyncA (struct NewAmigaGuide *nag, CONST struct TagItem *attrs)(A0,D0)
+==varargs
+APTR OpenAmigaGuideAsync (struct NewAmigaGuide *nag, ...)(A0,D0)
+VOID CloseAmigaGuide (APTR cl)(A0)
+ULONG AmigaGuideSignal (APTR cl)(A0)
+struct AmigaGuideMsg *GetAmigaGuideMsg (APTR cl)(A0)
+VOID ReplyAmigaGuideMsg (struct AmigaGuideMsg *amsg)(A0)
+LONG SetAmigaGuideContextA (APTR cl, ULONG id, CONST struct TagItem *attrs)(A0,D0,D1)
+==varargs
+LONG SetAmigaGuideContext (APTR cl, ULONG id, ...)(A0,D0,D1)
+LONG SendAmigaGuideContextA (APTR cl, CONST struct TagItem *attrs)(A0,D0)
+==varargs
+LONG SendAmigaGuideContext (APTR cl, ...)(A0,D0)
+LONG SendAmigaGuideCmdA (APTR cl, STRPTR cmd, CONST struct TagItem *attrs)(A0,D0,D1)
+==varargs
+LONG SendAmigaGuideCmd (APTR cl, CONST_STRPTR cmd, ...)(A0,D0,D1)
+LONG SetAmigaGuideAttrsA (APTR cl, CONST struct TagItem *attrs)(A0,A1)
+==varargs
+LONG SetAmigaGuideAttrs (APTR cl, ...)(A0,A1)
+LONG GetAmigaGuideAttr (Tag tag1, APTR cl, ULONG *storage)(D0,A0,A1)
+==private
+LONG SetAmigaGuideHook (APTR cl, ULONG v1, ULONG v2, ULONG v3)(A0,D0,A1,A2)
+==public
+LONG LoadXRef (BPTR lock, STRPTR name)(A0,A1)
+VOID ExpungeXRef ()()
+APTR AddAmigaGuideHostA (struct Hook *h, CONST_STRPTR name, CONST struct TagItem *attrs)(A0,D0,A1)
+==varargs
+APTR AddAmigaGuideHost (struct Hook *h, CONST_STRPTR name, ...)(A0,D0,A1)
+LONG RemoveAmigaGuideHostA (APTR hh, CONST struct TagItem *attrs)(A0,A1)
+==varargs
+LONG RemoveAmigaGuideHost (APTR hh, ...)(A0,A1)
+==private
+BPTR OpenE (BPTR path, CONST_STRPTR name, LONG mode)(A0,D1,D2)
+BPTR LockE (BPTR path, CONST_STRPTR name, LONG mode)(A0,D1,D2)
+BPTR CopyPathList (BPTR path)(A0)
+BPTR AddPathEntries (BPTR path, STRPTR *argptr)(A0,D0)
+VOID FreePathList (BPTR path)(A0)
+ULONG ParsePathString (CONST_STRPTR line, STRPTR *argv, ULONG max)(D0,A0,D1)
+struct DataBase *OpenDataBase (BPTR lock, CONST_STRPTR name)(A0,A1)
+LONG LoadNode (APTR cl, struct DataBase *db, struct HelpNode *hn)(A0,A1,A2)
+LONG UnloadNode (APTR cl, struct DataBase *db, struct HelpNode *hn)(A0,A1,A2)
+LONG CloseDataBase (struct DataBase *db) (A0)
+==public
+STRPTR GetAmigaGuideString (LONG id) (D0)
+==end

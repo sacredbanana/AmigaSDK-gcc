@@ -1,0 +1,48 @@
+==id $VER: rexxsyslib_lib.sfd 47.1 (30.11.2021)
+* "rexxsyslib.library"
+==base _RexxSysBase
+==basetype struct RxsLib *
+==libname rexxsyslib.library
+==bias 30
+==version 33
+==include <rexx/rxslib.h>
+==include <rexx/rexxio.h>
+==include <dos/dos.h>
+*
+==private
+==reserve 16
+==public
+*
+UBYTE *CreateArgstring(CONST_STRPTR string,ULONG length) (A0,D0)
+VOID DeleteArgstring(UBYTE *argstring) (A0)
+ULONG LengthArgstring(CONST UBYTE *argstring) (A0)
+struct RexxMsg *CreateRexxMsg(struct MsgPort *port,CONST_STRPTR extension,CONST_STRPTR host) (A0,A1,D0)
+VOID DeleteRexxMsg(struct RexxMsg *packet) (A0)
+VOID ClearRexxMsg(struct RexxMsg *msgptr,ULONG count) (A0,D0)
+BOOL FillRexxMsg(struct RexxMsg *msgptr,ULONG count,ULONG mask) (A0,D0,D1)
+BOOL IsRexxMsg(CONST struct RexxMsg *msgptr) (A0)
+*
+==private
+==bias 450
+==public
+*
+VOID LockRexxBase(ULONG resource) (D0)
+VOID UnlockRexxBase(ULONG resource) (D0)
+*
+==private
+==bias 480
+==public
+*--- function in V45 or higher (Release 3.9) ---
+*
+struct MsgPort *CreateRexxHostPort(CONST_STRPTR basename) (A0)
+VOID DeleteRexxHostPort(struct MsgPort *port) (A0)
+LONG GetRexxVarFromMsg(CONST_STRPTR var,CONST struct RexxMsg *msgptr,STRPTR value) (A0,A2,A1)
+LONG SetRexxVarFromMsg(CONST_STRPTR var,struct RexxMsg *msgptr,CONST_STRPTR value) (A0,A2,A1)
+struct RexxMsg *LaunchRexxScript(CONST_STRPTR script,struct MsgPort *replyport,CONST_STRPTR extension,BPTR input,BPTR output) (A0,A1,A2,D1,D2)
+VOID FreeRexxMsg(struct RexxMsg *msgptr) (A0)
+*
+*--- function in V47 or higher (Release 3.2) ---
+*
+LONG GetRexxBufferFromMsg(CONST_STRPTR var,CONST struct RexxMsg *msgptr,STRPTR buffer,ULONG buffer_size) (A0,A2,A1,D0)
+*
+==end

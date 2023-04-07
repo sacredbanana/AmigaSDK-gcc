@@ -1,0 +1,82 @@
+==id $VER: datatypes_lib.sfd 47.1 (30.11.2021)
+* "datatypes.library"
+==base _DataTypesBase
+==basetype struct Library *
+==libname datatypes.library
+==bias 30
+==public
+==include <exec/libraries.h>
+==include <exec/lists.h>
+==include <intuition/intuition.h>
+==include <intuition/classes.h>
+==include <intuition/classusr.h>
+==include <intuition/gadgetclass.h>
+==include <utility/tagitem.h>
+==include <datatypes/datatypes.h>
+==include <datatypes/datatypesclass.h>
+==include <rexx/storage.h>
+==version 40
+==private
+* ARexx function host entry point
+LONG RLDispatch (struct RexxMsg *rmsg, STRPTR *result)(A0,A1)
+==public
+*
+* Public entries
+*
+struct DataType *ObtainDataTypeA (ULONG type, APTR handle, CONST struct TagItem *attrs)(D0,A0,A1)
+==varargs
+struct DataType *ObtainDataType (ULONG type, APTR handle, ...)(D0,A0,A1)
+VOID ReleaseDataType (struct DataType *dt)(A0)
+Object *NewDTObjectA (CONST_STRPTR name, CONST struct TagItem *attrs)(D0,A0)
+==varargs
+Object *NewDTObject (CONST_STRPTR name, ...)(D0,A0)
+VOID DisposeDTObject (Object *o)(A0)
+ULONG SetDTAttrsA (Object *o, struct Window *win, struct Requester *req, CONST struct TagItem *attrs)(A0,A1,A2,A3)
+==varargs
+ULONG SetDTAttrs (Object *o, struct Window *win, struct Requester *req, ...)(A0,A1,A2,A3)
+ULONG GetDTAttrsA (Object *o, CONST struct TagItem *attrs)(A0,A2)
+==varargs
+ULONG GetDTAttrs (Object *o, ...)(A0,A2)
+LONG AddDTObject (struct Window *win, struct Requester *req, Object *o, LONG pos)(A0,A1,A2,D0)
+VOID RefreshDTObjectA (Object *o, struct Window *win, struct Requester *req, CONST struct TagItem *attrs)(A0,A1,A2,A3)
+==varargs
+VOID RefreshDTObjects (Object *o, struct Window *win, struct Requester *req, ...)(A0,A1,A2,A3)
+==varargs
+VOID RefreshDTObject (Object *o, struct Window *win, struct Requester *req, ...)(A0,A1,A2,A3)
+ULONG DoAsyncLayout (Object *o, struct gpLayout *gpl)(A0,A1)
+ULONG DoDTMethodA (Object *o, struct Window *win, struct Requester *req, Msg msg)(A0,A1,A2,A3)
+==varargs
+ULONG DoDTMethod (Object *o, struct Window *win, struct Requester *req, ULONG data, ...)(A0,A1,A2,A3)
+LONG RemoveDTObject (struct Window *win, Object *o)(A0,A1)
+ULONG *GetDTMethods (CONST Object *object)(A0)
+struct DTMethods *GetDTTriggerMethods (Object *object)(A0)
+ULONG PrintDTObjectA (Object *o, struct Window *w, struct Requester *r, struct dtPrint *msg)(A0,A1,A2,A3)
+==varargs
+ULONG PrintDTObject (Object *o, struct Window *w, struct Requester *r, ULONG data, ...)(A0,A1,A2,A3)
+==private
+APTR ObtainDTDrawInfoA (Object *o, CONST struct TagItem *attrs)(A0,A1)
+==varargs
+APTR ObtainDTDrawInfo (Object *o, ...)(A0,A1)
+LONG DrawDTObjectA (struct RastPort *rp, Object *o, LONG x, LONG y, LONG w, LONG h, LONG th, LONG tv, CONST struct TagItem *attrs)(A0,A1,D0,D1,D2,D3,D4,D5,A2)
+==varargs
+LONG DrawDTObject (struct RastPort *rp, Object *o, LONG x, LONG y, LONG w, LONG h, LONG th, LONG tv, ...)(A0,A1,D0,D1,D2,D3,D4,D5,A2)
+VOID ReleaseDTDrawInfo (Object *o, APTR handle)(A0,A1)
+==public
+STRPTR GetDTString (ULONG id)(D0)
+==reserve 19
+*--- functions in V45 or higher ---
+ULONG *FindMethod( CONST ULONG *methods, ULONG searchmethodid )(A0,A1)
+struct DTMethod *FindTriggerMethod( CONST struct DTMethod *dtm, CONST_STRPTR command, ULONG method )(A0,A1,D0)
+ULONG *CopyDTMethods( CONST ULONG *methods, CONST ULONG *include, CONST ULONG *exclude ) (A0,A1,A2)
+struct DTMethod *CopyDTTriggerMethods( CONST struct DTMethod *methods,
+				       CONST struct DTMethod *include, CONST struct DTMethod *exclude )(A0,A1,A2)
+VOID *FreeDTMethods( APTR methods )(A0)
+ULONG GetDTTriggerMethodDataFlags (ULONG triggermethod)(D0)
+ULONG SaveDTObjectA( Object *o, struct Window *win, struct Requester *req,
+		     CONST_STRPTR file, ULONG mode, LONG saveicon, struct TagItem *attrs )(A0,A1,A2,A3,D0,D1,A4)
+==varargs
+ULONG SaveDTObject( Object *o, struct Window *win, struct Requester *req,
+		     CONST_STRPTR file, ULONG mode, LONG saveicon, ...)(A0,A1,A2,A3,D0,D1,A4)
+ULONG StartDragSelect( Object *o )(A0)
+==reserve 3
+==end

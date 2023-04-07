@@ -1,0 +1,80 @@
+==id $VER: commodities_lib.sfd 47.1 (30.11.2021)
+* "commodities.library"
+==base _CxBase
+==basetype struct Library *
+==libname commodities.library
+==bias 30
+==public
+==include <exec/libraries.h>
+==include <exec/nodes.h>
+==include <libraries/commodities.h>
+==include <devices/inputevent.h>
+==include <devices/keymap.h>
+==version 36
+*
+*  OBJECT UTILITIES
+*
+CxObj *CreateCxObj(ULONG type,LONG arg1,LONG arg2) (D0,A0,A1)
+CxObj *CxBroker(CONST struct NewBroker *nb,LONG *error) (A0,D0)
+LONG ActivateCxObj(CxObj *co,LONG flag) (A0,D0)
+VOID DeleteCxObj(CxObj *co) (A0)
+VOID DeleteCxObjAll(CxObj *co) (A0)
+ULONG CxObjType(CONST CxObj *co) (A0)
+LONG CxObjError(CONST CxObj *co) (A0)
+VOID ClearCxObjError(CxObj *co) (A0)
+LONG SetCxObjPri(CxObj *co,LONG pri) (A0,D0)
+*
+*  OBJECT ATTACHMENT
+*
+VOID AttachCxObj(CxObj *headObj,CxObj *co) (A0,A1)
+VOID EnqueueCxObj(CxObj *headObj,CxObj *co) (A0,A1)
+VOID InsertCxObj(CxObj *headObj,CxObj *co,CxObj *pred) (A0,A1,A2)
+VOID RemoveCxObj(CxObj *co) (A0)
+*
+*  TYPE SPECIFIC
+*
+==private
+VOID CxReserved0( ) ()
+==public
+VOID SetTranslate(CxObj *translator,struct InputEvent *events) (A0,A1)
+VOID SetFilter(CxObj *filter,CONST_STRPTR text) (A0,A1)
+VOID SetFilterIX(CxObj *filter,CONST IX *ix) (A0,A1)
+LONG ParseIX(CONST_STRPTR description,IX *ix) (A0,A1)
+*
+*  COMMON MESSAGE
+*
+ULONG CxMsgType(CONST CxMsg *cxm) (A0)
+APTR CxMsgData(CONST CxMsg *cxm) (A0)
+LONG CxMsgID(CONST CxMsg *cxm) (A0)
+*
+*  MESSAGE ROUTING
+*
+VOID DivertCxMsg(CxMsg *cxm,CxObj *headObj,CxObj *returnObj) (A0,A1,A2)
+VOID RouteCxMsg(CxMsg *cxm,CxObj *co) (A0,A1)
+VOID DisposeCxMsg(CxMsg *cxm) (A0)
+*
+*  INPUT EVENT HANDLING
+*
+BOOL InvertKeyMap(ULONG ansiCode,struct InputEvent *event,CONST struct KeyMap *km) (D0,A0,A1)
+VOID AddIEvents(struct InputEvent *events) (A0)
+==private
+*
+* FOR USE ONLY BY CONTROLLER PROGRAM
+*
+LONG CopyBrokerList(struct List *blist) (A0)
+VOID FreeBrokerList(struct List *list) (A0)
+LONG BrokerCommand(STRPTR name,LONG id) (A0,D0)
+==public
+==version 38
+*  MORE INPUT EVENT HANDLING
+BOOL MatchIX(CONST struct InputEvent *event, CONST IX *ix) (A0,A1)
+==private
+*
+* Reserved entries
+*
+VOID CxReserved1( ) ()
+VOID CxReserved2( ) ()
+VOID CxReserved3( ) ()
+VOID CxReserved4( ) ()
+VOID CxReserved5( ) ()
+==end

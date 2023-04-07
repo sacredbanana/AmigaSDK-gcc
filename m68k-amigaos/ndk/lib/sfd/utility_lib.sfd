@@ -1,0 +1,122 @@
+==id $VER: utility_lib.sfd 47.1 (30.11.2021)
+* "utility.library"
+==base _UtilityBase
+==basetype struct Library *
+==libname utility.library
+==include <exec/libraries.h>
+==include <exec/ports.h>
+==include <utility/tagitem.h>
+==include <utility/date.h>
+==include <utility/hooks.h>
+==include <utility/name.h>
+==bias 30
+==public
+==version 36
+*
+* Tag item functions
+*
+struct TagItem *FindTagItem(Tag tagVal, CONST struct TagItem *tagList) (D0,A0)
+ULONG GetTagData(Tag tagValue, ULONG defaultVal, CONST struct TagItem *tagList) (D0,D1,A0)
+ULONG PackBoolTags(ULONG initialFlags, CONST struct TagItem *tagList, CONST struct TagItem *boolMap) (D0,A0,A1)
+struct TagItem *NextTagItem(struct TagItem **tagListPtr) (A0)
+VOID FilterTagChanges(struct TagItem *changeList, struct TagItem *originalList, ULONG apply) (A0,A1,D0)
+VOID MapTags(struct TagItem *tagList, CONST struct TagItem *mapList, ULONG mapType) (A0,A1,D0)
+struct TagItem *AllocateTagItems(ULONG numTags) (D0)
+struct TagItem *CloneTagItems(CONST struct TagItem *tagList) (A0)
+VOID FreeTagItems(struct TagItem *tagList) (A0)
+VOID RefreshTagItemClones(struct TagItem *clone, CONST struct TagItem *original) (A0,A1)
+BOOL TagInArray(Tag tagValue, CONST Tag *tagArray) (D0,A0)
+ULONG FilterTagItems(struct TagItem *tagList, CONST Tag *filterArray, ULONG logic) (A0,A1,D0)
+*
+* Hook functions
+*
+ULONG CallHookPkt(struct Hook *hook, APTR object, APTR paramPacket) (A0,A2,A1)
+==reserve 1
+*
+* Date functions
+*
+==reserve 1
+VOID Amiga2Date(ULONG seconds, struct ClockData *result) (D0,A0)
+ULONG Date2Amiga(CONST struct ClockData *date) (A0)
+ULONG CheckDate(CONST struct ClockData *date) (A0)
+*
+* 32 bit integer muliply functions
+*
+LONG SMult32(LONG arg1, LONG arg2) (D0,D1)
+ULONG UMult32(ULONG arg1, ULONG arg2) (D0,D1)
+*
+* 32 bit integer division funtions. The quotient and the remainder are
+* returned respectively in d0 and d1
+*
+LONG SDivMod32(LONG dividend, LONG divisor) (D0,D1)
+ULONG UDivMod32(ULONG dividend, ULONG divisor) (D0,D1)
+==version 37
+*
+* International string routines
+*
+LONG Stricmp(CONST_STRPTR string1, CONST_STRPTR string2) (A0,A1)
+LONG Strnicmp(CONST_STRPTR string1, CONST_STRPTR string2, LONG length) (A0,A1,D0)
+UBYTE ToUpper(UBYTE character) (D0)
+UBYTE ToLower(UBYTE character) (D0)
+==version 39
+*
+* More tag Item functions
+*
+VOID ApplyTagChanges(struct TagItem *list, CONST struct TagItem *changeList) (A0,A1)
+==reserve 1
+*
+* 64 bit integer muliply functions. The results are 64 bit quantities
+* returned in D0 and D1
+*
+LONG SMult64(LONG arg1, LONG arg2) (D0,D1)
+ULONG UMult64(ULONG arg1, ULONG arg2) (D0,D1)
+*
+* Structure to Tag and Tag to Structure support routines
+*
+ULONG PackStructureTags(APTR pack,CONST ULONG *packTable,CONST struct TagItem *tagList) (A0,A1,A2)
+ULONG UnpackStructureTags(CONST_APTR pack,CONST ULONG * packTable,struct TagItem *tagList) (A0,A1,A2)
+*
+* New, object-oriented NameSpaces
+*
+BOOL AddNamedObject(struct NamedObject *nameSpace, struct NamedObject *object) (a0,a1)
+struct NamedObject *AllocNamedObjectA(CONST_STRPTR name, CONST struct TagItem *tagList) (a0,a1)
+==varargs
+struct NamedObject *AllocNamedObject(CONST_STRPTR name, ...) (a0,a1)
+LONG AttemptRemNamedObject(struct NamedObject *object) (a0)
+struct NamedObject *FindNamedObject(struct NamedObject *nameSpace, CONST_STRPTR name, CONST struct NamedObject *lastObject) (a0,a1,a2)
+VOID FreeNamedObject(struct NamedObject *object) (a0)
+STRPTR NamedObjectName(struct NamedObject *object) (a0)
+VOID ReleaseNamedObject(struct NamedObject *object) (a0)
+VOID RemNamedObject(struct NamedObject *object, struct Message *message) (a0,a1)
+*
+* Unique ID generator
+*
+ULONG GetUniqueID() ()
+*
+==reserve 4
+*
+==version 47
+*
+* Reserved vectors for Os4, not populated.
+==reserve 2
+*
+LONG VSNPrintf(STRPTR buffer,ULONG bufsize,CONST_STRPTR fmt,CONST_APTR data) (a0,d0,a1,a2)
+==varargs
+LONG SNPrintf(STRPTR buffer,ULONG bufsize,CONST_STRPTR fmt,...) (a0,d0,a1,a2)
+*
+* Reserved vectors for Os4, not populated.
+==reserve 19
+*
+* Reserved vector for internal use.
+==reserve 1
+*
+STRPTR Strncpy(STRPTR dst,CONST_STRPTR src,ULONG size) (a1,a0,d0)
+STRPTR Strncat(STRPTR dst,CONST_STRPTR src,ULONG size) (a1,a0,d0)
+*
+* 64 bit integer division functions. The input is a 64 bit dividiend in d1:d0
+* with top 32 bits in 32 and a divisor in d2. Results are the quotient in d0
+* and a remainder in d1
+*
+LONG SDivMod64(LONG hi, LONG lo, LONG divisor) (D1,D0,D2)
+ULONG UDivMod64(ULONG hi, ULONG lo, ULONG divisor) (D1,D0,D2)
+==end
