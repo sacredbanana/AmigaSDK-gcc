@@ -1,0 +1,381 @@
+@database "nonvolatile"
+@master "AMIDEV:NDK/Autodocs/nonvolatile.doc"
+
+@Node Main "nonvolatile.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --background-- " Link "--background--"}
+    @{" DeleteNV() " Link "DeleteNV()"}
+    @{" FreeNVData() " Link "FreeNVData()"}
+    @{" GetCopyNV() " Link "GetCopyNV()"}
+    @{" GetNVInfo() " Link "GetNVInfo()"}
+    @{" GetNVList() " Link "GetNVList()"}
+    @{" SetNVProtection() " Link "SetNVProtection()"}
+    @{" StoreNV() " Link "StoreNV()"}
+@EndNode
+
+@Node "--background--" "nonvolatile.library/--background--"
+
+@{b}   PURPOSE@{ub}
+	The nonvolatile library provides a simple means for an application
+	developer to manage nonvolatile storage.
+
+@{b}   OVERVIEW@{ub}
+	The nonvolatile library is meant to be used transparently across all
+	configurations. Currently, nonvolatile storage may consist of NVRAM
+	and/or disk devices. nonvolatile.library will automatically
+	access the best nonvolatile storage available in the system. Disk
+	based storage will be selected first and if not available, NVRAM
+	storage will be accessed.
+
+	* NVRAM
+
+	On low-end diskless Amiga platforms, NVRAM may be available. This
+	RAM will maintain its data contents when the system is powered down.
+	This is regardless of whether batteries or battery-backed clock are
+	present. The data stored in NVRAM is accessible only through the
+	ROM-based nonvolatile library funtion calls. The size of NVRAM
+	storage	is dependant on the system platform and is attainable through
+	the @{"GetNVInfo()" Link "GetNVInfo()"} function.
+
+	* Disk
+
+	In keeping with the general configurability of the Amiga, the actual
+	disk location used by nonvolatile library when storing to disk may be
+	changed by the user.
+
+	The prefs directory is used on the Amiga for storing many user
+	configurable options. The location for nonvolatile disk storage
+	is contained in the file prefs/env-archive/sys/nv_location. This
+	file should contain a data string that specifies a lockable location.
+	If the string does not specify a lockable location, the file will
+	be ignored.
+
+	When opened, the nonvolatile library will search all drives within
+	the system until it finds this file and successfully accomplishes
+	a @{"Lock" Link "dos/Lock()"} on the location specified in the file. To force a rescan of
+	all drives, the library may be closed and reopened or execute the
+	@{"GetNVInfo()" Link "GetNVInfo()"} function.
+
+	A simple method for creating a floppy disk for saving nonvolatile
+	data is the following:
+
+	@{"Format" Link "dos/Format()"} a disk with the volume name NV
+	Create a file prefs/env-archive/sys/nv_location on this disk with
+	  the following contents:  NV:nonvolatile
+	Create a directory nonvolatile
+
+	The following is a script file that can be used to make a floppy
+	for use with nonvolatile library:
+
+	.KEY DRIVE/A,DISK
+	.BRA {
+	.KET }
+	format Drive {DRIVE} Name {DISK$NV} noicons ffs
+	makedir {DRIVE}prefs
+	makedir {DRIVE}nonvolatile
+	makedir {DRIVE}prefs/env-archive
+	makedir {DRIVE}prefs/env-archive/sys
+	echo {DISK$NV}:nonvolatile >{DRIVE}prefs/env-archive/sys/nv_location
+
+	!!!NOTE!!!
+
+	Because NVRAM performs disk access, you must open and use its
+	functionality from a DOS process, not an EXEC task.  Normally
+	your CDGS application is invoked as a DOS process so this
+	requirement generally should cause you no concern.  You just
+	need to be aware of this requirement should you create an
+	EXEC task and try to invoke nonvolatile.library from that task.
+
+@EndNode
+
+@Node "DeleteNV()" "nonvolatile.library/DeleteNV"
+
+@{b}   NAME@{ub}
+	DeleteNV -- remove an entry from nonvoltatile storage. (V40)
+
+@{b}   SYNOPSIS@{ub}
+	success = DeleteNV(appName, itemName, killRequesters);
+	D0		   A0	    A1	      D1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} DeleteNV(STRPTR, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, BOOL);
+
+@{b}   FUNCTION@{ub}
+	Searches the nonvolatile storage for the indicated entry and removes
+	it.
+
+	The strings appName and itemName may not contain the '/' or ':'
+	characters. It is recommended that these characters be blocked
+	from user input when requesting AppName and ItemName strings.
+
+@{b}   INPUTS@{ub}
+	appName - @{"NULL" Link "rexxsupport/NULL"} terminated string identifing the application that
+		  created the data. Maximum length is 31.
+	ItemName - @{"NULL" Link "rexxsupport/NULL"} terminated string uniquely identifing the data
+		   within the application. Maximum length is 31.
+	killRequesters - suppress system requesters flag. TRUE if all system
+			 requesters are to be suppressed during this function.
+			 FALSE if system requesters are allowed.
+
+@{b}   RESULT@{ub}
+	success - TRUE will be returned if the entry is found and deleted.
+		  If the entry is not found, FALSE will be returned.
+
+@EndNode
+
+@Node "FreeNVData()" "nonvolatile.library/FreeNVData"
+
+@{b}   NAME@{ub}
+	FreeNVData -- release the memory allocated by a function of this
+		      library. (V40)
+
+@{b}   SYNOPSIS@{ub}
+	FreeNVData(data);
+		   A0
+
+	VOID FreeNVData(APTR);
+
+@{b}   FUNCTION@{ub}
+	Frees a block of memory that was allocated by any of the following:
+	@{"GetCopyNV()" Link "GetCopyNV()"}, @{"GetNVInfo()" Link "GetNVInfo()"}, @{"GetNVList()" Link "GetNVList()"}.
+
+@{b}   INPUTS@{ub}
+	data - pointer to the memory block to be freed. If passed @{"NULL" Link "rexxsupport/NULL"},
+	       this function does nothing.
+
+@{b}   SEE ALSO@{ub}
+	@{"GetCopyNV()" Link "GetCopyNV()"}, @{"GetNVInfo()" Link "GetNVInfo()"}, @{"GetNVList()" Link "GetNVList()"}
+
+@EndNode
+
+@Node "GetCopyNV()" "nonvolatile.library/GetCopyNV"
+
+@{b}   NAME@{ub}
+	GetCopyNV -- return a copy of an item stored in nonvolatile storage.
+		     (V40)
+
+@{b}   SYNOPSIS@{ub}
+	data = GetCopyNV(appName, itemName, killRequesters);
+	D0		 A0	  A1	    D1
+
+	@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} GetCopyNV(STRPTR, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, BOOL);
+
+@{b}   FUNCTION@{ub}
+	Searches the nonvolatile storage for the indicated appName and
+	itemName. A pointer to a copy of this data will be returned.
+
+	The strings appName and itemName may not contain the '/' or ':'
+	characters. It is recommended that these characters be blocked
+	from user input when requesting appName and itemName strings.
+
+@{b}   INPUTS@{ub}
+	appName - @{"NULL" Link "rexxsupport/NULL"} terminated string indicating the application name
+		  to be found. Maximum length is 31.
+	itemName - @{"NULL" Link "rexxsupport/NULL"} terminated string indicated the item within the
+		   application to be found. Maximum length is 31.
+	killRequesters - Suppress system requesters flag. TRUE if all system
+			 requesters are to be suppressed during this function.
+			 FALSE if system requesters are allowed.
+
+@{b}   RESULT@{ub}
+	data - pointer to a copy of the data found in the nonvolatile storage
+	       assocated with appName and itemName. @{"NULL" Link "rexxsupport/NULL"} will be returned
+	       if there is insufficient memory or the appName/itemName does
+	       not exist.
+
+@{b}   SEE ALSO@{ub}
+	@{"FreeNVData()" Link "FreeNVData()"}, @{"<libraries/nonvolatile.h>" Link "INCLUDE:libraries/nonvolatile.h/Main" 0}
+
+@EndNode
+
+@Node "GetNVInfo()" "nonvolatile.library/GetNVInfo"
+
+@{b}   NAME@{ub}
+	GetNVInfo -- report information on the current nonvolatile storage.
+		     (V40)
+
+@{b}   SYNOPSIS@{ub}
+	information = GetNVInfo(killRequesters);
+	D0			D1
+
+	struct @{"NVInfo" Link "INCLUDE:libraries/nonvolatile.h/Main" 27} *GetNVInfo(BOOL);
+
+@{b}   FUNCTION@{ub}
+	Finds the user's preferred nonvolatile device and reports information
+	about it.
+
+@{b}   INPUTS@{ub}
+	killRequesters - suppress system requesters flag. TRUE if all system
+			 requesters are to be suppressed during this function.
+			 FALSE if system requesters are allowed.
+
+@{b}   RESULT@{ub}
+	information - pointer to an @{"NVInfo" Link "INCLUDE:libraries/nonvolatile.h/Main" 27} structure. This structure contains
+		      information on the NV storage media with the largest
+		      storage. The structure contains 2 longword fields:
+		      nvi_MaxStorage and nvi_FreeStorage. Both values are
+		      rounded down to the nearest ten. The nvi_MaxStorage
+		      field is defined as the total amount of nonvolatile
+		      storage available on this device. The nvi_FreeStorage is
+		      defined as the amount of available space for NVDISK or
+		      the amount of non-locked storage for NVRAM. For NVDISK,
+		      the nvi_FreeStorage takes into account the amount of
+		      overhead room required to store a new App/Item. This
+		      amount is 3 blocks to allow room for storing a new Item
+		      file and possibly a new App directory. For NVRAM, the
+		      amount of overhead is 5 bytes. However, the amount of
+		      room required to store a new NVRAM item depends on the
+		      length of the App and Item names. Refer to @{"StoreNV()" Link "StoreNV()"}
+		      function for storage details.
+
+		      This function may return @{"NULL" Link "rexxsupport/NULL"} in the case of failure.
+
+@{b}   SEE ALSO@{ub}
+	@{"FreeNVData()" Link "FreeNVData()"}, @{"StoreNV()" Link "StoreNV()"}, @{"<libraries/nonvolatile.h>" Link "INCLUDE:libraries/nonvolatile.h/Main" 0}
+
+@EndNode
+
+@Node "GetNVList()" "nonvolatile.library/GetNVList"
+
+@{b}   NAME@{ub}
+	GetNVList -- return a list of the items stored in nonvolatile
+		     storage. (V40)
+
+@{b}   SYNOPSIS@{ub}
+	list = GetNVList(appName, killRequesters);
+	D0		 A0	  D1
+
+	struct @{"MinList" Link "INCLUDE:exec/lists.h/Main" 30} *GetNVList(STRPTR, BOOL);
+
+@{b}   FUNCTION@{ub}
+	Returns a pointer to an Exec list of nonvolatile Items associated
+	with the appName requested.
+
+	The string appName may not contain the '/' or ':' characters.
+	It is recommended that these characters be blocked from user input
+	when requesting an appName string.
+
+@{b}   INPUTS@{ub}
+	appName - @{"NULL" Link "rexxsupport/NULL"} terminated string indicating the application name
+		  to be matched. Maximum length is 31.
+	killRequesters - Suppress system requesters flag. TRUE if all system
+			 requesters are to be suppressed during this function.
+			 FALSE if system requesters are allowed.
+
+@{b}   RESULT@{ub}
+	list - a pointer to an Exec @{"MinList" Link "INCLUDE:exec/lists.h/Main" 30} of NVEntries. A @{"NULL" Link "rexxsupport/NULL"} will be
+	       returned if there is insufficient memory. If there are no
+	       entries in the nonvolatile storage for the AppName, an
+	       empty list will be returned.
+
+@{b}   NOTE@{ub}
+	The protection field contains more bits than are required for
+	storing the delete protection status. These bits are reserved
+	for other system usage and may not be zero. When checking for
+	the delete status use either the field mask NVIF_DELETE, or the
+	bit definition NVIB_DELETE.
+
+@{b}   SEE ALSO@{ub}
+	@{"FreeNVData()" Link "FreeNVData()"}, @{"SetNVProtection()" Link "SetNVProtection()"}
+
+@EndNode
+
+@Node "SetNVProtection()" "nonvolatile.library/SetNVProtection"
+
+@{b}   NAME@{ub}
+	SetNVProtection -- set the protection flags. (V40)
+
+@{b}   SYNOPSIS@{ub}
+	success = SetNVProtection(appName, itemName, mask, killRequesters);
+	D0			  A0	   A1	     D2    D1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} SetNVProtection(STRPTR, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112}, BOOL);
+
+@{b}   FUNCTION@{ub}
+	Sets the protection attributes for an item currently in the
+	nonvolatile storage.
+
+	Although 'mask' is @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} only the delete bit, NVEF_DELETE/NVEB_DELETE,
+	may be set. If any other bits are set this function will return
+	FALSE.
+
+	The strings appName and itemName may not contain the '/' or ':'
+	characters. It is recommended that these characters be blocked
+	from user input when requesting AppName and ItemName strings.
+
+@{b}   INPUTS@{ub}
+	appName - @{"NULL" Link "rexxsupport/NULL"} terminated string indicating the application name
+		  to be matched. Maximum length is 31.
+	itemName - @{"NULL" Link "rexxsupport/NULL"} terminated string indicated the item within the
+		   application to be found. Maximum length is 31.
+	mask - the new protection mask. Only set the delete bit otherwise
+	       this function WILL CRASH.
+	killRequesters - suppress system requesters flag. TRUE if all system
+			 requesters are to be suppressed during this function.
+			 FALSE if system requesters are allowed.
+
+@{b}   RESULT@{ub}
+	success - FALSE if the protection could not be change (ie the data
+		  does not exist).
+
+@{b}   SEE ALSO@{ub}
+	@{"GetNVList()" Link "GetNVList()"}, @{"<libraries/nonvolatile.h>" Link "INCLUDE:libraries/nonvolatile.h/Main" 0}
+
+@EndNode
+
+@Node "StoreNV()" "nonvolatile.library/StoreNV"
+
+@{b}   NAME@{ub}
+	StoreNV -- store data in nonvolatile storage. (V40)
+
+@{b}   SYNOPSIS@{ub}
+	error = StoreNV(appName, itemName, data, length, killRequesters);
+	D0		A0	 A1	   A2    D0	 D1
+
+	@{"UWORD" Link "INCLUDE:exec/types.h/Main" 116} StoreNV(STRPTR, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, ULONG, BOOL);
+
+@{b}   FUNCTION@{ub}
+	Saves some data in nonvolatile storage. The data is tagged with
+	AppName and ItemName so it can be retrieved later. No single
+	item should be larger than one fourth of the maximum storage as
+	returned by @{"GetNVInfo()" Link "GetNVInfo()"}.
+
+	There is no data compression associated with this function.
+
+	The strings, AppName and ItemName, should be short, but descriptive.
+	They need to be short since the string is stored with the data and
+	the nonvolatile storage for a stand alone game system is limited.
+	The game system allows the user to selectively remove entries from
+	storage, so the string should be desriptive.
+
+	The strings AppName and ItemName may not contain the '/' or ':'
+	characters. It is recommended that these characters be blocked
+	from user input when requesting AppName and ItemName strings.
+
+@{b}   INPUTS@{ub}
+	appName - @{"NULL" Link "rexxsupport/NULL"} terminated string identifying the application
+		  creating the data. Maximum length is 31.
+	itemName - @{"NULL" Link "rexxsupport/NULL"} terminated string uniquely identifying the data
+		   within the application. Maximum length is 31.
+	data - pointer to the memory block to be stored.
+	length - number of bytes to be stored in the units of tens of
+		 bytes. For example, if you have 23 bytes to store length = 3;
+		 147 byte then length = 15.
+	killRequesters - suppress system requesters flag. TRUE if all system
+			 requesters are to be suppressed during this function.
+			 FALSE if system requesters are allowed.
+
+@{b}   RESULT@{ub}
+	error - 0                means no error,
+	        NVERR_BADNAME    error in AppName, or ItemName.
+	        NVERR_WRITEPROT  Nonvolatile storage is read only.
+	        NVERR_FAIL       Failure in writing data (nonvolatile storage
+				 full, or write protected).
+	        NVERR_FATAL      Fatal error when accessing nonvolatile
+				 storage, possible loss of previously saved
+				 nonvolatile data.
+
+@{b}   SEE ALSO@{ub}
+	@{"GetCopyNV()" Link "GetCopyNV()"}, @{"GetNVInfo()" Link "GetNVInfo()"}
+
+@EndNode
+

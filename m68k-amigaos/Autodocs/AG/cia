@@ -1,0 +1,258 @@
+@database "cia"
+@master "AMIDEV:NDK/Autodocs/cia.doc"
+
+@Node Main "cia.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" AbleICR() " Link "AbleICR()"}
+    @{" AddICRVector() " Link "AddICRVector()"}
+    @{" RemICRVector() " Link "RemICRVector()"}
+    @{" SetICR() " Link "SetICR()"}
+@EndNode
+
+@Node "AbleICR()" "cia.resource/AbleICR"
+
+@{b}   NAME@{ub}
+	AbleICR -- Enable/disable ICR interrupts.
+
+@{b}   SYNOPSIS@{ub}
+	oldMask = AbleICR( Resource, mask )
+	D0                 A6        D0
+
+	WORD AbleICR( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD );
+
+@{b}   FUNCTION@{ub}
+	This function provides a means of enabling and disabling 8520
+	@{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} interrupt control registers. In addition it returns the
+	previous enable mask.
+
+@{b}   INPUTS@{ub}
+	mask            A bit mask indicating which interrupts to be
+	                    modified. If bit 7 is clear the mask
+	                    indicates interrupts to be disabled. If
+	                    bit 7 is set, the mask indicates
+	                    interrupts to be enabled. Bit positions
+	                    are identical to those in 8520 ICR.
+
+@{b}   RESULTS@{ub}
+	oldMask         The previous enable mask before the requested
+	                    changes. To get the current mask without
+	                    making changes, call the function with a
+	                    null parameter.
+
+@{b}   EXAMPLES@{ub}
+	Get the current mask:
+	    mask = AbleICR(0)
+	@{"Enable" Link "exec/Enable()"} both timer interrupts:
+	    AbleICR(0x83)
+	@{"Disable" Link "exec/Disable()"} serial port interrupt:
+	    AbleICR(0x08)
+
+@{b}   EXCEPTIONS@{ub}
+	Enabling the mask for a pending interrupt will cause an
+	immediate processor interrupt (that is if everything else is
+	enabled). You may want to clear the pending interrupts with
+	@{"SetICR()" Link "SetICR()"} prior to enabling them.
+
+@{b}   NOTE@{ub}
+	The @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources are special in that there is more than one
+	of them in the system. Because of this, the C language stubs
+	in amiga.lib for the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources require an extra parameter
+	to specify which @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resource to use. The synopsys for the
+	amiga.lib stubs is as follows:
+
+	oldMask = AbleICR( Resource, mask )
+	D0                 A6        D0
+
+	WORD AbleICR( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD );
+
+@{b}   SEE ALSO@{ub}
+	@{"cia.resource/SetICR()" Link "SetICR()"}
+
+@EndNode
+
+@Node "AddICRVector()" "cia.resource/AddICRVector"
+
+@{b}   NAME@{ub}
+	AddICRVector -- attach an interrupt handler to a @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} bit.
+
+@{b}   SYNOPSIS@{ub}
+	interrupt = AddICRVector( Resource, iCRBit, interrupt )
+	D0                        A6        D0      A1
+
+	struct @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} *AddICRVector( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD,
+		struct @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} * );
+
+@{b}   FUNCTION@{ub}
+	Assign interrupt processing code to a particular interrupt bit
+	of the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} ICR.  If the interrupt bit has already been
+	assigned, this function will fail, and return a pointer to the
+	owner interrupt.  If it succeeds, a null is returned.
+
+	This function will also enable the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} interrupt for the given
+	ICR bit.
+
+@{b}   INPUTS@{ub}
+	iCRBit          Bit number to set (0..4).
+	interrupt       Pointer to interrupt structure.
+
+@{b}   RESULT@{ub}
+	interrupt       Zero if successful, otherwise returns a
+	                    pointer to the current owner interrupt
+	                    structure.
+
+@{b}   NOTE@{ub}
+	A processor interrupt may be generated immediatly if this call
+	is successful.
+
+	In general, it is probably best to only call this function
+	while DISABLED so that the resource to which the interrupt
+	handler is being attached may be set to a known state before
+	the handler is called. You MUST NOT change the state of the
+	resource before attaching your handler to it.
+
+	The @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources are special in that there is more than one
+	of them in the system. Because of this, the C language stubs
+	in amiga.lib for the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources require an extra parameter
+	to specify which @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resource to use. The synopsys for the
+	amiga.lib stubs is as follows:
+
+	interrupt = AddICRVector( Resource, iCRBit, interrupt )
+	D0                        A6        D0      A1
+
+	struct @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} *AddICRVector( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD,
+		struct @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} *);
+
+	***WARNING***
+
+	Never assume that any of the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} hardware is free for use.
+	Always use the AddICRVector() function to obtain ownership
+	of the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} hardware registers your code will use.
+
+	Note that there are two (2) interval timers per @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27}.  If
+	your application needs one of the interval timers, you
+	can try to obtain any one of the four (4) until AddICRVector()
+	succeeds.  If all four interval timers are in-use, your
+	application should exit cleanly.
+
+	If you just want ownership of a @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} hardware timer, or register,
+	but do not want interrupts generated, use the AddICRVector()
+	function to obtain ownership, and use the @{"AbleICR()" Link "AbleICR()"} function
+	to turn off (or on) interrupts as needed.
+
+	Note that CIA-B generates level 6 interrupts (which can degrade
+	system performance by blocking lower priority interrupts).  As
+	usual, interrupt handling code should be optimized for speed.
+
+	Always call @{"RemICRVector()" Link "RemICRVector()"} when your code exits to release
+	ownership of any @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} hardware obtained with AddICRVector().
+
+@{b}   SEE ALSO@{ub}
+	@{"cia.resource/RemICRVector()" Link "RemICRVector()"}, @{"cia.resource/AbleICR()" Link "AbleICR()"}
+
+@EndNode
+
+@Node "RemICRVector()" "cia.resource/RemICRVector"
+
+@{b}   NAME@{ub}
+	RemICRVector -- Detach an interrupt handler from a @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} bit.
+
+@{b}   SYNOPSIS@{ub}
+	RemICRVector( Resource, iCRBit, interrupt )
+	              A6        D0      A1
+
+	void RemICRVector( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD, struct @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} *);
+
+@{b}   FUNCTION@{ub}
+	Disconnect interrupt processing code for a particular
+	interrupt bit of the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} ICR.
+
+	This function will also disable the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} interrupt for the
+	given ICR bit.
+
+@{b}   INPUTS@{ub}
+	iCRBit          Bit number to set (0..4).
+	interrupt       Pointer to interrupt structure.
+
+@{b}   RESULT@{ub}
+
+@{b}   NOTE@{ub}
+	The @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources are special in that there is more than one
+	of them in the system. Because of this, the C language stubs
+	in amiga.lib for the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources require an extra parameter
+	to specify which @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resource to use. The synopsys for the
+	amiga.lib stubs is as follows:
+
+	RemICRVector( Resource, iCRBit, interrupt )
+	              A6        D0      A1
+
+	void RemICRVector( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD, struct @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} *);
+
+@{b}   SEE ALSO@{ub}
+	@{"cia.resource/AddICRVector()" Link "AddICRVector()"}
+
+@EndNode
+
+@Node "SetICR()" "cia.resource/SetICR"
+
+@{b}   NAME@{ub}
+	SetICR -- @{"Cause" Link "exec/Cause()"}, clear, and sample ICR interrupts.
+
+@{b}   SYNOPSIS@{ub}
+	oldMask = SetICR( Resource, mask )
+	D0                A6        D0
+
+	WORD SetICR( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD );
+
+@{b}   FUNCTION@{ub}
+	This function provides a means of reseting, causing, and
+	sampling 8520 @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} interrupt control registers.
+
+@{b}   INPUTS@{ub}
+	mask            A bit mask indicating which interrupts to be
+	                    effected. If bit 7 is clear the mask
+	                    indicates interrupts to be reset.  If bit
+	                    7 is set, the mask indicates interrupts to
+	                    be caused. Bit positions are identical to
+	                    those in 8520 ICR.
+
+@{b}   RESULTS@{ub}
+	oldMask         The previous interrupt register status before
+	                    making the requested changes.  To sample
+	                    current status without making changes,
+	                    call the function with a null parameter.
+
+@{b}   EXAMPLES@{ub}
+	Get the interrupt mask:
+	    mask = SetICR(0)
+	Clear serial port interrupt:
+	    SetICR(0x08)
+
+@{b}   NOTE@{ub}
+	The @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources are special in that there is more than one
+	of them in the system. Because of this, the C language stubs
+	in amiga.lib for the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resources require an extra parameter
+	to specify which @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} resource to use. The synopsys for the
+	amiga.lib stubs is as follows:
+
+	oldMask = SetICR( Resource, mask )
+	D0                A6        D0
+
+	WORD SetICR( struct @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} *, WORD );
+
+	***WARNING***
+
+	Never read the contents of the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} interrupt control registers
+	directly.  Reading the contents of one of the @{"CIA" Link "INCLUDE:hardware/cia.h/Main" 27} interrupt
+	control registers clears the register.  This can result in
+	interrupts being missed by critical operating system code, and
+	other applications.
+
+@{b}   EXCEPTIONS@{ub}
+	Setting an interrupt bit for an enabled interrupt will cause
+	an immediate interrupt.
+
+@{b}   SEE ALSO@{ub}
+	@{"cia.resource/AbleICR()" Link "AbleICR()"}
+
+@EndNode
+

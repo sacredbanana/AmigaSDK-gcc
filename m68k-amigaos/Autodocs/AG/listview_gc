@@ -1,0 +1,124 @@
+@database "listview_gc"
+@master "AMIDEV:NDK/Autodocs/listview_gc.doc"
+
+@Node Main "listview_gc.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" LISTVIEW_GetClass() " Link "LISTVIEW_GetClass()"}
+@EndNode
+
+@Node "--datasheet--()" "listview_gc/--datasheet--"
+
+@{b}    NAME@{ub}
+        listview_gc -- For browsing linked lists in various ways.
+
+@{b}    SUPERCLASS@{ub}
+        gadgetclass
+
+@{b}    REQUIRES@{ub}
+        None
+
+@{b}    DESCRIPTION@{ub}
+        This gadget is very similar to the LISTVIEW_KIND gadget in
+        gadtools.library, with numerous enhancements.  It displays a list in
+        a scrolling view so that you can browse through it an select items
+        in various ways.
+
+        listbrowser.gadget is a better alternative to this gadget.
+
+@{b}    ATTRIBUTES@{ub}
+        LISTVIEW_Labels (struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} *)
+            Pointer to the list of listview items. The type of the items
+            is @{"ListLabelNode" Link "INCLUDE:gadgets/listview.h/Main" 49}. You are responsible for allocating and
+            freeing the memory for these items yourself.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}, @{"OM_GET" Link "tabs_gc/OM_GET"}
+
+        LISTVIEW_Top (ULONG)
+            Ordinal number of the topmost visible item.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}, @{"OM_GET" Link "tabs_gc/OM_GET"}
+
+        LISTVIEW_Visible (ULONG)
+            Number of visible items.
+
+            Applicability is @{"OM_GET" Link "tabs_gc/OM_GET"}
+
+        LISTVIEW_Total (ULONG)
+            Total number of items.
+
+            Applicability is @{"OM_GET" Link "tabs_gc/OM_GET"}
+
+        LISTVIEW_MakeVisible (ULONG)
+            Ensure the item with this ordinal number is visible.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}
+
+        LISTVIEW_MultiSelect (BOOL)
+            Whether to allow selection of multiple items.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}
+
+        LISTVIEW_ItemHeight (ULONG)
+            Height of each item, in pixels.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}, @{"OM_GET" Link "tabs_gc/OM_GET"}
+
+        LISTVIEW_CallHook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *)
+            Render hook.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}
+
+        LISTVIEW_ScrollUp (ULONG)
+            Scroll view up by the specified number of items.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}
+
+        LISTVIEW_ScrollDown (ULONG)
+            Scroll view down by the specified number of items.
+
+            Applicability is @{"OM_NEW" Link "tabs_gc/OM_NEW"}, @{"OM_SET" Link "tabs_gc/OM_SET"}
+
+        These tags are not currently implemented:
+
+        LISTVIEW_ShowSelected
+        LISTVIEW_Selected
+        LISTVIEW_SelectedNode
+        LISTVIEW_ScrollLeft
+        LISTVIEW_ScrollRight
+        LISTVIEW_Spacing
+
+@EndNode
+
+@Node "LISTVIEW_GetClass()" "listview_gc/LISTVIEW_GetClass"
+
+@{b}    NAME@{ub}
+        LISTVIEW_GetClass -- Gets the pointer to the listview class.
+
+@{b}    SYNOPSIS@{ub}
+        listview_class = LISTVIEW_GetClass();
+        D0
+
+        Class * LISTVIEW_GetClass(VOID);
+
+@{b}    FUNCTION@{ub}
+        Obtains the pointer to the ListView gadget class for use with
+        @{"NewObject()" Link "intuition/NewObject()"}.  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+@{b}    INPUTS@{ub}
+        Nothing.
+
+@{b}    RESULT@{ub}
+        listview_class - Pointer to the ListView gadget class.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+

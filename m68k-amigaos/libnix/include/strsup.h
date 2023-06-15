@@ -12,9 +12,9 @@
 #endif
 
 __MY_INLINE__ __stdargs void *memmove(void *s1,const void *s2,size_t n)
-{	extern __stdargs void bcopy(const void *, void *, size_t);
+{	extern __stdargs void __bcopz(const void *, void *, size_t);
 
-	bcopy(s2,s1,n); return s1;
+	__bcopz(s2,s1,n); return s1;
 }
 
 __MY_INLINE__ __stdargs int memcmp(const void *s1,const void *s2,size_t n)

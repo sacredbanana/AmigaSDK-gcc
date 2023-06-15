@@ -3,6 +3,11 @@
 #include <string.h>
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+
 /* Adjusted to be compatible with the bsd headers
  * (At least for normal ANSI stuff)
  * Member names are not the same, but they need not be :-)
@@ -303,5 +308,8 @@ static inline __stdargs int	putc_unlocked (int c, FILE *f) { return putc(c, f);}
 static inline __stdargs int	putchar_unlocked (int c) { return putchar(c);}
 #endif
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _STDIO_H */

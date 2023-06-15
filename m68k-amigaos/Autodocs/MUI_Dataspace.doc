@@ -1,0 +1,216 @@
+TABLE OF CONTENTS
+
+Dataspace.mui/Dataspace.mui
+Dataspace.mui/MUIA_Dataspace_Pool
+Dataspace.mui/MUIM_Dataspace_Add
+Dataspace.mui/MUIM_Dataspace_Clear
+Dataspace.mui/MUIM_Dataspace_Find
+Dataspace.mui/MUIM_Dataspace_Merge
+Dataspace.mui/MUIM_Dataspace_ReadIFF
+Dataspace.mui/MUIM_Dataspace_Remove
+Dataspace.mui/MUIM_Dataspace_WriteIFF
+Dataspace.mui/Dataspace.mui
+
+	The Dataspace class serves as a very simple container for
+	all kinds of data. You can add data items and reference them
+	later through an ID. Furthermore, Dataspace class features
+	methods to import/export a complete Dataspace from/to an IFF
+	file handle.
+
+	MUI uses subclasses of dataspace class to handle all its
+	configuration data and thats probably the main purpose of a
+	dataspace.
+Dataspace.mui/MUIA_Dataspace_Pool
+
+    NAME
+	MUIA_Dataspace_Pool -- (V11) [I..], APTR
+
+    FUNCTION
+	If you specify a memory pool from exec.library/CreatePool()
+	here, the dataspace object will use this pool for all its
+	entries.
+
+	If you omit this tag or pass NULL, the dataspace object
+	will create its own memory pool instead.
+
+    SEE ALSO
+	MUIM_Dataspace_Add, exec.library/CreatePool
+Dataspace.mui/MUIM_Dataspace_Add
+
+    NAME
+	MUIM_Dataspace_Add (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_Add,APTR data, LONG len, ULONG id);
+
+   FUNCTION
+	This method adds a new entry to the dataspace. If an entry
+	with the same ID already exists, it will be replaced with
+	the new entry.
+
+    INPUTS
+	data - pointer to a data
+	len  - length of data
+	id   - reference id
+
+    RESULT
+	Returns NULL on failure (probably because of a memory
+	shortage) or some non NULL value on success.
+
+    SEE ALSO
+	MUIM_Dataspace_Remove, MUIM_Dataspace_Find
+Dataspace.mui/MUIM_Dataspace_Clear
+
+    NAME
+	MUIM_Dataspace_Clear (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_Clear);
+
+   FUNCTION
+	This method clears all the contents of a dataspace. Depending
+	on the state of the memory pool that the dataspace object uses,
+	this may or may not result in more free memory.
+
+    INPUTS
+	none
+
+    RESULT
+	All entries will be removed from the dataspace.
+	The return value of this method is currently undefined.
+
+    SEE ALSO
+	MUIM_Dataspace_Add, MUIM_Dataspace_Remove,
+	MUIM_Dataspace_Merge
+Dataspace.mui/MUIM_Dataspace_Find
+
+    NAME
+	MUIM_Dataspace_Find (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_Find,ULONG id);
+
+    FUNCTION
+	yet undocumented, complain in the beta mailing list :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+Dataspace.mui/MUIM_Dataspace_Merge
+
+    NAME
+	MUIM_Dataspace_Merge (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_Merge,Object *dataspace);
+
+   FUNCTION
+	This method adds all the contents of the merge dataspace
+	specified as parameter to the objects dataspace.
+	As with MUIM_Dataspace_Add, entries with equal IDs
+        will be replaced.
+
+    INPUTS
+	dataspace - dataspace objects whichs contents should
+	            be merged.
+
+    RESULT
+	Returns the number of entries that have been
+	added/replaced in the objects dataspace. If this
+	number doesnt match the number of entries in the
+	merge dataspace, something probably went wrong.
+
+    SEE ALSO
+	MUIM_Dataspace_Add, MUIM_Dataspace_Remove
+Dataspace.mui/MUIM_Dataspace_ReadIFF
+
+    NAME
+	MUIM_Dataspace_ReadIFF (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_ReadIFF,struct IFFHandle *handle);
+
+    FUNCTION
+	Adds the contents of an IFF handle from iffparse.library to
+	the dataspace. As always, objects with the same ID that
+	are already in the dataspace will be replaced.
+
+	This method does not look for any chunk types and chunk ids
+	itself. Instead, it expects that you have already located
+	the chunk which contains your data and does nothing
+	but ReadChunkBytes() until all dataspace entries of
+	the current chunk are read.
+
+    NOTES
+	Do not call MUIM_Dataspace_ReadIFF if your handle is
+	positioned on chunks that were not written with 
+	MUIM_Dataspace_WriteIFF or strange things may happen!
+
+    INPUTS
+	handle - pointer to a struct IFFHandle from
+	         iffparse.library/AllocIFF(). The handle must
+	         already be open, initialized for reading and
+	         positioned on a chunk that was created with
+	         MUIM_Dataspace_WriteIFF.
+
+    RESULT
+	Returns 0 on success or some IFFERR_xxx on failure.
+
+    SEE ALSO
+	MUIM_Dataspace_ReadIFF, iffparse.library/AllocIFF
+Dataspace.mui/MUIM_Dataspace_Remove
+
+    NAME
+	MUIM_Dataspace_Remove (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_Remove,ULONG id);
+
+   FUNCTION
+	This method removes an entry from the dataspace.
+
+    INPUTS
+	id - reference id
+
+    RESULT
+	Returns NULL if no entry with the given ID was found
+	in the dataspace or some non NULL value on success.
+
+    SEE ALSO
+	MUIM_Dataspace_Add, MUIM_Dataspace_Find
+Dataspace.mui/MUIM_Dataspace_WriteIFF
+
+    NAME
+	MUIM_Dataspace_WriteIFF (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Dataspace_WriteIFF,struct IFFHandle *handle, ULONG type, ULONG id);
+
+    FUNCTION
+	Writes the contents of a dataspace to an IFF handle of
+	iffparse.library.
+
+	In detail, a chunk with the specified type and id is created
+	with PushChunk(), the contents of the dataspace are written
+	with WriteChunkBytes() and the chunk is terminated with
+	PopChunk().
+
+    INPUTS
+	handle - pointer to a struct IFFHandle from
+	         iffparse.library/AllocIFF(). The handle must
+	         already be open and initialized for writing.
+
+	type   - type of chunk to create
+	id     - id of chunk to create
+
+    RESULT
+	Returns 0 on success or some IFFERR_xxx on failure.
+
+    SEE ALSO
+	MUIM_Dataspace_ReadIFF, iffparse.library/AllocIFF
+

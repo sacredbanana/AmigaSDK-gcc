@@ -1996,7 +1996,7 @@
   __asm volatile ("jsr a6@(-804:W)" \
   : \
   : "r"(__freeaddrinfo__bn), "r"(__freeaddrinfo_ai) \
-  : "d0", "d1", "a0", "a1", "fp0", "fp1", "cc", "memory"); \
+  : "d0", "d1", "a1", "fp0", "fp1", "cc", "memory"); \
   } \
 })
 

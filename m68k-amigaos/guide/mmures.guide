@@ -1,0 +1,2204 @@
+@database "mmures"
+@master "VIF:Mu/MuManual/Autodocs/mmures.doc"
+
+@Node Main "mmures.doc"
+    @{" --Background-- " Link "--Background--"}
+    @{" AdjustCtxtSettings() " Link "AdjustCtxtSettings()"}
+    @{" AdjustMMUContext() " Link "AdjustMMUContext()"}
+    @{" BuildMMUConfig() " Link "BuildMMUConfig()"}
+    @{" CheckMMUInterface() " Link "CheckMMUInterface()"}
+    @{" CmpDescriptor() " Link "CmpDescriptor()"}
+    @{" DefineMMUContext() " Link "DefineMMUContext()"}
+    @{" Exception() " Link "Exception()"}
+    @{" FindDescriptor() " Link "FindDescriptor()"}
+    @{" ForbidDMACache() " Link "ForbidDMACache()"}
+    @{" IncrementDescriptor() " Link "IncrementDescriptor()"}
+    @{" InstallNewPage() " Link "InstallNewPage()"}
+    @{" InstallPage() " Link "InstallPage()"}
+    @{" LoadRoot() " Link "LoadRoot()"}
+    @{" MMUResType() " Link "MMUResType()"}
+    @{" ParseTT() " Link "ParseTT()"}
+    @{" PermitDMACache() " Link "PermitDMACache()"}
+    @{" PFlush() " Link "PFlush()"}
+    @{" PFlushA() " Link "PFlushA()"}
+    @{" PFlushTwo() " Link "PFlushTwo()"}
+    @{" PushAll() " Link "PushAll()"}
+    @{" PushLine() " Link "PushLine()"}
+    @{" PushPage() " Link "PushPage()"}
+    @{" PushTwo() " Link "PushTwo()"}
+    @{" ReadDescriptor() " Link "ReadDescriptor()"}
+    @{" ReadFastDescriptor() " Link "ReadFastDescriptor()"}
+    @{" ReadMMUConfig() " Link "ReadMMUConfig()"}
+    @{" ReadUMFlags() " Link "ReadUMFlags()"}
+    @{" RootStarter() " Link "RootStarter()"}
+    @{" SetIndirect() " Link "SetIndirect()"}
+    @{" SetIndirectArray() " Link "SetIndirectArray()"}
+    @{" WithoutMMU() " Link "WithoutMMU()"}
+    @{" WriteDescriptor() " Link "WriteDescriptor()"}
+    @{" WriteMMUConfig() " Link "WriteMMUConfig()"}
+@EndNode
+
+@Node "--Background--" "mmu.resource/--Background--"
+
+@{b}    PURPOSE@{ub}
+	The mmu.resource is the low-level driver of the mmu.library;
+	it is just one level above hardware and is the interface of
+	the mmu.library to the hardware. There is absolutely no need
+	to make use of this resource whatsoever; the calling syntax is
+	wierd and requires assembly language necessarely. Many things
+	within this resource work much different than you might expect.
+
+	In case the mmu.resource is found available when the mmu.library
+	is opened, the library will use the resource to get its dirty
+	work done. That is, the construction of the MMU table descriptors,
+	the exception handler and similar. If the mmu.resource is not
+	found active, the mmu.library tries to figure this out itself.
+	It will check for the available routine and will use internal
+	routines that provide similar functions than the resource. It
+	will not try to build a mmu.resource, though.
+
+	The mmu.resource could be used to make use of the mmu.library
+	in an environment that is not supported by the library initially,
+	as for example more advanced processors, external MMUs or even
+	"software emulated" MMUs for emulators. Writing a mmu.resource
+	for a non-68K MMU might be possible provided the programming
+	model of this CPU is close enough to that of the Motorola's.
+
+	In order to make the mmu.library use your resource routines,
+	your hardware/software should make the resource available on
+	boot-up by means of AddResource() before the mmu.library gets
+	loaded.
+
+	The calling syntax of the mmu.resource is, indeed, strange.
+	This is because most of its functions are used by the core
+	code of the mmu.library, and hence must expect the a6 register
+	loaded with the base pointer of the mmu.library, and not this
+	resource. Some calls require multiple return values in several
+	registers, or even the condition-code register. About the only
+	reason why this is so is speed, and tradition - as to mimic the
+	former calling syntax of the mmu.library internal routines.
+
+	Even though the mmu.resource is just a resource, the typical
+	library type entries LibOpen(), LibClose(), LibExpunge() and
+	LibExtFunc() should be available. They are currently not used,
+	though.
+@EndNode
+
+@Node "CheckMMUInterface()" "mmu.resource/CheckMMUInterface"
+
+@{b}    NAME@{ub}
+	CheckMMUInterface - check for the required API interface level
+
+@{b}    SYNOPSIS@{ub}
+	okflag = CheckMMUInterface( version, mmubase, mmuresbase );
+	d0				d0	a0	a6
+	
+	BOOL CheckMMUInterface( UWORD, struct MMUBase *, struct MMUResBase);
+
+@{b}    FUNCTION@{ub}
+	Checks whether the expected API level of the mmu.resource matches
+	the requirements of the mmu.library and delivers the mmu.library
+	base pointer to the resource.
+
+@{b}    INPUTS@{ub}
+	version	- the version number of the mmu.resource API the mmu.library
+	expects to be available. This need not to coincide with the version of
+	the mmu.library, though.
+
+	mmubase - base pointer of the mmu.library based for internal use of
+	the resource.
+
+	mmuresbase - base pointer of the resource itself.
+
+@{b}    RETURNS@{ub}
+	TRUE in case the resource can service the API whose version is
+	indicated by the "version" argument; FALSE otherwise.
+
+@{b}    NOTES@{ub}
+	Note that the API version of the mmu.library need not to coincide
+	with its library version. The lowest available API level of the
+	library is 43; you should currently check for this value and fail
+	if you get anything different. Future versions of the mmu.library
+	might require an enhanced interface and will then bump this
+	release number.
+
+	This function will be called first by the mmu.library as soon as
+	it detects that the mmu.resource is available. If the result
+	value is FALSE, the mmu.library will revert to its own internal
+	CPU/MMU check and will try to select a proper internal set of
+	support routines.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "MMUResType()" "mmu.resource/MMUResType"
+
+@{b}    NAME@{ub}
+	MMUResType - provide a one-byte identifier specifying the
+	MMU type that gets supported
+
+@{b}    SYNOPSIS@{ub}
+	type = MMUResType( mmuresbase );
+	d0		      a6
+
+	char MMUResType( struct MMUResBase * );
+ 
+@{b}    FUNCTION@{ub}
+	Returns the ID of the mmu that is supported by this resource. This
+	number will be forwarded to application programs by means of the
+	mmu.library call @{"GetMMUType()" Link "mmu/GetMMUType()"}.
+
+@{b}    INPUTS@{ub}
+	mmuresbase	-	a pointer to the mmu.resource base.
+
+@{b}    RETURNS@{ub}
+	an identifier specifying the mmu that is available.
+
+@{b}    NOTES@{ub}
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"mmu.library/GetMMUType()" Link "mmu/GetMMUType()"}
+@EndNode
+
+@Node "AdjustCtxtSettings()" "mmu.resource/AdjustCtxtSettings"
+
+@{b}    NAME@{ub}
+	AdjustCtxtSettings - optimize a MMUContext for best performance
+
+@{b}    SYNPOSIS@{ub}
+	okflag = AdjustCtxtSettings( ctxt, mmubase );
+	d0		     	      a5     a6
+
+	BOOL AdjustCtxtSettings( struct IMMUContext *, struct MMUBase *);
+	
+@{b}    FUNCTION@{ub}
+	This function is called after the mmu.library identified the
+	initial MMU profile by means of @{"ReadMMUConfig()" Link "ReadMMUConfig()"}. It is supposed
+	to modify the read ctxt->ctx_LevelxBits, ctxt->PageBits	and 
+	ctxt->ctx_InitialShift bits in the following way, guaranteeing
+	that the sum of all these bit counters remains 32 - the number of
+	bits required to address the full address range of the MC68K
+	processor.
+
+	- the initial shift must be arranged to be zero by possibly
+	  enlarging the number of bits in the levels below.
+	- the page size should be adjusted to a reasonable default
+	  value if it is supposed to be non-sensical. This depends on
+	  your own choice, but as the mmu.library gets rather un-
+	  effective for small pages, page sizes below 1K and above 8K
+	  should possibly be avoided.
+
+@{b}    INPUTS@{ub}
+	ctxt - a pointer to the IMMUContext structure to be modified.
+	mmubase - base pointer of the mmu.library.
+
+@{b}    RESULTS@{ub}
+	a TRUE/FALSE indicator telling the mmu.library whether the
+	resource was successful to establish a useable setting.
+
+@{b}    NOTES	@{ub}
+	Note that a6 is loaded with the base of the mmu.library, not
+	that of the resource.
+
+	This function need not to update all the mask values of the
+	IMMUContext. This is done by the library internally afterwards.
+
+	The internal mmu.library drivers do not try to modify the page
+	size, except for the 68030 and 68851 drivers which will reject
+	to use a page size smaller than 1K and will then use a default
+	setting. It is probably a good idea to use the same approach
+	to come to a useful MMU setup.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"ReadMMUConfig()" Link "ReadMMUConfig()"}
+@EndNode
+
+@Node "ReadMMUConfig()" "mmu.resource/ReadMMUConfig"
+
+@{b}    NAME@{ub}
+	ReadMMUConfig() - read out the MMU register setup
+
+@{b}    SYNOPSIS@{ub}
+	ReadMMUConfig( config, mmubase );
+			a0	a6
+
+	void ReadMMUConfig(struct MMUConfig *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Reads all relevant MMU hardware registers and fills them into
+	the IMMUConfig structure for further processing.
+
+@{b}    INPUTS@{ub}
+	config - pointer to the struct MMUConfig to fill out.
+	mmubase - base pointer to the mmu.library
+
+@{b}    RESULTS@{ub}
+	
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This call need not to make a complete backup of the MMU setup;
+	only those registers that are relevant for the MMU programming
+	model need to be saved. The meaning of the components of the
+	MMUConfig structure are, even though documented, up to you and
+	the hardware requirements.
+
+	This function is called in supervisor mode and should return
+	to the caller with an RTS.
+	
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	mmu/config.h,@{"WriteMMUConfig()" Link "WriteMMUConfig()"},@{"BuildMMUConfig()" Link "BuildMMUConfig()"}
+@EndNode
+
+@Node "WriteMMUConfig()" "mmu.resource/WriteMMUConfig"
+
+@{b}    NAME@{ub}
+	WriteMMUConfig() - load an MMU configuration into the hardware
+
+@{b}    SYNOPSIS@{ub}
+	WriteMMUConfig( config, mmubase );
+			  a0	  a6
+
+	void WriteMMUConfig(struct MMUConfig *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Writes the configuration described by the struct MMUConfig into
+	the hardware and flushes caches as required.
+
+@{b}    INPUTS@{ub}
+	config - pointer to a struct MMUConfig to be loaded into the 
+		 hardware
+	mmubase - pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This call installs all relevant data of the MMUConfig back into
+	the hardware; dependent on the MMU, various caches must be
+	flushed here as well. The suggested operation works as follows:
+
+	- interrupts should be disabled by writing into the sr
+	- caches should be pushed back if required
+	- the MMU should be disabled,
+	- address translation caches should be flushed,
+	- transparent translation should be installed,
+	- MMU root pointers should be installed,
+	- MMU translation registers should be installed,
+	- caches should be flushed/pushed again.
+
+	This function is called in supervisor mode, it should return to
+	the caller by means of an RTS.
+
+	The function may leave interrupts disabled; they will be re-
+	enabled as soon as the supervisor mode is left by the caller.
+
+	This call need not to install all registers; only the registers
+	that are relevant to the MMU programming model are required to
+	be written back.
+
+	On a context switch, the mmu.library will compare all components
+	of the MMUContext except the two (user/supervisor) root pointers.
+	If these extended registers are equal, a short context switch by
+	means of @{"LoadRoot()" Link "LoadRoot()"} is engaged; otherwise, a complete context
+	switch by this function will be run.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	mmu/config.h,@{"ReadMMUConfig()" Link "ReadMMUConfig()"},@{"BuildMMUConfig()" Link "BuildMMUConfig()"},@{"LoadRoot()" Link "LoadRoot()"}
+@EndNode
+
+@Node "BuildMMUConfig()" "mmu.resource/BuildMMUConfig"
+
+@{b}    NAME@{ub}
+	BuildMMUConfig() - build a new MMU configuration from templates
+
+@{b}    SYNOPSIS@{ub}
+	ok = BuildMMUConfig( uctx, sctx, defconfig, destconfig, mmubase);
+	d0		      a0    a1	    a2		a3	  a6
+
+	BOOL BuildMMUConfig(struct IMMUContext *, struct IMMUConctext *,
+			    struct MMUConfig *,struct MMUConfig *,
+			    struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Fills in a new struct MMUConfig by combining data from the default
+	configuration, the user and the supervisor context. This function
+	is called by the mmu.library whenever the configuration of a new
+	context must be created. It should write the MMU root pointers of
+	the user and supervisor contexts into the MMUConfig, and fill the
+	remaining data of the configuration with default values from the
+	default configuration.
+
+@{b}    INPUTS@{ub}
+	uctx -	the user context whose configuration should be build. This
+		shall be the origin of the user root pointer. Further, the
+		page layout shall be taken from the uctx->ctx_LevelABits...
+		uctx->ctx_LevelDBits, uctx->ctx_PageBits bits and should
+		modify the translation control provided by defconfig ac-
+		cordingly before this data goes into the translation control
+		of destconfig.
+		Further, this procedure should clear transparent translation
+		if the uctx->ctx_Flags say so.
+
+	sctx -	the supervisor context of the uctx. This is the origin of the
+		supervisor root pointer.
+
+	defconfig - the default MMU configuration that was read by the
+		    mmu.library on startup. Remaining registers of the MMU
+		    programming model should be taken from here.
+	destconfig - destination MMU configuration to fill out.
+	mmubase - pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+	a boolean success/failure indicator. Should return TRUE in case
+	the configuration could be build successfully, FALSE otherwise
+	if for example the page configuration specified by the context is
+	not available.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	mmu/config.h,@{"ReadMMUConfig()" Link "ReadMMUConfig()"},@{"WriteMMUConfig()" Link "WriteMMUConfig()"}
+@EndNode
+
+@Node "LoadRoot()" "mmu.resource/LoadRoot"
+
+@{b}    NAME@{ub}
+	LoadRoot() - perform a minor context switch
+
+@{b}    SYNOPSIS@{ub}
+	LoadRoot( uroot, sroot, mmubase);
+		    a0	   a1	  a6
+
+	void LoadRoot( void *, void *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Performs a minor context switch by exchanging user, supervisor or
+	both MMU root pointers.
+
+@{b}    INPUTS@{ub}
+	uroot - the user MMU root pointer or NULL in case the user root
+		pointer shall remain unaltered.
+	sroot -	the supervisor MMU root pointer or NULL in case it need not
+		to be touched.
+	mmubase - pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This function installs either a new user or supervisor root pointer
+	into the MMU hardware; therefore, this function is called within
+	supervisor mode and shall return with an RTS to the user.
+
+	This function shall perform the following operations:
+
+	- flush the address translation cache,
+	- flush/push the cache if the cache is logically indexed. A
+	  physically indexed cache need not to be pushed.
+	- load the user root pointer with the new value
+	- flush old user root pointer from a RTC, if available,
+	  and old user root<>new user root
+	- load the supervisor root pointer with the new value,
+	- flush old supervisor pointer from a RTC, if available,
+	  and old supervisor root<>new supervisor root
+	- flush the ATC again
+
+	The mmu.library calls either this function or @{"WriteMMUConfig()" Link "WriteMMUConfig()"}
+	on a context switch. If the MMU registers of old and new context
+	are identically except for user and supervisor root pointer,
+	a minor context switch is run by this function. Otherwise, a
+	major context switch by means of @{"WriteMMUConfig()" Link "WriteMMUConfig()"} is performed.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"WriteMMUConfig()" Link "WriteMMUConfig()"}
+@EndNode
+
+@Node "DefineMMUContext()" "mmu.resource/DefineMMUContext"
+
+@{b}    NAME@{ub}
+	DefineMMUContext() - fill IMMUContext components with MMU specific
+	data from a MMUConfig.
+
+@{b}    SYNOPSIS@{ub}
+	DefineMMUContext( config, ctxt, mmubase);
+			    a0	   a5	   a6
+
+	void DefineMMUConfig( struct MMUConfig *, struct IMMUContext *, 
+			      struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Reads data from the MMUConfig structure, interprets the page
+	layout defined by this data and places the results in the
+	IMMUContext pointed to by ctxt. This function shall fill
+	in:
+
+	ctxt->ctx_InitialShift	with the initial shift value
+	ctxt->ctx_LevelABits	with the number of address bits to
+				address level A of the MMU table.
+	ctxt->ctx_LevelBBits
+	ctxt->ctx_LevelCBits
+	ctxt->ctx_LevelDBits	ditto up to level D
+	ctxt->ctx_PageBits	number of bits of a logical address
+				that define the offset within a page.
+
+	If the MMU is disabled, the above should be set to reasonable
+	defaults, as for example 4K pages.
+
+	ctxt->ctx_LevelAAlign	Page alignment alá @{"AllocAligned()" Link "mmu/AllocAligned()"} that
+				is required for the level A descriptor
+				level. This must be a power of two.
+	ctxt->ctx_LevelBAlign
+	ctxt->ctx_LevelCAlign
+	ctxt->ctx_LevelDAlign	ditto for levels B..D
+
+	ctxt->ctx_DescriptorAlign	alignment restrictions for
+					indirect descriptors.
+
+
+	ctxt->ctx_PageMemMask	binary mask of all mapping properties that
+				shall be touched when allocating memory for
+				the MMU table.
+	ctxt->ctx_PageMemProp	binary mask of page properties that will be
+				enabled/disabled for memory allocated for MMU
+				page descriptors.
+
+	The above two are only kept care of if the user specified
+
+	DescriptorCacheInhibit ON
+
+	in the ENVARC:MMU-Configuration file. Then, the properties of mmu
+	page memory are filtered by 
+
+	newprops = oldprops & (~PageMemMask) | PageMemProps
+	
+	to get the new property flags for the MMU table memory. Otherwise,
+	these two are ignored.
+
+	ctxt->ctx_PageMemForbid	property flags that must not be set for memory
+				that got allocated for the MMU table.
+
+	If the mmu.library finds one of the above properties set for memory
+	that it allocated, it will guru. Typically, this mask should contain:
+
+	MAPP_BLANK, MAPP_INVALID, MAPP_SWAPPED, MAPP_TRANSLATED, MAPP_ROM,
+	MAPP_WRITEPROTECTED, MAPP_BUNDLED, MAPP_SUPERVISORONLY, MAPP_INDIRECT
+
+	Note that memory allocated by MEMF_PUBLIC should never have any of the
+	properties above. Note further that the mmu.library is able to work
+	with MAPP_REMAPPED memory for mmu descriptors since it will first
+	translate the physical address to logical before using it for the
+	descriptors. This requires, though, that the memory is always
+	accessable under its physical address as well.
+
+
+	ctxt->ctx_LargestPageSize	largest possible page size with
+					this MMU; not necessarely the
+					active page size.
+
+	This value is required by the mmu.library to compute the
+	@{"RemapSize()" Link "mmu/RemapSize()"} value. It should be a power of two.
+
+@{b}    INPUTS@{ub}
+	config - struct MMUConfig to be read out.
+	ctxt - struct IMMUContext to be filled in.
+	mmubase - library base of the mmu.library.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is called by the mmu.library whenever a new context must be
+	build; you need not to touch any other mask/flags fields of the
+	IMMUContext as the library will compute them itself from the
+	data you provided. Note further that you should not cheat here
+	with the settings to get a more reasonable setup. The mmu.library
+	will later on call AdjustCtxtSetting() on this context to give
+	you the chance to make some adjustments on the MMU setup.
+
+	
+	DefineMMUContext( config, ctxt, mmubase);
+			    a0	   a5	   a6
+
+	void DefineMMUConfig( struct MMUConfig *, struct IMMUContext *, 
+			      struct MMUBase *);
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	AdjustCtxtSetting(), @{"mmu/RemapSize()" Link "mmu/RemapSize()"}, mmu/context.h,
+	mmu/config.h
+@EndNode
+
+@Node "AdjustMMUContext()" "mmu.resource/AdjustMMUContext"
+
+@{b}    NAME@{ub}
+	AdjustMMUContext() - integrate user supplied page layout settings into
+			     an IMMUContext
+
+@{b}    SYNOPSIS@{ub}
+	errcode = AdjustMMUContext( depth, destctxt, parent , mmubase );
+	  d0			     d0 	a0	a1	a6
+
+	LONG AdjustMMUContext( LONG depth, struct MMUContext *,
+			       struct IMMUContext *, struct IMMUBase *);
+
+@{b}    FUNCTION@{ub}
+	This function gets called on CreateMMUContextA() to integrate
+	the user supplied page model into the context, given a parent/
+	template context to take default settings from. This function
+	shall try to find a possible page configuration fit for the user
+	supplied data within the destctxt, or shall fail if it is not 
+	possible to generate the user defined page layout.
+
+@{b}    INPUTS@{ub}
+	depth - depth of the MMU tree in levels, or negative if not
+		specified by the user. Then, this function shall use
+		the default depth from the "parent" context.
+	destctxt - destination context to generate a page layout for;
+		specifically, the destctxt->ctx_LevelABits to
+		destctxt->ctx_PageBits must be defined. Initially,
+		these are either filled with the user-specified values,
+		or 0xff for "default values". It is the job of this
+		function to fill all the components of the IMMUContext
+		that are set to 0xff such that the page layout is
+		supported by the hardware and as close as possible to
+		that of the parent. Ideally, the parent configuration
+		should be used to allow minor context switches between
+		the parent and this context. If possible, at least the
+		page size of parent and destctxt should be made identically,
+		unless the user tries to setup its own page size.
+	parent - struct IMMUContext to take default settings from.
+	mmubase - library base pointer of the mmu.library
+
+@{b}    RESULTS@{ub}
+	An error code or zero on success. The following error codes shall
+	be used:
+
+	CCERR_INVALID_PARAMETERS	the parameters make no sense, as
+					for example the sum of all level and
+					page bits is not 32.
+
+	CCERR_UNSUPPORTED		the parameters are consistent, but not
+					supported by the MMU hardware.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	mmu/context.h, mmu/CreateMMUContextA()
+@EndNode
+
+@Node "ParseTT()" "mmu.resource/ParseTT"
+
+@{b}    NAME@{ub}
+	ParseTT() - integrate the transparent translation registers into
+		    the MMU table layout.
+
+@{b}    SYNOPSIS@{ub}
+	ok = ParseTT( ctxt, config, mmubase);
+	d0		a0	a1	a6
+
+	BOOL ParseTT( struct IMMUContext *, struct MMUConfig *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Parses the transparent translation registers given by the MMUConfig
+	and integrates the definitions made by the TTx registers into the
+	MMU setup defined by the ctxt. The attempt of this function is to
+	get rid of the TTx definitions and mimic their function by placing
+	similar page definition data into the MMU table of the context.
+
+@{b}    INPUTS@{ub}
+	ctxt -	the IMMUContext into which the TTx registers shall be integrated.
+		Especially, the following flags in ctxt->ctx_Flags should be
+		considered:
+
+		CTXF_CLEARDTT0		Is set on entry if the DTT0 register
+					shall be ignored. 
+
+		This flag gets set by the mmu.library on startup if the 
+		ENVARC:MMU-Configuration contains the "ClearTTx" command.
+
+		On exit, this flag shall be set in case the DTT0 setup could
+		be successfully integrated into the MMU table of ctxt.
+
+		CTXF_CLEARDTT1, CTXF_CLEARITT0, CTXF_CLEARITT1
+
+		similar.
+
+	config - struct MMUConfig containing the current setup of the TTx
+		registers that are about to be integrated.
+
+	mmubase - pointer to the mmu.library base
+
+@{b}    RESULTS@{ub}
+	a boolean success/failure indicator.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This function might require the help of two internal mmu.library
+	functions that are hereby documented purely for the use of the
+	mmu.resource:
+
+	ok = AddTransparentTranslation( ctxt, amask, props, propmask );
+	d0				 a5	a1     d0	d1
+
+	BOOL AddTransparentTranslation( struct IMMUContext *, UWORD,
+					ULONG, ULONG );
+
+	ok = OrTransparentTranslation( ctxt, amask, props, propmask );
+
+	BOOL OrTransparentTranslation(	struct IMMUContext *, UWORD,
+					ULONG, ULONG );
+
+	Both functions work very much the like with the difference that
+	the first attempts to insert all TTx properties into the context,
+	whereas the second uses the most conservative setting when the
+	old context definition and the TTx definition conflict.
+
+	Arguments of these calls are as follows:
+
+	ctxt	-	MMUContext to integrate TTx settings into
+	amask	-	an address and address mask. The lower 8 bits
+			of amask define a mask, the upper 8 an address.
+
+	The address mask is interpreted as bits 31..24 of a full mask,
+	where a one-bit indicates that the corresponding address bit is
+	ignored on address comparison. Bits 23..0 are always understood
+	to be one, i.e. are always ignored. Hence, TTx registers are
+	limited to define 16MB chunks of memory at once.
+
+	The address bits define bits 31..24 of an address to compare
+	against.
+
+	The code will, therefore, perform the following operation:
+
+	if (((address>>24)^(amask >> 8)) & (~amask & 0xff) == 0) {
+		/* modify context */
+	}
+
+	If the above comparison is true, the mmu.library will modify
+	the 16MB segment starting at "address" by means of the propmask
+	and the props arguments. "props" defines the new values of the
+	property flags, "propmask" which property bits are to be
+	altered.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	mmu/context.h
+@EndNode
+
+@Node "RootStarter()" "mmu.resource/RootStarter"
+
+@{b}    NAME@{ub}
+	RootStarter - get a pointer to the MMU root as abstract table 
+		      descriptor
+
+@{b}    SYNOPSIS@{ub}
+	ok = RootStarter( config, atd, type, mmubase);
+	d0		    a1	   a0	d0   a6
+
+	LONG RootStarter(struct MMUConfig *,struct AbstractDescriptor *,
+			 UBYTE, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Fills in the "AbstractDesctriptor" describing the location of the
+	MMU root table pointer. adt->adt_Pointer should be filled with
+	the address(!) of a memory location containing the user or
+	superivor root table pointer. This is typically the address of
+	one of the root pointer components within the MMUConfig passed
+	in.
+
+@{b}    INPUTS@{ub}
+	config	- struct MMUConfig containing the user and supervisor
+		  root pointers.
+	atd -	  AbstractDescriptor to be filled in. The following
+		  fields must be provided:
+
+		atd->atd_Pointer	pointer to the root pointer
+		atd->atd_LowerLimit	set to zero
+		atd->atd_UpperLimit	set to zero
+
+		atd->atd_Type		set to ATDT_TABLE for short
+					descriptors (four bytes), 
+					ATDT_TABLE|ATDT_LONG for long
+					descriptors (eight bytes)
+
+	type -	0 if you need to provide the user root pointer, non-
+		zero otherwise. In case the MMU programming model described
+		by "config" does not distinguish between user and supervisor
+		access, ignore this type.
+
+	mmubase - pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+	ok should be set to zero in case the MMU root could not be read.
+	In this case, the resource will have caused a guru already.
+	The result code shall be -1 in case the MMU is enabled and the
+	root could be read, and +1 in case the MMU is disabled. The
+	atd need not to be filled out in this case.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This function is used by the mmu.library to initiate the mmu table
+	scan of the active MMU configuration.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"ReadDescriptor()" Link "ReadDescriptor()"}, mmu/config.h, mmu/descriptor.h
+@EndNode
+
+@Node "ReadDescriptor()" "mmu.resource/ReadDescriptor"
+
+@{b}    NAME@{ub}
+	ReadDescriptor() - read and interpret an hardware MMU descriptor
+
+@{b}    SYNOPSIS@{ub}
+	ReadDescriptor( deptr, atd, type, level, ctxt, mmubase );
+		 	 a1    a0    d0    d1	 a5	a6
+
+	ReadDescriptor( ULONG *, struct AbstractDescriptor *, UBYTE ,
+			UBYTE, struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Reads and interprets an MMU table/page descriptor pointed to by
+	deptr, and fills the abstraction data into the atd.
+
+@{b}    INPUTS@{ub}
+	deptr -	points to the descriptor to read.
+	atd -	the AbstractDescriptor to be filled in.
+	type -	type of the descriptor to be read. This has the bit
+		ATDB_LONG set for long descriptors. All other bits
+		shall be ignored.
+	level -	MMU table level to read the descriptor from. Zero
+		identifies level A, -1 is used in case this function
+		shall read and interpret the root pointer itself, as
+		supplied by @{"RootStarter()" Link "RootStarter()"}. "deptr" points then to a
+		memory location containing(!) the root pointer.
+	ctxt -	struct IMMUContext this parsing is done within. The
+		IMMUContext provides all bitmasks to isolate property
+		bits and pointers from the descriptor, i.e. in 
+		ctxt->ctx_LevelAMask...ctxt->ctx_PageMask. Note that
+		the LevelAMask is required for reading pointers that
+		point to a level A table, i.e. the root pointer.
+	mmubase - pointer to the mmu.library base.
+
+
+	The AbstractDescriptor must be filled in as follows:
+
+	atd->atd_Pointer	pointer to the next MMU descriptor table
+				or the physical page address or the
+				indirect descriptor.
+
+	atd->atd_Properties	properties described by this descriptor.
+
+
+	atd->atd_LowerLimit	in case this is a long descriptor, the 
+				lower page limit in case this descriptor
+				uses a lower limit, or zero otherwise.
+
+	atd->atd_UpperLimit	in case this descriptor is long and uses
+				an upper page limit, fill this limit into
+				here without the "upper limit signal bit".
+				Otherwise, set to 0x7fff.
+
+	atd->atd_ThisType	type of this descriptor. The following bits
+				are available to signal the type:
+
+		ATDB_TABLE	is a table descriptor
+		ATDB_INDIRECT	is an indirect descriptor
+		ATDB_PAGE	is a page descriptor
+				(includes early termination descriptors)
+		ATDB_INVALID	is an invalid descriptor
+				(set properties to MAPP_INVALID, too!)
+
+	atd->atd_NextType	type of the descriptors this descriptor
+				points to if this is a table or an invalid
+				descriptor. The following bits should be
+				set:
+
+		ATDB_LONG	Descriptors in the table this descriptor
+				points to are of long type (eight bytes)
+		ATDB_TABLE	This descriptor points to a table of new
+				descriptors, possibly including page,
+				indirect or invalid descriptors.
+		ATDT_INVALID	This descriptor doesn't point to a next
+				descriptor because it is either a page
+				descriptor, an early termination descriptor
+				or invalid.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES	@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This function is used by the mmu.library to scan an already loaded
+	MMU table.
+
+@{b}    BUGS@{ub}
+    
+@{b}    SEE ALSO@{ub}
+	@{"RootStarter()" Link "RootStarter()"}, mmu/descriptor.h
+@EndNode
+
+@Node "ReadFastDescriptor()" "mmu.resource/ReadFastDescriptor"
+
+@{b}    NAME@{ub}
+	ReadFastDescriptor() - read an MMU descriptor quickly.
+
+@{b}    SYNOPSIS@{ub}
+	ReadFastDescriptor( deptr, atd, type, level, ctxt, mmubase );
+		 	     a1    a0    d0    d1	 a5	a6
+
+	ReadFastDescriptor( ULONG *, struct AbstractDescriptor *, UBYTE ,
+			    UBYTE, struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Reads and interprets an MMU table/page descriptor pointed to by
+	deptr, and fills the abstraction data into the atd.
+
+	This is similar to @{"ReadDescriptor" Link "mmures/ReadDescriptor()"} except that this function is
+	allowed to take some shortcuts. It is not assumed to fill in
+	any property flags or atd->atd_NextType, neither need it work
+	with long descriptors.
+
+@{b}    INPUTS@{ub}
+	deptr -	points to the descriptor to read.
+	atd -	the AbstractDescriptor to be filled in.
+	type -	type of the descriptor to be read. This has the bit
+		ATDB_LONG set for long descriptors. All other bits
+		shall be ignored.
+	level -	MMU table level to read the descriptor from. Zero
+		identifies level A, -1 is used in case this function
+		shall read and interpret the root pointer itself, as
+		supplied by @{"RootStarter()" Link "RootStarter()"}. "deptr" points then to a
+		memory location containing(!) the root pointer.
+	ctxt -	struct IMMUContext this parsing is done within. The
+		IMMUContext provides all bitmasks to isolate property
+		bits and pointers from the descriptor, i.e. in 
+		ctxt->ctx_LevelAMask...ctxt->ctx_PageMask. Note that
+		the LevelAMask is required for reading pointers that
+		point to a level A table, i.e. the root pointer.
+	mmubase - pointer to the mmu.library base.
+
+
+	See @{"ReadDescriptor()" Link "ReadDescriptor()"} for further details.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES	@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This streamlined version is used by the mmu.library as soon as
+	it knows that it works on tables it build itself.
+
+@{b}    BUGS@{ub}
+    
+@{b}    SEE ALSO@{ub}
+	@{"ReadDescriptor()" Link "ReadDescriptor()"}, mmu/descriptor.h
+@EndNode
+
+@Node "CmpDescriptor()" "mmu.resource/CmpDescriptor"
+
+@{b}    NAME@{ub}
+	CmpDescriptor() - compare two descriptors by an offset
+
+@{b}    SYNOPSIS@{ub}
+	iseq = CmpDescriptor( descr1 , descr2 , type, delta, mmubase);
+	ccr			a0	a1	 d0	d1	a6
+
+	void CmpDescriptor( ULONG *, ULONG *, UBYTE, ULONG, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Compares whether descriptor one is equal to the descriptor up to an
+	address displacement delta.
+
+	Hence, if both descriptors are page descriptors, the call checks
+	whether the destination page of descr1 equals the destination page
+	of descr2 minus delta, and whether the properties are identically up
+	to the MAPP_USED and MAPP_MODIFIED bits.
+
+	If both descriptors are indirect, the call checks whether they point
+	both to the same target descriptor.
+
+	If both descriptors are invalid, they are always considered equal.
+
+@{b}    INPUTS@{ub}
+	descr1	- the base descriptor to compare against
+	descr2	- the descriptor that it is compared with.
+	type	- has ATDT_LONG set for long descriptors, otherwise 
+		  descr1 and descr2 point to short descriptors.
+		  has ATDT_INDIRECT set for indirect descriptors.
+
+	delta   - address displacement of descr2 relative to descr1.
+	mmubase - base address of the mmu.library
+
+@{b}    RESULTS@{ub}
+	This call returns its result in the condition code register and is
+	hence not callable from C; note that it is not supposed to be called
+	by anything but the mmu.library anyhow.
+
+	It sets the condition code register Z flag if the descriptors are
+	considered to be equal, otherwise Z is cleared.
+
+	Register a0 must not be touched by this call, and register a1 must
+	be advanced by one descriptor, i.e. either four or eight bytes,
+	depending on whether the descriptor is long or short.
+
+	This strange syntax was chosen to make the call as fast as possible
+	and hence to speed up the MMU table scanner.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This call is used by the mmu.library internal MMU table parser to
+	detect continously mapped memory blocks. It shall execute as fast
+	as possible.
+
+@{b}    BUGS@{ub}
+	The calling syntax is ugly.
+
+@{b}    SEE ALSO@{ub}
+	@{"ReadDescriptor()" Link "ReadDescriptor()"}
+@EndNode
+
+@Node "IncrementDescriptor()" "mmu.resource/IncrementDescriptor"
+
+@{b}    NAME@{ub}
+	IncrementDescriptor() - advance a pointer into an MMU descriptor table
+				and provide an increment
+
+@{b}    SYNOPSIS@{ub}
+	increment = IncrementDescriptor( atd, index, mmubase );
+	d0				  a0	d0	a6
+
+	ULONG IncrementDescriptor( struct AbstractDescriptor *, ULONG, 
+				   struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Checks atd->atd_NextType and returns the increment required to
+	get to the next descriptor; further, loads a pointer at the
+	descriptor within the descriptor table pointed to by atd->atd_Pointer.
+
+@{b}    INPUTS@{ub}
+	atd -	an abstract descriptor describing the start of the descriptor
+		table and the type of descriptors within this table.
+
+		atd->atd_NextType is used to check whether short or long
+		descriptors are found within this table,
+
+		atd->atd_Pointer is assumed to be the base pointer to a
+		descriptor table of descriptors of type atd->atd_NextType.
+
+	index -	the index of the descriptor within the table pointed to by
+		atd->atd_Pointer to provide as secondary output.
+
+	mmubase - pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+	increment - the byte increment to get from one descriptor within the
+		    table atd->atd_Pointer points to to the next one. This
+		    is typically four for short and eight for long descriptors.
+
+	a0 contains a secondary result that is not useable from C (but note
+	that this function must not be called by anything but the mmu.library
+	anyhow), namely the address of the descriptor within the table at
+	the table entry given by index.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This call is used by the mmu.library internal MMU table parser to
+	advance by a table descriptor and to pick a descriptor from a
+	table.
+
+@{b}    BUGS@{ub}
+	The calling convention is ugly.
+
+@{b}    SEE ALSO@{ub}
+	@{"CmpDescriptor()" Link "CmpDescriptor()"}
+@EndNode
+
+@Node "WriteDescriptor()" "mmu.resource/WriteDescriptor"
+
+@{b}    NAME@{ub}
+	WriteDescriptor() - build a hardware MMU table descriptor from an
+			    abstract table descriptor.
+
+@{b}    SYNOPSIS@{ub}
+	descr = WriteDescriptor( atd, level, ctxt, mmubase );
+	d0			 a0	d1    a5     a6
+
+	ULONG WriteDescriptor(	struct AbstractDescriptor *a0, WORD level, 
+				struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Builds a hardware MMU table descriptor from an abstract description
+	for a given level of the MMU tree.
+
+@{b}    INPUTS@{ub}
+	atd -	AbstractDescriptor providing the information concerning the
+		descriptor type to build. The following components are
+		relevant:
+
+		atd->atd_Pointer:	Either the address of the next
+					descriptor table for table 
+					descriptors, or the physical address
+					for page descriptors, or the address
+					of the destination descriptor for
+					indirect descriptors, or the
+					descriptor contents for invalid
+					descriptors; in the last case, several
+					bits of the pointer will be masked
+					out, as they are required to signal an
+					indirect descriptor type.
+		atd->atd_Properties:	Properties of the descriptor to be
+					build. MAPP_INVALID or MAPP_SWAPPED 
+					signals that an	invalid descriptor
+					shall be build, MAPP_INDIRECT signals
+					an indirect descriptor.
+		atd->atd_LowerLimit:	ignored, only short descriptors are
+					supported
+		atd->atd_UpperLimit:	ignored for the same reason.
+		atd->atd_ThisType:	Descriptor type to build. This must 
+					have the ATDB_LONG bit cleared. The
+					following types are supported:
+
+			ATDT_INVALID	Build an invalid descriptor, as if
+					MAPP_INVALID or MAPP_SWAPPED has been
+					set. Descriptor contents is within
+					atd->atd_Pointer.
+			ATDT_PAGE	Build a page descriptor or an early
+					termination page descriptor. This
+					reverts to indirect or invalid de-
+					scriptors if the corresponding
+					property flags are set. The physical
+					page address is in atd->atd_Pointer.
+					In case MAPP_INVALID or MAPP_SWAPPED
+					are set, atd_Pointer contains the
+					data for the invalid descriptor.
+					In case MAPP_INDIRECT is set, the
+					atd_Pointer contains the address of
+					the target descriptor.
+			ATDT_TABLE	Build a table descriptor. atd_Pointer
+					points to the next descriptor table.
+			ATDT_INDIRECT	This value is not allowed. Instead,
+					indirect descriptors must be build by
+					MAPP_PAGE and properties of 
+					MAPP_INDIRECT.
+
+		atd->atd_NextType	ingored.
+
+	level - level at which the descriptor shall be build. Level = 0 
+		indicates level A of the MMU tree, level = -1 indicates that
+		a root descriptor shall be build.
+
+	ctxt - 	pointer to the IMMUContext the descriptor will be part of.
+
+	mmubase - pointer to the MMU library base.
+
+@{b}    RESULTS@{ub}
+	descr - the generated descriptor. Note that 0L need not to indicate
+	an error.
+
+	Error conditions are delivered by means of the Z bit of the CCR
+	register. If the Z bit is one, the requested descriptor could not be
+	build. This happens for example if a descriptor of type ATDT_PAGE
+	shall be build at non-page level and the MMU does not support early
+	termination descriptors. If everything is fine, the Z bit will be
+	cleared.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	Note that the usage of the abstract descriptor is slightly different
+	from that of @{"ReadDescriptor()" Link "ReadDescriptor()"}. @{"ReadDescriptor()" Link "ReadDescriptor()"} delivers a descriptor
+	type of ATDT_INDIRECT for indirect descriptors, whereas
+	WriteDescriptor() expects ATDT_PAGE with properties set to
+	MAPP_INDIRECT to build this descriptor type.
+
+	This call is used by the mmu.library table build algorithm to generate
+	new descriptors.
+
+@{b}    BUGS@{ub}
+	The name is misleading, GenerateDescriptor() would fit better as
+	this function never writes any descriptor out to memory.
+	The calling syntax is non-standard and ugly.
+
+@{b}    SEE ALSO@{ub}
+	@{"ReadDescriptor()" Link "ReadDescriptor()"}, mmu/descriptor.h
+@EndNode
+
+@Node "FindDescriptor()" "mmu.resource/FindDescriptor"
+
+@{b}    NAME@{ub}
+	FindDescriptor() - find an MMU descriptor by logical address.
+
+@{b}    SYNOPSIS@{ub}
+	level = FindDescriptor( addr, ctxt , mmubase );
+	d0			 a0     a5	a6
+
+	WORD FindDescriptor( ULONG, struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	This function scans the MMU tables to detect the descriptor that
+	is responsible for translating the logical address to a physical
+	address. This descriptor address is returned as secondary result
+	code in register a0.
+	For indirect descriptors, this function returns the address
+	of the descriptor pointing to the target descriptor, and not the
+	descriptor itself.
+	The primary result code is the level at which the descriptor
+	was found. Zero indicates a descriptor at level A of the MMU
+	table.
+
+@{b}    INPUTS@{ub}
+	addr - logical address whose descriptor shall be found.
+	ctxt - IMMUContext managing this descriptor.
+	mmubase - pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+	level - page level the descriptor has been found at. This need
+		not to be the page level as invalid or early termination
+		descriptor might abort a table search earlier.
+
+	A secondary result is returned in register a0; this is the address
+	of the descriptor translating the logical address; for indirect
+	descriptors, this is not the final target descriptor, but the
+	indirect descriptor pointing to the final target.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	This call has to read MMU descriptors for obvious reasons. As the
+	mmu.library does not necessarely place these in non-cacheable memory,
+	your code must keep care to push the descriptors back to memory as
+	soon as they have been read. Not following this advice may either
+	cause inconsistent MMU mapping or - even worse - hangs of the MMU.
+
+@{b}    BUGS@{ub}
+	The calling syntax is ugly.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "PFlush()" "mmu.resource/PFlush"
+
+@{b}    NAME@{ub}
+	PFLush()	-	flush ATC entries for a given logical address
+
+@{b}    SYNOPSIS@{ub}
+	PFlush( addr, mmubase );
+		 a0    a6
+
+	void PFlush( ULONG, struct MMUBase * );
+
+@{b}    FUNCTION@{ub}
+	Flushes the ATC entry for the descriptor describing the mapping
+	of the passed in logical address.
+
+@{b}    INPUTS@{ub}
+	addr - logical address whose descriptor needs to be flushed.
+	mmubase - base pointer of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	Since the mmu.library enforces a separate user/supervisor model,
+	this call must flush the ATC entries for both, user and supervisor
+	tree.
+
+	Note further that early termination descriptors take up more than
+	one ATC entry. Hence, this call flushes a descriptor for one page,
+	but not necessarely for all pages it describes.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PFlushA()" Link "PFlushA()"}, @{"PFlushTwo()" Link "PFlushTwo()"}
+@EndNode
+
+@Node "PFlushA()" "mmu.resource/PFlushA"
+
+@{b}    NAME@{ub}
+	PFlushA()	-	flush the address translation cache completely
+
+@{b}    SYNOPSIS@{ub}
+	PFlushA( mmubase );
+		   a6
+
+	void PFlushA( struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Flushes the address translation cache of the MMU completely.
+
+@{b}    INPUTS@{ub}
+	mmubase - library base pointer of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PFlush()" Link "PFlush()"}, @{"PFlushTwo()" Link "PFlushTwo()"}
+@EndNode
+
+@Node "PFlushTwo()" "mmu.resource/PFlushTwo"
+
+@{b}    NAME@{ub}
+	PFlushTwo()	-	flush two descriptors from the ATC
+
+@{b}    SYNOPSIS@{ub}
+	PFlushTwo( addr1, addr2, mmubase);
+		   a2    a3	a6
+
+	void PFlushTwo( ULONG, ULONG, struct MMUBase * );
+			  a2	 a3		a6
+
+@{b}    FUNCTION@{ub}
+	Flushes two descriptors from the MMU address translation cache by
+	the logical addresses they describe.
+
+@{b}    INPUTS@{ub}
+	addr1	-	first logical address whose descriptor shall be
+			flushed,
+	addr2	-	second logical address to be flushed
+	mmubase	-	base pointer to the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	Since the mmu.library enforces a separate user/supervisor model,
+	this call must flush the ATC entries for both, user and supervisor
+	tree.
+
+	Note further that early termination descriptors take up more than
+	one ATC entry. Hence, this call flushes a descriptor for one page,
+	but not necessarely for all pages it describes.
+
+	This call does not flush an address range, but really only two
+	descriptors; this call is used to speed-up the CachePreDMA() and
+	CachePostDMA() function patches. Otherwise, it is completely
+	equivalent to calling @{"PFlush()" Link "PFlush()"} twice with addr1 and addr2 as
+	arguments, respectively.
+
+@{b}    BUGS@{ub}
+	
+@{b}    SEE ALSO@{ub}
+	@{"PFlush()" Link "PFlush()"}, @{"PFlushA()" Link "PFlushA()"}
+@EndNode
+
+@Node "PushLine()" "mmu.resource/PushLine"
+
+@{b}    NAME@{ub}
+	PushLine()	-	push a cache line back to memory
+
+@{b}    SYNOPSIS@{ub}
+	PushLine( addr, mmubase );
+		   a0	  a6
+
+	void PushLine( ULONG, struct MMUBase * );
+
+@{b}    FUNCTION@{ub}
+	Pushes the cache line containing the logical address *a0 back
+	to memory. Hence, the sixteen-byte block containing the passed
+	in address will be written out from the cache into memory, if
+	the corresponding cache line is dirty. The cache line is then
+	marked as "flushed" and non-valid.
+
+@{b}    INPUTS@{ub}
+	addr - 	the logical address contained in the cache line to be
+		pushed.
+	mmubase - base pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	Depending on the cache, this call might require to push more than
+	just a line; it might also flush the cache completely if this is
+	more efficient. This call pushes the data cache, and flushes the
+	instruction cache; hence, it operates on all available caches.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PushPage()" Link "PushPage()"}, @{"PushAll()" Link "PushAll()"}, @{"PushTwo()" Link "PushTwo()"}
+@EndNode
+
+@Node "PushPage()" "mmu.resource/PushPage"
+
+@{b}    NAME@{ub}
+	PushPage()	-	push a MMU page back to memory
+
+@{b}    SYNOPSIS@{ub}
+	PushPage( addr, mmubase );
+		   a0	  a6
+
+	void PushPage( ULONG, struct MMUBase * );
+
+@{b}    FUNCTION@{ub}
+	Pushes the page containing the logical address *a0 back to 
+	memory. Hence, the memory page containing the passed in address
+	will be written out from the cache into memory, if the
+	corresponding cache line is dirty. The cache lines are then marked 
+	as "flushed" and non-valid.
+
+@{b}    INPUTS@{ub}
+	addr - 	the logical address contained in the page to be	pushed.
+	mmubase - base pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	Depending on the cache, this call might require to push more than
+	just a page; it might also flush the cache completely if this is
+	more efficient. This call pushes the data cache, and flushes the
+	instruction cache; hence, it operates on all available caches.
+
+@{b}    BUGS@{ub}
+	Due to a hardware bug of the 68060, this call might not	flush
+	the instruction cache as indicated if the address is not
+	aligned to a page boundary. Hence, you are adviced to align
+	the address before calling this as the mmu.resource does not
+	try to work around this bug.
+
+@{b}    SEE ALSO@{ub}
+	@{"PushLine()" Link "PushLine()"}, @{"PushAll()" Link "PushAll()"}, @{"PushTwo()" Link "PushTwo()"}
+@EndNode
+
+@Node "PushAll()" "mmu.resource/PushAll"
+
+@{b}    NAME@{ub}
+	PushAll()	-	push and flush all caches completely
+
+@{b}    SYNOPSIS@{ub}
+	PushAll( mmubase );
+		    a6
+
+	void PushAll( struct MMUBase * );
+
+@{b}    FUNCTION@{ub}
+	Pushes the data cache completely back to memory, and flushes
+	the data and instruction cache completely.
+
+@{b}    INPUTS@{ub}
+	mmubase - base pointer to the mmu.library base.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PushLine()" Link "PushLine()"}, @{"PushPage()" Link "PushPage()"}, @{"PushTwo()" Link "PushTwo()"}, exec/CacheClearU()
+@EndNode
+
+@Node "PushTwo()" "mmu.resource/PushTwo"
+
+@{b}    NAME@{ub}
+	PushTwo()	-	push two pages of the data cache
+
+@{b}    SYNOPSIS@{ub}
+	PushTwo( addr1, addr2, mmubase );
+		  a2	 a3	 a6
+
+	void PushTwo( ULONG, ULONG, struct MMUBase * );
+
+@{b}    FUNCTION@{ub}
+	Pushes the data cache entries for the pages containing the indicated
+	logical addresses from out of cache.
+
+@{b}    INPUTS@{ub}
+	addr1 -	first logical address contained in the first page to be
+		pushed,
+	addr2 -	second logical address of the page to be pushed
+	mmubase - base pointer to the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	This call does not touch the instruction cache; its purpose is to
+	prepare the edges of a memory block that is about to the transfered
+	by DMA. This is called as part of the CachePreDMA() resp. 
+	CachePostDMA() functions. Note that it doesn't push a range of pages,
+	but really only to pages.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PushLine()" Link "PushLine()"}, @{"PushPage()" Link "PushPage()"}, @{"PushAll()" Link "PushAll()"}
+@EndNode
+
+@Node "ForbidDMACache()" "mmu.resource/ForbidDMACache"
+
+@{b}    NAME@{ub}
+	ForbidDMACache() - forbid caching of a page temporarly as long as an
+			   DMA transfer is running.
+
+@{b}    SYNOPSIS@{ub}
+	ForbidDMACache( addr, ctxt, mmubase );
+			 a0    a5     a6
+
+	void ForbidDMACache( ULONG, struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Increments the DMA cache disable counter for the indicated page and
+	sets the cache mode of the affected page to MAPP_WRITETRHOUGH until
+	the matching @{"PermitDMACache()" Link "PermitDMACache()"} is called. This call nests. Further,
+	this call must be aware of the user selected page attributes.
+
+@{b}    INPUTS@{ub}
+	addr -	a logical address contained in the page to be touched by a
+		DMA transfer,
+	ctxt -	a struct MMUContext describing the context the corresponding
+		MMU tree is relative to.
+	mmubase - library base of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode. This will be called with all interrupts disabled.
+
+	This call must:
+
+	- Find the page descriptor for the selected page,
+	- push it back to memory in case someone read it (illegally, by-
+	  passing the mmu.library functions)
+	- check the DMA disable counter for the corresponding page.
+	  The mmu.library generates the required counters for you in the
+	  following way: A page-level descriptor table of "N" entries
+	  generates four tables: Table one at offset zero contains the
+	  MMU hardware descriptor, table two at offset "N" contains the
+	  page properties the user selected for the page, or the
+	  "userdata" for invalid or swapped pages, table three at offset
+	  "2*N" contains the DMA disable counters. Table four is still un-
+	  used. 
+	  Hence, this call must find the page descriptor of the indicated
+	  page and the size of the page descriptor table. The long word
+	  at byte offset "tablesize * 8" from the page descriptor is the
+	  DMA activity counter, the long word at "tablesize * 4" the
+	  user data or the mapping properties.
+	- if the DMA disable counter is still zero, and we found a page
+	  descriptor, disable the copyback flag if caching is enabled,
+	- write the descriptor back to memory,
+	- push the cache line containing the descriptor to ensure the
+	  MMU will find it.
+
+	Note that this call will not work for early termination page
+	descriptors, invalid, swapped or indirect descriptors. It need
+	not to work for early termination since the only MMUs that implement
+	them are the 68851 and 68030 whose CPUs do not offer a copyback
+	cache and hence do not need this support function. Neither need it
+	to support invalid or swapped pages since they cannot contain
+	vital data for a DMA process; it does not support indirect
+	descriptors since it wouldn't know how to reconstruct them if DMA
+	is done. This is a documented side condition of DMA and indirect
+	descriptors that must be kept care of. This function must not crash
+	if these conditions are not met; it shall not touch the descriptors
+	then, though.
+
+	Note further that the context you get passed in need not to be
+	the active context; in fact, this function is called with every
+	available context as soon as a DMA operation is initiated by means
+	of CachePreDMA() to ensure proper operation even on a context switch
+	while DMA is active.
+
+	This function does nothing in case the MMU does not support copyback,
+	i.e. for the 68030 and 68851.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PermitDMACache()" Link "PermitDMACache()"}, exec/CachePreDMA()
+@EndNode
+
+@Node "PermitDMACache()" "mmu.resource/PermitDMACache"
+
+@{b}    NAME@{ub}
+	PermitDMACache() - re-enable caching of a page if DMA done
+
+@{b}    SYNOPSIS@{ub}
+	PermitDMACache( addr, ctxt, mmubase );
+			 a0    a5     a6
+
+	void PermitDMACache( ULONG, struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Decrements the DMA cache disable counter for the indicated page and
+	restores the previously active caching mode if it reaches zero.
+	This call nests. Further, this call must be aware of the user 
+	selected page attributes.
+
+@{b}    INPUTS@{ub}
+	addr -	a logical address contained in the page that was touched by a
+		DMA transfer,
+	ctxt -	a struct MMUContext describing the context the corresponding
+		MMU tree is relative to.
+	mmubase - library base of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode. This will be called with all interrupts disabled.
+
+	This call must:
+
+	- Find the page descriptor for the selected page,
+	- check the DMA disable counter for the corresponding page.
+	  The mmu.library generates the required counters for you in the
+	  following way: A page-level descriptor table of "N" entries
+	  generates four tables: Table one at offset zero contains the
+	  MMU hardware descriptor, table two at offset "N" contains the
+	  page properties the user selected for the page, or the
+	  "userdata" for invalid or swapped pages, table three at offset
+	  "2*N" contains the DMA disable counters. Table four is still un-
+	  used. 
+	  Hence, this call must find the page descriptor of the indicated
+	  page and the size of the page descriptor table. The long word
+	  at byte offset "tablesize * 8" from the page descriptor is the
+	  DMA activity counter, the long word at "tablesize * 4" the
+	  user data or the mapping properties.
+	- decrement the DMA disable counter; if it underruns, it shall
+	  be set back to zero to support faulty devices that report a
+	  DMA-done more than once.
+	- if the DMA disable counter is zero, proceed as follows:
+	- push the page descriptor back to memory in case someone touched
+	  it, bypassing the documented mmu.library functions,
+	- check whether this descriptor is really a page descriptor or
+	  invalid or indirect,
+	- if it is, check whether the user property flags at offset 
+	  "tablesize * 4" indicate copyback caching,
+	- if so, re-enable the copyback cache.
+	- push the descriptor back to memory so the MMU will find the
+	  proper descriptor
+
+	Note that this call will not work for early termination page
+	descriptors, invalid, swapped or indirect descriptors. It need
+	not to work for early termination since the only MMUs that implement
+	them are the 68851 and 68030 whose CPUs do not offer a copyback
+	cache and hence do not need this support function. Neither need it
+	to support invalid or swapped pages since they cannot contain
+	vital data for a DMA process; it does not support indirect
+	descriptors since it wouldn't know how to reconstruct them if DMA
+	is done. This is a documented side condition of DMA and indirect
+	descriptors that must be kept care of. This function must not crash
+	if these conditions are not met; it shall not touch the descriptors
+	then, though.
+
+	Note further that the context you get passed in need not to be
+	the active context; in fact, this function is called with every
+	available context as soon as a DMA operation is terminated by means
+	of CachePostDMA() to ensure proper operation even on a context switch
+	while DMA is active.
+
+	This function does nothing in case the MMU does not support copyback,
+	i.e. for the 68030 and 68851.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"ForbidDMACache()" Link "ForbidDMACache()"}, exec/CachePostDMA()
+@EndNode
+
+@Node "InstallPage()" "mmu.resource/InstallPage"
+
+@{b}    NAME@{ub}
+	InstallPage() - re-install a page descriptor into the MMU tree
+
+@{b}    SYNOPSIS@{ub}
+	InstallPage( level, tablesize, dest, descr, data, addr, ctxt, mmubase);
+		       d2	d1	a2    d0     d4    a0    a5    a6
+
+	void InstallPage( WORD, ULONG, ULONG *, ULONG, ULONG, ULONG,
+			  struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Re-install a page descriptor into a MMU tree; keep care about DMA
+	disable counters and carry the used/modified bits over from the last
+	descriptor. Install or modify page data, adjust the context.
+
+@{b}    INPUTS@{ub}
+	level	-	level of the MMU tree where the descriptor shall be
+			installed. Zero is level A.
+	tablesize -	size of the descriptor table at this level in entries
+	dest	-	physical address where to install the descriptor to
+	descr	-	the descriptor to install
+	data	-	secondary page data to install
+	addr	-	logical address that is described by this descriptor
+	ctxt	-	struct IMMUContext this descriptor is part of
+	mmubase	-	library base pointer of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode. This will be called with all interrupts disabled.
+
+	This call must:
+
+	- check whether we need to install at page level; if so, DMA disable
+	  counters are available at byte offset "tablesize * 8" from the
+	  descriptor destination address "dest".
+	- if the DMA counter is found active, the descriptor is found to be
+	  a valid page descriptor with copyback enabled, copyback must be
+	  disabled. This is required for proper support of @{"ForbidDMACache()" Link "ForbidDMACache()"}
+	  as the user may want to install a descriptor while a DMA operation
+	  is running on the same page.
+	- secondary page data must be written to byte offset "tablesize * 4"
+	  from "dest". This page data consists either of the "property flags"
+	  if the page descriptor is valid or indirect, or on the "user data"
+	  for invalid or swapped non-repairable pages.
+	- check again whether the descriptor is a valid page descriptor;
+	- if so, check the type of the old descriptor; if it is a page 
+	  descriptor, too, carry its USED/MODIFIED bits over to the new
+	  descriptor. If it is a table descriptor, carry its MODIFIED bit
+	  over. This step is required to keep the U/M bits consistent in case
+	  the user wants to install a new descriptor while pages haven't been
+	  swapped out/read out yet.
+	- write the new descriptor back to memory.
+	- push the cache line containing the new descriptor so the MMU will
+	  really find it.
+	- check whether the logical address that is maintained by this
+	  descriptor is the zero-page; if so, the descriptor address must be
+	  placed in ctxt->ctx_ZeroPage for the exception handler
+
+	Note that the context you get passed in need not to be the active
+	context.
+	
+	Note further that this call expects a valid page descriptor active
+	already; in case you want to install a page descriptor into a not
+	yet valid array of descriptors, use @{"InstallNewPage()" Link "InstallNewPage()"} instead.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"InstallNewPage()" Link "InstallNewPage()"}, @{"ForbidDMACache()" Link "ForbidDMACache()"}
+@EndNode
+
+@Node "InstallNewPage()" "mmu.resource/InstallNewPage"
+
+@{b}    NAME@{ub}
+	InstallNewPage() - Install a page descriptor into the MMU tree
+
+@{b}    SYNOPSIS@{ub}
+	InstallNewPage( level, tablesize, dest, descr, data, addr, ctxt, mmubase);
+			 d2	   d1	   a2    d0     d4    a0    a5    a6
+
+	void InstallNewPage( WORD, ULONG, ULONG *, ULONG, ULONG, ULONG,
+			  struct IMMUContext *, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Install a page descriptor into a MMU tree; keep care about DMA
+	disable counters. Install new page data, adjust the context.
+
+@{b}    INPUTS@{ub}
+	level	-	level of the MMU tree where the descriptor shall be
+			installed. Zero is level A.
+	tablesize -	size of the descriptor table at this level in entries
+	dest	-	physical address where to install the descriptor to
+	descr	-	the descriptor to install
+	data	-	secondary page data to install
+	addr	-	logical address that is described by this descriptor
+	ctxt	-	struct IMMUContext this descriptor is part of
+	mmubase	-	library base pointer of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode. This will be called with all interrupts disabled.
+
+	This call must:
+
+	- check whether we need to install at page level; if so, DMA disable
+	  counters are available at byte offset "tablesize * 8" from the
+	  descriptor destination address "dest".
+	- if the DMA counter is found active, the descriptor is found to be
+	  a valid page descriptor with copyback enabled, copyback must be
+	  disabled. This is required for proper support of @{"ForbidDMACache()" Link "ForbidDMACache()"}
+	  as the user may want to install a descriptor while a DMA operation
+	  is running on the same page.
+	- secondary page data must be written to byte offset "tablesize * 4"
+	  from "dest". This page data consists either of the "property flags"
+	  if the page descriptor is valid or indirect, or on the "user data"
+	  for invalid or swapped non-repairable pages.
+	- write the new descriptor back to memory.
+	- push the cache line containing the new descriptor so the MMU will
+	  really find it.
+	- check whether the logical address that is maintained by this
+	  descriptor is the zero-page; if so, the descriptor address must be
+	  placed in ctxt->ctx_ZeroPage for the exception handler
+
+	Note that the context you get passed in need not to be the active
+	context.
+
+	This call does not make any assumptions about the contents of
+	"dest"; therefore, it does not try to carry over the USED/MODIFIED
+	bits from there and their contents will be lost resp. replaced by
+	the contents of the new descriptor. Do not use this call in case
+	you want to replace an already active page descriptor, consider
+	@{"InstallPage()" Link "InstallPage()"} instead.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"InstallPage()" Link "InstallPage()"}, @{"ForbidDMACache()" Link "ForbidDMACache()"}
+@EndNode
+
+@Node "ReadUMFlags()" "mmu.resource/ReadUMFlags"
+
+@{b}    NAME@{ub}
+	ReadUMFlags() - read and reset the USED/MODIFIED flags
+
+@{b}    SYNOPSIS@{ub}
+	flags = ReadUMFlags( descr, level, ctxt, mmubase );
+			      a0     d0     a5      a6
+
+	ULONG ReadUMFlags( ULONG *, WORD, struct IMMUContext *,
+			   struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Reads the USED/MODIFIED flags of the indicated descriptor, returns
+	them and clears them in the descriptor for the next go. This call
+	shall be used to drive a virtual memory engine.
+
+@{b}    INPUTS@{ub}
+	descr	-	address of the descriptor to be read
+	level	-	level of the descriptor within the MMU tree. Level A
+			is indicated by zero.
+	ctxt	-	pointer to the IMMUContext this descriptor is part of.
+	mmubase	-	base of the mmu.library
+
+@{b}    RESULTS@{ub}
+	a combination of MAPP_USED and/or MAPP_MODIFIED depending on whether
+	the memory page handled by the descriptor has been read, or touched
+	since the last call of this function or @{"InstallNewPage()" Link "InstallNewPage()"}.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode. This will be called with all interrupts disabled.
+
+	This call must:
+
+	- check whether the descriptor is a page or a table descriptor or
+	  invalid or indirect. Table descriptors only carry the USED and
+	  not the MODIFIED bit; invalid or indirect descriptors do not carry
+	  any status information.
+	- read the descriptor and extract the apropriate bits. These are
+	  no bits at all for indirect or invalid descriptors.
+	- push the cache line containing the descriptor back to memory.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"InstallNewPage()" Link "InstallNewPage()"}
+@EndNode
+
+@Node "SetIndirect()" "mmu.resource/SetIndirect"
+
+@{b}    NAME@{ub}
+	SetIndirect() - install an indirect page descriptor
+
+@{b}    SYNOPSIS@{ub}
+	SetIndirect( where, logical, descr, mmubase );
+		      a0       a1     d0	a6
+
+	void SetIndirect( ULONG *, ULONG, ULONG, struct MMUBase * );
+
+@{b}    FUNCTION@{ub}
+	Installs a new user-generated indirect descriptor at the
+	supplied address and flushes the caches accordingly.
+
+@{b}    INPUTS@{ub}
+	where	-	physical address into which the descriptor shall go
+	logical	-	logical address of the page that is handled by the
+			descriptor or (ULONG)(~0) if it handles more than
+			one or an unknown logical address
+	descr	-	the descriptor to install
+	mmubase -	base of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	This call
+
+	- checks the logical address against ~0. If it is, the ATC is
+	  flushed completely, the descriptor is installed, and the
+	  cache line containing the ATC is pushed, too.
+	- if it is not, only the ATC for the target logical address is
+	  pushed, the descriptor is installed, the cache line is pushed,
+	  and the ATC is flushed again.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"SetIndirectArray()" Link "SetIndirectArray()"}
+@EndNode
+
+@Node "SetIndirectArray()" "mmu.resource/SetIndirectArray"
+
+@{b}    NAME@{ub}
+	SetIndirectArray() - install an array of indirect descriptors at once
+
+@{b}    SYNOPSIS@{ub}
+	SetIndirectArray ( where, descr, num , mmubase );
+			    a0	   a1    d0	  a6
+	
+	void SetIndirectArray ( ULONG *, ULONG *, ULONG, struct MMUBase *);	
+
+@{b}    FUNCTION@{ub}
+	Installs an array of user generated descriptors at once and handles
+	caches accordingly.
+
+@{b}    INPUTS@{ub}
+	where	-	physical destination address where the descriptors
+			shall go
+	descr	-	logical address of the source array to take the
+			descriptors from
+	num	-	number of descriptors to install, i.e. size of the
+			array in entries
+	mmubase	-	base address of the mmu.library
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	This call shall try to find the most efficient way to install the
+	passed descriptors; for example, it might want to install as many
+	descriptors at once before pushing their cache lines; this call
+	must also flush the ATC when done.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"SetIndirect()" Link "SetIndirect()"}
+@EndNode
+
+@Node "WithoutMMU()" "mmu.resource/WithoutMMU"
+
+@{b}    NAME@{ub}
+	WithoutMMU() - call a small user interface with the MMU disabled
+
+@{b}    SYNOPSIS@{ub}
+	res = WithoutMMU( userprocptr, mmubase );
+	d0		      a5	 a6
+
+	ULONG WithoutMMU( APTR userproc, struct MMUBase *);
+
+@{b}    FUNCTION@{ub}
+	Calls the supplied user routine with the MMU and all interrupts 
+	disabled; the user routine must return with RTS and may provide
+	a result code in register d0 that is passed out again.
+
+@{b}    INPUTS@{ub}
+	userprocptr -	physical address of the user routine to be
+				called
+	mmubase	    -	base address of the mmu.library
+
+@{b}    RESULTS@{ub}
+	res -	whatever was left in regster d0 by the user routine.
+
+@{b}    NOTES@{ub}
+	Note that a6 points to the mmu.library base, not to the resource
+	base.
+
+	This is always called from supervisor mode; do not attempt to call
+	it from user mode.
+
+	This routine is, in fact, completely register transparent; it
+	returns all the registers that the user routine left in the CPU.
+
+	Note however that the user routine might not be able to do very
+	much: Due to the disabled MMU, some system structures, or even the
+	complete Os might be absent.
+
+	The implementation is required to save back some of the MMU state,
+	push all caches, disable the interrupts and the MMU, call the user
+	function, flush the ATC and caches, and restore the MMU state again.
+	It must not touch any registers - or rather, must restore them if it
+	does.
+
+@{b}    BUGS@{ub}
+	Requires at least the supervisor stack to map the same with and
+	without the MMU. There is no much hope otherwise.
+
+@{b}    SEE ALSO@{ub}
+	mmu/WithoutMMU()
+@EndNode
+
+@Node "Exception()" "mmu.resource/Exception"
+
+@{b}    NAME@{ub}
+	Exception()	-	Handle a bus error exception
+
+@{b}    SYNOPSIS@{ub}
+	Exception();
+
+	Exception();
+
+@{b}    FUNCTION@{ub}
+	This is the complete access error handler of the MMU/CPU combination
+	that is handled by this mmu.resource. You must not call this function;
+	rather, the mmu.library will install the function vector of this
+	routine directly into the vector base of the CPU. It is the job of this
+	routine to supply the ExceptionData structure to user exception
+	handlers, to provide suitable access to the CPU pipelines or provide an
+	emulation thereof, and to emulate accesses into the zero page,
+	including AbsExecBase, if the active context allows so.
+
+	All this makes this function maybe the most trickiest one of the
+	mmu.library combo.
+
+@{b}    INPUTS@{ub}
+	None, except the complete MMU/CPU status when this is called on a 
+	bus error. Note that this routine gets no pointer to the mmu.library
+	passed in, even though it is required. Use @{"CheckMMUInterface()" Link "CheckMMUInterface()"}
+	above to keep a local copy of the library base somewhere as it is
+	needed.
+
+@{b}    RESULTS@{ub}
+	None, except that the provided user exception handlers must be
+	handled consistently; if none of them is willing to accept this
+	access error, the system access error handler must be invoked,
+	causing the infamous "Guru".
+
+@{b}    NOTES@{ub}
+	This is the beasty one.
+
+	This function shall do the following:
+
+	- Check for the special branch cache prediction error for the 68060. 
+	  If found active, the branch cache must be flushed.
+	- Fetch the active context from the mmu.library base. Check whether
+	  this is a user or supervisor access, select the proper context.
+	- Check for long-word reads from AbsExecBase; if found, and the
+	  context allows these reads, provide a cached copy of AbsExecBase. 
+	  Do *NOT* attempt to read it from the zero page or you end up in an
+	  infinite loop.
+	  Several strategies exist to provide AbsExecBase access emulation:
+		- place it in the CPU input pipeline if the possibility
+		  exists (68020, 68030 only),
+		- emulate the offending instruction by hand. This is easy
+		  for simple "move.l" cases.
+		- make the zero page available, enable tracing, let the
+		  access happen, catch the trace exception, disable the
+		  zero page again. The active context contains a pointer
+		  to the zero page descriptor in ctxt->ctx_ZeroPage you
+		  may find useful to modify.
+	- Check for physical bus error cases or read/modify/write cycles
+	  you need not to handle. If found, restore all registers, and
+	  jump into MMUBase->mulib_OldException(). This will call the system
+	  guru.
+	- If you decide to handle the access error:
+		Allocate the ExceptionData structure in 
+		MMUBase->mulib_ExceptionData by setting mmuf_busy in
+		MMUBase->mulib_Flags1. If you find this bit "on" already,
+		a double bus fault happened and you better go guru.
+	- Fill in the ExceptionData structure; keep care about special
+	  cases as MOVE16, MOVEM with predecrement, FMOVE.X, FMOVE.D when
+	  computing the affected logical addresses.
+	- Check whether the fault goes into the readable part of the
+	  zero page by comparing against ctxt->ctx_LowMemoryLimit. If the
+	  address is larger than this limit, access must be emulated. One
+	  approach to handle this is to enable tracing, enable the zero page
+	  access by modifying the zero page descriptor pointed to by
+	  ctxt->ctx_ZeroPage, re-run the access, catch the trace exception,
+	  disable zero page access again.
+	- Check for read exceptions. If found, call the following private
+	  function of the mmu.library with the ExceptionData pointer in a0:
+
+		fatal = CallExceptionHandlers( excdata );
+		 d0				 a0
+
+		BOOL CallExceptionHandlers( struct ExceptionData *);
+
+	  It returns TRUE for a fatal exception; restore registers and
+	  jump into MMULib->mulib_OldException() to invoke the guru.
+
+	  Otherwise, check ExceptionData->exc_Flags how to continue.
+	- If (exd_Flags & exdf_call), a user supplied function must be
+	  called in user mode, possibly interrupting your access error
+	  handler. Luckely, no need to mess with this yourself as the
+	  mmu.library can do this for you with the following private 
+	  call:
+
+		SubUser( excd );
+			  a5
+	
+		void SubUser( struct ExceptionData *exc );
+
+	- If (exd_Flags & exdf_readback), the user provided data for the
+	  CPU pipeline that shall be read. Check for instruction access
+	  errors; if found, go guru and don't try to handle them. Check
+	  for REPAIRABLE as well. If not available, go guru as well.
+	  If you do not have access to the CPU pipeline, you need to emulate
+	  the access to fill the user data: ctxt->ctx_ReadBackPage provides
+	  the physical address of a page that is set aside for this mess.
+	  Fill this page with the user supplied data in the proper alignment,
+	  and modify the descriptor at (not pointed to!) 
+	  ctxt->ctx_InvalidIndirect with the proper descriptor. All 
+	  "repairable" page descriptors are indirect and point to this
+	  descriptor. Enable tracing, let the access happen - now to the
+	  ctx_ReadBackPage, and catch the trace exception. Disable tracing,
+	  and access to the ReadBackPage, and continue.
+	- Check for write exceptions. If found, check the properties of
+	  the descriptors that are accessed. If they indicate "MAPP_ROM",
+	  the access must be tolerated without modifying the original page.
+	  If you cannot abort the write by fiddling the CPU pipeline, you
+	  need to provide an emulation again: Replace the involved pages
+	  (at most two due to misalignment) by descriptors pointing to
+	  the two pages at ctx->ctx_RomPages, and keep the original
+	  descriptors in a temporary. Copy original page data over to the
+	  ROM pages of the context, enable tracing, let the access happen.
+	  In the trace exception, restore the original descriptors and
+	  disable tracing.
+	- Check whether the user likes to see the data that was written
+	  out by checking for MAPP_REPAIRABLE; if so, either try to
+	  supply from the CPU pipeline if available, otherwise you are
+	  in a mess:
+	- Replace again the pages by the context ROM pages, enable
+	  tracing, store the complete CPU state, let the access happen,
+	  catch the trace exception. Call the user handler/user routines
+	  in here and provide the written out data from the ROM pages
+	  that got modified at the address you recorded before. In case
+	  the user wants to repair the page itself by not setting the
+	  exdf_writecomplete flag in ExceptionData, you are now really in
+	  a mess:
+	  Restore the complete CPU state to what you found during the
+	  access error, restore the descriptors and re-start from the point
+	  where the access error happens.
+	- If the user does not want the read-out data, call user handlers
+	  and SubUser() within the access error handler directly.
+	- If the user signaled re-run by not setting exdf_writecomplete,
+	  let the access happen by restoring all registers and running
+	  into an RTE. If not, you still need to provide a destination
+	  where the write goes into; replace the affected descriptors
+	  with the ROM pages of the context, install trace vector,
+	  let the access happen and clean up in the trace exception.
+
+	Good luck, I'm with you in spirit.
+
+@{b}   BUGS@{ub}
+	Much more needs to be said about this; the implementation depends
+	heavely on the CPU/MMU programming model, and there are little
+	general guidelines I can give here. Test carefully!
+
+@{b}   SEE ALSO@{ub}
+	Exception.doc, mmu/context.h
+@EndNode
+

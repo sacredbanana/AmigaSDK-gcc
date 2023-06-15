@@ -1,0 +1,136 @@
+@database "battmem"
+@master "AMIDEV:NDK/Autodocs/battmem.doc"
+
+@Node Main "battmem.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" ObtainBattSemaphore() " Link "ObtainBattSemaphore()"}
+    @{" ReadBattMem() " Link "ReadBattMem()"}
+    @{" ReleaseBattSemaphore() " Link "ReleaseBattSemaphore()"}
+    @{" WriteBattMem() " Link "WriteBattMem()"}
+@EndNode
+
+@Node "ObtainBattSemaphore()" "battmem.resource/ObtainBattSemaphore"
+
+@{b}   NAME@{ub}
+	ObtainBattSemaphore -- Obtain access to nonvolatile ram. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	ObtainBattSemaphore( )
+
+	void ObtainBattSemaphore( void );
+
+@{b}   FUNCTION@{ub}
+	Aquires exclusive access to the system nonvolatile ram.
+
+@{b}   INPUTS@{ub}
+
+@{b}   RESULTS@{ub}
+
+@{b}   NOTES@{ub}
+
+@{b}   SEE ALSO@{ub}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "ReadBattMem()" "battmem.resource/ReadBattMem"
+
+@{b}   NAME@{ub}
+	ReadBattMem -- @{"Read" Link "dos/Read()"} a bitstring from nonvolatile ram.  (V36)
+
+@{b}   SYNOPSIS@{ub}
+	Error = ReadBattMem( Buffer, Offset, Len )
+	D0                   A0      D0      D1
+
+	ULONG ReadBattMem( @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, ULONG, ULONG );
+
+@{b}   FUNCTION@{ub}
+	@{"Read" Link "dos/Read()"} a bitstring from nonvolatile ram.
+
+@{b}   INPUTS@{ub}
+	Buffer          Where to put the bitstring.
+	Offset          Bit offset of first bit to read.
+	Len             Length of bitstring to read.
+
+@{b}   RESULTS@{ub}
+	Error           Zero if no error.
+
+@{b}   NOTES@{ub}
+	The battery-backed memory is checksummed. If a checksum error
+	is detected, all bits in the battery-backed memory are
+	silently set to zero.
+
+	Bits in the battery-backed memory that do not exist are read
+	as zero.
+
+	Partial byte reads (less than 8 bits) result in the bits read
+	being put in the low-order bits of the destination byte.
+
+@{b}   SEE ALSO@{ub}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "ReleaseBattSemaphore()" "battmem.resource/ReleaseBattSemaphore"
+
+@{b}   NAME@{ub}
+	ReleaseBattSemaphore -- Allow nonvolatile ram to others.  (V36)
+
+@{b}   SYNOPSIS@{ub}
+	ReleaseBattSemaphore( )
+
+	void ReleaseBattSemaphore( void );
+
+@{b}   FUNCTION@{ub}
+	Relinquish exclusive access to the system nonvolatile ram.
+
+@{b}   INPUTS@{ub}
+
+@{b}   RESULTS@{ub}
+
+@{b}   NOTES@{ub}
+
+@{b}   SEE ALSO@{ub}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "WriteBattMem()" "battmem.resource/WriteBattMem"
+
+@{b}   NAME@{ub}
+	WriteBattMem -- @{"Write" Link "dos/Write()"} a bitstring to nonvolatile ram.  (V36)
+
+@{b}   SYNOPSIS@{ub}
+	Error = WriteBattMem( Buffer, Offset, Len )
+	D0                    A0      D0      D1
+
+	ULONG WriteBattMem( @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, ULONG, ULONG );
+
+@{b}   FUNCTION@{ub}
+	@{"Write" Link "dos/Write()"} a bitstring to the nonvolatile ram.
+
+@{b}   INPUTS@{ub}
+	Buffer          Where to get the bitstring.
+	Offset          Bit offset of first bit to write.
+	Len             Length of bitstring to write.
+
+@{b}   RESULTS@{ub}
+	Error           Zero if no error.
+
+@{b}   NOTES@{ub}
+	The battery-backed memory is checksummed. If a checksum error
+	is detected, all bits in the battery-backed memory are
+	silently set to zero.
+
+	Partial byte writes (less than 8 bits) result in the bits
+	written being read from the low-order bits of the source byte.
+
+@{b}   SEE ALSO@{ub}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+

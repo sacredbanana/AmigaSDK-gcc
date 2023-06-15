@@ -1,0 +1,130 @@
+@database "drawlist_ic"
+@master "AMIDEV:NDK/Autodocs/drawlist_ic.doc"
+
+@Node Main "drawlist_ic.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" DRAWLIST_GetClass() " Link "DRAWLIST_GetClass()"}
+@EndNode
+
+@Node "--datasheet--()" "drawlist_ic/--datasheet--"
+
+@{b}    NAME@{ub}
+        drawlist_ic -- create drawlist BOOPSI objects
+
+@{b}    SUPERCLASS@{ub}
+        imageclass
+
+@{b}    REQUIRES@{ub}
+        None.
+
+@{b}    DESCRIPTION@{ub}
+        This image class can create custom scaled glyphs via a
+        "drawlist". The drawlist is an array of drawing directives
+        such as lines, areafills, etc. All coordinates are based
+        on an imaginary grid of a user specified size, then
+        @{"ScalerDiv()" Link "graphics/ScalerDiv()"} is used to scale these coordinates to the desired
+        image size to be rendered. This is a lower level class utilized
+        by glyph.image, if you create some interesting drawlist, please
+        consider passing them on to others, or to us for inclusion.
+
+@{b}    METHODS@{ub}
+        @{"OM_NEW" Link "tabs_gc/OM_NEW"} -- Create the drawlist image.  Passed to superclass, then
+            @{"OM_SET" Link "tabs_gc/OM_SET"}.
+
+        @{"OM_GET" Link "tabs_gc/OM_GET"} -- Get object attributes.  Passed to superclass first.
+
+        @{"OM_SET" Link "tabs_gc/OM_SET"} -- Set object attributes.  Passed to superclass first.
+
+        OM_UPDATE -- Set object notification attributes.  Passed to
+            superclass first.
+
+        IM_DRAW -- Renders the images.  Overrides the superclass.
+        IM_DRAWFRAME -- Renders the images scaled to thee frame size.
+            Overrides the superclass.
+
+        All other methods are passed to the superclass, including OM_DISPOSE.
+
+@{b}    ATTRIBUTES@{ub}
+        DRAWLIST_Directives (struct @{"DrawList" Link "INCLUDE:images/drawlist.h/Main" 66} *)
+            An array of drawlist directive structures are passed
+            to specify the vectors and render operation. The last
+            entry must be DLST_END!
+
+            struct @{"DrawList" Link "INCLUDE:images/drawlist.h/Main" 66}
+            {
+                WORD dl_Directive;
+                WORD dl_X1, dl_Y1;
+                WORD dl_X2, dl_Y2;
+                WORD dl_Pen;
+            };
+
+
+            The following directives are supported;
+
+            DLST_END      - End the directive list.
+            DLST_LINE     - Render a line from dl_x1,dl_y1 to dl_x2,dl_y2
+            DLST_RECT     - @{"Cause" Link "exec/Cause()"} a @{"RectFill()" Link "graphics/RectFill()"} of size dl_x1,dl_y1,dl_x2,dl_y
+2
+            DLST_LINEPAT  - Set the line pattern to value held in dl_Pen
+            DLST_FILLPAT  - Set the fill pattern to value held in dl_Pen
+            DLST_LINESIZE - Set the drawlist line thickness via dl_Pen
+            DLST_AMOVE    - @{"AreaMove()" Link "graphics/AreaMove()"} using dl_x1,dl_y1
+            DLST_ADRAW    - @{"AreaDraw()" Link "graphics/AreaDraw()"} using dl_x1,dl_y1
+            DLST_AFILL    - @{"Cause" Link "exec/Cause()"} the AreaFill() operation
+            DLST_FILL     - @{"Flood()" Link "graphics/Flood()"} an area.
+            DLST_ELLIPSE  - @{"AreaEllipse()" Link "graphics/AreaEllipse()"} (incorrectly implemented until V47)
+            DLST_CIRCLE   - @{"AreaCircle()" Link "graphics/AreaCircle()"} (incorrectly implemented until V47)
+            DLST_BEVELBOX - currently unsupported (alpha function removed)
+            DLST_ARC      - currently unsupported
+            DLST_START    - currently unsupported
+            DLST_BOUNDS   - currently unsupported
+
+            Defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        DRAWLIST_RefHeight (WORD)
+            Reference height of the drawlist imagary grid.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        DRAWLIST_RefWidth (WORD)
+            Reference width of the drawlist imagary grid.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+@EndNode
+
+@Node "DRAWLIST_GetClass()" "drawlist_ic/DRAWLIST_GetClass"
+
+@{b}    NAME@{ub}
+        DRAWLIST_GetClass -- Gets the pointer to the drawlist class.
+
+@{b}    SYNOPSIS@{ub}
+        drawlist_class = DRAWLIST_GetClass();
+        D0
+
+        Class * DRAWLIST_GetClass(VOID);
+
+@{b}    FUNCTION@{ub}
+        Obtains the pointer to the drawlist image class for use with
+        @{"NewObject()" Link "intuition/NewObject()"}.  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+@{b}    INPUTS@{ub}
+        Nothing.
+
+@{b}    RESULT@{ub}
+        drawlist_class - Pointer to the drawlist image class.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+

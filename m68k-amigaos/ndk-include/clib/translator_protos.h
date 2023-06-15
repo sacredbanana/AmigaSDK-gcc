@@ -18,6 +18,10 @@ extern "C" {
 #include <exec/types.h>
 #endif
 LONG  __stdargs Translate( CONST_STRPTR inputString, LONG inputLength, STRPTR outputBuffer, LONG bufferSize );
+LONG __stdargs TranslateAs(STRPTR inputString, LONG inputLen, STRPTR outputBuf,
+		 LONG outputLen, STRPTR languageFile);
+LONG __stdargs LoadAccent(STRPTR name);
+LONG __stdargs SetAccent(STRPTR name);
 
 #ifdef __cplusplus
 }

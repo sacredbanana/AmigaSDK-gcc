@@ -1,0 +1,2398 @@
+@database "amiga_lib"
+@master "AMIDEV:NDK/Autodocs/amiga_lib.doc"
+
+@Node Main "amiga_lib.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" ACrypt() " Link "ACrypt()"}
+    @{" AddTOF() " Link "AddTOF()"}
+    @{" afp() " Link "afp()"}
+    @{" ArgArrayDone() " Link "ArgArrayDone()"}
+    @{" ArgArrayInit() " Link "ArgArrayInit()"}
+    @{" ArgInt() " Link "ArgInt()"}
+    @{" ArgString() " Link "ArgString()"}
+    @{" arnd() " Link "arnd()"}
+    @{" BeginIO() " Link "BeginIO()"}
+    @{" CallHook() " Link "CallHook()"}
+    @{" CallHookA() " Link "CallHookA()"}
+    @{" CheckRexxMsg() " Link "CheckRexxMsg()"}
+    @{" CoerceMethod() " Link "CoerceMethod()"}
+    @{" CoerceMethodA() " Link "CoerceMethodA()"}
+    @{" CreateExtIO() " Link "CreateExtIO()"}
+    @{" CreatePort() " Link "CreatePort()"}
+    @{" CreateStdIO() " Link "CreateStdIO()"}
+    @{" CreateTask() " Link "CreateTask()"}
+    @{" CxCustom() " Link "CxCustom()"}
+    @{" CxDebug() " Link "CxDebug()"}
+    @{" CxFilter() " Link "CxFilter()"}
+    @{" CxSender() " Link "CxSender()"}
+    @{" CxSignal() " Link "CxSignal()"}
+    @{" CxTranslate() " Link "CxTranslate()"}
+    @{" dbf() " Link "dbf()"}
+    @{" DeleteExtIO() " Link "DeleteExtIO()"}
+    @{" DeletePort() " Link "DeletePort()"}
+    @{" DeleteStdIO() " Link "DeleteStdIO()"}
+    @{" DeleteTask() " Link "DeleteTask()"}
+    @{" DoMethod() " Link "DoMethod()"}
+    @{" DoMethodA() " Link "DoMethodA()"}
+    @{" DoSuperMethod() " Link "DoSuperMethod()"}
+    @{" DoSuperMethodA() " Link "DoSuperMethodA()"}
+    @{" FastRand() " Link "FastRand()"}
+    @{" fpa() " Link "fpa()"}
+    @{" FreeIEvents() " Link "FreeIEvents()"}
+    @{" GetRexxVar() " Link "GetRexxVar()"}
+    @{" HookEntry() " Link "HookEntry()"}
+    @{" HotKey() " Link "HotKey()"}
+    @{" InvertString() " Link "InvertString()"}
+    @{" LibAllocPooled() " Link "LibAllocPooled()"}
+    @{" LibCreatePool() " Link "LibCreatePool()"}
+    @{" LibDeletePool() " Link "LibDeletePool()"}
+    @{" LibFreePooled() " Link "LibFreePooled()"}
+    @{" NewList() " Link "NewList()"}
+    @{" RangeRand() " Link "RangeRand()"}
+    @{" RemTOF() " Link "RemTOF()"}
+    @{" SetRexxVar() " Link "SetRexxVar()"}
+    @{" SetSuperAttrs() " Link "SetSuperAttrs()"}
+    @{" sprintf() " Link "sprintf()"}
+    @{" TimeDelay() " Link "TimeDelay()"}
+@EndNode
+
+@Node "ACrypt()" "amiga.lib/ACrypt"
+
+@{b}   NAME@{ub}
+	ACrypt -- Encrypt a password
+
+@{b}   SYNOPSIS@{ub}
+	newpass = ACrypt( buffer, password, username )
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *ACrypt( @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *, @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *, @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *) ;
+
+@{b}   FUNCTION@{ub}
+	This function takes a buffer of at least 12 characters in length,
+	an unencrypted password and the user's name (as known to the host
+	system) and returns an encrypted password in the passed buffer.
+	This is a one-way encryption. Normally, the user's encrypted
+	password is stored in a file for future password comparison.
+
+@{b}   INPUTS@{ub}
+	buffer     - a pointer to a buffer at least 12 bytes in length.
+	password   - a pointer to an unencrypted password string.
+	username   - a pointer to the user's name.
+
+@{b}   RESULT@{ub}
+	newpass    - a pointer to the passed buffer if successful, @{"NULL" Link "rexxsupport/NULL"}
+	             upon failure. The encrypted password placed in the
+	             buffer will be be eleven (11) characters in length
+	             and will be NULL-terminated.
+
+@{b}   EXAMPLE@{ub}
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *pw, *getpassword() ;
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *user = "alf"
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *newpass ;
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} buffer[16] ;         \* size >= 12 *\
+
+	pw = getpassword() ;   \* your own function *\
+
+	if((newpass = ACrypt(buffer, pw, user)) != NULL)
+	{
+		printf("pw = %s\n", newpass) ; \* newpass = &buffer[0] *\
+	}
+	else
+	{
+		printf("ACrypt failed\n") ;
+	}
+
+@{b}   NOTES@{ub}
+	This function first appeared in later V39 versions of amiga.lib,
+	but works under V37 and up.
+
+	This function will return @{"NULL" Link "rexxsupport/NULL"} if utility.library cannot
+	be opened.
+
+	Both the user name and the password must be NUL-terminated if
+	they are shorter than 12 characters.
+
+	Neither user name nor password should be empty strings.
+
+	This function combines the user name and password, using only
+	the first 11 characters from each, producing a NUL-terminated
+	"digest" string of ASCII characters. This process should not
+	be assumed to be secure in any way. Encryption alone does not
+	induce security.
+
+	ACrypt() was designed for use with the Envoy peer-to-peer
+Amiga network resource sharing product and lacks even the basic
+	properties of a secure password storage system. Do not use
+	ACrypt() if you can help it.
+
+@EndNode
+
+@Node "AddTOF()" "amiga.lib/AddTOF"
+
+@{b}   NAME@{ub}
+	AddTOF - add a task to the VBlank interrupt server chain.
+
+@{b}   SYNOPSIS@{ub}
+	AddTOF(i,p,a);
+
+	VOID AddTOF(struct @{"Isrvstr" Link "INCLUDE:graphics/graphint.h/Main" 22} *, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, APTR);
+
+@{b}   FUNCTION@{ub}
+	Adds a task to the vertical-blanking interval interrupt server
+	chain. This prevents C programmers from needing to write an
+	assembly language stub to do this function.
+
+@{b}   INPUTS@{ub}
+	i - pointer to an initialized @{"Isrvstr" Link "INCLUDE:graphics/graphint.h/Main" 22} structure
+	p - pointer to the C-code routine that this server is to call each
+	    time TOF happens
+	a - pointer to the first longword in an array of longwords that
+	    is to be used as the arguments passed to your routine
+	    pointed to by p.
+
+@{b}   SEE ALSO@{ub}
+	@{"RemTOF()" Link "RemTOF()"}, @{"<graphics/graphint.h>" Link "INCLUDE:graphics/graphint.h/Main" 0}
+
+@EndNode
+
+@Node "afp()" "amiga.lib/afp"
+
+@{b}   NAME@{ub}
+	afp - Convert ASCII string variable into fast floating point
+
+@{b}   SYNOPSIS@{ub}
+	ffp_value = afp(string);
+
+@{b}    FUNCTION@{ub}
+	Accepts the address of the ASCII string in C format that is
+	converted into an FFP floating point number.
+
+	The string is expected in this Format:
+	{S}{digits}{'.'}{digits}{'E'}{S}{digits}
+	<*******MANTISSA*******><***EXPONENT***>
+
+
+	Syntax rules:
+	Both signs are optional and are '+' or '-'. The mantissa must be
+	present. The exponent need not be present. The mantissa may lead
+	with a decimal point. The mantissa need not have a decimal point.
+	Examples: All of these values represent the number fourty-two.
+		     42 	   .042e3
+		     42.	  +.042e+03
+		    +42.	  0.000042e6
+		0000042.00	 420000e-4
+			     420000.00e-0004
+
+	Floating point range:
+	Fast floating point supports the value zero and non-zero values
+	within the following bounds -
+			18			       20
+	 9.22337177 x 10   > +number >	5.42101070 x 10
+			18			       -20
+	-9.22337177 x 10   > -number > -2.71050535 x 10
+
+	Precision:
+	This conversion results in a 24 bit precision with guaranteed
+	error less than or equal to one-half least significant bit.
+
+	INPUTS
+	string - Pointer to the ASCII string to be converted.
+
+
+	OUTPUTS
+	string - points to the character which terminated the scan
+	equ - fast floating point equivalent
+@EndNode
+
+@Node "ArgArrayDone()" "amiga.lib/ArgArrayDone"
+
+@{b}   NAME@{ub}
+	ArgArrayDone -- release the memory allocated by a previous call
+			to @{"ArgArrayInit()" Link "ArgArrayInit()"}. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	ArgArrayDone();
+
+	VOID ArgArrayDone(VOID);
+
+@{b}   FUNCTION@{ub}
+	This function frees memory and does cleanup required after a
+	call to @{"ArgArrayInit()" Link "ArgArrayInit()"}. Don't call this until you are done using
+	the ToolTypes argument strings.
+
+@{b}   NOTES@{ub}
+	It is not safe to call ArgArrayDone() twice as it might attempt to
+	free memory which has already been freed.
+
+@{b}   SEE ALSO@{ub}
+	@{"ArgArrayInit()" Link "ArgArrayInit()"}
+
+@EndNode
+
+@Node "ArgArrayInit()" "amiga.lib/ArgArrayInit"
+
+@{b}   NAME@{ub}
+	ArgArrayInit -- allocate and initialize a tooltype array. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	ttypes = ArgArrayInit(argc,argv);
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} **ArgArrayInit(LONG,@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} **);
+
+@{b}   FUNCTION@{ub}
+	This function returns a null-terminated array of strings
+	suitable for sending to @{"icon.library/FindToolType()" Link "icon/FindToolType()"}. This array will
+	be the ToolTypes array of the program's icon, if it was started from
+	Workbench. It will just be 'argv' if the program was started from
+	a shell.
+
+	Pass ArgArrayInit() your startup arguments received by main().
+
+	ArgArrayInit() requires that icon.library be open (even if the caller
+	was started from a shell, so that the function @{"FindToolType()" Link "icon/FindToolType()"} can be
+	used) and may call @{"GetDiskObject()" Link "icon/GetDiskObject()"}, so clean up is necessary when
+	the strings are no longer needed. The function @{"ArgArrayDone()" Link "ArgArrayDone()"} does
+	just that.
+
+@{b}   INPUTS@{ub}
+	argc - the number of arguments in argv, 0 when started from Workbench
+	argv - an array of pointers to the program's arguments, or the
+	       Workbench startup message when started from WB.
+
+@{b}   RESULTS@{ub}
+	ttypes - the initialized argument array or @{"NULL" Link "rexxsupport/NULL"} if it could not be
+	         allocated
+
+@{b}   EXAMPLE@{ub}
+	Use of these routines facilitates the use of ToolTypes or command-
+	line arguments to control end-user parameters in Commodities
+	applications. For example, a filter used to trap a keystroke for
+	popping up a window might be created by something like this:
+
+    		char   *ttypes  = ArgArrayInit(argc, argv);
+    		@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73}   *filter = UserFilter(ttypes, "POPWINDOW", "alt f1");
+
+               ... with ...
+
+               @{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *UserFilter(char **tt, char *action_name,
+				  char *default_descr)
+		{
+		char *desc;
+
+		    desc = FindToolType(tt,action_name);
+
+		    return(CxFilter((ULONG)(desc? desc: default_descr)));
+		}
+
+	In this way the user can assign "alt f2" to the action by
+	entering a tooltype in the program's icon of the form:
+
+		POPWINDOW=alt f2
+
+	or by starting the program from the CLI like so:
+
+		myprogram "POPWINDOW=alt f2"
+
+@{b}   NOTES@{ub}
+	Your program must open icon.library and set up IconBase before calling
+	this routine. In addition IconBase must remain valid until after
+	@{"ArgArrayDone()" Link "ArgArrayDone()"} has been called!
+
+	ArgArrayInit() will set up global variables for its use. Do not call
+	it again unless you have called @{"ArgArrayDone()" Link "ArgArrayDone()"} first, or otherwise
+	memory will remain allocated which can never be freed.
+
+@{b}   SEE ALSO@{ub}
+	@{"ArgArrayDone()" Link "ArgArrayDone()"}, @{"ArgString()" Link "ArgString()"}, @{"ArgInt()" Link "ArgInt()"}, @{"icon.library/FindToolType()" Link "icon/FindToolType()"}
+
+@EndNode
+
+@Node "ArgInt()" "amiga.lib/ArgInt"
+
+@{b}   NAME@{ub}
+	ArgInt -- return an integer value from a ToolTypes array. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	value = ArgInt(tt,entry,defaultval)
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} ArgInt(UBYTE **,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},LONG);
+
+@{b}   FUNCTION@{ub}
+	This function looks in the ToolTypes array 'tt' returned
+	by @{"ArgArrayInit()" Link "ArgArrayInit()"} for 'entry' and returns the value associated
+	with it. 'tt' is in standard ToolTypes format such as:
+
+		ENTRY=Value
+
+	The Value string is passed to atoi() and the result is returned by
+	this function.
+
+	If 'entry' is not found, the integer 'defaultval' is returned.
+
+@{b}   INPUTS@{ub}
+	tt - a ToolTypes array as returned by @{"ArgArrayInit()" Link "ArgArrayInit()"}
+	entry - the entry in the ToolTypes array to search for
+	defaultval - the value to return in case 'entry' is not found within
+		     the ToolTypes array
+
+@{b}   RESULTS@{ub}
+	value - the value associated with 'entry', or defaultval if 'entry'
+		is not in the ToolTypes array
+
+@{b}   NOTES@{ub}
+	This function requires that dos.library V36 or higher be opened.
+
+@{b}   SEE ALSO@{ub}
+	@{"ArgArrayInit()" Link "ArgArrayInit()"}
+
+@EndNode
+
+@Node "ArgString()" "amiga.lib/ArgString"
+
+@{b}   NAME@{ub}
+	ArgString -- return a string pointer from a ToolTypes array. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	string = ArgString(tt,entry,defaultstring)
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} ArgString(UBYTE **,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This function looks in the ToolTypes array 'tt' returned
+	by @{"ArgArrayInit()" Link "ArgArrayInit()"} for 'entry' and returns the value associated
+	with it. 'tt' is in standard ToolTypes format such as:
+
+		ENTRY=Value
+
+	This function returns a pointer to the Value string.
+
+	If 'entry' is not found, 'defaultstring' is returned.
+
+@{b}   INPUTS@{ub}
+	tt - a ToolTypes array as returned by @{"ArgArrayInit()" Link "ArgArrayInit()"}
+	entry - the entry in the ToolTypes array to search for
+	defaultstring - the value to return in case 'entry' is not found within
+		        the ToolTypes array
+
+@{b}   RESULTS@{ub}
+	value - the value associated with 'entry', or defaultstring if 'entry'
+		is not in the ToolTypes array
+
+@{b}   SEE ALSO@{ub}
+	@{"ArgArrayInit()" Link "ArgArrayInit()"}
+
+@EndNode
+
+@Node "arnd()" "amiga.lib/arnd"
+
+  NAME
+	arnd - ASCII round of the provided floating point string
+
+@{b}   SYNOPSIS@{ub}
+	arnd(place, exp, &string[0]);
+
+@{b}   FUNCTION@{ub}
+	Accepts an ASCII string representing an FFP floating point
+	number, the binary representation of the exponent of said
+	floating point number and the number of places to round to.
+	A rounding process is initiated, either to the left or right
+	of the decimal place and the result placed back at the
+	input address defined by &string[0].
+
+@{b}   INPUTS@{ub}
+	place - integer representing number of decimal places to round to
+	exp - integer representing exponent value of the ASCII string
+	&string[0] - address where rounded ASCII string is to be placed
+		     (16 bytes)
+
+@{b}   RESULT@{ub}
+	&string[0] - rounded ASCII string
+
+@{b}   BUGS@{ub}
+	None
+@EndNode
+
+@Node "BeginIO()" "amiga.lib/BeginIO"
+
+@{b}   NAME@{ub}
+	BeginIO -- initiate asynchronous device I/O
+
+@{b}   SYNOPSIS@{ub}
+	BeginIO(ioReq)
+
+	VOID BeginIO(struct @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} *);
+
+@{b}   FUNCTION@{ub}
+	This function takes an @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16}, and passes it directly to the
+	"BeginIO" vector of the proper device.  This is equivalent to
+	@{"SendIO()" Link "exec/SendIO()"}, except that io_Flags is not cleared. A good understanding
+	of Exec device I/O is required to properly use this function.
+
+	This function does not wait for the I/O to complete.
+
+@{b}   INPUTS@{ub}
+	ioReq - an initialized and opened @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} structure with the
+	        io_Flags field set to a reasonable value (set to 0 if you do
+		not require io_Flags).
+
+@{b}   SEE ALSO@{ub}
+	@{"exec.library/DoIO()" Link "exec/DoIO()"}, @{"exec.library/SendIO()" Link "exec/SendIO()"}, @{"exec.library/WaitIO()" Link "exec/WaitIO()"}
+
+@EndNode
+
+@Node "CallHook()" "amiga.lib/CallHook"
+
+@{b}   NAME@{ub}
+	CallHook -- Invoke a hook given a message on the stack.
+
+@{b}   SYNOPSIS@{ub}
+	result = CallHook( hookPtr, obj, ... )
+
+	ULONG CallHook( struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, ... );
+
+@{b}   FUNCTION@{ub}
+	Like @{"CallHookA()" Link "CallHookA()"}, CallHook() invoke a hook on the supplied
+	hook-specific data (an "object") and a parameter packet ("message").
+	However, CallHook() allows you to build the message on your stack.
+
+@{b}   INPUTS@{ub}
+	hookPtr - A system-standard hook
+	obj - hook-specific data object
+	... - The hook-specific message you wish to send.  The hook is
+	    expecting a pointer to the message, so a pointer into your
+	    stack will be sent.
+
+@{b}   RESULT@{ub}
+	result - a hook-specific result.
+
+@{b}   NOTES@{ub}
+	This function first appeared in the V37 release of amiga.lib.
+	However, it does not depend on any particular version of the OS,
+	and works fine even in V34.
+
+@{b}   EXAMPLE@{ub}
+	If your hook's message was
+
+	    struct myMessage
+	    {
+		ULONG mm_FirstGuy;
+		ULONG mm_SecondGuy;
+		ULONG mm_ThirdGuy;
+	    };
+
+	You could write:
+
+	    result = CallHook( hook, obj, firstguy, secondguy, thirdguy );
+
+	as a shorthand for:
+
+	    struct myMessage msg;
+
+	    msg.mm_FirstGuy = firstguy;
+	    msg.mm_SecondGuy = secondguy;
+	    msg.mm_ThirdGuy = thirdguy;
+
+	    result = CallHookA( hook, obj, &msg );
+
+@{b}   SEE ALSO@{ub}
+	@{"CallHookA()" Link "CallHookA()"}, @{"utility.library/CallHookPkt()" Link "utility/CallHookPkt()"}, @{"<utility/hooks.h>" Link "INCLUDE:utility/hooks.h/Main" 0}
+
+@EndNode
+
+@Node "CallHookA()" "amiga.lib/CallHookA"
+
+@{b}   NAME@{ub}
+	CallHookA -- Invoke a hook given a pointer to a message.
+
+@{b}   SYNOPSIS@{ub}
+	result = CallHookA( hookPtr, obj, message )
+
+	ULONG CallHook( struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75} );
+
+@{b}   FUNCTION@{ub}
+	Invoke a hook on the supplied hook-specific data (an "object")
+	and a parameter packet ("message").  This function is equivalent
+	to @{"utility.library/CallHookPkt()" Link "utility/CallHookPkt()"}.
+
+@{b}   INPUTS@{ub}
+	hookPtr - A system-standard hook
+	obj - hook-specific data object
+	message - The hook-specific message you wish to send
+
+@{b}   RESULT@{ub}
+	result - a hook-specific result.
+
+@{b}   NOTES@{ub}
+	This function first appeared in the V37 release of amiga.lib.
+	However, it does not depend on any particular version of the OS,
+	and works fine even in V34.
+
+	This function does not preserve the contents of register A4,
+	which is the responsibility of the hook function being called.
+	If your code depends upon the contents of register A4 to remain
+	unchanged you may need to use your own CallHook/CallHookA
+	implementation instead of the amiga.lib version.
+
+@{b}   SEE ALSO@{ub}
+	@{"CallHook()" Link "CallHook()"}, @{"utility.library/CallHookPkt()" Link "utility/CallHookPkt()"}, @{"<utility/hooks.h>" Link "INCLUDE:utility/hooks.h/Main" 0}
+
+@EndNode
+
+@Node "CheckRexxMsg()" "amiga.lib/CheckRexxMsg"
+
+@{b}   NAME@{ub}
+	CheckRexxMsg - Check if a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} is from ARexx
+
+@{b}   SYNOPSIS@{ub}
+	result = CheckRexxMsg(message)
+	D0                    A0
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} CheckRexxMsg(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *);
+
+@{b}   FUNCTION@{ub}
+	This function checks to make sure that the message is from ARexx
+	directly.  It is required when using the Rexx Variable Interface
+	routines (RVI) that the message be from ARexx.
+
+	While this function is new in the V37 amiga.lib, it is safe to
+	call it in all versions of the operating system.  It is also
+	PURE code, thus usable in resident/pure executables.
+
+@{b}   NOTE@{ub}
+	This stub is obsolete. Use the CHECKREXXMSG() macro in
+	@{"rexx/storage.h" Link "INCLUDE:rexx/storage.h/Main" 0} instead.
+
+	This is a stub in amiga.lib.  It is only available via amiga.lib.
+	The stub has two labels.  One, _CheckRexxMsg, takes the arguments
+	from the stack.  The other, CheckRexxMsg, takes the arguments in
+	registers.
+
+@{b}   EXAMPLE@{ub}
+	if (CheckRexxMsg(rxmsg))
+	{
+		/* @{"Message" Link "INCLUDE:exec/ports.h/Main" 45} is one from ARexx */
+	}
+
+@{b}   INPUTS@{ub}
+	message		A pointer to the @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} in question
+
+@{b}   RESULTS@{ub}
+	result		A boolean - TRUE if message is from ARexx.
+
+@{b}   SEE ALSO@{ub}
+	@{"GetRexxVar()" Link "GetRexxVar()"}, @{"SetRexxVar()" Link "SetRexxVar()"}
+
+@EndNode
+
+@Node "CoerceMethod()" "amiga.lib/CoerceMethod"
+
+@{b}   NAME@{ub}
+	CoerceMethod -- Perform method on coerced object.
+
+@{b}   SYNOPSIS@{ub}
+	result = CoerceMethod( cl, obj, MethodID, ... )
+
+	ULONG CoerceMethod( struct @{"IClass" Link "INCLUDE:intuition/classes.h/Main" 30} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, ULONG, ... );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function that invokes the supplied message
+	on the specified object, as though it were the specified
+	class.  Equivalent to @{"CoerceMethodA()" Link "CoerceMethodA()"}, but allows you to
+	build the message on the stack.
+
+@{b}   INPUTS@{ub}
+	cl - pointer to boopsi class to receive the message
+	obj - pointer to boopsi object
+	... - method-specific message built on the stack
+
+@{b}   RESULT@{ub}
+	result - class and message-specific result or @{"NULL" Link "rexxsupport/NULL"} if either
+	    the cl or the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	CoerceMethod() checks if the either the cl or obj pointer is
+	@{"NULL" Link "rexxsupport/NULL"} and will return immediately if this is the case, indicating
+	failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+@{b}   SEE ALSO@{ub}
+	@{"CoerceMethodA()" Link "CoerceMethodA()"}, @{"DoMethodA()" Link "DoMethodA()"}, @{"DoSuperMethodA()" Link "DoSuperMethodA()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "CoerceMethodA()" "amiga.lib/CoerceMethodA"
+
+@{b}   NAME@{ub}
+	CoerceMethodA -- Perform method on coerced object.
+
+@{b}   SYNOPSIS@{ub}
+	result = CoerceMethodA( cl, obj, msg )
+
+	ULONG CoerceMethodA( struct @{"IClass" Link "INCLUDE:intuition/classes.h/Main" 30} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"Msg" Link "INCLUDE:intuition/classusr.h/Main" 28} );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function that invokes the supplied message
+	on the specified object, as though it were the specified
+	class.
+
+@{b}   INPUTS@{ub}
+	cl - pointer to boopsi class to receive the message
+	obj - pointer to boopsi object
+	msg - pointer to method-specific message to send
+
+@{b}   RESULT@{ub}
+	result - class and message-specific result or @{"NULL" Link "rexxsupport/NULL"} if either
+	    the cl or the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	CoerceMethodA() checks if the either the cl or obj pointer is
+	@{"NULL" Link "rexxsupport/NULL"} and will return immediately if this is the case, indicating
+	failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+	Some early example code may refer to this function as CM().
+
+@{b}   SEE ALSO@{ub}
+	@{"CoerceMethod()" Link "CoerceMethod()"}, @{"DoMethodA()" Link "DoMethodA()"}, @{"DoSuperMethodA()" Link "DoSuperMethodA()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "CreateExtIO()" "amiga.lib/CreateExtIO"
+
+@{b}   NAME@{ub}
+	CreateExtIO -- create an @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} structure
+
+@{b}   SYNOPSIS@{ub}
+	ioReq = CreateExtIO(port,ioSize);
+
+	struct @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} *CreateExtIO(struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *, ULONG);
+
+@{b}   FUNCTION@{ub}
+	Allocates memory for and initializes a new IO request block
+	of a user-specified number of bytes. The number of bytes
+	MUST be the size of a legal @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} (or extended IORequest)
+	or very nasty things will happen.
+
+@{b}   INPUTS@{ub}
+	port - an already initialized message port to be used for this IO
+	       request's reply port. If this is @{"NULL" Link "rexxsupport/NULL"} this function fails.
+	ioSize - the size of the IO request to be created.
+
+@{b}   RESULT@{ub}
+	ioReq - a new IO @{"Request" Link "intuition/Request()"} block, or @{"NULL" Link "rexxsupport/NULL"} if there was not enough memory
+
+@{b}   EXAMPLE@{ub}
+	if (ioReq = CreateExtIO(CreatePort(NULL,0),sizeof(struct IOExtTD)))
+
+@{b}   SEE ALSO@{ub}
+	@{"DeleteExtIO()" Link "DeleteExtIO()"}, @{"CreatePort()" Link "CreatePort()"}, @{"exec.library/CreateMsgPort()" Link "exec/CreateMsgPort()"}
+
+@EndNode
+
+@Node "CreatePort()" "amiga.lib/CreatePort"
+
+@{b}   NAME@{ub}
+	CreatePort - @{"Allocate" Link "exec/Allocate()"} and initialize a new message port
+
+@{b}   SYNOPSIS@{ub}
+	port = CreatePort(name,pri)
+
+	struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *CreatePort(CONST_STRPTR,LONG);
+
+@{b}   FUNCTION@{ub}
+	Allocates and initializes a new message port. The message list
+	of the new port will be prepared for use (via NewList).  A signal
+	bit will be allocated, and the port will be set to signal your
+	task when a message arrives (PA_SIGNAL).
+
+	You *must* use @{"DeletePort()" Link "DeletePort()"} to delete ports created with
+	CreatePort()!
+
+@{b}   INPUTS@{ub}
+	name - public name of the port, or @{"NULL" Link "rexxsupport/NULL"} if the port is not named.
+	       The name string is not copied. Most ports do not need names,
+	       see notes below on this.
+	pri  - Priority used for insertion into the public port list,
+	       normally 0.
+
+@{b}   RESULT@{ub}
+	port - a new @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} structure ready for use, or @{"NULL" Link "rexxsupport/NULL"} if the port
+	       could not be created due to not enough memory or no available
+	       signal bit.
+
+@{b}   NOTE@{ub}
+	In most cases, ports should not be named. Named ports are used for
+	rendez-vous between tasks. Everytime a named port needs to be located,
+	the list of all named ports must be traversed. The more named
+	ports there are, the longer this list traversal takes. Thus, unless
+	you really need to, do not name your ports, which will keep them off
+	of the named port list and improve system performance.
+
+@{b}   BUGS@{ub}
+	With versions of amiga.lib prior to V37.14, this function would
+	not fail even though it couldn't allocate a signal bit. The port
+	would be returned with no signal allocated.
+
+@{b}   SEE ALSO@{ub}
+	@{"DeletePort()" Link "DeletePort()"}, @{"exec.library/FindPort()" Link "exec/FindPort()"}, @{"<exec/ports.h>" Link "INCLUDE:exec/ports.h/Main" 0},
+	@{"exec.library/CreateMsgPort()" Link "exec/CreateMsgPort()"}
+
+@EndNode
+
+@Node "CreateStdIO()" "amiga.lib/CreateStdIO"
+
+@{b}   NAME@{ub}
+	CreateStdIO -- create an @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25} structure
+
+@{b}   SYNOPSIS@{ub}
+	ioReq = CreateStdIO(port);
+
+	struct @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25} *CreateStdIO(struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *)
+
+@{b}   FUNCTION@{ub}
+	Allocates memory for and initializes a new @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25} structure.
+
+@{b}   INPUTS@{ub}
+	port - an already initialized message port to be used for this IO
+	       request's reply port. If this is @{"NULL" Link "rexxsupport/NULL"} this function fails.
+
+@{b}   RESULT@{ub}
+	ioReq - a new @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25} structure, or @{"NULL" Link "rexxsupport/NULL"} if there was not enough
+		memory
+
+@{b}   SEE ALSO@{ub}
+	@{"DeleteStdIO()" Link "DeleteStdIO()"}, @{"CreateExtIO()" Link "CreateExtIO()"}, @{"exec.library/CreateIORequest()" Link "exec/CreateIORequest()"}
+
+@EndNode
+
+@Node "CreateTask()" "amiga.lib/CreateTask"
+
+@{b}   NAME@{ub}
+	CreateTask -- Create task with given name, priority, stacksize
+
+@{b}   SYNOPSIS@{ub}
+	task = CreateTask(name,pri,initPC,stackSize)
+
+	struct @{"Task" Link "INCLUDE:exec/tasks.h/Main" 23} *CreateTask(CONST_STRPTR,@{"LONG" Link "INCLUDE:exec/types.h/Main" 112},funcEntry,ULONG);
+
+@{b}   FUNCTION@{ub}
+	This function simplifies program creation of sub-tasks by
+	dynamically allocating and initializing required structures
+	and stack space, and adding the task to Exec's task list
+	with the given name and priority. A tc_MemEntry list is provided
+	so that all stack and structure memory allocated by CreateTask()
+	is automatically deallocated when the task is removed.
+
+	An Exec task may not call dos.library functions or any function
+	which might cause the loading of a disk-resident library, device,
+	or file (since such functions are indirectly calls to dos.library).
+	Only AmigaDOS Processes may call AmigaDOS; see the
+	@{"dos.library/CreateProc()" Link "dos/CreateProc()"} or the @{"dos.library/CreateNewProc()" Link "dos/CreateNewProc()"}
+	functions for more information.
+
+	If other tasks or processes will need to find this task by name,
+	provide a complex and unique name to avoid conflicts.
+
+	If your compiler provides automatic insertion of stack-checking
+	code, you may need to disable this feature when compiling sub-task
+	code since the stack for the subtask is at a dynamically allocated
+	location.  If your compiler requires 68000 registers to contain
+	particular values for base relative addressing, you may need to
+	save these registers from your main process, and restore them
+	in your initial subtask code.
+
+	The function entry initPC is generally provided as follows:
+
+	In C:
+	extern void functionName();
+	char *tname = "unique name";
+	task = CreateTask(tname, 0L, functionName, 4000L);
+
+	In assembler:
+		PEA	startLabel
+
+@{b}   INPUTS@{ub}
+	name - a null-terminated name string
+	pri - an Exec task priority between -128 and 127, normally 0
+	funcEntry - the address of the first executable instruction
+		    of the subtask code
+	stackSize - size in bytes of stack for the subtask. Don't cut it
+		    too close - system function stack usage may change.
+
+@{b}   RESULT@{ub}
+	task - a pointer to the newly created task, or @{"NULL" Link "rexxsupport/NULL"} if there was not
+	       enough memory.
+
+@{b}   BUGS@{ub}
+	Under exec.library V37 or beyond, the @{"AddTask()" Link "exec/AddTask()"} function used
+	internally by CreateTask() can fail whereas it couldn't fail in
+	previous versions of Exec. Prior to amiga.lib V37.14, this function
+	did not check for failure of @{"AddTask()" Link "exec/AddTask()"} and thus might return a
+	pointer to a task structure even though the task was not actually
+	added to the system.
+
+	Prior to amiga.lib V40.20 low memory conditions could cause
+	CreateTask() to malfunction. The implementation checked whether the
+	initial @{"AllocEntry()" Link "exec/AllocEntry()"} call would fail, but would use an inappropriate
+	test condition.
+
+@{b}   SEE ALSO@{ub}
+	@{"DeleteTask()" Link "DeleteTask()"}, @{"exec/FindTask()" Link "exec/FindTask()"}
+
+@EndNode
+
+@Node "CxCustom()" "amiga.lib/CxCustom"
+
+@{b}   NAME@{ub}
+	CxCustom -- create a custom commodity object. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	customObj = CxCustom(action,id);
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *CxCustom(LONG(*)(),LONG);
+
+@{b}   FUNCTION@{ub}
+	This function creates a custom commodity object. The action
+	of this object on receiving a commodity message is to call a
+	function of the application programmer's choice.
+
+	The function provided ('action') will be passed a pointer to
+	the actual commodities message (in commodities private data
+	space), and will actually execute as part of the input handler
+	system task. Among other things, the value of 'id' can be
+	recovered from the message by using the function @{"CxMsgID()" Link "commodities/CxMsgID()"}.
+
+	The purpose of this function is two-fold. First, it allows
+	programmers to create Commodities Exchange objects with
+	functionality that was not imagined or chosen for inclusion
+	by the designers. Secondly, this is the only way to act
+	synchronously with Commodities.
+
+	This function is a C-language macro for @{"CreateCxObj()" Link "commodities/CreateCxObj()"}, defined
+	in @{"<libraries/commodities.h>" Link "INCLUDE:libraries/commodities.h/Main" 0}.
+
+@{b}   INPUTS@{ub}
+	action - a function to call whenever a message reaches the object
+	id - a message id to assign to the object
+
+@{b}   RESULTS@{ub}
+	customObj - a pointer to the new custom object, or @{"NULL" Link "rexxsupport/NULL"} if it could
+		    not be created.
+
+  SEE ALSO
+	@{"commodities.library/CreateCxObj()" Link "commodities/CreateCxObj()"}, @{"commodities.library/CxMsgID()" Link "commodities/CxMsgID()"}
+
+@EndNode
+
+@Node "CxDebug()" "amiga.lib/CxDebug"
+
+@{b}   NAME@{ub}
+	CxDebug -- create a commodity debug object. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	debugObj = CxDebug(id);
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *CxDebug(LONG);
+
+@{b}   FUNCTION@{ub}
+	This function creates a Commodities debug object. The action of this
+	object on receiving a Commodities message is to print out information
+	about the Commodities message through the serial port (using the
+	kprintf() routine). The value of 'id' will also be displayed.
+
+	Note that this is a synchronous occurrence (the printing is done by
+	the input device task). If screen or file output is desired, using a
+	sender object instead of a debug object is necessary, since such
+	output is best done by your application process.
+
+	This function is a C-language macro for @{"CreateCxObj()" Link "commodities/CreateCxObj()"}, defined
+	in @{"<libraries/commodities.h>" Link "INCLUDE:libraries/commodities.h/Main" 0}.
+
+@{b}   INPUTS@{ub}
+	id - the id to assign to the debug object, this value is output
+	     whenever the debug object sends data to the serial port.
+
+@{b}   RESULTS@{ub}
+	debugObj - a pointer to the debug object, or @{"NULL" Link "rexxsupport/NULL"} if it could
+		   not be created.
+
+@{b}   SEE ALSO@{ub}
+	@{"commodities.library/CreateCxObj()" Link "commodities/CreateCxObj()"}, @{"CxSender()" Link "CxSender()"}, debug.lib/kprintf()
+
+@EndNode
+
+@Node "CxFilter()" "amiga.lib/CxFilter"
+
+@{b}   NAME@{ub}
+	CxFilter -- create a commodity filter object. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	filterObj = CxFilter(description);
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *CxFilter(STRPTR)
+
+@{b}   FUNCTION@{ub}
+	Creates an input event filter object that matches the
+	'description' string. If 'description' is @{"NULL" Link "rexxsupport/NULL"}, the filter will not
+	match any messages.
+
+	A filter may be modified by the functions @{"SetFilter()" Link "commodities/SetFilter()"}, using
+	a description string, and @{"SetFilterIX()" Link "commodities/SetFilterIX()"}, which takes a
+	binary @{"Input" Link "dos/Input()"} Expression as a parameter.
+
+	This function is a C-language macro for @{"CreateCxObj()" Link "commodities/CreateCxObj()"}, defined
+	in @{"<libraries/commodities.h>" Link "INCLUDE:libraries/commodities.h/Main" 0}.
+
+@{b}   INPUTS@{ub}
+	description - the description string in the same format as strings
+		      expected by @{"commodities.library/SetFilter()" Link "commodities/SetFilter()"}
+
+@{b}   RESULTS@{ub}
+	filterObj - a pointer to the filter object, or @{"NULL" Link "rexxsupport/NULL"} if there
+		    was not enough memory. If there is a problem in the
+		    description string, the internal error code of the filter
+		    object will be set to so indicate. This error code may be
+		    interrogated using the function @{"CxObjError()" Link "commodities/CxObjError()"}.
+
+@{b}   SEE ALSO@{ub}
+	@{"commodities.library/CreateCxObj()" Link "commodities/CreateCxObj()"}, @{"commodities.library/SetFilter()" Link "commodities/SetFilter()"},
+	@{"commodities.library/SetFilterIX()" Link "commodities/SetFilterIX()"}, @{"commodities.library/CxObjError()" Link "commodities/CxObjError()"}
+
+@EndNode
+
+@Node "CxSender()" "amiga.lib/CxSender"
+
+@{b}   NAME@{ub}
+	CxSender -- create a commodity sender object. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	senderObj = CxSender(port,id)
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *CxSender(struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *,LONG);
+
+@{b}   FUNCTION@{ub}
+	This function creates a Commodities sender object. The action
+	of this object on receiving a Commodities message is to copy the
+	Commodities message into a standard Exec @{"Message" Link "INCLUDE:exec/ports.h/Main" 45}, to put the value
+	'id' in the message as well, and to send the message off to the
+	message port 'port'.
+
+	The value 'id' is used so that an application can monitor
+	messages from several senders at a single port. It can be retrieved
+	from the Exec message by using the function @{"CxMsgID()" Link "commodities/CxMsgID()"}. The value can
+	be a simple integer ID, or a pointer to some application data
+	structure.
+
+	Note that Exec messages sent by sender objects arrive
+	asynchronously at the destination port. Do not assume anything about
+	the status of the Commodities message which was copied into the Exec
+	message you received.
+
+	All Exec messages sent to your ports must be replied. Messages may be
+	replied after the sender object has been deleted.
+
+	This function is a C-language macro for @{"CreateCxObj()" Link "commodities/CreateCxObj()"}, defined
+	in @{"<libraries/commodities.h>" Link "INCLUDE:libraries/commodities.h/Main" 0}.
+
+@{b}   INPUTS@{ub}
+	port - the port for the sender to send messages to
+	id - the id of the messages sent by the sender
+
+@{b}   RESULTS@{ub}
+	senderObj - a pointer to the sender object, or @{"NULL" Link "rexxsupport/NULL"} if it could
+		    not be created.
+
+@{b}   SEE ALSO@{ub}
+	@{"commodities.library/CreateCxObj()" Link "commodities/CreateCxObj()"}, @{"commodities.library/CxMsgID()" Link "commodities/CxMsgID()"},
+	@{"exec.library/PutMsg()" Link "exec/PutMsg()"}, @{"exec.library/ReplyMsg()" Link "exec/ReplyMsg()"}
+
+@EndNode
+
+@Node "CxSignal()" "amiga.lib/CxSignal"
+
+@{b}   NAME@{ub}
+	CxSignal -- create a commodity signaller object. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	signalerObj = CxSignal(task,signal);
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *CxSignal(struct @{"Task" Link "INCLUDE:exec/tasks.h/Main" 23} *,LONG);
+
+@{b}   FUNCTION@{ub}
+	This function creates a Commodities signal object. The action
+	of this object on receiving a Commodities message is to
+	send the 'signal' to the 'task'. The caller is responsible
+	for allocating the signal and determining the proper task ID.
+
+	Note that 'signal' is the signal value as returned by @{"AllocSignal()" Link "exec/AllocSignal()"},
+	not the mask made from that value.
+
+	This function is a C-language macro for @{"CreateCxObj()" Link "commodities/CreateCxObj()"}, defined
+	in @{"<libraries/commodities.h>" Link "INCLUDE:libraries/commodities.h/Main" 0}.
+
+@{b}   INPUTS@{ub}
+	task - the task for the signaller to signal
+	signal - the signal bit number for the signaller to send
+
+@{b}   RESULTS@{ub}
+	signallerObj - a pointer to the signaller object, or @{"NULL" Link "rexxsupport/NULL"} if it could
+		       not be created.
+
+@{b}   SEE ALSO@{ub}
+	@{"commodities.library/CreateCxObj()" Link "commodities/CreateCxObj()"}, @{"exec.library/FindTask()" Link "exec/FindTask()"}
+	@{"exec.library/Signal()" Link "exec/Signal()"}, @{"exec.library/AllocSignal()" Link "exec/AllocSignal()"},
+
+@EndNode
+
+@Node "CxTranslate()" "amiga.lib/CxTranslate"
+
+@{b}   NAME@{ub}
+	CxTranslate -- create a commodity translator object. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	translatorObj = CxTranslate(ie);
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *CxTranslate(struct @{"InputEvent" Link "INCLUDE:devices/inputevent.h/Main" 255} *);
+
+@{b}   FUNCTION@{ub}
+	This function creates a Commodities 'translator' object.
+	The action of this object on receiving a Commodities message is to
+	replace that message in the commodities network with a chain of
+	Commodities input messages.
+
+	There is one new Commodities input message generated for each input
+	event in the linked list starting at 'ie' (and @{"NULL" Link "rexxsupport/NULL"} terminated). The
+	routing information of the new input messages is copied from the input
+	message they replace.
+
+	The linked list of input events associated with a translator object
+	can be changed using the @{"SetTranslate()" Link "commodities/SetTranslate()"} function.
+
+	If 'ie' is @{"NULL" Link "rexxsupport/NULL"}, the null translation occurs: that is, the original
+	commodities input message is disposed, and no others are created to
+	take its place.
+
+	This function is a C-language macro for @{"CreateCxObj()" Link "commodities/CreateCxObj()"}, defined
+	in @{"<libraries/commodities.h>" Link "INCLUDE:libraries/commodities.h/Main" 0}.
+
+@{b}   INPUTS@{ub}
+	ie - the input event list used as replacement by the translator
+
+@{b}   WARNING@{ub}
+	The list of input events manipulated by a translator object is
+	inserted in reverse order in the commodities network, and come out
+	of the network in reverse order as well.
+
+	The @{"InvertString()" Link "InvertString()"} function creates lists of input events that are
+	in reverse order so they can be used directly with translator
+	objects.
+
+	If you are not using the @{"InvertString()" Link "InvertString()"} function then you will have
+	to either flip the list of input events or make sure that the list
+	is always filled in reverse order to begin with.
+
+@{b}   RESULTS@{ub}
+	translatorObj - a pointer to the translator object, or @{"NULL" Link "rexxsupport/NULL"} if it could
+		        not be created.
+
+@{b}   SEE ALSO@{ub}
+	@{"commodities.library/CreateCxObj()" Link "commodities/CreateCxObj()"}, @{"commodities.library/SetTranslate()" Link "commodities/SetTranslate()"},
+	@{"InvertString()" Link "InvertString()"}
+
+@EndNode
+
+@Node "dbf()" "amiga.lib/dbf"
+
+@{b}   NAME@{ub}
+	dbf - convert FFP dual-binary number to FFP format
+
+@{b}   SYNOPSIS@{ub}
+	fnum = dbf(exp, mant);
+
+@{b}   FUNCTION@{ub}
+	Accepts a dual-binary format (described below) floating point
+	number and converts it to an FFP format floating point number.
+	The dual-binary format is defined as:
+
+		exp bit  16	= sign (0=>positive, 1=>negative)
+		exp bits 15-0	= binary integer representing the base
+					  ten (10) exponent
+		man		= binary integer mantissa
+
+@{b}   INPUTS@{ub}
+	exp - binary integer representing sign and exponent
+	mant - binary integer representing the mantissa
+
+@{b}   RESULT@{ub}
+	fnum - converted FFP floating point format number
+
+@{b}   BUGS@{ub}
+	None
+@EndNode
+
+@Node "DeleteExtIO()" "amiga.lib/DeleteExtIO"
+
+@{b}   NAME@{ub}
+	DeleteExtIO - return memory allocated for extended IO request
+
+@{b}   SYNOPSIS@{ub}
+	DeleteExtIO(ioReq);
+
+	VOID DeleteExtIO(struct @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} *);
+
+@{b}   FUNCTION@{ub}
+	Frees up an IO request as allocated by @{"CreateExtIO()" Link "CreateExtIO()"}.
+
+@{b}   INPUTS@{ub}
+	ioReq - the @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} block to be freed, or @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   SEE ALSO@{ub}
+	@{"CreateExtIO()" Link "CreateExtIO()"}
+
+@EndNode
+
+@Node "DeletePort()" "amiga.lib/DeletePort"
+
+@{b}   NAME@{ub}
+	DeletePort - free a message port created by @{"CreatePort()" Link "CreatePort()"}
+
+@{b}   SYNOPSIS@{ub}
+	DeletePort(port)
+
+	VOID DeletePort(struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *);
+
+@{b}   FUNCTION@{ub}
+	Frees a message port created by @{"CreatePort" Link "amiga_lib/CreatePort()"}. All messages that
+	may have been attached to this port must have already been
+	replied before this function is called.
+
+@{b}   INPUTS@{ub}
+	port - message port to delete
+
+@{b}   SEE ALSO@{ub}
+	@{"CreatePort()" Link "CreatePort()"}
+
+@EndNode
+
+@Node "DeleteStdIO()" "amiga.lib/DeleteStdIO"
+
+@{b}   NAME@{ub}
+	DeleteStdIO - return memory allocated for @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25}
+
+@{b}   SYNOPSIS@{ub}
+	DeleteStdIO(ioReq);
+
+	VOID DeleteStdIO(struct @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25} *);
+
+@{b}   FUNCTION@{ub}
+	Frees up an @{"IOStdReq" Link "INCLUDE:exec/io.h/Main" 25} as allocated by @{"CreateStdIO()" Link "CreateStdIO()"}.
+
+@{b}   INPUTS@{ub}
+	ioReq - the @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} block to be freed, or @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   SEE ALSO@{ub}
+	@{"CreateStdIO()" Link "CreateStdIO()"}, @{"DeleteExtIO()" Link "DeleteExtIO()"}, @{"exec.library/CreateIORequest()" Link "exec/CreateIORequest()"}
+
+@EndNode
+
+@Node "DeleteTask()" "amiga.lib/DeleteTask"
+
+@{b}   NAME@{ub}
+	DeleteTask -- delete a task created with @{"CreateTask()" Link "CreateTask()"}
+
+@{b}   SYNOPSIS@{ub}
+	DeleteTask(task)
+
+	VOID DeleteTask(struct @{"Task" Link "INCLUDE:exec/tasks.h/Main" 23} *);
+
+@{b}   FUNCTION@{ub}
+	This function simply calls @{"exec.library/RemTask()" Link "exec/RemTask()"}, deleting a task
+	from the Exec task lists and automatically freeing any stack and
+	structure memory allocated for it by @{"CreateTask()" Link "CreateTask()"}.
+
+	Before deleting a task, you must first make sure that the task is
+	not currently executing any system code which might try to signal
+	the task after it is gone.
+
+	This can be accomplished by stopping all sources that might reference
+	the doomed task, then causing the subtask to execute a Wait(0L).
+	Another option is to have the task call @{"DeleteTask()/RemTask()" Link "exec/RemTask()"} on
+	itself.
+
+@{b}   INPUTS@{ub}
+	task - task to remove from the system
+
+@{b}   NOTE@{ub}
+	This function simply calls @{"exec.library/RemTask()" Link "exec/RemTask()"}, so you can call
+	@{"RemTask()" Link "exec/RemTask()"} directly instead of calling this function.
+
+@{b}   SEE ALSO@{ub}
+	@{"CreateTask()" Link "CreateTask()"}, @{"exec.library/RemTask()" Link "exec/RemTask()"}
+
+@EndNode
+
+@Node "DoMethod()" "amiga.lib/DoMethod"
+
+@{b}   NAME@{ub}
+	DoMethod -- Perform method on object.
+
+@{b}   SYNOPSIS@{ub}
+	result = DoMethod( obj, MethodID, ... )
+
+	ULONG DoMethod( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, ULONG, ... );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function that invokes the supplied message
+	on the specified object.  The message is invoked on the
+	object's true class.  Equivalent to @{"DoMethodA()" Link "DoMethodA()"}, but allows
+	you to build the message on the stack.
+
+@{b}   INPUTS@{ub}
+	obj - pointer to boopsi object
+	MethodID - which method to send (see @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0})
+	... - method-specific message built on the stack
+
+@{b}   RESULT@{ub}
+	result - specific to the message and the object's class
+	    or @{"NULL" Link "rexxsupport/NULL"} if the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	DoMethod() checks if the obj pointer is @{"NULL" Link "rexxsupport/NULL"} and will return
+	immediately if this is the case, indicating failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+@{b}   SEE ALSO@{ub}
+	@{"DoMethodA()" Link "DoMethodA()"}, @{"CoerceMethodA()" Link "CoerceMethodA()"}, @{"DoSuperMethodA()" Link "DoSuperMethodA()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "DoMethodA()" "amiga.lib/DoMethodA"
+
+@{b}   NAME@{ub}
+	DoMethodA -- Perform method on object.
+
+@{b}   SYNOPSIS@{ub}
+	result = DoMethodA( obj, msg )
+
+	ULONG DoMethodA( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"Msg" Link "INCLUDE:intuition/classusr.h/Main" 28} );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function that invokes the supplied message
+	on the specified object.  The message is invoked on the
+	object's true class.
+
+@{b}   INPUTS@{ub}
+	obj - pointer to boopsi object
+	msg - pointer to method-specific message to send
+
+@{b}   RESULT@{ub}
+	result - specific to the message and the object's class
+	    or @{"NULL" Link "rexxsupport/NULL"} if the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	DoMethodA() checks if the obj pointer is @{"NULL" Link "rexxsupport/NULL"} and will return
+	immediately if this is the case, indicating failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+	Some early example code may refer to this function as DM().
+
+@{b}   SEE ALSO@{ub}
+	@{"DoMethod()" Link "DoMethod()"}, @{"CoerceMethodA()" Link "CoerceMethodA()"}, @{"DoSuperMethodA()" Link "DoSuperMethodA()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "DoSuperMethod()" "amiga.lib/DoSuperMethod"
+
+@{b}   NAME@{ub}
+	DoSuperMethod -- Perform method on object coerced to superclass.
+
+@{b}   SYNOPSIS@{ub}
+	result = DoSuperMethod( cl, obj, MethodID, ... )
+
+	ULONG DoSuperMethod( struct @{"IClass" Link "INCLUDE:intuition/classes.h/Main" 30} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, ULONG, ... );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function that invokes the supplied message
+	on the specified object, as though it were the superclass
+	of the specified class.  Equivalent to @{"DoSuperMethodA()" Link "DoSuperMethodA()"},
+	but allows you to build the message on the stack.
+
+@{b}   INPUTS@{ub}
+	cl - pointer to boopsi class whose superclass is to
+	    receive the message
+	obj - pointer to boopsi object
+	... - method-specific message built on the stack
+
+@{b}   RESULT@{ub}
+	result - class and message-specific result or @{"NULL" Link "rexxsupport/NULL"} if either
+	    the cl or the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	DoSuperMethod() checks if the either the cl or obj pointer is
+	@{"NULL" Link "rexxsupport/NULL"} and will return immediately if this is the case, indicating
+	failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+@{b}   SEE ALSO@{ub}
+	@{"CoerceMethodA()" Link "CoerceMethodA()"}, @{"DoMethodA()" Link "DoMethodA()"}, @{"DoSuperMethodA()" Link "DoSuperMethodA()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "DoSuperMethodA()" "amiga.lib/DoSuperMethodA"
+
+@{b}   NAME@{ub}
+	DoSuperMethodA -- Perform method on object coerced to superclass.
+
+@{b}   SYNOPSIS@{ub}
+	result = DoSuperMethodA( cl, obj, msg )
+
+	ULONG DoSuperMethodA( struct @{"IClass" Link "INCLUDE:intuition/classes.h/Main" 30} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"Msg" Link "INCLUDE:intuition/classusr.h/Main" 28} );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function that invokes the supplied message
+	on the specified object, as though it were the superclass
+	of the specified class.
+
+@{b}   INPUTS@{ub}
+	cl - pointer to boopsi class whose superclass is to
+	    receive the message
+	obj - pointer to boopsi object
+	msg - pointer to method-specific message to send
+
+@{b}   RESULT@{ub}
+	result - class and message-specific result or @{"NULL" Link "rexxsupport/NULL"} if either
+	    the cl or the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	DoSuperMethodA() checks if the either the cl or obj pointer is
+	@{"NULL" Link "rexxsupport/NULL"} and will return immediately if this is the case, indicating
+	failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+	Some early example code may refer to this function as DSM().
+
+@{b}   SEE ALSO@{ub}
+	@{"CoerceMethodA()" Link "CoerceMethodA()"}, @{"DoMethodA()" Link "DoMethodA()"}, @{"DoSuperMethod()" Link "DoSuperMethod()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "FastRand()" "amiga.lib/FastRand"
+
+@{b}   NAME@{ub}
+	FastRand - quickly generate a somewhat random integer
+
+@{b}   SYNOPSIS@{ub}
+	number = FastRand(seed);
+
+	ULONG FastRand(ULONG);
+
+@{b}   FUNCTION@{ub}
+	Seed value is taken from stack, shifted left one position,
+	exclusive-or'ed with hex value $1D872B41 and returned.
+
+@{b}   INPUTS@{ub}
+	seed - a 32-bit integer
+
+@{b}   RESULT@{ub}
+	number - new random seed, a 32-bit value
+
+@{b}   NOTES@{ub}
+	the statistics of this "random generator" is less than ideal.
+
+@{b}   SEE ALSO@{ub}
+	@{"RangeRand()" Link "RangeRand()"}
+
+@{b}   BUGS@{ub}
+	The overall quality of the random generator leaves a lot to be
+	deserved.
+
+@EndNode
+
+@Node "fpa()" "amiga.lib/fpa"
+
+@{b}   NAME@{ub}
+	fpa - convert fast floating point into ASCII string equivalent
+
+@{b}   SYNOPSIS@{ub}
+	exp = fpa(fnum, &string[0]);
+
+@{b}   FUNCTION@{ub}
+	Accepts an FFP number and the address of the ASCII string where it's
+	converted output is to be stored.  The number is converted to a @{"NULL" Link "rexxsupport/NULL"}
+	terminated ASCII string in and stored at the address provided.
+	Additionally, the base ten (10) exponent in binary form is returned.
+
+@{b}   INPUTS@{ub}
+	fnum	   - Motorola Fast Floating Point number
+	&string[0] - address for output of converted ASCII character string
+		     (16 bytes)
+
+@{b}   RESULT@{ub}
+	&string[0] - converted ASCII character string
+	exp	   - integer exponent value in binary form
+
+@{b}   BUGS@{ub}
+	None
+@EndNode
+
+@Node "FreeIEvents()" "amiga.lib/FreeIEvents"
+
+@{b}   NAME@{ub}
+	FreeIEvents -- free a chain of input events allocated by
+		       @{"InvertString()" Link "InvertString()"}. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	FreeIEvents(events)
+
+	VOID FreeIEvents(struct @{"InputEvent" Link "INCLUDE:devices/inputevent.h/Main" 255} *);
+
+@{b}   FUNCTION@{ub}
+	This function frees a linked list of input events as obtained from
+	@{"InvertString()" Link "InvertString()"}.
+
+@{b}   INPUTS@{ub}
+       events - the list of input events to free, may be @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   SEE ALSO@{ub}
+	@{"InvertString()" Link "InvertString()"}
+
+@EndNode
+
+@Node "GetRexxVar()" "amiga.lib/GetRexxVar"
+
+@{b}   NAME@{ub}
+	GetRexxVar - Gets the value of a variable from a running ARexx program
+
+@{b}   SYNOPSIS@{ub}
+	error = GetRexxVar(message,varname,bufpointer)
+	D0,A1              A0      A1      (C-only)
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} GetRexxVar(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *,char *,char **);
+
+@{b}   FUNCTION@{ub}
+	This function will attempt to extract the value of the symbol
+	varname from the ARexx script that sent the message.  When called
+	from C, a pointer to the extracted value will be placed in the
+	pointer pointed to by bufpointer.  (*bufpointer will be the pointer
+	to the value)
+
+	When called from assembly, the pointer will be returned in A1.
+
+	The value string returned *MUST* *NOT* be modified.
+
+	While this function is new in the V37 amiga.lib, it is safe to
+	call it in all versions of the operating system.  It is also
+	PURE code, thus usable in resident/pure executables.
+
+@{b}   NOTE@{ub}
+	This stub is obsolete. Use @{"GetRexxVarFromMsg()" Link "rexxsyslib/GetRexxVarFromMsg()"} from
+	@{"clib/rexxsyslib_protos.h" Link "INCLUDE:clib/rexxsyslib_protos.h/Main" 0} instead. It is a rexxsyslib.library
+	function.
+
+	This is a stub in amiga.lib.  It is only available via amiga.lib.
+	The stub has two labels.  One, _GetRexxVar, takes the arguments
+	from the stack.  The other, GetRexxVar, takes the arguments in
+	registers.
+
+	This routine does a @{"CheckRexxMsg()" Link "CheckRexxMsg()"} on the message.
+
+@{b}   EXAMPLE@{ub}
+
+	char	*value;
+
+	/* @{"Message" Link "INCLUDE:exec/ports.h/Main" 45} is one from ARexx */
+	if (!GetRexxVar(rxmsg,"TheVar",&value))
+	{
+		/* The value was gotten and now is pointed to by value */
+		printf("Value of TheVar is %s\n",value);
+	}
+
+@{b}   INPUTS@{ub}
+	message		A message gotten from an ARexx script
+	varname		The name of the variable to extract
+	bufpointer	(For C only) A pointer to a string pointer.
+
+@{b}   RESULTS@{ub}
+	error		0 for success, otherwise an error code.
+			(Other codes may exists, these are documented)
+			3  == Insufficient Storage
+			9  == String too long
+			10 == invalid message
+
+	A1		(Assembly only)  Pointer to the string.
+
+@{b}   SEE ALSO@{ub}
+	@{"SetRexxVar()" Link "SetRexxVar()"}, @{"CheckRexxMsg()" Link "CheckRexxMsg()"}
+
+@EndNode
+
+@Node "HookEntry()" "amiga.lib/HookEntry"
+
+@{b}   NAME@{ub}
+	HookEntry -- Assembler to HLL conversion stub for hook entry.
+
+@{b}   SYNOPSIS@{ub}
+	result = HookEntry( struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75} )
+	D0                  A0             A2        A1
+
+@{b}   FUNCTION@{ub}
+	By definition, a standard hook entry-point must receive the
+	hook in A0, the object in A2, and the message in A1.  If your
+	hook entry-point is written in a high-level language and is
+	expecting its parameters on the stack, then HookEntry() will
+	put the three parameters on the stack and invoke the function
+	stored in the hook h_SubEntry field.
+
+	This function is only useful to hook implementers, and is
+	never called from C.
+
+@{b}   INPUTS@{ub}
+	hook - pointer to hook being invoked
+	object - pointer to hook-specific data
+	msg - pointer to hook-specific message
+
+@{b}   RESULT@{ub}
+	result - a hook-specific result.
+
+@{b}   NOTES@{ub}
+	This function first appeared in the V37 release of amiga.lib.
+	However, it does not depend on any particular version of the OS,
+	and works fine even in V34.
+
+	This function does not preserve the contents of register A4,
+	which is the responsibility of the hook function being called.
+	If your code depends upon the contents of register A4 to remain
+	unchanged you may need to use your own HookEntry implementation
+	instead of the amiga.lib version.
+
+@{b}   EXAMPLE@{ub}
+	If your hook dispatcher is this:
+
+	dispatch( struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *hookPtr, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *obj, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75} msg )
+	{
+	    ...
+	}
+
+	Then when you initialize your hook, you would say:
+
+	myhook.h_Entry = HookEntry;	/* amiga.lib stub */
+	myhook.h_SubEntry = dispatch;	/* HLL entry */
+
+@{b}   SEE ALSO@{ub}
+	@{"CallHook()" Link "CallHook()"}, @{"CallHookA()" Link "CallHookA()"}, @{"<utility/hooks.h>" Link "INCLUDE:utility/hooks.h/Main" 0}
+
+@EndNode
+
+@Node "HotKey()" "amiga.lib/HotKey"
+
+@{b}   NAME@{ub}
+	HotKey -- create a commodity triad. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	filterObj = Hotkey(description,port,id);
+
+	@{"CxObj" Link "INCLUDE:libraries/commodities.h/Main" 73} *HotKey(STRPTR,struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *,LONG);
+
+@{b}   FUNCTION@{ub}
+	This function creates a triad of commodity objects to accomplish a
+	high-level function.
+
+	The three objects are a filter, which is created to match by the call
+	CxFilter(description), a sender created by the call CxSender(port,id),
+	and a translator which is created by CxTranslate(NULL), so that it
+	swallows any commodity input event messages that are passed down by
+	the filter.
+
+	This is the simple way to get a message sent to your program when the
+	user performs a particular input action.
+
+	It is strongly recommended that the ToolTypes environment be used to
+	allow the user to specify the input descriptions for your application's
+	hotkeys.
+
+@{b}   INPUTS@{ub}
+	description - the description string to use for the filter in the same
+		      format as accepted by @{"commodities.library/SetFilter()" Link "commodities/SetFilter()"}
+	port - port for the sender to send messages to.
+	id - id of the messages sent by the sender
+
+@{b}   RESULTS@{ub}
+	filterObj - a pointer to a filter object, or @{"NULL" Link "rexxsupport/NULL"} if it could
+		    not be created.
+
+@{b}   SEE ALSO@{ub}
+	@{"CxFilter()" Link "CxFilter()"}, @{"CxSender()" Link "CxSender()"}, @{"CxTranslate()" Link "CxTranslate()"},
+	@{"commodities.library/CxObjError()" Link "commodities/CxObjError()"}, @{"commodities.library/SetFilter()" Link "commodities/SetFilter()"}
+
+@EndNode
+
+@Node "InvertString()" "amiga.lib/InvertString"
+
+@{b}   NAME@{ub}
+	InvertString -- produce input events that would generate the
+			given string. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	events = InvertString(str,km)
+
+	struct @{"InputEvent" Link "INCLUDE:devices/inputevent.h/Main" 255} *InvertString(STRPTR,struct @{"KeyMap" Link "INCLUDE:libraries/keymap.h/Main" 19} *);
+
+@{b}   FUNCTION@{ub}
+	This function returns a linked list of input events which would
+	translate into the string using the supplied keymap (or the system
+	default keymap if 'km' is NULL).
+
+	'str' must be null-terminated and may contain:
+	   - ANSI character codes
+	   - backslash escaped characters:
+		\n   -   CR
+		\r   -   CR
+		\t   -   TAB
+		\0   -   illegal, do not use!
+		\\   -   backslash
+	   - a text description of an input event as used by @{"ParseIX()" Link "commodities/ParseIX()"},
+	     enclosed in angle brackets.
+
+	An example is:
+          abc<alt f1>\nhi there.
+
+@{b}   INPUTS@{ub}
+	str - null-terminated string to convert to input events
+	km - keymap to use for the conversion, or @{"NULL" Link "rexxsupport/NULL"} to use the default
+	     system keymap.
+
+@{b}   RESULTS@{ub}
+	events - a chain of input events, or @{"NULL" Link "rexxsupport/NULL"} if there was a problem. The
+		 most likely cause of failure is an illegal description
+		 enclosed in angled brackets. Running out of available memory
+		 is possible, too. See the BUGS section for more information.
+
+		 This chain should eventually be freed using @{"FreeIEvents()" Link "FreeIEvents()"}.
+
+		 NOTE: The chain is always built in reverse order with the
+		       first input event of the chain corresponding to the
+		       last character or input expression text of the input
+		       string.
+
+@{b}   WARNING@{ub}
+	InvertString() has always built the event chain in reverse order.
+	The first event in the chain stands for the last character or input
+	expression text of the input string to be processed.
+
+	This order makes the event chin suitable for use with the
+	@{"CxTranslate()" Link "CxTranslate()"} function as well as @{"SetTranslate()" Link "commodities/SetTranslate()"} which is called by
+	@{"CxTranslate()" Link "CxTranslate()"}. If you want to use this event chain for anything
+	else, such as for @{"AddIEvents()" Link "commodities/AddIEvents()"}, then you will either need to flip the
+	string before passing it to InvertString(), or flip the resulting list
+	of input events.
+
+@{b}   BUGS@{ub}
+	The characters which cannot be converted into a corresponding
+	input event may be skipped or may produce input events with
+	InputEvent.ie_Class == IECLASS_NULL. If InvertString() returns
+	a valid pointer (not NULL) it does not necessarily mean that the
+	string could be processed correctly.
+
+	Even though it says above that the backslash-escaped character
+	"\0" is "illegal", InvertString() will not reject this attempt
+	and will instead try to produce an input event which may not be
+	attainable.
+
+	InvertString() will attempt to modify the input string if there are
+	text descriptions of input events enclosed in angle brackets. These
+	changes will be reversed, leaving the string unchanged before
+	InvertString() returns.
+	If the input string is stored in read-only memory then the results
+	will be unpredictable.
+	If the same input string is shared by several Tasks or interrupt
+	code you should take precautions for arbitration, such as the use
+	of SignalSemaphores or the @{"Disable()" Link "exec/Disable()"} / @{"Enable()" Link "exec/Enable()"} functions.
+
+	To use backslash-escaped character sequences other than \n, \r, \t,
+	\0 and \\ may cause InvertString() to abort and return @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   SEE ALSO@{ub}
+	@{"commodities.library/AddIEvents()" Link "commodities/AddIEvents()"}, @{"commodities.library/ParseIX()" Link "commodities/ParseIX()"},
+	@{"commodities.library/SetTranslate()" Link "commodities/SetTranslate()"}, @{"CxTranslate()" Link "CxTranslate()"}, @{"FreeIEvents()" Link "FreeIEvents()"}
+
+@EndNode
+
+@Node "LibAllocPooled()" "amiga.lib/LibAllocPooled"
+
+@{b}    NAME@{ub}
+	LibAllocPooled -- @{"Allocate" Link "exec/Allocate()"} memory with the pool manager (V33)
+
+@{b}    SYNOPSIS@{ub}
+	memory=LibAllocPooled(poolHeader,memSize)
+	d0                    a0         d0
+
+	void *LibAllocPooled(void *,ULONG);
+
+@{b}    FUNCTION@{ub}
+	This function is a copy of the pool functions in V39 and up of
+	EXEC.  In fact, if you are running in V39, this function will
+	notice and call the EXEC function.  This function works in
+	V33 and up (1.2) Amiga system.
+
+	The C code interface is _LibAllocPooled() and takes its arguments
+	from the stack just like the C code interface for @{"AllocPooled()" Link "exec/AllocPooled()"}
+	in amiga.lib.  The assembly code interface is with the symbol
+	_AsmAllocPooled: and takes the parameters in registers with the
+	additional parameter of @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} being in a6 which can be used
+	from SAS/C 6 by a prototype of:
+
+	void * __asm AsmAllocPooled(register __a0 void *,
+	                            register __d0 ULONG,
+	                            register __a6 struct @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} *);
+
+	@{"Allocate" Link "exec/Allocate()"} memSize bytes of memory, and return a pointer. @{"NULL" Link "rexxsupport/NULL"} is
+	returned if the allocation fails.
+
+	Doing a @{"LibDeletePool()" Link "LibDeletePool()"} on the pool will free all of the puddles
+	and thus all of the allocations done with LibAllocPooled() in that
+	pool.  (No need to @{"LibFreePooled()" Link "LibFreePooled()"} each allocation)
+
+@{b}    INPUTS@{ub}
+	poolHeader - a specific private pool header.
+	memSize - the number of bytes to allocate
+
+@{b}    RESULT@{ub}
+	A pointer to the memory, or @{"NULL" Link "rexxsupport/NULL"}.
+	The memory block returned is long word aligned.
+
+@{b}    NOTES@{ub}
+	The pool functions do not protect an individual pool from
+	multiple accesses.  The reason is that in most cases the pools
+	will be used by a single task.  If your pool is going to
+	be used by more than one task you must Semaphore protect
+	the pool from having more than one task trying to allocate
+	within the same pool at the same time.  Warning:  @{"Forbid()" Link "exec/Forbid()"}
+	protection *will not work* in the future.  *Do NOT* assume
+	that we will be able to make it work in the future.  LibAllocPooled()
+	may well break a @{"Forbid()" Link "exec/Forbid()"} and as such can only be protected
+	by a semaphore.
+
+	To track sizes yourself, the following code can be used:
+	*Assumes a6=ExecBase*
+
+	;
+	; Function to do AllocVecPooled(Pool,memSize)
+	;
+	AllocVecPooled:	addq.l	#4,d0		; Get space for tracking
+			move.l	d0,-(sp)	; Save the size
+			jsr	LibAllocPooled	; Call pool...
+			move.l	(sp)+,d1	; Get size back...
+			tst.l	d0		; Check for error
+			beq.s	avp_fail	; If @{"NULL" Link "rexxsupport/NULL"}, failed!
+			move.l	d0,a0		; Get pointer...
+			move.l	d1,(a0)+	; Store size
+			move.l	a0,d0		; Get result
+	avp_fail:	rts			; return
+
+	;
+	; Function to do LibFreeVecPooled(pool,memory)
+	;
+	FreeVecPooled:	move.l	-(a1),d0	; Get size / ajust pointer
+			jmp	@{"LibFreePooled" Link "amiga_lib/LibFreePooled()"}
+
+@{b}    BUGS@{ub}
+	Allocations should not exceed 4294967288 (0xFFFFFFF8) bytes because
+	this may trigger a side-effect leading to far less memory to be
+	allocated.
+
+@{b}    SEE ALSO@{ub}
+	@{"FreePooled()" Link "exec/FreePooled()"}, @{"CreatePool()" Link "exec/CreatePool()"}, @{"DeletePool()" Link "exec/DeletePool()"},
+	@{"LibFreePooled()" Link "LibFreePooled()"}, @{"LibCreatePool()" Link "LibCreatePool()"}, @{"LibDeletePool()" Link "LibDeletePool()"}
+
+@EndNode
+
+@Node "LibCreatePool()" "amiga.lib/LibCreatePool"
+
+@{b}    NAME@{ub}
+	LibCreatePool -- Generate a private memory pool header (V33)
+
+@{b}    SYNOPSIS@{ub}
+	newPool=LibCreatePool(memFlags,puddleSize,threshSize)
+	a0                    d0       d1         d2
+
+	void *LibCreatePool(ULONG,ULONG,ULONG);
+
+@{b}    FUNCTION@{ub}
+	This function is a copy of the pool functions in V39 and up of
+	EXEC.  In fact, if you are running in V39, this function will
+	notice and call the EXEC function.  This function works in
+	V33 and up (1.2) Amiga system.
+
+	The C code interface is _LibCreatePool() and takes its arguments
+	from the stack just like the C code interface for @{"CreatePool()" Link "exec/CreatePool()"}
+	in amiga.lib.  The assembly code interface is with the symbol
+	_AsmCreatePool: and takes the parameters in registers with the
+	additional parameter of @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} being in a6 which can be used
+	from SAS/C 6 by a prototype of:
+
+	void * __asm AsmCreatePool(register __d0 ULONG,
+	                           register __d1 ULONG,
+	                           register __d2 ULONG,
+	                           register __a6 struct @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} *);
+
+	@{"Allocate" Link "exec/Allocate()"} and prepare a new memory pool header.	Each pool is a
+	separate tracking system for memory of a specific type.  Any number
+	of pools may exist in the system.
+
+	Pools automatically expand and shrink based on demand.	Fixed sized
+	"puddles" are allocated by the pool manager when more total memory
+	is needed.  Many small allocations can fit in a single puddle.
+	Allocations larger than the threshSize are allocation in their own
+	puddles.
+
+	At any time individual allocations may be freed.  Or, the entire
+	pool may be removed in a single step.
+
+@{b}    INPUTS@{ub}
+	memFlags - a memory flags specifier, as taken by @{"AllocMem()" Link "exec/AllocMem()"}.
+	puddleSize - the size of Puddles...
+	threshSize - the largest allocation that goes into normal puddles.
+	             This *MUST* be less than or equal to puddleSize,
+	             (LibCreatePool() will fail if it is not).
+
+@{b}    RESULT@{ub}
+	The address of a new pool header, or @{"NULL" Link "rexxsupport/NULL"} for error.
+
+@{b}    NOTES@{ub}
+	The memFlags you specify are used by @{"LibAllocPooled()" Link "LibAllocPooled()"} only, not
+	by LibCreatePool(). The LibCreatePool() function will allocate memory
+	for its management data structures using MEMF_ANY. For example, if you
+	call LibCreatePool(MEMF_FAST, ...) and expect it to return @{"NULL" Link "rexxsupport/NULL"} if no
+	fast memory is available you may find that it succeeds. Subsequent
+	@{"LibAllocPooled()" Link "LibAllocPooled()"} calls for this pool will, however, fail on a system
+	without fast memory.
+
+
+	The memory pools solve three problems which allocating memory through
+	@{"AllocMem()" Link "exec/AllocMem()"}, @{"Allocate()" Link "exec/Allocate()"} and @{"AllocVec()" Link "exec/AllocVec()"} either do not address or which
+	are part of how they have to work:
+
+	* Memory pools keep track of the allocations made, so that you may release
+	  all of them by calling @{"LibDeletePool()" Link "LibDeletePool()"} instead of releasing each single
+	  allocation separately.
+
+	* Allocating and releasing memory from a pool does not need to involve
+	  the @{"Forbid()/Permit()" Link "exec/Permit()"} locking which is mandatory for @{"AllocMem()" Link "exec/AllocMem()"},
+	  @{"FreeMem()" Link "exec/FreeMem()"}, etc. Because of how much effort exec.library spends on
+	  finding a fitting memory chunk to allocate from and in turn freeing
+	  and coalescing freed memory chunks into larger chunks, you would not
+	  want this to happen while multitasking is temporarily disabled.
+
+	* Small allocations made from pools no longer affect the overall
+	  fragmentation of the available Amiga memory.
+
+	These features benefit not just your application, it also helps every
+	other Amiga software running at the same time.
+
+	These benefits come with costs which you should be aware of when making
+	the choice to adopt memory pools for your software.
+
+	* Tracking memory allocations can add a noticeable overhead to those
+	  allocations which are smaller than or equal to the threshold size given
+	  at LibCreatePool() time. This overhead exists because each such small
+	  allocation has to be found first when you call @{"LibFreePooled()" Link "LibFreePooled()"}.
+	  The more puddles are in use, the more time it will take to find the
+	  puddle which it was allocated from.
+
+	* Only one @{"Task/Process" Link "INCLUDE:dos/dosextens.h/Main" 39} at a time may allocate memory from a pool. This
+	  is why @{"AllocMem()" Link "exec/AllocMem()"}, @{"FreeMem()" Link "exec/FreeMem()"}, etc. imply @{"Forbid()/Permit()" Link "exec/Permit()"} locking.
+	  If your software is sharing a memory pool among several Tasks/Processes
+	  then you will have to use an arbitration mechanism such as a
+	  @{"SignalSemaphore" Link "INCLUDE:exec/semaphores.h/Main" 39} to allow only a single client at a time to access the
+	  pool.
+
+	  This is of particular importance because pools optimize the
+	  layout of the puddles in response to how frequently allocations and
+	  deallocations are made from a pool, which is called "bubbling". The
+	  more often a puddle is used, the less time will be spent on finding
+	  it when releasing an allocation from it.
+
+	  If no arbitration mechanism is available, you run the risk of corrupting
+	  both the pool contents and the memory managed through it.
+
+	  Sharing the same memory pool among several Tasks/Processes can cause the
+	  number of puddles to grow over time which are almost empty but never get
+	  memory allocated from them. This is a side-effect of how the layout of the
+	  puddles is optimized over time. To avoid this problem you should consider
+	  breaking down a single shared memory pool into separate pools if your
+	  software architecture permits it.
+
+	* While using memory pools will curb overall memory fragmentation, you may
+	  find that fragmentation issues affect the puddles more strongly. If
+	  allocations vary greatly in size and do not exceed the threshold value
+	  given at LibCreatePool() time you may end up with puddles which are only
+	  partly filled, wasting memory. If possible, try to match the puddle size
+	  and the threshold size to the allocation sizes you are most likely to use.
+
+@{b}    BUGS@{ub}
+	Avoid using a puddle size of 0 bytes. It will have the effect of
+	each @{"LibAllocPooled()" Link "LibAllocPooled()"} call resulting in a separate memory allocation.
+	This defeats the purpose of the memory pools, which is in curbing
+	memory fragmentation and the need to block multitasking when memory
+	has to be allocated from the global pool.
+
+	Puddle sizes should not exceed 4294967272 (0xFFFFFFE8) bytes because
+	this may trigger a side-effect leading to far less memory to be
+	allocated.
+
+	Creating a pool with MEMF_CLEAR set in the memFlags parameter has
+	a side-effect in slowing down all memory allocations made. The
+	creation of a new puddle will result in it getting set to zero,
+	and any allocation made from that puddle will set it to zero
+	all over again. If you can, avoid using MEMF_CLEAR and set the
+	memory allocated by @{"LibAllocPooled()" Link "LibAllocPooled()"} to zero all by yourself.
+
+@{b}    SEE ALSO@{ub}
+	@{"DeletePool()" Link "exec/DeletePool()"}, @{"AllocPooled()" Link "exec/AllocPooled()"}, @{"FreePooled()" Link "exec/FreePooled()"}, exec/memory.i,
+	@{"LibDeletePool()" Link "LibDeletePool()"}, @{"LibAllocPooled()" Link "LibAllocPooled()"}, @{"LibFreePooled()" Link "LibFreePooled()"}
+
+@EndNode
+
+@Node "LibDeletePool()" "amiga.lib/LibDeletePool"
+
+@{b}    NAME@{ub}
+	LibDeletePool --  Drain an entire memory pool (V33)
+
+@{b}    SYNOPSIS@{ub}
+	LibDeletePool(poolHeader)
+	              a0
+
+	void LibDeletePool(void *);
+
+@{b}    FUNCTION@{ub}
+	This function is a copy of the pool functions in V39 and up of
+	EXEC.  In fact, if you are running in V39, this function will
+	notice and call the EXEC function.  This function works in
+	V33 and up (1.2) Amiga system.
+
+	The C code interface is _LibDeletePool() and takes its arguments
+	from the stack just like the C code interface for @{"DeletePool()" Link "exec/DeletePool()"}
+	in amiga.lib.  The assembly code interface is with the symbol
+	_AsmDeletePool: and takes the parameters in registers with the
+	additional parameter of @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} being in a6 which can be used
+	from SAS/C 6 by a prototype of:
+
+	void __asm AsmDeletePool(register __a0 void *,
+	                         register __a6 struct @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} *);
+
+	Frees all memory in all puddles of the specified pool header, then
+	deletes the pool header.  Individual free calls are not needed.
+
+@{b}    INPUTS@{ub}
+	poolHeader - as returned by @{"LibCreatePool()" Link "LibCreatePool()"}.
+
+@{b}    SEE ALSO@{ub}
+	@{"CreatePool()" Link "exec/CreatePool()"}, @{"AllocPooled()" Link "exec/AllocPooled()"}, @{"FreePooled()" Link "exec/FreePooled()"},
+	@{"LibCreatePool()" Link "LibCreatePool()"}, @{"LibAllocPooled()" Link "LibAllocPooled()"}, @{"LibFreePooled()" Link "LibFreePooled()"}
+
+@EndNode
+
+@Node "LibFreePooled()" "amiga.lib/LibFreePooled"
+
+@{b}    NAME@{ub}
+	LibFreePooled -- Free pooled memory  (V33)
+
+@{b}    SYNOPSIS@{ub}
+	LibFreePooled(poolHeader,memory,memSize)
+		      a0         a1     d0
+
+	void LibFreePooled(void *,void *,ULONG);
+
+@{b}    FUNCTION@{ub}
+	This function is a copy of the pool functions in V39 and up of
+	EXEC.  In fact, if you are running in V39, this function will
+	notice and call the EXEC function.  This function works in
+	V33 and up (1.2) Amiga system.
+
+	The C code interface is _LibFreePooled() and takes its arguments
+	from the stack just like the C code interface for @{"FreePooled()" Link "exec/FreePooled()"}
+	in amiga.lib.  The assembly code interface is with the symbol
+	_AsmFreePooled: and takes the parameters in registers with the
+	additional parameter of @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} being in a6 which can be used
+	from SAS/C 6 by a prototype of:
+
+	void __asm AsmFreePooled(register __a0 void *,
+	                         register __a1 void *,
+	                         register __d0 ULONG,
+	                         register __a6 struct @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} *);
+
+	Deallocates memory allocated by @{"LibAllocPooled()" Link "LibAllocPooled()"}.  The size of the
+	allocation *MUST* match the size given to @{"LibAllocPooled()" Link "LibAllocPooled()"}.
+	The reason the pool functions do not track individual allocation
+	sizes is because many of the uses of pools have small allocation
+	sizes and the tracking of the size would be a large overhead.
+
+	Only memory allocated by @{"LibAllocPooled()" Link "LibAllocPooled()"} may be freed with this
+	function!
+
+	Doing a @{"LibDeletePool()" Link "LibDeletePool()"} on the pool will free all of the puddles
+	and thus all of the allocations done with @{"LibAllocPooled()" Link "LibAllocPooled()"} in that
+	pool.  (No need to LibFreePooled() each allocation)
+
+@{b}    INPUTS@{ub}
+	poolHeader - a specific private pool header.
+	memory - pointer to memory allocated by @{"AllocPooled" Link "exec/AllocPooled()"}.
+	memSize - the number of bytes allocated by @{"AllocPooled" Link "exec/AllocPooled()"}.
+	    THIS MUST NEVER BE 0!
+
+@{b}    NOTES@{ub}
+	The pool functions do not protect an individual pool from
+	multiple accesses.  The reason is that in most cases the pools
+	will be used by a single task.  If your pool is going to
+	be used by more than one task you must Semaphore protect
+	the pool from having more than one task trying to allocate
+	within the same pool at the same time.  Warning:  @{"Forbid()" Link "exec/Forbid()"}
+	protection *will not work* in the future.  *Do NOT* assume
+	that we will be able to make it work in the future.  LibFreePooled()
+	may well break a @{"Forbid()" Link "exec/Forbid()"} and as such can only be protected
+	by a semaphore.
+
+	The size of the memory allocation to be freed must match
+	the size used when @{"LibAllocPooled()" Link "LibAllocPooled()"} was called. A mismatch may
+	result in memory corruption or in memory remaining allocated
+	which not even @{"LibDeletePool()" Link "LibDeletePool()"} can release. THE SIZE OF THE MEMORY
+	ALLOCATION MUST NEVER BE 0, OR INSTANT MEMORY CORRUPTION IS
+	LIKELY TO FOLLOW!
+
+	If the address and allocation size cannot be matched against
+	a puddle or large allocation which is part of the pool, an
+	alert of type AN_BadFreeAddr will be triggered.
+
+	To track sizes yourself, the following code can be used:
+	*Assumes a6=ExecBase*
+
+	;
+	; Function to do AllocVecPooled(Pool,memSize)
+	;
+	AllocVecPooled:	addq.l	#4,d0		; Get space for tracking
+			move.l	d0,-(sp)	; Save the size
+			jsr	@{"LibAllocPooled" Link "amiga_lib/LibAllocPooled()"}	; Call pool...
+			move.l	(sp)+,d1	; Get size back...
+			tst.l	d0		; Check for error
+			beq.s	avp_fail	; If @{"NULL" Link "rexxsupport/NULL"}, failed!
+			move.l	d0,a0		; Get pointer...
+			move.l	d1,(a0)+	; Store size
+			move.l	a0,d0		; Get result
+	avp_fail:	rts			; return
+
+	;
+	; Function to do LibFreeVecPooled(pool,memory)
+	;
+	FreeVecPooled:	move.l	-(a1),d0	; Get size / ajust pointer
+			jmp	LibFreePooled
+
+@{b}    SEE ALSO@{ub}
+	@{"AllocPooled()" Link "exec/AllocPooled()"}, @{"CreatePool()" Link "exec/CreatePool()"}, @{"DeletePool()" Link "exec/DeletePool()"},
+	@{"LibAllocPooled()" Link "LibAllocPooled()"}, @{"LibCreatePool()" Link "LibCreatePool()"}, @{"LibDeletePool()" Link "LibDeletePool()"},
+	@{"exec/alerts.h" Link "INCLUDE:exec/alerts.h/Main" 0}
+
+@EndNode
+
+@Node "NewList()" "amiga.lib/NewList"
+
+@{b}   NAME@{ub}
+	NewList -- prepare a list structure for use
+
+@{b}   SYNOPSIS@{ub}
+	NewList(list)
+
+	VOID NewList(struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} *);
+	VOID NewList(struct @{"MinList" Link "INCLUDE:exec/lists.h/Main" 30} *);
+
+@{b}   FUNCTION@{ub}
+	Perform the magic needed to prepare a @{"List" Link "INCLUDE:exec/lists.h/Main" 19} header structure for
+	use; the list will be empty and ready to use.  (If the list is the
+	full featured type, you may need to initialize lh_Type afterwards)
+
+	Assembly programmers may want to use the NEWLIST macro instead.
+
+@{b}   INPUTS@{ub}
+	list - pointer to a @{"List" Link "INCLUDE:exec/lists.h/Main" 19} or @{"MinList" Link "INCLUDE:exec/lists.h/Main" 30}.
+
+@{b}   SEE ALSO@{ub}
+	@{"<exec/lists.h>" Link "INCLUDE:exec/lists.h/Main" 0}
+
+@EndNode
+
+@Node "RangeRand()" "amiga.lib/RangeRand"
+
+@{b}   NAME@{ub}
+	RangeRand - generate a random number within a specific integer range
+
+@{b}   SYNOPSIS@{ub}
+	number = RangeRand(maxValue);
+
+	@{"UWORD" Link "INCLUDE:exec/types.h/Main" 116} RangeRand(UWORD);
+
+@{b}   FUNCTION@{ub}
+	RangeRand() accepts a value from 0 to 65535, and returns a value
+	within that range.
+
+	maxValue is passed on stack as a 32-bit integer but used as though
+	it is only a 16-bit integer. Variable named RangeSeed is available
+	beginning with V33 that contains the global seed value passed from
+	call to call and thus can be changed in a program by declaring:
+
+	  extern ULONG RangeSeed;
+
+@{b}   INPUTS@{ub}
+	maxValue - the returned random number will be in the range
+	           [0..maxValue-1]
+
+@{b}   RESULT@{ub}
+	number - pseudo random number in the range of [0..maxValue-1].
+
+@{b}   NOTES@{ub}
+	the statistics of this "random generator" is less than ideal.
+
+@{b}   SEE ALSO@{ub}
+	@{"FastRand()" Link "FastRand()"}
+
+@{b}   BUGS@{ub}
+	The overall quality of the random generator leaves a lot to be
+	deserved.
+
+@EndNode
+
+@Node "RemTOF()" "amiga.lib/RemTOF"
+
+@{b}   NAME@{ub}
+	RemTOF - remove a task from the VBlank interrupt server chain.
+
+@{b}   SYNOPSIS@{ub}
+	RemTOF(i);
+
+	VOID RemTOF(struct @{"Isrvstr" Link "INCLUDE:graphics/graphint.h/Main" 22} *);
+
+@{b}   FUNCTION@{ub}
+	Removes a task from the vertical-blanking interval interrupt server
+	chain.
+
+@{b}   INPUTS@{ub}
+	i - pointer to an @{"Isrvstr" Link "INCLUDE:graphics/graphint.h/Main" 22} structure
+
+@{b}   SEE ALSO@{ub}
+	@{"AddTOF()" Link "AddTOF()"}, @{"<graphics/graphint.h>" Link "INCLUDE:graphics/graphint.h/Main" 0}
+
+@EndNode
+
+@Node "SetRexxVar()" "amiga.lib/SetRexxVar"
+
+@{b}   NAME@{ub}
+	SetRexxVar - Sets the value of a variable of a running ARexx program
+
+@{b}   SYNOPSIS@{ub}
+	error = SetRexxVar(message,varname,value,length)
+	D0                 A0      A1      D0    D1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} SetRexxVar(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *,char *,char *,ULONG);
+
+@{b}   FUNCTION@{ub}
+	This function will attempt to the the value of the symbol
+	varname in the ARexx script that sent the message.
+
+	While this function is new in the V37 amiga.lib, it is safe to
+	call it in all versions of the operating system.  It is also
+	PURE code, thus usable in resident/pure executables.
+
+@{b}   NOTE@{ub}
+	This stub is obsolete. Use @{"SetRexxVarFromMsg()" Link "rexxsyslib/SetRexxVarFromMsg()"} from
+	@{"clib/rexxsyslib_protos.h" Link "INCLUDE:clib/rexxsyslib_protos.h/Main" 0} instead. It is a rexxsyslib.library
+	function.
+
+	This is a stub in amiga.lib.  It is only available via amiga.lib.
+	The stub has two labels.  One, _SetRexxVar, takes the arguments
+	from the stack.  The other, SetRexxVar, takes the arguments in
+	registers.
+
+	This routine does a @{"CheckRexxMsg()" Link "CheckRexxMsg()"} on the message.
+
+@{b}   EXAMPLE@{ub}
+
+	char	*value;
+
+	/* @{"Message" Link "INCLUDE:exec/ports.h/Main" 45} is one from ARexx */
+	if (!SetRexxVar(rxmsg,"TheVar","25 Dollars",10))
+	{
+		/* The value of TheVar will now be "25 Dollars" */
+	}
+
+@{b}   INPUTS@{ub}
+	message		A message gotten from an ARexx script
+	varname		The name of the variable to set
+	value		A string that will be the new value of the variable
+	length		The length of the value string
+
+
+@{b}   RESULTS@{ub}
+	error		0 for success, otherwise an error code.
+			(Other codes may exists, these are documented)
+			3  == Insufficient Storage
+			9  == String too long
+			10 == invalid message
+
+@{b}   SEE ALSO@{ub}
+	SetRexxVar(), @{"CheckRexxMsg()" Link "CheckRexxMsg()"}
+
+@EndNode
+
+@Node "SetSuperAttrs()" "amiga.lib/SetSuperAttrs"
+
+@{b}   NAME@{ub}
+	SetSuperAttrs -- Invoke @{"OM_SET" Link "tabs_gc/OM_SET"} method on superclass with varargs.
+
+@{b}   SYNOPSIS@{ub}
+	result = SetSuperAttrs( cl, obj, tag, ... )
+
+	ULONG SetSuperAttrs( struct @{"IClass" Link "INCLUDE:intuition/classes.h/Main" 30} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, ULONG, ... );
+
+@{b}   FUNCTION@{ub}
+	Boopsi support function which invokes the @{"OM_SET" Link "tabs_gc/OM_SET"} method on the
+	superclass of the supplied class for the supplied object.  Allows
+	the ops_AttrList to be supplied on the stack (i.e. in a varargs
+	way).  The equivalent non-varargs function would simply be
+
+	    DoSuperMethod( cl, obj, @{"OM_SET" Link "tabs_gc/OM_SET"}, taglist, @{"NULL" Link "rexxsupport/NULL"} );
+
+@{b}   INPUTS@{ub}
+	cl - pointer to boopsi class whose superclass is to
+	    receive the @{"OM_SET" Link "tabs_gc/OM_SET"} message
+	obj - pointer to boopsi object
+	tag - list of tag-attribute pairs, ending in TAG_DONE
+
+@{b}   RESULT@{ub}
+	result - class and message-specific result or @{"NULL" Link "rexxsupport/NULL"} if either
+	    the cl or the obj pointer is @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   NOTES@{ub}
+	SetSuperAttrs() checks if the either the cl or obj pointer is
+	@{"NULL" Link "rexxsupport/NULL"} and will return immediately if this is the case, indicating
+	failure.
+
+	This function first appears in the V37 release of amiga.lib.
+	While it intrinsically does not require any particular release
+	of the system software to operate, it is designed to work with
+	the boopsi subsystem of Intuition, which was only introduced
+	in V36.
+
+@{b}   SEE ALSO@{ub}
+	@{"CoerceMethodA()" Link "CoerceMethodA()"}, @{"DoMethodA()" Link "DoMethodA()"}, @{"DoSuperMethodA()" Link "DoSuperMethodA()"}, @{"<intuition/classusr.h>" Link "INCLUDE:intuition/classusr.h/Main" 0}
+	ROM Kernel Manual boopsi section
+
+@EndNode
+
+@Node "sprintf()" "amiga.lib/sprintf"
+
+@{b}   NAME@{ub}
+	sprintf - format a C-like string into a string buffer.
+
+@{b}   SYNOPSIS@{ub}
+	sprintf(destination formatstring [,value [, values] ] );
+
+@{b}   FUNCTION@{ub}
+	Performs string formatting identical to printf, but directs the output
+	into a specific destination in memory. This uses the ROM version
+	of printf @{"(exec.library/RawDoFmt()" Link "exec/RawDoFmt()"}), so it is very small.
+
+	Assembly programmers can call this by placing values on the
+	stack, followed by a pointer to the formatstring, followed
+	by a pointer to the destination string.
+
+@{b}   INPUTS@{ub}
+	destination - the address of an area in memory into which the
+		      formatted output is to be placed.
+	formatstring - pointer to a null terminated string describing the
+	               desired output formatting (see printf() for a
+		       description of this string).
+	value(s) - numeric information to be formatted into the output
+		   stream.
+
+@{b}   SEE ALSO@{ub}
+	 printf(), @{"exec.library/RawDoFmt()" Link "exec/RawDoFmt()"}
+
+@EndNode
+
+@Node "TimeDelay()" "amiga.lib/TimeDelay"
+
+@{b}   NAME@{ub}
+	TimeDelay -- Return after a period of time has elapsed.
+
+@{b}   SYNOPSIS@{ub}
+	Error = TimeDelay( @{"Unit" Link "INCLUDE:exec/devices.h/Main" 30}, Seconds, MicroSeconds )
+	D0                 D0    D1       D2
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} TimeDelay( @{"LONG" Link "INCLUDE:exec/types.h/Main" 112}, ULONG, ULONG );
+
+@{b}   FUNCTION@{ub}
+	Waits for the period of time specified before returning to the
+	the caller.
+
+@{b}   INPUTS@{ub}
+	@{"Unit" Link "INCLUDE:exec/devices.h/Main" 30} -- timer.device unit to open for this command.
+	Seconds -- The seconds field of a timerequest is filled with
+	    this value. Check the documentation for what a particular
+	    timer.device unit expects there.
+	MicroSeconds -- The microseconds field of a timerequest is
+	    filled with this value. Check the documentation for what
+	    a particular timer.device units expects there.
+
+@{b}   RESULTS@{ub}
+	Error -- will be zero if all went well; otherwise, non-zero.
+
+@{b}   NOTES@{ub}
+	Two likely reasons for failures are invalid unit numbers or
+	no more free signal bits for this task.
+
+	While this function first appears in V37 amiga.lib, it works
+	on Kickstart V33 and higher.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/TR_ADDREQUEST" Link "timer/TR_ADDREQUEST"},
+	timer.device/TR_WAITUNTIL,
+	timer.device/WaitUnitl()
+
+@{b}   BUGS@{ub}
+
+@EndNode
+

@@ -1,0 +1,52 @@
+* Automatically generated header (sfdc 1.11f)! Do not edit!
+     IFND  LVO_RENDER_LIB_I
+LVO_RENDER_LIB_I   SET   1
+
+_LVOCreateRMHandlerA     EQU   -42
+_LVODeleteRMHandler     EQU   -48
+_LVOAllocRenderMem     EQU   -54
+_LVOFreeRenderMem     EQU   -60
+_LVOAllocRenderVec     EQU   -66
+_LVOFreeRenderVec     EQU   -72
+_LVOCreateHistogramA     EQU   -78
+_LVODeleteHistogram     EQU   -84
+_LVOQueryHistogram     EQU   -90
+_LVOAddRGB     EQU   -96
+_LVOAddRGBImageA     EQU   -102
+_LVOAddChunkyImageA     EQU   -108
+_LVOExtractPaletteA     EQU   -114
+_LVORenderA     EQU   -120
+_LVOPlanar2ChunkyA     EQU   -126
+_LVOChunky2RGBA     EQU   -132
+_LVOChunky2BitMapA     EQU   -138
+_LVOCreateScaleEngineA     EQU   -144
+_LVODeleteScaleEngine     EQU   -150
+_LVOScaleA     EQU   -156
+_LVOConvertChunkyA     EQU   -162
+_LVOCreatePenTableA     EQU   -168
+_LVOCreatePaletteA     EQU   -174
+_LVODeletePalette     EQU   -180
+_LVOImportPaletteA     EQU   -186
+_LVOExportPaletteA     EQU   -192
+_LVOCountRGB     EQU   -198
+_LVOBestPen     EQU   -204
+_LVOFlushPalette     EQU   -210
+_LVOSortPaletteA     EQU   -216
+_LVOAddHistogramA     EQU   -222
+_LVOScaleOrdinate     EQU   -228
+_LVOCreateMapEngineA     EQU   -246
+_LVODeleteMapEngine     EQU   -252
+_LVOMapRGBArrayA     EQU   -258
+_LVORGBArrayDiversityA     EQU   -264
+_LVOChunkyArrayDiversityA     EQU   -270
+_LVOMapChunkyArrayA     EQU   -276
+_LVOInsertAlphaChannelA     EQU   -282
+_LVOExtractAlphaChannelA     EQU   -288
+_LVOApplyAlphaChannelA     EQU   -294
+_LVOMixRGBArrayA     EQU   -300
+_LVOAllocRenderVecClear     EQU   -306
+_LVOCreateAlphaArrayA     EQU   -312
+_LVOMixAlphaChannelA     EQU   -318
+_LVOTintRGBArrayA     EQU   -324
+
+     ENDC  * LVO_RENDER_LIB_I

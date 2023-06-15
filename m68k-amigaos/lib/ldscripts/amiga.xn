@@ -12,10 +12,12 @@ SECTIONS
     *(.text)
     *(.text.main)
     *(.text*)
+    *(_*)
     *(.rodata*)
     *(.data.rel.ro*)
     *(.gnu.linkonce.t.*)
     *(.gnu.linkonce.r.*)
+    *(.gcc_except_table*)
     CONSTRUCTORS
     *(SORT_BY_NAME(.list___EH_FRAME*))
     *(SORT_BY_NAME(.list_*))
@@ -28,13 +30,13 @@ SECTIONS
   .data :
   {
     __sdata = .;
-    *(SORT_BY_NAME(.list___EH_FRAME*))
+    *(SORT_BY_NAME(.dlist___EH_FRAME_OBJECT*))
     *(SORT_BY_NAME(.dlist_*))
     *(.end_of_dlists)
+    *(.data.__EH_FRAME_OBJECT__*)
     *(.data)
     *(.data.*)
     *(.gnu.linkonce.d.*)
-    ___a4_init = 0x7ffe;
     __edata = .;
   }
   ___data_size = SIZEOF(.data);

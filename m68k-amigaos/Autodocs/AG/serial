@@ -1,0 +1,624 @@
+@database "serial"
+@master "AMIDEV:NDK/Autodocs/serial.doc"
+
+@Node Main "serial.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" AbortIO() " Link "AbortIO()"}
+    @{" BeginIO() " Link "BeginIO()"}
+    @{" CloseDevice() " Link "CloseDevice()"}
+    @{" CMD_CLEAR " Link "CMD_CLEAR"}
+    @{" CMD_FLUSH " Link "CMD_FLUSH"}
+    @{" CMD_READ " Link "CMD_READ"}
+    @{" CMD_RESET " Link "CMD_RESET"}
+    @{" CMD_START " Link "CMD_START"}
+    @{" CMD_STOP " Link "CMD_STOP"}
+    @{" CMD_WRITE " Link "CMD_WRITE"}
+    @{" OpenDevice() " Link "OpenDevice()"}
+    @{" SDCMD_BREAK " Link "SDCMD_BREAK"}
+    @{" SDCMD_QUERY " Link "SDCMD_QUERY"}
+    @{" SDCMD_SETPARAMS " Link "SDCMD_SETPARAMS"}
+@EndNode
+
+@Node "AbortIO()" "serial.device/AbortIO"
+
+@{b}   NAME@{ub}
+       AbortIO(ioRequest) -- abort an I/O request
+               A1
+
+@{b}   FUNCTION@{ub}
+      This is an exec.library call.
+
+      This function attempts to aborts a specified read or write request.
+      If the request is active, it is stopped immediately. If the request is
+      queued, it is painlessly removed.  The request will be returned
+      in the same way any completed request it.
+
+      After AbortIO(), you must generally do a @{"WaitIO()" Link "exec/WaitIO()"}.
+
+@{b}   INPUTS@{ub}
+      iORequest  -- pointer to the @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} Block that is to be aborted.
+
+@{b}   RESULTS@{ub}
+      io_Error -- if the Abort succeded, then io_Error will be
+           #IOERR_ABORTED (-2) and the request will be flagged as
+           aborted (bit 5 of io_Flags is set). If the Abort
+           failed, then the Error will be zero.
+
+@{b}   BUGS@{ub}
+       Previous to version 34, the serial.device would often hang when
+       aborting CTS/RTS handshake requests.  This was the cause of the
+       incorrect assumption that AbortIO() does not need to be followed
+       by a wait for a reply (or a @{"WaitIO()" Link "exec/WaitIO()"}).
+
+@EndNode
+
+@Node "BeginIO()" "serial.device/BeginIO"
+
+@{b}   NAME@{ub}
+       BeginIO(ioRequest),deviceNode -- start up an I/O process
+                A1        A6
+@{b}   FUNCTION@{ub}
+       This is a direct function call to the device.  It is intended for
+       more advanced programmers.  See exec's @{"DoIO()" Link "exec/DoIO()"} and @{"SendIO()" Link "exec/SendIO()"} for
+       the normal method of calling devices.
+
+       This function initiates a I/O request made to the serial
+       device. Other than read or write, the functions are performed
+       synchronously, and do not depend on any interrupt handling
+       logic (or it's associated discontinuities), and hence should
+       be performed as IO_QUICK.
+       With some exceptions, reads and writes are merely initiated by
+       BeginIO, and thusly return to the caller as begun, not completed.
+       Completion is signalled via the standard @{"ReplyMsg" Link "exec/ReplyMsg()"} routine.
+       Multiple requests are handled via FIFO queueing.
+       One exception to this non-QUICK handling of reads and writes
+       is for READS when:
+         - IO_QUICK bit is set
+         - There are no pending read requests
+         - There is already enough data in the input buffer to satisfy
+           this I/O @{"Request" Link "intuition/Request()"} immediately.
+       In this case, the IO_QUICK flag is not cleared, and the request
+       is completed by the time it returns to the caller. There is no
+       @{"ReplyMsg" Link "exec/ReplyMsg()"} or signal bit activity in this case.
+
+@{b}   INPUTS@{ub}
+       ioRequest  -- pointer to an I/O @{"Request" Link "intuition/Request()"} Block of size
+           io_ExtSerSize (see serial.i for size/definition),
+           containing a valid command in io_Command to process,
+           as well as the command's other required parameters.
+       deviceNode -- pointer to the "serial.device", as found in
+           the IO_DEVICE of the ioRequest.
+
+@{b}   RESULTS@{ub}
+       io_Error -- if the BeginIO succeded, then Error will be null.
+           If the BeginIO failed, then the Error will be non-zero.
+           I/O errors won't be reported until the io completes.
+
+@{b}   SEE ALSO@{ub}
+	@{"devices/serial.h" Link "INCLUDE:devices/serial.h/Main" 0}
+
+@EndNode
+
+@Node "CloseDevice()" "serial.device/CloseDevice"
+
+@{b}   NAME@{ub}
+       CloseDevice -- close the serial port
+
+@{b}   SYNOPSIS@{ub}
+       CloseDevice(deviceNode)
+                    A1
+@{b}   FUNCTION@{ub}
+       This is an exec call that terminates communication with the
+       serial device.  Upon closing, the device's input buffer is freed.
+
+       Note that all IORequests MUST be complete before closing.
+       If any are pending, your program must @{"AbortIO()" Link "AbortIO()"} then @{"WaitIO()" Link "exec/WaitIO()"}
+       to complete them.
+
+@{b}   INPUTS@{ub}
+       deviceNode - pointer to the device node, set by @{"Open" Link "printer/Open()"}
+
+@{b}   NOTES@{ub}
+       Starting with 43.4, serial.device will release resources
+       when closed, rather than when expunged.
+
+@{b}   SEE ALSO@{ub}
+       @{"serial.device/OpenDevice" Link "trackdisk/OpenDevice()"}
+
+@EndNode
+
+@Node "CMD_CLEAR" "serial.device/CMD_CLEAR"
+
+@{b}   NAME@{ub}
+       Clear -- clear the serial port buffers
+
+@{b}   FUNCTION@{ub}
+       This command resets the serial port's read buffer pointers.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_CLEAR
+
+@{b}   RESULTS@{ub}
+       Error -- If the Clear succeded, then io_Error will be null.
+                If the Clear failed, then the io_Error will be non-zero.
+
+@EndNode
+
+@Node "CMD_FLUSH" "serial.device/CMD_FLUSH"
+
+@{b}   NAME@{ub}
+       @{"Flush" Link "dos/Flush()"} -- clear all queued I/O requests for the serial port
+
+@{b}   FUNCTION@{ub}
+       This command purges the read and write request queues for the
+       serial device. @{"Flush" Link "dos/Flush()"} will not affect active requests.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_FLUSH
+
+@{b}   RESULTS@{ub}
+       Error -- if the @{"Flush" Link "dos/Flush()"} succeded, then io_Error will be null.
+           	 If the @{"Flush" Link "dos/Flush()"} failed, then the io_Error will be non-zero.
+
+@EndNode
+
+@Node "CMD_READ" "serial.device/CMD_READ"
+
+@{b}   NAME@{ub}
+       @{"Read" Link "dos/Read()"} -- read input from serial port
+
+@{b}   FUNCTION@{ub}
+       This command causes a stream of characters to be read in from
+       the serial port buffer.  The number of characters is specified
+       in io_Length.
+
+       The Query function can be used to check how many characters
+       are currently waiting in the serial port buffer.  If more characters
+       are requested than are currently available, the ioRequest
+       will be queued until it can be satisfied.
+
+
+       The best way to handle reads is to first Query to get the number
+       of characters currently in the buffer.  Then post a read request
+       for that number of characters (or the maximum size of your buffer).
+
+       If zero characters are in the buffer, post a request
+       for 1 character.  When at least one is ready, the device will return
+       it.  Now start over with another Query.
+
+       Before the program exits, it must be sure to @{"AbortIO()" Link "AbortIO()"} then @{"WaitIO()" Link "exec/WaitIO()"}
+       any outstanding ioRequests.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      A mn_ReplyPort is required
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_READ
+       io_Flags        If the IOB_QUICK bit is set, read will try
+                       to complete the IO quickly
+       io_Length       number of characters to receive.
+       io_Data         pointer to buffer
+
+@{b}   RESULTS@{ub}
+       Error -- if the @{"Read" Link "dos/Read()"} succeded, then io_Error will be null.
+           If the @{"Read" Link "dos/Read()"} failed, then io_Error will be non-zero.
+            io_Error will indicate problems such as parity mismatch,
+            break, and buffer overrun. io_Actual may always be
+            non-zero and the buffer may contain valid data.
+
+@{b}   SEE ALSO@{ub}
+       @{"serial.device/SDCMD_QUERY" Link "SDCMD_QUERY"}
+       @{"serial.device/SDCMD_SETPARAMS" Link "SDCMD_SETPARAMS"}
+
+@{b}   BUGS@{ub}
+       Having multiple outstanding read IORequests at any one time will
+       probably fail. Starting with 43.5, this should work.
+
+       Previous to 43.5 characters could be lost if a read terminated
+       early due to status or error conditions.
+
+       Due to hardware deficiency, the character immediately following
+       a break may be trashed or an extra character may be recognized
+       containing garbage.
+
+@{b}   NOTES@{ub}
+       Old documentation mentioned a mode where io_Length was set to -1
+       for 0-terminated reads.
+       Starting with 43.5, 0-terminated reads are supported. io_Actual
+       will include the trailing 0 byte.
+
+       @{"SDCMD_QUERY" Link "SDCMD_QUERY"} will report all bytes in the buffer. A CMD_READ
+       may still abort early to report status/error conditions that
+       occurred at a specific byte. Note that subsequent status/error
+       conditions are ignored until the current one has been "read".
+
+@EndNode
+
+@Node "CMD_RESET" "serial.device/CMD_RESET"
+
+@{b}   NAME@{ub}
+       Reset -- reinitializes the serial port
+
+@{b}   FUNCTION@{ub}
+       This command resets the serial port to its freshly initialized
+       condition. It aborts all I/O requests both queued and current,
+       relinquishes the current buffer, obtains a new default sized
+       buffer, and sets the port's flags and parameters to their
+       boot-up time default values. The functions places the reset
+       parameter values in the ioRequest block.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_RESET
+
+@{b}   RESULTS@{ub}
+       Error -- if the Reset succeded, then Error will be null.
+           If the Reset failed, then the Error will be non-zero.
+
+@EndNode
+
+@Node "CMD_START" "serial.device/CMD_START"
+
+@{b}   NAME@{ub}
+       Start -- restart paused I/O over the serial port
+
+@{b}   FUNCTION@{ub}
+       This function restarts all current I/O on the serial port by
+       sending an xON to the "other side", and submitting a "logical
+       xON" to "our side", if/when appropriate to current activity.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_START
+
+@{b}   RESULTS@{ub}
+
+@{b}   SEE ALSO@{ub}
+       @{"serial.device/CMD_STOP" Link "CMD_STOP"}
+
+@EndNode
+
+@Node "CMD_STOP" "serial.device/CMD_STOP"
+
+@{b}   NAME@{ub}
+       Stop -- pause all current I/O over the serial port
+
+@{b}   FUNCTION@{ub}
+       This command halts all current I/O on the serial port by
+       sending an xOFF to the "other side", and submitting a "logical
+       xOFF" to "our side", if/when appropriate to current activity.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_STOP
+
+@{b}   RESULTS@{ub}
+
+@{b}   SEE ALSO@{ub}
+       @{"serial.device/CMD_START" Link "CMD_START"}
+
+@EndNode
+
+@Node "CMD_WRITE" "serial.device/CMD_WRITE"
+
+@{b}   NAME@{ub}
+       @{"Write" Link "dos/Write()"} -- send output to serial port
+
+@{b}   FUNCTION@{ub}
+       This command causes a stream of characters to be written out
+       the serial port. The number of characters is specified in
+       io_Length, unless -1 is used, in which case output is sent until
+       a null(0x00) is encountered.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      must have mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      CMD_WRITE
+       io_Flags        Set IOF_QUICK to try quick I/O
+       io_Length       number of characters to transmit, or if set
+                       to -1 transmit until null encountered in buffer
+       io_Data         pointer to block of data to transmit
+
+@{b}   RESULTS@{ub}
+       Error -- if the @{"Write" Link "dos/Write()"} succeded, then io_Error will be null.
+           If the @{"Write" Link "dos/Write()"} failed, then the io_Error will be non-zero.
+
+@{b}   SEE ALSO@{ub}
+	@{"serial.device/SDCMD_SETPARAMS" Link "SDCMD_SETPARAMS"}
+
+@EndNode
+
+@Node "OpenDevice()" "serial.device/OpenDevice"
+
+@{b}   NAME@{ub}
+       OpenDevice -- @{"Request" Link "intuition/Request()"} an opening of the serial device.
+
+@{b}   SYNOPSIS@{ub}
+       error = OpenDevice("serial.device", unit, ioRequest, flags)
+       D0                  A0              D0    A1         D1
+
+       @{"BYTE" Link "INCLUDE:exec/types.h/Main" 118} OpenDevice(STRPTR, ULONG, struct IOExtSer *, ULONG);
+
+@{b}   FUNCTION@{ub}
+       This is an exec call.  Exec will search for the serial.device, and
+       if found, will pass this call on to the device.
+
+       Unless the shared-access bit (bit 5 of io_SerFlags) is set,
+       exclusive use is granted and no other access to that unit is
+       allowed until the owner closes it.  All the serial-specific fields
+       in the ioRequest are initialized to their most recent values (or
+       the @{"Preferences" Link "INCLUDE:intuition/preferences.h/Main" 57} default, for the first time open).
+
+       If support of 7-wire handshaking (i.e. RS232-C CTS/RTS protocol)
+       is required, use the @{"serial.device/SDCMD_SETPARAMS" Link "SDCMD_SETPARAMS"} command.
+       This feature should also be specified at inital OpenDevice() time.
+
+@{b}   INPUTS@{ub}
+       "serial.device" - pointer to literal string "serial.device"
+       unit            - Must be zero, or a user setable unit number.
+                         (This field is used by multiple port controllers)
+                         Zero specifies the default serial port.
+       ioRequest       - pointer to an ioRequest block of size io_ExtSerSize
+                         to be initialized by the serial.device.
+                         (see @{"devices/serial.h" Link "INCLUDE:devices/serial.h/Main" 0} for the definition)
+                         NOTE use of io_SerFlags (see FUNCTION above)
+               IMPORTANT: The ioRequest block MUST be of size io_ExtSerSize,
+                          and zeroed (with the exeptions as noted)!
+       flags           - Must be zero for future compatibility
+
+@{b}   RESULTS@{ub}
+       D0        - same as io_Error
+       io_Error  - If the @{"Open" Link "printer/Open()"} succeded, then io_Error will be null.
+                   If the @{"Open" Link "printer/Open()"} failed, then io_Error will be non-zero.
+       io_Device - A pointer to whatever device will handle the calls
+                   for this unit.  This pointer may be different depending
+                   on what unit is requested.
+
+@{b}   BUGS@{ub}
+       If 7-wire handshaking is specified, a timeout "feature" is enabled.
+       If the device holds off the computer for more than about 30-60
+       seconds, the device will return the write request with the error
+       SerErr_TimerErr.  Don't depend on this, however.  If you want a timeou
+t,
+       set up the timer.device and wait for either timer, or serial IO to
+       complete.
+
+       On open, the serial.device prior to 43.4 allocates the
+       misc.resource for the serial port. It does not return it
+       until the serial.device is expunged from memory. The device
+       should return it when no more openers exist. The bug has
+       been fixed starting with 43.4. This code can force a
+       specified device to try and expunge. Of course, if the
+       device is in use nothing will happen:
+
+
+
+       #include "exec/types.h"
+       #include "exec/execbase.h"
+       #include "proto/exec.h"
+
+       void FlushDevice(char *);
+       extern struct @{"ExecBase" Link "INCLUDE:exec/execbase.h/Main" 32} *SysBase;
+
+       void main()
+       {
+               FlushDevice("serial.device");   /* or parallel.device */
+       }
+
+       /*
+        * Attempts to flush the named device out of memory.
+        * If it fails, no status is returned; examination of
+        * the problem will reveal that information has no
+        * valid use after the @{"Permit()" Link "exec/Permit()"}.
+        */
+       void FlushDevice(name)
+       char  *name;
+       {
+       struct @{"Device" Link "INCLUDE:exec/devices.h/Main" 23} *result;
+
+           Forbid();
+           if( result=(struct @{"Device" Link "INCLUDE:exec/devices.h/Main" 23} *)FindName(&SysBase->DeviceList,name) )
+               RemDevice(result);
+           Permit();
+       }
+
+
+@{b}   SEE ALSO@{ub}
+       @{"serial.device/CloseDevice" Link "serial/CloseDevice()"}
+       @{"serial.device/SDCMD_SETPARAMS" Link "SDCMD_SETPARAMS"}
+       @{"devices/serial.h" Link "INCLUDE:devices/serial.h/Main" 0}
+
+@EndNode
+
+@Node "SDCMD_BREAK" "serial.device/SDCMD_BREAK"
+
+@{b}   NAME@{ub}
+       Break -- send a break signal over the serial line
+
+@{b}   FUNCTION@{ub}
+       This command sends a break signal (serial line held low for an
+       extended period) out the serial port. For the built-in port,
+       This is accomplished by setting the UARTBRK bit of regisrer ADKCON.
+
+       After a duration (user specifiable via setparams, default 250000
+       microseconds) the bit is reset and the signal discontinued.
+       If the QUEUEDBRK bit of io_SerFlags is set in the io_Request
+       block, the request is placed at the back of the write-request
+       queue and executed in turn. If the QUEUEDBRK bit is not set,
+       the break is started immediately, control returns to the
+       caller, and the timer discontinues the signal after the
+       duration is completed. Be aware that calling BREAK may
+	affect other commands such as ABORT, FLUSH, STOP, START, etc...
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         set by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      SDCMD_BREAK
+       io_Flags        set/reset IO_QUICK per above description
+
+@{b}   RESULTS@{ub}
+       Error -- if the Break succeded, then Error will be null.
+           If the Break failed, then the Error will be non-zero.
+
+@EndNode
+
+@Node "SDCMD_QUERY" "serial.device/SDCMD_QUERY"
+
+@{b}   NAME@{ub}
+       Query -- query serial port/line status
+
+@{b}   FUNCTION@{ub}
+       This command return the status of the serial port lines and
+       registers. The number of unread bytes in the serial device's
+       read buffer is shown in io_Actual.
+
+	The break send & received flags are cleared by a query, and
+	whenever a read @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16} is returned with a error
+	in io_Error.
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       preset by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         preset by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      SDCMD_QUERY
+
+@{b}   RESULTS@{ub}
+       io_Status        BIT  ACTIVE  FUNCTION
+
+              LSB       0    ---    reserved
+                        1    ---    reserved
+                        2    high   parallel "sel" on the A1000
+                                    On the A500 & A2000, "sel" is also
+                                    connected to the serial port's
+                                    "Ring Indicator".  Be cautious when
+                                    making cables.
+                        3    low    Data Set Ready
+                        4    low    Clear To Send
+                        5    low    Carrier Detect
+                        6    low    Ready To Send
+                        7    low    Data Terminal Ready
+              MSB       8    high   hardware overrun
+                        9    high   break sent (most recent output)
+                       10    high   break received (as latest input)
+                       11    high   transmit x-OFFed
+                       12    high   receive x-OFFed
+                    13-15    ---    reserved
+
+       io_Actual       set to count of unread input characters
+
+       io_Error -- Query will always succeded.
+
+@EndNode
+
+@Node "SDCMD_SETPARAMS" "serial.device/SDCMD_SETPARAMS"
+
+@{b}   NAME@{ub}
+       SetParams -- change parameters for the serial port
+
+@{b}   FUNCTION@{ub}
+       This command allows the caller to change parameters for the
+       serial device. Except for xON-xOFF enable/disable, it will
+       reject a setparams call if any reads or writes are active
+       or pending.
+          Note specifically:
+
+    1. Valid input for io_Baud is between 112 and 292000 baud inclusive;
+       asynchronous i/o above 32KB (especially on a busy system) may
+       be ambitious.
+    2. The EOFMODE and QUEUEDBRK bits of io_SerFlags can be set/reset
+       in the io_Rqst block without a call to SetParams. The SHARED
+       and 7WIRE bits of io_SerFlags can be used in @{"OpenDevice" Link "trackdisk/OpenDevice()"} calls.
+       ALL OTHER PARAMETERS CAN ONLY BE CHANGED BY THE SetParams
+       COMMAND.
+    3. RBufLen must be at least 64.  The buffer may be any multiple of
+	64 bytes.
+    4. If not used, io_ExtFlags MUST be set to zero.
+    5. xON-xOFF is by default enabled. The XDISABLED bit is the only
+       parameter that can be changed via a SetParams call while the
+       device is active. Note that this will return the value
+       SerErr_DevBusy in the io_Error field.
+
+	xON/xOFF handshaking is inappropriate for certain binary transfer
+	protocalls, such as Xmodem.  The binary data might contain the
+	xON (ASCII 17) and xOFF (ASCII 19) characters.
+
+    6. If trying to run MIDI, you should set the RAD_BOOGIE bit of
+       io_SerFlags to eliminate unneeded overhead. Specifically, this skips
+       checks for parity, x-OFF handling, character lengths other than
+       8 bits, and testing for a break signal. Setting RAD_BOOGIE will
+       also set the XDISABLED bit.
+       Note that writing data (that's already in MIDI format) at MIDI rates
+       is easily accomplished. Using this driver alone for MIDI reads may,
+       however, may not be reliable, due to MIDI timestamping requirements,
+       and possibility of overruns in a busy multitasking and/or display
+       intensive environment.
+    7. If you select mark or space parity (see io_ExtFlags in serial.h),
+       this will cause the SERB_PARTY_ON bit to be set, and the setting
+       of SERB_PARTY_ODD to be ignored.
+    8. For best results, set the RAD_BOOGIE flag whenever possible.  See
+	#6 for details.
+    9. Note that at this time parity is *not* calculated for the xON-xOFF
+	characters.  If you have a system that is picky about the parity of
+	these, you must set your own xON-xOFF characters in io_CtlChar.
+   10. 7WIRE (CTS/RTS) handshake is bi-directional.  The external side
+	is expected to drop CTS several character times before the external
+	buffer is full.  The Amiga will drop RTS several character times
+	before the Amiga's buffer is full.
+
+
+@{b}   IO REQUEST@{ub}
+       io_Message      mn_ReplyPort initialized
+       io_Device       preset by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Unit         preset by @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+       io_Command      SDCMD_SETPARAMS (0x0B)
+  			NOTE that the following fields are filled in by @{"Open" Link "printer/Open()"}
+                       to reflect the serial device's current configuration.
+       io_CtlChar      a longword containing byte values for the
+                       xON,xOFF,INQ,ACK fields (respectively)
+                       (INQ/ACK not used at this time)
+       io_RBufLen      length in bytes of input buffer
+  			NOTE that any change in buffer size causes the
+                       current buffer to be deallocated and a new,
+                       correctly sized one to be allocated. Thusly,
+                       the CONTENTS OF THE OLD BUFFER ARE LOST.
+       io_ExtFlags     additional serial flags (bitdefs in @{"devices/serial.h)" Link "INCLUDE:devices/serial.h/Main" 0}
+			mark & space parity may be specified here.
+       io_Baud         baud rate for reads AND writes. (See 1 above)
+       io_BrkTime      duration of break signal in MICROseconds
+       io_TermArray    ASCII descending-ordered 8-byte array of
+                       termination characters. If less than 8 chars
+                       used, fill out array w/lowest valid value.
+                       Terminators are checked only if EOFMODE bit of
+                       io_Serflags is set. (e.g. x512F040303030303 )
+       io_ReadLen      number of bits in read word (1-8) not including parity
+       io_WriteLen     number of bits in write word (1-8) not including parit
+y
+       io_StopBits     number of stop bits (0, 1 or 2)
+       io_SerFlags     see @{"devices/serial.h" Link "INCLUDE:devices/serial.h/Main" 0} for bit equates, NOTE that x00
+                       yields exclusive access, xON/OFF-enabled, no
+                       parity checking, 3-wire protocol and TermArray
+                       inactive.
+
+@{b}   RESULTS@{ub}
+       Error -- if the SetParams succeded, then Error will be null.
+           If the SetParams failed, then the Error will be non-zero.
+
+@{b}   SEE ALSO@{ub}
+	@{"exec/OpenDevice" Link "trackdisk/OpenDevice()"}
+
+@EndNode
+

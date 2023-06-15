@@ -1,0 +1,475 @@
+@database "cdplayer.guide"
+@node main
+
+ TABLE OF CONTENTS
+
+  @{" cdplayer.library/CDActive " link CDActive}
+  @{" cdplayer.library/CDCurrentTitle " link CDCurrentTitle}
+  @{" cdplayer.library/CDEject " link CDEject}
+  @{" cdplayer.library/CDGetVolume " link CDGetVolume}
+  @{" cdplayer.library/CDInfo " link CDInfo}
+  @{" cdplayer.library/CDJump " link CDJump}
+  @{" cdplayer.library/CDPlay " link CDPlay}
+  @{" cdplayer.library/CDReadTOC " link CDReadTOC}
+  @{" cdplayer.library/CDResume " link CDResume}
+  @{" cdplayer.library/CDSetVolume " link CDSetVolume}
+  @{" cdplayer.library/CDStop " link CDStop}
+  @{" cdplayer.library/CDTitleTime " link CDTitleTime}
+
+@endnode
+@node CDActive
+
+cdplayer.library/CDActive                           cdplayer.library/CDActive
+
+   NAME
+        CDActive -- liefert den Zustand des CD Laufwerks: steht oder spielt
+
+   SYNOPSIS
+        state = CDActive (io_ptr)
+                          A5
+
+        BOOL CDActive (struct IOStdReq *);
+
+   FUNCTION
+        Liefert bei einer Audioausgabe des Laufwerks TRUE, bei Stop oder
+        Pause FALSE.
+
+   INPUTS
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        state - TRUE wenn aktiv, sonst FALSE
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDCurrentTitle
+
+cdplayer.library/CDCurrentTitle               cdplayer.library/CDCurrentTitle
+
+   NAME
+        CDCurrentTitle -- liefert den aktuellen Titel
+
+   SYNOPSIS
+        title = CDCurrentTitle (io_ptr)
+                                A5
+
+        ULONG CDCurrentTitle (struct IOStdReq *);
+
+   FUNCTION
+        Liefert den aktuellen Titel, der gespielt wird.
+
+   INPUTS
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        title - Nummer des aktuellen Titels
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDEject
+
+cdplayer.library/CDEject                             cdplayer.library/CDEject
+
+   NAME
+        CDEject -- CD aus Laufwerk auswerfen
+
+   SYNOPSIS
+        result = CDEject (io_ptr)
+                          A5
+
+        BYTE CDEject (struct IOStdReq *);
+
+   FUNCTION
+        Wirft eine CD aus dem zum IORequest gehörigen Laufwerk aus. Nicht
+        alle Laufwerke unterstützen dieses Kommando, mein Toshiba macht es.
+
+   INPUTS
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDGetVolume
+
+cdplayer.library/CDGetVolume                     cdplayer.library/CDGetVolume
+
+   NAME
+        CDGetVolume -- aktuelle Lautstärke der Audiokanäle holen
+
+   SYNOPSIS
+        result = CDGetVolume (cd_vol, io_ptr)
+                              A0      A5
+
+        BYTE CDGetVolume (@{" struct CD_Volume * " link str_VOL}, struct IOStdReq *);
+
+   FUNCTION
+        Holt die aktuelle Laufstärke der Audiokanäle aus dem Laufwerk und
+        schreibt diese in einen @{" struct CD_Volume " link str_VOL}. 
+
+   INPUTS
+        cd_vol - Zeiger auf eine Struktur vom Typ @{" struct CD_Volume " link str_VOL}
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDInfo
+
+cdplayer.library/CDInfo                               cdplayer.library/CDInfo
+
+   NAME
+        CDInfo -- liefert Infos über das Gerät zum struct IOStdReq *
+
+   SYNOPSIS
+        result = CDInfo (cd_info, io_ptr)
+                         A0          A5
+
+        BYTE CDInfo (@{" struct CD_Info * " link str_INFO}, struct IOStdReq *);
+
+   FUNCTION
+        Liefert Infos über das Gerät, unter anderem Hersteller, Typ und
+        SCSI-Standart.
+
+   INPUTS
+        cd_info - Zeiger auf Struktur vom Typ @{" struct CD_Info " link str_INFO}
+        io_ptr  - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDJump
+
+cdplayer.library/CDJump                               cdplayer.library/CDJump
+
+   NAME
+        CDJump -- innerhalb eines Audiotracks die Position ändern
+
+   SYNOPSIS
+        result = CDJump (blocks, io_ptr)
+                         A0         A5
+
+        BYTE CDJump (LONG, struct IOStdReq *);
+
+   FUNCTION
+        CDJump wechselt die Position innerhalb eines Audiotracks. Dabei
+        spingt ein positiver Wert vorwärts, ein negativer Wert spult
+        zurück. 75 Blocks sind 1 Sekunde.
+
+   INPUTS
+        blocks - Anzahl der Blöcke, die gespult werden sollen
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDPlay
+
+cdplayer.library/CDPlay                               cdplayer.library/CDPlay
+
+   NAME
+        CDPlay -- startet mit der Wiedergabe eines Audiotracks
+
+   SYNOPSIS
+        result = CDPlay (starttrack, endtrack, io_ptr)
+                         A0             A1               A5
+
+        BYTE CDPlay (UBYTE, UBYTE, struct IOStdReq *);
+
+   FUNCTION
+        Startet die Wiedergabe eines oder einer Reihe von Audiotracks.
+        Dabei kann Start- und Endtrack definiert werden.
+
+   INPUTS
+        starttrack - erster Track, der gespielt werden soll
+        endtrack   - letzter Track
+        io_ptr     - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDReadTOC
+
+cdplayer.library/CDReadTOC                         cdplayer.library/CDReadTOC
+
+   NAME
+        CDReadTOC -- liest das Inhaltsverzeichniss der aktuellen CD
+
+   SYNOPSIS
+        result = CDReadTOC (toc, io_ptr)
+                            A0   A5
+
+        BYTE CDReadTOC (@{" struct CD_TOC * " link str_TOC}, struct IOStdReq *);
+
+   FUNCTION
+        Liest das Inhaltsverzeichniss der aktuellen CD und liefert so
+        Anzahl der Tracks, aktueller Titel, Typ der Tracks und deren
+        Adressen.
+
+   INPUTS
+        toc    - Zeiger auf eine Struktur vom Typ @{" struct CD_TOC " link str_TOC}
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDResume
+
+cdplayer.library/CDResume                           cdplayer.library/CDResume
+
+   NAME
+        CDResume -- schaltet zwischen Pause und Wiedergabe um
+
+   SYNOPSIS
+        result = CDResume (mode, io_ptr)
+                           A0         A5
+
+        BYTE CDResume (BOOL, struct IOStdReq *);
+
+   FUNCTION
+        Schaltet zwischen Pause und Wiedergabe eines Audiotracks um. Wenn
+        kein Track gespielt wird, hat die Funktion keine Wirkung.
+
+   INPUTS
+        mode   - TRUE für Abspielen und FALSE für Pause
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDSetVolume
+
+cdplayer.library/CDSetVolume                     cdplayer.library/CDSetVolume
+
+   NAME
+        CDSetVolume -- setzt die Lautstärke der Audiokanäle
+
+   SYNOPSIS
+        result = CDSetVolume (cd_vol, io_ptr)
+                              A0      A5
+
+        BYTE CDSetVolume (@{" struct CD_Volume * " link str_VOL}, IOStdReq *);
+
+   FUNCTION
+        Setzt die Lautstärke der Audiokanäle auf die in cd_vol übergebenen
+        Werte. So kann auch eine Balance-Einstellung ermöglicht werden.
+        (50% / 100%) usw.
+
+   INPUTS
+        cd_vol - Zeiger auf eine Struktur vom Typ @{" struct CD_Volume " link str_VOL}
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDStop
+
+cdplayer.library/CDStop                               cdplayer.library/CDStop
+
+   NAME
+        CDStop -- stoppt die Wiedergabe eines Audiotracks
+
+   SYNOPSIS
+        result = CDStop (io_ptr)
+                         A5
+
+        BYTE CDStop (struct IOStdReq *);
+
+   FUNCTION
+        Stoppt die Wiedergabe eines Audiotracks. Wenn gerade kein Track ge-
+        spielt wird, hat die Funktion keine Wirkung.
+
+   INPUTS
+        io_ptr - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+@endnode
+@node CDTitleTime
+
+cdplayer.library/CDTitleTime                     cdplayer.library/CDTitleTime
+
+   NAME
+        CDTitleTime -- liefert die aktuellen Zeitdaten über die CD
+
+   SYNOPSIS
+        result = CDTitleTime (cd_time, io_ptr)
+                              A0       A5
+
+        BYTE CDTitleTime (@{" struct CD_Time * " link str_TIME}, struct IOStdReq *);
+
+   FUNCTION
+        Füllt eine Struktur vom Typ CD_Time mit den Zeitdaten der aktuellen
+        CD. Dabei werden folgende Werte gesetzt:
+
+        @{" struct CD_Time " link str_TIME}
+        {
+                ULONG        cdt_TrackCurBase;
+                        // Adr: aktuelle Position Track
+                ULONG        cdt_TrackRemainBase;
+                        // Adr: Restspielzeit Track
+                ULONG        cdt_TrackCompleteBase;
+                        // Adr: Gesammspielzeit Track
+                ULONG        cdt_AllCurBase;
+                        // Adr: aktuelle Position CD
+                ULONG        cdt_AllRemainBase;
+                        // Adr: Restspielzeit CD
+                ULONG        cdt_AllCompleteBase;
+                        // Adr: Gesammtspielzeit CD
+        };
+
+        Aus den Adressen können nun mit den in cdplayer.h definierten Macros
+        BASE2MIN und BASE2SEC in Minuten/Sekunden umgerechnet werden,
+        BASE2MIN liefert die Minuten und BASE2SEC die Sekunden der Adresse.
+
+   INPUTS
+        cd_time - Zeiger auf eine Struktur vom Typ @{" struct CD_Time " link str_TIME}
+        io_ptr  - IORequest von OpenDevice()
+
+   RESULT
+        result - Fehlercode
+
+   BUGS
+        keine bekannt
+
+   EXAMPLE
+
+        [...]
+
+        @{" struct CD_Time " link str_TIME} CD_Time;
+
+        if (0 == (CDTitleTime (&CD_Time, CD_Request)))
+        {
+                // wir haben nun die aktuellen Daten der CD
+
+                Printf ("Gesammtspielzeit der CD ist %02d:%02d.\n",
+                        BASE2MIN (CD_Time.cdt_AllCompleteBase),
+                        BASE2SEC (CD_Time.cdt_AllCompleteBase));
+        }
+
+        [...]
+
+@endnode
+@node "Macros"
+
+Folgende Macros sind in "cdplayer.h" definiert:
+
+	#define BASE2MIN(val)	(val/75/60)
+	#define BASE2SEC(val)	((val/75)%60)
+
+	BASE2MIN() liefert aus einer CD-Adresse den entspechenden Minuten
+	Wert zurück.
+
+	BASE2SEC() liefert aus die restlichen Sekunden dieser Adresse.
+
+@endnode
+@node str_TOC "struct CD_TOC"
+
+struct CD_TOC
+{
+	UBYTE cdc_NumTracks;	/* Anzahl der Tracks auf CD */
+	UBYTE cdc_ActTitle;	/* aktueller Titel, nur nach TOC-Lesen aktuell */
+	UBYTE cdc_Flags[100];	/* Pro Track: 0 = Musik, 1 = Daten */
+	ULONG cdc_Addr[100];	/* Pro Track: Start-Adressen */
+};
+
+@endnode
+@node str_TIME "struct CD_Time"
+
+struct CD_Time
+{
+	ULONG	cdt_TrackCurBase;	/* Adr: aktuelle Position Track */
+	ULONG	cdt_TrackRemainBase;	/* Adr: Restspielzeit Track */
+	ULONG	cdt_TrackCompleteBase;	/* Adr: Gesammspielzeit Track */
+	ULONG	cdt_AllCurBase;		/* Adr: aktuelle Position CD */
+	ULONG	cdt_AllRemainBase;	/* Adr: Restspielzeit CD */
+	ULONG	cdt_AllCompleteBase;	/* Adr: Gesammtspielzeit CD */
+};
+
+@endnode
+@node str_VOL "struct CD_Volume"
+
+struct CD_Volume
+{
+	UBYTE	cdv_Chan0;	/* Lautstärke Kanal 0 (0-255) */
+	UBYTE	cdv_Chan1;	/* Lautstärke Kanal 1 (0-255) */
+	UBYTE	cdv_Chan2;	/* Lautstärke Kanal 2 (0-255) */
+	UBYTE	cdv_Chan3;	/* Lautstärke Kanal 3 (0-255) */
+};
+
+@endnode
+@node str_INFO "struct CD_Info"
+
+struct CD_Info
+{
+	BYTE  cdi_DeviceType;		/* @{" Gerätetyp " link DevType} */
+	BOOL  cdi_RemovableMedium;	/* kann Medium entnommen werden? */
+	BYTE  cdi_ANSIVersion;		/* @{" SCSI-Version " link SCSI} (0, 1, 2) */
+	UBYTE cdi_VendorID[9];		/* Herstellername */
+	UBYTE cdi_ProductID[17];	/* Product-ID */
+	UBYTE cdi_ProductRev[5];	/* Product-Revision */
+	UBYTE cdi_VendorSpec[21];	/* Vendor-Specification */
+};
+
+@endnode
+@node DevType "Devices"
+
+#define DIRECT_ACCESS_DEVICE	0	/* z.B. Festplatte */
+#define SEQ_ACCESS_DEVICE	1	/*      Streamer */
+#define PRINTER_DEVICE		2	/*      Drucker */
+#define PROCESSOR_DEVICE	3
+#define WRITE_ONCE_DEVICE	4
+#define CDROM_DEVICE		5	/*      CDRom */
+#define SCANNER_DEVICE		6	/*      Scanner */
+#define OPTICAL_MEMORY_DEVICE	7
+#define MEDIUM_CHANGER_DEVICE	8
+#define COMMUNICATION_DEVICE	9
+
+@endnode
+@node SCSI "SCSI"
+
+#define UNKNOWN		0
+#define SCSI_1		1
+#define SCSI_2		2
+
+@endnode
+

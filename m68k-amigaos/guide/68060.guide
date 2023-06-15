@@ -1,0 +1,96 @@
+@database "68060"
+@master "VIF:Mu/Mu680x0Libs/Autodocs/68060.doc"
+
+@Node Main "68060.doc"
+    @{" --Background-- " Link "--Background--"}
+    @{" FPUControl() " Link "FPUControl()"}
+@EndNode
+
+@Node "--Background--" "68060.library/--Background--"
+
+@{b}    PURPOSE@{ub}
+
+	This is the support library for 68060 based Amigas. Its purposes
+	are manifold:
+
+	- Fixes and workarounds for several programs that typically appear
+	  on 68060 based systems, mainly cache related, and related to
+	  the different FPU of the FPU.
+	- Replacement functions for exec.library CPU related functions.
+	- Replacement of the exec scheldurer for the FPU support.
+	- Loading and initialization of the FPSP68060 motorola software
+	  module for emulation of FPU instructions not natively supported
+	  by the 68060 internal FPU.
+	- Loading and setup of the emulated integer instructions of the 
+	  68060.
+	- Setup of the 68060 MMU and related functions of the exec library.
+	- Workarounds for possible bugs of the 68060.
+	
+	The last step is not done by the 68060.library directly but by the
+	mmu.library which is loaded by the 68060.library on startup.
+
+	Furthermore, this library provides user-callable functions. However,
+	even though they are documented, they shouldn't be called directly.
+	The recommended calling mechanism is not by using this library 
+	directly, but by calling the same vector of the 680x0.library which
+	does the same independent of the CPU installed in your system.
+
+@EndNode
+
+@Node "FPUControl()" "68060.library/FPUControl"
+
+@{b}    NAME@{ub}
+	FPUControl      -   control the generation of FPU exceptions
+
+@{b}    SYNOPSIS@{ub}
+	oldflags = FPUControl ( flags , mask );
+	d0			 d0      d1
+
+	ULONG FPUControl ( ULONG , ULONG );
+
+@{b}    FUNCTION@{ub}
+	This function disables or enables various exceptions the 68060
+	FPU might generate. The purpose of this function is mainly to
+	enable workarounds for badly written software.
+
+@{b}    INPUTS@{ub}
+	flags	-	A ULONG bit mask of the exceptions to disable. A
+			set bit disables the corresponding exception.
+	mask	-	A mask longword of the flags that are to be changed.
+			A set bit indicates that the corresponding bit in
+			flags mask is valid.
+
+	The following bits are currently defined:
+
+	FPUCtrlB_BSUN   0L      Disable the branch or set on unordered 
+				exception.
+	FPUCtrlB_INEX   1L      Disable the inexact result exception.
+	FPUCtrlB_DIVZ   2L      Disable the divide by zero exception.
+	FPUCtrlB_UNFL   3L      Disable the underflow exception.
+	FPUCtrlB_OVFL   4L      Disable the overflow exception.
+	FPUCtrlB_SNAN   5L      Disable the signalling NAN exception.
+	FPUCtrlB_OPERR  6L      Disable the operand error.
+
+@{b}    RESULTS@{ub}
+	the old settings of the exception mask.
+
+@{b}    NOTES@{ub}
+	This function should not be called directly. It is called indirectly
+	by the corresponding library function of the 680x0.library.
+
+	This function does not alter the FPU status at all, it does not
+	even touch the FPU. All it does is that it sets certain control
+	bits in the 68060 library base which are interpreted by the
+	exception vectors installed by this library.
+
+	Therefore, this library vector does nothing if someone altered the
+	FPU exception vectors manually.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	libraries/68060.h, libraries/680x0.h,
+	the Motorola 68060 manual.
+
+@EndNode
+

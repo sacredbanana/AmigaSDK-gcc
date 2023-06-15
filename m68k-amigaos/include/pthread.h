@@ -92,8 +92,8 @@ struct __OpaqueSemaphore {
 // POSIX pthread types
 //
 
-typedef unsigned int pthread_t;
-typedef unsigned int pthread_key_t;
+typedef __uint32_t pthread_t;
+typedef __uint32_t pthread_key_t;
 
 //
 // POSIX thread attribute values
@@ -238,8 +238,8 @@ typedef struct pthread_barrierattr pthread_barrierattr_t;
 
 struct pthread_barrier
 {
-	unsigned int curr_height;
-	unsigned int total_height;
+	__uint32_t curr_height;
+	__uint32_t total_height;
 	pthread_cond_t breeched;
 	pthread_mutex_t lock;
 };

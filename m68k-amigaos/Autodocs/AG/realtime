@@ -1,0 +1,488 @@
+@database "realtime"
+@master "AMIDEV:NDK/Autodocs/realtime.doc"
+
+@Node Main "realtime.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" CreatePlayer() " Link "CreatePlayer()"}
+    @{" DeletePlayer() " Link "DeletePlayer()"}
+    @{" ExternalSync() " Link "ExternalSync()"}
+    @{" FindConductor() " Link "FindConductor()"}
+    @{" GetPlayerAttrsA() " Link "GetPlayerAttrsA()"}
+    @{" LockRealTime() " Link "LockRealTime()"}
+    @{" NextConductor() " Link "NextConductor()"}
+    @{" SetConductorState() " Link "SetConductorState()"}
+    @{" SetPlayerAttrs() " Link "SetPlayerAttrs()"}
+    @{" UnlockRealTime() " Link "UnlockRealTime()"}
+@EndNode
+
+@Node "CreatePlayer()" "realtime.library/CreatePlayer"
+
+@{b}   NAME@{ub}
+	CreatePlayerA -- create a player and link it to a conductor. (V37)
+	CreatePlayer -- varargs stub for CreatePlayerA(). (V37)
+
+@{b}   SYNOPSIS@{ub}
+	player = CreatePlayerA(tagList);
+	D0                     A0
+
+	struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *CreatePlayerA(struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	player = CreatePlayer(firstTag, ...);
+
+	struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *CreatePlayer(Tag, ...);
+
+@{b}   FUNCTION@{ub}
+	Creates a player structure with the desired attributes.
+
+@{b}   INPUTS@{ub}
+	tagList - pointer to an array of tags providing optional extra
+		  parameters, or @{"NULL" Link "rexxsupport/NULL"}
+
+@{b}   TAGS@{ub}
+	PLAYER_Name (STRPTR) - name of the player (generally the
+			application's name). Default is no name. (V37)
+
+	PLAYER_Hook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *) - function to call when time changes
+			occur. Default is no function. The @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} is called
+			with:
+
+				A0 - address of @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} structure
+				A1 - message, currently @{"pmTime" Link "INCLUDE:libraries/realtime.h/Main" 165} or @{"pmState" Link "INCLUDE:libraries/realtime.h/Main" 172}
+		                A2 - address of @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} structure
+
+			Note that your hook function is not necessarily called
+			TICK_FREQ times per second. This is the maximum number
+			of times it can be called. (V37)
+
+	PLAYER_Priority (BYTE) - priority for the player, from -128 to +127.
+			Default is 0. (V37)
+
+	PLAYER_Conductor (STRPTR) - name of the conductor to link with. If
+			this conductor doesn't exist, it is created
+			automatically. If ~0 is passed, creates a private
+			conductor. (V37)
+
+	PLAYER_Ready (BOOL) - set/clear the "ready" flag. Default is FALSE.
+			(V37)
+
+	PLAYER_AlarmTime (LONG) - sets this player's alarm time, and the
+			PLAYERF_ALARMSET flag. (V37)
+
+	PLAYER_Alarm (BOOL) - if TRUE sets the PLAYERF_ALARMSET flag, FALSE
+			clears the flag. Default is FALSE. (V37)
+
+	PLAYER_AlarmSigTask (struct @{"Task" Link "INCLUDE:exec/tasks.h/Main" 23} *) - task to signal on notify or
+			alarm. Default is no task. Having no task automatically
+			forces the PLAYERF_ALARMSET flag off. (V37)
+
+	PLAYER_AlarmSigBit (BYTE) - signal bit to use on alarm or -1 to
+			disable. Default is -1. Having a signal bit of -1
+			automatically forces the PLAYERF_ALARMSET flag
+			off. (V37)
+
+	PLAYER_Quiet (BOOL) - when TRUE, this player is ignored. Mainly
+			used by external sync applications. Default is FALSE.
+			(V37)
+
+	PLAYER_UserData (VOID *) - sets the player's UserData value.
+			Default is @{"NULL" Link "rexxsupport/NULL"}. (V37)
+
+	PLAYER_ID (UWORD) - sets the player's ID value. Default is 0. (V37)
+
+	PLAYER_Conducted (BOOL) - if TRUE sets the PLAYERF_CONDUCTED flag,
+			FALSE clears the flag. Default is FALSE. (V37)
+
+	PLAYER_ExtSync (BOOL) - if TRUE, attempts to become external sync
+			source. (V37)
+
+	PLAYER_ErrorCode (LONG *) - optional pointer to a longword which
+			will receive an error code whenever this function
+			fails. Possible error values currently include:
+			  RTE_NOMEMORY - memory allocation failed
+			  RTE_NOTIMER  - timer (CIA) allocation failed
+
+@{b}   RESULTS@{ub}
+	player - a pointer to a @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} structure on success or @{"NULL" Link "rexxsupport/NULL"} on
+		 failure. When @{"NULL" Link "rexxsupport/NULL"} is returned, an error code can be returned
+		 in the longword variable pointed to by the optional
+		 PLAYER_ErrorCode tag.
+
+@{b}   SEE ALSO@{ub}
+	@{"DeletePlayer()" Link "DeletePlayer()"}, GetPlayerAttrs(), @{"SetPlayerAttrs()" Link "SetPlayerAttrs()"}
+
+@EndNode
+
+@Node "DeletePlayer()" "realtime.library/DeletePlayer"
+
+@{b}   NAME@{ub}
+	DeletePlayer -- delete a player. (V37)
+
+@{b}   SYNOPSIS@{ub}
+	DeletePlayer(player);
+	             A0
+
+	VOID DeletePlayer(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *);
+
+@{b}   FUNCTION@{ub}
+	Deletes the specified player.
+
+	Flushes the conductor that the player was connected to if this
+	is the last player connected to that conductor.
+
+@{b}   INPUTS@{ub}
+	player - @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} structure to delete, as allocated by
+		 @{"CreatePlayer()" Link "CreatePlayer()"}. May be @{"NULL" Link "rexxsupport/NULL"}, in which case this function
+		 does nothing.
+
+@{b}   SEE ALSO@{ub}
+	@{"CreatePlayer()" Link "CreatePlayer()"}
+
+@EndNode
+
+@Node "ExternalSync()" "realtime.library/ExternalSync"
+
+@{b}   NAME@{ub}
+	ExternalSync -- provide external source clock for a player's
+			conductor. (V37)
+
+@{b}   SYNOPSIS@{ub}
+	result = ExternalSync(player, minTime, maxTime);
+	D0		      A0      D0       D1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} ExternalSync(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112}, LONG);
+
+@{b}   FUNCTION@{ub}
+	Allows external applications to constrain conductor time between
+	minTime and maxTime, with the restraint that time can never run
+	backwards. Does nothing if the given player is not the
+	current External Sync source.
+
+@{b}   INPUTS@{ub}
+	player - player referencing the conductor to change
+	minTime, maxTime - time constraints
+
+@{b}   RESULTS@{ub}
+	result - TRUE if everything went OK, FALSE if the player is not the
+		 current sync source or there is no conductor for the player.
+
+@EndNode
+
+@Node "FindConductor()" "realtime.library/FindConductor"
+
+@{b}   NAME@{ub}
+	FindConductor -- find a conductor by name. (V37)
+
+@{b}   SYNOPSIS@{ub}
+	conductor = FindConductor(name);
+	D0			  A0
+
+	struct @{"Conductor" Link "INCLUDE:libraries/realtime.h/Main" 56} *FindConductor(STRPTR);
+
+@{b}   FUNCTION@{ub}
+	Returns the conductor with the given name or @{"NULL" Link "rexxsupport/NULL"} if not found.
+
+	The conductor list must be locked before calling this function. This
+	is done by calling LockRealTime(RT_CONDUCTORS).
+
+@{b}   INPUTS@{ub}
+	name - name of conductor to find.
+
+@{b}   RESULTS@{ub}
+	conductor - pointer to a @{"Conductor" Link "INCLUDE:libraries/realtime.h/Main" 56} structure, or @{"NULL" Link "rexxsupport/NULL"} if not found.
+
+@{b}   SEE ALSO@{ub}
+	@{"NextConductor()" Link "NextConductor()"}, @{"LockRealTime()" Link "LockRealTime()"}, @{"UnlockRealTime()" Link "UnlockRealTime()"}
+
+@EndNode
+
+@Node "GetPlayerAttrsA()" "realtime.library/GetPlayerAttrsA"
+
+@{b}   NAME@{ub}
+	GetPlayerAttrsA -- get the attributes of a player. (V37)
+	GetPlayerAttrs -- varargs stub for GetPlayerAttrsA(). (V37)
+
+@{b}   SYNOPSIS@{ub}
+	numProcessed = GetPlayerAttrsA(player, tagList);
+	D0                             A0      A1
+
+	ULONG GetPlayerAttrsA(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	numProcessed = GetPlayerAttrs(player, firstTag, ...);
+
+	ULONG GetPlayerAttrs(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...);
+
+@{b}   FUNCTION@{ub}
+	Retrieves the attributes of the specified player, according to the
+	attributes chosen in the tag list. For each entry in the tag list,
+	ti_Tag identifies the attribute, and ti_Data is a pointer to
+	the longword variable where you wish the result to be stored.
+
+@{b}   INPUTS@{ub}
+	player - pointer to the player in question. May be @{"NULL" Link "rexxsupport/NULL"}, in which case
+	         this function returns 0
+	tagList - pointer to @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} list.
+
+@{b}   TAGS@{ub}
+	PLAYER_Name (STRPTR) - return the name of the player, or @{"NULL" Link "rexxsupport/NULL"}
+			if this is an unnamed player. (V37)
+
+	PLAYER_Hook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *) - returns a pointer to the current
+			function called when time changes occur, or @{"NULL" Link "rexxsupport/NULL"}
+			if no function is currently installed. (V37)
+
+	PLAYER_Priority (BYTE) - returns the priority for the player. (V37)
+
+	PLAYER_Conductor (STRPTR) - returns the name of the conductor this
+			player is currently linked with, or @{"NULL" Link "rexxsupport/NULL"} if the
+			player is not linked to a conductor. (V37)
+
+	PLAYER_Ready (BOOL) - gets the state of the "ready" flag. (V37)
+
+	PLAYER_AlarmTime (LONG) - gets the current alarm time for this
+			player. (V37)
+
+	PLAYER_Alarm (BOOL) - returns TRUE if this player's alarm is
+			currently on. (V37)
+
+	PLAYER_AlarmSigTask (struct @{"Task" Link "INCLUDE:exec/tasks.h/Main" 23} *) - returns a pointer to the task to
+			signal on notify or alarm, or @{"NULL" Link "rexxsupport/NULL"} if there is no
+			task to signal. (V37)
+
+	PLAYER_AlarmSigBit (BYTE) - returns the signal bit to use on alarm or
+			-1 if no signal. (V37)
+
+	PLAYER_Quiet (BOOL) - returns TRUE if this player is currently being
+			ignored. FALSE if not. (V37)
+
+	PLAYER_UserData (VOID *) - returns the current value of this player's
+			UserData. (V37)
+
+	PLAYER_ID (UWORD) - gets the value of this player's ID. (V37)
+
+	PLAYER_Conducted (BOOL) - returns TRUE if this player is currently
+			being conducted. (V37)
+
+	PLAYER_ExtSync (BOOL) - returns TRUE if this player is the current
+			external sync source. (V37)
+
+@{b}   RESULTS@{ub}
+	numProcessed - the number of attributes successfully filled in.
+
+@{b}   SEE ALSO@{ub}
+	@{"CreatePlayer()" Link "CreatePlayer()"}, @{"SetPlayerAttrs()" Link "SetPlayerAttrs()"}
+
+@EndNode
+
+@Node "LockRealTime()" "realtime.library/LockRealTime"
+
+@{b}   NAME@{ub}
+	LockRealTime -- prevent other tasks from changing internal structures.
+			(V37)
+
+@{b}   SYNOPSIS@{ub}
+	lockHandle = LockRealTime(lockType);
+	D0                        D0
+
+	@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} LockRealTime(ULONG);
+
+@{b}   FUNCTION@{ub}
+	This routine will lock the internal sempahores in the RealTime library.
+	If they are already locked by another task, this routine will wait
+	until they are free.
+
+@{b}   INPUTS@{ub}
+	lockType - the internal list to lock. Only RT_CONDUCTORS is
+		   currently defined.
+
+@{b}   RESULT@{ub}
+	handle - if lockType is valid, returns a value that must be passed
+		 later to @{"UnlockRealTime()" Link "UnlockRealTime()"} to unlock the list. Returns @{"NULL" Link "rexxsupport/NULL"}
+		 if passed an invalid lock type.
+
+@{b}   SEE ALSO@{ub}
+	@{"UnlockRealTime()" Link "UnlockRealTime()"}
+
+@EndNode
+
+@Node "NextConductor()" "realtime.library/NextConductor"
+
+@{b}   NAME@{ub}
+	NextConductor -- return the next conductor on realtime.library's
+			 conductor list. (V37)
+
+@{b}   SYNOPSIS@{ub}
+	conductor = NextConductor(previousConductor);
+	D0			  A0
+
+	struct @{"Conductor" Link "INCLUDE:libraries/realtime.h/Main" 56} *NextConductor(struct @{"Conductor" Link "INCLUDE:libraries/realtime.h/Main" 56} *);
+
+@{b}   FUNCTION@{ub}
+	Returns the next conductor on realtime.library's conductor list. If
+	previousConductor is @{"NULL" Link "rexxsupport/NULL"}, returns the first conductor in the list.
+	Returns @{"NULL" Link "rexxsupport/NULL"} if no more conductors.
+
+	The conductor list must be locked before calling this function. This
+	is done by calling LockRealTime(RT_CONDUCTORS).
+
+@{b}   INPUTS@{ub}
+	previousConductor - previous conductor or @{"NULL" Link "rexxsupport/NULL"} to get first conductor.
+
+@{b}   RESULTS@{ub}
+	conductor - next conductor on the list, or @{"NULL" Link "rexxsupport/NULL"} if no more.
+
+@{b}   SEE ALSO@{ub}
+	@{"FindConductor()" Link "FindConductor()"}, @{"LockRealTime()" Link "LockRealTime()"}, @{"UnlockRealTime()" Link "UnlockRealTime()"}
+
+@EndNode
+
+@Node "SetConductorState()" "realtime.library/SetConductorState"
+
+@{b}   NAME@{ub}
+	SetConductorState -- change the play state of a player's
+			     conductor. (V37)
+
+@{b}   SYNOPSIS@{ub}
+	result = SetConductorState(player, state, time);
+	D0			   A0	   D0     D1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} SetConductorState(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *, ULONG, LONG);
+
+@{b}   FUNCTION@{ub}
+	Changes the play state of the conductor referenced by the
+	player. The states can be CONDSTATE_STOPPED, CONDSTATE_PAUSED,
+	CONDSTATE_LOCATE, CONDSTATE_RUNNING, or the special value
+	CONDSTATE_METRIC which asks the highest priority conducted node
+	to do a CONDSTATE_LOCATE, or the special value CONDSTATE_SHUTTLE
+	which informs the players that the clock value is changing, but the
+	clock isn't actually running. Note that going from CONDSTATE_PAUSED
+	to CONDSTATE_RUNNING does not reset the cdt_ClockTime of the
+	conductor.
+
+@{b}   INPUTS@{ub}
+	player - player referencing the conductor to change
+	state - new play state of conductor
+	time - start time offset in realtime.library heartbeat units
+
+@{b}   RESULTS@{ub}
+	result - 0 if everything went OK, or a realtime.library error code
+		 if an error occured. These currently include RTE_PLAYING
+		 and RTE_NOCONDUCTOR.
+
+@EndNode
+
+@Node "SetPlayerAttrs()" "realtime.library/SetPlayerAttrs"
+
+@{b}   NAME@{ub}
+	SetPlayerAttrsA -- set the attributes of a player. (V37)
+	SetPlayerAttrs -- varargs stub for SetPlayerAttrsA(). (V37)
+
+@{b}   SYNOPSIS@{ub}
+	result = SetPlayerAttrsA(player, tagList);
+	D0                       A0      A1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} SetPlayerAttrsA(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	result = SetPlayerAttrs(player,firstTag, ...);
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} SetPlayerAttrs(struct @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...);
+
+@{b}   FUNCTION@{ub}
+	Changes the attributes of the specified player, according to the
+	attributes chosen in the tag list. If an attribute is not provided
+	in the tag list, its value remains unchanged.
+
+@{b}   INPUTS@{ub}
+	player - player to set the attributes of.
+	tagList - pointer to an array of tags specifying the attributes
+		  to change, or @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   TAGS@{ub}
+	PLAYER_Name (STRPTR) - name of the player (generally the
+			application's name). (V37)
+
+	PLAYER_Hook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *) - function to call when time changes
+			occur. The @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} is called
+			with:
+
+				A0 - address of @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} structure
+				A1 - message, currently @{"pmTime" Link "INCLUDE:libraries/realtime.h/Main" 165} or @{"pmState" Link "INCLUDE:libraries/realtime.h/Main" 172}
+		                A2 - address of @{"Player" Link "INCLUDE:libraries/realtime.h/Main" 104} structure
+
+			Note that your hook function is not necessarily called
+			TICK_FREQ times per second. This is the maximum number
+			of times it can be called. (V37)
+
+	PLAYER_Priority (BYTE) - priority for the player, from -128 to +127.
+			(V37)
+
+	PLAYER_Conductor (STRPTR) - name of the conductor to link with. If
+			@{"NULL" Link "rexxsupport/NULL"}, delink from conductor. (V37)
+
+	PLAYER_Ready (BOOL) - set/clear the "ready" flag. (V37)
+
+	PLAYER_AlarmTime (LONG) - sets this player's alarm time, and the
+			PLAYERF_ALARMSET flag. (V37)
+
+	PLAYER_Alarm (BOOL) - if TRUE sets the PLAYERF_ALARMSET flag, FALSE
+			clears the flag. (V37)
+
+	PLAYER_AlarmSigTask (struct @{"Task" Link "INCLUDE:exec/tasks.h/Main" 23} *) - task to signal on notify or
+			alarm. Setting this to @{"NULL" Link "rexxsupport/NULL"} automatically clears the
+			PLAYERF_ALARMSET flag. (V37)
+
+	PLAYER_AlarmSigBit (BYTE) - signal bit to use on alarm or -1 to
+			disable. Setting this to -1 automatically clears the
+			PLAYERF_ALARMSET. (V37)
+
+	PLAYER_Quiet (BOOL) - when TRUE, this player is ignored. Mainly
+			used by external sync applications. (V37)
+
+	PLAYER_UserData (VOID *) - sets this player's UserData value. (V37)
+
+	PLAYER_ID (UWORD) - sets this player's ID value. (V37)
+
+	PLAYER_Conducted (BOOL) - if TRUE sets the PLAYERF_CONDUCTED flag,
+			FALSE clears the flag. (V37)
+
+	PLAYER_ExtSync (BOOL) - if TRUE, attempt to become external sync
+			source. If FALSE, release external sync. (V37)
+
+	PLAYER_ErrorCode (LONG *) - optional pointer to a longword which
+			will receive an error code whenever this function
+			fails. Possible error values currently include:
+			  RTE_NOMEM   - memory allocation failed
+			  RTE_NOTIMER - timer (CIA) allocation failed
+
+@{b}   RESULTS@{ub}
+	result - TRUE if all went well, FALSE if there was an error.
+		 When an error occurs, an error code can be returned
+		 in the longword variable pointed to by the optional
+		 PLAYER_ErrorCode tag.
+
+@{b}   SEE ALSO@{ub}
+	@{"CreatePlayer()" Link "CreatePlayer()"}, @{"DeletePlayer()" Link "DeletePlayer()"}, GetPlayerAttrs()
+
+@EndNode
+
+@Node "UnlockRealTime()" "realtime.library/UnlockRealTime"
+
+@{b}   NAME@{ub}
+	UnlockRealTime -- unlock internal lists. (V37)
+
+@{b}   SYNOPSIS@{ub}
+	UnlockRealTime(lockHandle);
+	               A0
+
+	VOID UnlockRealTime(APTR);
+
+@{b}   FUNCTION@{ub}
+	Undoes the effects of @{"LockRealTime()" Link "LockRealTime()"}.
+
+@{b}   INPUTS@{ub}
+	lockHandle - value returned by @{"LockRealTime()" Link "LockRealTime()"}. May be @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   SEE ALSO@{ub}
+	@{"LockRealTime()" Link "LockRealTime()"}
+
+@EndNode
+

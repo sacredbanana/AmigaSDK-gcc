@@ -1,0 +1,106 @@
+TABLE OF CONTENTS
+
+tapedeck_gc/--datasheet--
+tapedeck_gc/--datasheet--                           tapedeck_gc/--datasheet--
+
+    NAME
+        tapedeck.gadget -- tape deck controller class
+
+    SUPERCLASS
+        gadgetclass
+
+    REQUIRES
+        propgclass, frameiclass
+
+    DESCRIPTION
+        The tape deck controller class enables the user to select from
+        a set of buttons much like those found on a tape deck or DVD
+        player. There are two types of tape deck controller objects that
+        may be created depending on the TDECK_Tape attribute.
+
+        The default tape deck object has five buttons: rewind, play,
+        fast forward, stop and pause. The animation mode tape deck has
+        four buttons: rewind, play, fast forward and a frame control
+        slider.
+
+    METHODS
+        OM_NEW -- Create the tapedeck.gadget object. Passed to superclass.
+
+        OM_DISPOSE -- Destroy the gadget and then pass to superclass.
+
+        OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+        OM_SET -- Set object attributes. Passed to superclass first.
+
+        OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+        GM_HITTEST -- Determine if gadget was hit. Passed to image class.
+
+        GM_RENDER -- Render the gadget with state. Passed to image class.
+
+        GM_GOACTIVE -- Activate the gadget.
+
+        GM_GOINACTIVE -- Deactivate the gadget.
+
+        GM_HANDLEINPUT -- Handle input while active.
+
+        GM_LAYOUT -- Calculate relative gadget coordinates.
+
+        GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+            GDOMAIN_MAXIMUM dimensions. (V47)
+
+        All other methods are passed to the superclass.
+
+    ATTRIBUTES
+        GA_HintInfo (CONST_STRPTR)
+            Specify the text to use as the hint info for this gadget.
+            You can change this attribute at any time, and it will over-
+            ride any text specified in the windows HintInfo array. See
+            window.class autodoc for more information.
+
+            Defaults to NULL.
+
+            Applicability is (OM_NEW, OM_SET).
+
+        TDECK_Tape (BOOL)
+            Indicate whether to use tape deck or animation controls.
+            Tape deck controls include: rewind, play, fast forward, stop
+            and pause. The animation controls include: rewind, play,
+            fast forward and a frame slider.
+
+            Defaults to FALSE (tape deck controls).
+
+            Applicability is (OM_NEW)
+
+        TDECK_Mode (UWORD)
+            The current tape deck mode. The complete list of modes are
+            available in <gadgets/tapedeck.h>. All the modes up to and
+            including BUT_PAUSE are supported.
+
+            Defaults to BUT_STOP.
+
+            Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+        TDECK_Paused (BOOL)
+            Whether the pause mode is active or not. The TDECK_Mode will
+            be set to BUT_PAUSE when paused.
+
+            Defaults to FALSE.
+
+            Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+        TDECK_Frames (LONG)
+            Total number of frames in the animation.
+            Only valid when using animation controls.
+
+            Defaults to 10.
+
+            Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+        TDECK_CurrentFrame (LONG)
+            The current animation frame number from 0 to TDECK_Frames.
+            Only valid when using animation controls.
+
+            Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+

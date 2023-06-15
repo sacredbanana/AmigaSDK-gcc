@@ -1,0 +1,1464 @@
+@database "datatypes"
+@master "AMIDEV:NDK/Autodocs/datatypes.doc"
+
+@Node Main "datatypes.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --background-- " Link "--background--"}
+    @{" --rexxhost-- " Link "--rexxhost--"}
+    @{" AddDTObject() " Link "AddDTObject()"}
+    @{" CopyDTMethods() " Link "CopyDTMethods()"}
+    @{" CopyDTTriggerMethods() " Link "CopyDTTriggerMethods()"}
+    @{" DisposeDTObject() " Link "DisposeDTObject()"}
+    @{" DoAsyncLayout() " Link "DoAsyncLayout()"}
+    @{" DoDTDomainA() " Link "DoDTDomainA()"}
+    @{" DoDTMethodA() " Link "DoDTMethodA()"}
+    @{" DrawDTObjectA() " Link "DrawDTObjectA()"}
+    @{" FindMethod() " Link "FindMethod()"}
+    @{" FindToolNodeA() " Link "FindToolNodeA()"}
+    @{" FindTriggerMethod() " Link "FindTriggerMethod()"}
+    @{" FreeDTMethods() " Link "FreeDTMethods()"}
+    @{" GetDTAttrsA() " Link "GetDTAttrsA()"}
+    @{" GetDTMethods() " Link "GetDTMethods()"}
+    @{" GetDTString() " Link "GetDTString()"}
+    @{" GetDTTriggerMethodDataFlags() " Link "GetDTTriggerMethodDataFlags()"}
+    @{" GetDTTriggerMethods() " Link "GetDTTriggerMethods()"}
+    @{" LaunchToolA() " Link "LaunchToolA()"}
+    @{" LockDataType() " Link "LockDataType()"}
+    @{" NewDTObjectA() " Link "NewDTObjectA()"}
+    @{" ObtainDataTypeA() " Link "ObtainDataTypeA()"}
+    @{" ObtainDTDrawInfoA() " Link "ObtainDTDrawInfoA()"}
+    @{" PrintDTObjectA() " Link "PrintDTObjectA()"}
+    @{" RefreshDTObjectA() " Link "RefreshDTObjectA()"}
+    @{" ReleaseDataType() " Link "ReleaseDataType()"}
+    @{" ReleaseDTDrawInfo() " Link "ReleaseDTDrawInfo()"}
+    @{" RemoveDTObject() " Link "RemoveDTObject()"}
+    @{" SaveDTObjectA() " Link "SaveDTObjectA()"}
+    @{" SetDTAttrsA() " Link "SetDTAttrsA()"}
+    @{" StartDragSelect() " Link "StartDragSelect()"}
+@EndNode
+
+@Node "--background--" "datatypes.library/--background--"
+
+@{b}   PURPOSE@{ub}
+	The datatypes.library provides transparent data handling
+	abilities to applications.  Application developers can register
+	their data format with datatypes.library and provide a class
+	library for handling their data within other applications.
+
+@{b}   OVERVIEW@{ub}
+
+	* @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} Oriented
+
+	datatypes.library implementation is object oriented, using the
+	boopsi functions of Intuition.  Each data class is implemented
+	as a shared system library.
+
+	* Embedded Objects
+
+	datatypes.library provides the ability to embed different object
+	types within an application.  For example, an application can
+	embed an picture object or even an AmigaGuide document browser
+	within their application's window.  Objects can also be embedded
+	within other objects.
+
+	* Gadget-like
+
+	Embedded objects are actually boopsi gadgets.  That means that
+	input handling is done on Intuition's task.  Time intensive
+	operations, such as layout when the window size changes, are
+	off-loaded to a sub-process.  Printing, clipboard operations,
+	file read/write are also off-loaded to a separate process on an
+	as-needed basis.
+
+	* Trigger Methods
+
+	Sometimes it is necessary for an application to provide
+	additional controls for navigating through an object.  For
+	example, with an AmigaGuide object it is necessary to have
+	controls for "Contents", "Index", "Browse >", "Browse <".  Each
+	class implements a method that returns the trigger methods, and
+	the appropriate labels, that a class supports.
+
+	* @{"Format" Link "dos/Format()"} Conversion
+
+	As long as the objects are sub-classes of the same class, data
+	from one format can be written out as another format.  For
+	example, it is possible to read in an ILBM file and write out a
+	JPEG file, since both data types are sub-classes of PICTURE.
+
+	* Future Compatible
+
+	Each class implements a method that returns the supported
+	methods within a class.  This way an application can ask an
+	object if it is capable of any particular method, such as
+	DTM_WRITE for example.
+
+	* Data Type Detection
+
+	datatypes.library provides the ability to examine a file or
+	the clipboard to determine what type of data it contains.
+
+@EndNode
+
+@Node "--rexxhost--" "datatypes.library/--rexxhost--"
+
+@{b}   HOST INTERFACE@{ub}
+	datatypes.library provides an ARexx function host interface that
+	enables ARexx programs to take advantage of the features of data
+	types.  The functions provided by the interface are directly
+	related to the functions described herein, with the differences
+	mostly being in the way they are called.
+
+	The function host library vector is located at offset -30 from
+	the library. This is the value you provide to ARexx in the
+	AddLib() function call.
+
+@{b}   FUNCTIONS@{ub}
+	ExamineDT(FILENAME/A,VARIABLENAME,STEM/S,VAR/S)
+
+@{b}   EXAMPLE@{ub}
+	\* datatypes.rexx *\
+	PARSE ARG fname
+	OPTIONS RESULTS
+
+	\* Load the datatypes.library as a function host *\
+	IF ~SHOW('L','datatypes.library') THEN
+	   CALL ADDLIB('datatypes.library',0,-30)
+
+	   IF fname="" THEN DO
+	      SAY "Usage:"
+	      SAY "  rx datatypes <filename>"
+	      EXIT
+	   END
+
+	   SAY 'var test'
+	   type = ExamineDT(fname,,VAR)
+	   SAY type
+
+	   SAY 'stem test'
+	   CALL ExamineDT(fname,dtstem.,STEM)
+
+	   SAY '      Disk Key:' dtstem.DiskKey
+	   SAY 'Dir Entry Type:' dtstem.DirEntryType
+	   SAY '     File Name:' dtstem.FileName
+	   SAY '    Protection:' dtstem.Protection
+	   SAY '    Entry Type:' dtstem.EntryType
+	   SAY '          Size:' dtstem.Size
+	   SAY '        Blocks:' dtstem.NumBlocks
+	   SAY '          Date:' dtstem.Date
+	   SAY '       Comment:' dtstem.Comment
+	   SAY '          Type:' dtstem.BaseType
+	   SAY '     File Type:' dtstem.DataType
+	   SAY '     Base Name:' dtstem.BaseName
+	EXIT
+
+@EndNode
+
+@Node "AddDTObject()" "datatypes.library/AddDTObject"
+
+@{b}    NAME@{ub}
+	AddDTObject - Add an object to a window or requester.   (V39)
+
+@{b}    SYNOPSIS@{ub}
+	realposition = AddDTObject (window, requester, object, position);
+	d0			    a0      a1	       a2      d0
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} AddDTObject (struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+			  @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, LONG);
+
+@{b}    FUNCTION@{ub}
+	This function adds a single object to the gadget list of the given
+	window or requester at the position in the list specified by the
+	position argument.
+
+	When the object is added to the gadget list, the object will
+	receive a @{"GM_LAYOUT" Link "tabs_gc/GM_LAYOUT"} message with the gpl_Initial field set to
+	one.
+
+@{b}    INPUTS@{ub}
+	window - Pointer to the window.
+
+	requester - Must be @{"NULL" Link "rexxsupport/NULL"}.
+
+	object - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+	position - Integer position in the list for the new gadget.
+	    -1 to add to the end of the list.
+
+@{b}    RETURNS@{ub}
+	Returns the position of where the object was actually added.
+
+@{b}    SEE ALSO@{ub}
+	@{"RemoveDTObject()" Link "RemoveDTObject()"}, @{"intuition.library/AddGList()" Link "intuition/AddGList()"}
+
+@EndNode
+
+@Node "CopyDTMethods()" "datatypes.library/CopyDTMethods"
+
+@{b}   NAME@{ub}
+        CopyDTMethods -- Clone and modify DTA_Methods array (V45)
+
+@{b}   SYNOPSIS@{ub}
+        newmethods = CopyDTMethods( methods, include, exclude );
+
+        ULONG *CopyDTMethods( ULONG *, ULONG *, ULONG * );
+
+@{b}   FUNCTION@{ub}
+        Copy and modify array of supported methods.
+
+        This function is used for subclass implementors, who want to
+        add their methods (like DTM_TRIGGER) to the array of supported
+        methods.
+
+@{b}   INPUTS@{ub}
+        methods - Methods array, as obtained by @{"GetDTMethods" Link "datatypes/GetDTMethods()"} or DTA_Methods.
+            @{"NULL" Link "rexxsupport/NULL"} causes the function to return @{"NULL" Link "rexxsupport/NULL"}.
+
+        include - Methods to include, ~0UL terminated. May be @{"NULL" Link "rexxsupport/NULL"}.
+
+        exclude - Methods to exclude, ~0UL terminated. May be @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   RESULT@{ub}
+        newmethods - New array of methods or @{"NULL" Link "rexxsupport/NULL"} (no memory).
+
+@{b}   SEE ALSO@{ub}
+        @{"FindMethod" Link "datatypes/FindMethod()"},
+        @{"CopyDTTriggerMethods" Link "datatypes/CopyDTTriggerMethods()"},
+        @{"FreeDTMethods" Link "datatypes/FreeDTMethods()"}
+
+@EndNode
+
+@Node "CopyDTTriggerMethods()" "datatypes.library/CopyDTTriggerMethods"
+
+@{b}   NAME@{ub}
+        CopyDTTriggerMethods -- Clone and modify DTA_TriggerMethods array
+                                                                      (V45)
+
+@{b}   SYNOPSIS@{ub}
+        newmethods = CopyDTTriggerMethods( methods, include, exclude );
+
+        struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} *CopyDTTriggerMethods( struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} *,
+                                               struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} *,
+                                               struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} * );
+
+@{b}   FUNCTION@{ub}
+        Copy and modify a DTMethods array.
+        This function is for subclass implementors for an easy way to
+        add their trigger methods to exising ones, or disable some because
+        they're internally used.
+
+@{b}   INPUTS@{ub}
+        methods - Methods array, as obtained by @{"GetDTTriggerMethods" Link "datatypes/GetDTTriggerMethods()"} or
+            DTA_TriggerMethods.
+            @{"NULL" Link "rexxsupport/NULL"} causes the function to return @{"NULL" Link "rexxsupport/NULL"}.
+
+        include - Trigger methods to include. May be @{"NULL" Link "rexxsupport/NULL"}.
+
+        exclude - Trigger methods to exclude. May be @{"NULL" Link "rexxsupport/NULL"}.
+                  The dtm_Command and dtm_Method fields may have
+                  the options described in @{"FindTriggerMethod" Link "datatypes/FindTriggerMethod()"} to
+                  filter/match out the given entries.
+
+@{b}   NOTE@{ub}
+        It is assumed that the dtm_Label and dtm_Command strings are
+        valid as long as the object exists. They are NOT copied.
+
+        Subclasses which implements DTM_TRIGGER __MUST__ send unknown
+        trigger methods to it's superclass.
+
+@{b}   RESULT@{ub}
+        newmethods - New array of methods or @{"NULL" Link "rexxsupport/NULL"} (no memory).
+
+@{b}   SEE ALSO@{ub}
+        @{"FindTriggerMethod" Link "datatypes/FindTriggerMethod()"},
+        @{"CopyDTMethods" Link "datatypes/CopyDTMethods()"},
+        @{"FreeDTMethods" Link "datatypes/FreeDTMethods()"}
+
+@EndNode
+
+@Node "DisposeDTObject()" "datatypes.library/DisposeDTObject"
+
+@{b}    NAME@{ub}
+	DisposeDTObject - Delete a data type object.            (V39)
+
+@{b}    SYNOPSIS@{ub}
+	DisposeDTObject (o);
+			 a0
+
+	VOID DisposeDTObject (Object *);
+
+@{b}    FUNCTION@{ub}
+	This function is used to dispose of a data type object that was
+	obtained with @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+@{b}    INPUTS@{ub}
+	o - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+	    @{"NULL" Link "rexxsupport/NULL"} is a valid input.
+
+@{b}    SEE ALSO@{ub}
+	@{"NewDTObjectA()" Link "NewDTObjectA()"}
+
+@EndNode
+
+@Node "DoAsyncLayout()" "datatypes.library/DoAsyncLayout"
+
+@{b}    NAME@{ub}
+	DoAsyncLayout - Call the DTM_ASYNCLAYOUT method on a separate process.
+                                                               (V39)
+
+@{b}    SYNOPSIS@{ub}
+	retval = DoAsyncLayout (object, gpl);
+	d0			a0	a1
+
+	ULONG DoAsyncLayout (Object *, struct @{"gpLayout" Link "INCLUDE:intuition/gadgetclass.h/Main" 494} *);
+
+@{b}    FUNCTION@{ub}
+	This function triggers the DTM_ASYNCLAYOUT method of the given object
+	asyncronously. The purpose of asyncronous method dispatch is to
+	offload rendering from the input.device.
+
+	The DTM_ASYNCLAYOUT method must exit when SIGBREAKF_CTRL_C signal
+	is set.  This indicates that the data has become obsolete and
+	the DTM_ASYNCLAYOUT method may be called again.
+
+@{b}    INPUTS@{ub}
+	object - Pointer to the data types object.
+	gpl - Pointer to a @{"gpLayout" Link "INCLUDE:intuition/gadgetclass.h/Main" 494} message.
+
+@{b}    RETURNS@{ub}
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "DoDTDomainA()" "datatypes.library/DoDTDomainA"
+
+@{b}   NAME@{ub}
+       DoDTDomainA -- Obtain the min/nom/max domains of a dt object (V45)
+
+@{b}   SYNOPSIS@{ub}
+       retval = DoDTDomainA( o, win, req, rport, which, domain, attrs );
+                            a0 a1   a2   a3     d0     a4      a5
+
+       ULONG DoDTDomainA( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+             struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *, ULONG, struct @{"IBox" Link "INCLUDE:intuition/intuition.h/Main" 929} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} * );
+
+       retval = DoDTDomain( o, win, req, rport, which, domain, tag1,
+                ... );
+
+       ULONG DoDTDomain( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+             struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *, ULONG, struct @{"IBox" Link "INCLUDE:intuition/intuition.h/Main" 929} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ... );
+
+@{b}   FUNCTION@{ub}
+
+@{b}   INPUTS@{ub}
+        o      - @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} like returned from @{"NewDTObjectA" Link "datatypes/NewDTObjectA()"}
+
+        win    - @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} the object is attached to
+
+        req    - @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} the object is attached to
+
+        rport  - @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52}, used for domain calculations
+
+        which  - one of the GDOMAIN_#? identifiers from
+            @{"<intuition/gadgetclass.h>" Link "INCLUDE:intuition/gadgetclass.h/Main" 0}
+
+        domain - resulting domain box
+
+        attrs  - Additional attributes
+
+@{b}   TAGS@{ub}
+        Subclass specific.
+
+        Example:
+            DTA_TextAttr (struct @{"TextAttr" Link "INCLUDE:graphics/text.h/Main" 63} *) - Default object font
+                used for text calculations.
+
+@{b}   RETURNS@{ub}
+       retval - The return value returned by GM_DOMAIN or 0UL for an error.
+
+       domain - On success, the domain box will be filled with the
+                gadget's domain dimensions for this particular GDOMAIN_#?
+                id.
+
+@{b}   EXAMPLE@{ub}
+
+@{b}   NOTE@{ub}
+       This function cannot handle the GM_DOMAIN method without
+       an object. To do this, you have to use CoreceMethodA
+       manually.
+
+@{b}   SEE ALSO@{ub}
+       datatypesclass/GM_DOMAIN,
+       @{"<intuition/gadgetclass.h>" Link "INCLUDE:intuition/gadgetclass.h/Main" 0}
+
+@EndNode
+
+@Node "DoDTMethodA()" "datatypes.library/DoDTMethodA"
+
+@{b}    NAME@{ub}
+	DoDTMethodA - Do a datatypes method.                    (V39)
+
+@{b}    SYNOPSIS@{ub}
+	retval = DoDTMethodA (o, win, req, msg);
+	d0		      a0 a1   a2   a3
+
+	ULONG DoDTMethodA (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *,
+			   struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *, Msg);
+
+	retval = DoDTMethod (o, win, req, data, ...);
+
+	ULONG DoDTMethod (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *,
+			  struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *, ULONG, ...);
+
+@{b}    FUNCTION@{ub}
+	This function performs a method of an object.
+
+@{b}    INPUTS@{ub}
+	o   - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+	win - @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} that the object is attached to.
+
+	req - @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} that the object is attached to.
+
+	msg - The message to send to the object.
+
+@{b}    RETURNS@{ub}
+	Returns the value returned by the method.
+
+@{b}    SEE ALSO@{ub}
+	intuition.library/DoGadgetMethod()
+
+@EndNode
+
+@Node "DrawDTObjectA()" "datatypes.library/DrawDTObjectA"
+
+@{b}    NAME@{ub}
+	DrawDTObjectA - @{"Draw" Link "graphics/Draw()"} a DataTypes object.                (V44)
+
+@{b}    SYNOPSIS@{ub}
+	retval = DrawDTObjectA (rp, o, x, y, w, h, th, tv, attrs);
+	d0			a0  a1 d0 d1 d2 d3 d4  d5  a2
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} DrawDTObjectA (struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} x, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} y,
+			    @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} w, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} h, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} th, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} tv,
+			    struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	retval = DrawDTObject (rp, o, x, y, w, h, th, tv, tag1, ...);
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} DrawDTObjectA (struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} x, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} y,
+			    @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} w, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} h, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} th, @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} tv, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...);
+
+@{b}    FUNCTION@{ub}
+	This function draws a DataTypes object into a @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52}.
+
+	This function can be used for strip printing the object or
+	embedding it within a document.
+
+	You must call @{"ObtainDTDrawInfoA()" Link "ObtainDTDrawInfoA()"} before using this function.
+
+	This function invokes the DTM_DRAW method of the object.
+
+	Clipping MUST be turned on within the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52}.  This means
+	that there must be a valid layer structure attached to the
+	@{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52}.
+
+@{b}    INPUTS@{ub}
+	rp - Pointer to the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} to draw into.
+	o - Pointer to an object returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+	x - Left-most point of area to draw into.
+	y - Top-most point of area to draw into.
+	w - Width of area to draw into.
+	h - Height of area to draw into.
+	th - Horizontal top in units.
+	tv - Vertical top in units.
+	attrs - Additional attributes.
+
+@{b}    TAGS@{ub}
+	none defined at this time.
+
+@{b}    RETURNS@{ub}
+	TRUE to indicate that it was able to render, FALSE on failure.
+
+@{b}    SEE ALSO@{ub}
+	ObtainDTDrawInfo(), @{"ReleaseDTDrawInfo()" Link "ReleaseDTDrawInfo()"}
+
+@EndNode
+
+@Node "FindMethod()" "datatypes.library/FindMethod"
+
+@{b}   NAME@{ub}
+        FindMethod -- find a specified method in methods array (V45)
+
+@{b}   SYNOPSIS@{ub}
+        method = FindMethod( methods, searchmethodid );
+
+        ULONG *FindMethod( ULONG *, ULONG );
+
+@{b}   FUNCTION@{ub}
+        This function searches for a given method in a given methods
+        array like got from @{"GetDTMethods" Link "datatypes/GetDTMethods()"}.
+
+@{b}   INPUTS@{ub}
+        methods - methods array, like got from @{"GetDTMethods" Link "datatypes/GetDTMethods()"} or DTA_Methods
+                  @{"NULL" Link "rexxsupport/NULL"} is a valid arg.
+
+        searchmethodid - method id to find.
+
+@{b}   RETURNS@{ub}
+        Pointer to the method table entry or @{"NULL" Link "rexxsupport/NULL"} if not found.
+
+@{b}   EXAMPLE@{ub}
+        \* This macro tests if a given method (like DTM_PRINT) is
+         * supported by the given object
+         *\
+        #define IsDTMethodSupported( o, id ) \
+                ((BOOL)FindMethod(GetDTMethods( (o) ), (id) ))
+
+@{b}   SEE ALSO@{ub}
+       @{"GetDTMethods" Link "datatypes/GetDTMethods()"},
+       @{"CopyDTMethods" Link "datatypes/CopyDTMethods()"}
+
+@EndNode
+
+@Node "FindToolNodeA()" "datatypes.library/FindToolNodeA"
+
+@{b}   NAME@{ub}
+        FindToolNodeA -- Find a tool node (V45)
+
+@{b}   SYNOPSIS@{ub}
+        tn = FindToolNodeA( toollist, attrs );
+        d0                  a0        a1
+
+        struct @{"ToolNode" Link "INCLUDE:datatypes/datatypes.h/Main" 194} *FindToolNodeA( struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} *,
+                                        struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} * );
+
+        tn = FindToolNode( toollist, tag1, ... );
+
+        ULONG FindToolNode( struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} *, ... );
+
+@{b}   FUNCTION@{ub}
+        This function searches for a given tool in a list of tool nodes.
+
+@{b}   INPUTS@{ub}
+        toollist - struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} * or a struct @{"ToolNode" Link "INCLUDE:datatypes/datatypes.h/Main" 194} * (which will be
+                   skipped) to search in.
+                   @{"NULL" Link "rexxsupport/NULL"} is a valid arg.
+
+        attrs    - Search tags.
+                   A @{"NULL" Link "rexxsupport/NULL"} arg returns simple the following node.
+
+@{b}   TAGS@{ub}
+        TOOLA_Program    - name of the program to search for
+
+        TOOLA_Which      - one of the TW_#? types.
+
+        TOOLA_LaunchType - Launch mode; TF_SHELL, TF_WORKBENCH or TF_RX
+
+@{b}   RETURNS@{ub}
+        struct @{"ToolNode" Link "INCLUDE:datatypes/datatypes.h/Main" 194} * or @{"NULL" Link "rexxsupport/NULL"}
+
+@{b}   NOTE@{ub}
+        This function is not limited to the (&(DataType -> dtn_ToolList));
+        programmers can set up their own lists.
+        The (&(DataType -> dtn_ToolList)) entries are valid as long as
+        the application obtains a lock to the @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} (as obtained from
+        a dt object, @{"ObtainDataTypeA" Link "datatypes/ObtainDataTypeA()"} or LockDataType).
+
+@{b}   SEE ALSO@{ub}
+       @{"LaunchToolA" Link "datatypes/LaunchToolA()"}
+
+@EndNode
+
+@Node "FindTriggerMethod()" "datatypes.library/FindTriggerMethod"
+
+@{b}   NAME@{ub}
+        FindTriggerMethod -- find a specified trigger method in trigger
+                             methods array                         (V45)
+
+@{b}   SYNOPSIS@{ub}
+        method = FindTriggerMethod( dtm, command, method );
+
+        struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} *FindTriggerMethod( struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} *, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},
+                                            ULONG );
+
+@{b}   FUNCTION@{ub}
+        This function searches for a given trigger method in a given methods
+        array like got from @{"GetDTTriggerMethods" Link "datatypes/GetDTTriggerMethods()"}.
+
+        If one of the "command" or "method" args matches an array item, this
+        function returns a pointer to it.
+
+@{b}   INPUTS@{ub}
+        methods - trigger methods array, like got from @{"GetDTTriggerMethods" Link "datatypes/GetDTTriggerMethods()"}
+                  or DTA_TriggerMethods. @{"NULL" Link "rexxsupport/NULL"} is a valid arg.
+
+        command - trigger method command name (case-insensitive match),
+                  may be @{"NULL" Link "rexxsupport/NULL"} (don't match).
+
+        method  - trigger method id, may be ~0UL (don't match).
+
+@{b}   RETURNS@{ub}
+        Pointer to the trigger method table entry (struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} *) or
+        @{"NULL" Link "rexxsupport/NULL"} if not found.
+
+@{b}   EXAMPLE@{ub}
+
+@{b}   SEE ALSO@{ub}
+       @{"GetDTTriggerMethods" Link "datatypes/GetDTTriggerMethods()"}, @{"CopyDTTriggerMethods" Link "datatypes/CopyDTTriggerMethods()"}
+
+@EndNode
+
+@Node "FreeDTMethods()" "datatypes.library/FreeDTMethods"
+
+@{b}   NAME@{ub}
+        FreeDTMethods -- Free methods array obtained by CopyDT#?Methods (V45)
+
+@{b}   SYNOPSIS@{ub}
+        FreeDTMethods( methods );
+
+        VOID FreeDTMethods( @{"APTR" Link "INCLUDE:exec/types.h/Main" 75} );
+
+@{b}   FUNCTION@{ub}
+
+@{b}   INPUTS@{ub}
+        methods - Methods array, as obtained by @{"CopyDTMethods" Link "datatypes/CopyDTMethods()"} or
+            @{"CopyDTTriggerMethods" Link "datatypes/CopyDTTriggerMethods()"}. @{"NULL" Link "rexxsupport/NULL"} is a valid input.
+
+@{b}   SEE ALSO@{ub}
+        @{"CopyDTMethods" Link "datatypes/CopyDTMethods()"},
+        @{"CopyDTTriggerMethods" Link "datatypes/CopyDTTriggerMethods()"}
+
+@EndNode
+
+@Node "GetDTAttrsA()" "datatypes.library/GetDTAttrsA"
+
+@{b}    NAME@{ub}
+	GetDTAttrsA - Obtain attributes for an object.          (V39)
+
+@{b}    SYNOPSIS@{ub}
+	retval = GetDTAttrsA (o, attrs);
+	d0		      a0  a2
+
+	ULONG GetDTAttrsA (Object *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	retval = GetDTAttrs (o, tag1, ...);
+
+	ULONG GetDTAttrs (Object *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1, ...);
+
+@{b}    FUNCTION@{ub}
+	This function retrieves the attributes of a data type object.
+
+@{b}    INPUTS@{ub}
+	o - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+	attrs - Attributes to get, terminated with TAG_DONE.  The data
+	    element of each pair contains the address of the storage
+	    variable.
+
+@{b}    RETURNS@{ub}
+	retval - Contains the number of attributes the system was able
+	    to obtain.
+
+@{b}    SEE ALSO@{ub}
+	@{"SetDTAttrsA()" Link "SetDTAttrsA()"}, @{"intuition.library/GetAttr()" Link "intuition/GetAttr()"}
+
+@EndNode
+
+@Node "GetDTMethods()" "datatypes.library/GetDTMethods"
+
+@{b}    NAME@{ub}
+	GetDTMethods - Obtain methods an object supports.       (V39)
+
+@{b}    SYNOPSIS@{ub}
+	methods = GetDTMethods (object);
+	d0			a0
+
+	ULONG GetDTMethods (Object *);
+
+@{b}    FUNCTION@{ub}
+	This function obtains a list of methods supported by a given
+	object.
+
+@{b}    INPUTS@{ub}
+	object - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+@{b}    RETURNS@{ub}
+	Returns a pointer to a ~0 terminated ULONG array.  This array
+	is only valid until the object is disposed.
+
+@{b}    SEE ALSO@{ub}
+	@{"GetDTTriggerMethods()" Link "GetDTTriggerMethods()"}
+
+@EndNode
+
+@Node "GetDTString()" "datatypes.library/GetDTString"
+
+@{b}    NAME@{ub}
+	GetDTString - Obtain a DataTypes string.                (V39)
+
+@{b}    SYNOPSIS@{ub}
+	str = GetDTString (id);
+	d0		   d0
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} GetDTString (ULONG id);
+
+@{b}    FUNCTION@{ub}
+	This function is used to obtain a pointer to a localized
+	DataTypes string.
+
+@{b}    INPUTS@{ub}
+	id - ID of the string to obtain.
+
+@{b}    RETURNS@{ub}
+	A pointer to a @{"NULL" Link "rexxsupport/NULL"} terminated string.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "GetDTTriggerMethodDataFlags()" "datatypes.library/GetDTTriggerMethodDataFlagsrary/GetDTTriggerMethodDataFlags"
+
+@{b}   NAME@{ub}
+       GetDTTriggerMethodDataFlags -- Get data type of dtt_Data value (V45)
+
+@{b}   SYNOPSIS@{ub}
+       type = GetDTTriggerMethodDataFlags( method );
+                                            d0
+
+       ULONG GetDTTriggerMethodDataFlags( ULONG );
+
+@{b}   FUNCTION@{ub}
+       This function returns the kind of data which can be attached
+       to the stt_Data field in the @{"dtTrigger" Link "INCLUDE:datatypes/datatypesclass.h/Main" 388} method body.
+
+       The data type can be specified by or'ing the method id (within
+       STMF_METHOD_MASK value) with one of the STMD_#? identifiers:
+
+       STMD_VOID    - stt_Data MUST be @{"NULL" Link "rexxsupport/NULL"}
+       STMD_ULONG   - stt_Data contains an unsigned long value
+       STMD_STRPTR  - stt_Data is a string pointer
+       STMD_TAGLIST - stt_Data points to an array of struct TagItem's,
+                      terminated with TAG_DONE
+
+       The trigger methods below STM_USER are explicitly handled, as
+       described in @{"<datatypes/datatypesclass.h>" Link "INCLUDE:datatypes/datatypesclass.h/Main" 0}, e.g. STM_COMMAND
+       return STMD_STRPTR, instead of STMD_VOID.
+
+@{b}   INPUTS@{ub}
+       method - dtt_Method ID from struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278}
+
+@{b}   RESULT@{ub}
+       type - one of the STMD_#? identifies in @{"<datatypes/datatypesclass.h>" Link "INCLUDE:datatypes/datatypesclass.h/Main" 0}
+
+@{b}   EXAMPLE@{ub}
+       struct @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} htmldtc_dtm[] =
+       {
+         "Stop Loading", "STOP",       (STM_STOP | STMD_VOID),
+         "Load Images",  "LOADIMAGES", ((STM_USER + 20) | STMD_VOID),
+         "Goto URL",     "GOTOURL",    ((STM_USER + 21) | STMD_STRPTR),
+         @{"NULL" Link "rexxsupport/NULL"},           @{"NULL" Link "rexxsupport/NULL"},         0L
+       };
+
+       Sets up three methods:
+         "STOP" takes no arguments,
+         "LOADIMAGES" takes no arguments and
+         "GOTOURL" takes a @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} as an argument.
+
+@{b}   SEE ALSO@{ub}
+       @{"CopyDTTriggerMethods" Link "datatypes/CopyDTTriggerMethods()"},
+       @{"FindTriggerMethod" Link "datatypes/FindTriggerMethod()"},
+       datatypesclass/DTM_TRIGGER
+
+@EndNode
+
+@Node "GetDTTriggerMethods()" "datatypes.library/GetDTTriggerMethods"
+
+@{b}    NAME@{ub}
+	GetDTTriggerMethods - Obtain trigger methods supported by an object
+                                                               (V39)
+
+@{b}    SYNOPSIS@{ub}
+	methods = GetDTTriggerMethods (object);
+	d0				a0
+
+	struct DTMethods *GetDTTriggerMethods (Object *);
+
+@{b}    FUNCTION@{ub}
+	This function obtains a list of trigger methods supported by a
+	given object.  Applications may use this information to provide
+	appropriate controls for the object.
+	For example, an AmigaGuide object needs controls for "Contents",
+	"Index", "Retrace", "Browse <", and "Browse >",
+
+@{b}    INPUTS@{ub}
+	object - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+@{b}    RETURNS@{ub}
+	Returns a pointer to a @{"NULL" Link "rexxsupport/NULL"} terminated @{"DTMethod" Link "INCLUDE:datatypes/datatypesclass.h/Main" 278} list.  This list is
+	only valid until the object is disposed.
+
+@{b}    EXAMPLE@{ub}
+	To call the method:
+
+	    @{"DoMethod" Link "amiga_lib/DoMethod()"} (object, DTM_TRIGGER, dtm[button]->dtm_Method);
+
+@{b}    SEE ALSO@{ub}
+	@{"GetDTMethods()" Link "GetDTMethods()"}
+
+@EndNode
+
+@Node "LaunchToolA()" "datatypes.library/LaunchToolA"
+
+@{b}   NAME@{ub}
+       LaunchToolA -- invoke a given tool with project (V45)
+
+@{b}   SYNOPSIS@{ub}
+       success = LaunchToolA( tool, project, attrs );
+       d0                     a0    a1       a2
+
+       ULONG LaunchToolA( struct @{"Tool" Link "INCLUDE:datatypes/datatypes.h/Main" 143} *, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} * );
+
+       success = LaunchTool( tool, project, tag1, ... );
+
+       ULONG LaunchTool( struct @{"Tool" Link "INCLUDE:datatypes/datatypes.h/Main" 143} *, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, ... );
+
+@{b}   FUNCTION@{ub}
+       This function launches an application with a specified project.
+       The application and its launch mode and other attributes are
+       specified through the "Tool" structure.
+
+@{b}   INPUTS@{ub}
+       tool    - Pointer to a @{"Tool" Link "INCLUDE:datatypes/datatypes.h/Main" 143} structure. @{"NULL" Link "rexxsupport/NULL"} is a valid arg.
+
+       project - Name of the project to execute or @{"NULL" Link "rexxsupport/NULL"}.
+
+       attrs   - Additional attributes.
+
+@{b}   TAGS@{ub}
+       NP_Priority (BYTE) - sets the priority of the launched tool
+           Defaults to the current process's priority for
+           Shell and ARexx programs; Workbench applications
+           defaults to 0 except overridden by the TOOLPRI tooltype.
+
+       NP_Synchronous (BOOL) - don't return until lauched application
+           process finishes. Defaults to FALSE. Also see 'NOTE' below.
+
+       Other tags are __currently__ ignored.
+
+@{b}   RETURNS@{ub}
+       FALSE for failure, non-zero for success.
+
+@{b}   EXAMPLE@{ub}
+
+@{b}   NOTE@{ub}
+       - This function requires the "RX" command when lauching ARexx
+         scripts.
+
+       - This function must be launched from a process, not a simple task.
+
+       - This function is not limited to use the struct DataType->dtn_Tools
+         tools. Applications can set up their own struct Tool's as long
+         as these structures contains no rubbish.
+         If you don't know the TW_#? ("which") type of your custom tool, set
+         tn_Which to TW_MISC.
+
+       - The NP_Synchronous tag has been removed from @{"<dos/dostags.h>" Link "INCLUDE:dos/dostags.h/Main" 0} in v51
+         because dos.library never supported this feature. In v51.8+ of
+         datatypes.library SYS_Asynch can be used instead.
+
+@{b}   BUGS@{ub}
+       - The path of the launched tools depends on the parents path.
+         If there is no path, shell tools can only launch other tools
+         with their full path.
+
+@{b}   SEE ALSO@{ub}
+       @{"FindToolNodeA" Link "datatypes/FindToolNodeA()"}
+
+@EndNode
+
+@Node "LockDataType()" "datatypes.library/LockDataType"
+
+@{b}   NAME@{ub}
+      LockDataType -- @{"Lock" Link "dos/Lock()"} a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure.         (V45)
+
+@{b}   SYNOPSIS@{ub}
+      LockDataType( dtn );
+                    a0
+
+      VOID LockDataType( struct @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} * );
+
+@{b}   FUNCTION@{ub}
+      This function is used to lock a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure obtained
+      by @{"ObtainDataTypeA" Link "datatypes/ObtainDataTypeA()"} or a datatypes object (DTA_DataType attribute).
+
+      All calls to LockDataType or @{"ObtainDataTypeA" Link "datatypes/ObtainDataTypeA()"} must match the same
+      number of @{"ReleaseDataType" Link "datatypes/ReleaseDataType()"} calls, otherwise havoc will break out.
+
+@{b}   INPUTS@{ub}
+      dtn - @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure returned by @{"ObtainDataTypeA" Link "datatypes/ObtainDataTypeA()"}. @{"NULL" Link "rexxsupport/NULL"}
+            is a valid input.
+
+@{b}   NOTE@{ub}
+      This function has been made public to allow to get a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178}
+      structure from an object (DTA_DataType attribute), and remain the
+      reference valid after the object has been disposed off (which
+      unlocks the @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure locked in NewDTObjectA).
+
+@{b}   SEE ALSO@{ub}
+      @{"ObtainDataTypeA" Link "datatypes/ObtainDataTypeA()"}, @{"ReleaseDataType" Link "datatypes/ReleaseDataType()"}
+
+@EndNode
+
+@Node "NewDTObjectA()" "datatypes.library/NewDTObjectA"
+
+@{b}    NAME@{ub}
+	NewDTObjectA - Create an data type object.              (V39)
+
+@{b}    SYNOPSIS@{ub}
+	o = NewDTObjectA (name, attrs);
+	d0		  d0   a0
+
+	@{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *NewDTObjectA (APTR, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	o = NewDTObject (name, tag1, ...);
+
+	@{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *NewDTObject (APTR, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1, ...);
+
+@{b}    FUNCTION@{ub}
+	This is the method for creating datatype objects from
+	'boopsi' classes.  Boopsi' stands for "basic object-oriented
+	programming system for Intuition".)
+
+	You further specify initial "create-time" attributes for the
+	object via a @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} list, and they are applied to the
+	resulting datatype object that is returned.
+
+@{b}    INPUTS@{ub}
+	name - Name of the data source.  Usually an existing file name.
+
+	attrs - Pointer to a taglist containing additional arguments.
+
+@{b}    TAGS@{ub}
+	DTA_SourceType - Specify the type of source data; such as coming
+	    from a file or clipboard (defaults to DTST_FILE).  If
+	    source type is clipboard, then the name field contains the
+	    numeric clipboard unit. If source type is DTST_MEMORY,
+	    the name field will be ignored (V44).
+
+	DTA_Handle - Can optionally be used instead of the name field.
+	    Must be a valid file lock if DTA_SourceType is DTST_FILE.
+	    Must be a valid @{"IFFHandle" Link "INCLUDE:libraries/iffparse.h/Main" 41} if DTA_SourceType is DTST_CLIPBOARD.
+	    Will be ignored if DTA_SourceType is DTST_MEMORY.
+
+	    NOTE: If you provide a file lock if DTA_SourceType is DTST_FILE
+	          then this file lock will become associated with the
+	          data type object. Do not @{"UnLock()" Link "dos/UnLock()"} it, or freeing the
+	          data type object will result in the same lock being
+	          unlocked again!
+
+	          If you provide a file lock on a file, you must also
+	          provide the name of the file or it will fail to open.
+	          This makes the use of the DTA_Handle difficult to
+	          justify for this use case.
+
+	DTA_DataType - Specify the class of data.  Data is a pointer to a
+	    valid @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178}.  This is only used when attempting to create
+	    a new object that doesn't have any source data.
+
+	DTA_GroupID - Specify that the object must be of this type, or
+	    NewDTObject() will fail with @{"IoErr()" Link "dos/IoErr()"} of
+	    ERROR_OBJECT_WRONG_TYPE.
+
+	DTA_SourceAddress (APTR) -- For DTST_MEMORY source data, this
+	    specifies the memory address at which the source data is
+	    located. This must be non-NULL. This attribute is required
+	    for DTST_MEMORY source data (V44).
+
+	DTA_SourceSize (ULONG) -- For DTST_MEMORY source data, this
+	    specifies the size of the source data (in bytes). This must
+	    be greater than 0. This attribute is required for DTST_MEMORY
+	    source data (V44).
+
+	GA_Left, GA_RelRight, GA_Top, GA_RelBottom, GA_Width, GA_RelWidth,
+	GA_Height, GA_RelHeight - Specify the placement of the object
+	    within the destination window.
+
+	GA_ID - Specify the object ID.
+
+	GA_UserData - Specify the application specific data for the
+	    object.
+
+@{b}    RETURNS@{ub}
+	A boopsi object, which may be used in different contexts such
+	as a gadget or image, and may be manipulated by generic functions.
+	You eventually free the object using @{"DisposeDTObject()" Link "DisposeDTObject()"}.
+
+	A @{"NULL" Link "rexxsupport/NULL"} return indicates failure.  Use @{"IoErr()" Link "dos/IoErr()"} to get error value.
+	Following is a summary of the error number used and there meaning
+	as it relates to DataTypes.
+
+	ERROR_REQUIRED_ARG_MISSING - Indicates that a required attribute
+	    wasn't passed in.
+	ERROR_BAD_NUMBER - An invalid group ID was passed in.
+	ERROR_OBJECT_WRONG_TYPE - @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} data type doesn't match
+	    DTA_GroupID.
+	ERROR_NO_FREE_STORE - Not enough memory.
+	DTERROR_UNKNOWN_DATATYPE - Unable to open the class library
+	    associated with the data type.
+	DTERROR_COULDNT_OPEN - Unable to open the data object.
+	ERROR_NOT_IMPLEMENTED - Unknown handle type.
+
+@{b}    NOTES@{ub}
+	This function invokes the @{"OM_NEW" Link "tabs_gc/OM_NEW"} "method" for the class specified.
+
+	The DTST_MEMORY source type introduced in V44 makes in-memory
+	data available to subclasses as if the data were stored in a
+	file. Thus, subclasses will see the data as DTST_FILE. Since
+	the data does not correspond to an on-disk file, subclasses
+	and examine hook code must not assume that they will be able
+	to reopen the "file" whose data has been provided to them.
+
+@{b}    EXAMPLE@{ub}
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} fileName = "s:startup-sequence"
+	@{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *o;
+
+	\* Simplest use is to just open an existing file *\
+	if (o = NewDTObject ((APTR)fileName, NULL))
+	{
+	    \* Free the object when we are done with it *\
+	    @{"DisposeDTObject" Link "datatypes/DisposeDTObject()"} (o);
+	}
+
+@{b}    SEE ALSO@{ub}
+	@{"AddDTObject()" Link "AddDTObject()"}, @{"DisposeDTObject()" Link "DisposeDTObject()"}, @{"RemoveDTObject()" Link "RemoveDTObject()"},
+	intuition.library/NewObjectA()
+
+@{b}    BUGS@{ub}
+	Documentation used to state that for DTA_SourceType == DTST_FILE
+	the DTA_Handle tag had to refer to a valid file handle. This is
+	not correct. The DTA_Handle tag for DTA_SourceType == DTST_FILE
+	always had to be a valid file lock.
+
+	A file lock used with the DTA_Handle tag and
+	DTA_SourceType == DTST_FILE will become part of the data type
+	object. UnLock()'ing that file lock will cause the same file
+	lock to be UnLock()'ed again, causing memory to be freed
+	twice.
+
+	The use of a file lock with DTA_Handle for a file will still
+	require that you also provide the name of the file in question,
+	making it hard to justify its use in the first place.
+
+@EndNode
+
+@Node "ObtainDataTypeA()" "datatypes.library/ObtainDataTypeA"
+
+@{b}   NAME@{ub}
+	ObtainDataTypeA - Examines a handle and return its @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178}.
+                                                               (V39)
+@{b}   SYNOPSIS@{ub}
+	dtn = ObtainDataTypeA (type, handle, attrs);
+	d0			d0    a0      a1
+
+	struct @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} *ObtainDataTypeA (ULONG, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	dtn = ObtainDataType (type, handle, tag1, ...);
+
+	struct @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} *ObtainDataType (ULONG, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1, ...);
+
+@{b}   FUNCTION@{ub}
+	This function examines the data that the handle points to,
+	and returns a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} record that describes the data.
+
+@{b}   INPUTS@{ub}
+	type - Type of handle.
+
+	handle - Handle to examine.
+	    For DTST_FILE, handle must be @{"BPTR" Link "INCLUDE:dos/dos.h/Main" 131} lock.
+	    For DTST_CLIPBOARD, handle must be struct @{"IFFHandle" Link "INCLUDE:libraries/iffparse.h/Main" 41} *.
+	    For DTST_MEMORY, handle will be ignored (you need
+	    to specify the additional information required by this
+	    source type through the attrs list).
+
+	attrs - Additional attributes (see TAGS).
+
+@{b}   TAGS@{ub}
+	DTA_SourceAddress (APTR) -- For DTST_MEMORY source data, this
+	    specifies the memory address at which the source data is
+	    located. This must be non-NULL. This attribute is required
+	    for DTST_MEMORY source data (V44).
+
+	DTA_SourceSize (ULONG) -- For DTST_MEMORY source data, this
+	    specifies the size of the source data (in bytes). This must
+	    be greater than 0. This attribute is required for DTST_MEMORY
+	    source data (V44).
+
+@{b}   NOTES@{ub}
+	The datatypes.library maintains a sorted list of all the
+	@{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} descriptors.  The descriptor can consist of a
+	function, a data mask for the first 64 bytes of the data,
+	and a name pattern.
+
+	The sort order for the list is:
+
+	    Descriptors with a function and no mask or name pattern.
+	    Descriptors with a function and a mask or name pattern.
+	    Descriptors with no function and a mask or name pattern.
+
+	Within each group, they are also sorted in descending priority
+	and descending mask length.
+
+	The DTST_MEMORY source type introduced in V44 makes in-memory
+	data available to subclasses as if the data were stored in a
+	file. Thus, subclasses will see the data as DTST_FILE. Since
+	the data does not correspond to an on-disk file, subclasses
+	and examine hook code must not assume that they will be able
+	to reopen the "file" whose data has been provided to them.
+
+@{b}   RETURNS@{ub}
+	Success returns a pointer to a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178}.  You must call
+	@{"ReleaseDataType()" Link "ReleaseDataType()"} when you are done with the handle.
+
+	A @{"NULL" Link "rexxsupport/NULL"} return indicates failure.  Use @{"IoErr()" Link "dos/IoErr()"} to get error value.
+	Following is a summary of the error number used and there meaning
+	as it relates to DataTypes.
+
+	ERROR_NO_FREE_STORE - Not enough memory.
+	ERROR_OBJECT_NOT_FOUND - Unable to open the data object.
+	ERROR_NOT_IMPLEMENTED - Unknown handle type.
+
+@{b}   SEE ALSO@{ub}
+	@{"ReleaseDataType()" Link "ReleaseDataType()"}
+
+@EndNode
+
+@Node "ObtainDTDrawInfoA()" "datatypes.library/ObtainDTDrawInfoA"
+
+@{b}    NAME@{ub}
+	ObtainDTDrawInfoA - Obtain a DataTypes object for drawing. (V44)
+
+@{b}    SYNOPSIS@{ub}
+	handle = ObtainDTDrawInfoA (o, attrs);
+	d0			    a0 a1
+
+	@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} ObtainDTDrawInfoA (Object *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	handle = ObtainDTDrawInfo (o, tag1, ...);
+
+	@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} ObtainDTDrawInfo (Object *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...);
+
+@{b}    FUNCTION@{ub}
+	This function prepares a DataTypes object to render itself
+	into a @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52}.
+
+	This function will send the DTM_OBTAINDRAWINFO method
+	to the object using the @{"opSet" Link "INCLUDE:intuition/classusr.h/Main" 76} message structure.
+
+@{b}    INPUTS@{ub}
+	o - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+	attrs - Additional attributes.
+
+@{b}    RETURNS@{ub}
+	Returns a opaque handle that must be passed to @{"ReleaseDTDrawInfo()" Link "ReleaseDTDrawInfo()"}
+	when the application is done drawing the object.
+
+@{b}    NOTE@{ub}
+	This function implies a layout operation. Thus, you must not
+	add the object in question to a window or requester and use
+	ObtainDTDrawInfo() on it.
+
+@{b}    TAGS@{ub}
+	none defined at this time.
+
+@{b}    SEE ALSO@{ub}
+	@{"DrawDTObjectA()" Link "DrawDTObjectA()"}, @{"ReleaseDTDrawInfo()" Link "ReleaseDTDrawInfo()"}
+
+@EndNode
+
+@Node "PrintDTObjectA()" "datatypes.library/PrintDTObjectA"
+
+@{b}    NAME@{ub}
+	PrintDTObjectA - Call the DTM_PRINT method on a separate process.
+                                                               (V39)
+
+@{b}    SYNOPSIS@{ub}
+	retval = PrintDTObjectA (object, window, requester, msg);
+	d0			 a0	 a1	 a2	    a3
+
+	ULONG PrintDTObjectA (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+			      struct @{"dtPrint" Link "INCLUDE:datatypes/datatypesclass.h/Main" 449} *);
+
+	retval = PrintDTObject (object, window, requester, data, ...);
+
+	ULONG PrintDTObject (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+			     ULONG, ...);
+
+@{b}    FUNCTION@{ub}
+	This function is triggers the DTM_PRINT method of the object
+	asyncronously.
+
+	Once the application has performed the PrintDTObjectA() function,
+	it must not manipulate the printerIO union until it receives a
+	IDCMP_IDCMPUPDATE message that contains the DTA_PrinterStatus
+	tag.
+
+	To abort a print, the application sends the DTM_ABORTPRINT method
+	to the object.  This in turn signals the print process with a
+	SIGBREAKF_CTRL_C.
+
+@{b}    INPUTS@{ub}
+	object - Pointer to the DataTypes object.
+	window - Pointer to the window that the object has been added to.
+	requester - Pointer to the requester that the object has been
+	    added to.
+
+@{b}    RETURNS@{ub}
+	Returns TRUE if successful, FALSE on error.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "RefreshDTObjectA()" "datatypes.library/RefreshDTObjectA"
+
+@{b}    NAME@{ub}
+	RefreshDTObjectA - Refresh a datatypes object.          (V39)
+
+@{b}    SYNOPSIS@{ub}
+	RefreshDTObjectA (object, window, req, attrs)
+			   a0	   a1	   a2	a3
+
+	VOID RefreshDTObjectA (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *,
+			        struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	RefreshDTObject (object, window, req, tag1, ...);
+
+	VOID RefreshDTObject (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *,
+			       struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1, ...);
+
+@{b}    FUNCTION@{ub}
+	Refreshes the specified object, by sending the @{"GM_RENDER" Link "tabs_gc/GM_RENDER"} method to
+	the object.
+
+@{b}    INPUTS@{ub}
+	object - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+	window - Pointer to the window.
+
+	req - Must be @{"NULL" Link "rexxsupport/NULL"}.
+
+	attrs - Additional attributes (currently none are defined).
+
+@{b}    SEE ALSO@{ub}
+	@{"AddDTObject()" Link "AddDTObject()"}, @{"RemoveDTObject()" Link "RemoveDTObject()"}, @{"intuition.library/RefreshGList()" Link "intuition/RefreshGList()"}
+
+@EndNode
+
+@Node "ReleaseDataType()" "datatypes.library/ReleaseDataType"
+
+@{b}    NAME@{ub}
+	ReleaseDataType - Release a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure.         (V39)
+
+@{b}    SYNOPSIS@{ub}
+	ReleaseDataType (dtn);
+		      a0
+
+	VOID ReleaseDataType (struct @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} *);
+
+@{b}    FUNCTION@{ub}
+	This function is used to release a @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure obtained
+	by @{"ObtainDataTypeA()" Link "ObtainDataTypeA()"}.
+
+@{b}    INPUTS@{ub}
+	dtn - @{"DataType" Link "INCLUDE:datatypes/datatypes.h/Main" 178} structure returned by @{"ObtainDataTypeA()" Link "ObtainDataTypeA()"}.  @{"NULL" Link "rexxsupport/NULL"}
+	    is a valid input.
+
+@{b}    SEE ALSO@{ub}
+	@{"ObtainDataTypeA()" Link "ObtainDataTypeA()"}
+
+@EndNode
+
+@Node "ReleaseDTDrawInfo()" "datatypes.library/ReleaseDTDrawInfo"
+
+@{b}    NAME@{ub}
+	ReleaseDTDrawInfo - Release a DataTypes object from drawing. (V44)
+
+@{b}    SYNOPSIS@{ub}
+	ReleaseDTDrawInfo (o, handle);
+			   a0 a1
+
+	VOID ReleaseDTDrawInfo (Object *, APTR);
+
+@{b}    FUNCTION@{ub}
+	This function releases the information obtained
+	with @{"ObtainDTDrawInfoA()" Link "ObtainDTDrawInfoA()"}.
+
+	This function invokes the DTM_RELEASEDRAWINFO method of the
+	object using the @{"opMember" Link "INCLUDE:intuition/classusr.h/Main" 122} message structure.
+
+@{b}    INPUTS@{ub}
+	handle - Pointer to an object returned by @{"ObtainDTDrawInfoA()" Link "ObtainDTDrawInfoA()"}.
+
+@{b}    SEE ALSO@{ub}
+	@{"DrawDTObjectA()" Link "DrawDTObjectA()"}, ObtainDTDrawInfo()
+
+@EndNode
+
+@Node "RemoveDTObject()" "datatypes.library/RemoveDTObject"
+
+@{b}    NAME@{ub}
+	RemoveDTObject - @{"Remove" Link "exec/Remove()"} an object from a window.        (V39)
+
+@{b}    SYNOPSIS@{ub}
+	position = RemoveDTObject (window, object);
+	d0			    a0	    a1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} RemoveDTObject (struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *);
+
+@{b}    FUNCTION@{ub}
+	Removes the object from the object list of the window and waits
+	until the AsyncLayout process is complete.  The object will
+	receive a DTM_REMOVEDTOBJECT message to inform the object it has
+	been removed.
+
+@{b}    INPUTS@{ub}
+	window - Pointer to the window.
+
+	object - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+@{b}    RETURNS@{ub}
+	Returns the ordinal position of the removed object.  If the
+	object wasn't found in the appropriate list then a -1 is
+	returned.
+
+@{b}    SEE ALSO@{ub}
+	@{"AddDTObject()" Link "AddDTObject()"}, @{"intuition.library/RemoveGList()" Link "intuition/RemoveGList()"}
+
+@EndNode
+
+@Node "SaveDTObjectA()" "datatypes.library/SaveDTObjectA"
+
+@{b}   NAME@{ub}
+        SaveDTObjectA -- Save object's contents                     (V45)
+
+@{b}   SYNOPSIS@{ub}
+        success = SaveDTObjectA( o, win, req, file, mode, saveicon, attrs );
+
+        ULONG SaveDTObjectA( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+                       @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, ULONG, @{"BOOL" Link "INCLUDE:exec/types.h/Main" 168}, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} * );
+
+        success = SaveDTObject( o, win, req, file, mode, saveicon, tag1,
+                                ... );
+
+        ULONG SaveDTObject( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+                      @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, ULONG, @{"BOOL" Link "INCLUDE:exec/types.h/Main" 168}, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ... );
+
+@{b}   FUNCTION@{ub}
+        This function saves the contents of an object into a file.
+
+        The function opens the named file and saves the object's contexts
+        into it (DTM_WRITE). Then it closes the file.
+        If the DTM_WRITE method returns success and the saveicon option is
+        TRUE, matching icon is saved.
+
+        If DTM_WRITE returns 0, the file will be deleted.
+
+@{b}   INPUTS@{ub}
+        o        - @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} like returned from @{"NewDTObjectA" Link "datatypes/NewDTObjectA()"}
+
+        win      - @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} the object is attached to
+
+        req      - @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} the object is attached to
+
+        file     - file name to save to
+
+        mode     - Save mode, (RAW, IFF etc.), one of the DTWM_#? identifiers
+
+        saveicon - Save icon? Does not overwrite an existing icon.
+
+        attrs    - Additional attributs
+
+@{b}   TAGS@{ub}
+        Subclass specific.
+
+        For example, @{"animation.datatype" Link "animation_dtc/animation.datatype()"} V41 recognizes ADTA_Frame (start
+        frame to save) and ADTA_Frames (number of frames to save).
+
+@{b}   RETURNS@{ub}
+        success - The return value returned by DTM_WRITE or @{"NULL" Link "rexxsupport/NULL"} for an
+                  error.
+
+@{b}   BUGS@{ub}
+
+@{b}   SEE ALSO@{ub}
+        datatypesclass/DTM_WRITE
+
+@EndNode
+
+@Node "SetDTAttrsA()" "datatypes.library/SetDTAttrsA"
+
+@{b}    NAME@{ub}
+	SetDTAttrsA - Set attributes for an object.             (V39)
+
+@{b}    SYNOPSIS@{ub}
+	retval = SetDTAttrsA (o, win, req, attrs);
+	d0		      a0  a1   a2   a3
+
+	ULONG SetDTAttrsA (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+			   struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	retval = SetDTAttrs (o, win, req, tag1, ...);
+
+	ULONG SetDTAttrs (Object *, struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *, struct @{"Requester" Link "INCLUDE:intuition/intuition.h/Main" 142} *,
+			  @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1, ...);
+
+@{b}    FUNCTION@{ub}
+	This function is used to set the attributes of a data type
+	object.
+
+@{b}    INPUTS@{ub}
+	o - Pointer to an object as returned by @{"NewDTObjectA()" Link "NewDTObjectA()"}.
+
+	win - @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} that the object has been added to.
+
+	attrs - Attributes to set, terminated with TAG_DONE.
+
+@{b}    TAGS@{ub}
+	see @{"<datatypes/datatypesclass.h>" Link "INCLUDE:datatypes/datatypesclass.h/Main" 0} for tags.
+
+@{b}    SEE ALSO@{ub}
+	@{"GetDTAttrsA()" Link "GetDTAttrsA()"}, @{"intuition.library/SetGadgetAttrsA()" Link "intuition/SetGadgetAttrsA()"}
+
+@EndNode
+
+@Node "StartDragSelect()" "datatypes.library/StartDragSelect"
+@{b}    NAME@{ub}
+	StartDragSelect -- Start drag-selection                     (V45)
+
+@{b}    SYNOPSIS@{ub}
+	success = StartDragSelect( o );
+
+       ULONG StartDragSelect( @{"Object" Link "INCLUDE:intuition/classusr.h/Main" 18} * );
+
+@{b}    FUNCTION@{ub}
+	This function starts drag-selection by the user (marking).
+
+	This function replaces the old flag-fiddling method to
+	start drag-select.
+
+	The drag-select will only be started of the object supports
+	DTM_SELECT, is in a window or requester and no layout-process
+	is working on the object. If all conditions are good, it sets
+	the DTSIF_DRAGSELECT flag and returns TRUE for success.
+
+@{b}     INPUTS@{ub}
+	o - object like returned from @{"NewDTObjectA" Link "datatypes/NewDTObjectA()"}
+
+@{b}     RETURNS@{ub}
+	TRUE for success, FALSE for failure
+
+@{b}   SEE ALSO@{ub}
+
+@EndNode
+

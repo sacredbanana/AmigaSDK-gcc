@@ -1,0 +1,486 @@
+TABLE OF CONTENTS
+
+sketchboard_gc/--datasheet--
+sketchboard_gc/SGM_Clear
+sketchboard_gc/SGM_Redo
+sketchboard_gc/SGM_Scroll
+sketchboard_gc/SGM_Undo
+sketchboard_gc/SKETCHBOARD_GetClass
+sketchboard_gc/--datasheet--                     sketchboard_gc/--datasheet--
+
+    NAME
+        sketchboard.gadget -- sketchboard gadget class
+
+    SUPERCLASS
+        gadgetclass
+
+    REQUIRES
+        bevel.image
+
+    DESCRIPTION
+        This class is intended to be used to edit smaller bitmaps with a
+        limited set of drawing tools. It is used by the Pointer preferences
+        as well as the IconEdit utility.
+
+        Special features include bitmap scaling, an optional grid pattern
+        and optional hot spot indicator.
+
+    METHODS
+        OM_NEW -- Create the sketchboard.gadget object. Passed to superclass.
+
+        OM_DISPOSE -- Destroy the gadget and then pass to superclass.
+
+        OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+        OM_SET -- Set object attributes. Passed to superclass first.
+
+        OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+        GM_HELPTEST -- Determine if gadget help was hit.
+
+        GM_HITTEST -- Determine if gadget was hit.
+
+        GM_RENDER -- Render the gadget with state.
+
+        GM_GOACTIVE -- Activate the gadget.
+
+        GM_GOINACTIVE -- Deactivate the gadget.
+
+        GM_HANDLEINPUT -- Handle input while gadget is active.
+
+        GM_EXTENT -- Inquire about gadget rendering extent.
+
+        GM_LAYOUT -- Calculate relative gadget coordinates.
+
+        GM_DOMAIN -- Obtain gadget sizing requirements.
+
+        SGM_Clear -- Set drawing area to current pen color.
+
+        SGM_Undo -- Undo the last change.
+
+        SGM_Redo -- Redo the last change.
+
+        SGM_Scroll -- Scroll contents of drawing area by dx/dy pixels.
+
+        All other methods are passed to the superclass.
+
+    ATTRIBUTES
+        GA_ReadOnly (BOOL)
+            This attribute overrides the behavior of the superclass
+            to set and clear the GFLG_SELECTED flag. Set the gadget to
+            read only when accessing the SGA_BitMap.
+
+            Defaults to FALSE.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        GA_Disabled (BOOL)
+            This attribute overrides the behavior of the superclass
+            to also set and clear the GFLG_SELECTED flag.
+
+            Defaults to FALSE.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        GA_HintInfo (CONST_STRPTR)
+            Specify the text to use as the hint info for this gadget.
+            You can change this attribute at any time, and it will over-
+            ride any text specified in the windows HintInfo array. See
+            window.class autodoc for more information.
+
+            Defaults to NULL.
+
+            Applicability is (OM_NEW, OM_SET).
+
+        SGA_BitMap (struct BitMap *)
+            Pointer to the source bitmap which will be copied from
+            when used with OM_NEW, OM_SET and OM_UPDATE. This bitmap
+            is only read from.
+
+            The sketchboard object always uses its own internal bitmap
+            for editing. The internal bitmap can be retrieved using
+            this attribute and OM_GET. Set the gadget to GA_ReadOnly
+            before invoking OM_GET and be ready to handle a NULL
+            pointer if the gadget has not yet been layed out.
+
+            Defaults to NULL (blank).
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_MouseX (UWORD)
+            The current mouse X coordinate within the drawing area.
+
+            When using OM_GET, initialize the tag value to the
+            mouse X coordinate relative to the gadget's bounds.
+            This value will then be scaled to provide the mouse X
+            coordinate within the drawing area.
+
+            When SGA_Scale is 1 there is no scaling because each
+            pixel is exactly one square in the drawing area. When
+            SGA_Scale is 2 there are 2 pixels for every one square
+            withing the drawing area and so forth.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_MouseY (UWORD)
+            The current mouse Y coordinate within the drawing area.
+
+            When using OM_GET, initialize the tag value to the
+            mouse Y coordinate relative to the gadget's bounds.
+            This value will then be scaled to provide the mouse Y
+            coordinate within the drawing area.
+
+            When SGA_Scale is 1 there is no scaling because each
+            pixel is exactly one square in the drawing area. When
+            SGA_Scale is 2 there are 2 pixels for every one square
+            withing the drawing area and so forth.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_Width (UWORD)
+            The width of the drawing in pixels.
+
+            Defaults to 32.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_Height (UWORD)
+            The height of the drawing in pixels.
+
+            Defaults to 32.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_APen (UBYTE)
+            Current primary drawing pen.
+
+            Defaults to 1.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+        SGA_Tool (UWORD)
+            The currently active drawing tool which is one of the following:
+             SGTOOL_FREEHAND_DOTS  - freehand dots only
+             SGTOOL_FREEHAND       - freehand connected lines
+             SGTOOL_ELLIPSE        - ellipse
+             SGTOOL_ELLIPSE_FILLED - filled ellipse
+             SGTOOL_RECT           - rectangle
+             SGTOOL_RECT_FILLED    - filled rectangle
+             SGTOOL_LINE           - single line
+             SGTOOL_FILL           - flood fill an area
+             SGTOOL_GETPEN         - get primary pen (SGA_APen notifies)
+             SGTOOL_HOTSPOT        - set image hot spot
+             SGTOOL_SELECT         - selecting a part of the image for cut, c
+opy or move
+             SGTOOL_MOVE           - move the image og selection
+
+            Defaults to SGTOOL_FREEHAND_DOTS.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+        SGA_UndoAvailable (BOOL)
+            This attribute indicates whether an undo operation is possible
+            with the currently selected SGA_Tool.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_RedoAvailable (BOOL)
+            This attribute indicates whether a redo operation is possible
+            with the currently selected SGA_Tool.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_ShowGrid (BOOL)
+            This attribute enables or disables the drawing grid.
+
+            Defaults to TRUE.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+        SGA_ScaleByCtrlMouseWheel (BOOL)
+            Enables Scaling by user turning the mouse wheel with Ctrl held do
+wn
+
+            Defaults to FALSE
+
+            Applicability is (OM_GET)
+
+        SGA_Scale (UWORD)
+            Determines the scaling factor to use starting from 1.
+
+            Defaults to 3.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_AfPt (UWORD *)
+            Control the area fill pattern for the space not being
+            edited around the image.
+
+            Defaults to NULL (checkerboard pattern).
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_AfPtSize (WORD)
+            Size of area fill pattern.
+
+            Defaults to 1.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_HPropTotal (UWORD)
+            Total horizontal size of the sketch when scaled. For use
+            when interconnecting with a propgclass object or similar.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_HPropTop (UWORD)
+            Top of the horizontal size of the sketch when scaled. For
+            use when interconnecting with a propgclass object or similar.
+
+            Applicability is (OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+        SGA_HPropVisible (UWORD)
+            Visible horizontal size of the sketch when scaled. For use
+            when interconnecting with a propgclass object or similar.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_VPropTotal (UWORD)
+            Total vertical size of the sketch when scaled. For use
+            when interconnecting with a propgclass object or similar.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_VPropTop (UWORD)
+            Top of the vertical size of the sketch when scaled. For
+            use when interconnecting with a propgclass object or similar.
+
+            Applicability is (OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+        SGA_VPropVisible (UWORD)
+            Visible vertical size of the sketch when scaled. For use
+            when interconnecting with a propgclass object or similar.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SGA_HotSpot (ULONG)
+            The current hot spot location packed into a ULONG. The
+            upper word is the X position while the lower word is the
+            Y position. The hot spot will be rendered as a small square.
+
+            Defaults to -1 (no hot spot).
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+        SGA_Changed (BOOL)
+            The flag will be set to TRUE when the drawing has been
+            changed in some way.
+
+            Defaults to FALSE.
+
+            Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+        SGA_RastPort (struct RastPort *)
+            This attribute is for subclass implementors only. It points
+            the the layered RastPort being used for the drawing. The
+            pointer may change when SGA_SketchWidth or SGA_SketchHeight
+            changes. It is also possible it may be NULL.
+
+            Applicability is (OM_GET)
+
+        SGA_SketchBoardRect (struct Rectangle *)
+            This attribute is for subclass implementors only. It defines
+            the area bounds where the actual rendering takes place
+            relative to the top left corner of the parent window. This
+            is a read only attribute.
+
+            Applicability is (OM_GET)
+
+        SGA_SubWidth (UWORD)
+        SGA_SubHeight (UWORD)
+            These attribute are currently not implemented.
+
+        SGA_DoubleScaleX (BOOL)
+        SGA_DoubleScaleY (BOOL)
+            Internally double X/Y scale. Useful if showing a lores/non-
+            interlaced image on a hires/interlaced screen.
+
+            Applicability is (OM_NEW, OM_SET)
+
+        SGA_TopLayerBitmap (struct BitMap *)
+            A bitmap that acts as top layer on
+            top of the image itself. The use can move this bitmap
+            around with the Move tool. Many actions like change of
+            tool or selecting another area may dispose the internal
+            SGA_TopLayerBitmap.
+
+            After OM_SETting this attribute you can release the bitmap
+            as the gadget copies it to its own one.
+
+            For OM_GET this will return a pointer to the gadget's bitmap;
+            don't cache this pointer!
+
+            Be prepared to handle NULL pointers (out of memory, no
+            selection, or gadget hasn't been layouted).
+
+            NOTE: when setting or getting this you also need to
+            do SGA_TopLayerWidth.
+
+            Applicability is (OM_GET, OM_NEW, OM_SET)
+
+        SGA_TopLayerWidth (WORD)
+            The real width of the SGA_TopLayerBitmap.
+            It can be 0 if there is no selection.
+
+            Applicability is (OM_GET, OM_NEW, OM_SET)
+
+        SGA_WithBevel (BOOL)
+            Whether to use a bevel.
+
+            Defaults to TRUE. Applicability is (OM_NEW)
+
+        SGA_WithBevel (BOOL)
+            Whether to use a bevel.
+
+            Defaults to TRUE. Applicability is (OM_NEW)
+
+        SGA_ScrollWheelResponse (ULONG)
+            See <gadgets/sketchboard.h> for possible values.
+            Defaults to SGSCROLLWHEEL_SCROLLANDZOOM. (IS) (V47)
+
+        SGA_MaxUndoSteps (ULONG)
+            Defaults to 16. (IS) (V47)
+
+        SGA_UpdatedBitMap (struct BitMap *)
+            Exactly the same as SGA_BitMap EXCEPT it doesn't reset the
+            change stack, but instead records this update as a step in
+            the change stack. (ISG) (V47)
+
+        SGA_MaxScale (ULONG)
+            Maximum scale. Defaults to 16.
+            Probably shouldn't be much bigger. (ISG) (V47.19)
+
+sketchboard_gc/SGM_Clear                             sketchboard_gc/SGM_Clear
+
+    NAME
+        SGM_Clear -- Set drawing area to current pen color.
+
+    SYNOPSIS
+        ULONG result = IDoMethodA(APTR obj, struct spGeneral* msg);
+
+    FUNCTION
+        This method clears the entire sketchboard to the current pen color.
+
+        Since V47 it clears the selection if there is one. Old applications t
+hat
+        don't activate the select tool will not see a difference.
+
+    INPUTS
+        obj - sketchboard object pointer
+        msg - pointer to fully initialized struct spGeneral with the
+              MethodID set to SGM_Clear
+              (see <gadgets/sketchboard.h>)
+
+    RESULT
+        Returns 1 if changes were rendered or 0 if not.
+
+    SEE ALSO
+        intuition.library/DoGadgetMethodA()
+
+sketchboard_gc/SGM_Redo                               sketchboard_gc/SGM_Redo
+
+    NAME
+        SGM_Redo -- Redo the last change.
+
+    SYNOPSIS
+        ULONG result = IDoMethodA(APTR obj, struct spGeneral* msg);
+
+    FUNCTION
+        This method redoes the last change to the sketchboard.
+
+    INPUTS
+        obj - sketchboard object pointer
+        msg - pointer to fully initialized struct spGeneral with the
+              MethodID set to SGM_Redo
+              (see <gadgets/sketchboard.h>)
+
+    RESULT
+        Returns 1 if changes were rendered or 0 if not.
+
+    SEE ALSO
+        SGM_Undo, intuition.library/DoGadgetMethodA()
+
+sketchboard_gc/SGM_Scroll                           sketchboard_gc/SGM_Scroll
+
+    NAME
+        SGM_Scroll -- Scroll the contents by dx/dy pixels.
+
+    SYNOPSIS
+        ULONG result = IDoMethodA(APTR obj, struct spScrollRaster* msg);
+
+    FUNCTION
+        This method scrolls the sketchboard by dx/dy pixels. The
+        delta amounts are specified in the spScrollRaster message.
+
+    INPUTS
+        obj - sketchboard object pointer
+        msg - pointer to fully initialized struct spScrollRaster
+              (see <gadgets/sketchboard.h>)
+
+    RESULT
+        Returns 1 if changes were rendered or 0 if not.
+
+    SEE ALSO
+        intuition.library/DoGadgetMethodA()
+
+sketchboard_gc/SGM_Undo                               sketchboard_gc/SGM_Undo
+
+    NAME
+        SGM_Undo -- Undo the last change.
+
+    SYNOPSIS
+        ULONG result = IDoMethodA(APTR obj, struct spGeneral* msg);
+
+    FUNCTION
+        This method undoes the last change to the sketchboard.
+
+    INPUTS
+        obj - sketchboard object pointer
+        msg - pointer to fully initialized struct spGeneral with the
+              MethodID set to SGM_Undo
+              (see <gadgets/sketchboard.h>)
+
+    RESULT
+        Returns 1 if changes were rendered or 0 if not.
+
+    SEE ALSO
+        SGM_Redo, intuition.library/DoGadgetMethodA()
+
+sketchboard_gc/SKETCHBOARD_GetClass       sketchboard_gc/SKETCHBOARD_GetClass
+
+    NAME
+        SKETCHBOARD_GetClass -- Gets pointer to the sketchboard class.
+
+    SYNOPSIS
+        sketchboard_class = SKETCHBOARD_GetClass();
+        D0
+
+        Class * class = SKETCHBOARD_GetClass();
+
+    FUNCTION
+        Obtains the pointer to the sketchboard gadget class for use with
+        NewObject().  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+    RESULT
+        class - Pointer to the sketchboard class.
+
+    SEE ALSO
+
+

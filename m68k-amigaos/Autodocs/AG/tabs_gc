@@ -1,0 +1,250 @@
+@database "tabs_gc"
+@master "AMIDEV:NDK/Autodocs/tabs_gc.doc"
+
+@Node Main "tabs_gc.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" GM_GOACTIVE " Link "GM_GOACTIVE"}
+    @{" GM_HITTEST " Link "GM_HITTEST"}
+    @{" GM_LAYOUT " Link "GM_LAYOUT"}
+    @{" GM_RENDER " Link "GM_RENDER"}
+    @{" OM_GET " Link "OM_GET"}
+    @{" OM_NEW " Link "OM_NEW"}
+    @{" OM_SET " Link "OM_SET"}
+@EndNode
+
+@Node "--datasheet--()" "tabs.gadget/--datasheet--"
+
+@{b}    NAME@{ub}
+       tabs.gadget--File folder tabs gadget.                   (V42)
+
+@{b}    SUPERCLASS@{ub}
+	gadgetclass
+
+@{b}    DESCRIPTION@{ub}
+	The tabs gadget class provides a custom control that has imagry
+	similar in style to the tabs seen in a drawer full of file folders.
+	The action of the gadget is the same as a conventional
+	mutual-exclusion control in that only one tab can be active at a time
+	and a tab is selected by clicking upon it.
+
+	The purpose of the tabs gadget class is to provide functionality like
+	the page selection cycle gadget on the top-right side of the AmigaOS
+	2.1 PrinterPS preferences editor, but allowing all the choices to be
+	visible at the same time.
+
+	This gadget class requires 2.04 (V37) or greater.
+
+@{b}    METHODS@{ub}
+	OM_NEW--Create the button gadget.  Passed to superclass, then @{"OM_SET" Link "OM_SET"}.
+
+	OM_GET--Get an object attribute.  Passed to superclass for unknown
+	    attributes.
+
+	OM_SET--Set object attributes.  Passed to superclass first.
+
+	OM_UPDATE--Set object notification attributes.  Passed to superclass
+	    first.
+
+	GM_LAYOUT--Calculate gadget imagry positioning.  Passed to superclass
+	    first.
+
+	GM_RENDER--Renders the gadget imagry.  Overrides the superclass.
+
+	GM_HITTEST--Determines if mouse is within the gadget rectangle.  Over-
+	    rides the superclass.
+
+	GM_GOACTIVE--Handles activation, toggle-select and button-select.
+	    Overrides the superclass.
+
+	GM_GOINACTIVE--Deselects the button.  Overrides the superclass.
+
+	All other methods are passed to the superclass, including OM_DISPOSE.
+
+@{b}    ATTRIBUTES@{ub}
+	GA_Disabled (BOOL) -- Determines whether the button is disabled or
+	    not.  Changing disable state will invoke @{"GM_RENDER" Link "GM_RENDER"}.  A disabled
+	    button's border and label are all rendered in SHADOWPEN and then
+	    dusted in a ghosting pattern that is rendered in SHADOWPEN.
+	    Defaults to FALSE.
+
+	GA_TextAttr (struct @{"TextAttr" Link "INCLUDE:graphics/text.h/Main" 63} *) -- @{"Text" Link "graphics/Text()"} attribute for the font to
+	    use for the labels.
+
+	LAYOUTA_ChildMaxWidth (BOOL) -- Indicate whether the tabs should be
+	    the width of the widest label.  Defaults to TRUE.
+
+	TABS_Labels (TabLabelP) -- An array of TabLabel structures used to
+	    indicate the labels for each of the tabs.
+
+	TABS_Current (LONG) -- Currently selected tab.  Defaults to zero.
+
+@{b}    NOTES@{ub}
+	This gadget class requires 2.04 or beyond to run.
+
+@EndNode
+
+@Node "GM_GOACTIVE" "tabs.gadget/GM_GOACTIVE"
+
+@{b}    NAME@{ub}
+       GM_GOACTIVE--Activate a gadget.                         (V42)
+
+@{b}    FUNCTION@{ub}
+	The GM_GOACTIVE method is used to indicate to a gadget that it has
+	become active.  This method overrides the superclass.
+
+	Invokes @{"GM_RENDER" Link "GM_RENDER"} with GREDRAW_UPDATE set if the current tab is
+	changed.
+
+@{b}    RESULT@{ub}
+	If a new tab is selected, then returns GMR_VERIFY | GMR_NOREUSE.
+
+	All other cases returns GMR_NOREUSE.
+
+	Sets the *msg->gpi_Termination field to TABS_Current, which in turn
+	fills in the IntuiMessage->Code field.
+
+@EndNode
+
+@Node "GM_HITTEST" "tabs.gadget/GM_HITTEST"
+
+@{b}    NAME@{ub}
+       GM_HITTEST--Is gadget hit.                              (V42)
+
+@{b}    FUNCTION@{ub}
+	The GM_HITTEST method is used to determine if the given mouse
+	coordinates are within the domain of the gadget.  This method
+	overrides the superclass.
+
+@{b}    RESULT@{ub}
+	This method returns GMR_GADGETHIT if within the domain, otherwise
+	zero is returned.
+
+@EndNode
+
+@Node "GM_LAYOUT" "tabs.gadget/GM_LAYOUT"
+
+@{b}    NAME@{ub}
+       GM_LAYOUT--Calculate the positioning of the imagry.     (V42)
+
+@{b}    FUNCTION@{ub}
+	The GM_LAYOUT method is used to calculate the domain of the gadget
+	and to center the label within the domain.  This method is passed to
+	the superclass first.
+
+	@{"Gadget" Link "INCLUDE:intuition/intuition.h/Main" 212} relativity is fully supported.
+
+@{b}    RESULT@{ub}
+	This method returns 0.
+
+@EndNode
+
+@Node "GM_RENDER" "tabs.gadget/GM_RENDER"
+
+@{b}    NAME@{ub}
+       GM_RENDER--Render the visuals of the gadget.            (V42)
+
+@{b}    FUNCTION@{ub}
+	The GM_RENDER method is used to render the visuals of the gadget.
+	This method overrides the superclass.
+
+	If the gadget is disabled, then the ghosting pattern is applied.
+
+@{b}    RESULT@{ub}
+	This method returns 0.
+
+@EndNode
+
+@Node "OM_GET" "tabs.gadget/OM_GET"
+
+@{b}    NAME@{ub}
+       OM_GET--Get an attribute of a tabs.gadget object.       (V42)
+
+@{b}    FUNCTION@{ub}
+	The OM_GET method is used to get an attributes of a tabs.gadget.
+	This method is passed to the superclass for any attribute the
+	class doesn't understand..
+
+@{b}    ATTRIBUTES@{ub}
+	The following attributes can be obtained from the tabs.gadget.
+
+	TABS_Current (LONG) -- Currently selected tab.
+
+@{b}    RESULT@{ub}
+	Returns TRUE (1) if the attribute can be obtained, otherwise
+	returns FALSE (0).
+
+@EndNode
+
+@Node "OM_NEW" "tabs.gadget/OM_NEW"
+
+@{b}    NAME@{ub}
+       OM_NEW--Create a tabs.gadget object.                    (V42)
+
+@{b}    FUNCTION@{ub}
+	The OM_NEW method is used to create an instance of the tabs.gadget
+	class.  This method is passed to the superclass first.
+
+@{b}    ATTRIBUTES@{ub}
+	The following attributes can be specified at creation time.
+
+	GA_Top (LONG) -- The top of the gadget.  Should be
+	    win->BorderTop + 2.
+
+	GA_Left (LONG) -- The left edge of the gadget.
+
+	GA_Height (LONG) -- Height of the gadget.  Should be the font
+	    height plus seven.
+
+	GA_RelHeight (LONG) -- Although this attribute is supported, it is
+	    stylistically a bad thing to do.
+
+	GA_Disabled (BOOL) -- Determines whether the gadget is disabled or
+	    not.  Defaults to FALSE.
+
+	GA_TextAttr (struct @{"TextAttr" Link "INCLUDE:graphics/text.h/Main" 63} *) -- @{"Text" Link "graphics/Text()"} attribute for the font to
+	    use for the labels.
+
+@{b}    RESULT@{ub}
+	If the object was created then a pointer to the object is returned,
+	otherwise @{"NULL" Link "rexxsupport/NULL"} is returned.
+
+@EndNode
+
+@Node "OM_SET" "tabs.gadget/OM_SET"
+
+@{b}    NAME@{ub}
+       OM_SET--Set the attributes of a tabs.gadget object.     (V42)
+
+@{b}    FUNCTION@{ub}
+	The OM_SET method is used to set the attributes of a tabs.gadget.
+	This method is passed to the superclass first.
+
+@{b}    ATTRIBUTES@{ub}
+	The following attributes can be changed at OM_SET or OM_UPDATE.
+
+	GA_Disabled (BOOL) -- Determines whether the gadget is disabled or
+	    not.  Changing disable state will invoke @{"GM_RENDER" Link "GM_RENDER"}.  A disabled
+	    gadget's border and label are all rendered in SHADOWPEN and then
+	    dusted in a ghosting pattern that is rendered in SHADOWPEN.
+	    Defaults to FALSE.
+
+	GA_TextAttr (struct @{"TextAttr" Link "INCLUDE:graphics/text.h/Main" 63} *) -- @{"Text" Link "graphics/Text()"} attribute for the font to
+	    use for the labels.
+
+	LAYOUTA_ChildMaxWidth (BOOL) -- Indicate whether the tabs should be
+	    the width of the widest label.  Defaults to TRUE.
+
+	TABS_Labels (TabLabelP) -- An array of TabLabel structures used to
+	    indicate the labels for each of the tabs.
+
+	TABS_Current (LONG) -- Currently selected tab.  Defaults to zero.
+
+@{b}    RESULT@{ub}
+	The class will update the attributes of object.  Changing some
+	attributes will result in @{"GM_LAYOUT" Link "GM_LAYOUT"} and/or @{"GM_RENDER" Link "GM_RENDER"} being called.
+
+	The return value will be non-zero if the gadget needs to be refreshed.
+
+@EndNode
+

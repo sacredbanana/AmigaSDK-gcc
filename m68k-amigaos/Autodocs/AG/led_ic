@@ -1,0 +1,88 @@
+@database "led_ic"
+@master "AMIDEV:NDK/Autodocs/led_ic.doc"
+
+@Node Main "led_ic.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+@EndNode
+
+@Node "--datasheet--()" "led_ic/--datasheet--"
+
+@{b}    NAME@{ub}
+        led.image--Simulated LED display image.                 (V42)
+
+@{b}    SUPERCLASS@{ub}
+        imageclass
+
+@{b}    DESCRIPTION@{ub}
+        The led.image image class provides a simulated LED image display.
+
+@{b}    METHODS@{ub}
+        OM_NEW--Create the LED image.  Passed to superclass, then @{"OM_SET" Link "tabs_gc/OM_SET"}.
+
+        OM_SET--Set object attributes.  Passed to superclass first.
+
+        OM_UPDATE--Set object notification attributes.  Passed to superclass
+            first.
+
+        IM_DRAW--Renders the images.  Overrides the superclass.
+
+        All other methods are passed to the superclass, including OM_DISPOSE.
+
+@{b}    ATTRIBUTES@{ub}
+        SYSIA_DrawInfo (struct @{"DrawInfo" Link "INCLUDE:intuition/screens.h/Main" 66} *) -- Contains important pen
+            information.  This is required if IA_BGPen and IA_FGPen are
+            not specified.
+
+        IA_FGPen (LONG) -- Pen to use to draw the lit segments.  If -1
+            is specified then TEXTPEN is used.
+
+        IA_BGPen (LONG) -- Pen to use to draw the unlit segments or
+            background.  If -1 is specified then BACKGROUNDPEN is used.
+            Ignored prior to V47.
+
+        IA_Width (LONG) -- Width of the image.
+
+        IA_Height (LONG) -- Height of the image.
+
+        LED_Pairs (LONG) -- Number of pairs of digits.
+
+        LED_Values (WORD *) -- Array of values.  One entry per pair
+            is required.
+
+        LED_Colon (BOOL) -- Is the colon between pairs lit or not.
+            Defaults to FALSE.
+
+        LED_Negative (BOOL) -- Is the negative sign lit or not.
+            Defaults to FALSE.
+
+        LED_Signed (BOOL) -- Leave room for a negative sign or
+            not.  Defaults to FALSE.
+
+        LED_Time (BOOL) -- Leave space for a colon or not. Defaults to
+            TRUE. (V47.3)
+
+        LED_Hexadecimal (BOOL) -- Hexadecimal instead of decimal output.
+            Defaults to FALSE. (V47.3)
+
+        LED_Raw (BOOL) -- Raw mode; allows arbitrary combinations of segments
+            to be lit. In this mode, each byte of the array at LED_Values
+            is interpreted as follows (on bits are lit, off bits are unlit):
+
+            bit 7: currently ignored
+            bit 6: top
+            bit 5: top left
+            bit 4: top right
+            bit 3: middle
+            bit 2: bottom left
+            bit 1: bottom right
+            bit 0: bottom
+
+            The high byte of each word pertains to the left digit of the
+            pair, and the low byte pertains to the right digit.
+
+            Eg. to form a lowercase "ab", a value of $5F2F would be used.
+            (V47.3)
+
+@EndNode
+

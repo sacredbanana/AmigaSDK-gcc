@@ -1,0 +1,207 @@
+TABLE OF CONTENTS
+
+Guigfx_mcc/MUIA_Guigfx_BitmapInfo
+Guigfx_mcc/MUIA_Guigfx_FileName
+Guigfx_mcc/MUIA_Guigfx_ImageInfo
+Guigfx_mcc/MUIA_Guigfx_Picture
+Guigfx_mcc/MUIA_Guigfx_Quality
+Guigfx_mcc/MUIA_Guigfx_ScaleMode
+Guigfx_mcc/MUIA_Guigfx_Transparency
+Guigfx_mcc/MUIA_Guigfx_TransparentColor
+
+
+Guigfx_mcc/MUIA_Guigfx_BitmapInfo
+
+    NAME
+	MUIA_Guigfx_BitmapInfo -- (V0) [IS ], struct MUIP_Guigfx_BitmapInfo *
+
+    FUNCTION
+	To display a bitmap supplied by your application in a Guigfx
+	object instead of loading an image from disk, set this attribute
+	to a pointer to a MUIP_Guigfx_BitmapInfo structure.
+	This structure holds some additional information which is required
+	but not present in a standard BitMap:
+	- the palette as a series of 32-bit RGB triplets (see
+          graphics.library/GetRGB32())
+	- an optional pointer to a single bitplane to be used as a
+	  transparency mask
+	- the picture's horizontal/vertical pixel aspect
+
+    NOTES
+	Setting this attribute may change the object's size and thus
+	requires a MUIM_Group_InitChange/MUIM_Group_ExitChange pair for the
+	object's parent group!
+
+    TODO
+	Allow nonstandard bitmap formats. Currently, only standard Amiga
+	bitmaps can be used.
+
+    SEE ALSO
+	MUIA_Guigfx_Filename, MUIA_Guigfx_Picture,
+	MUIA_Guigfx_ImageInfo
+Guigfx_mcc/MUIA_Guigfx_FileName
+
+    NAME
+	MUIA_Guigfx_FileName -- (V0) [IS ], STRPTR
+
+    FUNCTION
+	Pointer to the filename of a picture to load and display.
+	Files are loaded using guigfx.library which uses datatypes, so the
+	format doesn't matter as long as the user has a datatype for it.
+
+    NOTES
+	Setting this attribute may change the object's size and thus
+	requires a MUIM_Group_InitChange/MUIM_Group_ExitChange pair for the
+	object's parent group!
+
+    SEE ALSO
+	MUIA_Guigfx_Picture, MUIA_Guigfx_BitmapInfo,
+	MUIA_Guigfx_Image
+Guigfx_mcc/MUIA_Guigfx_ImageInfo
+
+    NAME
+	MUIA_Guigfx_ImageInfo -- (V0) [IS ], struct MUIP_Guigfx_ImageInfo *
+
+    FUNCTION
+	Set this to a Guigfx_ImageInfo structure to show the Intuition
+	image it describes. See Guigfx_mcc.h and MUIA_Guigfx_BitmapInfo
+	for a description of its members.
+	The special values MUIV_Guigfx_WBPalette and
+	MUIV_Guigfx_GreyPalette may be used instead of a pointer to a
+	color table to use the WB's (e.g. to show an icon image read with
+	GetDiskObject()) or a greyscale palette respectively.
+
+    NOTES
+	Setting this attribute may change the object's size and thus
+	requires a MUIM_Group_InitChange/MUIM_Group_ExitChange pair for the
+	object's parent group!
+
+    SEE ALSO
+	MUIA_Guigfx_BitmapInfo
+
+Guigfx_mcc/MUIA_Guigfx_Picture
+
+    NAME
+	MUIA_Guigfx_Picture -- (V0) [ISG], APTR
+
+    FUNCTION
+	Holds an opaque pointer to a guigfx.library picture object. If you
+	want to load a picture yourself using guigfx.library, you can pass
+	in a pointer to the object here, or get() the pointer to the object
+	Guigfx.mcc created from another source.
+
+    NOTES
+	Setting this attribute may change the object's size and thus
+	requires a MUIM_Group_InitChange/MUIM_Group_ExitChange pair for the
+	object's parent group!
+
+    SEE ALSO
+	MUIA_Guigfx_FileName, MUIA_Guigfx_BitmapInfo,
+	MUIA_Guigfx_Image
+Guigfx_mcc/MUIA_Guigfx_Quality
+
+    NAME
+	MUIA_Guigfx_Quality -- (V0) [ISG], ULONG
+
+    FUNCTION
+	Accuracy to use when remapping/dithering an image. Possible values:
+
+	- MUIV_Guigfx_Quality_Low
+	    Remapping: PRECISION_ICON
+	    Dithering: none
+	  
+	- MUIV_Guigfx_Quality_Medium
+	    Remapping: PRECISION_ICON
+	    Dithering: EDD / automatic / threshold=250
+
+	- MUIV_Guigfx_Quality_High
+	    Remapping: PRECISION_IMAGE
+	    Dithering: EDD / automatic / threshold=120
+
+	- MUIV_Guigfx_Quality_Best
+	    Remapping: PRECISION_IMAGE
+	    Dithering: Floyd-Steinberg / always
+
+Guigfx_mcc/MUIA_Guigfx_ScaleMode
+
+    NAME
+	MUIA_Guigfx_ScaleMode -- (V0) [I G], ULONG
+
+    FUNCTION
+	Whether/how to allow image scaling. This is a flag longword with
+	the following bits currently defined:
+
+	- NISMF_SCALEUP
+	  Allow image to be enlarged.
+
+	- NISMF_SCALEDOWN
+	  Allow image to be reduced.
+
+	- NISMF_SCALEFREE
+	  Combination of the above flags, allows any size
+		
+	Use NISMF_NONE to forbid scaling altogether.
+
+	Special flags:
+
+	- NISMF_KEEPASPECT_PICTURE
+	  Don't change the picture's aspect when scaling. As MUI doesn't
+	  support explicit width/height ratios, this will cause some
+	  background to appear above and below or to the left and right
+	  of the picture which will always be centered in the available
+	  rectangle.
+
+	- NISMF_KEEPASPECT_SCREEN
+	  Take the screen's pixel aspect into account when calculating the
+	  allowed sizes. So a picture drawn for e.g. a 640x256 screenmode
+	  will have its pixel height multiplied by 1.87 times for an
+	  800x600 screen to make it look as close to the original as
+	  possible. This flag implies NISMF_KEEPASPECT_PICTURE, so an
+	  aspect-corrected picture will also scale with fixed aspect.
+
+    NOTES
+	Setting this attribute changes the way MUI's layout manager handles
+	the object's size and thus requires a MUIM_Group_InitChange/
+	MUIM_Group_ExitChange pair for the object's parent group!
+
+Guigfx_mcc/MUIA_Guigfx_Transparency
+
+    NAME
+	MUIA_Guigfx_Transparency -- (V0) [ISG], ULONG
+
+    FUNCTION
+	Two flags may be set to determine if and what kind of transparancy
+	should be used:
+
+	- NITRF_MASK
+	  Some image file formats and their corresponding datatypes support an
+	  alphachannel, typically in 1-8 bits. If this flag is set and an
+	  alphachannel was found in an image, it is converted into a mask so
+	  that only the opaque image parts are drawn.
+
+	- NITRF_RGB
+	  For formats that don't support an alphachannel you may want to use a
+	  certain RGB value as a background color. By setting this flag, a
+	  value set with MUIA_Guigfx_TransparentColor is considered valid.
+
+	If both flags are set, the alphachannel is tried first. If it
+	doesn't exist the class falls back to an RGB mask using
+	MUIA_Guigfx_TransparentColor.
+
+    SEE ALSO
+	MUIA_Guigfx_TransparentColor
+Guigfx_mcc/MUIA_Guigfx_TransparentColor
+
+    NAME
+	MUIA_Guigfx_TransparentColor -- (V0) [IS ], 
+
+    FUNCTION
+	For image formats that don't support an alphachannel (or pictures that
+	simply don't have one although the format permits it) you may want to
+	specify a certain RGB value that is to be used as "background color".
+	In this case, set the NITRF_RGB flag in MUIA_Guigfx_Transparent and
+	MUIA_Guigfx_TransparentColor to the RGB value in format 0x00rrggbb.
+
+    SEE ALSO
+	MUIA_Guigfx_Transparency
+

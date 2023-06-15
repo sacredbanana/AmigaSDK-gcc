@@ -1,0 +1,287 @@
+@database "radio_gc"
+@master "AMIDEV:NDK/Autodocs/radio_gc.doc"
+
+@Node Main "radio_gc.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" AllocRadioButtonNodeA() " Link "AllocRadioButtonNodeA()"}
+    @{" FreeRadioButtonNode() " Link "FreeRadioButtonNode()"}
+    @{" GetRadioButtonNodeAttrsA() " Link "GetRadioButtonNodeAttrsA()"}
+    @{" RADIOBUTTON_GetClass() " Link "RADIOBUTTON_GetClass()"}
+    @{" SetRadioButtonNodeAttrsA() " Link "SetRadioButtonNodeAttrsA()"}
+@EndNode
+
+@Node "--datasheet--()" "radiobutton_gc/--datasheet--"
+
+@{b}    NAME@{ub}
+        radiobutton_gc -- create radiobutton BOOPSI objects
+
+@{b}    SUPERCLASS@{ub}
+        gadgetclass
+
+@{b}    REQUIRES@{ub}
+        bevel.image, glyph.image
+
+@{b}    DESCRIPTION@{ub}
+        The radiobutton gadget class is used to create a mutually exclusive
+        (MX) selection button group. Selection of an associated option is
+        denoted by the depressed/filled button. Unlike GadTools, GA_Width and
+        GA_Height to not specify the size of a single radio button. Instead
+        it marks the entire domain of the gadget which allows for easier
+        group layout. When used outside of a layout group you must be
+        sure to provide enough space for the gadget to completly render
+        all radio buttons and labels. However, within a layout group such
+        as ReAction's own layout.gadget this is automatic and of no
+        concern to the application programmer.
+
+        Advantages that this class provides over the standard gadtools
+        radiobutton (MX_KIND) are:
+
+         > Strumming of the radio buttons with the mouse.
+
+         > Aspect correct scaled buttons with any screen resolution or font.
+
+         > Works under OS 2.0 or greater.
+
+@{b}    METHODS@{ub}
+        @{"OM_NEW" Link "tabs_gc/OM_NEW"} -- Passed to superclass first, defaults set, then @{"OM_SET" Link "tabs_gc/OM_SET"}.
+
+        @{"OM_SET" Link "tabs_gc/OM_SET"} -- Passed to superclass first, then custom tags set.
+
+        @{"OM_GET" Link "tabs_gc/OM_GET"} -- Returns requested setting or passed to superclass
+
+        OM_DISPOSE -- Passed to superclass.
+
+        @{"GM_GOACTIVE" Link "tabs_gc/GM_GOACTIVE"} -- Passed to superclass first, then radio activated.
+
+        GM_GOINACTIVE -- Passed to superclass first, then radio deactivated.
+
+        GM_HANDLEINPUT -- Handles button selection/strum. Overrides
+            superclass.
+
+        @{"GM_HITTEST" Link "tabs_gc/GM_HITTEST"} -- Overrides superclass, returns GMR_HITTEST.
+
+        @{"GM_RENDER" Link "tabs_gc/GM_RENDER"} -- Renders radio button(s).
+
+        GM_DOMAIN -- Returns GDOMAIN_MINIMUM and GDOMAIN_MAXIMUM dimensions.
+
+        GM_KEYACTIVE -- Activates button via keyboard. Advances selection
+            to the next item (down), if SHIFT is pressed, it selects
+            the previous item (up). Invoked by window.class only.
+
+        GM_KEYINACTIVE -- Deactivates gadget. Invoked by window.class only.
+
+        All other methods are passed to the superclass.
+
+
+@{b}    ATTRIBUTES@{ub}
+        GA_ID (WORD)
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE, OM_NOTIFY)
+
+        GA_TextAttr (struct @{"TextAttr" Link "INCLUDE:graphics/text.h/Main" 63} *)
+            Used to set the text font to render the radiobutton labels.
+
+            Defaults to RPort->Font, which is often the screen or
+            window font.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE)
+
+        GA_Text (STRPTR *)
+            A @{"NULL" Link "rexxsupport/NULL"} terminated array of strings to use as labels. v45.1.
+
+            Defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE)
+
+        RADIOBUTTON_Labels (struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} *)
+            Used to set the text labels for the radiobutton group.
+
+            Defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE)
+
+
+        RADIOBUTTON_Spacing (WORD)
+            Spacing between the radio buttons.
+
+            Defaults to 1.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE, OM_NOTIFY)
+
+        RADIOBUTTON_Selected (WORD)
+            Currently selected radio button number.
+
+            Defaults to 0.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE)
+
+        RADIOBUTTON_LabelPlace (WORD)
+            Location of radiobutton text labels. Supports:
+
+                PLACETEXT_RIGHT
+
+            Defaults to PLACETEXT_RIGHT.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_UPDATE)
+
+@{b}    NOTES@{ub}
+        GA_Height and GA_Width DO NOT specify the actual button size, but
+        rather the entire "hit box" area which includes the text label.
+        When being used with layout.gadget it will domain to a proper
+        size to hold the number of buttons and largest text labels.
+        Take care when designing interfaces with out layout to set
+        a proper height and width to hold the radiobutton imagery.
+        This may be done via sending a BOOPSI GM_DOMAIN GDOMAIN_MINIMUM
+        method message to the object with DoGadgetMethod(), or computing
+        a minimum size based on font height and length. In other words,
+        use layout, it's a lot easier! :-)
+
+@EndNode
+
+@Node "AllocRadioButtonNodeA()" "radiobutton_gc/AllocRadioButtonNodeA"
+
+@{b}    NAME@{ub}
+        AllocRadioButtonNodeA -- @{"Allocate" Link "exec/Allocate()"} a RadioButton node. (V40)
+
+@{b}    SYNOPSIS@{ub}
+        struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} * AllocRadioButtonNode(UWORD pri, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+        node = AllocRadioButtonNode(pri, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+
+        struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} * AllocRadioButtonNodeA(UWORD pri, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *)
+        node = AllocRadioButtonNodeA(pri, taglist)
+
+@{b}    FUNCTION@{ub}
+        Allocates a node that can be added to the Exec linked list of
+        labels in the radiobutton.  This is the only way to allocate a
+        node for this list, you cannot allocate nodes yourself because
+        the RadioButton class uses a private node structure.
+
+@{b}    INPUTS@{ub}
+        pri - the priority of the node (node->ln_Pri).
+        taglist - Attributes for the node, passed onto
+            @{"SetRadioButtonNodeAttrsA()" Link "SetRadioButtonNodeAttrsA()"}.
+
+@{b}    RESULT@{ub}
+        node - A node that can be added into the Exec list of labels for
+            a RadioButton gadget.
+
+@{b}    SEE ALSO@{ub}
+        @{"FreeRadioButtonNode()" Link "FreeRadioButtonNode()"}, @{"SetRadioButtonNodeAttrsA()" Link "SetRadioButtonNodeAttrsA()"}
+
+@EndNode
+
+@Node "FreeRadioButtonNode()" "radiobutton_gc/FreeRadioButtonNode"
+
+@{b}    NAME@{ub}
+        FreeRadioButtonNode -- Free a RadioButton node. (V40)
+
+@{b}    SYNOPSIS@{ub}
+        VOID FreeRadioButtonNode(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *)
+        FreeRadioButtonNode(node)
+
+@{b}    FUNCTION@{ub}
+        Frees a RadioButtonNode allocated with @{"AllocRadioButtonNodeA()" Link "AllocRadioButtonNodeA()"}.
+
+@{b}    INPUTS@{ub}
+        node - The node to free.
+
+@{b}    SEE ALSO@{ub}
+        @{"AllocRadioButtonNodeA()" Link "AllocRadioButtonNodeA()"}
+
+@EndNode
+
+@Node "GetRadioButtonNodeAttrsA()" "radiobutton_gc/GetRadioButtonNodeAttrsAadiobutton_gc/GetRadioButtonNodeAttrsA"
+
+@{b}    NAME@{ub}
+        GetRadioButtonNodeAttrsA -- Get attributes about a RadioButton node.
+        (V40)
+
+@{b}    SYNOPSIS@{ub}
+        VOID GetRadioButtonNodeAttrs(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+        GetRadioButtonNodeAttrs(node, firsttag, ...)
+
+        VOID GetRadioButtonNodeAttrsA(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *)
+        GetRadioButtonNodeAttrsA(node, taglist)
+
+@{b}    FUNCTION@{ub}
+        The RadioButton uses a private node structure and all attributes
+        are hidden, and must therefore be accessed with this function.
+
+@{b}    INPUTS@{ub}
+        node - The RadioButton node to get the information on.
+        taglist - A tag list of attributes to get.  ti_Tag is the attribute
+        to get and ti_Data is a pointer to a location to copy the result
+        to.
+
+@{b}    SEE ALSO@{ub}
+        @{"SetRadioButtonNodeAttrsA()" Link "SetRadioButtonNodeAttrsA()"}
+
+@EndNode
+
+@Node "RADIOBUTTON_GetClass()" "radiobutton_gc/RADIOBUTTON_GetClass"
+
+@{b}    NAME@{ub}
+        RADIOBUTTON_GetClass -- Gets the pointer to the radiobutton class.
+
+@{b}    SYNOPSIS@{ub}
+        radiobutton_class = RADIOBUTTON_GetClass();
+        D0
+
+        Class * RADIOBUTTON_GetClass(VOID);
+
+@{b}    FUNCTION@{ub}
+        Obtains the pointer to the RadioButton gadget class for use with
+        @{"NewObject()" Link "intuition/NewObject()"}.  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+@{b}    INPUTS@{ub}
+        Nothing.
+
+@{b}    RESULT@{ub}
+        radiobutton_class - Pointer to the RadioButton gadget class.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "SetRadioButtonNodeAttrsA()" "radiobutton_gc/SetRadioButtonNodeAttrsAadiobutton_gc/SetRadioButtonNodeAttrsA"
+
+@{b}    NAME@{ub}
+        SetRadioButtonNodeAttrsA -- Set attributes of a RadioButton node.
+        (V40)
+
+@{b}    SYNOPSIS@{ub}
+        VOID SetRadioButtonNodeAttrs(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+        SetRadioButtonNodeAttrs(node, firsttag, ...)
+
+        VOID SetRadioButtonNodeAttrsA(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *)
+        SetRadioButtonNodeAttrsA(node, taglist)
+
+@{b}    FUNCTION@{ub}
+        Changes attributes for a RadioButton node.  Since the RadioButton
+        class uses a private node structure, this is the only way to change
+        node attributes.
+
+        You may NOT change node attributes when the node is in a list
+        attached to a RadioButton gadget.  You must first detach the list
+        with RADIOBUTTON_Labels, ~0 before you can change attributes, and
+        then re-attach the list.
+
+@{b}    TAGS@{ub}
+        RBNA_Label (STRPTR)
+
+@{b}    INPUTS@{ub}
+        node - @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} whose attributes you are changing.
+        taglist - @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} list of attributes to change.
+
+@{b}    SEE ALSO@{ub}
+        @{"GetRadioButtonNodeAttrsA()" Link "GetRadioButtonNodeAttrsA()"}
+
+@EndNode
+

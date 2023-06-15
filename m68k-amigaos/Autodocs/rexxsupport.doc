@@ -1,0 +1,404 @@
+TABLE OF CONTENTS
+
+rexxsupport.library/
+rexxsupport.library/ALLOCMEM
+rexxsupport.library/BADDR
+rexxsupport.library/CLOSEPORT
+rexxsupport.library/DELAY
+rexxsupport.library/DELETE
+rexxsupport.library/FORBID
+rexxsupport.library/FORWARD
+rexxsupport.library/FREEMEM
+rexxsupport.library/GETARG
+rexxsupport.library/GETPKT
+rexxsupport.library/MAKEDIR
+rexxsupport.library/NEXT
+rexxsupport.library/NULL
+rexxsupport.library/OFFSET
+rexxsupport.library/OPENPORT
+rexxsupport.library/PERMIT
+rexxsupport.library/RENAME
+rexxsupport.library/REPLY
+rexxsupport.library/SHOWDIR
+rexxsupport.library/SHOWLIST
+rexxsupport.library/STATEF
+rexxsupport.library/TYPEPKT
+rexxsupport.library/WAITPKT
+rexxsupport.library/                                     rexxsupport.library/
+
+    NAME
+	rexxsupport.library
+
+    This library provides several support and utility functions for
+    ARexx. If you want to use functions that are included in this library,
+    it needs to be added explicitly to ARexx to make it aware of its
+    functions. The following AmigaDOS command will import the function
+    definitions in here:
+
+	rxlib rexxsupport.library 0 -30 0
+
+    Alternatively, the library can also be added within a Rexx script
+    as follows:
+
+	rv = ADDLIB('rexxmathlib.library',0,-30,0)
+
+	rv is a boolean value that indicates success.
+
+rexxsupport.library/ALLOCMEM                     rexxsupport.library/ALLOCMEM
+
+    NAME
+	ALLOCMEM - Allocate system memory
+
+    SYNOPSIS
+	addr = ALLOCMEM(size,[reqments])
+
+    FUNCTION
+	Requests the indicated number of bytes from the system and returns
+	an address string as argument. The optional requirements argument
+	specifies memory requires as given in <exec/memory.h>. If not
+	given, public memory (requirements = 1) is requested.
+
+rexxsupport.library/BADDR                           rexxsupport.library/BADDR
+
+    NAME
+	BADDR - convert a BCPL pointer to a C address string
+
+    SYNOPSIS
+	rv = BADDR(bptr)
+
+    FUNCTION
+	Converts a BCPL style pointer encoded as address string to an
+	address string representing a C pointer.
+
+rexxsupport.library/CLOSEPORT                   rexxsupport.library/CLOSEPORT
+
+    NAME
+	CLOSEPORT - closes and disposes a public command port
+
+    SYNOPSIS
+	rv = CLOSEPORT(name)
+
+    FUNCTION
+	Closes and disposes a port whose name is given as argument. The
+	port must have been created by OPENPORT before. Returns a boolean
+	success indicator.
+
+rexxsupport.library/DELAY                           rexxsupport.library/DELAY
+
+    NAME
+	DELAY - wait for the indicated number of ticks
+
+    SYNOPSIS
+	rv = DELAY(ticks)
+
+    FUNCTION
+	Waits the indicated number of ticks, i.e. 50th of a second, and
+	then returns to the caller. The return value has no particular
+	meaning and can be ignored.
+
+rexxsupport.library/DELETE                         rexxsupport.library/DELETE
+
+    NAME
+	DELETE - delete a file by file name
+
+    SYNOPSIS
+	rv = DELETE(filename)
+
+    FUNCTION
+	Deletes the file given by its file name, and returns a boolean
+	success code.
+
+rexxsupport.library/FORBID                         rexxsupport.library/FORBID
+
+    NAME
+	FORBID - temporarily disable task switching
+
+    SYNOPSIS
+	rv = FORBID()
+
+    FUNCTION
+	Disables task switching until the next call to FORBID() or until
+	ARexx gives up the CPU voluntarily.
+
+rexxsupport.library/FORWARD                       rexxsupport.library/FORWARD
+
+    NAME
+	FORWARD - forwards a message packet to a named port
+
+    SYNOPSIS
+       rv = FORWARD(pkt,portname)
+
+    FUNCTION
+	Forwards the ARexx command packet, given as address string, to
+	the port whose name is given as second argument. Returns 0 if
+	the port could not be found, or the address of the port if found
+	and forwarding worked.
+
+rexxsupport.library/FREEMEM                       rexxsupport.library/FREEMEM
+
+    NAME
+	FREEMEM - release memory to the system
+
+    SYNOPSIS
+	rv = FREEMEM(address,size)
+
+    FUNCTION
+	Returns the address block given as first argument, as address
+	string, whose size is given as second argument, back to the system.
+	Returns a boolean success indicator.
+
+    NOTES
+	The function always succeeds, but if the address block or its
+	size is different from what has been allocated before, the
+	system may crash.
+
+rexxsupport.library/GETARG                         rexxsupport.library/GETARG
+
+    NAME
+	GETARG - retrieve a given argument from an ARexx command packet
+
+    SYNOPSIS
+	rv = GETARG(packet,[argument])
+
+    FUNCTION
+	Retrieves from the given ARexx command packet the indicated argument
+	number and returns it as a string.
+
+rexxsupport.library/GETPKT                         rexxsupport.library/GETPKT
+
+    NAME
+	GETPKT - returns the next ARexx command packet queued on a port
+
+    SYNOPSIS
+	rv = GETPKT(port)
+
+    FUNCTION
+	Retrieves an address string representing the next ARexx command
+	packet queued on a port, also given as address string. If no
+	command packet is queued on the port, returns '0000 0000'x, i.e.
+	the address string representing the NULL pointer.
+
+rexxsupport.library/MAKEDIR                       rexxsupport.library/MAKEDIR
+
+    NAME
+	MAKEDIR - create a new directory
+
+    SYNOPSIS
+	rv = MAKEDIR(dirname)
+
+    FUNCTION
+	Creates the directory of the given name, and returns a boolean
+	success indicator.
+
+rexxsupport.library/NEXT                             rexxsupport.library/NEXT
+
+    NAME
+	NEXT - retrieve the next node of a linked list in memory
+
+    SYNOPSIS
+	rv = NEXT(address,[offset])
+
+    FUNCTION
+	Retrieves the 4-byte address string at "address" plus "offset".
+	It reads four bytes from memory, and returns the value at this
+	offset.
+
+rexxsupport.library/NULL                             rexxsupport.library/NULL
+
+    NAME
+	NULL - return an address string represting the NULL pointer
+
+    SYNOPSIS
+	rv = NULL()
+
+    FUNCTION
+	Retrieves the address string representing the NULL pointer, i.e.
+	'0000 0000'x.
+
+rexxsupport.library/OFFSET                         rexxsupport.library/OFFSET
+
+    NAME
+	OFFSET - adds an offset to a pointer given as address string
+
+    SYNOPSIS
+	rv = OFFSET(address,displacement)
+
+    FUNCTION
+	Takes a pointer given as address string and adds a displacement to
+	it, and returns it as address string.
+
+rexxsupport.library/OPENPORT                     rexxsupport.library/OPENPORT
+
+    NAME
+	OPENPORT - create a public message port of given name
+
+    SYNOPSIS
+	rv = OPENPORT(name)
+
+    FUNCTION
+	Creates a public message port for retrieving ARexx command packets
+	and returns its address as address string. Returns '0000 0000'x in
+	case of failure.
+
+rexxsupport.library/PERMIT                         rexxsupport.library/PERMIT
+
+    NAME
+	PERMIT - re-enable multitasking
+
+    SYNOPSIS
+	rv = PERMIT()
+
+    FUNCTION
+	Re-enables multitasking after calling PERMIT(). The return value
+	is irrelevant and can be ignored.
+
+rexxsupport.library/RENAME                         rexxsupport.library/RENAME
+
+    NAME
+	RENAME - Rename a file or directory
+
+    SYNOPSIS
+	rv = RENAME(oldname,newname)
+
+    FUNCTION
+	Renames a file or directory whose original name is given as first
+	argument to the name given as second argument. Returns a boolean
+	success indicator.
+
+rexxsupport.library/REPLY                           rexxsupport.library/REPLY
+
+    NAME
+	REPLY - reply a ARexx command packet with a return code to its issuer
+
+    SYNOPSIS
+	rv = REPLY(packet,resultcode)
+
+    FUNCTION
+	Replies the packet, represented as address string, with the given
+	result code to its issuer.
+
+rexxsupport.library/SHOWDIR                       rexxsupport.library/SHOWDIR
+
+    NAME
+	SHOWDIR - create list of directory contents
+
+    SYNOPSIS
+	rv = SHOWDIR(dirname,'ALL'|'FILE'|'DIR',separator)
+
+    FUNCTION
+	Creates a string that contains the file names of all files in
+	the directory given as first argument, and that match the type
+	given as second argument. File entries are separated by the
+	string given as third argument.
+
+    NOTES
+	The type FILE also includes hard links to files,
+	the type DIR also includes hard links to directories,
+	but soft links are only included if the type is 'ALL'.
+
+rexxsupport.library/SHOWLIST                     rexxsupport.library/SHOWLIST
+
+    NAME
+	SHOWLIST - creates a string of system resources of indicated type
+
+    SYNOPSIS
+	rv = SHOWLIST(type,[name],[separator],['A'])
+
+     FUNCTION
+	Returns a list of system resources of the type given as first
+	argument, or checks for its availability or its address, if
+	the last argument is 'A' or 'Address'. The resource list is
+	returned as a single string where the names of the resources
+	are separated by the string given as third argument, or
+	spaces if the third argument is missing.
+
+	The first argument specifies the type as follows:
+	    'L' System libraries currently in RAM
+	    'D' System devices currently in RAM
+	    'M' Memory nodes registered
+	    'P' Public ports
+	    'R' Resources
+	    'S' Public semaphores
+	    'V'	Volumes registered in the dos.library
+	    'H' Handlers registered in the dos.library
+	    'A' Assigns registered in the dos.library
+	    'T' Tasks that are ready to run
+	    'W' Tasks waiting for a signal
+
+	If the 'name' argument is given, then the function checks for
+	the presence of the given system resource and returns a boolean
+	indicator. If the last argument is 'A' or 'Address', its address
+	is returned as address string, or '0000 0000'x if the resource
+	has not been found.
+	If the separator is given, then the resources are separated it.
+
+rexxsupport.library/STATEF                         rexxsupport.library/STATEF
+
+    NAME
+	STATEF - returns information on a file or directory
+
+    SYNOPSIS
+	rv = STATEF(filespec)
+
+    FUNCTION
+	Returns a string describing the type, size, protection bits and
+	creation date of an entry of a directory.
+
+	Each entry consists of the following tokens, separated by blank
+	spaces: <type> <size> <blocks> <flags> <days> <mins> <ticks> <cmt>
+	 type   - either DIR, FILE, DIRLINK, FILELINK, or SOFTLINK
+	 size   - in bytes, as a decimal string
+	 blocks - size in blocks of the file system
+	 flags  - protection flags, as string of HSPAWRED where
+	 	  each character indicates one protection bit if set,
+		  or a dash if the bit is reset.
+	 days   - days since 1.1.1970 of the last modification time
+	 mins   - minutes since the start of the day since last
+	 	  modification of the file or directory.
+	 ticks	- ticks from the last minute of the last modification
+	 	  of the file or directory.
+        cmt    - file comment, if any
+
+rexxsupport.library/TYPEPKT                       rexxsupport.library/TYPEPKT
+
+    NAME
+	TYPEPKT - returns a type of an Arexx command packet
+
+    SYNOPSIS
+	rv = TYPEPKT(pkt,[mode])
+
+    FUNCTION
+	Returns the type of an ARexx command packet whose address is given
+	as address string as first argument.
+	If the mode argument is omitted, then the return value is a number
+	that indicates the type in packed form, also available separately
+	through specifying various modes.
+
+	The mode can be one of the following:
+	    'A'	 -   Returns the number of arguments of the packet
+	    	     also as byte 0 of the packed result.
+	    'C'	 -   Returns TRUE if the packet was created as
+	    	     command rather than function. This information
+		     is also available as byte 3 of the packed result,
+		     which is '01'x for commands.
+	    'F'  -   Returns TRUE if the packet was created as
+	    	     function  call. This information is also available
+		     as byte 3 of the packed result, which is '02'x for
+		     function calls.
+	 Byte 2 are modifier flags that are handled automatically by the
+	 REPLY function.
+
+rexxsupport.library/WAITPKT                       rexxsupport.library/WAITPKT
+
+    NAME
+	WAITPKT - wait for a ARexx command packet on a named port
+
+    SYNOPSIS
+	rv = WAITPKT(portname)
+
+    FUNCTION
+	Waits on the port whose name is given as argument for an
+	ARexx command packet to arrive. Returns non-zero if a packet is
+	available, but does not remove it. Use GETPKT for this.
+
+

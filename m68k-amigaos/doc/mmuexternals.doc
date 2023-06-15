@@ -1,0 +1,124 @@
+		External Setup Programs of the mmu.library
+------------------------------------------------------------------------------
+
+Abstract:
+
+The mmu.library supports external tool programs that are run as part of
+the "MMU-Configuration" file, as for example the "P5Init" program. The 
+aim of this documentation is to explain this interface.
+
+
+
+The "MMU-Configuration" contains commands that are used to setup the
+MMU tables when the system boots up. It gets executed by the mmu.library
+on startup, and modifies the preliminary MMU table setup that got
+constructed by the library before. The aim of this file is to allow the
+advanced user some fine tuning and optimizing of the MMU setup, and also
+to support exotic hardware that cannot be recognized by documented system
+mechanisms.
+
+The MMU-Configuration file is a pure text file that can be edited by a 
+standard text editor like the system editor "Ed". The syntax of this file 
+is similar to that of a shell script and documented in [1]. 
+
+When the mmu.library is parsing a line of the configuration file, it first 
+checks its for its internal commands. If no matching internal command 
+is found, the library looks for file of the same name in the "LIBS:mmu" 
+directory. This file is organized as a standard binary load file 
+(see [2]) and loaded by the LoadSeg() call of the dos.library. The file
+is however not executed in the sense of a standard shell command, if
+called from the shell, this file should not perform any action. Rather,
+the mmu.library scans the file for a "Resident structure" as documented
+in exec/resident.h [3],[4]. If the name of this resident structure is
+identically to that of the command within the MMU-Configuration file,
+the external command is accepted as valid. Otherwise it is rejected
+and an error message is generated.
+
+The resident structure should indicate a type of NT_UNKNOWN, a
+version of at least 40 and a cleared rt_AutoInit flag.
+
+Once the resident structure has been located, it is run by its rt_Init
+vector. The code is called with the following parameters:
+
+a1	:	Register a1 contains a pointer to the MMUContext [5]
+		which is the object that should be manipulated by
+		the code by means of mmu.library calls.
+
+a0	:	Register a0 contains a pointer to a struct RDArgs, ready
+		to be parsed by the dos.library ReadArgs() function.
+		([2],[4])
+		This register should be used as third (d3) argument of
+		ReadArgs() to scan for optional command arguments.
+
+a2	:	Register a2 contains the base of the dos.library system
+		library; hence, external commands need not to open the
+		dos.
+
+a6	:	Register a6 contains the base of the mmu.library required
+		for all modifications of the context passed in a1.
+
+It is very important that while in the external command, you *MUST NOT*
+OpenLibrary() the mmu.library; instead, use register a6 as base pointer.
+This is because your code is run as part of the mmu.library startup code
+in the context of the "ramlib" process. Trying an OpenLibrary() could
+start an endless loop or crash the system. 
+
+The mmu.library is, at that point, not yet added to the system library 
+list, but is already constructed properly for operation. However, the
+MMU list encoded in the MMUContext you get as argument is not yet loaded
+into the MMU. Hence, you are still running under the boot configuration
+of the MMU; the mmu.library will load the MMU as soon as the startup
+code is finished, though.
+
+The MMU context you receive as argument has already been modified by
+all the commands "above" your command in the MMU-Configuration, and
+may be touched by the commands below it before the mmu.library makes
+use of it.
+
+It is *VERY IMPORTANT* to know that your code will be executed twice,
+because the MMU-Configuration file is also parsed twice. The library 
+will call you once with the "default MMUContext" in *a1, which is the
+context responsible for user mode accesses, and a second time with the
+"supervisor MMUContext", which will be used if the CPU is in supervisor
+mode [1],[6],[7]. Your code must be prepared to handle this, and to 
+make the proper modifications each time. Especially, if your code 
+requires to setup system resources, make sure you allocate/build these
+structures only once by checking for their existance before you use
+them. The mmu.library doesn't provide any mechanism to pass information
+from the first pass to the second, and your code is unloaded between
+the two calls.
+
+Your code shall exit with a return code in d0. If this return code is
+zero, everything went well. A return code larger or equal than five
+will result in an error message; the mmu.library will then abort its
+setup process and will not be loaded into the system.
+
+To avoid loading your code from the shell by accident, you should
+start the code by the following instruction sequence:
+
+	moveq #-1,d0
+	rts
+
+This will cause the shell to report an error should a user try to execute
+the file as a shell command. The Resident structure should start below
+this point.
+
+------------------------------------------------------------------------------
+
+Literature:
+
+[1]	:	The MMU.guide, MMULib.lha on Aminet.
+[2]	:	The AmigaDos Manual, Bantam Books, 3rd Ed.
+[3]	:	Amiga ROM Kernel Reference Manual: Includes and Autodocs
+		Addison Wesley Publishing Company, Inc, 1991,
+		ISBN 0-201-56773-3.
+[4]	:	Amiga ROM Kernel Reference Manual: Libraries
+		Addison Wesley Publishing Company, Inc, 1991,
+		ISBN 0-201-56774-1
+[5]	:	The mmu.library Programmer's Manual, MuManual.lha, on
+		Aminet.
+[6]	:	Programmer's Reference Manual,
+		Motorola document M68000PM/AD rev.1, Motorola 1992
+[7]	:	The M68000 Microprocessor Family, Yu-Cheng Liu,
+		Prentice-Hall International Editions, 1991
+		ISBN 0-13-553108-X

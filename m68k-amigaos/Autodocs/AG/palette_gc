@@ -1,0 +1,199 @@
+@database "palette_gc"
+@master "AMIDEV:NDK/Autodocs/palette_gc.doc"
+
+@Node Main "palette_gc.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" --styleguide--() " Link "--styleguide--()"}
+    @{" PALETTE_GetClass() " Link "PALETTE_GetClass()"}
+@EndNode
+
+@Node "--datasheet--()" "palette_gc/--datasheet--"
+
+@{b}    NAME@{ub}
+        palette_gc -- A colour selection gadget.
+
+@{b}    SUPERCLASS@{ub}
+        gadgetclass
+
+@{b}    REQUIRES@{ub}
+        bevel.image
+
+@{b}    DESCRIPTION@{ub}
+        This gadget is equivalent to the GadTools PALETTE_KIND gadget, but
+        implemented as a BOOPSI gadget class.  It displays a palette of
+        colours, allowing the user to select one.
+
+        Advantages that this class provides:
+
+         > Right mouse button cancels gadget action.
+
+         > Supports window relativity.
+
+         > Supports gadget interconnections.
+
+         > Supports OS 3.0 BOOPSI @{"Gadget" Link "INCLUDE:intuition/intuition.h/Main" 212} HelpTest.
+
+@{b}    METHODS@{ub}
+        @{"OM_NEW" Link "tabs_gc/OM_NEW"} -- Create the palette gadget, calls @{"OM_SET" Link "tabs_gc/OM_SET"}.  Passed to
+            superclass.
+
+        @{"OM_SET" Link "tabs_gc/OM_SET"} -- Set object attributes.  Passed to superclass first.
+
+        @{"OM_GET" Link "tabs_gc/OM_GET"} -- Get object attributes.  Passed to superclass first.
+
+        OM_NOTIFY -- Notify connections of attribute changes.
+
+        OM_DISPOSE -- Frees resources and calls superclass.
+
+        OM_UPDATE -- Calls @{"OM_SET" Link "tabs_gc/OM_SET"}.
+
+        GM_DOMAIN -- Return the maximum and minimum size of the gadget.
+
+        @{"GM_RENDER" Link "tabs_gc/GM_RENDER"} -- Renders the gadget imagry.  Overrides the superclass.
+
+        GM_KEYACTIVE -- Handles keyboard activation.
+
+        GM_KEYINACTIVE -- Handles keyboard de-activation.
+
+        @{"GM_GOACTIVE" Link "tabs_gc/GM_GOACTIVE"} -- Activates the gadget on mouse click only.  Overrides
+            the superclass.
+
+        GM_HANDLEINPUT -- Handles input events once active.  Overrides the
+            superclass.
+
+        GM_GOINACTIVE -- Deactivates the gadget.  Passed to the superclass.
+
+        All other methods are passed to the superclass.
+
+@{b}    ATTRIBUTES@{ub}
+        GA_Disabled (BOOL)
+            Set to TRUE to disable gadget, FALSE otherwise.
+
+            Defaults to FALSE.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        PALETTE_Colour (UBYTE)
+	        Initially selected color of the palette. This number is a pen
+	        number, and not the ordinal color number within the palette
+	        gadget itself.  The exception is when PALETTE_ColourTable is
+	        used, in which case you will get an index into your table.
+
+            Defaults to 0.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        PALETTE_ColourOffset (UBYTE)
+            First colour in screen palette to display.
+
+            Defaults to 0.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        PALETTE_ColourTable (UWORD *)
+            Pointer to a table of pen numbers indicating which colors
+            should be used and edited by the palette gadget.  The array
+            provided with this tag must remain valid for the life of the
+            gadget or until a new table is provided.
+
+            This array  must contain as many entries as there are colours
+            displayed in the palette gadget PLUS the colour offset.
+            The first PALETTE_ColourOffset entries in your table are
+            skipped (ignored). Eg. If PALETTE_ColourOffset is 8, and
+            PALETTE_NumColours is 4, you must provide an array of 12
+            UWORDs but only the last 4 will be used.
+
+            Note: in earlier versions of this document, this attribute
+            has been incorrectly described as being of type @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *; the
+            correct type is (and has always been) @{"UWORD" Link "INCLUDE:exec/types.h/Main" 116} *, as stated in
+            the @{"<gadgets/palette.h>" Link "INCLUDE:gadgets/palette.h/Main" 0} header file.
+
+            Default is @{"NULL" Link "rexxsupport/NULL"}, which causes a 1-to-1 mapping of pen numbers.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        PALETTE_NumColours (UWORD)
+            Number of colors to display in the palette gadget.  Currently
+            this must be a power of 2.
+
+            Defaults to 2.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+        PALETTE_RenderHook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *) (V47)
+            @{"Custom" Link "INCLUDE:hardware/custom.h/Main" 23} rendering hook for palette boxes. This allows you to
+            extend the palette gadget functionality by using it to show
+            a "palette" of arbitrary items rather than just colours.
+
+            Your hook will be called with the following arguments:
+
+            hook    - pointer to your own hook structure
+            object  - currently @{"NULL" Link "rexxsupport/NULL"}, reserved for future use
+            message - pointer to a @{"PBoxDrawMsg" Link "INCLUDE:gadgets/palette.h/Main" 62} structure
+
+            The rendering hook will have to fill the bounds provided in
+            the @{"PBoxDrawMsg" Link "INCLUDE:gadgets/palette.h/Main" 62} structure if the received message is of type
+            PB_DRAW (check the value of pbdm_MethodID to find out the
+            message type) and return PBCB_OK. If the message type is not
+            PB_DRAW, or another known type, the hook should immediately
+            return PBCB_UNKNOWN without performing any processing.
+
+            See @{"<gadgets/palette.h>" Link "INCLUDE:gadgets/palette.h/Main" 0} for more information on the palette
+            rendering hook and the @{"PBoxDrawMsg" Link "INCLUDE:gadgets/palette.h/Main" 62} message structure.
+
+            Defaults to @{"NULL" Link "rexxsupport/NULL"}, which means no custom rendering hook is used.
+
+            Applicability is (OM_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+@EndNode
+
+@Node "--styleguide--()" "palette_gc/--styleguide--"
+
+@{b}    PALETTE STYLE@{ub}
+        The usability of a palette gadget decreases as the number of
+        colours it is displaying increases.  If there is a possibility
+        that your palette gadget may be displaying a large number of
+        colours (say, greater than 16), you should provide a means to
+        simplify the colour selection.  One possibility would be to
+        divide your colour palette into banks, and have users switch
+        banks via a chooser gadget for example.  Another possibility
+        would be to attach a scroller gadget to allow the user to
+        scroll through the available colours, displaying just a
+        subset of them on screen at a time.  You may also want to sort
+        your colours in some logical manner and use PALETTE_ColourTable.
+
+@EndNode
+
+@Node "PALETTE_GetClass()" "palette_gc/PALETTE_GetClass"
+
+@{b}    NAME@{ub}
+        PALETTE_GetClass -- Gets the pointer to the palette class.
+
+@{b}    SYNOPSIS@{ub}
+        palette_class = PALETTE_GetClass();
+        D0
+
+        Class * PALETTE_GetClass(VOID);
+
+@{b}    FUNCTION@{ub}
+        Obtains the pointer to the Palette gadget class for use with
+        @{"NewObject()" Link "intuition/NewObject()"}.  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+@{b}    INPUTS@{ub}
+        Nothing.
+
+@{b}    RESULT@{ub}
+        palette_class - Pointer to the Palette gadget class.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+

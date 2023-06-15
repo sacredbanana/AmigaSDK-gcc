@@ -1,0 +1,453 @@
+TABLE OF CONTENTS
+
+carddisk.device/CMD_CLEAR
+carddisk.device/CMD_READ
+carddisk.device/CMD_UPDATE
+carddisk.device/CMD_WRITE
+carddisk.device/TD_ADDCHANGEINT
+carddisk.device/TD_CHANGENUM
+carddisk.device/TD_CHANGESTATE
+carddisk.device/TD_FORMAT
+carddisk.device/TD_GETGEOMETRY
+carddisk.device/TD_MOTOR
+carddisk.device/TD_PROTSTATUS
+carddisk.device/TD_RAWREAD
+carddisk.device/TD_RAWWRITE
+carddisk.device/TD_REMCHANGEINT
+carddisk.device/CMD_CLEAR                           carddisk.device/CMD_CLEAR
+
+   NAME
+	CMD_CLEAR/ETD_CLEAR -- mark the internal buffer as containing
+			       invalid data.
+
+   FUNCTION
+	As the carddisk.device does not have an internal buffer, this
+	command performs no operation. It is only implemented to be
+	consistent with the trackdisk.device type of interface.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_CLEAR or ETD_CLEAR
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success
+
+   SEE ALSO
+	CMD_WRITE, CMD_UPDATE
+
+carddisk.device/CMD_READ                             carddisk.device/CMD_READ
+
+   NAME
+	CMD_READ/ETD_READ -- read data from a card.
+
+   FUNCTION
+	These commands transfer data from the card to a supplied buffer.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_READ or ETD_READ
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to read, must be a multiple of the
+			card block size.
+	io_Offset	byte offset from the start of the card describing
+			where to read data from, must be a multiple of the
+			card block size.
+	iotd_Count	(ETD_READ only) maximum allowable change counter
+			value.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+   NOTES
+
+   SEE ALSO
+	CMD_WRITE
+
+carddisk.device/CMD_UPDATE                         carddisk.device/CMD_UPDATE
+
+   NAME
+	CMD_UPDATE/ETD_UPDATE -- write out internal buffers to card
+
+   FUNCTION
+	As the carddisk.device does not buffer data internally, this
+	command performs no operation and returns immediately. It is
+	implemented to support file systems that use it as part of the
+	regular trackdisk-type device interface.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_UPDATE or ETD_UPDATE
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   SEE ALSO
+	CMD_WRITE
+
+carddisk.device/CMD_WRITE                           carddisk.device/CMD_WRITE
+
+   NAME
+	CMD_WRITE/ETD_WRITE -- write sectors of data to a disk.
+
+   FUNCTION
+	These commands transfer data from a supplied buffer to the card.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_WRITE or ETD_WRITE
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to write, must be a multiple of the
+			card block size.
+	io_Offset	byte offset from the start of the card describing
+			where to write data to, must be a multiple of the
+			card block size.
+	iotd_Count	(ETD_WRITE only) maximum allowable change counter
+			value.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   NOTES
+
+   SEE ALSO
+	CMD_READ, TD_FORMAT
+
+carddisk.device/TD_ADDCHANGEINT               carddisk.device/TD_ADDCHANGEINT
+
+   NAME
+	TD_ADDCHANGEINT -- add a disk change software interrupt handler.
+
+   FUNCTION
+	This command lets you add a software interrupt handler to the
+	disk device that gets invoked whenever a disk insertion or removal
+	occurs.
+
+	You must pass in a properly initialized Exec Interrupt structure
+	and be prepared to deal with disk insertions/removals
+	immediately. From within the interrupt handler, you may only call the
+	status commands that can use IOF_QUICK.
+
+	To set up the handler, an Interrupt structure must be initialized.
+	This structure is supplied as the io_Data to the TD_ADDCHANGEINT
+	command. The handler then gets linked into the handler chain and
+	gets invoked whenever a disk change happens. You must eventually
+	remove the handler before you exit.
+
+	This command only returns when the handler is removed. That is,
+	the device holds onto the IO request until the TD_REMCHANGEINT command
+	is executed with that same IO request. Hence, you must use SendIO()
+	with this command.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_ADDCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to Interrupt structure
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   SEE ALSO
+	TD_REMCHANGEINT, <devices/trackdisk.h>, <exec/interrupts.h>,
+	exec.library/Cause()
+
+carddisk.device/TD_CHANGENUM                     carddisk.device/TD_CHANGENUM
+
+   NAME
+	TD_CHANGENUM -- return the current value of the card-change counter.
+
+   FUNCTION
+	This command returns the current value of the card-change counter (as
+	used by the enhanced commands). The change counter is incremented
+	each time a card is inserted or removed from the unit.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_CHANGENUM
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+	io_Actual - if io_Error is 0, this contains the current value of the
+		    disk-change counter.
+
+carddisk.device/TD_CHANGESTATE                 carddisk.device/TD_CHANGESTATE
+
+   NAME
+	TD_CHANGESTATE -- check if a card is currently inserted.
+
+   FUNCTION
+	This command checks to see if there is currently a card inserted.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_CHANGESTATE
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+	io_Actual - if io_Error is 0, this tells you whether a card is
+		    inserted. 0 means there is a card, while anything else
+		    indicates there is none.
+
+carddisk.device/TD_FORMAT                           carddisk.device/TD_FORMAT
+
+   NAME
+	TD_FORMAT/ETD_FORMAT -- Write data to card memory
+
+   FUNCTION
+	This function is traditionally used to write data to a disk
+	that has not yet been formatted before or has had a hard error
+	on a standard write command. None of these states apply to the
+	credit card device, and as such, this command is identical to
+	CMD_WRITE.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_FORMAT or ETD_FORMAT
+	io_Flags	0 or IOF_QUICK
+	io_Data		points to a buffer containing the data to write to the
+			track, must be at least as large as io_Length.
+	io_Length	number of bytes to write, must be a multiple of the
+			card block size.
+	io_Offset	byte offset from the start of the card, must be a
+			multiple of the card block size.
+	iotd_Count	(ETD_FORMAT only) maximum allowable change counter
+			value.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   NOTES
+
+   SEE ALSO
+	CMD_WRITE, TD_RAWWRITE
+
+carddisk.device/TD_GETGEOMETRY                 carddisk.device/TD_GETGEOMETRY
+
+   NAME
+       TD_GETGEOMETRY -- return the geometry of the credit card.
+
+   FUNCTION
+	This command returns a full set of information about the
+	layout of the drive. The information is returned in the
+	DriveGeometry structure pointed to by io_Data.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_GETGEOMETRY
+	io_Flags	0 or IOF_QUICK
+	io_Data		Pointer to a DriveGeometry structure
+	io_Length	sizeof(struct DriveGeometry)
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   NOTE
+	This information may change when a card is inserted.
+
+   SEE ALSO
+	TD_GETDRIVETYPE, TD_GETNUMTRACKS
+
+carddisk.device/TD_MOTOR                             carddisk.device/TD_MOTOR
+
+   NAME
+	TD_MOTOR/ETD_MOTOR -- control the on/off state of the card LED.
+
+   FUNCTION
+	This command gives control over the card LED. The LED may be
+	turned on or off.
+
+	In addition, the standard instructions to the user are that it is safe
+	to remove a card if and only if the LED is off.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_MOTOR or ETD_MOTOR
+	io_Flags	0 or IOF_QUICK
+	io_Length	the requested state of the LED, 0 to turn the LED
+			off, and 1 to turn the LED on.
+	iotd_Count	(ETD_MOTOR only) maximum allowable change counter
+			value.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+	io_Actual - if io_Error is 0 this contains the previous state of the
+		    LED.
+
+carddisk.device/TD_PROTSTATUS                   carddisk.device/TD_PROTSTATUS
+
+   NAME
+	TD_PROTSTATUS -- return whether the card is write-protected.
+
+   FUNCTION
+	This command is used to determine whether the current card is
+	write-protected.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_PROTSTATUS
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+	io_Actual - if io_Error is 0, this tells you whether the card
+		    is write-protected. 0 means the card is NOT write-
+		    protected, while any other value indicates it is.
+
+carddisk.device/TD_RAWREAD                         carddisk.device/TD_RAWREAD
+
+   NAME
+	TD_RAWREAD/ETD_RAWREAD -- read raw data from the card.
+
+   FUNCTION
+	Raw read data bytes - typical use is to read bytes from
+	CIS for verification during writes.  Bytes read from attribute
+	memory can be done as multi-byte reads returning junk for
+	odd byte addresses, though single byte reads from even byte
+	addresses is recommended.
+
+	The caller MUST own the the card, and must pass in a valid
+	pointer to the credit-card common memory, or attribute memory.
+	the raw read function fails if the device owns the card.
+
+
+	
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command      TD_RAWREAD or ETD_RAWREAD.
+	io_Flags	ignored.
+	io_Length	Length of buffer in bytes, with a maximum of 65535
+			bytes.
+	io_Data		Pointer to buffer where data is to be deposited.
+	io_Offset	Address in the credit card or attribute memory.
+
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   NOTES
+	Note that the use of the carddisk.device RAWREAD function makes
+	it possible to use other deices if needed in the future which
+	support RAWREAD commands like thse to read a new CIS from flash
+	ROMs, SRAM cards with EEPROMs from attribute memory. Some
+	vendors have attribute memory options for their SRAM cards. Of
+	interest, these can actually be formatted as disks even if there
+	is no writeable attribute memory. There is code for these cases:
+
+	1) A formatted card which lacks a device tuple as the first
+	tuple in attribute memory.  This works if there is a LINKTARGET
+	tuple starting at mem location 0 in common memory, and the
+	CISTPL_FORMAT tuple is stored in common memory.
+
+	2) Like #1, but there is a CISTPL_DEVICE tuple in common memory.
+	This is technically not allowed, though supported by the device in
+	anticipation of using SRAM cards which lack attribute memory.
+
+	3) The attribute memory, and common memory overlap, and the
+	CIS has been properly written such that the CIS is stored in
+	even bytes only until a LONGLINK_C tuple is found which continues
+	the chain in contiguous bytes in common memory.  POQET SRAM cards
+	have such overlapped memory, as do Intel Flash-ROMS.
+
+   BUGS
+
+   SEE ALSO
+	TD_RAWWRITE
+
+carddisk.device/TD_RAWWRITE                       carddisk.device/TD_RAWWRITE
+
+   NAME
+	TD_RAWWRITE/ETD_RAWWRITE -- write raw data to the card.
+
+   FUNCTION
+	Raw write data bytes - most likely use is to write CIS bytes to card.
+	Bytes written to attribute memory can be done as multi-byte writes
+	with junk for odd bytes, though single byte writes to even byte
+	addresses is recommended.
+
+	Caller MUST own the card!
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command      TD_RAWWRITE or ETD_RAWWRITE.
+	io_Flags	ignored
+	io_Length	Length of buffer in bytes, with a maximum of 65535
+			bytes.
+	io_Data		Pointer to memory buffer where data is to be taken.
+	io_Offset	Pointer to credit card or attribute memory region.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   NOTES
+	Caller MUST own card, and pass in a valid pointer to
+	credit-card common memory, or attribute memory.  The raw r/w
+	commands fail if the device owns the card.  This has been done
+	to prevent problems with someone who thinks they know how to
+	deal with trackdisk, but provides an option to use another
+	device!  Rather than crashing because these commands are being
+	used improperly, we return that these commands are not supported.
+	Of course if they call these functions without checking for
+	disk status change status, oh well...
+
+   BUGS
+
+   SEE ALSO
+	TD_RAWREAD
+
+carddisk.device/TD_REMCHANGEINT               carddisk.device/TD_REMCHANGEINT
+
+   NAME
+	TD_REMCHANGEINT -- remove a disk change software interrupt handler.
+
+   FUNCTION
+	This command removes a disk change software interrupt added
+	by a previous use of TD_ADDCHANGEINT.
+
+   IO REQUEST INPUT
+	The same IO request used for TD_ADDCHANGEINT.
+
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_REMCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to Interrupt structure
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/trackdisk.h>
+
+   SEE ALSO
+	TD_ADDCHANGEINT, <devices/trackdisk.h>
+
+

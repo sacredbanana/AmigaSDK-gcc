@@ -1,0 +1,405 @@
+@database "timer"
+@master "AMIDEV:NDK/Autodocs/timer.doc"
+
+@Node Main "timer.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --background-- " Link "--background--"}
+    @{" AbortIO() " Link "AbortIO()"}
+    @{" AddTime() " Link "AddTime()"}
+    @{" CmpTime() " Link "CmpTime()"}
+    @{" GetSysTime() " Link "GetSysTime()"}
+    @{" ReadEClock() " Link "ReadEClock()"}
+    @{" SubTime() " Link "SubTime()"}
+    @{" TR_ADDREQUEST " Link "TR_ADDREQUEST"}
+    @{" TR_GETSYSTIME " Link "TR_GETSYSTIME"}
+    @{" TR_SETSYSTIME " Link "TR_SETSYSTIME"}
+@EndNode
+
+@Node "--background--" "timer.device/--background--"
+
+@{b}   TIMER REQUEST@{ub}
+	A time request is a non standard IO @{"Request" Link "intuition/Request()"}.  It has an @{"IORequest" Link "INCLUDE:exec/io.h/Main" 16}
+	followed by a timeval structure or an eclockval structure.
+
+@{b}   TIMEVAL@{ub}
+	A timeval structure consists of two longwords.  The first is
+	the number of seconds, the latter is the fractional number
+	of microseconds.  The microseconds must always be "normalized"
+	e.g. the longword must be between 0 and one million.
+
+@{b}   ECLOCKVAL@{ub}
+	A eclockval structure consists of two longwords.  The first is
+	the high order 32 bits of a 64 bit number and the second is the
+	the low order 32 bits.  The 64 bit number is a count of "E" clock
+	ticks.  The "E" clock frequency is related to the master clock
+	frequency of the machine and can be determined by calling the
+	@{"ReadEClock()" Link "ReadEClock()"} library like call.
+
+@{b}   UNITS@{ub}
+	The timer contains five units -- two designed to accuratly measure
+	short intervals, one that has little system overhead and is very
+	stable over time, and two that work like an alarm clock.
+
+@{b}   UNIT_MICROHZ@{ub}
+	This unit uses the programmable timers in the 8520s to keep track
+	of its time.  It has precision down to about 2 microseconds, but
+	will drift as system load increases.  The accuracy of this unit
+	is the same as that of the master clock of the machine.  This unit
+	uses a timeval in its timerequest.
+
+@{b}   UNIT_VBLANK@{ub}
+	This unit uses a strobe from the power supply to keep track of its
+	time or the "E" clock on machines without power supply strobes.
+	It is very stable over time, but only has a resolution of that of
+	the vertical blank interrupt.  This unit is very cheap to use, and
+	should be used by those who are waiting for long periods of time
+	(typically 1/2 second or more).  This unit uses a timeval in its
+	timerequest.
+
+@{b}   UNIT_ECLOCK@{ub}
+	This unit is exacly the same as UNIT_MICROHZ except that it uses
+	an eclockval instead of a timeval in its timerequest.
+
+@{b}   UNIT_WAITUNTIL@{ub}
+	This unit waits until the systime is greater than or equal to the
+	time in the timeval in the timerequest.  This unit has the same
+	resolution and accuracy as that of UNIT_VBLANK.
+
+@{b}   UNIT_WAITECLOCK@{ub}
+	This unit waits until the E-Clock value as returned by @{"ReadEClock()" Link "ReadEClock()"}
+	is greater than or equal to the eclockval in the timerequest. This
+	unit has the same resolution and accuracy as that of UNIT_ECLOCK.
+
+@{b}   LIBRARY@{ub}
+	In addition to the normal device calls, the timer also supports
+	several direct, library like calls.
+
+@{b}   BUGS@{ub}
+	In the V1.2/V1.3 release, the timer device has problems with
+	very short time requests.  When one of these is made, other
+	timer requests may be finished inaccurately.  A side effect
+	is that AmigaDOS requests such as "Delay(0);" or
+	"WaitForChar(x,0);" are unreliable.
+
+@EndNode
+
+@Node "AbortIO()" "timer.device/AbortIO"
+
+@{b}   NAME@{ub}
+	AbortIO -- @{"Remove" Link "exec/Remove()"} an existing timer request.
+
+@{b}   SYNOPSIS@{ub}
+	error = AbortIO( timerequest )
+	D0               A1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} AbortIO( struct timerequest * );
+
+@{b}   FUNCTION@{ub}
+	This is an exec.library call.
+
+	This routine removes a timerquest from the timer.  It runs in
+	the context of the caller.
+
+@{b}   INPUTS@{ub}
+	timerequest - the timer request to be aborted
+
+@{b}   RETURNS@{ub}
+	0  if the request was aborted, io_Error will also be set to
+	    IOERR_ABORTED.
+	-1 otherwise
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	exec.library/AbortIO()
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "AddTime()" "timer.device/AddTime"
+
+@{b}   NAME@{ub}
+	AddTime -- Add one time request to another.
+
+@{b}   SYNOPSIS@{ub}
+	AddTime( Dest, Source )
+	         A0    A1
+
+	void AddTime( struct timeval *, struct timeval *);
+
+@{b}   FUNCTION@{ub}
+	This routine adds one timeval structure to another.  The
+	results are stored in the destination (Dest + Source -> Dest)
+
+	A0 and A1 will be left unchanged
+
+@{b}   INPUTS@{ub}
+	Dest, Source -- pointers to timeval structures.
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/CmpTime()" Link "CmpTime()"},
+	@{"timer.device/SubTime()" Link "SubTime()"}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "CmpTime()" "timer.device/CmpTime"
+
+@{b}   NAME@{ub}
+	CmpTime -- Compare two timeval structures.
+
+@{b}   SYNOPSIS@{ub}
+	result = CmpTime( Dest, Source )
+	D0                A0    A1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} CmpTime( struct timeval *, struct timeval *);
+
+@{b}   FUNCTION@{ub}
+	This routine compares timeval structures
+
+	A0 and A1 will be left unchanged
+
+@{b}   INPUTS@{ub}
+	Dest, Source -- pointers to timeval structures.
+
+@{b}   RESULTS@{ub}
+	result will be   0 if Dest has same time as source
+	                -1 if Dest has more time than source
+	                +1 if Dest has less time than source
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/AddTime()" Link "AddTime()"},
+	@{"timer.device/SubTime()" Link "SubTime()"}
+
+@{b}   BUGS@{ub}
+	Older version of this document had the sense of the return
+	codes wrong; the code hasn't changed but the document has.
+
+@EndNode
+
+@Node "GetSysTime()" "timer.device/GetSysTime"
+
+@{b}   NAME@{ub}
+	GetSysTime -- Get the system time. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	GetSysTime( Dest )
+	            A0
+
+	void GetSysTime( struct timeval * );
+
+@{b}   FUNCTION@{ub}
+	Ask the system what time it is.  The system time starts off at
+	zero at power on, but may be initialized via the @{"TR_SETSYSTIME" Link "TR_SETSYSTIME"}
+	timer.device command.
+
+	System time is monotonocally increasing and guarenteed to be
+	unique (except when the system time is set back).
+
+	A0 will be left unchanged.
+
+	This function is less expensive to use than the @{"TR_GETSYSTIME" Link "TR_GETSYSTIME"}
+	@{"IORequest" Link "INCLUDE:exec/io.h/Main" 16}.
+
+@{b}   INPUTS@{ub}
+	Dest -- pointer to a timeval structure to hold the system time.
+
+@{b}   RESULTS@{ub}
+	Dest -- the timeval structure will contain the system time.
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/TR_GETSYSTIME" Link "TR_GETSYSTIME"},
+	@{"timer.device/TR_SETSYSTIME" Link "TR_SETSYSTIME"},
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "ReadEClock()" "timer.device/ReadEClock"
+
+@{b}   NAME@{ub}
+	ReadEClock -- Get the current value of the E-Clock. (V36)
+
+@{b}   SYNOPSIS@{ub}
+	E_Freq = ReadEClock( Dest )
+	D0                   A0
+
+	ULONG ReadEClock ( struct @{"EClockVal" Link "INCLUDE:devices/timer.h/Main" 100} * );
+
+@{b}   FUNCTION@{ub}
+	This routine calculates the current 64 bit value of the E-Clock
+	and stores it in the destination @{"EClockVal" Link "INCLUDE:devices/timer.h/Main" 100} structure. The count
+	rate of the E-Clock is also returned.
+
+	A0 will be left unchanged
+
+	This is a low overhead function designed so that very short
+	intervals may be timed.
+
+@{b}   INPUTS@{ub}
+	Dest -- pointer to an @{"EClockVal" Link "INCLUDE:devices/timer.h/Main" 100} structure.
+
+@{b}   RETURNS@{ub}
+	Dest -- the @{"EClockVal" Link "INCLUDE:devices/timer.h/Main" 100} structure will contain the E-Clock time
+	E_Freq -- The count rate of the E-Clock (tics/sec).
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "SubTime()" "timer.device/SubTime"
+
+@{b}   NAME@{ub}
+	SubTime -- Subtract one time request from another.
+
+@{b}   SYNOPSIS@{ub}
+	SubTime( Dest, Source )
+	         A0    A1
+
+	void SubTime( struct timeval *, struct timeval *);
+
+@{b}   FUNCTION@{ub}
+	This routine subtracts one timeval structure from another.  The
+	results are stored in the destination (Dest - Source -> Dest)
+
+	A0 and A1 will be left unchanged
+
+@{b}   INPUTS@{ub}
+	Dest, Source -- pointers to timeval structures.
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/AddTime()" Link "AddTime()"},
+	@{"timer.device/CmpTime()" Link "CmpTime()"}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "TR_ADDREQUEST" "timer.device/TR_ADDREQUEST"
+
+@{b}   NAME@{ub}
+	TR_ADDREQUEST -- Submit a request to wait a period of time.
+
+@{b}   FUNCTION@{ub}
+	Ask the timer to wait a specified amount of time before
+	replying the timerequest.
+
+	The message may be forced to finish early with an
+	@{"AbortIO()/WaitIO()" Link "exec/WaitIO()"} pair.
+
+@{b}   TIMER REQUEST@{ub}
+	io_Message      mn_ReplyPort initialized
+	io_Device       preset by timer in @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+	io_Unit         preset by timer in @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+	io_Command      TR_ADDREQUEST
+	io_Flags        IOF_QUICK permitted (but ignored)
+	tr_time         a timeval structure specifying how long the
+	                    device will wait before replying
+
+@{b}   RESULTS@{ub}
+	tr_time         will be zeroed
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+	Previous to 2.0, the tr_time field was documented as containing
+	junk when the timerequest was returned.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/AbortIO()" Link "AbortIO()"},
+	@{"timer.device/TimeDelay()" Link "amiga_lib/TimeDelay()"},
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "TR_GETSYSTIME" "timer.device/TR_GETSYSTIME"
+
+@{b}   NAME@{ub}
+	TR_GETSYSTIME -- get the system time.
+
+@{b}   FUNCTION@{ub}
+	Ask the system what time it is.  The system time starts off at
+	zero at power on, but may be initialized via the @{"TR_SETSYSTIME" Link "TR_SETSYSTIME"}
+	call.
+
+	System time is monotonically increasing, and guaranteed to be
+	unique (except when the system time is set backwards).
+
+@{b}   TIMER REQUEST@{ub}
+	io_Message      mn_ReplyPort initialized
+	io_Device       preset by timer in @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+	io_Unit         preset by timer in @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+	io_Command      TR_GETSYSTIME
+	io_Flags        IOF_QUICK permitted
+
+@{b}   RESULTS@{ub}
+	tr_time         a timeval structure with the current system
+	                    time
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/TR_SETSYSTIME" Link "TR_SETSYSTIME"},
+	@{"timer.device/GetSysTime()" Link "GetSysTime()"},
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "TR_SETSYSTIME" "timer.device/TR_SETSYSTIME"
+
+@{b}   NAME@{ub}
+	TR_SETSYSTIME -- Set the system time.
+
+@{b}   FUNCTION@{ub}
+	Set the system idea of what time it is.  The system starts out
+	at time "zero" so it is safe to set it forward to the real
+	time.  However, care should be taken when setting the time
+	backwards.  System time is generally expected to monotonically
+	increasing.
+
+@{b}   TIMER REQUEST@{ub}
+	io_Message      mn_ReplyPort initialized
+	io_Device       preset by timer in @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+	io_Unit         preset by timer in @{"OpenDevice" Link "trackdisk/OpenDevice()"}
+	io_Command      @{"TR_GETSYSTIME" Link "TR_GETSYSTIME"}
+	io_Flags        IOF_QUICK permitted
+	tr_time         a timeval structure with the current system
+	                    time
+
+@{b}   RESULTS@{ub}
+	tr_time         will contain junk
+
+@{b}   NOTES@{ub}
+	This function may be called from interrupts.
+
+@{b}   SEE ALSO@{ub}
+	@{"timer.device/TR_GETSYSTIME" Link "TR_GETSYSTIME"},
+	@{"timer.device/GetSysTime()" Link "GetSysTime()"},
+
+@{b}   BUGS@{ub}
+
+@EndNode
+

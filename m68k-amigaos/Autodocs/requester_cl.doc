@@ -1,0 +1,336 @@
+TABLE OF CONTENTS
+
+requester.class/RM_OPENREQ
+requester_cl/--datasheet--
+requester_cl/REQUESTER_GetClass
+requester.class/RM_OPENREQ                         requester.class/RM_OPENREQ
+
+    NAME
+	RM_OPENREQ -- Open a requester.
+
+    SYNOPSIS
+	ULONG button_num = DoMethodA(APTR obj, struct orRequest *msg);
+
+    FUNCTION
+	Opens a requester and returns the number of the button the
+	user selected.
+
+    INPUTS
+	obj - requester object pointer
+	msg - pointer to fully initialized struct orRequest
+	      (see <classes/requester.h>)
+
+    RESULT
+	For REQTYPE_INFO, returns the number of the button the user did
+	select. The buttons are numbered 1, 2, 3, ..., 0. A requester with
+	a single button always returns 0.
+
+	For REQTYPE_INTEGER, returns either TRUE or FALSE (= Cancel).
+
+	For REQTYPE_STRING, returns FALSE if the string was empty and empty
+	strings were not allowed, otherwise returns TRUE.
+
+	For all types, returns 0 when opening the requester failed.
+
+	For all types, returns -1 when a timeout occured or when an IDCMP
+	event specified with REQ_IDCMP_Ptr occurred.
+
+    EXAMPLE
+	struct orRequest reqmsg;
+	struct TagItem   tags[10];
+	char             buffer[100] = "Default string";
+
+	reqmsg.MethodID  = RM_OPENREQ;
+	reqmsg.or_Attrs  = tags;
+	reqmsg.or_Window = NULL;
+	reqmsg.or_Screen = myScreenPtr;
+	tags[0].ti_Tag   = REQ_Type;
+	tags[0].ti_Data  = REQTYPE_STRING;
+	tags[1].ti_Tag   = REQ_TitleText;
+	tags[1].ti_Data  = (Tag)"Requesting a string";
+	tags[2].ti_Tag   = REQ_BodyText;
+	tags[2].ti_Data  = (Tag)"Please enter a string";
+	tags[3].ti_Tag   = REQ_GadgetText;
+	tags[3].ti_Data  = (Tag)"_Ok|_Cancel";
+	tags[4].ti_Tag   = REQS_Buffer;
+	tags[4].ti_Data  = (Tag)buffer;
+	tags[5].ti_Tag   = REQS_MaxChars;
+	tags[5].ti_Data  = sizeof(buffer) - 1;
+	tags[6].ti_Tag   = REQS_ShowDefault;
+	tags[6].ti_Data  = TRUE;
+	tags[7].ti_Tag   = REQS_AllowEmpty;
+	tags[7].ti_Data  = FALSE;
+	tags[8].ti_Tag   = REQS_Invisible;
+	tags[8].ti_Data  = FALSE;
+	tags[9].ti_Tag   = TAG_END;
+	tags[9].ti_Data  = 0;
+
+	ULONG button_num = DoMethodA(reqobj, (Msg)&reqmsg);
+	if (button_num == 0)
+	{
+	    // Cancel button or failed to open.
+	}
+
+	// Buffer contains result string which is the default when
+	// the user did cancel the requester or it did not open.
+
+requester_cl/--datasheet--                         requester_cl/--datasheet--
+
+    NAME
+        requester_cl -- create requester BOOPSI objects
+
+    SUPERCLASS
+        rootclass
+
+    DESCRIPTION
+        The requester class is used to show information and query requesters,
+        get integer and and to get string information in an easy and
+        consistent way.
+
+        Advantages that this class provides:
+
+        > Consistent behaviour and look in all applications using this class
+          instead of doing their own requester selection routines.
+
+        > Easy to use.
+
+    METHODS
+        OM_NEW -- Passed to superclass, defaults set, then OM_SET.
+
+        OM_SET -- Passed to superclass, custom tags set.
+
+        OM_GET -- Custom tag returned or passed to superclass.
+
+        OM_UPDATE -- Passed to superclass.
+
+        OM_DISPOSE -- Layout disposed of, then passed to superclass.
+
+        RM_OPENREQ -- requster class method for invoking the requester.
+           Applicability is (OM_GET, OM_NOTIFY).
+
+    ATTRIBUTES
+        REQ_Type (ULONG)
+           Type of requester. See <classes/requester.h> for definitions.
+
+           Defaults to REQTYPE_INFO.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQ_TitleText (UBYTE *)
+           Title text of the requester.
+
+           Defaults to none.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQ_BodyText (UBYTE *)
+           Body text of the requester. The following codes
+           can be used to change the appearence of the text:
+
+           ESC u -- Set the soft style to underline.
+
+           ESC b -- Set the soft style to bold.
+
+           ESC i -- Set the soft style to italic.
+
+           ESC n -- Set the soft style back to normal.
+
+           ESC l -- Left justify the following text.
+
+           ESC c -- Center the following text.
+
+           ESC r -- Right justify the following text.
+
+           ESC <n> -- Use pen number n (1-9) as front pen. n must be a valid
+                DrawInfo pen as specified in <intuition/screens.h>. Note that
+                this is the _offset_ into the drinfo->dri_Pens array, and
+                not a absolute pen number.
+
+           ESC f[<font>/<size>] -- Use the given font with the given size
+                on the text that follows.
+
+           Example text:
+		   "\33b\33f[topaz.font/8]This is bold text with Topaz/8."
+
+           Defaults to none.
+
+           NOTE: Do not use the "\33<pen>" representation when selecting pen
+		   to use  since the compiler will translate this to the wrong octal
+		   number. Instead, use the ESC key on the keyboard, like "<ESC><pen>".
+
+           NOTE: Due to limitations in label.image, the justification codes
+		   can only be used once in the text.  If you use it more than once,
+		   the last one will be used for all of the text. This might change
+		   in future versions of label.image.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+			REQ_VarArgs (APTR)
+			   Varargs data array to supply data for RawDoFmt() when format
+			   specifiers are to be used in REQ_BodyText text string.
+
+			   Applicability is (OM_NEW, OM_SET, RM_OPENREQ).  (V47).
+
+        REQ_GadgetText (UBYTE *)
+           Gadget text(s) for the requester.
+
+           Defaults to "_Ok|_Cancel".
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQ_ReturnCode (ULONG)
+           Last return code of the requester.
+
+           Applicability is (OM_GET).
+
+        REQ_TabSize (ULONG) *** NOT IMPLEMENTED YET ***
+           Tab size to use when formatting the bodytext.
+
+           Defaults to 8.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQ_Image (struct Image *)
+           Use this tag to specify the image being displayed in the requester
+           You can either supply your own BOOPSI image or you can use one of
+			   the build-in images:
+
+           REQIMAGE_DEFAULT - Based on the gadget/option count REQIMAGE_INFO
+		   (one gadget/option) or REQIMAGE_QUESTION (>1) is used.
+           REQIMAGE_INFO - a '!' sign.
+           REQIMAGE_QUESTION - a '?' sign.
+           REQIMAGE_WARNING - a warning sign.
+           REQIMAGE_ERROR - an error sign.
+           REQIMAGE_INSERTDISK - an insert disk sign.
+
+           Defaults to REQIMAGE_DEFAULT.
+
+			   Applicability is (OM_NEW, OM_SET, RM_OPENREQ).  (V47).
+
+        REQI_Minimum (LONG)
+           Minimum allowed value.
+
+           Defaults to MININT.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQI_Maximum (LONG)
+           Maximum allowed value.
+
+           Defaults to MAXINT.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQI_Invisible (BOOL)
+           Integer input will be echoed with '.' and not what the user
+           actually types.  V50.
+
+           Defaults to FALSE.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQI_Number (LONG)
+           Number to show in gadget.
+
+           Defaults to 0.
+
+           Applicability is (OM_NEW, OM_SET, OM_GET, RM_OPENREQ).
+
+        REQI_Arrows (BOOL)
+           Show arrows to the right of the integer gadget.
+
+           Defaults to FALSE.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQI_MaxChars (UWORD)
+           Maximum number of characters for the number (including negative
+           sign).
+
+           Defaults to 10 and 10 is also the highest value allowed.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQS_AllowEmpty (BOOL)
+           Allow empty string to be accepted.
+
+           Defaults to FALSE.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQS_Invisible (BOOL)
+           String input will be echoed with '.' and not what the user
+           actually types.  V50.
+
+           Defaults to FALSE.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQS_Buffer (UBYTE *)
+           Buffer used in the string gadget. MUST be provided.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQS_ShowDefault (BOOL)
+           Show content of REQS_Buffer in string gadget.
+
+           Defaults to TRUE.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQS_MaxChars (ULONG)
+           Maximum number of characters in string gadget. Must not be
+           larger than size of REQS_Buffer - 1.
+
+           Defaults to 127.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ).
+
+        REQS_ChooserArray (UBYTE **) (V42)
+           An array of strings that will be added to a chooser gadget
+           to the right of the string gadget.
+
+           Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+        REQS_ChooserActive (ULONG) (V42)
+           The current active entry among the strings passed in
+           using REQS_ChooserOptions.  (default: 0)
+
+           Applicability is (OM_NEW, OM_SET, OM_GET, RM_OPENREQ)
+
+requester_cl/REQUESTER_GetClass               requester_cl/REQUESTER_GetClass
+
+    NAME
+        REQUESTER_GetClass -- Gets the pointer to the requester class
+
+    SYNOPSIS
+        requester_class = REQUESTER_GetClass();
+        D0
+
+        Class * REQUESTER_GetClass( void );
+
+    FUNCTION
+        Obtains the pointer to the requester class for use with
+        NewObject().  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+    INPUTS
+
+    RESULT
+        requester_class - Pointer to the requester class.
+
+    EXAMPLE
+
+    NOTES
+
+    BUGS
+
+    SEE ALSO
+
+

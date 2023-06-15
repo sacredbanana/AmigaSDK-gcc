@@ -1,0 +1,110 @@
+*-----------------------------------------------------------------
+*-- MMU.library                                                 --
+*-- © 1998-2016 the mmu.library development group, THOR-Software--
+*--                                                             --
+*-- Library header file Version 46.1                            --
+*--                                                             --
+*-- created 18 Oct 1998 THOR,   Thomas Richter                  --
+*--     Modifications:                                          --
+*--                                                             --
+*-- 40.50:      Final release,  31 Oct 1999, Thomas Richter     --
+*-- 41.1:                       28 Nov 1999, Thomas Richter     --
+*-- 42.0:                       25 Mar 2000, Thomas Richter     --
+*-- 43.1:                       16 Sep 2001, Thomas Richter     --
+*-- 46.2:                       15 May 2016, Thomas Richter     --
+*-- 47.1:			10 Aug 2021, Thomas Richter     --
+*-----------------------------------------------------------------
+##base _MMUBase
+##bias 30
+##public
+AllocAligned(bytesize,reqments,alignment)(d0,d1,a0)
+GetMapping(ctx)(a0)
+ReleaseMapping(ctx,list)(a0,a1)
+GetPageSize(ctx)(a0)
+GetMMUType()()
+##private
+GetMMUConfig()()
+ReleaseMMUConfig(mfc)(a1)
+##public
+LockMMUContext(ctx)(a0)
+UnlockMMUContext(ctx)(a0)
+SetPropertiesA(ctx,flags,mask,lower,size,tags)(a0,d1,d2,a1,d0,a2)
+GetPropertiesA(ctx,lower,tags)(a0,a1,a2)
+RebuildTree(ctx)(a0)
+SetPagePropertiesA(ctx,flags,mask,lower,tags)(a0,d1,d2,a1,a2)
+GetPagePropertiesA(ctx,lower,tags)(a0,a1,a2)
+CreateMMUContextA(tags)(a0)
+DeleteMMUContext(ctx)(a0)
+##private
+AllocLineMem(bytesize,reqments)(d0,d1)
+##public
+AllocLineVec(bytesize,reqments)(d0,d1)
+PhysicalPageLocation(ctx,addr)(a0,a1)
+SuperContext(ctx)(a0)
+DefaultContext()()
+EnterMMUContext(ctx,task)(a0,a1)
+LeaveMMUContext(task)(a1)
+AddContextHookA(tags)(a0)
+RemContextHook(hook)(a1)
+AddMessageHookA(tags)(a0)
+RemMessageHook(hook)(a1)
+ActivateException(hook)(a1)
+DeactivateException(hook)(a1)
+AttemptLockMMUContext(ctx)(a0)
+LockContextList()()
+UnlockContextList()()
+AttemptLockContextList()()
+SetPropertyList(ctx,list)(a0,a1)
+TouchPropertyList(list)(a1)
+CurrentContext(task)(a1)
+DMAInitiate(ctx,addrptrptr,lengthptr,write)(d1,a0,a1,d0)
+DMATerminate(ctx)(d1)
+PhysicalLocation(ctx,addrptrptr,lengthptr)(d1,a0,a1)
+RemapSize(ctx)(a0)
+WithoutMMU(func)(a5)
+SetBusError(func,oldfuncptr)(a0,a1)
+GetMMUContextData(ctx,tagid)(a0,d0)
+SetMMUContextDataA(ctx,tags)(a0,a1)
+NewMapping()()
+CopyMapping(from,to,base,length,mask)(a0,a1,d0,d1,d2)
+DupMapping(list)(a0)
+CopyContextRegion(ctx,list,base,length,mask)(a0,a1,d0,d1,d2)
+SetPropertiesMapping(ctx,list,base,length,mask)(a0,a1,d0,d1,d2)
+SetMappingPropertiesA(list,flags,mask,lower,size,tags)(a0,d1,d2,a1,d0,a2)
+GetMappingPropertiesA(list,lower,tags)(a0,a1,a2)
+BuildIndirect(ctx,address,props)(a0,d0,d1)
+SetIndirect(destination,logical,descriptor)(a0,a1,d0)
+GetIndirect(ctx,adt,address)(a0,a1,d0)
+##private
+** VMM support functions
+SwitchControl(oldswitch)(a0)
+##public
+** New for V41
+RebuildTreesA(ctxptr)(a0)
+** New for V42
+RunOldConfig(func)(a5)
+SetIndirectArray(destination,descriptor,number)(a0,a1,d0)
+** New for V43
+GetPageUsedModified(ctx,address)(a0,a1)
+##private
+reserved1()()
+reserved2()()
+reserved3()()
+reserved4()()
+reserved5()()
+reserved6()()
+##public
+** New for V46
+MapWindow(targetctx,srcctx,window)(a0,a1,d1)
+CreateContextWindowA(targetctx,srcctxptrptr)(a0,a1)
+ReleaseContextWindow(window)(a1)
+RefreshContextWindow(window)(a0)
+MapWindowCached(targetctx,srcctx,window)(a0,a1,d1)
+LayoutContextWindow(window)(a0)
+##private
+BuildDefaultTableSelected(ctx,flags)(a0,d0)
+##public
+** New for V47
+LogicalLocation(ctx,adrptrptr,lengthptr)(d1,a0,a1)
+##end
+

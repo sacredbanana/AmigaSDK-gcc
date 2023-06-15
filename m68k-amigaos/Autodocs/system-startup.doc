@@ -1,0 +1,113 @@
+TABLE OF CONTENTS
+
+System-Startup/--Background--
+System-Startup/ROM-Updates
+System-Startup/--Background--                   System-Startup/--Background--
+
+   NAME
+	System-Startup - the initial boot process of AmigaDos
+
+   Background
+	System-Startup is to AmigaDos what "init" is to Unix. It is
+	the initial process that is taking control as soon as all
+	essential system libraries are initialized. As part of its
+	job, it also updates system components from disk if newer
+	replacements are available there, see ROM-Updates.
+
+	The System-Startup module has been factored out from the
+	dos.library and is now a process and a module of its own.
+	The function it performs were previously executed by
+	the boot shell through CliInit(), a private and now obsolete
+	LVO of the dos.library.
+
+    STARTUP MECHANISM
+	The system-startup process is as follows:
+
+	1) System-Startup completes building the dos.library.
+	2) System-Startup initializes intuition provisionally
+	3) System-Startup mounts all volumes collected recorded
+	   in ExpansionBase left there by auto-bootable controllers.
+	4) If a newer file system has been loaded from the RDB,
+	   this file system is placed in the FileSystem.resource, then
+	   adds this as "filesystem" to the resident list.
+	5) System-Startup then continues to mount some important RAM-based
+	   handlers, namely PRT:, PAR:, SER: and PIPE:.
+	6) System-Startup starts the file system of the boot volume
+	7) System assigns are made, namely, L:, FONTS:, DEVS:, LIBS:
+	   S:, C:, SYS: and ENVARC:. The latter is a "late assign".
+	8) All remaining file systems are started.
+	9) System-Startup mounts RAW: and CON: and adds the con-handler
+	   to the resident list.
+	10)Unless disabled by the boot menu, System-Startup looks for
+	   ROM-Updates on file systems, see section ROM-Updates.
+	11)As part of this update process, any provisional version
+	   of intuition is shutdown and replaced by the final version.
+	12)If the boot monitor is AGA-based, graphics and intuition are
+	   "enlightened", i.e. AGA modes are enabled. This does not
+	   happen by default for backwards compatibility.
+	13)All rom-modules flagged as RTF_AFTERDOS are initialized.
+	14)System-Startup reads DEVS:System-Configuration, the legacy
+	   intuition preferences.
+	15)System-Startup opens the boot console, and the
+	   Startup-Sequence.
+	16)Unless flagged as silent in Expansion, the boot console
+	   is forced open.
+	17)If flagged by Expansion, the SysLog module is loaded and
+	   initialized.
+	18)If flagged by Expansion, the "debug" and "interactive"
+	   shell variables are set.
+	19)The boot shell is initialized through System().
+	20)System-Startup dies down as the shell takes over now.
+
+    SEE ALSO
+    	 ROM-Updates
+System-Startup/ROM-Updates                         System-Startup/ROM-Updates
+
+   NAME
+	System-Startup ROM Updates - update ROM modules from disk
+
+   FUNCTION
+	The ROM-Updates mechanism is part of System-Startup and is
+	able to replace some system-modules by corresponding RAM
+	versions if available on disk. ROM-Updating can be disabled
+	from the Boot-Menu through setting a flag in ExpansionBase.
+	Note that ROM-Updates does not enforce a reboot.
+
+	A RAM-module replaces a ROM-Module if the version of the RAM
+	module is strictly larger than that of the ROM-Module. That is,
+	a V48 module can replace a V47 module. The only exception is
+	intuition, which can always be downgraded to V40.
+
+	The search path for ROM-Updates is as follows:
+
+	- the boot volume. If a replacement module is found there,
+	  it is used. If, however, the boot volume contains a non-
+	  loadable (probably empty) dummy file of the name of a ROM
+	  component, scanning is aborted and the ROM module is not
+	  updated.
+	- any other mounted volume, in the order they appear in the
+	  DosList. The only exception is the intuition.library in
+	  version 40, which is *only* scanned for on the boot volume.
+	- the file system is upgraded automatically from the RDB if
+	  a new version exists there. It is not upgraded from file.
+
+    UPGRADABLE MODULES
+    	At the time of writing, the following ROM-Modules are upgradable
+	from disk:
+	- "filesystem" aka "FFS", taken from the RDB if a newer version
+	  is available there.
+	- "con-handler", taken from "L:".
+	- "ram-handler", taken from "L:".
+	- "shell", "BootShell" and "CLI, all taken from "L:Shell-Seg".
+	- "intuition", taken from "LIBS:", with
+	  the option for downgrading to V40.
+	- "console.device", taken from "DEVS:"
+	- "gadtools.library", taken from "LIBS:"
+	- "syslog", taken from "L:"
+	- "mathffp.library", taken from "LIBS:"
+	- "mathieeesingbas.library", taken from "LIBS:"
+	- "audio.device", taken from "DEVS:"
+	- "workbench.library" and "icon.library" are already RAM-based
+	  but use the same search path.
+
+

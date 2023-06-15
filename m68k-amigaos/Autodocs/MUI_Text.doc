@@ -1,0 +1,182 @@
+TABLE OF CONTENTS
+
+Text.mui/Text.mui
+Text.mui/MUIA_Text_Contents
+Text.mui/MUIA_Text_HiChar
+Text.mui/MUIA_Text_PreParse
+Text.mui/MUIA_Text_SetMax
+Text.mui/MUIA_Text_SetMin
+Text.mui/MUIA_Text_SetVMax
+Text.mui/Text.mui
+
+	Text class allows generating objects that contain
+	some kind of text. You can control the outfit of
+	your text with some special control characters,
+	including italics, bold, underline and color
+	codes. Format codes align text either left,
+	centered or right, linefeeds allow multiline
+	text fields.
+Text.mui/MUIA_Text_Contents
+
+    NAME
+	MUIA_Text_Contents -- (V4 ) [ISG], STRPTR
+
+    FUNCTION
+	String to be displayed in a text object.
+
+	If the string is larger than available display space,
+	it will be clipped. Setting MUIA_Text_Contents to NULL
+	results in an empty text object.
+
+	The string is copied into a private buffer, you can destroy
+	the original after using this tag.
+
+	Whenever MUI prints strings, they may contain some special
+	character sequences defining format, color and style of the text.
+
+	'\n'	 Start a new line. With this character you can e.g. create
+		 multi line buttons.
+
+	ESC -    Disable text engine, following chars will be printed
+	         without further parsing.
+
+	ESC u    Set the soft style to underline.
+
+	ESC b    Set the soft style to bold.
+
+	ESC i    Set the soft style to italic.
+
+	ESC n    Set the soft style back to normal.
+
+	ESC <n>  Use pen number n (2..9) as front pen. n must be a valid
+		 DrawInfo pen as specified in "intuition/screens.h".
+
+	ESC c    Center current (and following) line(s).
+		 This sequence is only valid at the beginning of a
+		 string or after a newline character.
+
+	ESC r    Right justify current (and following) line(s).
+		 This sequence is only valid at the beginning of a
+		 string or after a newline character.
+
+	ESC l    Left justify current (and following) line(s).
+		 This sequence is only valid at the beginning of a
+		 string or after a newline character.
+
+	ESC I[s] Draw MUI image with specification <s>. See autodocs
+	         of image class for image spec definition.
+
+	Note:	 These rules apply to all MUI strings, not only to
+		 a text objects contents. You can e.g. format the
+	         columns of a listview or include images in a cycle
+	         gadgets entries.
+
+    EXAMPLE
+	...
+	MUIA_Text_Contents, "\33c\33bMUI\33n\nis magic"
+	...
+
+	would look like     |    MUI   |  <-- bold
+	                    | is magic |  <-- normal
+
+    SEE_ALSO
+	MUIA_Text_SetMin, MUIA_Text_SetMax, MUIA_Text_PreParse
+Text.mui/MUIA_Text_HiChar
+
+    NAME
+	MUIA_Text_HiChar -- (V4 ) [I..], char
+
+    FUNCTION
+	If the character given here exists in the displayed
+	string (no matter if upper or lower case), it will
+	be underlined. This makes it easy to create macros
+	such as KeyButton() that specify the control char
+	and the underline char at the same time.
+
+    SEE ALSO
+	MUIA_Text_Contents, MUIA_ControlChar
+Text.mui/MUIA_Text_PreParse
+
+    NAME
+	MUIA_Text_PreParse -- (V4 ) [ISG], STRPTR
+
+    FUNCTION
+	String containing format definitions to be parsed before
+	the text from MUIA_Text_Contents is printed.
+
+	Using this tag, you can easily define different formats,
+	colors and styles without modifying the original string.
+
+    EXAMPLE
+	...
+	MUIA_Text_PreParse, "\33c\33i",   // centered and italics
+	MUIA_Text_Contents, "foobar",
+	...
+
+    SEE_ALSO
+	MUIA_Text_Contents
+Text.mui/MUIA_Text_SetMax
+
+    NAME
+	MUIA_Text_SetMax -- (V4 ) [I..], BOOL
+
+    FUNCTION
+	Boolean value to indicate wether the objects maximal width
+	shall be calculated to fit the string given with
+	MUIA_Text_Contents.
+
+	When set to FALSE, maximum width is not limited.
+
+	For a text object that needs to be updated (e.g. some
+	information about your programs status) you would probably
+	set MUIA_Text_SetMax to FALSE to allow resizing of this
+	object.
+
+	For a label for one of your gadgets, you might want to
+	give this tag a value of TRUE to prevent MUI from
+	inserting additional layout space.
+
+	Defaults to FALSE.
+
+    EXAMPLE
+	...
+	TX_Status = TextObject,
+	   RecessedFrame,
+	   MUIA_Background   , MUII_BACKGROUND,
+	   MUIA_Text_PreParse, "\33c",
+	   MUIA_Text_Contents, "running...",
+	   End,
+	...
+	set(TX_Status,MUIA_Text_Contents,"reading...");
+	...
+	set(TX_Status,MUIA_Text_Contents,"writing...");
+	...
+
+    SEE_ALSO
+	MUIA_Text_SetMin, MUIA_Text_Contents
+Text.mui/MUIA_Text_SetMin
+
+    NAME
+	MUIA_Text_SetMin -- (V4 ) [I..], BOOL
+
+    FUNCTION
+	Boolean value to indicate wether the objects minimal width
+	shall be calculated to fit the string given with
+	MUIA_Text_Contents.
+
+	When set to FALSE, minimum width will be set to 0
+	and the displayed string may be clipped.
+
+	Defaults to TRUE.
+
+    SEE_ALSO
+	MUIA_Text_SetMax, MUIA_Text_Contents
+Text.mui/MUIA_Text_SetVMax
+
+    NAME
+	MUIA_Text_SetVMax -- (V11) [I..], BOOL
+
+    FUNCTION
+	Settings this to FALSE makes a TextObjects y-size unlimited.
+	Defaults to TRUE which means the objects height is fixed.
+

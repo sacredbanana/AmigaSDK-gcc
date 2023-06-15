@@ -1,0 +1,737 @@
+@database "scsidisk"
+@master "AMIDEV:NDK/Autodocs/scsidisk.doc"
+
+@Node Main "scsidisk.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" CMD_READ " Link "CMD_READ"}
+    @{" CMD_START " Link "CMD_START"}
+    @{" CMD_STOP " Link "CMD_STOP"}
+    @{" CMD_UPDATE " Link "CMD_UPDATE"}
+    @{" CMD_WRITE " Link "CMD_WRITE"}
+    @{" HD_SCSICMD " Link "HD_SCSICMD"}
+    @{" TD_ADDCHANGEINT " Link "TD_ADDCHANGEINT"}
+    @{" TD_CHANGENUM " Link "TD_CHANGENUM"}
+    @{" TD_CHANGESTATE " Link "TD_CHANGESTATE"}
+    @{" TD_EJECT " Link "TD_EJECT"}
+    @{" TD_FORMAT " Link "TD_FORMAT"}
+    @{" TD_FORMAT64 " Link "TD_FORMAT64"}
+    @{" TD_GETGEOMETRY " Link "TD_GETGEOMETRY"}
+    @{" TD_MOTOR " Link "TD_MOTOR"}
+    @{" TD_PROTSTATUS " Link "TD_PROTSTATUS"}
+    @{" TD_READ64 " Link "TD_READ64"}
+    @{" TD_REMCHANGEINT " Link "TD_REMCHANGEINT"}
+    @{" TD_SEEK " Link "TD_SEEK"}
+    @{" TD_SEEK64 " Link "TD_SEEK64"}
+    @{" TD_WRITE64 " Link "TD_WRITE64"}
+@EndNode
+
+@Node "CMD_READ" "scsi.device/CMD_READ"
+
+@{b}   NAME@{ub}
+	CMD_READ -- read sectors of data from a disk.
+
+@{b}   FUNCTION@{ub}
+	This command reads data from the drive to a supplied buffer.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_READ
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to read, must be a multiple of
+			the drive block size.
+	io_Offset	byte offset from the start of the disk describing
+			where to read data from, must be a multiple of
+			the drive block size.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+@{b}   NOTES@{ub}
+	This command can only reach data below the 4GB barrier. To read
+	data beyond the barrier, use @{"TD_READ64" Link "TD_READ64"} instead.
+
+@{b}   BUGS@{ub}
+	Some incarnations of the scsi.device, namely those that handle
+	actually IDE devices, were unable to read more than 255 blocks
+	in one go. This bug has been fixed in V47.
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"}, @{"TD_READ64" Link "TD_READ64"}
+
+@EndNode
+
+@Node "CMD_START" "scsi.device/CMD_START"
+
+@{b}   NAME@{ub}
+       CMD_START -- start a drive, if possible.
+
+@{b}   FUNCTION@{ub}
+	This command causes the drive to attempt spinning up the motor and
+	return from an idle operation.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_START
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	Drives may or may not react on this command. A possible
+	reaction is that a parked drive spins up its motor and is
+	then ready to take read or write commands.
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "CMD_STOP" "scsi.device/CMD_STOP"
+
+@{b}   NAME@{ub}
+       CMD_STOP -- stop a drive, if possible.
+
+@{b}   FUNCTION@{ub}
+	This command causes the drive to attempt spinning down the motor,
+	park the drive heads and enter an idle state.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_STOP
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	Drives may or may not react on this command. A possible
+	reaction is that the drive spins down its motor and parks
+	its drive head. A @{"CMD_START" Link "CMD_START"} is then required to return the
+	drive into an operational stage.
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "CMD_UPDATE" "scsi.device/CMD_UPDATE"
+
+@{b}   NAME@{ub}
+	CMD_UPDATE -- write out drive cache to the disk.
+
+@{b}   FUNCTION@{ub}
+	This command may instruct the connected drive to flush its internal
+	buffers to the disk, and hence complete a write operation. Whether
+	the drive actually has a drive cache, and performs any operation in
+	response of this command is implementation defined.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_UPDATE or ETD_UPDATE
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_WRITE64" Link "TD_WRITE64"}, @{"CMD_WRITE" Link "CMD_WRITE"}
+
+@EndNode
+
+@Node "CMD_WRITE" "scsi.device/CMD_WRITE"
+
+@{b}   NAME@{ub}
+	CMD_WRITE -- write sectors of data to a disk.
+
+@{b}   FUNCTION@{ub}
+	This command transfer data from a supplied buffer to a disk.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_WRITE
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to write, must be a multiple of
+			the disk block size.
+	io_Offset	byte offset from the start of the disk describing
+			where to write data to, must be a multiple of
+			the disk block size.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	This command can only reach data below the 4GB barrier. To write
+	data beyond the barrier, use @{"TD_WRITE64" Link "TD_WRITE64"} instead.
+
+@{b}   BUGS@{ub}
+	Some incarnations of the scsi.device, namely those that handle
+	actually IDE devices, were unable to write more than 255 blocks
+	in one go. This bug has been fixed in V47.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_WRITE64" Link "TD_WRITE64"}, @{"CMD_READ" Link "CMD_READ"}, @{"TD_FORMAT" Link "TD_FORMAT"}
+
+@EndNode
+
+@Node "HD_SCSICMD" "scsi.device/HD_SCSICMD"
+
+@{b}   NAME@{ub}
+       HD_SCSICMD -- issue a SCSI command to the drive
+
+@{b}   FUNCTION@{ub}
+	This command issues a SCSI command to the drive, bypassing the
+	translation from trackdisk to SCSI commands.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	HD_SCSICMD
+	io_Data		pointer to a struct @{"SCSICmd" Link "INCLUDE:devices/scsidisk.h/Main" 69}
+	io_Length	sizeof(struct SCSICmd)
+	io_Flags	0 or IOF_QUICK
+
+@{b}   SCSI COMMAND INPUT@{ub}
+	scsi_Data	word aligned buffer to be filled or
+			transmitted during the data phase of
+			the scsi command.
+	scsi_Length	number of bytes to be transfered during
+			the SCSI data phase
+	scsi_Actual	filled upon return with the actual number
+			of bytes transmitted
+	scsi_Command	pointer to a word aligned buffer containing
+			the bytes to be transmitted during the
+			SCSI command phase. That is, this buffer
+			contains the SCSI commands to be issued.
+	scsi_CmdLength	number of bytes to be transmitted during
+			the SCSI command phase, i.e. the byte size
+			of the command.
+	scsi_CmdActual	filled upon return with the actual number
+			of bytes transfered during the command
+			phase.
+	scsi_Flags	various flags, such as:
+			SCSIF_WRITE: transfer from RAM to disk
+			SCSIF_READ: transfer from disk to RAM
+			SCSIF_AUTOSENSE: automatically sense
+			error status upon failure
+	scsi_Status	returned status of the command, see
+			@{"<devices/scsidisk.h>" Link "INCLUDE:devices/scsidisk.h/Main" 0}
+	scsi_SenseData	pointer to a word aligned buffer that
+			is filled with sense data upon failure
+			if the SCSIF_AUTOSENSE flag is set.
+	scsi_SenseLength size of the autosense buffer
+	scsi_SenseActual actual number of sense bytes returned
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0} or @{"<devices/scsidisk.h>" Link "INCLUDE:devices/scsidisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	The scsi.device may actually not be connected to a SCSI
+	bus at all, but may emulate (some) SCSI commands through
+	appropriate IDE commands. If the connected device speaks
+	ATAPI, then the SCSI commands are directly dispatched
+	as ATAPI commands. Note that ATAPI uses the same command
+	set as SCSI.
+
+	However, for non-ATAPI devices, the following table lists
+	which SCSI commands are emulated through ATA commands:
+
+	READ(6)		(0x08)
+	READ(10)	(0x28)
+	WRITE(6)	(0x0a)
+	WRITE(10)	(0x2a)
+	REQUEST_SENSE	(0x03)
+	FORMAT_UNIT(6)	(0x04)
+	TEST_UNIT_READY	(0x00)
+	SEEK(6)		(0x0b)
+	SEEK(10)	(0x2b)
+	READ_CAPACITY	(0x25)
+	MODE_SENSE	(0x1a)
+	INQUIRY		(0x12)
+	REZERO_UNIT	(0x01)
+	VERIFY		(0x2f)
+	RESERVE		(0x16)
+	SEND_DIAGNOSTIC	(0x1d)
+
+	The following mode pages are emulated through MODE_SENSE:
+	    Page 3 (Format @{"Device" Link "INCLUDE:exec/devices.h/Main" 23} page)
+	    Page 4 (Rigid Disk page)
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "TD_ADDCHANGEINT" "scsi.device/TD_ADDCHANGEINT"
+
+@{b}   NAME@{ub}
+	TD_ADDCHANGEINT -- add a disk change software interrupt handler.
+
+@{b}   FUNCTION@{ub}
+	This command lets you add a software interrupt handler to the
+	scsi.device that gets invoked whenever a disk insertion or removal
+	occurs.
+
+	You must pass in a properly initialized Exec @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure
+	and be prepared to deal with disk insertions/removals
+	immediately. From within the interrupt handler, you may only call the
+	status commands that can use IOF_QUICK.
+
+	To set up the handler, an @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure must be initialized.
+	This structure is supplied as the io_Data to the TD_ADDCHANGEINT
+	command. The handler then gets linked into the handler chain and
+	gets invoked whenever a disk change happens. You must eventually
+	remove the handler before you exit.
+
+	This command only returns when the handler is removed. That is,
+	the device holds onto the IO request until the @{"TD_REMCHANGEINT" Link "TD_REMCHANGEINT"} command
+	is executed with that same IO request. Hence, you must use @{"SendIO()" Link "exec/SendIO()"}
+	with this command.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_ADDCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_REMCHANGEINT" Link "TD_REMCHANGEINT"}, @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}, @{"<exec/interrupts.h>" Link "INCLUDE:exec/interrupts.h/Main" 0},
+	@{"exec.library/Cause()" Link "exec/Cause()"}
+
+@EndNode
+
+@Node "TD_CHANGENUM" "scsi.device/TD_CHANGENUM"
+
+@{b}   NAME@{ub}
+	TD_CHANGENUM -- return the current value of the disk-change counter.
+
+@{b}   FUNCTION@{ub}
+	This command returns the current value of the disk-change counter (as
+	used by the enhanced commands). The disk change counter is incremented
+	each time a disk is inserted or removed from the device unit.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_CHANGENUM
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0, this contains the current value of the
+		    disk-change counter.
+
+@EndNode
+
+@Node "TD_CHANGESTATE" "scsi.device/TD_CHANGESTATE"
+
+@{b}   NAME@{ub}
+	TD_CHANGESTATE -- check if a disk is currently in a device unit.
+
+@{b}   FUNCTION@{ub}
+	This command checks to see if there is currently a disk in a unit.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_CHANGESTATE
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0, this tells you whether a disk is in
+		    the drive. 0 means there is a disk, while anything else
+		    indicates there is no disk.
+
+@EndNode
+
+@Node "TD_EJECT" "scsi.device/TD_EJECT"
+
+@{b}   NAME@{ub}
+       TD_EJECT -- eject (or load) the disk in the drive, if possible.
+
+@{b}   FUNCTION@{ub}
+	This command causes the drive to attempt to eject the disk in
+	it, if any.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_EJECT
+	io_Flags	0 or IOF_QUICK
+	io_Length	0 (load, if supported) or 1 (eject)
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "TD_FORMAT" "scsi.device/TD_FORMAT"
+
+@{b}   NAME@{ub}
+	TD_FORMAT -- write data to disk.
+
+@{b}   FUNCTION@{ub}
+	This command is traditionally used to write data to disk that
+	has not yet been formatted or has had a hard error on a standard write
+	command. However, as scsi and ide drives come pre-formatted, these
+	commands are identical to @{"CMD_READ" Link "CMD_READ"}.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_FORMAT
+	io_Flags	0 or IOF_QUICK
+	io_Data		points to a buffer containing the data to write to the
+			disk, must be at least as large as io_Length.
+	io_Length	number of bytes to format, must be a multiple of the
+			block size of the drive.
+	io_Offset	byte offset from the start of the disk for the block
+			to write to, must be a multiple of the drive block size.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	This command can only reach data below the 4GB barrier. To write
+	data beyond the barrier, use @{"TD_FORMAT64" Link "TD_FORMAT64"} instead.
+
+@{b}   BUGS@{ub}
+	Some incarnations of the scsi.device, namely those that handle
+	actually IDE devices, were unable to write more than 255 blocks
+	in one go. This bug has been fixed in V47.
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"}, @{"TD_FORMAT64" Link "TD_FORMAT64"}
+
+@EndNode
+
+@Node "TD_FORMAT64" "scsi.device/TD_FORMAT64"
+
+@{b}   NAME@{ub}
+	TD_FORMAT64 -- write data to disk, 64 bit extended
+
+@{b}   FUNCTION@{ub}
+	This command is traditionally used to write data to disk that
+	has not yet been formatted or has had a hard error on a standard write
+	command. However, as scsi and ide drives come pre-formatted, these
+	commands are identical to @{"TD_WRITE64" Link "TD_WRITE64"}.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_FORMAT64
+	io_Flags	0 or IOF_QUICK
+	io_Data		points to a buffer containing the data to write to the
+			disk, must be at least as large as io_Length.
+	io_Length	number of bytes to format, must be a multiple of the
+			block size of the drive.
+	io_Offset	low 32 bits of the byte offset from the start of the
+			disk to the block to write to.
+	io_Actual	high 32 bits of the byte offset.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+
+@{b}   BUGS@{ub}
+	Some incarnations of the scsi.device, namely those that handle
+	actually IDE devices, were unable to write more than 255 blocks
+	in one go. This bug has been fixed in V47.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_SEEK64" Link "TD_SEEK64"}
+
+@EndNode
+
+@Node "TD_GETGEOMETRY" "scsi.device/TD_GETGEOMETRY"
+
+@{b}   NAME@{ub}
+       TD_GETGEOMETRY -- return the geometry of the drive.
+
+@{b}   FUNCTION@{ub}
+	This command returns a full set of information about the
+	layout of the drive. The information is returned in the
+	@{"DriveGeometry" Link "INCLUDE:devices/trackdisk.h/Main" 133} structure pointed to by io_Data.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_GETGEOMETRY
+	io_Flags	0 or IOF_QUICK
+	io_Data		Pointer to a @{"DriveGeometry" Link "INCLUDE:devices/trackdisk.h/Main" 133} structure
+	io_Length	sizeof(struct DriveGeometry)
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTE@{ub}
+	This information may change when a disk in inserted when
+	certain hardware is present.
+
+	The information provided with this command may not actually
+	reflect the true device geometry as hard disk geometries are
+	more complex than what can be described by the @{"DriveGeometry" Link "INCLUDE:devices/trackdisk.h/Main" 133}
+	structure. However, the size of the medium described by this
+	structure is "approximately correct" in the sense that the
+	sector size is correct (or accepted by the drive), and the
+	number of blocks due to this structure is not larger than
+	the physical block count of the drive.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_GETDRIVETYPE" Link "trackdisk/TD_GETDRIVETYPE"}, @{"TD_GETNUMTRACKS" Link "trackdisk/TD_GETNUMTRACKS"}
+
+@EndNode
+
+@Node "TD_MOTOR" "scsi.device/TD_MOTOR"
+
+@{b}   NAME@{ub}
+	TD_MOTOR/ETD_MOTOR -- control the on/off state of a drive motor
+	or the drive LED.
+
+@{b}   FUNCTION@{ub}
+	This command gives control over the disk motor or the drive status
+	LED. The motor/motor light may be turned on or off.
+
+	Turning the drive on is not necessary, the device does this
+	automatically if it receives a request when the motor is off. Some
+	drives control the drive LED automatically ignoring the TD_MOTOR
+	command.
+
+	In addition, the standard instructions to the user are that it is safe
+	to remove a disk from a drive if and only if the motor is off (that is,
+	if the disk light is off).
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_MOTOR or ETD_MOTOR
+	io_Flags	0 or IOF_QUICK
+	io_Length	the requested state of the motor, 0 to turn the motor
+			off, and 1 to turn the motor on.
+	iotd_Count	(ETD_MOTOR only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0 this contains the previous state of the
+		    drive motor.
+
+@EndNode
+
+@Node "TD_PROTSTATUS" "scsi.device/TD_PROTSTATUS"
+
+@{b}   NAME@{ub}
+	TD_PROTSTATUS -- return whether the current disk is write-protected.
+
+@{b}   FUNCTION@{ub}
+	This command is used to determine whether the current disk is
+	write-protected.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_PROTSTATUS
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0, this tells you whether the disk in the
+		    drive is write-protected. 0 means the disk is NOT write-
+		    protected, while any other value indicates it is.
+
+@EndNode
+
+@Node "TD_READ64" "scsi.device/TD_READ64"
+
+@{b}   NAME@{ub}
+	TD_READ64 -- read sectors of data from a disk.
+
+@{b}   FUNCTION@{ub}
+	This command reads data from the drive to a supplied buffer.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	@{"CMD_READ" Link "CMD_READ"}
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to read, must be a multiple of
+			the drive block size.
+	io_Offset	low 32 bit of the byte offset from the start of the
+			disk describing where to read data from, must be a
+			multiple of the drive block size.
+	io_Actual	high 32 bit of the byte offset where to read data
+			from.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+@{b}   NOTES@{ub}
+
+@{b}   BUGS@{ub}
+	Some incarnations of the scsi.device, namely those that handle
+	actually IDE devices, were unable to read more than 255 blocks
+	in one go. This bug has been fixed in V47.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_WRITE64" Link "TD_WRITE64"}, @{"TD_WRITE64" Link "TD_WRITE64"}
+
+@EndNode
+
+@Node "TD_REMCHANGEINT" "scsi.device/TD_REMCHANGEINT"
+
+@{b}   NAME@{ub}
+	TD_REMCHANGEINT -- remove a disk change software interrupt handler.
+
+@{b}   FUNCTION@{ub}
+	This command removes a disk change software interrupt added
+	by a previous use of @{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}.
+
+@{b}   IO REQUEST INPUT@{ub}
+	The same IO request used for @{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}.
+
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_REMCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   BUGS@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}, @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@EndNode
+
+@Node "TD_SEEK" "scsi.device/TD_SEEK"
+
+@{b}   NAME@{ub}
+	TD_SEEK -- control positioning of the drive heads with 64 bit offset
+
+@{b}   FUNCTION@{ub}
+	This command is currently provided for internal diagnostics, disk
+	repair, and head cleaning only. Drives may or may not implement
+	them.
+
+	TD_SEEK move the drive heads to the track specified. The io_Offset
+	field should be set to the (byte) offset to which the seek is
+	to occur. TD_SEEK may not verify their position until the next
+	read. That is, they may only move the heads; they do not actually read
+	any data. Actually, some drives may do nothing.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_SEEK
+	io_Flags	0 or IOF_QUICK
+	io_Offset	byte offset from the start of the disk describing
+			where to move the head to. This shall be a multiple
+			of the drive block size.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@EndNode
+
+@Node "TD_SEEK64" "scsi.device/TD_SEEK64"
+
+@{b}   NAME@{ub}
+	TD_SEEK64 -- control positioning of the drive heads.
+
+@{b}   FUNCTION@{ub}
+	These commands are currently provided for internal diagnostics,
+	disk repair, and head cleaning only. Drives may or may not implement
+	them.
+
+	TD_SEEK64 move the drive heads to the track specified. The io_Offset
+	field should be set to the (byte) offset to which the seek is
+	to occur. TD_SEEK64 may not verify their position until the next
+	read. That is, they may only move the heads; they do not actually read
+	any data. Actually, some drives may do nothing.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	@{"TD_SEEK" Link "TD_SEEK"}
+	io_Flags	0 or IOF_QUICK
+	io_Offset	low 32 bits of the byte offset from the start
+			of the disk describing where to move the head to.
+			This shall be a multiple of the drive block size.
+	io_Actual	high 32 bits of the byte offset to seek to.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@EndNode
+
+@Node "TD_WRITE64" "scsi.device/TD_WRITE64"
+
+@{b}   NAME@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"} -- write sectors of data to a disk, with 64 bit offset
+
+@{b}   FUNCTION@{ub}
+	This command transfer data from a supplied buffer to a disk.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_WRITE64
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to write, must be a multiple of
+			the disk block size.
+	io_Offset	low 32 bits of the byte offset from the start of
+			the disk describing where to write data to, must be
+			the disk block size.
+	io_Actual	high 32 bits of the byte offset.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+
+@{b}   BUGS@{ub}
+	Some incarnations of the scsi.device, namely those that handle
+	actually IDE devices, were unable to write more than 255 blocks
+	in one go. This bug has been fixed in V47.
+
+@{b}   SEE ALSO@{ub}
+	TD_WRITE64, @{"TD_READ64" Link "TD_READ64"}, @{"TD_FORMAT64" Link "TD_FORMAT64"}
+
+@EndNode
+

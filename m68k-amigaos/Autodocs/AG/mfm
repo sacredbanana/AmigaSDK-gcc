@@ -1,0 +1,684 @@
+@database "mfm"
+@master "AMIDEV:NDK/Autodocs/mfm.doc"
+
+@Node Main "mfm.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" CMD_CLEAR " Link "CMD_CLEAR"}
+    @{" CMD_READ " Link "CMD_READ"}
+    @{" CMD_UPDATE " Link "CMD_UPDATE"}
+    @{" CMD_WRITE " Link "CMD_WRITE"}
+    @{" MD_SETPARMS " Link "MD_SETPARMS"}
+    @{" TD_ADDCHANGEINT " Link "TD_ADDCHANGEINT"}
+    @{" TD_CHANGENUM " Link "TD_CHANGENUM"}
+    @{" TD_CHANGESTATE " Link "TD_CHANGESTATE"}
+    @{" TD_EJECT " Link "TD_EJECT"}
+    @{" TD_FORMAT " Link "TD_FORMAT"}
+    @{" TD_GETDRIVETYPE " Link "TD_GETDRIVETYPE"}
+    @{" TD_GETGEOMETRY " Link "TD_GETGEOMETRY"}
+    @{" TD_GETNUMTRACKS " Link "TD_GETNUMTRACKS"}
+    @{" TD_MOTOR " Link "TD_MOTOR"}
+    @{" TD_PROTSTATUS " Link "TD_PROTSTATUS"}
+    @{" TD_RAWREAD " Link "TD_RAWREAD"}
+    @{" TD_RAWWRITE " Link "TD_RAWWRITE"}
+    @{" TD_REMCHANGEINT " Link "TD_REMCHANGEINT"}
+    @{" TD_SEEK " Link "TD_SEEK"}
+@EndNode
+
+@Node "CMD_CLEAR" "mfm.device/CMD_CLEAR"
+
+@{b}   NAME@{ub}
+	CMD_CLEAR/ETD_CLEAR -- mark the track buffer as containing invalid
+			       data.
+
+@{b}   FUNCTION@{ub}
+	These commands mark the track buffer as invalid, forcing a
+	reread of the disk on the next operation. ETD_UPDATE or @{"CMD_UPDATE" Link "CMD_UPDATE"}
+	would be used to force data out to the disk before turning the motor
+	off. ETD_CLEAR or CMD_CLEAR are usually used after having locked out
+	the mfm.device via the use of the disk resource, when you
+	wish to prevent the track from being updated, or when you wish to
+	force the track to be re-read. ETD_CLEAR or CMD_CLEAR will not do an
+	update, nor will an update command do a clear.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_CLEAR or ETD_CLEAR
+	io_Flags	0 or IOF_QUICK
+	iotd_Count	(ETD_CLEAR only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"}, @{"CMD_UPDATE" Link "CMD_UPDATE"}
+
+@EndNode
+
+@Node "CMD_READ" "mfm.device/CMD_READ"
+
+@{b}   NAME@{ub}
+	CMD_READ/ETD_READ -- read sectors of data from a disk.
+
+@{b}   FUNCTION@{ub}
+	These commands transfer data from the track buffer to a supplied
+	buffer. If the desired sector is already in the track buffer, no disk
+	activity is initiated. If the desired sector is not in the buffer, the
+	track containing that sector is automatically read in. If the data in
+	the current track buffer has been modified, it is written out to the
+	disk before a new track is read. The mfm.device never reads sector
+	label information.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_READ or ETD_READ
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to read, must be a multiple of
+			the pyhsical sector size of the disk.
+	io_Offset	byte offset from the start of the disk describing
+			where to read data from, must be a multiple of
+			the physical sector size of the disk.
+	iotd_Count	(ETD_READ only) maximum allowable change counter
+			value.
+	iotd_SecLabel	ignored.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+@{b}   NOTES@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"}
+
+@EndNode
+
+@Node "CMD_UPDATE" "mfm.device/CMD_UPDATE"
+
+@{b}   NAME@{ub}
+	CMD_UPDATE/ETD_UPDATE -- write out the track buffer if it is dirty.
+
+@{b}   FUNCTION@{ub}
+	The mfm.device does not write data sectors unless it is
+	necessary (you request that a different track be used) or until the
+	user requests that an update be performed. This improves system speed
+	by caching disk operations. These commands ensure that any
+	buffered data is flushed out to the disk. If the track buffer has not
+	been changed since the track was read in, these commands do nothing.
+	ETD_UPDATE command checks for diskchange.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_UPDATE or ETD_UPDATE
+	io_Flags	0 or IOF_QUICK
+	iotd_Count	(ETD_UPDATE only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"}
+
+@EndNode
+
+@Node "CMD_WRITE" "mfm.device/CMD_WRITE"
+
+@{b}   NAME@{ub}
+	CMD_WRITE/ETD_WRITE -- write sectors of data to a disk.
+
+@{b}   FUNCTION@{ub}
+	These commands transfer data from a supplied buffer to the track
+	buffer. If the track that contains this sector is already in the track
+	buffer, no disk activity is initiated. If the desired sector is not in
+	the buffer, the track containing that sector is automatically read in.
+	If the data in the current track buffer has been modified, it is
+	written out to the disk before the new track is read in for
+	modification. ETD_WRITE does not write sector label information.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	CMD_WRITE or ETD_WRITE
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to write, must be a multiple of
+			the physical sector size of the disk.
+	io_Offset	byte offset from the start of the disk describing
+			where to write data to, must be a multiple of
+			the physical sector size of the disk.
+	iotd_Count	(ETD_WRITE only) maximum allowable change counter
+			value.
+	iotd_SecLabel	ignored
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_READ" Link "CMD_READ"}, @{"TD_FORMAT" Link "TD_FORMAT"}
+
+@EndNode
+
+@Node "MD_SETPARMS" "mfm.device/MD_SETPARMS"
+
+@{b}   NAME@{ub}
+	MD_SETPARMS -- set track and sector layout.
+
+@{b}   FUNCTION@{ub}
+	This defines the track and sector layout the mfm.device shall use
+	for reading and writing to disk. Typically, applications will
+	retrieve this layout from the MS-DOS bootblock of the disk.
+
+	The disk geometry is taken from a struct @{"DosEnvec" Link "INCLUDE:dos/filehandler.h/Main" 25} that is typically
+	used to mount devices. The following entries are recognized:
+
+	de_HighCyl:	defines the number of tracks on the disk - 1
+	de_DosType:	if set to MDD\0, the drive is double-stepped, i.e.
+			each track step command steps over two tracks.
+			The number of tracks is then computed as
+			(de_HighCyl+1)/2.
+	de_SizeBlock:	Number of longs per sector, i.e. 128 longs =
+			512 bytes per sector.
+	de_SecOrg:	Sector index of the first sector in the track.
+			Normally 0.
+	de_Surfaces:	Defines whether the disk is single or double
+			sided. Must be 1 or 2.
+	de_BlocksPerTrack: Number of sectors(!) per track.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	MD_SETPARMS
+	io_Flags	0
+	io_Length	ignored
+	io_Data		pointer to a struct @{"DosEnvec" Link "INCLUDE:dos/filehandler.h/Main" 25},
+			see @{"<dos/filehandler.h>" Link "INCLUDE:dos/filehandler.h/Main" 0}
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   BUGS@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}, @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}, @{"<dos/filehandler.h>" Link "INCLUDE:dos/filehandler.h/Main" 0}
+
+@EndNode
+
+@Node "TD_ADDCHANGEINT" "mfm.device/TD_ADDCHANGEINT"
+
+@{b}   NAME@{ub}
+	TD_ADDCHANGEINT -- add a disk change software interrupt handler.
+
+@{b}   FUNCTION@{ub}
+	This command lets you add a software interrupt handler to the
+	disk device that gets invoked whenever a disk insertion or removal
+	occurs.
+
+	You must pass in a properly initialized Exec @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure
+	and be prepared to deal with disk insertions/removals
+	immediately. From within the interrupt handler, you may only call the
+	status commands that can use IOF_QUICK.
+
+	To set up the handler, an @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure must be initialized.
+	This structure is supplied as the io_Data to the TD_ADDCHANGEINT
+	command. The handler then gets linked into the handler chain and
+	gets invoked whenever a disk change happens. You must eventually
+	remove the handler before you exit.
+
+	This command only returns when the handler is removed. That is,
+	the device holds onto the IO request until the @{"TD_REMCHANGEINT" Link "TD_REMCHANGEINT"} command
+	is executed with that same IO request. Hence, you must use @{"SendIO()" Link "exec/SendIO()"}
+	with this command.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_ADDCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_REMCHANGEINT" Link "TD_REMCHANGEINT"}, @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}, @{"<exec/interrupts.h>" Link "INCLUDE:exec/interrupts.h/Main" 0},
+	@{"exec.library/Cause()" Link "exec/Cause()"}
+
+@EndNode
+
+@Node "TD_CHANGENUM" "mfm.device/TD_CHANGENUM"
+
+@{b}   NAME@{ub}
+	TD_CHANGENUM -- return the current value of the disk-change counter.
+
+@{b}   FUNCTION@{ub}
+	This command returns the current value of the disk-change counter (as
+	used by the enhanced commands). The disk change counter is incremented
+	each time a disk is inserted or removed from the trackdisk unit.
+
+	This command is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_CHANGENUM
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0, this contains the current value of the
+		    disk-change counter.
+
+@EndNode
+
+@Node "TD_CHANGESTATE" "mfm.device/TD_CHANGESTATE"
+
+@{b}   NAME@{ub}
+	TD_CHANGESTATE -- check if a disk is currently in a drive.
+
+@{b}   FUNCTION@{ub}
+	This command checks to see if there is currently a disk in a drive.
+
+	This request is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_CHANGESTATE
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0, this tells you whether a disk is in
+		    the drive. 0 means there is a disk, while anything else
+		    indicates there is no disk.
+
+@EndNode
+
+@Node "TD_EJECT" "mfm.device/TD_EJECT"
+
+@{b}   NAME@{ub}
+       TD_EJECT -- eject (or load) the disk in the drive, if possible.
+
+@{b}   FUNCTION@{ub}
+	This command causes the drive to attempt to eject the disk in
+	it, if any.  Note that the current mfm.device does not
+	implement this command, but it might in the future, and other
+	trackdisk-compatible drivers may implement this command.  Some
+	devices may be able to load disks on command also.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_EJECT
+	io_Flags	0 or IOF_QUICK
+	io_Length	0 (load, if supported) or 1 (eject)
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   BUGS@{ub}
+
+@EndNode
+
+@Node "TD_FORMAT" "mfm.device/TD_FORMAT"
+
+@{b}   NAME@{ub}
+	TD_FORMAT/ETD_FORMAT -- format a track on a disk.
+
+@{b}   FUNCTION@{ub}
+	These commands are used to write data to a track that either
+	has not yet been formatted or has had a hard error on a standard write
+	command. TD_FORMAT completely ignores all data currently on a track and
+	does not check for disk change before performing the command. The
+	io_Data field must point to at least one track worth of data. The
+	io_Offset field must be track aligned, and the io_Length field must be
+	in units of track length (that is, NUMSEC*TD_SECTOR).
+
+	The device will format the requested tracks, filling each sector with
+	the contents of the buffer pointed to by io_Data. You
+	should do a read pass to verify the data.
+
+	If you have a hard write error during a normal write, you may find it
+	possible to use the TD_FORMAT command to reformat the track as part of
+	your error recovery process. Note that the mfm.device does not write
+	sector label information.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_FORMAT or ETD_FORMAT
+	io_Flags	0 or IOF_QUICK
+	io_Data		points to a buffer containing the data to write to the
+			track, must be at least as large as io_Length.
+	io_Length	number of bytes to format, must be a multiple of
+			(TD_SECTORS * NUMSEC).
+	io_Offset	byte offset from the start of the disk for the track to
+			format, must be a multiple of (TD_SECTORS * NUMSEC).
+	iotd_Count	(ETD_FORMAT only) maximum allowable change counter
+			value.
+	iotd_SecLabel	ignored
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	Under versions of Kickstart earlier than V36, the io_Data had to
+	point to a buffer in chip memory. This restriction is no longer
+	present as of Kickstart V36 and beyond.
+
+@{b}   SEE ALSO@{ub}
+	@{"CMD_WRITE" Link "CMD_WRITE"}, @{"TD_RAWWRITE" Link "TD_RAWWRITE"}
+
+@EndNode
+
+@Node "TD_GETDRIVETYPE" "mfm.device/TD_GETDRIVETYPE"
+
+@{b}   NAME@{ub}
+	TD_GETDRIVETYPE -- return the type of disk drive for the unit that was
+			   opened.
+
+@{b}   FUNCTION@{ub}
+	This command returns the type of the disk drive to the user.
+	This number will be a small integer and will come from the set of
+	DRIVEXXX constants defined in @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}.
+
+	This command is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_GETDRIVETYPE
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0 this contains the drive type connected to
+		    this unit.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_GETNUMTRACKS" Link "TD_GETNUMTRACKS"}, @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@EndNode
+
+@Node "TD_GETGEOMETRY" "mfm.device/TD_GETGEOMETRY"
+
+@{b}   NAME@{ub}
+       TD_GETGEOMETRY -- return the geometry of the drive.
+
+@{b}   FUNCTION@{ub}
+	This command returns a full set of information about the
+	layout of the drive. The information is returned in the
+	@{"DriveGeometry" Link "INCLUDE:devices/trackdisk.h/Main" 133} structure pointed to by io_Data.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_GETGEOMETRY
+	io_Flags	0 or IOF_QUICK
+	io_Data		Pointer to a @{"DriveGeometry" Link "INCLUDE:devices/trackdisk.h/Main" 133} structure
+	io_Length	sizeof(struct DriveGeometry)
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTE@{ub}
+	This information may change when a disk in inserted when
+	certain hardware is present.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_GETDRIVETYPE" Link "TD_GETDRIVETYPE"}, @{"TD_GETNUMTRACKS" Link "TD_GETNUMTRACKS"}
+
+@EndNode
+
+@Node "TD_GETNUMTRACKS" "mfm.device/TD_GETNUMTRACKS"
+
+@{b}   NAME@{ub}
+	TD_GETNUMTRACKS -- return the number of tracks for the type of disk
+			   drive for the unit that was opened.
+
+@{b}   FUNCTION@{ub}
+	This command returns the number of tracks that are available
+	on the disk unit.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_GETNUMTRACKS
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0 this contains the drive type connected to
+		    this unit.
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_GETDRIVETYPE" Link "TD_GETDRIVETYPE"}
+
+@EndNode
+
+@Node "TD_MOTOR" "mfm.device/TD_MOTOR"
+
+@{b}   NAME@{ub}
+	TD_MOTOR/ETD_MOTOR -- control the on/off state of a drive motor.
+
+@{b}   FUNCTION@{ub}
+	This command gives control over the disk motor. The motor may be
+	turned on or off. When it is on, the drive light automatically turns
+	on as well.
+
+	This command is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_MOTOR or ETD_MOTOR
+	io_Flags	0 or IOF_QUICK
+	io_Length	the requested state of the motor, 0 to turn the motor
+			off, and 1 to turn the motor on.
+	iotd_Count	(ETD_MOTOR only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0 this contains the previous state of the
+		    drive motor.
+
+@EndNode
+
+@Node "TD_PROTSTATUS" "mfm.device/TD_PROTSTATUS"
+
+@{b}   NAME@{ub}
+	TD_PROTSTATUS -- return whether the current disk is write-protected.
+
+@{b}   FUNCTION@{ub}
+	This command is used to determine whether the current disk is
+	write-protected.
+
+	This request is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_PROTSTATUS
+	io_Flags	0 or IOF_QUICK
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+	io_Actual - if io_Error is 0, this tells you whether the disk in the
+		    drive is write-protected. 0 means the disk is NOT write-
+		    protected, while any other value indicates it is.
+
+@EndNode
+
+@Node "TD_RAWREAD" "mfm.device/TD_RAWREAD"
+
+@{b}   NAME@{ub}
+	TD_RAWREAD/ETD_RAWREAD -- read raw data from the disk.
+
+@{b}   FUNCTION@{ub}
+	These commands read a track of raw data from disk and deposits it in
+	the provided buffer. The data is taken straight from the disk with
+	no processing done on it. It will appear exactly as the bits come out
+	off the disk, hopefully in some legal MFM format.
+
+	This command is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command      TD_RAWREAD or ETD_RAWREAD.
+	io_Flags	if the IOTDB_INDEXSYNC bit is set then the driver
+			will make a best effort attempt to start reading
+			from the index mark.  Note that there will be at
+			least some delay, and perhaps a great deal of delay
+			(for example if interrupts have been disabled).
+	io_Length	Length of buffer in bytes, with a maximum of 32768
+			bytes.
+	io_Data		Pointer to CHIP memory buffer where raw track data is
+			to be deposited.
+	io_Offset	The number of the track to read in.
+	iotd_Count	(ETD_RAWREAD only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	The track buffer provided MUST be in CHIP memory
+
+@{b}   BUGS@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_RAWWRITE" Link "TD_RAWWRITE"}, trackdisk autodocs
+
+@EndNode
+
+@Node "TD_RAWWRITE" "mfm.device/TD_RAWWRITE"
+
+@{b}   NAME@{ub}
+	TD_RAWWRITE/ETD_RAWWRITE -- write raw data to the disk.
+
+@{b}   FUNCTION@{ub}
+	This command writes a track of raw data from the provided buffer to
+	the specified track on disk. The data is copied straight to the disk
+	with no processing done on it. It will appear exactly on the disk as
+	it is in the memory buffer, hopefully in a legal MFM format.
+
+	This command is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command      TD_RAWWRITE or ETD_RAWWRITE.
+	io_Flags	if the IOTDB_INDEXSYNC bit is set then the driver
+			will make a best effort attempt to start writing
+			from the index mark.  Note that there will be at
+			least some delay, and perhaps a great deal of delay
+			(for example if interrupts have been disabled).
+	io_Length	Length of buffer in bytes, with a maximum of 32768
+			bytes.
+	io_Data		Pointer to CHIP memory buffer where raw track data is
+			to be taken.
+	io_Offset	The number of the track to write to.
+	iotd_Count	(ETD_RAWWRITE only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   NOTES@{ub}
+	The track buffer provided MUST be in CHIP memory
+
+@{b}   BUGS@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_RAWREAD" Link "TD_RAWREAD"}, the trackdisk autodocs
+
+@EndNode
+
+@Node "TD_REMCHANGEINT" "mfm.device/TD_REMCHANGEINT"
+
+@{b}   NAME@{ub}
+	TD_REMCHANGEINT -- remove a disk change software interrupt handler.
+
+@{b}   FUNCTION@{ub}
+	This command removes a disk change software interrupt added
+	by a previous use of @{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}.
+
+	This command is directly forwarded to the trackdisk.device.
+
+@{b}   IO REQUEST INPUT@{ub}
+	The same IO request used for @{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}.
+
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_REMCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to @{"Interrupt" Link "INCLUDE:exec/interrupts.h/Main" 20} structure
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@{b}   BUGS@{ub}
+
+@{b}   SEE ALSO@{ub}
+	@{"TD_ADDCHANGEINT" Link "TD_ADDCHANGEINT"}, @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@EndNode
+
+@Node "TD_SEEK" "mfm.device/TD_SEEK"
+
+@{b}   NAME@{ub}
+	TD_SEEK/ETD_SEEK -- control positioning of the drive heads.
+
+@{b}   FUNCTION@{ub}
+	These commands are currently provided for internal diagnostics,
+	disk repair, and head cleaning only.
+
+	TD_SEEK and ETD_SEEK move the drive heads to the track specified. The
+	io_Offset field should be set to the (byte) offset to which the seek is
+	to occur. TD_SEEK and ETD_SEEK do not verify their position until the
+	next read. That is, they only move the heads; they do not actually read
+	any data.
+
+@{b}   IO REQUEST INPUT@{ub}
+	io_Device	preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Unit		preset by the call to @{"OpenDevice()" Link "trackdisk/OpenDevice()"}
+	io_Command	TD_SEEK or ETD_SEEK
+	io_Flags	0 or IOF_QUICK
+	io_Offset	byte offset from the start of the disk describing
+			where to move the head to.
+	iotd_Count	(ETD_SEEK only) maximum allowable change counter
+			value.
+
+@{b}   IO REQUEST RESULT@{ub}
+	io_Error - 0 for success, or an error code as defined in
+	           @{"<devices/trackdisk.h>" Link "INCLUDE:devices/trackdisk.h/Main" 0}
+
+@EndNode
+

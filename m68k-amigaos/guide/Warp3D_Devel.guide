@@ -1,0 +1,1986 @@
+@database Warp3D_Devel
+
+@Master Warp3D_Devel.texi
+
+@Width 72
+
+
+This is the AmigaGuide®  file Warp3D_Devel, produced by Makeinfo-1.68 from 
+the input file Warp3D_Devel.texi.
+
+  Warp3D is a programming environment for accessing 3D hardware in such
+a fashion that it is independent from the hardware used as well as the
+emulation software installed. This file is a programming guide for
+Warp3D, intended to explain the steps needed to write programs that
+benefit from the 3D hardware installed on the target system.
+
+@node Main "Warp3D_Devel"
+@next "Introduction"
+
+
+
+  This is the Programmer's Manual for @{i}Warp3D@{ui}. It should serve as an
+introduction to @{i}Warp3D@{ui} programming, and not as a reference for the
+functions (those are explained in the AutoDocs).
+
+
+ @{" Introduction       " link "Introduction"}  Introduction to Warp3D.
+ @{" Getting Started    " link "Getting Started"}  How to get Warp3D going
+ @{" Textures           " link "Textures"}  Textures and their management
+ @{" Context States     " link "Context States"}  States
+ @{" Drawing            " link "Drawing"}  Drawing something to the Screen
+ @{" Hinting            " link "Hinting"}  Controlling output quality
+ @{" Indirect Rendering " link "Indirect Rendering"}  Background rendering
+
+ @{" Indices            " link "Indices"}  The Index
+
+
+@endnode
+
+@node "Introduction" "Warp3D_Devel/Introduction"
+@next "Getting Started"
+@prev "Main"
+@toc "Main"
+
+Introduction
+************
+
+Overview
+========
+
+@{i}  Warp3D@{ui} is a library for direct access  to  3D  Hardware  in such  a
+way that it is independent of both the graphics system as well as the
+hardware installed (if any). Some of the concepts  are similar to those
+found in @{i}OpenGL@{ui}, however, @{i}Warp3D@{ui} is much more  low-level,  since  it
+does  not  for  example  provide functions  for  3D  rotation  or
+projection  (1).  Rather, @{i}Warp3D@{ui} requires that coordinates are
+specified in a coordinate  system  that  is  often   called   @{i}Camera-@{ui}
+or @{i}Eye-@{ui} Coordinate System: The X- and Y-Coordinates are screen
+coordinates, and the Z-Coordinate specifies  the  "depth"  of  a
+vertex.  There  are  special  constraints about coordinates, which will
+be explained later.
+
+@{i}  Warp3D@{ui} is a low-level API, meaning that it should serve  as a direct
+interface between an application and the 3D hardware. Other then
+OpenGL, it has no 3D functionality, but rather is a rasterizer.  A
+rasterizer takes descriptions of primitives and renders those to a
+drawing canvas, in the case of @{i}Warp3D@{ui} this means a BitMap.
+
+How to use this manual
+======================
+
+  Examples in this  manual  will  be  given  in  the  C  programming
+language.  This is done for clarity, and since C is my programming
+language of choice (actually it's C++, but ...). Most examples will be
+more or less complete with error checking, but it might be left out in
+some places for brevity. In the real world, however, you should always
+check the return values, and act accordingly.
+
+  Function descriptions may appear a bit short in some places. In
+general, you should always refer to the AutoDocs for more in-depth
+discussion of peculiarities. In any case, references to function
+parameters will be named exactly as in the AutoDoc description for this
+function, and will be written in @{b}this style@{ub}. For example, the third
+parameter of the @{b}W3D_UpdateTexImage@{ub} is called @{b}teximage@{ub}.
+
+  To understand @{i}Warp3D@{ui} programming, you should read this manual and
+cross-check with the AutoDocs as much as possible when @{i}Warp3D@{ui} functions
+are described.  The AutoDocs will @{b}always@{ub} have the latest, up-to-date
+information, and if an AutoDoc entry contradicts this guide, the
+AutoDocs take precedence. This is because the AutoDocs are usually
+updated more frequently than this guide, although we are trying hard to
+keep it up-to-date.
+
+Commonly used terms
+===================
+
+  When we say @{i}Warp3D@{ui}, usually this means the @{b}Warp3D.library@{ub} or Warp3D
+as an entity.
+
+  The term 'the driver' usually refers to the active driver library,
+for example, on a system with a @{b}CyberVision64/3D@{ub} card, this means the
+@{b}W3D_Virge.library@{ub}. This information is not usually necessary to
+understand, but in some cases it might be important to make this
+distinction, since even if @{i}Warp3D@{ui} supports a certain feature, 'the
+driver' might not.
+
+  ---------- Footnotes ----------
+
+  (1) This might change when hardware  with  geometry  engines  become
+available
+
+
+@endnode
+
+@node "Getting Started" "Warp3D_Devel/Getting Started"
+@next "Textures"
+@prev "Introduction"
+@toc "Main"
+
+Getting Started
+***************
+
+
+ @{" Opening the library        " link "Opening the library"}  How the Warp3D library is opened
+ @{" Querying Capabilities      " link "Querying Capabilities"}  How to find out more about the
+                                Environment you are running in and
+                                how you can influence driver selection.
+ @{" Opening the display        " link "Opening the display"}  How you to provide drawing space
+ @{" Creating a Context         " link "Creating a Context"}  Defining the basic drawing area
+ @{" Context Queries            " link "Context Queries"}  Finding out what the chip can do on
+                                this display
+
+
+@endnode
+
+@node "Opening the library" "Warp3D_Devel/Opening the library"
+@next "Querying Capabilities"
+@toc "Getting Started"
+
+Opening the library
+===================
+
+  The first step will almost always be to open the required libraries.
+Besides the normal system libraries you need, you must open the @{i}Warp3D@{ui}
+library. The following code fragment shows how this is done
+
+         struct Library *Warp3DBase;
+         // ...
+     
+         Warp3DBase = OpenLibrary(``Warp3D.library'', 0L);
+         if (!Warp3DBase) {
+             fprintf(stderr, ``Error: Could not open Warp3D.library\n'');
+             exit(0L);
+         }
+
+@{i}  Note for PPC/StormC:@{ui} You must link with @{b}w3d.lib@{ub} for PPC code.
+
+  Make sure to always check the returned base. If everything goes OK,
+then @{i}Warp3D@{ui} is ready for use.  There are numerous reasons beside memory
+shortage why the open could go wrong, for example, Warp3D might be
+unable to initialize an appropriate driver, or there might be an
+unsupported graphics system installed (1) and so on.
+
+  After opening the library, you might want to check what kind of
+driver you got. The parameterless function @{b}W3D_CheckDriver@{ub} will
+determine this, as is illustrated in this example code:
+
+         ULONG flags = W3D_CheckDriver();
+         if (flags & W3D_DRIVER_3DHW) printf("Hardware driver available\n");
+         if (flags & W3D_DRIVER_CPU)  printf("Software driver available\n");
+         if (flags == 0) {
+             printf("PANIC: no driver available!!!\n");
+             doPanic();
+             exit(0);
+         }
+
+  ---------- Footnotes ----------
+
+  (1) In which case you might want to write your own driver for it. If
+you want to, please contact us so we can provide you with the details.
+
+
+@endnode
+
+@node "Querying Capabilities" "Warp3D_Devel/Querying Capabilities"
+@next "Opening the display"
+@prev "Opening the library"
+@toc "Getting Started"
+
+Querying Capabilities
+=====================
+
+  It is possible that a system has more than one 3D graphics card
+installed, and it might be useful to find out which of those matches
+your requirements. Furthermore, there might be a couple of different
+CPU drivers that also have different capabilities, or support different
+destination formats.
+
+  For this purpose, Warp3D provides a library call, @{b}W3D_GetDrivers@{ub}.
+This call returns an array of pointers to @{b}W3D_Driver@{ub} structures. You
+may examine these read-only stuctures to find out the destination
+formats supported by this driver, and if the driver is a hardware- or
+CPU-Driver. Furthermore, you can obtain the name of the driver, in case
+there are alternatives that you want to present to the user.
+
+  If you need more information about a specific driver, there is a
+function @{b}W3D_QueryDriver@{ub} that works exactly like the @{b}W3D_Query@{ub}
+function, only that in stead of a context, it accepts a @{b}W3D_Driver@{ub}
+structure. Otherwise, the functions work identical.
+
+  For further details about W3D_Query, see the chapter about
+@{"Context Queries" link "Context Queries"}.
+
+
+@endnode
+
+@node "Opening the display" "Warp3D_Devel/Opening the display"
+@next "Creating a Context"
+@prev "Querying Capabilities"
+@toc "Getting Started"
+
+Opening the display
+===================
+
+  The next step is to open the display. This might depend on the
+graphics system software you are using. Using the Intuition standard
+functions @{b}OpenScreen@{ub} and @{b}OpenWindow@{ub} should work on all systems, but
+might not support special features of your software.
+
+  First, you need to find out what modes are supported. The function
+@{b}W3D_GetDestFmt@{ub} can be used to query this:
+
+         ULONG format;
+     
+         format = W3D_GetDestFmt();
+         if (format & W3D_FMT_CLUT)      printf("Driver supports 8 bit chunky modes\n");
+         if (format & W3D_FMT_R5G5B5)    printf("Driver supports 15 bit RGB modes\n");
+
+  Note that this function doesn't take parameters and can be used
+directly after you are sure you have a driver.
+
+  The following code will try to open a screen suitable for a @{i}Warp3D@{ui}
+display, but does use CyberGraphX for obtaining a ModeID:
+
+         ModeID = BestCModeIDTags(
+             CYBRBIDTG_Depth,            15L,
+             CYBRBIDTG_NominalWidth,     640,
+             CYBRBIDTG_NominalHeight,    480,
+         TAG_DONE);
+     
+         if (ModeID == INVALID_ID) {
+             printf("Error: No ModeID found\n");
+             goto panic;
+         }
+     
+         // Open Screen
+         screen = OpenScreenTags(NULL,
+             SA_Height,    960,
+             SA_DisplayID, ModeID,
+             SA_ErrorCode, &OpenErr,
+             SA_ShowTitle, FALSE,
+             SA_Draggable, FALSE,
+         TAG_DONE);
+     
+         if (!screen) {
+             printf("Unable to open screen. Reason: Error code %d\n", OpenErr);
+             goto panic;
+         }
+     
+         // Open window
+         // While this is not strictly necessary, we use it because
+         // we want to get IDCMP messages. You can also use the screen's
+         // bitmap to render
+         window = OpenWindowTags(NULL,
+             WA_CustomScreen,    screen,
+             WA_Width,           screen->Width,
+             WA_Height,          screen->Height,
+             WA_Left,            0,
+             WA_Top,             0,
+             WA_Title,           NULL,
+             WA_CloseGadget,     FALSE,
+             WA_Backdrop,        TRUE,
+             WA_Borderless,      TRUE,
+             WA_IDCMP,           IDCMP_CLOSEWINDOW|IDCMP_VANILLAKEY|IDCMP_RAWKEY|IDCMP_MOUSEBUTTONS|IDCMP_MOUSEMOVE|IDCMP_DELTAMOVE,
+             WA_Flags,           WFLG_REPORTMOUSE|WFLG_RMBTRAP,
+         TAG_DONE);
+     
+         if (!window) {
+             printf("Unable to open window.\n");
+             goto panic;
+         }
+
+  Note that creating a suitable display might also be in the form of an
+AllocBitMap call, but you'll have to make sure that this bitmap is
+allocated in card memory. If you use an off-screen bitmap, or one that
+is attached to a window, you might use @{i}Warp3D@{ui} in window mode, for
+example by blit-copying the drawing bitmap to a window. Also note that
+there is no way of ensuring that clip regions other than those defined
+in the context's scissor region are correctly taken into account, so a
+window that is in front of your drawing window might get overdrawn.
+
+  Starting with Version 2, Warp3D provides a screen mode requester.
+This requester can be instructed to filter screen modes according to
+one of three rules, specified by the following tag items:
+
+@{b}W3D_SMR_DRIVER@{ub}
+     The argument to this tag item is a pointer to a @{b}W3D_Driver@{ub}
+     structure, as provided by @{b}W3D_GetDrivers@{ub}. If this tag is present,
+     only screenmodes that are supported by this driver are shown in
+     the requester. The screen modes may be filtered further (see
+     below), but the modes are guaranteed to be supported by this
+     driver.
+
+@{b}W3D_SMR_DESTFMT@{ub}
+     The argument to this tag item is a mask made up from one or more
+     of the @{b}W3D_FMT_#?@{ub} bits. Each screen mode is compared against this
+     mask before it makes its way into the mode requester. You may
+     either use this to filter directly after the destination fomrat,
+     or use it to further narrow down the selection of modes in
+     conjunction with the @{b}W3D_SMR_DRIVER@{ub} tag item.
+
+@{b}W3D_SMR_TYPE@{ub}
+     The argument to this tag item is one of the constants
+     @{b}W3D_DRIVER_CPU@{ub} or @{b}W3D_DRIVER_3DHW@{ub}, exclusively. Before a screen
+     mode is presented in the mode requester, it is checked against all
+     of the screen modes supported by the CPU drivers (if the argument
+     is @{b}W3D_DRIVER_CPU@{ub}) or by the hardware drivers (if @{b}W3D_DRIVER_3DHW@{ub}
+     was specified). This tag can be used in conjunction with
+     @{b}W3D_SMR_DESTFMT@{ub} to further narrow the selection of modes.
+
+  Further filtering may be done by using the @{b}ASLSM_MIN#?@{ub} tags in
+conjunction with @{b}W3D_SMR_SIZEFILTER@{ub}. This tag is a boolean tag that
+specifies if you want to filter screen modes according to certain size
+constraints. See the @{b}WarpTest.c@{ub} for more details.
+
+  To allow for futher selection of a suitable driver, for example, when
+you want to open up on a public screen, you can use the @{b}W3D_TextMode@{ub}
+function. This function accepts one argument, the ModeID of the screen,
+and returns a suitable @{b}W3D_Driver@{ub}, either a HW driver if one is
+present, or a CPU driver (if one is available), or NULL if nothing is
+available.
+
+
+@endnode
+
+@node "Creating a Context" "Warp3D_Devel/Creating a Context"
+@next "Context Queries"
+@prev "Opening the display"
+@toc "Getting Started"
+
+Creating a Context
+==================
+
+  We are now ready to create a @{b}W3D_Context@{ub}. But first, let us introduce
+the concept of a context.
+
+  A @{b}W3D_Context@{ub} is a structure that stores information about the
+current rendering state, display state, and also driver-internal
+information. It serves as some kind of "anchor" or "handle" for @{i}Warp3D@{ui}.
+The structure itself is off-limits, you should neither read or write it
+directly, but rather use the functions provided by the library.
+
+  A context is created with the @{b}W3D_CreateContext@{ub} function. This
+function is fully described in the AutoDoc, we'll just look at an
+example call here to illustrate how the context is created for our
+full-screen example above (See @{"Opening the display" link "Opening the display"}).
+
+
+         W3D_Context *context;
+         ULONG CError;
+     
+         context = W3D_CreateContextTags(&CError,
+             W3D_CC_BITMAP,      bm,
+             W3D_CC_MODEID,      ModeID,
+             W3D_CC_YOFFSET,     height,
+             W3D_CC_DRIVERTYPE,  W3D_DRIVER_BEST,
+         TAG_DONE);
+
+  Note that there is usually no way for the programmer to influence
+driver selection. The User usually has the possibility to indicate a
+"preferred" CPU driver, but the HW driver is always selected
+automatically (if @{b}W3D_DRIVER_BEST@{ub} is set).
+
+  The @{b}W3D_CC_YOFFSET@{ub} tag item is used for double buffering the
+CyberGraphX style. This specifies the top scanline used for rendering.
+All coordinates will be relative to this line, meaning the the offset
+is automatically added to the Y coordinates. When you switch display
+with @{b}ScrollVPort@{ub}, you will need to set a new drawing area with
+@{b}W3D_SetDrawRegion@{ub}, you can change this offset.
+
+  Please note that you should start with an Y-Offset of the second
+(invisible) page. This way, rendering will be directed to the invisible
+page, and switching the display will reveal the stuff you just drawn.
+
+  The following table summarizes the tag items for @{b}W3D_CreateContext@{ub}:
+
+@{b}W3D_CC_BITMAP@{ub}
+     Specifies the bitmap where @{i}Warp3D@{ui} should render into. This bitmap
+     must either be allocated on the graphics card, or must be the
+     bitmap of a screen or window.
+
+@{b}W3D_CC_MODEID@{ub}
+     Specifies the ModeID of the display you want to use. This tag may
+     be ommited if you open a window on the current public screen,
+     otherwise it is mandatory. This tag is used to select the correct
+     driver for the display.
+
+@{b}W3D_CC_YOFFSET@{ub}
+     Used for 'fake' double buffering. Specifies the YOffset to add to
+     all coordinates for drawing operations. Should generally only used
+     if you use @{b}ScrollVPort@{ub} double buffering.
+
+@{b}W3D_CC_DRIVERTYPE@{ub}
+     Specifies what type of driver should be active for this context.
+     Must be one of three pre-defined symbols: @{b}W3D_DRIVER_BEST@{ub} tries to
+     obtain the best possible driver.  @{b}W3D_DRIVER_3DHW@{ub} makes the call
+     fail if no suitable hardware driver was found.  @{b}W3D_DRIVER_CPU@{ub}
+     will try to use a CPU driver.
+
+@{b}W3D_CC_W3DBM@{ub}
+     For CPU drivers, a simple bitmap might not be enough. A CPU driver
+     might need a fastram buffer. This tagitem can be used to pass a
+     @{b}W3D_Bitmap@{ub}.
+
+@{b}W3D_CC_INDIRECT@{ub}
+     Sets the @{b}W3D_INDIRECT@{ub} state bit on the created context. This means
+     that all drawing operations will be queued. See
+     @{"Indirect Rendering" link "Indirect Rendering"} for further details.
+
+@{b}W3D_CC_GLOBALTEXENV@{ub}
+     If this tagitem's value is @{b}W3D_TRUE@{ub}, all texture environment
+     changes will affect @{i}all@{ui} textures, not just a single texture.
+
+@{b}W3D_CC_DOUBLEHEIGHT@{ub}
+     If this tagitem's value is @{b}W3D_TRUE@{ub}, the bitmap is considered to
+     be only half visible. This is used in conjunction with
+     @{b}W3D_CC_YOFFSET@{ub} to fake double buffering on older CyberGraphX
+     systems.
+
+@{b}W3D_CC_FAST@{ub}
+     By setting this to @{b}W3D_TRUE@{ub}, your are allowing the driver to alter
+     the structures you pass it.  This means that drawing will be
+     slightly faster, because the structures need not be copied.  This
+     can speed things up when drawing many small triangles.
+
+@{b}     Caution:@{ub} Do not use the tagitems @{b}W3D_CC_YOFFSET@{ub} and
+     @{b}W3D_CC_DOUBLEHEIGHT@{ub} for any other purpose. They might not work on
+     certain graphics systems or drivers, and might even become
+     deprecated in the future, so this don't try to outsmart the
+     documentation.
+
+
+@endnode
+
+@node "Context Queries" "Warp3D_Devel/Context Queries"
+@prev "Creating a Context"
+@toc "Getting Started"
+
+Context Queries
+===============
+
+  Once the context is created, you should go and find out what the chip
+really can do in the environment you have provided it with. For this
+purpose, the @{b}W3D_Query@{ub} function also accepts the context structure as
+an argument.
+
+  The template for calling the @{b}W3D_Query@{ub} function is
+         res = W3D_Query(context, query, destfmt);
+
+@{b}  context@{ub} is the pointer to the @{b}W3D_Context@{ub} structure you created, and
+@{b}query@{ub} is the item you want to query. The @{b}destfmt@{ub} parameter is ignored.
+
+  The result is one of the following three values:
+@{b}W3D_FULLY_SUPPORTED@{ub}
+     This feature is fully supported by the selected driver.
+
+@{b}W3D_PARTIALLY_SUPPORTED@{ub}
+     This feature in not fully supported, but may somehow still work.
+     There might be graphics glitches, or the result might not look
+     like you intended it to look. If possible, you should give users
+     the possibility to bypass this feature if it can be simulated.
+
+@{b}W3D_NOT_SUPPORTED@{ub}
+     This feature is not supported, and must be emulated in software.
+
+  For a description of the supported items, refer to the AutoDocs, and
+to the include file @{b}Warp3D/Warp3D.h@{ub}.
+
+
+@endnode
+
+@node "Textures" "Warp3D_Devel/Textures"
+@next "Context States"
+@prev "Getting Started"
+@toc "Main"
+
+Textures
+********
+
+
+ @{" What is it                 " link "What is it"}  What exactly is a texture
+ @{" Texture Infos              " link "Texture Infos"}  How to get Information on Textures
+ @{" Creating Textures          " link "Creating Textures"}  How to create and destroy textures
+ @{" Texture Images             " link "Texture Images"}  How texture images are represented
+ @{" MIP-Mapping                " link "MIP-Mapping"}  How MIP-Maps fit into this
+ @{" Using Textures             " link "Using Textures"}  How textures are used
+
+
+@endnode
+
+@node "What is it" "Warp3D_Devel/What is it"
+@next "Texture Infos"
+@toc "Textures"
+
+What is it
+==========
+
+  A @{i}Texture@{ui} is a square or rectangular image map. That's about it. A
+texture can be used for @{i}Texture Mapping@{ui}. Texture Mapping is the process
+of distorting the texture so that it looks as if it has been
+perspectively draw onto a triangle. Most 3D hardware can do texture
+mapping by itself, and that's what makes them so fast.
+
+  A texture in @{i}Warp3D@{ui} is a combination of a structure, called
+@{b}W3D_Texture@{ub}, and a few memory blocks.  Those memory blocks hold the
+texture data, the MIP-Maps (See @{"MIP-Mapping" link "MIP-Mapping"}) and the converted texture
+data(1).
+
+  Textures can have several attributes associated with them. They can
+be either @{b}RESIDENT@{ub}, in which case they are in the texture memory of the
+graphics board. They can be @{b}DIRTY@{ub}, in which case the program has
+updated the imagery of the texture, resulting in the need to convert or
+upload them again.  More on this is covered in the next section.
+
+  ---------- Footnotes ----------
+
+  (1) This data is generated by the 3D Hardware driver to suit the
+needs of the hardware.
+
+
+@endnode
+
+@node "Texture Infos" "Warp3D_Devel/Texture Infos"
+@next "Creating Textures"
+@prev "What is it"
+@toc "Textures"
+
+Texture Infos
+=============
+
+  Different chips support different texture formats. Because of this,
+your textures might be in a format that the driver cannot use directly.
+If this is the case, your textures are automatically converted to a
+suitable format, without modifying the texture data you passed in. This
+step is handled completely transparent, without you ever noticing it.
+
+  However, this might not be desirable. For example, it might be
+necessary to convert your true-color textures to a chunky format
+because the chip can only use chunky textures. In this case, a very
+complicated process of finding closest matching colors must be
+performed, resulting in poor overall performance.
+
+@{i}  Warp3D@{ui} offers a function that can determine if a texture format is
+directly supported by a given hardware driver. This function is called
+@{b}W3D_GetTexFmtInfo@{ub}, and is called with one ULONG parameter, the format
+of the texture you want to verify.
+
+  The return value of this function is a bit mask. Currently, the
+following values are supported:
+
+@{b}W3D_TEXFMT_SUPPORTED@{ub}
+     The specified format is supported by the driver, although it may
+     need to be converted to be usable by the hardware.
+
+@{b}W3D_TEXFMT_UNSUPPORTED@{ub}
+     The format is not supported by the driver, and no emulation or
+     format conversion is defined for it.
+
+@{b}W3D_TEXFMT_FAST@{ub}
+     The given format is directly supported by the hardware, without
+     any conversion step
+
+@{b}W3D_TEXFMT_CLUTFAST@{ub}
+     The given format is directly supported by the hardware in Chunky
+     modes only.
+
+@{b}W3D_TEXFMT_ARGBFAST@{ub}
+     The given format is directly supported by the hardware in direct
+     color modes only.
+
+  Consider this example: You are using Chunky textures, but want to use
+a True-Color 15 bit display. To find out if your active driver supports
+this directly, you would use something like this
+
+
+         ULONG info;
+         // ...
+         info = W3D_GetTexFmtInfo(W3D_CLUT);
+     
+         if ((info & W3D_TEXFMT_ARGBFAST) || (info & W3D_TEXFMT_FAST)) {
+             // ... simply load the textures, it's ok to do so
+         } else {
+             // consider converting your textures to ARGB format once at the start
+         }
+
+  If you found out that your textures aren't directly supported, you
+might want to convert them to a suitable format yourself, although this
+step is not needed due to the on-the-fly conversion of texture formats
+done by @{i}Warp3D@{ui}. To find a suitable format, you can also use the
+@{b}W3D_GetTexFmtInfo@{ub} function.
+
+
+@endnode
+
+@node "Creating Textures" "Warp3D_Devel/Creating Textures"
+@next "Texture Images"
+@prev "Texture Infos"
+@toc "Textures"
+
+Creating Textures
+=================
+
+  Textures must be created with the @{b}W3D_AllocTexObj@{ub} function. The
+calling template for this function looks like this:
+
+
+     texture = W3D_AllocTexObj(context, error, ATOTags);
+
+  The @{b}context@{ub} argument is a pointer to a context structure created with
+@{b}W3D_CreateContext@{ub} (See @{"Creating a Context" link "Creating a Context"}). @{b}error@{ub} is an @{b}ULONG *@{ub} where
+the function deposits an error code in case of failure. Finally,
+@{b}ATOTags@{ub} is a taglist of one or more tagitems defined in
+@{b}Warp3D/Warp3D.h@{ub}. Currently, the following tag items are supported:
+
+@{b}W3D_ATO_IMAGE@{ub}
+     (required) A pointer to the image data. See @{"Texture Images" link "Texture Images"} for a
+     description about how the texture data should be organized
+
+@{b}W3D_ATO_FORMAT@{ub}
+     (required) A constant indicating the source format of the texture.
+     See @{"Texture Images" link "Texture Images"} for a description of these formats
+
+@{b}W3D_ATO_WIDTH@{ub}
+     (required) The border width of the texture map. This must be 2^n
+     with an integral n.
+
+@{b}W3D_ATO_HEIGHT@{ub}
+     (required) The border height of the texture map. Same constraints
+     as with the @{b}W3D_ATO_WIDTH@{ub}.
+
+@{b}W3D_ATO_MIPMAP@{ub}
+     If this tag item is specified, the texture map can be used for
+     mipmapping. You can either provide your own mipmaps, or let @{i}Warp3D@{ui}
+     create some or all of them for you. For complete explanation of
+     this tag item, See @{"MIP-Mapping" link "MIP-Mapping"}
+
+@{b}W3D_ATO_MIPMAPPTRS@{ub}
+     This tag item must be specified if @{b}W3D_ATO_MIPMAP@{ub} was used. The
+     data of this tag item is a null-terminated array of pointers to
+     the mipmaps you want to provide. This is described in more detail
+     in @{"MIP-Mapping" link "MIP-Mapping"}
+
+@{b}W3D_ATO_PALETTE@{ub}
+     (required for chunky textures only) This defines the color palette
+     used for a texture. This is a pointer to an ULONG array defining
+     256 entries of ARGB values, packed into one ULONG, with the bits
+     31-24 defining Alpha, 23-16 defining red, 15-8 defining green and
+     7-0 defining blue.
+
+  If the return value of this function is NULL, the ULONG pointed to by
+@{b}error@{ub} is filled with an error value. You should always take appropriate
+action, and not ignore the value.
+
+  After you are done with the texture, it must be freed with
+@{b}W3D_FreeTexObj@{ub}. This frees up all associated storage, but not the
+texture data pointer or mipmap pointers that you passed in.  It is your
+responsibility to free this storage. See also @{"Texture Images" link "Texture Images"} for
+further details.
+
+
+@endnode
+
+@node "Texture Images" "Warp3D_Devel/Texture Images"
+@next "MIP-Mapping"
+@prev "Creating Textures"
+@toc "Textures"
+
+Texture Images
+==============
+
+  Textures are stored in one of six possible formats. The format of a
+texture specifies how a single pixel is represented. Textures are
+always stored one scanline at a time, with all scanlines successively
+stored in memory. Thus, a chunky texture of 128 by 128 pixels will
+occupy 16384 bytes of memory (if no mipmaps are used).
+
+Supported Formats
+-----------------
+
+  The following formats are supported by Warp3D:
+
+Format         Pixel Size  Description                                
+@{b}W3D_CHUNKY@{ub}1 Byte      Palettized Data. Each unit servers as an   
+                           index into a color lookup table. (This     
+                           lookup table must be provided on           
+                           @{b}W3D_AllocTexObj@{ub} with the @{b}W3D_ATO_PALETTE@{ub}
+                           tag item). The palette given must match    
+                           the screen palette, otherwise the result   
+                           is undefined.                              
+@{b}W3D_A1R5G5B5@{ub}2 Bytes     True color data, one word per pixel. The   
+                           layout corresponds to a 15 bit screen      
+                           mode, i.e. there's 5 bits for each color,  
+                           but preceeded by a one bit alpha. If this  
+                           alpha is one, the pixel is fully opaque.   
+                           If the alpha is zero, the pixel is         
+                           invisible/fully transparent.               
+@{b}W3D_R5G6B5@{ub}2 Bytes     True color data, one word per pixel. This  
+                           layout corresponds to a 16 bit screen      
+                           mode, with each 5 bits for red and blue,   
+                           and 6 bits for green (The additional bit   
+                           is used for green rather than another      
+                           color because the human eye is more        
+                           sensitive to green than to any other       
+                           primary color). This format has no alpha   
+                           channel.                                   
+@{b}W3D_R8G8B8@{ub}3 Bytes     True color data, 3 bytes per pixel. Each   
+                           byte corresponds to one primary color,     
+                           with no alpha channel information. This    
+                           format is problematic because of the       
+                           uneven addresses of pixels, but can be     
+                           useful for true color textures since it    
+                           has no alpha channel, which might not      
+                           always be needed.                          
+@{b}W3D_A4R4G4B4@{ub}2 Bytes     True color data, one word per pixel. This  
+                           format is the only "narrow" true color     
+                           format that supports more than just        
+                           on/off alpha channels. Uses Four bits per  
+                           color and alpha channel.                   
+@{b}W3D_A8R8G8B8@{ub}4 Bytes     True color data, one longword per pixel.   
+                           This format uses 8 bit for each color and  
+                           alpha channel.                             
+@{b}W3D_A8@{ub}1 Byte      Pure alpha data, one byte per pixel. This  
+                           format uses 8 bits of alpha information.   
+@{b}W3D_L8@{ub}1 Byte      8 bit luminance data. This format uses is  
+                           similar to R8G8B8 with each component set  
+                           to L, meaning that this texture specifies  
+                           a gray level map.                          
+@{b}W3D_L8A8@{ub}2 Bytes     8 bit luminance and 8 bit alpha. This      
+                           format is a combination of @{b}W3D_L8@{ub} and
+                           @{b}W3D_A8@{ub}                            
+@{b}W3D_I8@{ub}1 Byte      8 bit Intensity. This format uses 8 bit    
+                           and is similar to A8R8G8B8 with A=R=G=B=I  
+
+  The format you choose for your textures is a matter of choice, need
+and hardware limitations. Some hardware might not be able to use True
+color textures on an 8 bit screen, so if you want to use and 8 bit
+screen, it might be more advisable to use the @{b}W3D_CHUNKY@{ub} format instead
+and convert your true color data to 8 bit using a dither algorithm that
+might be time consuming (once) but may yield better quality than
+@{i}Warp3D@{ui}'s internal texture conversion algorithms, which are mainly tuned
+for speed. What format you finally choose is up to you, and it is very
+hard to give a general suggestion.
+
+  Generally, you @{b}should only@{ub} use @{b}W3D_CHUNKY@{ub} textures on an 8 bit
+screen, and true color texture formats on highcolor or truecolor
+screens.
+
+Color Channels
+--------------
+
+  As with the standard RGB model, the textures @{i}Warp3D@{ui} uses do support
+all three color channels, including a forth, so called Alpha channel.
+The Alpha Channel is not really a color, but rather the "transparency"
+information associated with a pixel. An Alpha value of zero means the
+pixel is totally transparent, while full alpha means the pixel is
+completely opaque.
+
+  The real outcome of the pixel depends on the alpha blending mode (see
+the chapter about @{"Alpha Blending" link "Alpha Blending"} for more detailed information about
+alpha blending modes). Alpha blending can be used for spectacular
+effects that are very hard to do in software.
+
+Texture Memory and Images
+-------------------------
+
+  Normally, when you allocate a texture, your source data is @{i}not@{ui}
+copied. Rather, the data is used as specified, but might be internally
+converted to a more suitable format by the driver. This means that as
+long as your data pointer is associated with a texture, you may not
+freely modify the texture image without calling @{b}W3D_UpdateTexImage@{ub}.
+Calling @{b}W3D_UpdateTexImage@{ub} tells the driver that the image has changed.
+
+  To update only part of an image, use @{b}W3D_UpdateTexImage@{ub}. See the
+AutoDoc for more information.
+
+
+@endnode
+
+@node "MIP-Mapping" "Warp3D_Devel/MIP-Mapping"
+@next "Using Textures"
+@prev "Texture Images"
+@toc "Textures"
+
+MIP-Mapping
+===========
+
+Introduction
+------------
+
+  A common aliasing problem is loss of detail when textures move far
+away from the observer. For example, a skeleton sprite in a role
+playing game might look even more skinny when it is away from the
+player.  A grate might not look like a grate from a distance because
+the bars have disappeared. Texture mapping a large texture onto a small
+polygon results in loss of pixels, and hence loss of (possibly
+important) details.
+
+  MIP-Mapping is a way to compensate this. Technically, a MIP-Map is a
+sequence of arrays of decreasing size of texture maps. Each new map is
+half as large as the previous one; for example, a valid mipmap sequence
+would be 128x128, 64x64, 32x32, 16x16, 8x8, 4x4, 2x2 and 1x1. In the
+case of non-square (read: rectangular) maps, this works a bit
+different: Each side is halved until it reaches 1, in which case it
+stays one. Such, a 32x16 texture would be MIP-Mapped as 32x16, 16x8,
+8x4, 4x2, 2x1, 1x1.
+
+Specifying MIP-Maps
+-------------------
+
+  MIP-Maps might either be programmer-supplied, or generated on the
+fly, or a mixture of this. The Programmer might specify any or all of
+the MIP-Maps.
+
+  In any case, the mechanism for this is always identical. The tag
+items @{b}W3D_ATO_MIPMAP@{ub} and @{b}W3D_ATO_MIPMAPPTRS@{ub} are used for this while
+allocating the texture with @{b}W3D_AllocTexObj@{ub}. The first tag item
+@{b}W3D_ATO_MIPMAP@{ub}'s data is a bit mask indicating which MIP-Maps are to be
+generated by @{i}Warp3D@{ui}. A zero bit indicates this map is user supplied,
+while a 1 bit indicates that this MIP map should be generated.
+Regardless of this tag item's value, its presence always implies that
+this texture is a mip map. Note also that you may provide only part of
+the MIP maps, and that any holes in the sequence are filled in by
+Warp3D. Also note that automatic MIP-Map generation decreases
+performance, since those maps must be generated and filtered.
+
+  The second tag item involved is @{b}W3D_ATO_MIPMAPPTRS@{ub}, which must be
+present if @{b}W3D_ATO_MIPMAP@{ub} was specified. It's data is a pointer to a
+NULL-terminated array with pointer to the MIP-Map data, in the same
+format as the texture data.
+
+  Automatic MIP-Map creation filters the images when scaling down. The
+filter process is only supported on true-color maps. On 8 bit, the maps
+are simply scaled down to half the size. This means that MIP-Mapping
+essentially has no effect if automatic mipmap creation is used. Of
+course, using pre-defined MIP-Maps still gives good results, since an
+artist can decide which details should be carried over to the next
+level of detail.
+
+  The following example illustrates the use of MIP-Maps. In this case,
+we consider a program that wants to create a 64x64 MIP-Map and provide
+two additional maps, the 16x16 and 8x8 maps. We assume that there is a
+function @{b}void *LoadImageMap(int size, char *name)@{ub} that loads an image
+file.
+
+         void *Maps[3];
+         void *MainMap;
+         W3D_Texture *texture;
+         ULONG error;
+     
+         extern W3D_Context *context;
+     
+         MainMap = LoadImageMap(64, "main.png");
+         // Check for errors in the real world!
+     
+         Maps[0] = LoadImageMap(16, "main_m1.png");
+         Maps[1] = LoadImageMap(8,  "main_m2.png");
+         Maps[2] = NULL;
+     
+         texture = W3D_AllocTexObj(context, &error,
+             W3D_ATO_IMAGE,      MainMap,
+             W3D_ATO_FORMAT,     W3D_A1R5G5B5,
+             W3D_ATO_WIDTH,      128,
+             W3D_ATO_HEIGHT,     128,
+             W3D_ATO_MIPMAP,     0x0049,     // == 00111001b
+             W3D_ATO_MIPMAPPTRS, Maps,
+         TAG_DONE);
+     
+         // --- Proceed
+
+
+@endnode
+
+@node "Using Textures" "Warp3D_Devel/Using Textures"
+@prev "MIP-Mapping"
+@toc "Textures"
+
+Using Textures
+==============
+
+Textures and Video Ram
+----------------------
+
+  In order to be used, it is not sufficient that the texture object is
+allocated. Rather, it must be on the graphics card's texture memory to
+be used. There are two possible ways to ensure this. You may either use
+the the @{b}W3D_AUTOTEXMANAGEMENT@{ub} state (See @{"Context States" link "Context States"}, or you may
+manually upload the textures. The automatic texture management is the
+easiest to use, since this will take care of the details.
+
+  If automatic texture management is on, @{i}Warp3D@{ui} will automatically
+upload textures when they are needed and are not resident in video
+memory. Otherwise, you must upload them manually, using the
+@{b}W3D_UploadTexture@{ub} call:
+
+
+         success = W3D_UploadTexture(context,texture);
+
+@{b}  context@{ub} is the drawing context you are using. @{b}texture@{ub} is the texture
+object to be uploaded.
+
+@{b}     Caution:@{ub} You may never use textures allocated under one context in
+     a different context. This might lead to unpredictable behavior,
+     including crashes
+
+  The reverse process to uploading is releasing. A (single) texture can
+be released with a call to the @{b}W3D_ReleaseTexture@{ub} call. The call has
+exactly the same parameters as the @{b}W3D_UploadTexture@{ub} call, only the
+reverse effect.
+
+  To release multiple textures, you may call the @{b}W3D_FlushTextures@{ub}
+function with the context as a parameter. This will release @{i}all@{ui}
+textures from the video memory
+
+The Fate of a Texture
+---------------------
+
+  When you're done with a texture, it must be deallocated. This is done
+with a call to the @{b}W3D_FreeTexObj@{ub} function. The texture pointer becomes
+invalid after you freed the texture object. This will also free any
+video memory associated with the texture, and deallocate all memory
+that @{i}Warp3D@{ui} allocated, including MIP-Maps created automatically.
+However, all memory allocated by the programmer, including the main
+texture image and the provided MIP-Maps, must be freed all by yourself.
+
+Modifying Texture Images
+------------------------
+
+  There might be situations where you would like to modify the image of
+a texture, or you might want to re-use a texture handle instead of
+disposing it and creating a new one if the overall parameters (size and
+format) match. The function @{b}W3D_UpdateTexImage@{ub} must be used in this
+case. The @{b}teximage@{ub} parameter might be either a pointer to a new image
+that should replace the old one, or @{b}NULL@{ub}. In the latter case, @{i}Warp3D@{ui}
+assumes that you have modified the original texture image and just want
+to inform the driver about this fact.
+
+@{b}     Caution:@{ub} You @{b}must@{ub} call @{b}W3D_UpdateTexImage@{ub} when you modified your
+     texture.  Certain drivers might not need to convert your source
+     data, and CPU drivers might directly use your memory area and
+     directly display the correct texture without this call. This does
+     not mean, however, that this will be the case with every other
+     driver.
+
+  In a similar line, you might want to update only parts of a texture.
+There are two possiblities for this, and both use the function
+@{b}W3D_UpdateTexSubImage@{ub}.
+
+  If you want to replace parts of the texture with a new image, you can
+give a non-@{b}NULL@{ub} pointer for the @{b}teximage@{ub} parameter when calling
+@{b}W3D_UpdateTexSubImage@{ub}. This essentially copies the image pointed to
+into the texture, replacing what was originally there. The area to
+update is specified with a pointer to a @{b}W3D_Scissor@{ub} region in @{b}scissor@{ub}.
+The image size should match the scissor region, if it doesn't, the
+@{b}srcbpr@{ub} parameter should be used to specify the bytes to skip from the
+first pixel of the subimage to get to the next line.
+
+  You might also want to change parts of the original image and tell
+@{i}Warp3D@{ui} the exact area where your changes took place, so that the driver
+might limit conversion of the image data to the are where the actual
+damage was done. In this case, @{b}teximage@{ub} should be set to @{b}NULL@{ub}.
+
+Texture Image Considerations
+----------------------------
+
+  The @{b}W3D_UpdateTexImage@{ub} function gives you the possibility to update
+the texture image, however, it might not always be what you want. For
+example, the game Descent uses animated textures for monitors in the
+mine. You might chose to use the @{b}W3D_UpdateTexImage@{ub} function each time
+the monitor switches an image, but that might be wasteful. The reason
+for this is that your program might not use the complete texture
+memory, so that all monitor images might fit. Using repetitive calls to
+the @{b}W3D_UpdateTexImage@{ub} function will @{i}always@{ui} convert and upload the new
+image.
+
+  As you can see from the above, a structured approach to texture
+management might be needed.
+
+
+@endnode
+
+@node "Context States" "Warp3D_Devel/Context States"
+@next "Drawing"
+@prev "Textures"
+@toc "Main"
+
+Context States
+**************
+
+Introduction to Context States
+==============================
+
+  Like @{i}OpenGL@{ui}, @{i}Warp3D@{ui} uses @{i}States@{ui} to inform the graphics pipeline how
+certain situations should be handled. Some states affect internal
+workings of @{i}Warp3D@{ui}, for example the @{b}W3D_AUTOTEXMANAGEMENT@{ub} state which
+make texture uploading and releasing automatic, others affect the way
+primitives are drawn, for example, if the @{b}W3D_PERSPECTIVE@{ub} state is
+active, triangles are drawn with perspective-corrected texture mapping.
+
+  States are set and cleared with a call to @{b}W3D_SetState@{ub}. If the
+@{b}newstate@{ub} argument equals @{b}W3D_ENABLE@{ub}, the state is set. If it equals
+@{b}W3D_DISABLE@{ub}, the state is reset. However, not every hardware supports
+every state. In order to find out what is supported, use the @{b}W3D_Query@{ub}
+function (See @{"Context Queries" link "Context Queries"}). Alternatively, you should check the
+return value of the @{b}W3D_SetState@{ub}. If it returns @{b}W3D_SUCCESS@{ub}, the state
+was successfully set or reset, otherwise this state cannot be enabled
+(or disabled, depending on the operation you attempted).
+
+  At the start of a program, when a context was created, all states are
+set to a well-defined initial state, with the exception of states that
+cannot be set to the desired value(1). To find out what states are set,
+use the @{b}W3D_GetState@{ub} function. This function returns @{b}W3D_ENABLED@{ub} if the
+state is active, and @{b}W3D_DISABLED@{ub} otherwise.
+
+Supported States
+================
+
+  The following summerizes the available states, as well as the default
+values that are set by @{b}W3D_CreateContext@{ub}.
+
+@{b}W3D_AUTOTEXMANAGEMENT@{ub}
+     If this state is enabled, textures are automatically uploaded to
+     the video memory as needed, and "old" textures are released if
+     texture memory overflows. If disabled, the drawing functions return
+     an error message when the texture supplied is not on the card.
+     Unless you really need full control, there's really no reason to
+     disable this. Enabled by default.
+
+@{b}W3D_SYNCHRON@{ub}
+     If disabled, any drawing function  starts its operation and
+     immediately returns, without waiting for the operation to finish.
+     Thus, the main CPU can work in parallel with the hardware and use
+     the extra cycles for calculations and the triangle setup stage. If
+     enabled, all drawing functions wait until the operation completed
+     before returning(2). Disabled by default.
+
+@{b}W3D_INDIRECT@{ub}
+     If enabled, no drawing is done; rather, the primitive drawing
+     functions are queued until one of three things happen: A @{b}W3D_Flush@{ub}
+     is called by the program, the buffer overflows, or the @{b}W3D_INDIRECT@{ub}
+     is reset. See the section on @{"Indirect Rendering" link "Indirect Rendering"} for further
+     details. Disabled by default.
+
+@{b}W3D_TEXMAPPING@{ub}
+     If enabled, the @{b}tex@{ub} field of primitives are used to texture-map
+     the primitive. If disabled, the current state of @{b}W3D_GOURAUD@{ub}
+     determines if the primitive will be gouraud-shaded or flat-shaded.
+     Enabled if the hardware supports texture mapping.
+
+@{b}W3D_PERSPECTIVE@{ub}
+     If enabled, textures are drawn with perspective correction.
+     Otherwise, the textures are drawn with linear mapping. The latter
+     is faster, but will look worse. Disabled by default, unless the
+     hardware does not support linear mapping.
+
+@{b}W3D_GOURAUD@{ub}
+     If enabled, and texture mapping is disabled, triangles are drawn
+     with gouraud shading. Otherwise, flat shading is used. Enabled if
+     the hardware supports gouraud shading.
+
+@{b}W3D_ZBUFFER@{ub}
+     If enabled, the ZBuffer is used for depth sorting/ZBuffering (See
+     @{"ZBuffering" link "ZBuffering"}). If disabled, pixels are always drawn, regardless of
+     ZBuffer value. Disabled by default, unless the hardware won't do
+     without it.
+
+@{b}W3D_ZBUFFERUPDATE@{ub}
+     If enabled, the Z value of incoming pixels is used to update the
+     ZBuffer if the ZBuffering test succeeded (See @{"ZBuffering" link "ZBuffering"}). If
+     disabled, does not update the ZBuffer. Enabled by default, unless
+     the ZBuffer cannot be updated.
+
+@{b}W3D_BLENDING@{ub}
+     If enabled, Alpha Blending is turned on, and pixels are
+     alpha-blended according to the current alpha blending mode.
+     Otherwise, alpha blending is not performed. Disabled by default,
+     unless it can't be disabled.
+
+@{b}W3D_FOGGING@{ub}
+     If enabled, fogging is turned on (See @{"Fogging" link "Fogging"}). Otherwise, no
+     fogging is done. Disabled by default, unless the hardware enforces
+     the use of fogging.
+
+@{b}W3D_ANTI_POINT@{ub}
+@{b}W3D_ANTI_LINE@{ub}
+@{b}W3D_ANTI_POLYGON@{ub}
+@{b}W3D_ANTI_FULLSCREEN@{ub}
+     If any of these is enabled, the appropriate operation is
+     anti-aliased. The @{b}W3D_ANTI_FULLSCREEN@{ub} affects the complete screen.
+     If one is disabled, then one of the other states might still be
+     active.  All are disabled by default, unless they can't be
+     disabled.
+
+@{b}W3D_DITHERING@{ub}
+     If enabled, output is dithered using the default dithering
+     method(3). Otherwise, pixels are written "as-is". Disabled by
+     default, unless the hardware insists on dithering(4).
+
+@{b}W3D_LOGICOP@{ub}
+     If enabled, Logic operations are performed (See @{"Logic Operations" link "Logic Operations"})
+     according to the currently set logic operation. Otherwise, pixels
+     are drawn normally. Disabled by default, unless it must be enabled.
+
+@{b}W3D_STENCILBUFFER@{ub}
+     If enabled, stencil buffering is performed (See
+     @{"Stencil Buffering" link "Stencil Buffering"}) as specified by the stencil buffer mode.
+     Otherwise, pixels are always written regardless of stencil values.
+     Disabled by default, unless it can't be disabled.
+
+@{b}W3D_DOUBLEHEIGHT@{ub}
+     If enabled, the bitmap pointer passed in assumed to be a
+     double-height bitmap for faked double buffering.  The ZBuffer or
+     Stencil Buffer will be allocated with half the height of this
+     bitmap. If disabled, the bitmap is considered to be completely
+     used for rendering. Disabled by default, unless the
+     @{b}W3D_CC_DOUBLEHEIGHT@{ub} tag item was specified on context creation.
+@{i}Note:@{ui} More states may be supported. Check the @{b}AutoDoc@{ub} for a description
+of all states.
+
+  ---------- Footnotes ----------
+
+  (1) For example, @{b}W3D_DITHERING@{ub} cannot be disabled with the ViRGE
+driver
+
+  (2) The hardware driver will @{i}always@{ui} wait for completion of the last
+operation before it writes any registers.
+
+  (3) Chances are this is Ordered Dithering
+
+  (4) The ViRGE does indeed
+
+
+@endnode
+
+@node "Drawing" "Warp3D_Devel/Drawing"
+@next "Hinting"
+@prev "Context States"
+@toc "Main"
+
+Drawing
+*******
+
+
+ @{" Starting to Draw       " link "Starting to Draw"}  How to start, what to do
+ @{" Locking                " link "Locking"}  Locking and Unlocking the display
+ @{" Coordinates            " link "Coordinates"}  X/Y/Z and U/V/W
+ @{" Triangles              " link "Triangles"}  The essentials on Triangles
+ @{" Lines                  " link "Lines"}  Line Drawing
+ @{" Points                 " link "Points"}  Point Drawing
+ @{" Fogging                " link "Fogging"}  Fog and Depth Cueing
+ @{" Logic Operations       " link "Logic Operations"}  What the LogicOp stuff means
+ @{" Stencil Buffering      " link "Stencil Buffering"}  Cookie Cutting
+ @{" ZBuffering             " link "ZBuffering"}  Using the Z Buffer
+ @{" Alpha Blending         " link "Alpha Blending"}  Transparency and other stuff
+ @{" Light                  " link "Light"}  Lighting
+
+
+@endnode
+
+@node "Starting to Draw" "Warp3D_Devel/Starting to Draw"
+@next "Locking"
+@toc "Drawing"
+
+Starting to Draw
+================
+
+  Let's now get to the most important part of @{i}Warp3D@{ui} programming:
+Drawing. In order for the user or player to see anything, we must bring
+our expensively calculated 3D objects to the screen.
+
+  In spite of the name, @{i}Warp3D@{ui} does not really do any 3D calculation.
+The coordinates passed in must be in so-called @{i}Screen Space@{ui}, that is,
+they must have been projected and clipped so that they lie on screen,
+or rather, in the currently visible buffer. Under Picasso96 or
+CyberGraphX 3, you can use the @{b}ChangeScreenBuffer@{ub} call for double
+buffering.
+
+  To define the area on which you want to draw, you must call the
+@{b}W3D_SetDrawRegion@{ub} function.  The @{b}bm@{ub} parameter is a pointer to the bit
+map you want the driver to draw into, that is, it must be compatible
+with @{i}Warp3D@{ui} (@{b}W3D_CreateContext@{ub} checks this). The @{b}yoffset@{ub} parameter
+indicates the vertical offset of the top left edge of the screen, and
+is used to do the double buffering under CyberGraphX V2.
+
+  Basically, both the @{b}ScrollVPort@{ub} trick and the normal Kick 3.x double
+buffering functions can be used for double buffering under @{i}Warp3D@{ui}.
+However, the latter method has the advantage that if you do want to do
+direct rendering with the processor, you do not need to add an offset
+to determine the correct buffer. Otherwise, both functions work equally
+good, and with comparable speed.
+
+  The @{b}scissor@{ub} parameter is a pointer to a filled-in @{b}W3D_Scissor@{ub}
+structure. This defines the area of the screen that drawing should be
+restricted to. It is generally a good idea to set this, even if you
+don't really intent to draw into s screen section only, as it protects
+the memory outside your drawing area. An example for this can be found
+in the @{b}WarpTest.c@{ub} source file.
+
+  When the selected driver is a CPU driver, it might be more reasonable
+to specify a RAM-Buffers instead of a bitmap for drawing. To that end,
+@{i}Warp3D@{ui} specifies a @{b}W3D_Bitmap@{ub} structure. This can be used to pass such
+a pointer in the @{b}dest@{ub} field upon creation of the context, with the help
+of the @{b}W3D_CC_W3DBM@{ub} tag item. Refer to the @{b}Warp3D.h@{ub} include file for
+further details.
+
+
+@endnode
+
+@node "Locking" "Warp3D_Devel/Locking"
+@next "Coordinates"
+@prev "Starting to Draw"
+@toc "Drawing"
+
+Locking
+=======
+
+  In order to be able to draw @{i}anything@{ui}, you must first lock the
+hardware. This is done with a single call to @{b}W3D_LockHardware@{ub}. This
+call grants exclusive access to the hardware. Unless the @{b}W3D_INDIRECT@{ub}
+state is enabled, this call must preceed any drawing operation.  (see
+See @{"Indirect Rendering" link "Indirect Rendering"} for details about indirect rendering).
+
+  Locking ensures that the hardware is ready to draw, and also assures
+that the bitmap you want to draw to is residing in graphics memory.
+This can result in a certain temporal overhead. Although this is not
+too much, you should not lock the hardware for every primitive, This
+tactic should only be used if time is very unimportant for your
+application, or otherwise a per-frame locking is not possible(1). In
+this case, it might be a better idea to use indirect rendering, as
+discussed in @{"Indirect Rendering" link "Indirect Rendering"}.
+
+  Certain constraints of the graphics subsystem also affect locking.
+For example, CyberGraphX might have severe difficulties when a lock is
+held for a certain time. However, you should generally try and lock
+only on a frame basis, i.e. you should lock your hardware, draw your
+stuff, and finally release the hardware.
+
+  Other strategies include locking for a certain time only. For
+example, if you can predict the amount of work required for an
+operation, you might predict the time for which you will hold the lock.
+However, such things are hard to implement, so the best bet is to lock
+the entire frame.
+
+  ---------- Footnotes ----------
+
+  (1) This might be the case if you are porting a 3D-Engine from
+another platform, or use @{i}Warp3D@{ui} as a rasterizer for a 3D-Graphics
+library
+
+
+@endnode
+
+@node "Coordinates" "Warp3D_Devel/Coordinates"
+@next "Triangles"
+@prev "Locking"
+@toc "Drawing"
+
+Coordinates
+===========
+
+  Coordinates are passed to @{i}Warp3D@{ui} as floating point numbers of type
+@{b}W3D_Float@{ub}. This allows for sub-pixel accuracy, i.e. it avoids "jumping"
+polygons, and generally looks better than using integer coordinates (of
+course, your 3D engine must support this). For this reason, @{i}Warp3D@{ui} only
+runs on systems with a floating point unit.
+
+  X and Y coordinates are @{i}screen coordinates@{ui}, also called @{i}device
+coordinates@{ui}, because they reference individual pixels on the display
+directly. They need not be passed in any particular order (i.e.
+clockwise/counterclockwise), although a certain direction is almost
+always imposed by the 3D engine.
+
+  The Z coordinate is the vertex depth coordinate, and is used
+primarily for Z Buffering (See @{"ZBuffering" link "ZBuffering"}).  The Z value must be
+normalized to a value between 0 and 1, where one is the smallest depth
+(i.e. 0 is directly behind the glass of the monitor).
+
+  There has been much confusion on the meaning of the W coordinate.
+Traditionally, the W coordinate used to be the fourth component of a 3D
+vector in a homogenous coordinate system. In such a system, a point in
+3-space is represented as v = (x y z w), and for projection, this is
+transformed as v' = (x/w y/w z/w 1), but this is not what it stands for
+in @{i}Warp3D@{ui}.
+
+  In @{i}Warp3D@{ui}, the W coordinate is used as the inverse of the z
+coordinate, i.e. w = 1/z. The reason for this is that for texture
+mapping, the z value is not linear, but 1/z is(1). Note that the z
+value we are talking about here is the z value in camera or eye space,
+that is, before the perspective transformation took place. This is
+because with some approaches, the z coordinate is also perspectively
+foreshorted, which is not what we want here. The W coordinate should
+generally be set to w = scale/z. The scale value can be any value, you
+should define it in a way that all W values in your engine fit into the
+area [0..1]. Or, in other words: if you multiply all W values in your
+engine by 2, the result will be the same (unless overflow or precision
+errors occur).  Finally, the W value has no meaning as an absolute
+value, it only contains information when compared to the W values of
+other vertices. It is finally only used for transformations between
+linear and perspective space.  (Note to OpenGL implementors: the
+correct value for W is the inverse of W in clip coordinate space,
+eventually scaled to achieve better precision).  While it is desired to
+scale the W values into the range [0..1], it is possible to pass values
+outside this range, but it may result in a slight performance loss.
+Often, this is necessary, for example when the world starts close to 0,
+or if negative Z coordinate appear (OpenGL is very flexible here).
+Note that you must @{i}not@{ui} pass negative W values.  See the example source
+@{b}WarpTest.c@{ub} for an example on how to do this.
+
+  The texture coordinates, U and V, are always given as @{i}pixel
+coordinates@{ui}. This means that if you are using a 128x128 texture map,
+the upper left pixel is at (0,0), while the lower right is at
+(127,127). These values are floating point, so you may even specify
+subpixels.
+
+  Light or color "coordinates" are given in a range of [0..1], with 0
+being lowest, and 1 highest intensity. These values should be clamped
+to the interval to avoid errors. Also, alpha values are given in the
+same range, with 1 being full opaque, and 0 translucent.
+
+  ---------- Footnotes ----------
+
+  (1) This is quite easy to see, for example, the function f(x) = 1/x
+is not linear, while g(x) = 1/f(x) is the identity, which is linear.
+
+
+@endnode
+
+@node "Triangles" "Warp3D_Devel/Triangles"
+@next "Lines"
+@prev "Coordinates"
+@toc "Drawing"
+
+Triangles
+=========
+
+  Triangle drawing is the most essential operation in 3D graphics.
+Usually, objects are represented using the so-called @{i}Polygon Boundary
+Representation@{ui}, which means that the surface of the object is
+represented as a series of polygons, which usually should be planar.
+Since Planarity can only be guaranteed for triangles, most 3D
+accelerators offer triangles as a drawing primitive.
+
+  Triangles are defined by three vertices at their corner. A vertex is
+specified using a @{b}W3D_Vertex@{ub} structure. Basically, this structure
+defines the vertex screen coordinate, it's depth and texture space
+coordinate as well as the vertex color. The latter is used for gouraud
+shading, while the depth and texture space coordinates are used for
+Z-Buffering, texture mapping, and fogging.
+
+  Triangles are drawn with one of three functions. @{b}W3D_DrawTriange@{ub}
+draws a single triangle specified by a @{b}W3D_Triangle@{ub} structure. The
+advantage of this function is that it directly returns if @{b}W3D_SYNCHRON@{ub}
+is not set, giving you extra time to do other stuff while the 3D chip
+is busy writing the triangle to the screen.
+
+  If you want to draw more than one triangle at once, it might be more
+advisable to use one of the other two functions. Those can actually
+draw polygons, although they expect the vertices of these polygons to
+be in sequence. The functions are called @{b}W3D_DrawTriFan@{ub} and
+@{b}W3D_DrawTriStrip@{ub}.  Since they are very similar, they are discussed here
+together.
+
+  Both use a @{b}W3D_Triangles@{ub} structure. This structure contains a pointer
+to the vertices that define the polygon. Texture information is
+extracted from the @{b}tex@{ub} field in the @{b}W3D_Triangles@{ub} structure. The @{b}v@{ub}
+field points to an array of @{b}W3D_Vertex@{ub} structures. These need not be
+specially terminated, so this can also be a slice of an array, the
+@{b}vertexcount@{ub} field determines the number of edges your polygon has.
+
+  The difference between the functions is that @{b}W3D_DrawTriFan@{ub} function
+draws a @{i}triangle fan@{ui}, while the @{b}W3D_DrawTriStrip@{ub} draws a @{i}triangle
+strip@{ui}. For a detailed description about these, see the @{i}OpenGL
+Specification@{ui}.
+
+  The following image shows the order in which vertices have to be
+specified in the @{b}W3D_Triangles@{ub} structure:
+
+@{"(press this link to see the image)" link fan_strip.iff/main}
+
+
+@endnode
+
+@node "Lines" "Warp3D_Devel/Lines"
+@next "Points"
+@prev "Triangles"
+@toc "Drawing"
+
+Lines
+=====
+
+  Lines are defined by their two endpoints. These are specified using
+@{b}W3D_Vertex@{ub} structures, just like in the case with triangles (See
+@{"Triangles" link "Triangles"}). On some hardware, lines can be textures; in this case,
+the @{b}tex@{ub} element of the @{b}W3D_Line@{ub} structure is used.
+
+  If the driver supports arbitrary line widths, the @{b}linewidth@{ub} element
+can be used for this. If you do not want to use this feature, or if the
+current driver does not support this, you should still set the
+linewidth to 1.0, so that your code also works on other hardware.
+
+  Vertices (@{b}v1@{ub} and @{b}v2@{ub}) are used the same way as with triangles, and
+this applies to all of the entries in the @{b}W3D_Vertex@{ub} structure. Most
+notably, the @{b}z@{ub} coordinate is still used for Z-Buffering (if enabled)
+and the @{b}w@{ub} coordinate is also used for fogging (if enabled) and
+texturing (if supported/enabled). Colors are also taken into account.
+
+  To draw the line, you call the @{b}W3D_DrawLine@{ub} function.
+
+
+@endnode
+
+@node "Points" "Warp3D_Devel/Points"
+@next "Fogging"
+@prev "Lines"
+@toc "Drawing"
+
+Points
+======
+
+  Points only take one @{b}W3D_Vertex@{ub} element. They may be textured, if the
+driver supports this.  As with lines (See @{"Lines" link "Lines"}), given the right
+driver, you may specify the size of the point in the @{b}pointsize@{ub} entry.
+This must be set to 1.0 if you just wish pixel-sized dots, even if the
+driver does not support arbitrary point sizes, so that your code works
+on other drivers too.
+
+  Points are drawn with a call to the @{b}W3D_DrawPoint@{ub} function.
+
+
+@endnode
+
+@node "Fogging" "Warp3D_Devel/Fogging"
+@next "Logic Operations"
+@prev "Points"
+@toc "Drawing"
+
+Fogging
+=======
+
+  Fogging is the process of blending an incoming pixel (i.e. a pixel
+that is about to be drawn) with a certain amount of a specified color,
+the @{i}fog color@{ui}. The amount of color blending is determined by the
+incoming pixel's W coordinate and the current @{i}fog function@{ui}.
+
+  Fogging is controlled by the @{b}W3D_SetFogParams@{ub} function call and the
+W3D_FOGGING state. The state is controlled with the @{b}W3D_SetState@{ub}
+function (See @{"Context States" link "Context States"}).
+
+  To set the fogging parameters, you'll have to fill out a @{b}W3D_Fog@{ub}
+structure. The @{b}fog_start@{ub} and @{b}fog_end@{ub} elements specify where the fog
+starts to gather up, and where it is so think that pixels are only
+drawn in the fog color (specified in the @{b}fog_color@{ub} field). The start
+and end values are in W-Coordinates, meaning that a @{b}fog_start@{ub} of 1.0
+means the fog starts right behind the glass of the monitor. The
+@{b}fog_density@{ub} field is only used with non-linear fog (see below).
+
+  The @{b}fogmode@{ub} parameter in the @{b}W3D_SetFogParams@{ub} function call specifies
+the type of fogging you want to use (the fog function). @{b}W3D_FOG_LINEAR@{ub}
+means that the fog should ramp up from @{b}fog_start@{ub} to @{b}fog_end@{ub}. The
+@{b}W3D_FOG_EXP@{ub} and @{b}W3D_FOG_EXP_2@{ub} are called @{i}exponential fogging@{ui} and @{i}square
+exponential fogging@{ui} respectively (also sometimes called non-linear fog
+modes). The exact formula is given in the @{i}OpenGL@{ui} specification, and
+since Texinfo isn't that good at math formulas, I won't give it here.
+
+
+@endnode
+
+@node "Logic Operations" "Warp3D_Devel/Logic Operations"
+@next "Stencil Buffering"
+@prev "Fogging"
+@toc "Drawing"
+
+Logic Operations
+================
+
+  This chapter has not been written yet.
+
+
+@endnode
+
+@node "Stencil Buffering" "Warp3D_Devel/Stencil Buffering"
+@next "ZBuffering"
+@prev "Logic Operations"
+@toc "Drawing"
+
+Stencil Buffering
+=================
+
+  Stencil buffering is covered extensively in the (guess where) @{i}OpenGL@{ui}
+specification, so I will only briefly describe it here. It is not
+available in the ViRGE driver.
+
+  Like the Z Buffer (See @{"ZBuffering" link "ZBuffering"}) , the Stencil Buffer is a buffer
+as large as the drawing area.  Each incoming pixel is assigned a
+stencil value if stencil buffering is enabled. This value is compared
+against the value in the buffer, and depending on the outcome of this
+comparison, the pixel is either drawn or discarded. Furthermore, the
+stencil value of the frame buffer may be updated in a certain way, as
+specified in the stencil test operation. These operations include
+incrementing or decrementing the buffer value, setting it to zero,
+replace it with the incoming value, and so on.
+
+  Stencil buffering is used (among other things) to cookie-cut shapes
+from an image.
+
+
+@endnode
+
+@node "ZBuffering" "Warp3D_Devel/ZBuffering"
+@next "Alpha Blending"
+@prev "Stencil Buffering"
+@toc "Drawing"
+
+ZBuffering
+==========
+
+  ZBuffering (sometimes also called depth buffering) is a method for
+hidden surface removal. The ZBuffer itself is a buffer with the same
+size as the drawing area.
+
+Theory of Operation
+-------------------
+
+  When a pixel is about to be drawn, it's Z value (which is taken from
+the vertex structure's Z value interpolated along the primitive) is
+compared against the current ZBuffer Z value using the current compare
+function. If the test fails, the pixel is discarded. If it succeeds,
+the pixel is drawn.  After this, if ZBuffer updating is enabled, the Z
+value of the pixel overwrites the value in the ZBuffer only if the
+pixel was also drawn.
+
+  The following table summarizes the available Z Comparison functions,
+along with their meaning:
+@{b}W3D_Z_NEVER@{ub}
+     The comparison never passes, the pixel is always discarded.
+
+@{b}W3D_Z_LESS@{ub}
+     The comaprison passes if the incoming Z value is less than the
+     ZBuffer's value
+
+@{b}W3D_Z_GEQUAL@{ub}
+     The comaprison passes if the incoming Z value is greater or equal
+     the ZBuffer's value
+
+@{b}W3D_Z_LEQUAL@{ub}
+     The comaprison passes if the incoming Z value is less than or
+     equal to the ZBuffer's value
+
+@{b}W3D_Z_GREATER@{ub}
+     The comaprison passes if the incoming Z value is greater than the
+     ZBuffer's value
+
+@{b}W3D_Z_NOTEQUAL@{ub}
+     The comaprison passes if the incoming Z value is not equal to the
+     ZBuffer's value
+
+@{b}W3D_Z_EQUAL@{ub}
+     The comaprison passes if the incoming Z value is equal to the
+     ZBuffer's value
+
+@{b}W3D_Z_ALWAYS@{ub}
+     The comaprison always passes, the pixel is always drawn.
+
+Using the ZBuffer
+-----------------
+
+  The comparison function is set using the @{b}W3D_SetZCompareMode@{ub}
+function. The @{b}mode@{ub} parameter must be a value from the above table. In
+this context, the @{b}W3D_Z_LESS@{ub} comparison function is what usually is
+understood as ZBuffering, meaning that pixels closer to the screen are
+drawn, while those further away are discarded. On the other hand, the
+@{b}W3D_Z_EQUAL@{ub} or @{b}W3D_Z_NOTQUAL@{ub} modes can be used as a kind of ,,poor mans
+stencil buffering".
+
+  In order to use the ZBuffer, it must have been allocated before. This
+is done with a single call to the function @{b}W3D_AllocZBuffer@{ub}. This makes
+the ZBuffer available if the return value was @{b}W3D_SUCCESS@{ub}. After you
+are done with it, it must be freed again with a call to @{b}W3D_FreeZBuffer@{ub}.
+
+  In addition to the above, there are other functions to read and write
+to the ZBuffer. These are only explained here in brief, please refer to
+the appropriate AutoDocs for more details.
+
+@{b}  W3D_ClearZBuffer@{ub} clears the ZBuffer with a specified value. This
+value must be in the range 0 through 1.
+
+@{b}  W3D_ReadZPixel@{ub} and @{b}W3D_ReadZSpan@{ub} read a single pixel or a number of
+pixels from the ZBuffer.  The result is a single or an array of floats,
+all in range 0 through 1.
+
+
+@endnode
+
+@node "Alpha Blending" "Warp3D_Devel/Alpha Blending"
+@next "Light"
+@prev "ZBuffering"
+@toc "Drawing"
+
+Alpha Blending
+==============
+
+  Alpha Blending is a process where the color of a pixel to be drawn is
+blended with what is already in the frame buffer at this time. The way
+how each pixel affects the other is defined by the blend functions on a
+per-texture basis.
+
+  There are two blending functions, named source and destination mode.
+The source function affects the alpha of the current pixel to be drawn,
+while the destination function affects the framebuffer pixel.  For
+example, a destination function of @{b}W3D_ONE@{ub} completely ignored the alpha
+value of the framebuffer pixel (assumes it to be one, i.e. opaque) and
+just uses the alpha from the incoming pixel.
+
+  An alpha value of 1.0 means this pixel is completely opaque, or more
+mathematically, this pixel's weight is 1.0. The resulting color will be
+a weighed average of both pixels, a linear interpolation between both
+pixels with the interpolation factor being the calculated alpha value.
+
+  For a deeper discussion of alpha blending, consult the @{i}OpenGL@{ui}
+specification.
+
+
+@endnode
+
+@node "Light" "Warp3D_Devel/Light"
+@prev "Alpha Blending"
+@toc "Drawing"
+
+Light
+=====
+
+  Gouraud shading is an algorithm for simulating lighting of a
+triangle. For Gouraud shading to work, only the normals at the vertices
+are needed to calculate the color values. Gouraud shading has some
+shortcommings, especially if compared with the more complex Phong
+shading. Most notably, it will never catch hightlights that are not on
+a vertex(1). Moreover, it also never takes perspective into account.
+
+  Most modern 3D hardware support gouraud shading. Gouraud shading is
+used either for shading untextured triangles, or for "lighting"
+textured polygons.
+
+  On untextured triangles, the vertex colors are linearly interpolated
+over the triangle. The alternative to this is flat shading, where one
+color is used for the entire triangle.
+
+  On textured triangles, the vertex colors are also interpolated over
+the triangle, but depending on the environment mode selected for the
+texture, the light color is combined with the texture color.
+
+  There are currently four possible environment modes for textures.
+These are set with a single call to @{b}W3D_SetTexEnv@{ub}. The possible mode
+are(2)
+
+@{b}W3D_REPLACE@{ub}
+     The texture color is used for the triangle. No lighting whatsoever
+     is done
+
+@{b}W3D_DECAL@{ub}
+     The texture color is blended with the light color depending on the
+     alpha value. This means the alpha value of the texture is used as
+     a linear interpolation factor between texture and light color.
+
+@{b}W3D_MODULATE@{ub}
+     The texture color and light color are multiplied, and the result
+     is used as the pixel color.
+
+@{b}W3D_BLEND@{ub}
+     This mode behave much like @{b}W3D_MODULATE@{ub}, only that the specified
+     @{b}envcolor@{ub} is blended with the result.
+
+  ---------- Footnotes ----------
+
+  (1) A relatively new algorithm named fence shading will catch those
+on edges too, but still not those that are completely inside the
+triangle
+
+  (2) The ViRGE only supports the first three modes, and the alpha for
+blending must be set to 1.0. Furthermore, @{b}W3D_REPLACE@{ub} and @{b}W3D_MODULATE@{ub}
+are treated equally
+
+
+@endnode
+
+@node "Hinting" "Warp3D_Devel/Hinting"
+@next "Indirect Rendering"
+@prev "Drawing"
+@toc "Main"
+
+Hinting
+*******
+
+@{i}  Hints@{ui} are a means of controlling output quality of the @{i}Warp3D@{ui} system
+without knowing the capability of the underlying hardware. @{i}Warp3D@{ui}
+defines a number of categories and three different levels of quality.
+The function @{b}W3D_Hint@{ub} is used to tell @{i}Warp3D@{ui} what quality is desired
+for a certain category under the current context.
+
+  The following table summerizes the possible quality levels:
+
+@{b}W3D_H_FAST@{ub}
+     Use the fastest possible solution for this category, even if this
+     means to downgrade the quality of output. Using this level might
+     result in graphics glitches sometimes, but is always the fastest
+     possible setting. This or the next mode should be used for games.
+
+@{b}W3D_H_AVERAGE@{ub}
+     Try to use a compromise between speed and quality.
+
+@{b}W3D_H_NICE@{ub}
+     With this setting, everything is optimized for maximum output
+     quality, regardless of output speed. This mode is most suitable
+     for interactive software that does not need all the possible
+     speed, like modellers or some OpenGL applications.
+
+  Currently, @{i}Warp3D@{ui} specifies the following categories for Hinting:
+
+@{b}W3D_H_TEXMAPPING@{ub}
+     Affects the quality of texture mapping.
+
+@{b}W3D_H_MIPMAPPING@{ub}
+     Affects the quality of mipmapping
+
+@{b}W3D_H_BILIENARFILTER@{ub}
+     Affects the quality of filtering. For example, there is a faster
+     bilinear filter mode available on the ViRGE graphics processor
+     (due to a bug, YUV textures are treated normally, but with a
+     faster filter mode).  The quality of this is a bit lower.
+
+@{b}W3D_H_MMFILTER@{ub}
+     Affects the quality of depth filtering
+
+@{b}W3D_H_PERSPECTIVE@{ub}
+     Affects the quality of perspective mapping. For example, the ViRGE
+     processor has problems with wrapping in perspective mode, but the
+     driver has the ability to subdivide triangles on texture wrap
+     borders.
+
+@{b}W3D_H_BLENDING@{ub}
+     Affects the quality of alpha blending.
+
+@{b}W3D_H_FOGGING@{ub}
+     Affects the quality of fogging. For example, some graphics chips
+     cannot have discontinuities in fogging, which means that when the
+     fogging border is within the triangle drawn, the linear fog
+     interpolation will not draw the triangle correctly. Again, some
+     drivers can subdivide the triangle to get this effect right.
+
+@{b}W3D_H_ANTIALIASING@{ub}
+     Affects the quality of anti-aliasing
+
+@{b}W3D_H_DITHERING@{ub}
+     Affects the quality of dithering. For example, some driver might
+     be able to select ordered dithering or floyd-steinberg depending
+     on this setting.
+
+@{b}W3D_H_ZBUFFER@{ub}
+     Affects the accuracy of the Z buffer, i.e. bit depth.
+
+
+@endnode
+
+@node "Indirect Rendering" "Warp3D_Devel/Indirect Rendering"
+@next "Indices"
+@prev "Hinting"
+@toc "Main"
+
+Indirect Rendering
+******************
+
+  If the context was created with the W3D_CC_FAST tag set to @{b}W3D_TRUE@{ub},
+or the state @{b}W3D_FAST@{ub} was set, @{i}Warp3D@{ui} is in fast mode. This means that
+structures passed to the driver are not copied and may be modified.
+
+  In fast mode, locking the hardware is no longer necessary. All
+rendering calls are internally stored. Each time the queue is full, or
+certain functions are called, the queue is flushed (The same effect can
+be achieved with the @{b}W3D_Flush@{ub} function).
+
+  The following table lists all functions that are queued:
+   * W3D_DrawLine
+
+   * W3D_DrawPoint
+
+   * W3D_DrawTriangle
+
+   * W3D_DrawTriFan
+
+   * W3D_DrawTriStrip
+
+   * W3D_ClearZBuffer
+
+   * W3D_ClearStencilbuffer
+
+   * W3D_SetCurrentColor
+
+   * W3D_SetCurrentPen
+
+   * W3D_Hint
+
+  These flush the queue:
+   * All Stencil buffer functions except W3D_AllocStencliBuffer, and
+     the functions that are queued.
+
+   * All ZBuffer functions, except W3D_AllocZBuffer, and the functions
+     that are queued.
+
+   * All functions that change the visual appearance of rendering, i.e
+     W3D_SetFogParams
+
+   * All functions changing textures, i.e. W3D_UpdateTexImage
+
+
+@endnode
+
+@node "Indices" "Warp3D_Devel/Indices"
+@prev "Indirect Rendering"
+@toc "Main"
+
+Indices
+*******
+
+
+ @{" Concept Index      " link "Concept Index"}  Index of concepts
+ @{" Function Index     " link "Function Index"}  Index of functions
+ @{" Type Index         " link "Type Index"}  Index of data-types
+
+
+@endnode
+
+@node "Concept Index" "Warp3D_Devel/Concept Index"
+@next "Function Index"
+@prev "Indices"
+@toc "Indices"
+
+Concept Index
+*************
+
+@index "Concept Index"
+
+
+
+ @{" Camera Space                             " link "Coordinates"}   Coordinates
+ @{" Context Queries                          " link "Context Queries"}   Context Queries
+ @{" Context States                           " link "Context States"}   Context States
+ @{" Coordinates                              " link "Coordinates"}   Coordinates
+ @{" Creating a Context                       " link "Creating a Context"}   Creating a Context
+ @{" Creating MIP-Maps                        " link "MIP-Mapping"}   MIP-Mapping
+ @{" Creating Textures                        " link "Creating Textures"}   Creating Textures
+ @{" Device Coordinates                       " link "Coordinates"}   Coordinates
+ @{" Eye Space                                " link "Coordinates"}   Coordinates
+ @{" Fogging                                  " link "Fogging"}   Fogging
+ @{" Getting Texture Information              " link "Texture Infos"}   Texture Infos
+ @{" How Textures are represented             " link "Texture Images"}   Texture Images
+ @{" Introduction                             " link "Introduction"}   Introduction
+ @{" Light Coordinates                        " link "Coordinates"}   Coordinates
+ @{" Lines                                    " link "Lines"}   Lines
+ @{" Locking                                  " link "Locking"}   Locking
+ @{" Making a Texture                         " link "Creating Textures"}   Creating Textures
+ @{" MIP-Mapping                              " link "MIP-Mapping"}   MIP-Mapping
+ @{" MIP-Maps <1>                             " link "Textures"}   Textures
+ @{" MIP-Maps                                 " link "What is it"}   What is it
+ @{" Opening the Warp3D library               " link "Opening the library"}   Opening the library
+ @{" Points                                   " link "Points"}   Points
+ @{" Querying Capabilities                    " link "Querying Capabilities"}   Querying Capabilities
+ @{" Screen Cooridnates                       " link "Coordinates"}   Coordinates
+ @{" States                                   " link "Context States"}   Context States
+ @{" Texture <1>                              " link "Textures"}   Textures
+ @{" Texture                                  " link "What is it"}   What is it
+ @{" Texture Creation                         " link "Creating Textures"}   Creating Textures
+ @{" Texture Images                           " link "Texture Images"}   Texture Images
+ @{" Texture Mapping                          " link "What is it"}   What is it
+ @{" Texture Space                            " link "Coordinates"}   Coordinates
+ @{" Texture Storage                          " link "Texture Images"}   Texture Images
+ @{" Triangle Fan                             " link "Triangles"}   Triangles
+ @{" Triangle Strip                           " link "Triangles"}   Triangles
+ @{" Triangles                                " link "Triangles"}   Triangles
+ @{" Using MIP-Maps                           " link "MIP-Mapping"}   MIP-Mapping
+ @{" Using Textures                           " link "Using Textures"}   Using Textures
+ @{" ZBuffering                               " link "ZBuffering"}   ZBuffering
+
+
+@endnode
+
+@node "Function Index" "Warp3D_Devel/Function Index"
+@next "Type Index"
+@prev "Concept Index"
+@toc "Indices"
+
+Function Index
+**************
+
+
+
+ @{" W3D_AllocTexObj <1>                      " link "Textures"}   Textures
+ @{" W3D_AllocTexObj                          " link "Creating Textures"}   Creating Textures
+ @{" W3D_AllocZBuffer                         " link "ZBuffering"}   ZBuffering
+ @{" W3D_CheckDriver                          " link "Opening the library"}   Opening the library
+ @{" W3D_ClearZBuffer                         " link "ZBuffering"}   ZBuffering
+ @{" W3D_CreateContext                        " link "Creating a Context"}   Creating a Context
+ @{" W3D_DrawLine                             " link "Lines"}   Lines
+ @{" W3D_DrawPoint                            " link "Points"}   Points
+ @{" W3D_DrawTriangle                         " link "Triangles"}   Triangles
+ @{" W3D_DrawTriFand                          " link "Triangles"}   Triangles
+ @{" W3D_DrawTriStrip                         " link "Triangles"}   Triangles
+ @{" W3D_Flush                                " link "Indirect Rendering"}   Indirect Rendering
+ @{" W3D_FlushTextures                        " link "Using Textures"}   Using Textures
+ @{" W3D_FreeTexObj <1>                       " link "Textures"}   Textures
+ @{" W3D_FreeTexObj <2>                       " link "Using Textures"}   Using Textures
+ @{" W3D_FreeTexObj                           " link "Creating Textures"}   Creating Textures
+ @{" W3D_FreeZBuffer                          " link "ZBuffering"}   ZBuffering
+ @{" W3D_GetDestFmt                           " link "Opening the display"}   Opening the display
+ @{" W3D_GetDrivers                           " link "Querying Capabilities"}   Querying Capabilities
+ @{" W3D_GetState                             " link "Context States"}   Context States
+ @{" W3D_GetTexFmtInfo                        " link "Texture Infos"}   Texture Infos
+ @{" W3D_LockHardware                         " link "Locking"}   Locking
+ @{" W3D_Query <1>                            " link "Querying Capabilities"}   Querying Capabilities
+ @{" W3D_Query                                " link "Context Queries"}   Context Queries
+ @{" W3D_QueryDriver                          " link "Querying Capabilities"}   Querying Capabilities
+ @{" W3D_ReadZPixel                           " link "ZBuffering"}   ZBuffering
+ @{" W3D_ReadZSpan                            " link "ZBuffering"}   ZBuffering
+ @{" W3D_ReleaseTexture                       " link "Using Textures"}   Using Textures
+ @{" W3D_SetFogParams                         " link "Fogging"}   Fogging
+ @{" W3D_SetState                             " link "Context States"}   Context States
+ @{" W3D_SetZCompareMode                      " link "ZBuffering"}   ZBuffering
+ @{" W3D_UnLockHardware                       " link "Locking"}   Locking
+ @{" W3D_UpdateTexImage                       " link "Using Textures"}   Using Textures
+ @{" W3D_UpdateTexSubImage                    " link "Using Textures"}   Using Textures
+ @{" W3D_UploadTexture <1>                    " link "Using Textures"}   Using Textures
+ @{" W3D_UploadTexture                        " link "Textures"}   Textures
+
+
+@endnode
+
+@node "Type Index" "Warp3D_Devel/Type Index"
+@prev "Function Index"
+@toc "Indices"
+
+Type Index
+**********
+
+
+
+ @{" W3D_ANTI_FULLSCREEN                      " link "Context States"}   Context States
+ @{" W3D_ANTI_LINE                            " link "Context States"}   Context States
+ @{" W3D_ANTI_POINT                           " link "Context States"}   Context States
+ @{" W3D_ANTI_POLYGON                         " link "Context States"}   Context States
+ @{" W3D_AUTOTEXMANAGEMENT                    " link "Context States"}   Context States
+ @{" W3D_BLENDING                             " link "Context States"}   Context States
+ @{" W3D_Context <1>                          " link "Creating a Context"}   Creating a Context
+ @{" W3D_Context                              " link "Context Queries"}   Context Queries
+ @{" W3D_DITHERING                            " link "Context States"}   Context States
+ @{" W3D_FOGGING                              " link "Context States"}   Context States
+ @{" W3D_GOURAUD                              " link "Context States"}   Context States
+ @{" W3D_LOGICOP                              " link "Context States"}   Context States
+ @{" W3D_PERSPECTIVE                          " link "Context States"}   Context States
+ @{" W3D_STENCILBUFFER                        " link "Context States"}   Context States
+ @{" W3D_SYNCHRON                             " link "Context States"}   Context States
+ @{" W3D_TEXMAPPING                           " link "Context States"}   Context States
+ @{" W3D_Texture <1>                          " link "Creating Textures"}   Creating Textures
+ @{" W3D_Texture <2>                          " link "What is it"}   What is it
+ @{" W3D_Texture                              " link "Textures"}   Textures
+ @{" W3D_ZBUFFER                              " link "Context States"}   Context States
+ @{" W3D_ZBUFFERUPDATE                        " link "Context States"}   Context States
+
+@endnode
+

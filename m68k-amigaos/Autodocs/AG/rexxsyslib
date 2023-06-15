@@ -1,0 +1,591 @@
+@database "rexxsyslib"
+@master "AMIDEV:NDK/Autodocs/rexxsyslib.doc"
+
+@Node Main "rexxsyslib.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" ClearRexxMsg() " Link "ClearRexxMsg()"}
+    @{" CreateArgstring() " Link "CreateArgstring()"}
+    @{" CreateRexxHostPort() " Link "CreateRexxHostPort()"}
+    @{" CreateRexxMsg() " Link "CreateRexxMsg()"}
+    @{" DeleteArgstring() " Link "DeleteArgstring()"}
+    @{" DeleteRexxHostPort() " Link "DeleteRexxHostPort()"}
+    @{" DeleteRexxMsg() " Link "DeleteRexxMsg()"}
+    @{" FillRexxMsg() " Link "FillRexxMsg()"}
+    @{" FreeRexxMsg() " Link "FreeRexxMsg()"}
+    @{" GetRexxBufferFromMsg() " Link "GetRexxBufferFromMsg()"}
+    @{" GetRexxVarFromMsg() " Link "GetRexxVarFromMsg()"}
+    @{" IsRexxMsg() " Link "IsRexxMsg()"}
+    @{" LaunchRexxScript() " Link "LaunchRexxScript()"}
+    @{" LengthArgstring() " Link "LengthArgstring()"}
+    @{" LockRexxBase() " Link "LockRexxBase()"}
+    @{" SetRexxVarFromMsg() " Link "SetRexxVarFromMsg()"}
+    @{" UnlockRexxBase() " Link "UnlockRexxBase()"}
+@EndNode
+
+@Node "ClearRexxMsg()" "rexxsyslib.library/ClearRexxMsg"
+
+@{b}    NAME@{ub}
+	ClearRexxMsg - Releases and clears the argument array in a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83}
+
+@{b}    SYNOPSIS@{ub}
+	ClearRexxMsg(msgptr, count)
+	             A0      D0
+
+	VOID ClearRexxMsg(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *,ULONG)
+
+@{b}    FUNCTION@{ub}
+	This function will @{"DeleteArgstring()" Link "DeleteArgstring()"} one or more argstrings from
+	the @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} and clear the slot.  The count is used to select the
+	number of slots to clear.
+
+@{b}    INPUTS@{ub}
+	msgptr - A pointer to a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83}
+	count - The number of slots to be cleared.  The number can be from
+	        1 to 16.  (There are 16 slots)
+
+@{b}    RESULTS@{ub}
+	All of the slots in the given count will be cleared and the argstring
+	will have been released.
+
+@{b}    SEE ALSO@{ub}
+	@{"FillRexxMsg()" Link "FillRexxMsg()"}, @{"DeleteRexxMsg()" Link "DeleteRexxMsg()"}, @{"DeleteArgstring()" Link "DeleteArgstring()"}, @{"CreateArgstring()" Link "CreateArgstring()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "CreateArgstring()" "rexxsyslib.library/CreateArgstring"
+
+@{b}    NAME@{ub}
+	CreateArgstring - Create an argument string structure
+
+@{b}    SYNOPSIS@{ub}
+	argstr = CreateArgstring(string, length)
+	D0,A0                    A0      D0
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *CreateArgstring(UBYTE *, ULONG);
+
+@{b}    FUNCTION@{ub}
+	Allocates a @{"RexxArg" Link "INCLUDE:rexx/storage.h/Main" 71} structure and copies the supplied string into it.
+	The returned pointer points at the string part of the structure
+	and can be treated like an ordinary string pointer.  (However, care
+	must be taken that you do not change the string)
+
+@{b}    INPUTS@{ub}
+	string - A pointer at your input string
+	length - The number of bytes of your input string you wish copied.
+	         (NOTE:  You are limited to 65,535 byte strings)
+
+@{b}    RESULTS@{ub}
+	argstr - A pointer to the argument string.  The results are returned
+	         in both A0 and D0.  You should always check the result
+	         as an allocation failure would cause an error.
+
+@{b}    SEE ALSO@{ub}
+	@{"DeleteArgstring()" Link "DeleteArgstring()"}, @{"LengthArgstring()" Link "LengthArgstring()"}, ClearRessMsg(), @{"FillRexxMsg()" Link "FillRexxMsg()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "CreateRexxHostPort()" "rexxsyslib.library/CreateRexxHostPort"
+
+@{b}    NAME@{ub}
+	CreateRexxHostPort - Create a port for an ARexx host (V45)
+
+@{b}    SYNOPSIS@{ub}
+	port = CreateRexxHostPort(basename)
+	                            A0
+
+	struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *CreateRexxHostPort(const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *)
+
+@{b}    FUNCTION@{ub}
+	Creates a unique port for an ARexx host.
+
+@{b}    INPUTS@{ub}
+	basename - Name basis for the port. The final name of the port is
+	           created by appending a period to the name, followed by
+	           a number to make the port name unique.
+
+@{b}    RESULTS@{ub}
+	result - a pointer to the port created, or @{"NULL" Link "rexxsupport/NULL"} for failure
+
+@{b}    NOTES@{ub}
+	All resources required for the port, including memory and the
+	signal bit are allocated by this function. To release the port
+	and all associated resources, use @{"DeleteRexxHostPort()" Link "DeleteRexxHostPort()"}.
+
+@{b}    SEE ALSO@{ub}
+	@{"DeleteRexxHostPort()" Link "DeleteRexxHostPort()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "CreateRexxMsg()" "rexxsyslib.library/CreateRexxMsg"
+
+@{b}    NAME@{ub}
+	CreateRexxMsg - Create an ARexx message structure
+
+@{b}    SYNOPSIS@{ub}
+	rexxmsg = CreateRexxMsg(port, extension, host)
+	D0,A0                   A0    A1         A2
+
+	struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *CreateRexxMsg(struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *, @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *, @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *)
+
+@{b}    FUNCTION@{ub}
+	This functions allocates an ARexx message packet.  The @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83}
+	consists of a standard EXEC message structure extended to include
+	the ARexx specific information.
+
+@{b}    INPUTS@{ub}
+	port - A pointer to a public or private message port.  This *MUST*
+	       be a valid port as this is where the message will be replied.
+
+	extension - A pointer to a @{"NULL" Link "rexxsupport/NULL"} terminated string that is to be used
+	            as the default extension for the REXX scripts.  If this
+	            is @{"NULL" Link "rexxsupport/NULL"}, the default is "REXX"
+
+	host - A pointer to a @{"NULL" Link "rexxsupport/NULL"} terminated string that is to be used
+	       as the default host port.  The name must be the same as the
+	       name of the public message port that is to be the default host.
+	       If this field is @{"NULL" Link "rexxsupport/NULL"}, the default is REXX.
+
+@{b}    RESULTS@{ub}
+	rexxmsg - A @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} structure
+
+@{b}    NOTES@{ub}
+	The extension and host strings must remain valid for as long as the
+	@{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} exists as only the pointer to those strings are stored.
+
+@{b}    SEE ALSO@{ub}
+	@{"DeleteRexxMsg()" Link "DeleteRexxMsg()"}, @{"ClearRexxMsg()" Link "ClearRexxMsg()"}, @{"FillRexxMsg()" Link "FillRexxMsg()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "DeleteArgstring()" "rexxsyslib.library/DeleteArgstring"
+
+@{b}    NAME@{ub}
+	DeleteArgstring - Releases an Argstring created by @{"CreateArgstring()" Link "CreateArgstring()"}
+
+@{b}    SYNOPSIS@{ub}
+	DeleteArgstring(argstring)
+	                A0
+
+	VOID DeleteArgstring(UBYTE *)
+
+@{b}    FUNCTION@{ub}
+	Releases an argstring.  The argstring must have been created by ARexx
+
+@{b}    INPUTS@{ub}
+	argstring - A pointer to the string buffer of an argstring.
+
+@{b}    RESULTS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"CreateArgstring()" Link "CreateArgstring()"}, @{"ClearRexxMsg()" Link "ClearRexxMsg()"}, @{"FillRexxMsg()" Link "FillRexxMsg()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "DeleteRexxHostPort()" "rexxsyslib.library/DeleteRexxHostPort"
+
+@{b}    NAME@{ub}
+	DeleteRexxHostPort - Delete a port of an ARexx host (V45)
+
+@{b}    SYNOPSIS@{ub}
+	DeleteRexxHostPort(port)
+	               A0
+
+	VOID DeleteRexxHostPort(struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *)
+
+@{b}    FUNCTION@{ub}
+	Deletes a port created by @{"CreateRexxHostPort()" Link "CreateRexxHostPort()"}
+
+@{b}    INPUTS@{ub}
+	port   -   Pointer to the port to be deleted. Passing @{"NULL" Link "rexxsupport/NULL"}
+	           is a no-op.
+
+@{b}    NOTES@{ub}
+	The port passed in must have been created by
+	@{"CreateRexxHostPort()" Link "CreateRexxHostPort()"}
+
+@{b}    SEE ALSO@{ub}
+	@{"CreateRexxHostPort()" Link "CreateRexxHostPort()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "DeleteRexxMsg()" "rexxsyslib.library/DeleteRexxMsg"
+
+@{b}    NAME@{ub}
+	DeleteRexxMsg - Releases a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} structure created by @{"CreateRexxMsg()" Link "CreateRexxMsg()"}
+
+@{b}    SYNOPSIS@{ub}
+	DeleteRexxMsg(packet)
+	              A0
+
+	VOID DeleteRexxMsg(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *)
+
+@{b}    FUNCTION@{ub}
+	The function releases an ARexx message packet that was allocated
+	with @{"CreateRexxMsg()" Link "CreateRexxMsg()"}.  Any argument fields in the @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} structure
+	should be cleared before calling this function as it does
+	not release them for you.
+
+@{b}    INPUTS@{ub}
+	packet - A pointer to a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} structure allocated by @{"CreateRexxMsg()" Link "CreateRexxMsg()"}
+
+@{b}    EXAMPLE@{ub}
+	if (rmsg=CreateRexxMsg(myport,"myapp","MYAPP_PORT"))
+	{
+		/* Do my think with rmsg */
+		ClearRexxMsg(rmsg,16);	/* We may not want to clear all 16 */
+		DeleteRexxMsg(rmsg);
+	}
+
+@{b}    SEE ALSO@{ub}
+	@{"CreateRexxMsg()" Link "CreateRexxMsg()"}, @{"ClearRexxMsg()" Link "ClearRexxMsg()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "FillRexxMsg()" "rexxsyslib.library/FillRexxMsg"
+
+@{b}    NAME@{ub}
+	FillRexxMsg - Fill the argument strings as needed
+
+@{b}    SYNOPSIS@{ub}
+	result = FillRexxMsg(msgptr, count, mask)
+	D0                   A0      D0     D1 [0:15]
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} FillRexxMsg(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *,ULONG,ULONG)
+
+@{b}    FUNCTION@{ub}
+	This function will convert and install up to 16 argument strings into
+	a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} structure.  The message packet's argument fields must be
+	set to either a pointer to a @{"NULL" Link "rexxsupport/NULL"} terminated string or an integer value
+	The mask, bits 0 to 15, correspond to the type of value is stored
+	in the argument slot.  If the bit is cleared, the argument is a
+	string pointer; if the bit is set, the argument is an integer.
+
+@{b}    INPUTS@{ub}
+	msgptr - Pointer to a @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} (allocated via CreateRexxMsg)
+	count - The number of argument slots to fill in.  This number should
+	        be from 1 to 16.
+
+	mask - A bit mask corresponding to the 16 fields that is used to
+	       determine the type of the field.
+
+@{b}    RESULTS@{ub}
+	result - A boolean.  If it is TRUE, the call worked.  If it is false,
+	         some allocation did not work.  All argstrings that were
+	         created will be released.
+
+@{b}    SEE ALSO@{ub}
+	@{"ClearRexxMsg()" Link "ClearRexxMsg()"}, @{"CreateArgstring()" Link "CreateArgstring()"}, @{"DeleteArgstring()" Link "DeleteArgstring()"}, @{"CreateRexxMsg()" Link "CreateRexxMsg()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "FreeRexxMsg()" "rexxsyslib.library/FreeRexxMsg"
+
+@{b}    NAME                                                        (V45)@{ub}
+	FreeRexxMsg - dispose a rexx message of @{"LaunchRexxScript" Link "rexxsyslib/LaunchRexxScript()"}
+
+@{b}    SYNOPSIS@{ub}
+	FreeRexxMsg(rexxmsg);
+	              A0
+
+	void FreeRexxMsg(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *);
+
+@{b}    FUNCTION@{ub}
+	This function disposes a rexx message and its arguments formally
+	created by LaunchRexxMsg(). It does not shut down the rm_Stdin and
+	rm_Stdout streams of this message, nor does it check for the result
+	codes. It disposes all the rexx arguments, though.
+
+@{b}    INPUTS@{ub}
+	rexxmsg - a struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} that has been created by LaunchRexxMsg()
+	before. Should not be used for other messages.
+
+@{b}    RESULTS@{ub}
+
+@{b}    NOTES@{ub}
+	Do not call this function on a message that did not yet return
+	on your reply port or REXX may crash.
+
+@{b}    SEE ALSO@{ub}
+	@{"LaunchRexxScript()" Link "LaunchRexxScript()"}, @{"ClearRexxMsg()" Link "ClearRexxMsg()"}, @{"DeleteRexxMsg()" Link "DeleteRexxMsg()"},
+	@{"rexx/storage.h" Link "INCLUDE:rexx/storage.h/Main" 0}
+@EndNode
+
+@Node "GetRexxBufferFromMsg()" "rexxsyslib.library/GetRexxBufferFromMsgexxsyslib.library/GetRexxBufferFromMsg"
+
+@{b}    NAME@{ub}
+	GetRexxBufferFromMsg - retrieve the value of a Rexx variable (V47)
+
+@{b}    SYNOPSIS@{ub}
+	error = GetRexxBufferFromMsg(var,msg,out,size)
+	                             A0  A2  A1  D0
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} GetRexxBufferFromMsg(const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *var,const struct @{"Message" Link "INCLUDE:exec/ports.h/Main" 45} *msg,
+	                          @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *buffer)
+
+@{b}    FUNCTION@{ub}
+	Retrieves the value of an ARexx variable whose name is given as
+	first argument, and places its length into the output buffer of
+	the given size.
+
+@{b}    INPUTS@{ub}
+	var    -   Name of the variable to be read. A stem variable is fine.
+	msg    -   Pointer to a rexx message received by this program defining
+	           the execution environment from which the variable is read.
+	out    -   buffer to hold the value of the variable.
+	size   -   size of the buffer in characters (including NUL)
+
+@{b}    RESULTS@{ub}
+	error  -   an error code from @{"<rexx/errors.h>" Link "INCLUDE:rexx/errors.h/Main" 0} or 0 for success.
+
+@{b}    NOTES@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"GetRexxVarFromMsg()" Link "GetRexxVarFromMsg()"}, @{"SetRexxVarFromMsg()" Link "SetRexxVarFromMsg()"},
+	@{"GetRexxVar()" Link "amiga_lib/GetRexxVar()"} in amiga.lib
+
+@{b}    BUGS@{ub}
+	This function only supports NUL-terminated values (which is,
+	however, generally the case).
+@EndNode
+
+@Node "GetRexxVarFromMsg()" "rexxsyslib.library/GetRexxVarFromMsg"
+
+@{b}    NAME@{ub}
+	GetRexxVarFromMsg - retrieve the value of a Rexx variable (V45)
+
+@{b}    SYNOPSIS@{ub}
+	error = GetRexxVarFromMsg(var,msg,out)
+	                          A0  A2  A1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} GetRexxVarFromMsg(const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *var,const struct @{"Message" Link "INCLUDE:exec/ports.h/Main" 45} *msg,
+	                       @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *buffer)
+
+@{b}    FUNCTION@{ub}
+	Retrieves the value of an ARexx variable whose name is given as
+	first argument, and places its length into the output buffer.
+
+@{b}    INPUTS@{ub}
+	var    -   Name of the variable to be read. A stem variable is fine.
+	msg    -   Pointer to a rexx message received by this program defining
+	           the execution environment from which the variable is read.
+	out    -   buffer of 256 characters to hold the value of the variable.
+
+@{b}    RESULTS@{ub}
+	error  -   an error code from @{"<rexx/errors.h>" Link "INCLUDE:rexx/errors.h/Main" 0} or 0 for success.
+
+@{b}    NOTES@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"GetRexxBufferFromMsg()" Link "GetRexxBufferFromMsg()"}, @{"SetRexxVarFromMsg()" Link "SetRexxVarFromMsg()"},
+	@{"GetRexxVar()" Link "amiga_lib/GetRexxVar()"} in amiga.lib
+
+@{b}    BUGS@{ub}
+	This function always assumes that the target buffer is at least
+	256 characters long. Reading longer variables will create an
+	error. Furthermore, this function only supports NUL-terminated
+	values (which is generally the case, though).
+@EndNode
+
+@Node "IsRexxMsg()" "rexxsyslib.library/IsRexxMsg"
+
+@{b}    NAME@{ub}
+	IsRexxMsg - Function to determine if a message came from ARexx
+
+@{b}    SYNOPSIS@{ub}
+	result = IsRexxMsg(msgptr)
+	D0                 A0
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} IsRexxMsg(struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *)
+
+@{b}    FUNCTION@{ub}
+	This function can be used to determine if a message came from an
+	ARexx program.
+
+@{b}    INPUTS@{ub}
+	msgptr - A pointer to the suspected @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83}.
+
+@{b}    RESULTS@{ub}
+	result - A boolean:  TRUE if it is an ARexx message, FALSE if not.
+
+@{b}    SEE ALSO@{ub}
+	@{"CreateRexxMsg()" Link "CreateRexxMsg()"}
+
+@{b}    BUGS@{ub}
+	This function may not be fully sufficient to check whether a message
+	really came from Rexx. For a more careful check, use the
+	CHECKREXXMSG() macro from @{"<rexx/storage.h>" Link "INCLUDE:rexx/storage.h/Main" 0}
+@EndNode
+
+@Node "LaunchRexxScript()" "rexxsyslib.library/LaunchRexxScript"
+
+@{b}    NAME@{ub}
+	LaunchRexxScript - run a Rexx script from a Rexx host (V45)
+
+@{b}    SYNOPSIS@{ub}
+	msg = LaunchRexxScript(script,port,suffix,in,out)
+	                        A0    A1   A2     D1 D2
+
+	struct @{"RexxMsg" Link "INCLUDE:rexx/storage.h/Main" 83} *LaunchRexxScript(const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *script,
+	                                 const struct @{"MsgPort" Link "INCLUDE:exec/ports.h/Main" 26} *port,
+	                                 const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *suffix,
+	                                 @{"BPTR" Link "INCLUDE:dos/dos.h/Main" 131} in,@{"BPTR" Link "INCLUDE:dos/dos.h/Main" 131} out)
+
+@{b}    FUNCTION@{ub}
+	Runs a rexx script from a rexx host.
+
+@{b}    INPUTS@{ub}
+	script -   The script along with all of its arguments, separated by spaces.
+	port   -   A private or public port the created message will be replied to
+	           when script execution terminates.
+	suffix -   file name suffix of the script. If @{"NULL" Link "rexxsupport/NULL"}, then "REXX" is assumed.
+	in     -   input file handle supplied to the script.
+	out    -   output file handle supplied to the script.
+
+@{b}    RESULTS@{ub}
+	msg    -   a message that has already been send to the Rexx master for
+	           execution. If this message is retrieved on the port provided
+	           as argument, then execution is complete.
+
+@{b}    NOTES@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"CreateRexxMsg()" Link "CreateRexxMsg()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "LengthArgstring()" "rexxsyslib.library/LengthArgstring"
+
+@{b}    NAME@{ub}
+	LengthArgstring - Returns the length value stored in the argstring
+
+@{b}    SYNOPSIS@{ub}
+	length = LengthArgstring(argstring)
+	D0                       A0
+
+	ULONG LengthArgstring(UBYTE *)
+
+@{b}    FUNCTION@{ub}
+	This function returns the length value stored in the argstring.
+	This is *NOT* the same as doing a strlen() type call on the
+	argstring.  (Note that argstrings may contain NULLs)
+
+@{b}    INPUTS@{ub}
+	argstring - A pointer to an argstring that was created by ARexx
+
+@{b}    RESULTS@{ub}
+	length - The length of the argstring.
+
+@{b}    EXAMPLE@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"CreateArgstring()" Link "CreateArgstring()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "LockRexxBase()" "rexxsyslib.library/LockRexxBase"
+
+@{b}    NAME@{ub}
+	LockRexxBase - Obtain a semaphore lock on the RexxBase structure
+
+@{b}    SYNOPSIS@{ub}
+	LockRexxBase(resource)
+	             D0
+
+	VOID LockRexxBase(ULONG)
+
+@{b}    FUNCTION@{ub}
+	Secures the specified resource in the ARexx library base.
+
+@{b}    INPUTS@{ub}
+	resource - A manifest constant defining which resource to lock.
+	           ZERO locks all resources.
+
+@{b}    NOTES@{ub}
+	Currently, only ZERO resource type is available.  You *MUST* make
+	sure that you do not call this function with an undefined value
+	as it may become defined at some future date and cause unwanted
+	behavior.
+
+@{b}    SEE ALSO@{ub}
+	@{"UnlockRexxBase()" Link "UnlockRexxBase()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+
+@Node "SetRexxVarFromMsg()" "rexxsyslib.library/SetRexxVarFromMsg"
+
+@{b}    NAME@{ub}
+	SetRexxVarFromMsg - set the value of a Rexx variable (V45)
+
+@{b}    SYNOPSIS@{ub}
+	error = SetRexxVarFromMsg(var,msg,value)
+	                          A0  A2  A1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} SetRexxVarFromMsg(const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *var,const struct @{"Message" Link "INCLUDE:exec/ports.h/Main" 45} *msg,
+	                       const @{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} *value)
+
+@{b}    FUNCTION@{ub}
+	Sets an ARexx variable whose name is given as first argument to the
+	value given as third argument.
+
+@{b}    INPUTS@{ub}
+	var    -   Name of the variable to be set. A stem variable is fine.
+	msg    -   Pointer to a rexx message received by this program defining
+	           the execution environment from which the variable is read.
+	out    -   NUL-terminated string defining the value to be set.
+
+@{b}    RESULTS@{ub}
+	error  -   an error code from @{"<rexx/errors.h>" Link "INCLUDE:rexx/errors.h/Main" 0} or 0 for success.
+
+@{b}    NOTES@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"GetRexxBufferFromMsg()" Link "GetRexxBufferFromMsg()"}, @{"GetRexxVarFromMsg()" Link "GetRexxVarFromMsg()"},
+	@{"SetRexxVar()" Link "amiga_lib/SetRexxVar()"} in amiga.lib
+
+@{b}    BUGS@{ub}
+	This function only supports NUL-terminated values.
+@EndNode
+
+@Node "UnlockRexxBase()" "rexxsyslib.library/UnlockRexxBase"
+
+@{b}    NAME@{ub}
+	UnlockRexxBase - Release a semaphore lock on the RexxBase structure
+
+@{b}    SYNOPSIS@{ub}
+	UnlockRexxBase(resource)
+	               D0
+
+	VOID UnlockRexxBase(ULONG)
+
+@{b}    FUNCTION@{ub}
+	Releases the specified resource in the ARexx library base.
+
+@{b}    INPUTS@{ub}
+	resource - A manifest constant defining which resource to unlock.
+	           This value *MUST* match the value used in the matching
+	           @{"LockRexxBase()" Link "LockRexxBase()"} call.
+
+@{b}    NOTES@{ub}
+	Currently, only ZERO resource type is available.  You *MUST* make
+	sure that you do not call this function with an undefined value
+	as it may become defined at some future date and cause unwanted
+	behavior.  You *MUST* make sure that you only call this function
+	after a matching call to @{"LockRexxBase()" Link "LockRexxBase()"} was made.
+
+@{b}    SEE ALSO@{ub}
+	@{"LockRexxBase()" Link "LockRexxBase()"}
+
+@{b}    BUGS@{ub}
+@EndNode
+

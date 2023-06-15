@@ -1,0 +1,234 @@
+@database "datebrowser_gc"
+@master "AMIDEV:NDK/Autodocs/datebrowser_gc.doc"
+
+@Node Main "datebrowser_gc.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" DATEBROWSER_GetClass() " Link "DATEBROWSER_GetClass()"}
+    @{" JulianLeapYear() " Link "JulianLeapYear()"}
+    @{" JulianMonthDays() " Link "JulianMonthDays()"}
+    @{" JulianWeekDay() " Link "JulianWeekDay()"}
+@EndNode
+
+@Node "--datasheet--()" "datebrowser.gadget/--datasheet--"
+
+@{b}    NAME@{ub}
+        datebrowser.gadget -- Monthly calendar gadget
+
+@{b}    SUPERCLASS@{ub}
+        gadgetclass
+
+@{b}    DESCRIPTION@{ub}
+        The datebrowser gadget class is used to display a month-based array
+        of days in the visual style of traditional calendarss.
+
+@{b}    METHODS@{ub}
+        OM_NEW--Create the gadget.  Passed to superclass, then @{"OM_SET" Link "tabs_gc/OM_SET"}.
+
+        OM_SET--Set object attributes.  Passed to superclass first.
+
+        OM_UPDATE--Set object notification attributes.  Passed to superclass
+            first.
+
+        GM_LAYOUT--Calculate relative gadget coordinates.  Passed to
+            superclass first.  Requires V39 or beyond of Intuition.
+
+        GM_RENDER--Renders the gadget imagry.  Overrides the superclass.
+
+        GM_HITTEST--Determines if mouse is within the gadget rectangle.
+            Overrides the superclass.
+
+        GM_GOACTIVE--Handles activation, mutual-exclusion and date-select.
+            Overrides the superclass.
+
+        GM_HANDLEINPUT--Handles input events once active. Overrides the
+            superclass.
+
+        GM_GOINACTIVE--Deselects the button.  Overrides the superclass.
+
+        GM_DOMAIN--Obtain the minimum, nominal and maximum size of a
+            datebrowser object.
+
+        GM_KEYACTIVE--private method for handling keyboard control
+            activation.
+
+        GM_KEYINACTIVE--private method for handling keyboard control
+            termination.
+
+        GM_CLIPRECT--method needed to use this gadget in virtual groups. New
+            for v45.
+
+        All other methods are passed to the superclass, including OM_DISPOSE.
+
+@{b}    ATTRIBUTES@{ub}
+        GA_Disabled (BOOL) -- Determines whether the datebrowser is disabled
+            or not.  Changing disable state will invoke @{"GM_RENDER" Link "tabs_gc/GM_RENDER"}.  A
+            disabled datebrowser's border and label are all rendered in
+            SHADOWPEN and then dusted in a ghosting pattern that is rendered
+            in SHADOWPEN.  Defaults to FALSE.
+
+        GA_TextAttr (struct @{"TextAttr" Link "INCLUDE:graphics/text.h/Main" 63} *) -- @{"Text" Link "graphics/Text()"} attribute for the font to
+            use for the labels.
+
+        GA_ReadOnly (BOOL) -- Indicate whether datebrowser has selectable
+            days or is for display only.  Defaults to FALSE (selectable
+            days).
+
+        DATEBROWSER_Day (UWORD) -- Set the current day of the month. Defaults
+            to 1. Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_UPDATE,OM_GET).
+
+        DATEBROWSER_Month (UWORD) -- Set the current month of the year.
+            Defaults to 1. Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_UPDATE,OM_GET).
+
+        DATEBROWSER_Year (LONG) -- Calendar year to display. Defaults to
+            1978. Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_UPDATE,OM_GET).
+
+        DATEBROWSER_SelectedDays (ULONG) -- A 32 bit value, each bit
+            represents a day of the month.  If set, the corresponding
+            calendar day is selected. This is useful for multi-select mode to
+            find out what days are selected via one packed value.
+            Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_UPDATE,OM_GET).
+
+        DATEBROWSER_FirstWDay (LONG) -- Gets the first day of the week. 0 is
+            Sunday. Applicability is (OM_GET).
+
+        DATEBROWSER_NumDays (UWORD) -- Returns the number of days in the
+            currently set month. A better solution may be using datebrowser's
+            public julian date functions.
+            Applicability is (OM_GET).
+
+        DATEBROWSER_WeekDay (UWORD) -- Returns the day of the week for the
+            currently selected 'DATEBROWSER_Day'. A better solution may be
+            using datebrowser's public julian date functions.
+            Applicability is (OM_GET).
+
+        DATEBROWSER_ShowTitle (BOOL) -- Enables display of the week-day title
+            bar. NOTE: If turned on after layout group creation, you must be
+            sure to @{"FlushLayoutDomainCache()" Link "layout_gc/FlushLayoutDomainCache()"} and @{"RethinkDisplay()" Link "intuition/RethinkDisplay()"}, and
+            potentionally increase the window size to accomodate the possibly
+            larger layout. Simply toggling iconify on/off, or close & open of
+            the window class will archieve similiar results.
+            Applicability is (OM_NEW,OM_SET).
+
+        DATEBROWSR_MultiSelect (BOOL) -- Enables multi-selection of calendar
+            days. Applicability is (OM_NEW,OM_SET).
+
+        DATEBROWSER_DayTitles (STRPTR *) -- Pointer to an array of @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}
+            containing day titles. Defaults to non-localized internal "Mon",
+            "Tue", etc., if locale.library cannot be opened.
+            Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_UPDATE,OM_GET).
+
+@{b}    NOTES@{ub}
+        Relative support requires V39 and beyond of Intuition.
+
+@EndNode
+
+@Node "DATEBROWSER_GetClass()" "datebrowser_gc/DATEBROWSER_GetClass"
+
+@{b}    NAME@{ub}
+        DATEBROWSER_GetClass -- Gets the pointer to the datebrowser class.
+
+@{b}    SYNOPSIS@{ub}
+        datebrowser_class = DATEBROWSER_GetClass();
+        D0
+
+        Class * DATEBROWSER_GetClass(VOID);
+
+@{b}    FUNCTION@{ub}
+        Obtains the pointer to the datebrowser gadget class for use with
+        @{"NewObject()" Link "intuition/NewObject()"}.  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+@{b}    INPUTS@{ub}
+        Nothing.
+
+@{b}    RESULT@{ub}
+        datebrowser_class - Pointer to the datebrowser gadget class.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "JulianLeapYear()" "datebrowser_gc/JulianLeapYear"
+
+@{b}    NAME@{ub}
+        JulianLeapYear -- Checks for a leap-year.
+
+@{b}    SYNOPSIS@{ub}
+        isleapyear = JulianLeapYear(year);
+        D0                          D0
+
+        @{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} JulianLeapYear(LONG);
+
+@{b}    FUNCTION@{ub}
+        This function will return TRUE if the given year is a leap year.
+
+@{b}    INPUTS@{ub}
+        year -- the year.
+
+@{b}    RESULT@{ub}
+        days -- TRUE when the given year is a leap-year, otherwise FALSE.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "JulianMonthDays()" "datebrowser_gc/JulianMonthDays"
+
+@{b}    NAME@{ub}
+        JulianMonthDays -- Returns the length of a month.
+
+@{b}    SYNOPSIS@{ub}
+        days = JulianMonthDays(month, year);
+        D0                     D0     D1
+
+        WORD JulianMonthDays(WORD, LONG);
+
+@{b}    FUNCTION@{ub}
+        Based on the input parameters "month" and "year", this
+        function returns the length of the given month.
+
+@{b}    INPUTS@{ub}
+        month -- the month.
+        year -- the year.
+
+@{b}    RESULT@{ub}
+        days -- the length of the given month.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+
+@Node "JulianWeekDay()" "datebrowser_gc/JulianWeekDay"
+
+@{b}    NAME@{ub}
+        JulianWeekDay -- Checks for leap-year.
+
+@{b}    SYNOPSIS@{ub}
+        wday = JulianWeekDay(day,month,year);
+        D0                   D0  D1    D2
+
+        WORD JulianWeekDay(WORD,WORD,LONG);
+
+@{b}    FUNCTION@{ub}
+        Return the weekday of the given date.
+
+@{b}    INPUTS@{ub}
+        day -- the day (1-31).
+        month -- the month (1-12).
+        year -- the year.
+
+@{b}    RESULT@{ub}
+        wday -- the weekday of the given date, with 0 being Sunday and
+           6 being Saturday.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+

@@ -1,0 +1,97 @@
+TABLE OF CONTENTS
+
+text.datatype/text.datatype
+text.datatype/text.datatype                       text.datatype/text.datatype
+
+    NAME
+	text.datatype -- Root class type to display textual data.
+
+    FUNCTION
+	The text.datatype is the super-class for any text related classes.
+
+    METHODS
+	OM_NEW -- Create a new text object.
+
+	OM_UPDATE -- adjusts attributes of the object. The method is of type
+	    struct opSet *, and the following attributes are currently
+	    supported:
+	    DTA_TopVert:	line number of the topmost line
+	    DTA_TopHoriz:	column number of the first visible column
+	    DTA_VisibleVert:	number of visible lines 
+	    DTA_VisibleHoriz:	numer of visible columns
+	    DTA_Sync:		if the tag value is non-zero, re-renders
+	    			the contents
+	    TDTA_Buffer:	pointer to an AllocVec()'d buffer containing
+	    			the text to show. Lifetime managenemt of the
+				buffer is within the datatype.
+	    TDTA_BufferLen:	size of the buffer
+	    TDTA_WordWrap:	currently ignored and reserved.
+	    TDTA_WordDelim:	Pointer to a NUL-terminated string that
+	    			contains all ISO-Latin-1 characters that
+				delimit words. Used for word-selection and
+				clipboard handling. By default, this string
+				is "\t *-,()<>[];\""
+	    
+	OM_SET -- identical to OM_UPDATE.
+
+	OM_GET -- retrieves attributes from an object. In addition to the
+	    attributes supported by OM_SET, the following attributes can
+	    also be retrieved:
+
+	    DTA_TextAttr:	Pointer to a struct TTextAttr that defines
+	    			the font used for rendering the text.
+	    DTA_TextFont:	Pointer to a struct TextFont used for
+	    			rendering.
+	    DTA_ObjName:	Name of the file or source that is currently
+	    			being displayed.
+	    DTA_Methods:	Pointer to an array of methods supported by
+	    			the datatype.
+	    DTA_TriggerMethods:	Pointer to an array of struct DTMethods that
+	    			indicates which additional trigger methods
+				are supported by the object, and are potentially
+				shown in a menu, e.g. in MultiView. Currently,
+				the object supports STM_SEARCH, STM_SEARCH_NEXT
+				and STM_SEARCH_PREV.
+
+	GM_RENDER -- re-render the contents of the text window.
+
+	DTM_PROCLAYOUT -- Layout (remap) the text in the context of the caller.
+
+	GM_LAYOUT -- identical to DTM_PROCLAYOUT
+
+	GM_GOACTIVE -- tell the object to become active.
+
+	GM_HANDLEINPUT -- processes user interaction.
+
+	DTM_CLEARSELECTED -- resets the selected text region.
+
+	DTM_COPY -- copies the selected text areas into the clipboard.
+
+	DTM_WRITE -- writes the contents into a file or a clipboard. The
+	    message is of type "struct dtWrite *". If dtw_Mode is DTWM_RAW
+	    and dtw_FileHandle is set, the text is written "as is" into the
+	    given file.
+	    If dtw_Mode is DTWM_IFF, the file is written as IFF TEXT into
+	    the file given in dtw_FileHandle.
+
+	DTM_PRINT -- print the text, the method is of type "struct dtPrint *"
+	    and dtp_PIO points to an IORequest over which the text is written.
+
+	DTM_REMOVEDTOBJECT -- removes the seach window GUI.
+
+	DTM_TRIGGER -- triggers user-initiated functions on the object. The
+	    method is of type struct dtTrigger *, and dtt_Function is one
+	    of the following:
+	    STM_ACTIVATE_FIELD,STM_RETRACE,STM_SEARCH: Shows the search window,
+	    allowing the user to enter a string to be searched.
+	    STM_PREV_FIELD,STM_BROWSE_PREV,STM_SEARCH_PREV: Searches the
+	    previous occurance of the user provided string.
+	    STM_NEXT_FIELD,STM_BROWSE_NEXT,STM_SEARCH_NEXT: Searches the
+	    next occurance of the user provided string.
+
+	OM_DISPOSE -- Dispose the object.
+
+    SEE ALSO
+	<datatypes/textclass.h>
+
+

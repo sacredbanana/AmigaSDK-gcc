@@ -1,0 +1,1184 @@
+@database "memory"
+@master "VIF:Mu/MuManual/Autodocs/memory.doc"
+
+@Node Main "memory.doc"
+    @{" --Background-- " Link "--Background--"}
+    @{" NewAdrSpaceA() " Link "NewAdrSpaceA()"}
+    @{" DeleteAdrSpace() " Link "DeleteAdrSpace()"}
+    @{" MMUContextOf() " Link "MMUContextOf()"}
+    @{" AdrSpaceOfCtx() " Link "AdrSpaceOfCtx()"}
+    @{" NewVMPoolA() " Link "NewVMPoolA()"}
+    @{" DeleteVMPool() " Link "DeleteVMPool()"}
+    @{" LockMemory() " Link "LockMemory()"}
+    @{" UnlockMemory() " Link "UnlockMemory()"}
+    @{" HoldMemory() " Link "HoldMemory()"}
+    @{" UnholdMemory() " Link "UnholdMemory()"}
+    @{" SwapMemoryOut() " Link "SwapMemoryOut()"}
+    @{" AllocVMemory() " Link "AllocVMemory()"}
+    @{" FreeVMemory() " Link "FreeVMemory()"}
+    @{" PoolVBase() " Link "PoolVBase()"}
+    @{" PoolVSize() " Link "PoolVSize()"}
+    @{" EnterAddressSpace() " Link "EnterAddressSpace()"}
+    @{" LeaveAddressSpace() " Link "LeaveAddressSpace()"}
+    @{" CurrentAddressSpace() " Link "CurrentAddressSpace()"}
+@EndNode
+
+@Node "--Background--" "memory.library/--Background--"
+
+@{b}    PURPOSE@{ub}
+	The memory.library provides functions for memory allocation and
+	deallocation that are superior to those of the exec.library.
+
+	The functions of this library provide so called "virtual memory" by using 
+	the mmu.library, memory that can be swapped to disk transparently to the 
+	application. Hence, applications will be usually able to allocate more 
+	memory than physically available.
+
+	Certain access restrictions arise for memory allocated by the memory.library. 
+	First, you can't access it in Forbid() or Disable() state. Trying to do so
+	may certainly cause a fatal "Guru" of the Bus-Error type. The memory.library
+	does further not allow you to allocate or release memory while in Forbid()
+	or Disable() state, so beware!
+
+	Second, virtual memory cannot be shared amongst different pools. You must 
+	explicitly attach the tasks that should be able to access memory from a given 
+	pool. Thus, you can't use this kind of memory for keeping Os structures since
+	they may be passed to different tasks for further processing. Use the classic
+	AllocMem() for this purpose, it will give you "shared memory" or "shareable
+	memory".
+
+	Third, you MAY NOT access virtual memory in a situation where file I/O would 
+	be impossible. That is, DO NOT access this mem while:
+		- disabling the filing system of the swap partition if you're using
+		  a file based swapping mechanism
+		- making the swapping exec device unaccessible
+		- taking over the hardware
+	The mmu.library will try to detect such situations and will throw a guru 
+	whenever possible. However, if it is not, these situations will result 
+	in a dead-lock! Keep care!
+	
+
+@{b}    OBJECTS:@{ub}
+
+	Two new objects are introduced by the memory library: The "AddressSpace"
+	and the "VMPool". Both objects have no documented structure and should
+	not be touched by your application directly. Similarly to the MMUContext
+	of the mmu.library, these two should be understood as "magic cookies"
+	that have to be passed into the functions of the memory.library.
+
+	The AddressSpace is an extension of the "MMUContext" of the mmu.library;
+	it defines a "meaning" to addresses for all tasks that are part of a
+	certain address space. Hence, a "Task" in the exec sense should be 
+	understood as a "thread" in the sense of Un*x, and an "AddressSpace" as
+	the analogue of a "process" as all tasks that are part of an 
+	"AddressSpace" share common addresses. Tasks must enter and leave 
+	address spaces explicitly by functions provided by this library.
+
+	Each MMUContext can hold *at most one* AddressSpace, not more. In case
+	you want to build a new address space, you are hence strongly encouraged
+	to build a private MMUContext of the "shared" type, see the mmu.library
+	documentation for details. Do not try to attach an address space to the
+	public MMUContext.
+
+	A VMPool can be understood as the analogue of the memory pools of the
+	exec.library. Each AddressSpace can hold as many pools as you need, 
+	each of them with a well-defined set of caching modes and memory 
+	property flags. You may even define a private swapping mechanism on a
+	per-pool basis.
+
+	A VMPool need not to carry memory that is available for allocation 
+	by means of @{"AllocVMemory()" Link "AllocVMemory()"} resp. @{"FreeVMemory()" Link "FreeVMemory()"}. A VMPool can also hold
+	the image of a file which is, as a whole, mirrored in memory. The
+	file contents can then be altered simply by working on the image in 
+	memory, without even requiring to hold the file in memory completely.
+	Swapping will happen automatically and completely transparent to your
+	application. This is similar to the Un*x mmap() feature.
+
+
+	The restriction that virtual memory cannot be accessed during Forbid()
+	or Disable() can be weakened somewhat by the @{"LockMemory/UnlockMemory" Link "memory/UnlockMemory()"}
+	resp. @{"HoldMemory/UnholdMemory" Link "memory/UnholdMemory()"} functions. Where the first pair 
+	guarantees that the addressed memory cannot be flushed out and hence
+	remains valid within Forbid()/Disable(), the second pair even returns
+	a continuous *physical* memory block that can be transfered to and
+	from disk using traditional I/O mechanisms. Note that @{"LockMemory()" Link "LockMemory()"}
+	does not allow this as a "logical" memory block may be fragmentated
+	into several physical memory blocks that do not form a continuous
+	memory block by their physical addresses. As both functions require
+	the complete memory block to fit into the system main memory, you are
+	encouraged to hold locks as short as possible.
+
+	This kind of "virtual memory" is of course some kind of a "poor man's 
+	solution" for implementing virtual memory. No exec function will be 
+	patched and old programs will continue to work without any change. The 
+	library is of course of limited or no use at all for old programs since
+	it doesn't redirect standard memory allocation functions to their 
+	"virtual" counterparts. Thus, this is a very "conservative" approach to
+	overcome this limitation of AmigaOs.
+
+	A special "VMM/GigaMem" is planned to be made available that uses the 
+	functions of this library to provide virtual memory to every task. 
+	However, since this CAN'T be fully compatible to old programs and may,
+	therefore, cause some compatibility problems. It should be up to the 
+	user if she/he likes to install a patch like this or not, but it should 
+	NOT the way how virtual memory enters AmigaOs, at least not now.
+
+@EndNode
+
+@Node "NewAdrSpaceA()" "memory.library/NewAdrSpaceA"
+
+@{b}    NAME@{ub}
+	NewAdrSpaceA	-	create a new address space.
+
+@{b}    SYNOPSIS@{ub}
+	adr = NewAdrSpaceA( tags );
+	d0		     a0
+
+	struct AdrSpace *NewAdrSpaceA( struct TagItem * );
+
+	adr = NewAdrSpace( tag, ... );
+
+	struct AdrSpace *NewAdrSpace( Tag tag1, ... );
+
+@{b}    FUNCTION@{ub}
+	Builds a new address space of the given properties, to be
+	passed in as a tag list. Note that this call *does not* attach
+	any task to the address space, neither does it involve the
+	creation of any memory pool.
+
+@{b}    INPUTS@{ub}
+	tags -	a tag list containing the arguments how the address
+	space has to be build.
+
+@{b}    RESULTS@{ub}
+	a new address space or NULL on failure. In case this function
+	is called from a dos.library "Process", IoErr() will be set to
+	a secondary error code on failure. See <memory/memerrors.h>
+	for details.
+
+@{b}    TAGS@{ub}
+	The following tag items are interpreted:
+
+
+	MEMTAG_CONTEXT
+		The mmu.library MMUContext the address space shall
+		become part of. At most one address space per context;
+		DO *NOT* attach an address space to the public context
+		or to a supervisor context, this won't work.
+		Default is the context the MEMTAG_TASK task is part of.
+
+	MEMTAG_TASK
+		If MEMTAG_CONTEXT is missing, this tag can be used to
+		specify the target context. The MMUContext this task
+		is part of will then be used as target for the new 
+		AddressSpace. Default is the current task.
+
+	MEMTAG_SWAPFAILHOOK
+		A pointer to a "struct Hook" that will be called 
+		whenever swapping memory in or out fails. See the
+		"Programmer's manual" for details how you are called.
+
+	MEMTAG_VMSIZE
+		Size of virtual memory area to be handled by this
+		address space, not including shared system memory.
+		Default is as large as the system, the swapping
+		device and MEMTAG_VMMAXSIZE (see below) allows.
+
+	MEMTAG_VMMAXSIZE
+		Limits the size of the virtual memory region to be
+		allocated to the indicated size. The resulting address
+		space will hold at most the indicated size, but might
+		hold less due to limitations of the swap device.
+		
+	MEMTAG_MAXSYSMEM
+		Maximal amount of physical system memory this address
+		space is allowed to allocate. If a new page must be
+		swapped in, the total amount of physical page memory
+		held by this address space is compared against this
+		threshold. If it is larger, pages are swapped out.
+		However, if you hold locks on memory by @{"LockMemory()" Link "LockMemory()"}
+		resp. @{"HoldMemory()" Link "HoldMemory()"}, the library may ignore this 
+		threshold temporarely as long as you hold the locks.
+		I.e., locking will not fail due to this threshold as
+		long as enough system memory is available.
+		Default is half the system memory minus a safety
+		margin.
+
+	MEMTAG_CACHESIZE
+		Defines the size in bytes of an additional write cache
+		that is used to minimize the seeking within a swap
+		file or swap partition/device. This cache keeps swapped
+		out pages and is written out "in one go" as soon as
+		necessary. Defaults to sixteen pages, or no write cache
+		if MEMTAG_READONLY,TRUE has been found. The memory type
+		of the cache is controlled by MEMTAG_BUFMEMTYPE, and
+		defaults to MEMF_PUBLIC.
+
+	MEMTAG_WINDOWPTRPTR
+		Defines a pointer to a window pointer - note the double
+		indirection - where error requesters concerning the 
+		virtual memory system will appear. If the pointer the
+		argument is set to (struct Window *)(~0), no requesters 
+		will be generated as if the requester got canceled, 
+		if set to NULL, requesters will appear on the workbench. 
+		Default is NULL, or a pointer to the pr_WindowPtr 
+		component of the MEMTAG_TASK, should this tag be present.
+
+	MEMTAG_VMHOOK
+		A custom defined swap hook as "struct Hook *" that
+		will be called for swapping activities. Either this
+		or the next tag must be given to define a swapping
+		mechanism.
+
+	MEMTAG_VMSWAPTYPE
+		Defines a library pre-defined swap hook as swapping
+		mechanism; this is the prefered option. The following
+		swap types are available:
+
+		MEMFLAG_SWAPFILE
+			Swap to a dos.library file.
+			Note that this is slow for the FFS, but is the
+			least critical way to provide a swap target.
+
+		MEMFLAG_SWAPPART
+			Swap to a dos.library "Device"
+			in the sense of a partition on a hard disk. This is
+			the best compromise between speed and safety.			
+
+		MEMFLAG_DEVICE:		
+			Swap to an exec.library 
+			"device" given by a device name and a unit.
+
+	The following are only for MEMFLAG_SWAPFILE:
+
+	MEMTAG_SWAPFILENAME
+		A "char *" to the name of the swap file. Must be 
+		present for file swapping.
+
+	MEMTAG_SWAPFILELOCK
+		A lock onto a directory the above file name is
+		relative to. Defaults to the current directory of
+		the calling process.
+
+	MEMTAG_KEEPFILE
+		If set to TRUE, the file is not deleted if the
+		AddressSpace is shut down. Defaults to FALSE, i.e. 
+		the file will be deleted when done.
+
+	MEMTAG_PREDEFINED
+		If set to TRUE, the swap file is assumed to be
+		existent already and the contents of this file
+		is mirrored into the virtual memory. Defaults to
+		FALSE. Most useful with MEMTAG_KEEPFILE.
+
+	MEMTAG_READONLY
+		Requires MEMTAG_PREDEFINED set to true and
+		allows reading from the swap file only to browse
+		it in memory. Any changes made to the memory are
+		discarded. Should be combined with the MMU
+		property MAPP_ROM or MAPP_READONLY for the pools 
+		of this address space for optimal performance.
+		Defaults to FALSE.
+
+
+	The following are only for MEMFLAG_SWAPPART:
+
+	MEMTAG_SWAPDEVICENODE
+		A pointer to a dos.library "struct DeviceNode" that
+		defines the swap partition. Either this or the next
+		tag must be given to specify a swap partition.
+
+	MEMTAG_SWAPPARTNAME
+		The dos.library device name of the swap partition as
+		"char *" with or without trailing colon, e.g. "SWAP:"
+
+	The following are only for MEMFLAG_SWAPDEVICE:
+		
+	MEMTAG_DEVICENAME			
+		The name of an exec.library "device" to which memory
+		shall be swapped. This must be a "trackdisk"-like
+		device that allows random access. This tag must be
+		available.
+
+	MEMTAG_DEVICEUNIT
+		Unit number of the above device to swap to. Defaults
+		to zero.
+
+	MEMTAG_DEVICEFLAGS
+		Flags for "OpenDevice()" for this device. Defaults to
+		zero.
+
+	MEMTAG_BUFMEMTYPE
+		Intermediate buffer memory type for the device in
+		case the device is unable to perform I/O on all system
+		memory addresses. Default is MEMF_24BITDMA. Note that
+		this is a very conservative setting that should work
+		with all devices; you might want to specify MEMF_ANY
+		here. Note further that the memory.library never
+		passes "logical addresses" to the swapping device, but
+		always already translated physical addresses.
+
+	MEMTAG_MASK
+		Memory mask to check the memory against. If the
+		output buffer "and-ed" with the complement of this
+		mask is non-zero, the device swap hook will use
+		single-block I/O to perform the operation. Note that,
+		similar to the above, you *need not* to specify a 
+		mask to exclude virtual memory. The library will
+		always pass physical addresses to the device.
+		Default is 0x00fffffc, which is a very conservative
+		setting and allows only device access within the
+		24 bit address space. A well-written device driver
+		will accept 0xffffffff here.
+
+	MEMTAG_MAXTRANSFER
+		The size of the largest memory block this device
+		will be able to access at a time. Defaults to
+		0x001fe000. 
+
+	MEMTAG_DEVICESIZE
+		Size of the area to be reserved for the swapping
+		activities. Limited by 2GB. Note that due to the
+		broken design of many devices, i.e. lack of support
+		for TD_GETGEOMETRY, this size cannot be obtained 
+		safely from the device itself.
+
+	MEMTAG_DEVICEORIGIN
+		Byte offset from the beginning of the device to the
+		first block of the device where swapped data will
+		be held. This is a pointer to a "QUAD word", i.e.
+		a two-ULONG array containing the high and low 
+		ulong-word defining the size as 64 bit integer.
+		If any part of the swap area exceeds the 64 bit
+		limit, the device must be either TD64 or NSD 
+		compliant with the further restriction that 
+		NSDPatch must be running to activate NSD activities.
+	
+	MEMTAG_SECTORSIZE
+		Size of a sector (or "block") of the device in 
+		bytes. This value is only used for single-block
+		transfers and defaults to 512 bytes.
+
+@{b}    NOTES@{ub}
+	This call builds a new address space, but does neither create
+	any pools nor does it attach the calling task to the address
+	space. You need to do this manually, i.e. build a pool by
+	NewVMPool() and enter this address space by @{"EnterAddressSpace()" Link "EnterAddressSpace()"}.
+
+	To mirror the contents of a file into memory (i.e. to emulate
+	"mmap") the following tags should be used:
+
+
+	        adr = NewAdrSpace(
+				MEMTAG_VMSWAPTYPE,MEMFLAG_SWAPFILE,
+				MEMTAG_SWAPFILENAME,"MyMMAPTarget",
+				MEMTAG_KEEPFILE,TRUE,
+				MEMTAG_PREDEFINED,TRUE,
+				TAG_DONE);
+
+	For a classical swap partition, the following combination
+	is useful:
+		
+	        adr = NewAdrSpace(
+				MEMTAG_VMSWAPTYPE,MEMFLAG_SWAPPART,
+				MEMTAG_SWAPPARTNAME,"SWAP:",
+				MEMTAG_VMSIZE,128*1024*1024, /* e.g. 128MB */
+				TAG_DONE);
+
+	Note that - similar to all other Os calls - the tags and its
+	arguments must be placed in shared system memory.
+
+@{b}    BUGS@{ub}
+	The device and partition swap hook expect currently that the block 
+	size of the responsible exec.device is a multiple of the page size.
+	This rules page sizes of 256 bytes out - as they are available on a 
+	68030 or 68020/68851 combo. Further, this doesn't allow swap devices
+	whose block sizes are not a power of two (as for example CDs - but
+	who wants to swap to a CDRW anyhow?)
+
+@{b}    SEE ALSO@{ub}
+	@{"DeleteAdrSpace()" Link "DeleteAdrSpace()"}, @{"mmu/CreateMMUContext()" Link "mmu/CreateMMUContext()"}, @{"EnterAddressSpace()" Link "EnterAddressSpace()"},
+	dos/IoErr(),
+	memory/memtags.h, memory/memerrors.h
+
+@EndNode
+
+@Node "DeleteAdrSpace()" "memory.library/DeleteAdrSpace"
+
+@{b}    NAME@{ub}
+	DeleteAdrSpace	-	delete an address space.
+
+@{b}    SYNOPSIS@{ub}
+	DeleteAdrSpace( adr );
+			 a0
+
+	void DeleteAdrSpace( struct AdrSpace * );
+
+@{b}    FUNCTION@{ub}
+	This call deletes the specified address space, unlinks it from its
+	MMUContext, disposes all VMPools of this address space and closes
+	all swap hooks, possibly deleting all swap files.
+
+@{b}    INPUTS@{ub}
+	adr	-	pointer to the address space to dispose.
+
+@{b}    RESULTS@{ub}
+	none
+
+@{b}    NOTES@{ub}
+	You should unlink your task from the MMUContext as well and dispose
+	this context as well; this function will *not* do this for you.
+	Note that you should not attach AddressSpace(s) to the public MMU
+	context.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	CreateAdrSpaceA(), @{"mmu/DeleteMMUContext()" Link "mmu/DeleteMMUContext()"}
+
+@EndNode
+
+@Node "MMUContextOf()" "memory.library/MMUContextOf"
+
+@{b}    NAME@{ub}
+	MMUContextOf	-	return the underlying MMUContext of an
+				AddressSpace
+
+@{b}    SYNOPSIS@{ub}
+	ctx = MMUContextOf( adrspace );
+	d0		       a0
+
+	struct MMUContext *MMUContextOf( struct AdrSpace *);
+
+@{b}    INPUTS@{ub}
+	adrspace - pointer to a struct AdrSpace whose underlying MMUContext
+	shall be obtained
+
+@{b}    RESULTS@{ub}
+	ctx - the MMUContext handling the MMU setup of the passed in Address
+	space.
+
+@{b}    NOTES@{ub}
+	This call cannot fail.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"AdrSpaceOfCtx()" Link "AdrSpaceOfCtx()"}
+@EndNode
+
+@Node "AdrSpaceOfCtx()" "memory.library/AdrSpaceOfCtx"
+
+@{b}    NAME@{ub}
+	AdrSpaceOfCtx	-	return the AdressSpace a MMUContext is
+	attached to.
+
+@{b}    SYNOPSIS@{ub}
+	adr = AdrSpaceOfCtx( ctx );
+	d0		      a0
+
+	struct AdrSpace * AdrSpaceOfCtx( struct MMUContext * );
+
+@{b}    INPUTS@{ub}
+	ctx - a pointer to a struct MMUContext whose AddressSpace shall be
+	obtained.
+
+@{b}    RESULTS@{ub}
+	the AddressSpace the passed in MMUContext is attached to or NULL
+	in case it is not attached to any AddressSpace.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"MMUContextOf()" Link "MMUContextOf()"}
+@EndNode
+
+@Node "NewVMPoolA()" "memory.library/NewVMPoolA"
+
+@{b}    NAME@{ub}
+	NewVMPool	-	create a new virtual memory pool
+
+@{b}    SYNOPSIS@{ub}
+	pool = NewVMPoolA( tags );
+	d0		    a0
+
+	struct VMPool * NewVMPoolA( struct TagItem *tags);
+
+
+	pool = NewVMPool( tag, ... );
+
+	struct VMPool * NewVMPool( Tag tag1, ... );
+
+@{b}    FUNCTION@{ub}
+	Creates a new pool providing virtual memory within an AddressSpace.
+
+@{b}    INPUTS@{ub}
+	tags - a list of TagItems describing the properties of the VMPool
+	to be created, see below.
+
+@{b}    RESULTS@{ub}
+	a pointer to a new memory pool structure or NULL on failure. If
+	the calling task is a dos.library "process", then IoErr() will be
+	set to an error code defined in dos/dos.h or memory/memerrors.h 
+	on failure.
+
+@{b}    TAGS@{ub}
+	The following tags are available for building new VMPools:
+
+		The next three are used to specify the AddressSpace for
+		the new pool:
+
+		MEMTAG_ADRSPACE
+			A pointer to the AddressSpace within which this
+			pool shall be created. 
+
+		MEMTAG_CONTEXT
+			A pointer to a MMUContext that is attached to
+			an AddressSpace; the pool will then be build within
+			the AddressSpace that is attached to the specified
+			MMUContext.
+
+		MEMTAG_TASK
+			A pointer to a struct Task that is attached to
+			an AddressSpace; the pool will be build within this
+			AddressSpace. Defaults to the current task.
+
+		If either this or the next tag is present, the pool will
+		get its own swapping mechanism; otherwise, the same swap
+		hook than the parent AddressSpace will be used:
+
+		MEMTAG_VMHOOK
+			A custom defined swap hook as "struct Hook *" that
+			will be called for swapping activities. 
+
+		MEMTAG_VMSWAPTYPE
+			Defines a library pre-defined swap hook as swapping
+			mechanism.
+
+		See @{"NewAdrSpaceA()" Link "NewAdrSpaceA()"} for further tags related to the swap
+		hook specification; all of them are valid here as well.
+		Using a private swap hook requires MEMTAG_FIXEDSIZE set
+		to TRUE, and therefore MEMTAG_PREDEFINED set to TRUE as
+		well.
+
+
+		Further extended tags:
+
+		MEMTAG_PREALLOC
+			If set to TRUE, the pool memory will be allocated
+			already at full size from the available virtual 
+			memory space of the AddressSpace on setup. Otherwise, 
+			memory puddles are build as soon as required. 
+			MEMTAG_PREALLOC, TRUE must be specified if you want
+			to map a file into memory.
+			Defaults to FALSE.
+
+		MEMTAG_MEMFLAGS
+			exec/memory.h type memory properties describing
+			the physical memory to be allocated for this pool.
+			Defaults to MEMF_ANY. 
+
+		MEMTAG_CACHEFLAGS
+			mmu/context.h type "MMU properties" of the memory
+			to be addressed by the context. This defaults
+			to the optimal caching mode of the memory the
+			library allocated for its pages. Useful	flags are:
+
+			MAPP_COPYBACK:	Make the memory copyback-cacheable.
+					If cleared explicitly, the caching 
+					mode is writethrough.
+			MAPP_CACHEINHIBIT: Forbid caching in the allocated
+					pages.
+			MAPP_NONSERIALIZED: Allow access reordering for the
+					68040 if cache inhibited; ignored 
+					otherwise.
+			MAPP_IMPRECISE:	Allow imprecise exception model for
+					the 68060 if caching is inhibited; 
+					ignored otherwise.
+			MAPP_ROM:	Defensive write protection. Useful
+					for "read only" images of files.
+			MAPP_WRITEPROTECTED: Aggressive write protection,
+					write access causes an access error
+					and therefore either a Guru or a
+					MuForce hit.
+
+		MEMTAG_CACHEMASK
+			mmu/context.h mask describing which caching flags
+			shall be altered. Note that the memory.library may
+			ignore some of your choices because it requires some
+			flags for its own purposes.
+
+		MEMTAG_PUDDLESIZE
+			Size of a memory puddle in bytes that will be 
+			created if a memory block runs out of data. Puddles 
+			are enforced to be at least one MMU page large. 
+			Defaults to eight pages.
+
+		MEMTAG_PUDDLETHRES
+			Threshold defining which allocations go into separate
+			puddles and which allocations are taken from the
+			common puddles. Default is half the puddle size.
+			
+			NOTE: The puddling mechanism of the memory.library
+			works *not* like that of exec.library. Do not
+			expect any exec.library compatible memory pools.
+
+		MEMTAG_POOLPRI
+			Priority of this pool. Higher priority pools will
+			be swapped out later. Defaults to zero.
+
+		MEMTAG_FIXEDSIZE
+			Do not allow the creation of new puddles. Only use-
+			ful if MEMTAG_PREALLOC is set to TRUE as well or
+			you won't be able to allocate any memory. Defaults
+			to FALSE.
+
+		MEMTAG_PROVIDESMEM
+			Set to TRUE in case this pool can be used to allocate
+			virtual memory; if FALSE, this pool is rather used
+			as a mirror of the swap space, or available for your
+			own memory allocation routines. Defaults to TRUE,
+			should be set to FALSE for an "mmap" emulation.
+
+		MEMTAG_PREDEFINED
+			The pool contents is pre-defined by the contents of
+			the swap space. Only useful if you want to mirror the 
+			swap space into memory for "mmap" emulation.
+			Defaults to FALSE.
+
+		MEMTAG_READONLY
+			Changes made to the pool are not written back to
+			swap space. Requires MEMTAG_PROVIDESMEM set to FALSE
+			or the pool will become corrupt as soon as it must
+			be swapped. Defaults to FALSE.
+
+@{b}    NOTES@{ub}
+	Useful pool options for "mmap" are as follows:
+
+	
+		vmpool = NewVMPool(	MEMTAG_ADRSPACE,adr,
+					MEMTAG_PREDEFINED,TRUE,
+					/* MEMTAG_READONLY,TRUE, for read-only files */
+					MEMTAG_PREALLOC,TRUE,
+					MEMTAG_PROVIDESMEM,FALSE,
+					MEMTAG_FIXEDSIZE,TRUE,
+					TAG_DONE);
+
+	Then use @{"PoolVBase()" Link "PoolVBase()"} to obtain the virtual base address of the swap
+	file in memory.
+
+	Useful options for virtual memory operations are:
+
+		
+		vmpool = NewVMPool(	MEMTAG_ADRSPACE,adr,
+					MEMTAG_PROVIDESMEM,TRUE,
+					/* MEMTAG_MEMFLAGS,MEMF_CLEAR, */
+					TAG_DONE);
+
+	Then use @{"AllocVMemory()" Link "AllocVMemory()"} and @{"FreeVMemory()" Link "FreeVMemory()"} to allocate and release 
+	virtual memory. Note that MEMF_CLEAR might be very expensive since
+	clearing the memory might cause the library swap in/out the blanked
+	memory.
+
+@{b}   SEE ALSO@{ub}
+	@{"NewAdrSpaceA()" Link "NewAdrSpaceA()"}, @{"PoolVBase()" Link "PoolVBase()"}, @{"AllocVMemory()" Link "AllocVMemory()"}, @{"FreeVMemory()" Link "FreeVMemory()"},
+	dos/IoErr(),
+	memory/memerrors.h, memory/memtags.h
+@EndNode
+
+@Node "DeleteVMPool()" "memory.library/DeleteVMPool"
+
+@{b}    NAME@{ub}
+	DeleteVMPool - Delete a virtual memory pool
+
+@{b}    SYNOPSIS@{ub}
+	DeleteVMPool( pool );
+		       a0
+
+	void DeleteVMPool( struct VMPool *);
+
+@{b}    FUNCTION@{ub}
+	Deletes the given virtual memory pool, releases the memory occupied 
+	by the pool.
+
+@{b}    INPUTS@{ub}
+	pool a handle to a VMPool as created by @{"NewVMPoolA()" Link "NewVMPoolA()"}. 
+
+@{b}    RESULTS@{ub}
+	nothing
+
+@{b}    NOTES@{ub}
+	In case the pool was created with MEMTAG_PREDEFINED,TRUE, this
+	call also ensures that all changes to the memory are again swapped
+	out before the swap hook is closed again. 
+
+@{b}    SEE ALSO@{ub}
+	@{"NewVMPoolA()" Link "NewVMPoolA()"}
+@EndNode
+
+@Node "LockMemory()" "memory.library/LockMemory"
+
+@{b}    NAME@{ub}
+	LockMemory - lock virtual memory in physical space
+
+@{b}    SYNOPSIS@{ub}
+	ok = LockMemory( adr, mem, size );
+	d0		 a0   a1   d0
+
+	BOOL LockMemory( struct AdrSpace *,APTR,size);
+
+@{b}    FUNCTION@{ub}
+	The specified memory region in the selected address space is swapped
+	in and locked in physical memory. It will not be swapped out until
+	you unlock it again. This call nests.
+
+@{b}    INPUTS@{ub}
+	adr - the address space the memory is part of. Need not to be the
+	address space of the calling task.
+	mem - (virtual) start address of the memory to lock.
+	size - size of the virtual memory to lock.
+
+	mem and size will be rounded down resp. up to multiples of the 
+	page size.
+
+@{b}    RESULTS@{ub}
+	a boolean success/failure indicator. This call may fail if not
+	enough physical memory is available to hold the entire range.
+
+@{b}    NOTES@{ub}
+	Even though the memory region will be represented in physical
+	space after you locked it, it need not to be represented as a
+	single continuous block. It is likely that it is fragmented
+	into several discontinuous blocks. Therefore, this routine does
+	not return any physical address. Use @{"HoldMemory()" Link "HoldMemory()"} for that.
+
+	Note that this call nests.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"UnlockMemory()" Link "UnlockMemory()"}, @{"HoldMemory()" Link "HoldMemory()"}
+@EndNode
+
+@Node "UnlockMemory()" "memory.library/UnlockMemory"
+
+@{b}    NAME@{ub}
+	UnlockMemory - unlock virtual memory and re-allow swapping
+
+@{b}    SYNOPSIS@{ub}
+	UnlockMemory( adr, mem, size, force);
+		      a0   a1    d0    d1
+
+	void UnlockMemory(struct AdrSpace *,APTR,ULONG size,BOOL force);
+
+@{b}    FUNCTION@{ub}
+	The specified memory region of the address space is unlocked again.
+	If the last lock is unlocked again, swapping the memory region
+	is re-allowed. The memory region passed in here should match one
+	of the regions previously locked with @{"LockMemory()" Link "LockMemory()"}.
+
+@{b}    INPUTS@{ub}
+	adr - Address space whose memory shall be unlocked.
+	mem - (virtual) start address of the memory to be unlocked.
+	size - size of the memory region to unlock
+	force - if FALSE, this call nests with a previous @{"LockMemory()" Link "LockMemory()"}.
+		if TRUE, this call resets all lock counts immediately.
+
+	mem and size will be rounded down resp. up to multiples of the 
+	page size.
+
+@{b}    RESULTS@{ub}
+	nothing
+
+@{b}    NOTES@{ub}
+	Uses "force = TRUE" with care. It ignores the nesting and
+	hence the design of @{"LockMemory()" Link "LockMemory()"}.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"LockMemory()" Link "LockMemory()"}, @{"UnholdMemory()" Link "UnholdMemory()"}
+@EndNode
+
+@Node "HoldMemory()" "memory.library/HoldMemory"
+
+@{b}    NAME@{ub}
+	HoldMemory - hold and lock memory in a continuous physical block
+
+@{b}    SYNOPSIS@{ub}
+	physical = HoldMemory( adr, mem, size );
+	d0			a0   a1   d0
+
+	APTR HoldMemory( struct AdrSpace *,APTR,size);
+
+@{b}    FUNCTION@{ub}
+	The specified memory region in the selected address space is swapped
+	in and locked in a continuous block of physical memory. It will not be 
+	swapped out until you unhold it again. This call nests.
+
+@{b}    INPUTS@{ub}
+	adr - the address space the memory is part of. Need not to be the
+	address space of the calling task.
+	mem - (virtual) start address of the memory to lock.
+	size - size of the virtual memory to lock.
+
+	mem and size will be rounded down resp. up to multiples of the 
+	page size.
+
+@{b}    RESULTS@{ub}
+	the physical address of the memory block containing the memory region
+	or NULL in case the physical memory is not available.
+
+@{b}    NOTES@{ub}
+	This call guarantees that the specified memory region is held 
+	entirely and continuously in physical memory. Note that this is
+	a relatively "costy" operation and might require moving major
+	parts of data around. Hence, try to avoid this call and use
+	@{"LockMemory()" Link "LockMemory()"} whenever applicable.
+
+	Note that this call nests.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"UnholdMemory()" Link "UnholdMemory()"}, @{"LockMemory()" Link "LockMemory()"}
+@EndNode
+
+@Node "UnholdMemory()" "memory.library/UnholdMemory"
+
+@{b}    NAME@{ub}
+	UnholdMemory - unlock virtual memory and re-allow swapping
+
+@{b}    SYNOPSIS@{ub}
+	UnholdMemory( adr, mem, size, force);
+		      a0   a1    d0    d1
+
+	void UnholdMemory(struct AdrSpace *,APTR,ULONG size,BOOL force);
+
+@{b}    FUNCTION@{ub}
+	The specified memory region of the address space is unlocked again.
+	If the last lock is unlocked again, swapping the memory region
+	is re-allowed. The memory region passed in here should match one
+	of the regions previously locked with @{"HoldMemory()" Link "HoldMemory()"}.
+
+@{b}    INPUTS@{ub}
+	adr - Address space whose memory shall be unlocked.
+	mem - (virtual) start address of the memory to be unlocked.
+	size - size of the memory region to unlock
+	force - if FALSE, this call nests with a previous @{"HoldMemory()" Link "HoldMemory()"}.
+		if TRUE, this call resets all lock counts immediately.
+
+	mem and size will be rounded down resp. up to multiples of the 
+	page size.
+
+@{b}    RESULTS@{ub}
+	nothing
+
+@{b}    NOTES@{ub}
+	Uses "force = TRUE" with care. It ignores the nesting and
+	hence the design of @{"HoldMemory()" Link "HoldMemory()"}.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"HoldMemory()" Link "HoldMemory()"}, @{"UnlockMemory()" Link "UnlockMemory()"}
+@EndNode
+
+@Node "SwapMemoryOut()" "memory.library/SwapMemoryOut"
+
+@{b}    NAME@{ub}
+
+	SwapMemoryOut	-	swap a virtual memory block out.
+
+@{b}    SYNOPSIS@{ub}
+
+	ok = SwapMemoryOut( adr, mem, size );
+	d0		    a0   a1   d0
+
+	BOOL SwapMemoryOut( struct AdrSpace, APTR mem, ULONG size);
+
+@{b}    FUNCTION@{ub}
+	swaps the selected memory region of the specified address space
+	out to the swap device. The locked or held parts of the selected
+	memory blocks remain in memory, though.
+
+@{b}    INPUTS@{ub}
+	adr - address space whose memory shall be swapped out
+	mem - (logical) base address of the memory area to swap out
+	size - size in bytes of the memory region to swap out
+
+	mem and size will be rounded down resp. up to multiples of the 
+	page size.
+
+@{b}    RESULTS@{ub}
+	a boolean success/failure indicator. On FALSE, your SwapFault
+	hook will have been called already.
+
+@{b}    NOTES@{ub}
+	This call swaps memory out on demand. This might be a good thing
+	to do for telling the library that certain memory regions are
+	currently not required. This call does *not* override any locks
+	or helds of the regions involved; if parts of the selected
+	memory block is locked or held, these parts, and only these
+	parts, remain untouched.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"LockMemory()" Link "LockMemory()"}, @{"HoldMemory()" Link "HoldMemory()"}
+@EndNode
+
+@Node "AllocVMemory()" "memory.library/AllocVMemory"
+
+@{b}    NAME@{ub}
+
+	AllocVMemory	-	allocate virtual memory from a pool
+
+
+@{b}    SYNOPSIS@{ub}
+	mem = AllocVMemory( pool, bytesize);
+	d0		     a0	     d0
+
+	APTR AllocVMemory( struct VMPool *, ULONG);
+
+@{b}    FUNCTION@{ub}
+	This function allocates memory from a given virtual pool.
+
+@{b}    INPUTS@{ub}
+	pool - The pool to allocate the memory from.
+
+	bytesize - The size of the memory required. This might be larger
+	than the amount of physical memory available.
+
+@{b}    RESULTS@{ub}
+	the memory block allocated or NULL for failure. If the calling
+	task is a process, the reason for failure will be returned by
+	IoErr().
+
+@{b}    NOTES@{ub}
+	This call may cause task reschelduringe. It may swap out pages of
+	virtual memory if necessary. This call will fail(!) if you call
+	it within a Forbid() or Disable() state.
+
+	The returned memory will be aligned to at least a longword bondary,
+	the size might be rounded somewhat, but will at least contain the 
+	number of bytes specified by the argument.
+
+	To be able to allocate memory from the pool, the calling task
+	must have been entered the AddressSpace of the selected pool. See
+	@{"EnterAddressSpace()" Link "EnterAddressSpace()"}.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"FreeVMemory()" Link "FreeVMemory()"}, @{"EnterAddressSpace()" Link "EnterAddressSpace()"}, dos/IoErr(),
+	exec/memory.h, memory/memerrors.h
+@EndNode
+
+@Node "FreeVMemory()" "memory.library/FreeVMemory"
+
+@{b}    NAME@{ub}
+	FreeVMemory - release virtual memory
+
+@{b}    SYNOPSIS@{ub}
+	FreeVMemory( pool , mem , bytesize);
+		      a0     a1	     d0
+
+	void FreeVMemory( struct VMPool *, APTR mem, ULONG size);
+
+@{b}    FUNCTION@{ub}
+	This function releases virtual memory back into the pool.
+
+@{b}    INPUTS@{ub}
+	pool -	the pool the memory was taken from. Must match the pool of
+		@{"AllocVMemory()" Link "AllocVMemory()"}
+
+	mem  -	the memory pointer to be released. It is safe to pass NULL
+		here. No action is performed then.
+
+	bytesize - size of the memory block to release. *MUST* match the
+		   size parameter of @{"AllocVMemory" Link "memory/AllocVMemory()"}.
+
+@{b}    RESULTS@{ub}
+	none
+
+@{b}    NOTES@{ub}
+	The caller *MUST NOT* be in Forbid() or Disable() state. If this
+	rule is not followed, a bus error "Guru 80000002" or a MuForce
+	hit might be the result. This call might swap virtual memory pages 
+	in or out.
+
+	To be able to call this function, the calling task must have entered
+	the AddressSpace the pool is part of. See @{"EnterAddressSpace()" Link "EnterAddressSpace()"} for
+	details.
+
+@{b}    SEE ALSO@{ub}
+	@{"AllocVMemory()" Link "AllocVMemory()"}, @{"EnterMMUContext()" Link "mmu/EnterMMUContext()"}
+@EndNode
+
+@Node "PoolVBase()" "memory.library/PoolVBase"
+
+@{b}    NAME@{ub}
+	PoolVBase - return the logical base address of a memory pool
+
+@{b}    SYNOPSIS@{ub}
+	mem = PoolVBase( pool );
+	d0		  a0
+
+	APTR PoolVBase ( struct VMPool *);
+
+@{b}    FUNCTION@{ub}
+	This function returns the base address of the virtual memory block
+	the memory pool consists of. However, this call is guaranteed to
+	work *ONLY* if the pool has been setup with the tags
+
+	MEMTAG_PROVIDESMEM,FALSE,
+	MEMTAG_PREDEFINED,TRUE,
+
+	to declare a non-administrated pool.
+
+@{b}    INPUTS@{ub}
+	pool - pointer to a VMPool structure as obtained from @{"NewVMPoolA()" Link "NewVMPoolA()"}.
+
+@{b}    RESULTS@{ub}
+	a pointer to the first logical address managed by the pool or NULL
+	in case of failure.
+
+@{b}    NOTES@{ub}
+	This call will fail if the pool has been setup for usage of the
+	virtual memory allocation pair @{"AllocVMemory()" Link "AllocVMemory()"} resp. @{"FreeVMemory()" Link "FreeVMemory()"}.
+	Use this pair of functions to obtain logical addresses then.
+
+	The purpose of this call is either to implement a private memory
+	management within the pool memory, or to get the base address of a
+	mirror image of a file if you use this pool as "mmap" emulation.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PoolVSize()" Link "PoolVSize()"}, @{"NewVMPoolA()" Link "NewVMPoolA()"}, @{"AllocVMemory()" Link "AllocVMemory()"}, @{"FreeVMemory()" Link "FreeVMemory()"}
+@EndNode
+
+@Node "PoolVSize()" "memory.library/PoolVSize"
+
+@{b}    NAME@{ub}
+	PoolVSize - get the size of a virtual memory pool
+
+@{b}    SYNOPSIS@{ub}
+	size = PoolVSize( pool );
+	d0		   a0
+
+	ULONG PoolVSize( struct VMPool * );
+
+@{b}    FUNCTION@{ub}
+	Returns the size in bytes of the passed in memory pool. Hence, the
+	pool covers the virtual addresses from PoolVBase(..) up to
+	PoolVBase(..) + PoolVSize(..), exclusive. However, this call is 
+	guaranteed to work *ONLY* if the pool has been setup with the tags
+
+	MEMTAG_PROVIDESMEM,FALSE,
+	MEMTAG_PREDEFINED,TRUE
+
+	to declare a non-administrated pool.
+
+@{b}    INPUTS@{ub}
+	pool -	a handle to the virtual memory pool whose size shall be
+		obtained.
+
+@{b}    RESULTS@{ub}
+	the pool size in bytes, or 0 in case of failure.
+
+@{b}    NOTES@{ub}
+	This call will fail if the pool has been setup for usage of the
+	virtual memory allocation pair @{"AllocVMemory()" Link "AllocVMemory()"} resp. @{"FreeVMemory()" Link "FreeVMemory()"}.
+
+	The purpose of this call is either to implement a private memory
+	management within the pool memory, or to get the size of a mirror
+	image of a file if you use this pool as "mmap" emulation. 
+
+	Note that in the latter case, the size of the pool might be larger
+	than the file size due to the MMU page granularity. In fact, pool
+	sizes will always be multiples of the MMU page size, whatever it
+	might be.
+
+@{b}    BUGS@{ub}
+
+@{b}    SEE ALSO@{ub}
+	@{"PoolVBase()" Link "PoolVBase()"}, @{"NewVMPoolA()" Link "NewVMPoolA()"}, @{"AllocVMemory()" Link "AllocVMemory()"}, @{"FreeVMemory()" Link "FreeVMemory()"}
+@EndNode
+
+@Node "EnterAddressSpace()" "memory.library/EnterAddressSpace"
+
+@{b}    NAME@{ub}
+	EnterAddressSpace - attach a task to an address space
+
+
+@{b}    SYNOPSIS@{ub}
+	ok = EnterAddressSpace( adr , task );
+	d0			a0	a1
+
+	BOOL EnterAddressSpace(struct AdrSpace *adr,struct Task *task);  
+
+@{b}    FUNCTION@{ub}
+	This call makes the specified task enter the address space; If this
+	call succeeds, the task may use all the VMPools of the address-
+	space.
+
+@{b}    INPUTS@{ub}
+	adr - 	address space to enter
+	task -	task that is supposed to enter an address space
+
+@{b}    RESULTS@{ub}
+	a boolean success/failure indicator. Will be TRUE on success,
+	FALSE otherwise.
+
+@{b}    NOTES@{ub}
+	Note that you *must* enter address spaces explicitly to use their
+	VMPools. @{"NewAdrSpaceA()" Link "NewAdrSpaceA()"} won't do this for you.
+
+	This call also (implicitly) enters the MMUContext of the AddressSpace
+	and hence overloads the tc_Switch and tc_Launch vectors of the
+	specified task.
+
+@{b}    BUGS@{ub}
+		
+@{b}    SEE ALSO@{ub}
+	@{"LeaveAddressSpace()" Link "LeaveAddressSpace()"}
+@EndNode
+
+@Node "LeaveAddressSpace()" "memory.library/LeaveAddressSpace"
+
+@{b}    NAME@{ub}
+	LeaveAddressSpace - remove the calling task from an address space.
+
+@{b}    SYNOPSIS@{ub}
+
+	ok = LeaveAddressSpace( task );
+	d0			 a1
+
+	BOOL LeaveAddressSpace( struct Task *);
+
+@{b}    FUNCTION@{ub}
+	Remove the calling task from its address space and let it enter	the 
+	public MMUContext again. The address space itself will continue	to
+	exist.
+
+@{b}    INPUTS@{ub}
+	task - pointer to the task that shall leave its address space
+
+@{b}    RESULTS@{ub}
+	a boolean success/failure indicator. Will return FALSE for
+	incorrect parameters, but is otherwise not fail-able.
+
+@{b}    NOTES@{ub}
+	The current task is, after calling this function, no longer allowed
+	to use any virtual memory allocated by the memory.library.
+
+	It is safe to call this function if the current task isn't attached
+	to any address space. Nothing will happen in this case except a
+	FALSE result code.
+
+@{b}    SEE ALSO@{ub}
+	@{"EnterAddressSpace()" Link "EnterAddressSpace()"}
+@EndNode
+

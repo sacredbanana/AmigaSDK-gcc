@@ -1,0 +1,145 @@
+@database "debug_lib"
+@master "AMIDEV:NDK/Autodocs/debug_lib.doc"
+
+@Node Main "debug_lib.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" KCmpStr() " Link "KCmpStr()"}
+    @{" KGetChar() " Link "KGetChar()"}
+    @{" KGetNum() " Link "KGetNum()"}
+    @{" KMayGetChar() " Link "KMayGetChar()"}
+    @{" KPrintF() " Link "KPrintF()"}
+    @{" KPutChar() " Link "KPutChar()"}
+    @{" KPutStr() " Link "KPutStr()"}
+@EndNode
+
+@Node "KCmpStr()" "debug.lib/KCmpStr"
+
+@{b}   NAME@{ub}
+	KCmpStr - compare two null terminated strings
+
+@{b}   SYNOPSIS@{ub}
+	mismatch = KCmpStr(string1, string2)
+	D0         A0        A1
+
+@{b}   FUNCTION@{ub}
+	string1 is compared to string2 using the ASCII collating
+	sequence.  0 indicates the strings are identical.
+@EndNode
+
+@Node "KGetChar()" "debug.lib/KGetChar"
+
+@{b}   NAME@{ub}
+	KGetChar - get a character from the console
+		   (defaults to the serial port at 9600 baud)
+
+@{b}   SYNOPSIS@{ub}
+	char = KGetChar()
+	D0
+
+@{b}   FUNCTION@{ub}
+	busy wait until a character arrives from the console.
+	KGetChar is the assembly interface, _KGetChar and _kgetc
+	are the C interfaces.
+@EndNode
+
+@Node "KGetNum()" "debug.lib/KGetNum"
+
+@{b}   NAME@{ub}
+	KGetNum - get a number from the console
+
+@{b}   SYNOPSIS@{ub}
+	number = KGetNum()
+	D0
+
+@{b}   FUNCTION@{ub}
+	get a signed decimal integer from the console.  This will busy
+	wait until the number arrives.
+
+@EndNode
+
+@Node "KMayGetChar()" "debug.lib/KMayGetChar"
+
+@{b}   NAME@{ub}
+	KMayGetChar - return a character if present, but don't wait
+		      (defaults to the serial port at 9600 baud)
+
+@{b}   SYNOPSIS@{ub}
+	flagChar = KMayGetChar()
+	D0
+
+@{b}   FUNCTION@{ub}
+	return either a -1, saying that there is no character present, or
+	whatever character was waiting.  KMayGetChar is the assembly
+	interface,  _KMayGetChar is the C interface.
+@EndNode
+
+@Node "KPrintF()" "debug.lib/KPrintF"
+
+@{b}   NAME@{ub}
+	KPrintF - print formatted data to the console
+	          (defaults to the serial port at 9600 baud)
+
+@{b}   SYNOPSIS@{ub}
+	KPrintF("format string",values)
+	         A0             A1
+
+@{b}   FUNCTION@{ub}
+	print a formatted C-type string to the console.  See the
+	exec @{"RawDoFmt()" Link "exec/RawDoFmt()"} call for the supported % formatting commands.
+
+@{b}   INPUTS@{ub}
+	"format string" - A C style string with % commands to indicate
+	                  where paramters are to be inserted.
+	values - A pointer to an array of paramters, to be inserted into
+	         specified places in the string.
+
+	KPutFmt and KPrintF are identical assembly interfaces that want the
+	two pointers in registers.  _KPrintF and _kprintf are C interfaces
+	that expect the format string pointer on the stack, and the
+	paramters on the stack above that.
+
+@{b}   SEE ALSO@{ub}
+	@{"exec.library/RawDoFmt" Link "exec/RawDoFmt()"}, any C compiler's "printf" call.
+@EndNode
+
+@Node "KPutChar()" "debug.lib/KPutChar"
+
+@{b}   NAME@{ub}
+	KPutChar - put a character to the console
+		   (defaults to the serial port at 9600 baud)
+
+@{b}   SYNOPSIS@{ub}
+	char = KPutChar(char)
+	D0	        D0
+
+@{b}   FUNCTION@{ub}
+	Put a character to the console.  This function will not return
+	until the character has been completely transmitted.
+
+@{b}   INPUTS@{ub}
+	KPutChar is the assembly interface, the character must be in D0.
+	_KPutChar and _kputc are the C interfaces, the character must be
+	a longword on the stack.
+
+@EndNode
+
+@Node "KPutStr()" "debug.lib/KPutStr"
+
+@{b}   NAME@{ub}
+	KPutStr - put a string to the console
+		   (defaults to the serial port at 9600 baud)
+
+@{b}   SYNOPSIS@{ub}
+	KPutStr(string)
+	        A0
+
+@{b}   FUNCTION@{ub}
+	put a null terminated string to the console.  This function will
+	not return until the string has been completely transmitted.
+
+@{b}   INPUTS@{ub}
+	KPutStr is the assembly interface, a string pointer must be in A0.
+	_KPutStr and _kputs are the C interfaces, the string pointer must
+	be on the stack.
+@EndNode
+

@@ -1,0 +1,414 @@
+@database "speedbar_gc"
+@master "AMIDEV:NDK/Autodocs/speedbar_gc.doc"
+
+@Node Main "speedbar_gc.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --datasheet--() " Link "--datasheet--()"}
+    @{" AllocSpeedButtonNodeA() " Link "AllocSpeedButtonNodeA()"}
+    @{" FreeSpeedButtonNode() " Link "FreeSpeedButtonNode()"}
+    @{" GetSpeedButtonNodeAttrsA() " Link "GetSpeedButtonNodeAttrsA()"}
+    @{" SetSpeedButtonNodeAttrsA() " Link "SetSpeedButtonNodeAttrsA()"}
+    @{" SPEEDBAR_GetClass() " Link "SPEEDBAR_GetClass()"}
+@EndNode
+
+@Node "--datasheet--()" "speedbar_gc/--datasheet--"
+
+@{b}    NAME@{ub}
+        speedbar_gc -- create speedbar BOOPSI objects
+
+@{b}    SUPERCLASS@{ub}
+        gadgetclass
+
+@{b}    REQUIRES@{ub}
+        bevel.image
+
+@{b}    DESCRIPTION@{ub}
+        This classes provides a simple way to create and manage
+        "Speed Bars", also commonly called Button Bars, @{"Tool" Link "INCLUDE:datatypes/datatypes.h/Main" 143} Docs, etc.
+
+        A speed bar is a horizontal row or vertical column of button
+        gadgets, usually with an image face denoting some program function.
+        The speedbar gadget could be placed in the main programs window
+        or perhaps its own window to form a floating speedbar/tooldoc.
+
+        An advantages that this class provides:
+
+         > Speedbar button strip created & removed as a single gadget.
+
+         > Help strings for each button can be provided, and displayed
+           in a window title bar while a button is depressed.
+
+         > Supports Right Mouse Button abort.
+
+         > Supports window relativity.
+
+         > @{"Custom" Link "INCLUDE:hardware/custom.h/Main" 23} centered images.
+
+         > Ability to change background color of the speed bar strip
+           or use fill hook pattern.
+
+         > Horizontal or Vertical speed bar orientation.
+
+         > Supports hiding and exposing speed buttons in the bar.
+
+         > Supports scrolling additional speed buttons in to view
+           via holding down the SHIFT key while clicking and
+           dragging the mouse left/right or up/down depending on
+           the SPEEDBAR_Orientation setting.
+
+         > Supports OM_NOTIFY and may be attached to either
+           button.gadget, scroller.gadget and/or propgclass to scroll
+           the speed buttons if more buttons exist that are visible
+           within its bounds. However, this as a slight unresolvable bug.
+
+@{b}    METHODS@{ub}
+        @{"OM_NEW" Link "tabs_gc/OM_NEW"} -- Passed to superclass, defaults set, then @{"OM_SET" Link "tabs_gc/OM_SET"}.
+
+        @{"OM_SET" Link "tabs_gc/OM_SET"} -- Passed to superclass, options tags set then rendered.
+
+        @{"OM_GET" Link "tabs_gc/OM_GET"} -- @{"Custom" Link "INCLUDE:hardware/custom.h/Main" 23} tag returned or passed to superclass.
+
+        OM_UPDATE -- Passed to superclass, options set then rendered.
+
+        OM_NOTIFY -- Passed to superclass, options set then rendered.
+
+        OM_DISPOSE -- Passed to superclass.
+
+        @{"GM_RENDER" Link "tabs_gc/GM_RENDER"} -- Passed to superclass, then speedbar is rendered.
+
+        @{"GM_HITTEST" Link "tabs_gc/GM_HITTEST"} -- Overrides supperclass, returns GMR_HITTEST.
+
+        @{"GM_GOACTIVE" Link "tabs_gc/GM_GOACTIVE"} -- Passed to superclass, speedbar activated.
+
+        GM_HANDLEINPUT -- Overrides supperclass, all input processed.
+
+        GM_GOINACTIVE -- Passed to superclass, speedbar deactivated.
+
+        GM_DOMAIN -- Returns GDOMAIN_MINIMUM and GDOMAIN_MAXIMUM dimensions.
+
+@{b}    ATTRIBUTES@{ub}
+        SPEEDBAR_Buttons (struct @{"List" Link "INCLUDE:exec/lists.h/Main" 19} *)
+            An Exec list.  Nodes in this list must be allocated with
+            @{"AllocSpeedButtonNodeA()" Link "AllocSpeedButtonNodeA()"}.
+
+            See the included SpeedBarTest.c example for additional
+            information.
+
+            Passing a @{"NULL" Link "rexxsupport/NULL"} list will remove all buttons from the speedbar and
+            detatch the buttons.  Passing ~0 will detach all buttons but not
+            erase the display, useful when working on the list data, or while
+            changing button lists.
+
+            Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_GET)
+
+        SPEEDBAR_Orientation (WORD)
+            Define orientation of the speedbar's button strip.
+
+            Accepted values as defined in @{"<gadgets/speedbar.h>" Link "INCLUDE:gadgets/speedbar.h/Main" 0} are:
+
+               SBORIENT_HORIZ
+               SBORIENT_VERT
+
+            Defaults to SBORIENT_HORIZ
+
+
+            Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_GET)
+
+        SPEEDBAR_Background (WORD)
+            Background colour to appear behind gadget.
+
+            Defaults to 0.
+
+            Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_GET)
+
+        SPEEDBAR_Window (struct @{"Window" Link "INCLUDE:intuition/intuition.h/Main" 942} *)
+            This Window's TitleBar will changed to the selected button's
+            help text while the button remains selected.
+
+            Defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+            Applicability is (OM_NEW,@{"OM_SET" Link "tabs_gc/OM_SET"},OM_GET)
+
+            NOTE: SPEEDBAR_Screen is *NOT* implemented.
+
+        SPEEDBAR_StrumBar (BOOL)
+            @{"Enable" Link "exec/Enable()"} "strumming" mode, where by you can drag the mouse
+            over the button bar to view the help titles and release
+            mouse button select the speed button under the mouse.
+
+            Defaults to FALSE.
+
+            Applicability is (OM_NEW,OM_SET)
+
+            NOTE: SPEEDBAR_StrumBar has been disabled to support other
+                  features available now, and in the future.
+
+        SPEEDBAR_OffButton (SHORT)
+            Disconnect a specified button ID from the speedbar display,
+            but does not remove or deallocate button from the list.
+
+            Applicability is (OM_SET, OM_UPDATE)
+
+        SPEEDBAR_OnButton (SHORT)
+            Reconnect specified button ID to the speedbar.
+
+            Applicability is (OM_SET, OM_UPDATE)
+
+        SPEEDBAR_ScrollLeft (BOOL)
+            Scrolls the speedbuttons to the Left or Up depending on
+            gadget orientation.
+
+            Applicability is (OM_SET, OM_UPDATE)
+
+        SPEEDBAR_ScrollRight (BOOL)
+            Scrolls the speedbuttons to the Right or Down depending on
+            gadget orientation.
+
+            Applicability is (OM_SET, OM_UPDATE)
+
+        SPEEDBAR_Top (WORD)
+            Set or retrieve the SpeedButton ID of the Top (read First
+            Visible) gadget in the button list.
+
+            Applicability is (OM_SET, OM_UPDATE, @{"OM_GET" Link "tabs_gc/OM_GET"}, OM_NOTIFY)
+
+        SPEEDBAR_Visible (WORD)
+            Retrieve the number of speed buttons visible within
+            the gadget's container bounds.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SPEEDBAR_Total (WORD)
+            Retrieve the total number of speed buttons in the button list.
+            SPEEDBAR_Total, SPEEDBAR_Visible and SPEEDBAR_Top could be
+            mapped to a scroller's matching PGA tags to scroll the button
+            list if so desired.
+
+            Applicability is (OM_GET, OM_NOTIFY)
+
+        SPEEDBAR_BevelStyle (WORD)
+            Set bevel box style around the speed bar. In some cases
+            complex speedbars might be built via a series of speedbars
+            in a layout object group and it would be desirable to
+            select other bevel styles such as BVS_NONE, which under any
+            bevel style preferences in use, it will not render a bevel.
+
+            Defaults to BVS_BUTTON.
+
+            Applicability is (ON_NEW, @{"OM_SET" Link "tabs_gc/OM_SET"}, OM_GET)
+
+@EndNode
+
+@Node "AllocSpeedButtonNodeA()" "speedbar_gc/AllocSpeedButtonNodeA"
+
+@{b}    NAME@{ub}
+        AllocSpeedButtonNodeA -- @{"Allocate" Link "exec/Allocate()"} a SpeedBar node. (V40)
+
+@{b}    SYNOPSIS@{ub}
+        struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} * AllocSpeedButtonNode(UWORD, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+        node = AllocSpeedButtonNode(number, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+
+        struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} * AllocSpeedButtonNodeA(UWORD, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *)
+        node = AllocSpeedButtonNodeA(number, taglist)
+
+@{b}    FUNCTION@{ub}
+        Allocates a node that can be added to the Exec linked list of
+        labels in the speedbar.  This is the only way to allocate a
+        node for this list, you cannot allocate nodes yourself because
+        the SpeedBar class uses a private node structure.
+
+@{b}    INPUTS@{ub}
+        number - Places value in node->sbn_Node.ln_Pri, and is the
+            numeric ID of the button within the bar. Note the current
+            limitation, ln_Pri is a @{"BYTE" Link "INCLUDE:exec/types.h/Main" 118}. This will be addressed, and
+            *posibly* made obsolete and overridden by SBNA_ButtonID.
+
+        taglist - Attributes for the node, passed onto
+            @{"SetSpeedButtonNodeAttrsA()" Link "SetSpeedButtonNodeAttrsA()"}.
+
+@{b}    RESULT@{ub}
+        node - A node that can be added into the Exec list of labels for
+            a SpeedBar gadget.
+
+@{b}    SEE ALSO@{ub}
+        @{"FreeSpeedButtonNode()" Link "FreeSpeedButtonNode()"}, @{"SetSpeedButtonNodeAttrsA()" Link "SetSpeedButtonNodeAttrsA()"}
+
+@EndNode
+
+@Node "FreeSpeedButtonNode()" "speedbar_gc/FreeSpeedButtonNode"
+
+@{b}    NAME@{ub}
+        FreeSpeedButtonNode -- Free a SpeedBar node. (V40)
+
+@{b}    SYNOPSIS@{ub}
+        VOID FreeSpeedButtonNode(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *)
+        FreeSpeedButtonNode(node)
+
+@{b}    FUNCTION@{ub}
+        Frees a SpeedButtonNode allocated with @{"AllocSpeedButtonNodeA()" Link "AllocSpeedButtonNodeA()"}.
+
+@{b}    INPUTS@{ub}
+        node - The node to free.
+
+@{b}    SEE ALSO@{ub}
+        @{"AllocSpeedButtonNodeA()" Link "AllocSpeedButtonNodeA()"}
+
+@EndNode
+
+@Node "GetSpeedButtonNodeAttrsA()" "speedbar_gc/GetSpeedButtonNodeAttrsA"
+
+@{b}    NAME@{ub}
+        GetSpeedButtonNodeAttrsA -- Get attributes about a SpeedBar node. (V4
+0)
+
+@{b}    SYNOPSIS@{ub}
+        VOID GetSpeedButtonNodeAttrs(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+        GetSpeedButtonNodeAttrs(node, firsttag, ...)
+
+        VOID GetSpeedButtonNodeAttrsA(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *)
+        GetSpeedButtonNodeAttrsA(node, taglist)
+
+@{b}    FUNCTION@{ub}
+        The SpeedBar uses a private node structure and all attributes
+        are hidden, and must therefore be accessed with this function.
+
+@{b}    INPUTS@{ub}
+        node - The SpeedBar node to get the information on.
+        taglist - A tag list of attributes to get.  ti_Tag is the attribute
+            to get and ti_Data is a pointer to a location to copy the result
+            to.
+
+@{b}    SEE ALSO@{ub}
+        @{"SetSpeedButtonNodeAttrsA()" Link "SetSpeedButtonNodeAttrsA()"}
+
+@EndNode
+
+@Node "SetSpeedButtonNodeAttrsA()" "speedbar_gc/SetSpeedButtonNodeAttrsA"
+
+@{b}    NAME@{ub}
+        SetSpeedButtonNodeAttrsA -- Set attributes of a SpeedBar node. (V40)
+
+@{b}    SYNOPSIS@{ub}
+        VOID SetSpeedButtonNodeAttrs(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...)
+        SetSpeedButtonNodeAttrs(node, firsttag, ...)
+
+        VOID SetSpeedButtonNodeAttrsA(struct @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} *, struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *)
+        SetSpeedButtonNodeAttrsA(node, taglist)
+
+@{b}    FUNCTION@{ub}
+        Changes attributes for a SpeedBar node.  Since the SpeedBar
+        class uses a private node structure, this is the only way to change
+        node attributes.
+
+        You may NOT change node attributes when the node is in a list
+        attached to a SpeedBar gadget.  You must first detach the list
+        with SPEEDBAR_Buttons, ~0 before you can change attributes, and
+        then re-attach the list.
+
+@{b}    TAGS@{ub}
+        SBNA_Left (WORD)
+        Left spacing offset of button from left of bar, set automatically.
+
+        SBNA_Top (WORD)
+        Top spacing offset of button from top of bar, set automatically.
+
+        SBNA_Width (WORD)
+        Width Of Button - these are set automatically.
+
+        SBNA_Height (WORD)
+        Height Of Button - these are set automatically.
+
+        SBNA_Image (struct @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} *)
+        Standard @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} or BOOPSI @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} to be displayed in this button.
+
+        SBNA_SelImage (struct @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} *)
+        Standard @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} or BOOPSI @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} to be displayed in this button
+        when selected.
+
+        SBNA_Spacing (WORD)
+        Spacing between this button and the last button.
+
+        SBNA_Highlight (WORD)
+        Button selecting highlight mode, ant one of the following
+        is supported:
+
+                SBH_NONE        - Do not highlight.
+                SBH_BACKFILL    - BackFill will FILLPEN
+                SBH_RECESS      - Shift image right and down when selected.
+                SBH_IMAGE       - Display alternate image (SBNA_SelImage)
+
+        SBNA_Enabled (BOOL)
+        Enabled (hidden/shown) state of a speed button.
+
+        SBNA_Help (STRPTR)
+        String Pointer to optional help text place in window titlebar
+        when this speed button is active/selected. This only works if you
+        have provided a valid SPEEDBAR_Window.
+
+        SBNA_UserData (APTR)
+        User Data, use as desired.
+
+        SBNA_Disabled (BOOL) (V41)
+        Marks this button as disabled, it will render with a ghost pattern
+        and will not allow it to be selected.
+
+        SBNA_Toggle (BOOL) (V41)
+        Designates the button as a boolean toggle button. Defaults FALSE.
+
+        SBNA_Selected (BOOL) (V41)
+        The current selection state of a Toggle/MX button. Defaults FALSE.
+
+        SBNA_MXGroup (BOOL) (V41)
+        Set the MXGroup a button belongs in. This setting implies the
+        SBNA_Toggle setting as TRUE also. The default is ~0, or not
+        in any MXGroup. Note, a single speedbar can contain several
+        MX groupings and mixtures of toggles and normal selections!
+        Eg. six buttons as two groups of three could be implemented as
+        SBNA_MXGroup, 0 for the first three buttons and SBNA_MXGroup, 1
+        for the last three buttons.
+
+        GA_GadgetHelpText  (STRPTR) (V47)
+        Same as for gadgets. If set on a node this is the text the speedbar
+        returns when this node is hit
+
+@{b}    INPUTS@{ub}
+        node - @{"Node" Link "INCLUDE:exec/nodes.h/Main" 21} whose attributes you are changing.
+        taglist - @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} list of attributes to change.
+
+@{b}    SEE ALSO@{ub}
+        @{"GetSpeedButtonNodeAttrsA()" Link "GetSpeedButtonNodeAttrsA()"}
+
+@EndNode
+
+@Node "SPEEDBAR_GetClass()" "speedbar_gc/SPEEDBAR_GetClass"
+
+@{b}    NAME@{ub}
+        SPEEDBAR_GetClass -- Gets the pointer to the speedbar class. (V40)
+
+@{b}    SYNOPSIS@{ub}
+        speedbar_class = SPEEDBAR_GetClass();
+        D0
+
+        Class * SPEEDBAR_GetClass(VOID);
+
+@{b}    FUNCTION@{ub}
+        Obtains the pointer to the SpeedBar gadget class for use with
+        @{"NewObject()" Link "intuition/NewObject()"}.  This function always returns a valid pointer so
+        you do not need to check it.  The reason is that if the library
+        opens fine, then the pointer returned is already setup.  (Of course
+        this implies that if opening the library fails, you shouldn't be
+        calling this.)
+
+        Note that this function does not create the class, that is done
+        when the class library is opened.
+
+@{b}    INPUTS@{ub}
+        Nothing.
+
+@{b}    RESULT@{ub}
+        speedbar_class - Pointer to the SpeedBar gadget class.
+
+@{b}    SEE ALSO@{ub}
+
+@EndNode
+

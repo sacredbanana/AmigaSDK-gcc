@@ -1,0 +1,1242 @@
+@database "locale"
+@master "AMIDEV:NDK/Autodocs/locale.doc"
+
+@Node Main "locale.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" --environment_vars--() " Link "--environment_vars--()"}
+    @{" --rexxhost-- " Link "--rexxhost--"}
+    @{" --structures-- " Link "--structures--"}
+    @{" CloseCatalog() " Link "CloseCatalog()"}
+    @{" CloseLocale() " Link "CloseLocale()"}
+    @{" ConvToLower() " Link "ConvToLower()"}
+    @{" ConvToUpper() " Link "ConvToUpper()"}
+    @{" FormatDate() " Link "FormatDate()"}
+    @{" FormatString() " Link "FormatString()"}
+    @{" GetCatalogStr() " Link "GetCatalogStr()"}
+    @{" GetLocaleStr() " Link "GetLocaleStr()"}
+    @{" IsXXXX() " Link "IsXXXX()"}
+    @{" OpenCatalog() " Link "OpenCatalog()"}
+    @{" OpenLocale() " Link "OpenLocale()"}
+    @{" ParseDate() " Link "ParseDate()"}
+    @{" StrConvert() " Link "StrConvert()"}
+    @{" StrnCmp() " Link "StrnCmp()"}
+@EndNode
+
+@Node "--environment_vars--()" "locale.library/--environment_vars--"
+
+	Starting with V40, locale.library maintains a global environment
+	variable called "Language" which contains the name of the current
+	default language as used in the system. This is the name of the
+	language associated with the @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} structure returned by
+	OpenLocale(NULL).
+
+@{b}   EXAMPLE@{ub}
+	From a shell:
+
+		Echo "The system language currently is: $Language"
+
+	will print the name of the current system language ("english",
+	"français", etc)
+
+@EndNode
+
+@Node "--rexxhost--" "locale.library/--rexxhost--"
+
+@{b}   HOST INTERFACE@{ub}
+	locale.library provides an ARexx function host interface that enables
+	ARexx programs to take advantage of system localization. The
+	functions provided by the interface are directly related to the
+	functions described herein, with the differences mostly being
+	in the way they are called.
+
+	The function host library vector is located at offset -30 from the
+	library. This is the value you provide to ARexx in the AddLib()
+	function call.
+
+@{b}   FUNCTIONS@{ub}
+	@{"CloseCatalog" Link "locale/CloseCatalog()"} (CATALOG/N/A)
+	@{"ConvToLower" Link "locale/ConvToLower()"} (CHARACTER/A)
+	@{"ConvToUpper" Link "locale/ConvToUpper()"} (CHARACTER/A)
+	@{"GetCatalogStr" Link "locale/GetCatalogStr()"} (CATALOG/A,STRING/N/A,DEFAULT/A)
+	IsAlNum (CHARACTER/A)
+	IsAlpha (CHARACTER/A)
+	IsCntrl (CHARACTER/A)
+	IsDigit (CHARACTER/A)
+	IsGraph (CHARACTER/A)
+	IsLower (CHARACTER/A)
+	IsPrint (CHARACTER/A)
+	IsPunct (CHARACTER/A)
+	IsSpace (CHARACTER/A)
+	IsUpper (CHARACTER/A)
+	IsXDigit (CHARACTER/A)
+	@{"OpenCatalog" Link "locale/OpenCatalog()"} (NAME/A,BUILTINLANGUAGE/A,VERSION/N/A)
+	Strncmp (STRING1/A,STRING2/A,TYPE/N/A)
+
+@{b}   EXAMPLE@{ub}
+	\* localetest.rexx *\
+
+	\* Make sure locale is loaded as a function host *\
+	IF ~SHOW(L,'locale.library') THEN DO
+	  CALL ADDLIB('locale.library',0,-30)
+	END;
+
+	say ConvToLower("A");
+	say ConvToUpper("b");
+	say IsAlpha("1");
+
+	catalog = OpenCatalog("sys/workbench.catalog","english",0);
+	say GetCatalogStr(catalog,34,"default");
+	say CloseCatalog(catalog);
+	say StrnCmp("test","test",2);
+
+@EndNode
+
+@Node "--structures--" "locale.library/--structures--"
+
+	The @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} structure is the main public structure provided by
+	locale.library. The structure is defined in @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0}
+	and consists of the following fields:
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_LocaleName
+	    Locale's name.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_LanguageName
+	    The language of the driver bound to this locale.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_PrefLanguages[10]
+	    The ordered list of preferred languages for this locale.
+
+	ULONG loc_Flags
+	    @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} flags. Currently always 0.
+
+	ULONG loc_CodeSet
+	    Specifies the code set required by this locale. Before V46, this
+	    value was always 0. Since V46, this is the IANA charset number
+	    (see L:CharSets/character-sets). For compatibility, 0 should be
+	    handled as equal to 4, both meaning ISO-8859-1 Latin1.
+
+	ULONG loc_CountryCode
+	    The international country code.
+
+	ULONG loc_TelephoneCode
+	    The international telephone code for the country.
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} loc_GMTOffset
+	    The offset in minutes of the current location from GMT.
+	    Positive indicates a Westerly direction from GMT,
+	    negative Easterly.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MeasuringSystem
+	    The measuring system being used.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_DateTimeFormat
+	    The date and time format string, ready to pass to @{"FormatDate()" Link "FormatDate()"}
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_DateFormat
+	    The date format string.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_TimeFormat
+	    The time format string.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_ShortDateTimeFormat
+	    The short date and time format string, ready to pass to
+	    @{"FormatDate()" Link "FormatDate()"}
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_ShortDateFormat
+	    The short date format string.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_ShortTimeFormat
+	    The short time format string.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_DecimalPoint
+	    The decimal point character used to format non-monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_GroupSeparator
+	    The characters used to separate groups of digits before the
+	    decimal-point character in formatted non-monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_FracGroupSeparator
+	    The characters used to separate groups of digits after the
+	    decimal-point character in formatted non-monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_Grouping
+	    A string whose elements indicate the size of each group of digits
+	    before the decimal-point character in formatted non-monetary
+	    quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_FracGrouping
+	    A string whose elements indicate the size of each group of digits
+	    after the decimal-point character in formatted non-monetary
+	    quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonDecimalPoint
+	    The decimal-point used to format monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonGroupSeparator
+	    The separator for groups of digits before the decimal-point in
+	    monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonFracGroupSeparator
+	    The separator for groups of digits after the decimal-point in
+	    monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonGrouping
+	    A string whose elements indicate the size of each group of digits
+	    before the decimal-point character in monetary quantities.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonFracGrouping
+	    A string whose elements indicate the size of each group of digits
+	    after the decimal-point character in monetary quantities.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonFracDigits
+	    The number of fractional digits (those after the decimal-point)
+	    to be displayed in a formatted monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonIntFracDigits
+	    The number of fractional digits (those after the decimal-point)
+	    to be displayed in an internationally formatted monetary quantity.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonCS
+	    The local currency symbol applicable to the current locale.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonSmallCS
+	    The currency symbol for small amounts.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonIntCS
+	    The international currency symbol applicable to the current
+	    locale. The first three characters contain the alphabetic
+	    international currency symbol in accordance with those specified
+	    in ISO 4217 Codes for the Representation of Currency and Funds.
+	    The fourth character (immediately preceding the NULL) is the
+	    character used to separate the international currency symbol from
+	    the monetary quantity.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonPositiveSign
+	    The string used to indicate a non-negative monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonPositiveSpaceSep
+	    Specifies the number of spaces separating the currency symbol from
+	    the non-negative monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonPositiveSignPos
+	    Set to a value indicating the positioning of loc_MonPositiveSign
+	    for a non-negative monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonPositiveCSPos
+	    Set to 1 or 0 if loc_MonCS respectively precedes or succeeds
+	    the value for a non-negative monetary quantity.
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} loc_MonNegativeSign
+	    The string used to indicate a negative monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonNegativeSpaceSep
+	    Specifies the number of spaces separating the currency symbol from
+	    the negative monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonNegativeSignPos
+	    Set to a value indicating the positioning of loc_MonNegativeSign
+	    for a negative monetary quantity.
+
+	@{"UBYTE" Link "INCLUDE:exec/types.h/Main" 97} loc_MonNegativeCSPos
+	    Set to 1 or 0 if loc_MonCS respectively precedes or succeeds
+	    the value for a negative monetary quantity.
+
+
+	The grouping tables pointed to by loc_Grouping, loc_FracGrounping,
+	loc_MonGrouping, and loc_MonFracGrouping contain a stream of bytes
+	with the following values:
+
+	    255		No further grouping is to be performed.
+
+	    0		The previous element is to be repeatedly used for the
+			remainder of the digits.
+
+	    1..254	The integer value is the number of digits that comprise
+			the current group. The next element is examined to
+			determine the size of the next group of digits before
+			the current group.
+
+	The values of loc_MonPositiveSignPos and loc_MonNegativeSignPos are
+	interpreted according to the following:
+
+	    0		Parentheses surround the quantity and currency symbol
+
+	    1		The sign string precedes the quantity and
+			currency symbol
+
+	    2		The sign string succeeds the quantity and
+			currency symbol
+
+	    3		The sign string immediately precedes the
+			currency symbol
+
+	    4		The sign string immediately succeeds the
+			currency symbol.
+
+@EndNode
+
+@Node "CloseCatalog()" "locale.library/CloseCatalog"
+
+@{b}   NAME@{ub}
+	CloseCatalog -- close a message catalog. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	CloseCatalog(catalog);
+	             A0
+
+	VOID CloseCatalog(struct @{"Catalog" Link "INCLUDE:libraries/locale.h/Main" 271} *);
+
+@{b}   FUNCTION@{ub}
+	Concludes access to a message catalog. The usage count of the
+	catalog is decremented. When this count reaches 0, the catalog
+	can be expunged from system memory whenever a memory panic occurs.
+
+@{b}   INPUTS@{ub}
+	catalog - the message catalog to close. A @{"NULL" Link "rexxsupport/NULL"} catalog is a valid
+		  parameter and is simply ignored.
+
+@{b}   SEE ALSO@{ub}
+	@{"OpenCatalog()" Link "OpenCatalog()"}, @{"GetCatalogStr()" Link "GetCatalogStr()"}
+
+@EndNode
+
+@Node "CloseLocale()" "locale.library/CloseLocale"
+
+@{b}   NAME@{ub}
+	CloseLocale -- close a locale. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	CloseLocale(locale);
+	            A0
+
+	VOID CloseLocale(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *);
+
+@{b}   FUNCTION@{ub}
+	Concludes access to a locale.
+
+@{b}   INPUTS@{ub}
+	locale - an opened locale. A @{"NULL" Link "rexxsupport/NULL"} locale is a valid
+		 parameter and is simply ignored.
+
+@{b}   SEE ALSO@{ub}
+	@{"OpenLocale()" Link "OpenLocale()"}, @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0}
+
+@EndNode
+
+@Node "ConvToLower()" "locale.library/ConvToLower"
+
+@{b}   NAME@{ub}
+	ConvToLower -- convert a character to lower case. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	char = ConvToLower(locale,character);
+	D0	           A0     D0
+
+	ULONG ConvToLower(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,ULONG);
+
+@{b}   FUNCTION@{ub}
+	This function tests if the character specified is upper case. If it is
+	then the lower case version of that character is returned, and if it
+	isn't then the original character is returned.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the conversion
+	character - the character to convert
+
+@{b}   RESULT@{ub}
+	char - a (possibly) converted character
+
+@{b}   NOTE@{ub}
+	This function requires a full 32-bit character be passed-in in order
+	to support multi-byte character sets.
+
+@{b}   BUGS@{ub}
+	Prior to V46, the builtin default routine (it can be replaced by
+	the default language driver or, since V46, by the default charset
+	driver) did read from unallocated memory and returned random results
+	for characters > 0xFF. Since V46, it always returns the unchanged
+	character in this case.
+	Prior to V46, the builtin default routine converted '×' -> '÷'.
+
+@EndNode
+
+@Node "ConvToUpper()" "locale.library/ConvToUpper"
+
+@{b}   NAME@{ub}
+	ConvToUpper -- convert a character to upper case. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	char = ConvToUpper(locale,character);
+	D0	           A0     D0
+
+	ULONG ConvToUpper(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,ULONG);
+
+@{b}   FUNCTION@{ub}
+	This function tests if the character specified is lower case. If it is
+	then the upper case version of that character is returned, and if it
+	isn't then the original character is returned.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the conversion
+	character - the character to convert
+
+@{b}   RESULT@{ub}
+	char - a (possibly) converted character
+
+@{b}   NOTE@{ub}
+	This function requires a full 32-bit character be passed-in in order
+	to support multi-byte character sets.
+
+@{b}   BUGS@{ub}
+	Prior to V46, the builtin default routine (it can be replaced by
+	the default language driver or, since V46, by the default charset
+	driver) did read from unallocated memory and returned random results
+	for characters > 0xFF. Since V46, it always returns the unchanged
+	character in this case.
+
+	Prior to V46, the builtin default routine converted '÷' -> '×'.
+
+@EndNode
+
+@Node "FormatDate()" "locale.library/FormatDate"
+
+@{b}   NAME@{ub}
+	FormatDate -- generate a date string based on a date formatting
+	              template. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	FormatDate(locale,fmtTemplate,date,putCharFunc);
+	           A0     A1          A2   A3
+
+	VOID FormatDate(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},struct @{"DateStamp" Link "INCLUDE:dos/dos.h/Main" 51} *,
+	                struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *);
+
+@{b}   FUNCTION@{ub}
+	This function processes a formatting template and generates
+	a stream of bytes that's sent one character at a time to the
+	putCharFunc callback hook.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the formatting
+	fmtTemplate - the NULL-terminated template describing the desired
+	              format for the date. This is constructed just like
+	              C-language printf() statements, except that different
+	              formatting codes are used. Just like in C, formatting
+	              codes start with a % followed by the formatting command.
+	              The following commands are accepted by this function:
+
+	              %a  - abbreviated weekday name
+	              %-a - abbreviated weekday name, first letter lowercase
+	              %+a - abbreviated weekday name, first letter uppercase
+	              %^a - abbreviated weekday name, all letters uppercase
+	              %A  - weekday name
+	              %-A - weekday name, first letter lowercase
+	              %+A - weekday name, first letter uppercase
+	              %^A - weekday name, all letters uppercase
+	              %<A - alternate weekday name, first letter lowercase
+	              %>A - alternate weekday name, first letter uppercase
+	              %b  - abbreviated month name
+	              %-b - abbreviated month name, first letter lowercase
+	              %+b - abbreviated month name, first letter uppercase
+	              %^b - abbreviated month name, all letters uppercase
+	              %B  - month name
+	              %-B - month name, first letter lowercase
+	              %+B - month name, first letter uppercase
+	              %^B - month name, all letters uppercase
+	              %<B - alternate month name, first letter lowercase
+	              %>B - alternate month name, first letter uppercase
+	              %c  - same as "%a %b %d %H:%M:%S %Y"
+	              %C  - century (year / 100) with leading zeros (00-99)
+	              %-C - century (year / 100) without leading zeros (0-99)
+	              %d  - day number with leading zeros (01-31)
+	              %-d - day number without leading zeros (1-31)
+	              %D  - same as "%m/%d/%y"
+	              %e  - day number with leading spaces ( 1-31)
+	              %F  - same as "%Y-%m-%d", ISO 8601 date format
+	              %g  - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using two digits with leading zeros (00-99)
+	              %-g - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using two digits without leading zeros (0-99)
+	              %G  - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using four digits with leading zeros
+	              %-G - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using four digits without leading zeros
+	              %h  - abbreviated month name
+	              %-h - abbreviated month name, first letter lowercase
+	              %+h - abbreviated month name, first letter uppercase
+	              %^h - abbreviated month name, all letters uppercase
+	              %H  - hour using 24-hour style with leading zeros
+	                    (00-23)
+	              %I  - hour using 12-hour style with leading zeros
+	                    (01-12)
+	              %j  - julian date with leading zeros (001-366)
+	              %-j - julian date without leading zeros (1-366)
+	              %J  - remaining days of the year with leading zeros
+	              %-J - remaining days of the year without leading zeros
+	              %m  - month number with leading zeros (01-12)
+	              %-m - month number without leading zeros (1-12)
+	              %M  - the number of minutes with leading zeros (00-59)
+	              %-M - the number of minutes without leading zeros
+	                    (0-59)
+	              %n  - insert a linefeed
+	              %p  - AM or PM strings
+	              %-p - AM or PM strings, first letter lowercase
+	              %+p - AM or PM strings, first letter uppercase
+	              %^p - AM or PM strings, all letters uppercase
+	              %q  - hour using 24-hour style without leading zeros
+	                    (0-23)
+	              %Q  - hour using 12-hour style without leading zeros
+	                    (1-12)
+	              %r  - same as "%I:%M:%S %p"
+	              %R  - same as "%H:%M"
+	              %S  - number of seconds with leadings zeros (00-60)
+	              %-S - number of seconds without leadings zeros (0-60)
+	              %t  - insert a tab character
+	              %T  - same as "%H:%M:%S"
+	              %u  - week day number (1-7), taking Monday as first day
+                           of the week as specified in ISO 8601
+	              %U  - week number, taking the first Sunday of the year
+	                    as first day of week 1, with leading zeros
+	                    (00-53)
+	              %-U - like %U but without leading zeros (0-53)
+	              %V  - week number (01-53), taking Monday as first day
+                           of the week as specified in ISO 8601
+	              %-V - like %V but without leading zeros (1-53)
+	              %w  - weekday number
+	              %W  - week number, taking the first Monday of the year
+	                    as first day of week 1, with leading zeros
+	                    (00-53)
+	              %-W - like %W but without leading zeros (0-53)
+	              %x  - same as "%m/%d/%y"
+	              %X  - same as "%H:%M:%S"
+	              %y  - year using two digits with leading zeros (00-99)
+	              %-y - year using two digits without leading zeros
+	                    (0-99)
+	              %Y  - year using four digits with leading zeros
+	              %-Y - year using four digits without leading zeros
+	              %z  - time zone offset to UTC as specified in
+	                    ISO 8601, using a '-' sign for time zone offsets
+	                    behind UTC (west of Greenwhich), a '+' sign
+	                    otherwise, then two digits for the hours
+	                    and two digits for the minutes
+	              %Z  - time zone name or abbreviation. "UTC" for now,
+	                    may be localized in future
+	              %%  - a single '%' character
+
+	              The variants starting with %-, %+, %^, %< and %>
+	              were added in V50.
+
+	              The %< and %> alternate weekday and month names were
+	              added in V50 for better support of languages where
+	              the name used alone differs from the name used in a
+	              date string, e.g. czech, finnish, slovak. If the
+	              language driver does not provide alternate weekday
+	              or month names for usage inside of date strings, the
+	              normal versions for standalone usage are used.
+
+	              Before V51.11 "%C" was defined to be equal to
+	              "%a %b %e %T %Z %Y" but that did never work
+	              because "%Z" was not defined. Now it's the century
+	              for compatibility to ISO C99 strftime().
+
+	              In V51.11, "%g", "%-g", "%F", "%G", "%-G", "%u",
+	              "%V", "z" and "%Z" were added, "%U" and "%W" were
+	              slightly changed for compatibility to ISO C99
+	              strftime().
+
+	              If the template parameter is @{"NULL" Link "rexxsupport/NULL"}, a single NUL byte
+	              is sent to putCharFunc.
+	date        - the date to format into a string.
+	putCharFunc - a callback hook invoked for every character generated,
+	              including for the terminating NUL character. The hook
+	              function is called with:
+
+	              A0 - address of @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} structure
+	              A2 - locale pointer
+	              A1 - character for hook to process (not a pointer!)
+
+
+@{b}   SEE ALSO@{ub}
+	@{"ParseDate()" Link "ParseDate()"}, @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0}, @{"<dos/dos.h>" Link "INCLUDE:dos/dos.h/Main" 0}
+
+@EndNode
+
+@Node "FormatString()" "locale.library/FormatString"
+
+@{b}   NAME@{ub}
+	FormatString -- format data into a character stream. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	next = FormatString(locale,fmtTemplate,dataStream,putCharFunc);
+	D0                  A0     A1          A2         A3
+
+	@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} FormatString(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},@{"APTR" Link "INCLUDE:exec/types.h/Main" 75},struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *);
+
+@{b}   FUNCTION@{ub}
+	This function performs C-language-like formatting of a data stream,
+	outputting the result a character at a time. Where % formatting
+	commands are found in the formatting template, they are replaced with
+	the corresponding elements in 'dataStream'. %% must be used in the
+	string if a % is desired in the output.
+
+	An extension to the standard C-language printf() conventions used
+	by FormatString() is argument position specification. Specifying the
+	argument position lets the order of the % commands change while the
+	arguments provided remain the same. Using the C printf() call as an
+	example:
+	    printf("%d eyes, %d feet and %d ears",eyes,feet,ears);
+	    printf("%3$d ears, %1$d eyes and %2$d feet",eyes,feet,ears);
+	These two statements would produce the following output:
+	    "2 eyes, 3 feet and 4 ears" for the first
+	    "4 ears, 2 eyes and 3 feet" for the second
+
+	The argument positioning feature lets you change the format string
+	being processed while keeping the data stream the same. This is
+	an invaluable tool when translating strings to different languages.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the formatting
+	fmtTemplate - a C-language-like NULL-terminated format string,
+	              with the following supported % options:
+
+	  %[arg_pos$][flags][width][.limit][length]type
+
+	  arg_pos - ordinal position of the argument for this command within
+	            the array of arguments pointed to by 'dataStream'
+	    $     - must follow the arg_pos value, if specified
+	  flags   - only one allowed. '-' specifies left justification.
+	  width   - field width. If the first character is a '0', the
+	            field is padded with leading 0s.
+	    .     - must precede the field limit value, if specified
+	  limit   - maximum number of characters to output from a string.
+	            (only valid for %s or %b).
+	  length  - size of input data defaults to word (16-bit) for types c,
+	            d, u and x, 'l' changes this to long (32-bit).
+	  type    - supported types are:
+	                  b - BSTR, data is 32-bit @{"BPTR" Link "INCLUDE:dos/dos.h/Main" 131} to byte count followed
+	                      by a byte string. A @{"NULL" Link "rexxsupport/NULL"} @{"BPTR" Link "INCLUDE:dos/dos.h/Main" 131} is treated as an
+	                      empty string.
+	                  d - signed decimal
+	                  D - signed decimal using the locale's formatting
+	                      conventions
+	                  u - unsigned decimal
+	                  U - unsigned decimal using the locale's formatting
+	                      conventions
+	                  x - hexadecimal with hex digits in uppercase
+	                  X - hexadecimal with hex digits in lowercase
+	                  s - string, a 32-bit pointer to a NULL-terminated
+	                      byte string. A @{"NULL" Link "rexxsupport/NULL"} pointer is treated
+	                      as an empty string.
+	                  c - character
+
+	              If the formatting template parameter is @{"NULL" Link "rexxsupport/NULL"}, the
+	              function returns without outputting anything. Note the
+	              meaning of %x and %X are swapped with respect to
+	              standard C conventions. This is for compatibility with
+	              @{"exec.library/RawDoFmt()" Link "exec/RawDoFmt()"}.
+
+	dataStream - a stream of data that is interpreted according to
+	             the format string. Often this is a pointer into
+	             the task's stack.
+	putCharFunc - a callback hook invoked for every character generated,
+	              including for the terminating @{"NULL" Link "rexxsupport/NULL"} character. The hook
+	              is called with:
+
+	                A0 - address of @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} structure
+	                A1 - character for hook to process (not a pointer!)
+	                A2 - locale pointer
+
+	             the function is called with a @{"NULL" Link "rexxsupport/NULL"} char at the end of
+	             the format string.
+
+@{b}   RESULT@{ub}
+	next - A pointer to beyond the last data element used in 'dataStream'
+	       (the next argument that would have been processed).
+	       This allows multiple formatting passes to be made using the
+	       same data.
+
+@{b}   WARNING@{ub}
+	This function formats word values in the data stream. If your compiler
+	defaults to longs, you must add an "l" to your specifications. This
+	can get strange for characters, which might look like "%lc".
+
+	If you specify argument positions, please be aware that the number of
+	arguments is limited to 128 whose positions are tracked. If you exceed
+	this limitation, FormatString() will start producing the contents of
+	the remaining format string instead of converting the arguments to text.
+	So, for example, if the 129th conversion specification were "%s" then
+	it would come out as "%s" rather than an empty string. This limitation
+	has existed in all locale.library versions.
+
+@{b}   BUGS@{ub}
+	Result pointer was unreliable in all versions including 47.14 if any
+	number conversion with grouping characters was being used.
+
+	Positional arguments as in "%2$s" could lead to undefined behaviour
+	if the position was given as 0, or if the position was missing
+	altogether ("%$s") in all versions including 47.14.
+
+	Only up to 65535 characters of strings used by the %s conversion
+	specification will be copied in all versions including 47.14.
+
+	Mixing arguments with specific positions (e.g. "%2$s") and arguments
+	without specific positions (e.g. "%ld") could lead to undefined
+	behaviour in all version including 47.21, with more data read from
+	the argument list than was available and in a different order than
+	what might have been expected. In order to produce reliable results,
+	either use arguments with specific positions in all conversion
+	specifications, or only use conversion specifications without
+	specific argument positions.
+
+@{b}   In 3.2 (47.26) %d and %D were printed as if unsigned. This is fixed in 3.2@{ub}
+.1
+   (47.27)
+
+@{b}   SEE ALSO@{ub}
+	@{"exec.library/RawDoFmt()" Link "exec/RawDoFmt()"}
+
+@EndNode
+
+@Node "GetCatalogStr()" "locale.library/GetCatalogStr"
+
+@{b}   NAME@{ub}
+	GetCatalogStr -- get a string from a message catalog. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	string = GetCatalogStr(catalog,stringNum,defaultString);
+	D0                     A0      D0        A1
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} GetCatalogStr(struct @{"Catalog" Link "INCLUDE:libraries/locale.h/Main" 271} *,@{"LONG" Link "INCLUDE:exec/types.h/Main" 112},STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This function returns a specific string within a message catalog.
+	If the catalog parameter is @{"NULL" Link "rexxsupport/NULL"}, or the requested message does not
+	exist, then defaultString is returned.
+
+@{b}   INPUTS@{ub}
+	catalog - a message catalog as obtained from @{"OpenCatalog()" Link "OpenCatalog()"}, or @{"NULL" Link "rexxsupport/NULL"}
+	stringNum - a message number within the catalog
+	defaultString - string to return in case "catalog" is @{"NULL" Link "rexxsupport/NULL"} or
+	                "stringNum" can't be found
+
+@{b}   RESULT@{ub}
+	string - a pointer to a NULL-terminated string. The returned string
+		 is READ-ONLY, do NOT modify! This string pointer is valid
+		 only as long as the catalog remains open.
+
+@{b}   BUGS@{ub}
+	In locale.library V38-V40 the GetCatalogStr() function would preserve
+	the value of register A1 and also return the result string both in
+	registers A0 and D0. These are side-effects which, however, some
+	applications depend upon. You are well-advised to only use the
+	result string returned in register D0 and to assume that registers
+	A0, A1 and D1 will contain indeterminate data.
+
+@{b}   SEE ALSO@{ub}
+	@{"OpenCatalog()" Link "OpenCatalog()"}, @{"CloseCatalog()" Link "CloseCatalog()"}
+
+@EndNode
+
+@Node "GetLocaleStr()" "locale.library/GetLocaleStr"
+
+@{b}   NAME@{ub}
+	GetLocaleStr -- get a standard string from a locale. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	string = GetLocaleStr(locale,stringNum);
+	D0                    A0     D0
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} GetLocaleStr(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,ULONG);
+
+@{b}   FUNCTION@{ub}
+	This function returns a specific string associated with the given
+	locale.
+
+@{b}   INPUTS@{ub}
+	locale - a valid locale
+	stringNum - the number of the string to get a pointer to. See the
+		    constants defined in @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0} for the
+		    possible values.
+
+@{b}   RESULT@{ub}
+	string - a pointer to a NULL-terminated string, or @{"NULL" Link "rexxsupport/NULL"} if the
+		 requested string number was out of bounds. The returned
+		 string is READ-ONLY, do NOT modify! This string pointer
+		 is valid only as long as the locale remains open.
+
+@{b}   SEE ALSO@{ub}
+	@{"OpenLocale()" Link "OpenLocale()"}, @{"CloseLocale()" Link "CloseLocale()"}, @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0}
+
+@EndNode
+
+@Node "IsXXXX()" "locale.library/IsXXXX"
+
+@{b}   NAME@{ub}
+	IsXXXX -- determine whether a character is of a certain type. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	state = IsXXXX(locale,character);
+	D0	       A0     D0
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} IsXXXX(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,ULONG);
+
+@{b}   FUNCTION@{ub}
+	These functions determine whether the character specified is of a
+	certain type, according to the supplied locale.
+
+	IsAlNum() - test if alphanumeric character
+	IsAlpha() - test if alphabetical character
+	IsCntrl() - test if control character
+	IsDigit() - test if decimal digit character
+	IsGraph() - test if visible character
+	IsLower() - test if lower case character
+	IsPrint() - test if blank
+	IsPunct() - test if punctuation character
+	IsSpace() - test if white space character
+	IsUpper() - test if upper case character
+	IsXDigit() - test if hexadecimal digit
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the test
+	character - the character to test
+
+@{b}   RESULT@{ub}
+	state - TRUE if the character is of the required type, FALSE otherwise
+
+@{b}   NOTE@{ub}
+	These functions require full 32-bit characters be passed-in in order
+	to support multi-byte character sets.
+
+@{b}   BUGS@{ub}
+	Prior to V46, the builtin default routines (they can be replaced by
+	the default language driver or, since V46, by the default charset
+	driver) did read from unallocated memory and returned random results
+	for characters > 0xFF. Since V46, they always return FALSE in this
+	case.
+
+	Prior to V46, the builtin default IsUpper() routine did return TRUE
+	for the ß character (0xDF latin small letter sharp s). Fixed in V46.
+	Prior to V46, the builtin default IsUpper() routine did return TRUE
+	for '×', IsPunct() did return FALSE.
+
+@EndNode
+
+@Node "OpenCatalog()" "locale.library/OpenCatalog"
+
+@{b}   NAME@{ub}
+	OpenCatalogA -- open a message catalog. (V38)
+	OpenCatalog -- varargs stub for OpenCatalogA(). (V38)
+
+@{b}   SYNOPSIS@{ub}
+	catalog = OpenCatalogA(locale,name,tagList);
+	D0                     A0     A1   A2
+
+	struct @{"Catalog" Link "INCLUDE:libraries/locale.h/Main" 271} *OpenCatalogA(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	catalog = OpenCatalog(locale,name,firstTag, ...);
+
+	struct @{"Catalog" Link "INCLUDE:libraries/locale.h/Main" 271} *OpenCatalog(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},@{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28}, ...);
+
+@{b}   FUNCTION@{ub}
+	This function opens a message catalog. Catalogs contain all the
+	text strings that an application uses. These strings can easily
+	be replaced by strings in a different language, which causes the
+	application to magically start operating in that new language.
+
+	Catalogs originally come from disk files. This function searches for
+	them in the following places:
+
+		PROGDIR:Catalogs/languageName/name
+		LOCALE:Catalogs/languageName/name
+
+	where languageName is the name of the language associated with the
+	locale parameter. So assuming an application called WizPaint:
+
+		catalog = OpenCatalog(NULL,
+				      "WizPaint.catalog",
+				      OC_BuiltInLanguage,"english",
+				      TAG_DONE);
+
+	Passing @{"NULL" Link "rexxsupport/NULL"} as first parameter to OpenCatalog() indicates you
+	wish to use the system's default locale. Assuming the default locale
+	specifies "deutsch" as language, OpenCatalog() tries to open the
+	catalog as:
+
+		PROGDIR:Catalogs/deutsch/WizPaint.catalog
+
+	and if that file is not found, then OpenCatalog() tries to open it
+	as:
+
+		LOCALE:Catalogs/deutsch/WizPaint.catalog
+
+	PROGDIR: is not always checked before LOCALE: is. If the volume which
+	PROGDIR: is assigned to is NOT currently mounted, and if the one
+	which LOCALE: is assigned to IS mounted, then LOCALE: is checked
+	first, followed by PROGDIR: if needed. This is done in order to
+	minimize the number of disk swaps on floppy systems.
+
+	The OC_BuiltInLanguage tag specifies the language of the strings
+	that are built into the application. If the language of the
+	built-in strings matches that of the locale, then no catalog
+	need be loaded from disk and the built-in strings can be used
+	directly.
+
+	locale.library caches text catalogs in order to minimize disk
+	access. As such, OpenCatalog() may or may not cause disk access.
+	This fact should be taken into consideration. Unused catalogs are
+	automatically flushed from the system when there is not enough
+	memory. When there is disk access, it is possible a DOS requester
+	may be opened asking for a volume to be inserted. You can avoid this
+	requester opening by setting your process' pr_WindowPtr field to -1.
+
+@{b}   INPUTS@{ub}
+	locale - The locale for which the catalog should be opened, or @{"NULL" Link "rexxsupport/NULL"}.
+		 When @{"NULL" Link "rexxsupport/NULL"}, then the system's default locale is used. This
+		 should generally be @{"NULL" Link "rexxsupport/NULL"}
+	name - The NULL-terminated name of the catalog to open, typically
+	       the application name with a ".catalog" extension
+	tagList - Pointer to an array of tags providing optional extra
+		  parameters, or @{"NULL" Link "rexxsupport/NULL"}
+
+@{b}   TAGS@{ub}
+	OC_BuiltInLanguage (STRPTR) - Language of built-in strings of the
+				      application. That is, this tag identifies
+				      the language used for the "defaultString"
+				      parameter used in the @{"GetCatalogStr()" Link "GetCatalogStr()"}
+				      function. Default is "english". Providing
+				      this tag and setting its value to @{"NULL" Link "rexxsupport/NULL"}
+				      indicates that there are no built-in
+				      strings.
+
+	OC_BuiltInCodeSet (ULONG) - Code set of built-in strings. Default is 0.
+				    THIS TAG SHOULD ALWAYS BE SET TO 0 FOR NOW.
+
+	OC_Language (STRPTR) - Language explicitly requested for the catalog.
+			       A catalog of this language will be returned if
+			       possible, otherwise a catalog in one of the
+			       user's preferred languages. This tag should
+			       normally not be provided as it overrides the
+			       user's preferences.
+
+	OC_Version (UWORD) - @{"Catalog" Link "INCLUDE:libraries/locale.h/Main" 271} version number required. Default is 0
+			     which means to accept any version of the catalog
+			     that is found. Note that if a version is
+			     specified, the catalog's version must match it
+			     exactly. This is different from version numbers
+			     used by @{"OpenLibrary()" Link "exec/OpenLibrary()"}.
+
+@{b}   RESULT@{ub}
+	catalog - A message catalog to use with @{"GetCatalogStr()" Link "GetCatalogStr()"} or @{"NULL" Link "rexxsupport/NULL"}.
+		  A @{"NULL" Link "rexxsupport/NULL"} result does not necessarily indicate an error.
+		  If OpenCatalog() determines that the built-in strings of
+		  the application can be used instead of an external catalog
+		  from disk, then @{"NULL" Link "rexxsupport/NULL"} is returned. To determine whether
+		  a @{"NULL" Link "rexxsupport/NULL"} result actually indicates an error, look at the
+		  return value of @{"dos.library/IoErr()" Link "dos/IoErr()"}. 0 means no error.
+
+		  @{"GetCatalogStr()" Link "GetCatalogStr()"} interprets a @{"NULL" Link "rexxsupport/NULL"} catalog as meaning to use
+		  the built-in strings.
+
+@{b}   NOTE@{ub}
+	In most cases, failing to open a catalog should not be considered a
+	fatal error, and the application should continue operating and
+	simply use the built-in set of strings instead of the disk-based
+	catalog. Note that @{"GetCatalogStr()" Link "GetCatalogStr()"} accepts a @{"NULL" Link "rexxsupport/NULL"} catalog pointer for
+	this very reason.
+
+	Also note that displaying an error message when a catalog fails to
+	open can be a meaningless endeavor as the message is likely in a
+	language the user does not understand.
+
+@{b}   BUGS@{ub}
+	Short of media read errors or failing to open a catalog file
+	practically no kind of error, such as corrupted catalog file contents,
+	will be reported if a catalog fails to open.
+
+@{b}   SEE ALSO@{ub}
+	@{"CloseCatalog()" Link "CloseCatalog()"}, @{"GetCatalogStr()" Link "GetCatalogStr()"}
+
+@EndNode
+
+@Node "OpenLocale()" "locale.library/OpenLocale"
+
+@{b}   NAME@{ub}
+	OpenLocale -- open a locale. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	locale = OpenLocale(name);
+	D0                  A0
+
+	struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *OpenLocale(STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This function opens a named locale. Locales contain many parameters
+	that an application needs to consider when being integrated into
+	different languages, territories and customs. Using the information
+	stored in a locale instead of hard-coding it into an application,
+	lets the application dynamically adapt to the user's environment.
+
+	Locales originally come from disk files which are created by the
+	user using the @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} preferences editor. Passing a @{"NULL" Link "rexxsupport/NULL"} instead of
+	a name causes this function to return the current default locale.
+	This is what most applications will do.
+
+	Every locale specifies a language, and special language drivers
+	must be loaded from disk depending on which language is being used.
+	These files include for example:
+
+		LOCALE:Languages/français.language
+		LOCALE:Languages/dansk.language
+		LOCALE:Languages/italiano.language
+
+@{b}   INPUTS@{ub}
+	name - the NULL-terminated name of the locale to open, or @{"NULL" Link "rexxsupport/NULL"} to open
+	       the current default locale. This should generally be @{"NULL" Link "rexxsupport/NULL"}. The
+	       name you supply must be a pathname leading to a locale
+	       preferences file. This is an IFF PREF file as saved by
+	       @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} prefs, that can contain both LCLE and CTRY chunks.
+	       See @{"<prefs/locale.h>" Link "INCLUDE:prefs/locale.h/Main" 0} for definitions.
+
+@{b}   RESULT@{ub}
+	locale - a pointer to an initialized @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} structure, or @{"NULL" Link "rexxsupport/NULL"} if the
+		 locale could not be loaded. In the case of a @{"NULL" Link "rexxsupport/NULL"} return, the
+		 DOS @{"IoErr()" Link "dos/IoErr()"} function can be called to obtain more information
+		 on the failure.
+
+		 When passing a @{"NULL" Link "rexxsupport/NULL"} name parameter to this function, you are
+		 guaranteed a valid return.
+
+@{b}   SEE ALSO@{ub}
+	@{"CloseLocale()" Link "CloseLocale()"}, @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0}, @{"<prefs/locale.h>" Link "INCLUDE:prefs/locale.h/Main" 0}
+
+@EndNode
+
+@Node "ParseDate()" "locale.library/ParseDate"
+
+@{b}   NAME@{ub}
+	ParseDate -- interpret a string according to the date formatting
+	             template and convert it into a @{"DateStamp" Link "INCLUDE:dos/dos.h/Main" 51}. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	state = ParseDate(locale,date,fmtTemplate,getCharFunc);
+	D0                A0     A1   A2          A3
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} ParseDate(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,struct @{"DateStamp" Link "INCLUDE:dos/dos.h/Main" 51} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *);
+
+@{b}   FUNCTION@{ub}
+	This function converts a stream of characters into an AmigaDOS
+	@{"DateStamp" Link "INCLUDE:dos/dos.h/Main" 51} structure. The characters are obtained from the
+	getCharFunc callback hook and the formatting template is used
+	to direct the parse.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the formatting
+	date - place to put the converted date, this may be @{"NULL" Link "rexxsupport/NULL"} in which
+	       case this routine can be used to simply validate a date
+	fmtTemplate - the date template describing the expected format of the
+	              data. See @{"FormatDate()" Link "FormatDate()"} documentation for a description of
+	              date templates. The following formatting controls from
+	              @{"FormatDate()" Link "FormatDate()"} can be used in ParseDate():
+	                %a %A %b %B %d %e %h %H %I %m %M %p %S %y %Y
+	getCharFunc - a callback hook invoked whenever a character is required.
+	              The hook should return the next character to process,
+	              with a @{"NULL" Link "rexxsupport/NULL"} character to indicate the end of the string.
+	              The hook is called with:
+
+	                A0 - address of @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} structure
+	                A1 - locale pointer
+	                A2 - @{"NULL" Link "rexxsupport/NULL"}
+
+	              The hook returns the character to process in D0. Note
+	              that a complete 32-bit result is expected in D0, not
+	              just 8 bits.
+
+@{b}   RESULT@{ub}
+	state - TRUE if the parsing went OK, or FALSE if the input did not
+	        match the template
+
+@{b}   SEE ALSO@{ub}
+	@{"FormatDate()" Link "FormatDate()"}, @{"<dos/dos.h>" Link "INCLUDE:dos/dos.h/Main" 0}
+
+@EndNode
+
+@Node "StrConvert()" "locale.library/StrConvert"
+
+@{b}   NAME@{ub}
+	StrConvert -- transform a string according to collation information.
+		      (V38)
+
+@{b}   SYNOPSIS@{ub}
+	length = StrConvert(locale,string,buffer,bufferSize,type);
+	D0                  A0     A1     A2     D0         D1
+
+	ULONG StrConvert(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},@{"APTR" Link "INCLUDE:exec/types.h/Main" 75},ULONG,ULONG);
+
+@{b}   FUNCTION@{ub}
+	This function transforms the passed string and places the resulting
+	into the supplied buffer. No more than bufferSize bytes are copied
+	into the buffer.
+
+	The transformation is such that if the C strcmp() function is applied
+	to two transformed strings, it returns a value corresponding to
+	the result returned by the @{"StrnCmp()" Link "StrnCmp()"} function applied to the two
+	original strings.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for the transformation
+	string - NULL-terminated string to transform
+	buffer - buffer where to put the transformed string
+	bufferSize - maximum number of bytes to deposit in the buffer
+	             StrConvert() may require more storage than
+		     the unconverted string does
+	type - describes how the transformation is to be performed. See
+	       the documentation on @{"StrnCmp()" Link "StrnCmp()"} for more information on the
+	       comparison types available. Note that SC_COLLATE2 does
+	       append all characters from the original string which differ
+	       from the transformed character to the transformed string,
+	       e.g. "teSt" -> "TESTtet" which is probably not what you want.
+
+@{b}   RESULT@{ub}
+	length - length of the transformed string which is the number of bytes
+		 deposited in the buffer minus 1 (since strings are NULL-
+		 terminated)
+
+@{b}   BUGS@{ub}
+	Prior to V46, the builtin default routine (it can be replaced by
+	the default language driver or, since V46, by the default charset
+	driver) had bugs in the Collate table used for SC_COLLATE1 and
+	SC_COLLATE2 transformations (See the @{"StrnCmp" Link "locale/StrnCmp()"} description for details).
+	And it did not restore the stack pointer if an unknown type was
+	specified. Fixed in V46.
+
+@{b}   SEE ALSO@{ub}
+	@{"StrnCmp()" Link "StrnCmp()"}, @{"<libraries/locale.h>" Link "INCLUDE:libraries/locale.h/Main" 0}
+
+@EndNode
+
+@Node "StrnCmp()" "locale.library/StrnCmp"
+
+@{b}   NAME@{ub}
+	StrnCmp -- localized string comparison. (V38)
+
+@{b}   SYNOPSIS@{ub}
+	result = StrnCmp(locale,string1,string2,length,type);
+	D0               A0     A1      A2      D0     D1
+
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} StrnCmp(struct @{"Locale" Link "INCLUDE:libraries/locale.h/Main" 143} *,@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137},@{"LONG" Link "INCLUDE:exec/types.h/Main" 112},ULONG);
+
+@{b}   FUNCTION@{ub}
+	Compares string1 to string2 according to the collation information
+	provided by the locale and returns an integer greater than,
+	equal to, or less than zero, accordingly as the string pointed to
+	by string1 is greater than, equal to, or less than the string
+	pointed to by string2.
+
+	The length parameter specifies how many characters to compare, or if
+	the length is specified as -1 then the strings are compared until
+	a @{"NULL" Link "rexxsupport/NULL"} is encountered.
+
+	The type parameter dictates how the comparison is to be performed.
+
+@{b}   INPUTS@{ub}
+	locale - the locale to use for this comparison
+	string1	- NULL-terminated string
+	string2	- NULL-terminated string
+	length - the maximum number of characters to be compared, or -1 to
+		 compare all characters until a @{"NULL" Link "rexxsupport/NULL"} is encountered
+	type - describes how the comparison is to be performed. The following
+	       values can be passed:
+		 SC_ASCII causes an ASCII-based case-insensitive comparison
+		 to be performed. SC_ASCII is the fastest of the comparison
+		 types, but it uses ASCII ordering and considers accented
+		 characters different than their non-accented counterparts.
+
+		 SC_COLLATE1 causes the characters to be compared using their
+		 primary sorting order. This effectively produces a comparison
+		 that ignores letter case and diacritical marks. That is,
+		 letters such as "e" and "é" are treated as if they were both
+		 "e".
+
+		 SC_COLLATE2 causes the characters to be compared using both
+		 their primary and secondary sorting order. SC_COLLATE2 is
+		 slower than SC_COLLATE1. This is the type of comparison to
+		 use when sorting data to be presented to the user. It operates
+		 in two passes. First it performs a comparison equivalent to
+		 SC_COLLATE1. If both strings compare the same, then a second
+		 pass is made using the secondary sorting order, which gives
+		 finer resolution to the comparison. For example, SC_COLLATE1
+		 would return the following strings as identical:
+		    "père"  and  "pere"
+		 since SC_COLLATE1 ignores diacritical marks. SC_COLLATE2
+		 would make a second pass over the string comparing
+		 diacritical marks instead of actual characters.
+
+@{b}   RESULT@{ub}
+	result - relationship between string1 and string2
+			<0 means string1 < string2
+			=0 means string1 = string2
+			>0 means string1 > string2
+
+@{b}   BUGS@{ub}
+	Prior to V46, the builtin default routine (it can be replaced by
+	the default language driver or, since V46, by the default charset
+	driver) had the following bugs in the Collate table used for
+	SC_COLLATE1 and SC_COLLATE2 comparisons:
+	'{' -> 'a'
+	'|' -> 'b'
+	'}' -> 'c'
+	'~' -> 'd'
+	DEL -> 'e'
+	0x80-0x9F -> 0xE0-0xFF
+	'¤' -> 'g'
+	'¥' -> 'h'
+	'¦' -> 'i'
+	'§' -> 'S'
+	'¨' -> 'j'
+	'©' -> 'k'
+	'ª' -> 'l'
+	'¬' -> 'm'
+	'­' -> 'n'
+	'®' -> 'o'
+	'¯' -> 'p'
+	'°' -> 'q'
+	'±' -> 'r'
+	'²' -> 's'
+	'³' -> 't'
+	'´' -> 'u'
+	'µ' -> 'v'
+	'¶' -> 'w'
+	'·' -> 'x'
+	'¸' -> 'y'
+	'¹' -> 'z'
+	'º' -> '{'
+	'¼' -> '|'
+	'½' -> '}'
+	'¾' -> '~'
+	'Ð' -> 'D'
+	'Þ' -> 'P'
+	'ß' -> 'Y'
+	'ð' -> 'D'
+	'þ' -> 'P'
+
+	Fixed in V46, now these characters are not transformed except:
+	'¤' -> '$'  currency      -> dollar
+	'¥' -> '$'  yen           -> dollar
+	'¦' -> '|'  broken bar    -> vertical bar
+	'­' -> '-'  soft hyphen   -> hyphen-minus
+	'²' -> '2'  superscript 2 -> 2
+	'³' -> '3'  superscript 3 -> 3
+	'´' -> '\'' acute accent  -> apostrophe
+	'¹' -> '1'  superscript 1 -> 1
+	'ð' -> 'Ð'  small eth     -> capital eth
+	'þ' -> 'Þ'  small thorn   -> capital thorn
+
+@{b}   SEE ALSO@{ub}
+	@{"OpenLocale()" Link "OpenLocale()"}, @{"CloseLocale()" Link "CloseLocale()"}, @{"StrConvert()" Link "StrConvert()"}
+
+@EndNode
+

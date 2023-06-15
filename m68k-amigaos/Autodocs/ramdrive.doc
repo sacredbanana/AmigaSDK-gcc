@@ -1,0 +1,291 @@
+TABLE OF CONTENTS
+
+ramdrive.device/CMD_CLEAR
+ramdrive.device/CMD_READ
+ramdrive.device/CMD_UPDATE
+ramdrive.device/CMD_WRITE
+ramdrive.device/KillRAD
+ramdrive.device/KillRAD0
+ramdrive.device/TD_CHANGENUM
+ramdrive.device/TD_CHANGESTATE
+ramdrive.device/TD_FORMAT
+ramdrive.device/TD_GETGEOMETRY
+ramdrive.device/TD_MOTOR
+ramdrive.device/TD_PROTSTATUS
+ramdrive.device/CMD_CLEAR                           ramdrive.device/CMD_CLEAR
+
+   NAME
+	CMD_CLEAR/ETD_CLEAR -- mark the internal buffer as containing
+			       invalid data.
+
+   FUNCTION
+	As the ramdrive.device does not have an internal buffer, this
+	command performs no operation. It is only implemented to be
+	consistent with the trackdisk.device type of interface.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_CLEAR or ETD_CLEAR
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   SEE ALSO
+	CMD_WRITE, CMD_UPDATE
+
+ramdrive.device/CMD_READ                             ramdrive.device/CMD_READ
+
+   NAME
+	CMD_READ/ETD_READ -- read data from ramdrive.
+
+   FUNCTION
+	These commands transfer data from the ramdrive to a supplied buffer.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_READ or ETD_READ
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to read
+	io_Offset	byte offset from the start of the card describing
+			where to read data from.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   NOTES
+
+   SEE ALSO
+	CMD_WRITE
+
+ramdrive.device/CMD_UPDATE                         ramdrive.device/CMD_UPDATE
+
+   NAME
+	CMD_UPDATE/ETD_UPDATE -- write out internal buffers to ram.
+
+   FUNCTION
+	As the ramdrive.device does not buffer data internally, this
+	command performs no operation and returns immediately. It is
+	implemented to support file systems that use it as part of the
+	regular trackdisk-type device interface.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_UPDATE or ETD_UPDATE
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   SEE ALSO
+	CMD_WRITE
+
+ramdrive.device/CMD_WRITE                           ramdrive.device/CMD_WRITE
+
+   NAME
+	CMD_WRITE/ETD_WRITE -- write data to ramdrive.
+
+   FUNCTION
+	These commands transfer data from a supplied buffer to ram.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_WRITE or ETD_WRITE
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to write.
+	io_Offset	byte offset from the start of the card describing
+			where to write data to.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   NOTES
+
+   SEE ALSO
+	CMD_READ, TD_FORMAT
+
+ramdrive.device/KillRAD                               ramdrive.device/KillRAD
+
+   NAME
+	KillRAD -- kill ramdrive.device unit
+
+   SYNOPSIS
+	devName = KillRAD(unit)
+
+	char *KillRAD( ULONG );
+
+   FUNCTION
+	Kill a RAD: disk and return its memory.  First, remove the
+	system hooks that recover the disk memory after reset, then
+	free the disk memory, and return the dos device name.
+
+   INPUTS
+	unit - the unit of the ramdrive.device to kill.
+
+   RESULTS
+	devName - a pointer to the colon terminated device name that
+		was associated with this unit.  This is a null
+		terminated C string.
+
+ramdrive.device/KillRAD0                             ramdrive.device/KillRAD0
+
+   NAME
+	KillRAD0 -- kill ramdrive.device unit 0
+
+   SYNOPSIS
+	devName = KillRAD(unit)
+
+	char *KillRAD( ULONG );
+
+   FUNCTION
+	Perform a KillRAD(0).  This function is retained for
+	historical reasons.
+
+   SEE ALSO
+	ramdrive.device/KillRAD
+
+ramdrive.device/TD_CHANGENUM                     ramdrive.device/TD_CHANGENUM
+
+   NAME
+	TD_CHANGENUM -- return the current value of the counter.
+
+   FUNCTION
+	This command returns the current value of the ramdrive counter (as
+	used by the enhanced commands). The change counter is always 1.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_CHANGENUM
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+	io_Actual - is always 1.
+
+ramdrive.device/TD_CHANGESTATE                 ramdrive.device/TD_CHANGESTATE
+
+   NAME
+	TD_CHANGESTATE -- check if the ramdrive is currently available.
+
+   FUNCTION
+	This command checks to see if the ramdrive is available. As it
+	always is, this command always returns 0.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_CHANGESTATE
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+	io_Actual - 0, indicating that the ram can be read from or
+		    written to.
+
+ramdrive.device/TD_FORMAT                           ramdrive.device/TD_FORMAT
+
+   NAME
+	TD_FORMAT/ETD_FORMAT -- Write data to memory
+
+   FUNCTION
+	This function is traditionally used to write data to a disk
+	that has not yet been formatted before or has had a hard error
+	on a standard write command. None of these states apply to the
+	ramdrive.device, and as such, this command is identical to
+	CMD_WRITE.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_FORMAT or ETD_FORMAT
+	io_Flags	0 or IOF_QUICK
+	io_Data		points to a buffer containing the data to write to the
+			track, must be at least as large as io_Length.
+	io_Length	number of bytes to write.
+	io_Offset	byte offset from the start of the device.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   NOTES
+
+   SEE ALSO
+	CMD_WRITE, TD_RAWWRITE
+
+ramdrive.device/TD_GETGEOMETRY                 ramdrive.device/TD_GETGEOMETRY
+
+   NAME
+       TD_GETGEOMETRY -- return the geometry of the ramdrive.
+
+   FUNCTION
+	This command returns a full set of information about the
+	layout of the drive. The information is returned in the
+	DriveGeometry structure pointed to by io_Data.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_GETGEOMETRY
+	io_Flags	0 or IOF_QUICK
+	io_Data		Pointer to a DriveGeometry structure
+	io_Length	sizeof(struct DriveGeometry)
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+
+   NOTE
+
+   SEE ALSO
+	TD_GETDRIVETYPE, TD_GETNUMTRACKS
+
+ramdrive.device/TD_MOTOR                             ramdrive.device/TD_MOTOR
+
+   NAME
+	TD_MOTOR/ETD_MOTOR -- control the on/off state of the virtual motor.
+
+   FUNCTION
+	This command would usually give control over the drive LED or
+	motor of a drive. As the ramdrive does not have either, this command
+	does nothing and always indicates success.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_MOTOR or ETD_MOTOR
+	io_Flags	0 or IOF_QUICK
+	io_Length	ignored.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success
+	io_Actual - always 1, indicating a running motor.
+
+ramdrive.device/TD_PROTSTATUS                   ramdrive.device/TD_PROTSTATUS
+
+   NAME
+	TD_PROTSTATUS -- return whether the ram is write-protected.
+
+   FUNCTION
+	This command is used to determine whether the ram drive is
+	currently write-protected. The write protection status can
+	be set with bit 0 of the flags value of OpenDevice().
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_PROTSTATUS
+	io_Flags	0 or IOF_QUICK
+
+   IO REQUEST RESULT
+	io_Error - 0 for success.
+	io_Actual - if io_Error is 0, this tells you whether the device
+		    is write-protected. 0 means the device is NOT write-
+		    protected, while any other value indicates it is.
+
+

@@ -1,0 +1,2066 @@
+@database "icon"
+@master "AMIDEV:NDK/Autodocs/icon.doc"
+
+@Node Main "icon.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" AddFreeList() " Link "AddFreeList()"}
+    @{" BumpRevision() " Link "BumpRevision()"}
+    @{" BumpRevisionLength() " Link "BumpRevisionLength()"}
+    @{" ChangeToSelectedIconColor() " Link "ChangeToSelectedIconColor()"}
+    @{" DeleteDiskObject() " Link "DeleteDiskObject()"}
+    @{" DrawIconStateA() " Link "DrawIconStateA()"}
+    @{" DupDiskObjectA() " Link "DupDiskObjectA()"}
+    @{" FindToolType() " Link "FindToolType()"}
+    @{" FreeAlloc() " Link "FreeAlloc()"}
+    @{" FreeDiskObject() " Link "FreeDiskObject()"}
+    @{" FreeFree() " Link "FreeFree()"}
+    @{" FreeFreeList() " Link "FreeFreeList()"}
+    @{" GetDefDiskObject() " Link "GetDefDiskObject()"}
+    @{" GetDiskObject() " Link "GetDiskObject()"}
+    @{" GetDiskObjectNew() " Link "GetDiskObjectNew()"}
+    @{" GetIconRectangleA() " Link "GetIconRectangleA()"}
+    @{" GetIconTagList() " Link "GetIconTagList()"}
+    @{" IconControlA() " Link "IconControlA()"}
+    @{" LayoutIconA() " Link "LayoutIconA()"}
+    @{" MatchToolValue() " Link "MatchToolValue()"}
+    @{" NewDiskObject() " Link "NewDiskObject()"}
+    @{" PutDefDiskObject() " Link "PutDefDiskObject()"}
+    @{" PutDiskObject() " Link "PutDiskObject()"}
+    @{" PutIconTagList() " Link "PutIconTagList()"}
+@EndNode
+
+@Node "AddFreeList()" "icon.library/AddFreeList"
+
+@{b}   NAME@{ub}
+	AddFreeList - add memory to a free list.
+
+@{b}   SYNOPSIS@{ub}
+	status = AddFreeList(free, mem, len)
+	  D0                  A0    A1   A2
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} AddFreeList(struct @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} *, @{"APTR" Link "INCLUDE:exec/types.h/Main" 75}, ULONG);
+
+@{b}   FUNCTION@{ub}
+	This routine adds the specified memory to the free list.
+	The free list will be extended (if required).  If there
+	is not enough memory to complete the call, @{"NULL" Link "rexxsupport/NULL"} is returned.
+
+	Note that AddFreeList() does NOT allocate the requested memory.
+	It only records the memory in the free list.
+
+@{b}   INPUTS@{ub}
+	free -- a pointer to a @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} structure
+	mem -- the base of the memory to be recorded
+	len -- the length of the memory to be recorded
+
+@{b}   RESULTS@{ub}
+	status -- TRUE if the call succeeded else FALSE;
+
+@{b}   SEE ALSO@{ub}
+	@{"exec.library/AllocEntry" Link "exec/AllocEntry()"}
+	@{"exec.library/FreeEntry" Link "exec/FreeEntry()"}
+	@{"icon.library/FreeFreeList" Link "icon/FreeFreeList()"}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+
+@EndNode
+
+@Node "BumpRevision()" "icon.library/BumpRevision"
+
+@{b}   NAME@{ub}
+	BumpRevision - reformat a name for a second copy.
+
+@{b}   SYNOPSIS@{ub}
+	result = BumpRevision(newbuf, oldname)
+	  D0                    A0      A1
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} BumpRevision(STRPTR, STRPTR);
+
+@{b}   FUNCTION@{ub}
+	BumpRevision takes a name and turns it into a "copy_of_name".
+	It knows how to deal with copies of copies.  The routine
+	will truncate the new name to the maximum dos name size
+	(currently 30 characters).
+
+@{b}   INPUTS@{ub}
+	newbuf - the new buffer that will receive the name
+	         (it must be at least 31 characters long).
+	oldname - the original name
+
+@{b}   RESULTS@{ub}
+	result - a pointer to newbuf
+
+@{b}   EXAMPLE@{ub}
+	oldname                          newbuf
+	-------                          ------
+	"foo"                            "copy_of_foo"
+	"copy_of_foo"                    "copy_2_of_foo"
+	"copy_2_of_foo"                  "copy_3_of_foo"
+	"copy_199_of_foo"                "copy_200_of_foo"
+	"copy foo"                       "copy_of_copy foo"
+	"copy_0_of_foo"                  "copy_1_of_foo"
+	"012345678901234567890123456789" "copy_of_0123456789012345678901"
+
+@EndNode
+
+@Node "BumpRevisionLength()" "icon.library/BumpRevisionLength"
+
+@{b}   NAME@{ub}
+	BumpRevisionLength - length-limited name-reformatting for a copy (V45)
+
+@{b}   SYNOPSIS@{ub}
+	result = BumpRevisionLength(newbuf, oldname, length)
+	  D0                          A0      A1      D0
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} BumpRevisionLength(STRPTR, @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137}, ULONG length);
+
+@{b}   FUNCTION@{ub}
+	BumpRevisionLength takes a name and turns it into a
+       "copy_of_name". It knows how to deal with copies of copies.
+       The routine will truncate the new name to the given maximal
+       file size. In case it cannot fit the fill the name even by
+       truncation, it will return @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   INPUTS@{ub}
+	newbuf - the new buffer that will receive the name
+	         (it must be at least 31 characters long).
+	oldname - the original name
+
+@{b}   RESULTS@{ub}
+	result - a pointer to newbuf, or @{"NULL" Link "rexxsupport/NULL"} in case the buffer is too
+       small even for a truncated copy.
+
+@{b}   EXAMPLE@{ub}
+	oldname                          newbuf
+	-------                          ------
+	"foo"                            "copy_of_foo"
+	"copy_of_foo"                    "copy_2_of_foo"
+	"copy_2_of_foo"                  "copy_3_of_foo"
+	"copy_199_of_foo"                "copy_200_of_foo"
+	"copy foo"                       "copy_of_copy foo"
+	"copy_0_of_foo"                  "copy_1_of_foo"
+	"012345678901234567890123456789" "copy_of_0123456789012345678901"
+
+@EndNode
+
+@Node "ChangeToSelectedIconColor()" "icon.library/ChangeToSelectedIconColor"
+
+@{b}   NAME@{ub}
+	ChangeToSelectedIconColor -- Modify an RGB colour value for use in
+	    a selected icon image (V44)
+
+@{b}   SYNOPSIS@{ub}
+	ChangeToSelectedIconColor(cr)
+	                          A0
+
+	VOID ChangeToSelectedIconColor(struct @{"ColorRegister" Link "INCLUDE:datatypes/pictureclass.h/Main" 286} *cr);
+
+@{b}   FUNCTION@{ub}
+	This function will change the provided RGB colour value to make it
+	suitable for use in an icon's select image. This may involve darkening
+	or toning the colour. Usually, icon.library calls this function
+	when creating a select image for palette mapped icons which do not
+	contain "real" select images.
+
+@{b}   INPUTS@{ub}
+	cr -- Pointer to a @{"ColorRegister" Link "INCLUDE:datatypes/pictureclass.h/Main" 286}, containing the RGB colour value
+	    to be changed.
+
+@EndNode
+
+@Node "DeleteDiskObject()" "icon.library/DeleteDiskObject"
+
+@{b}   NAME@{ub}
+	DeleteDiskObject - Delete a Workbench disk object from disk.     (V37)
+
+@{b}   SYNOPSIS@{ub}
+	result = DeleteDiskObject(name)
+	  D0                      A0
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} DeleteDiskObject(STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This routine will try to delete a Workbench disk object from disk.
+	The name parameter will have ".info" postpended to it, and the
+	icon file of that name will be deleted.  If the call fails,
+	it will return FALSE. The reason for the failure may be obtained
+	via @{"dos.library/IoErr()" Link "dos/IoErr()"}.
+
+	This call also updates the Workbench screen if needed.
+
+	Using this routine protects you from any future changes to
+	the way icons are stored within the system.
+
+@{b}   INPUTS@{ub}
+	name -- name of the object (char *)
+
+@{b}   RESULTS@{ub}
+	result -- TRUE if it worked, FALSE if not.
+
+@{b}   EXAMPLE@{ub}
+
+	error = 0;
+
+	\* Check if you have the right library version *\
+	if(IconBase->lib_Version > 36)
+	{
+	    if (!DeleteDiskObject(name))
+	        error = IoErr();
+	}
+	else
+	{
+	    \* Delete name plus ".info" *\
+	}
+
+	if (error != 0)
+	{
+	    \* Do error routine...*\
+	}
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/PutDiskObject" Link "icon/PutDiskObject()"}
+	@{"icon.library/GetDiskObject" Link "icon/GetDiskObject()"}
+	@{"icon.library/FreeDiskObject" Link "icon/FreeDiskObject()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+
+@EndNode
+
+@Node "DrawIconStateA()" "icon.library/DrawIconStateA"
+
+@{b}   NAME@{ub}
+	DrawIconStateA -- @{"Draw" Link "graphics/Draw()"} an icon as if it were an image (V44)
+
+@{b}   SYNOPSIS@{ub}
+	DrawIconStateA(rp,icon,label,leftEdge,topEdge,state,tags)
+	               A0 A1   A2    D0       D1      D2    A3
+
+	VOID DrawIconStateA(struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp,struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                    @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} label,@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} leftEdge,@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} topEdge,
+	                    ULONG state,struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *tags);
+
+	DrawIconState(rp,icon,label,leftEdge,topEdge,state,...);
+
+	VOID DrawIconState(struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp,struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                   @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} label,@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} leftEdge,@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} topEdge,
+	                   ULONG state,...);
+
+@{b}   FUNCTION@{ub}
+	This function will draw an icon as if it were an image; if
+	a label is provided, it will be printed below it.
+
+@{b}   INPUTS@{ub}
+	rp -- Pointer to the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} to draw into; the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} clipping
+	    rules, font, style, text colours and drawing mode will be used.
+	icon -- Pointer to a struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}.
+	label -- Pointer to a NUL-terminated string, or @{"NULL" Link "rexxsupport/NULL"} if
+	    no label text is to be printed.
+	leftEdge, topEdge -- Coordinates at which the icon image
+	    should be drawn, including its border; please note that the
+	    icon label may extend in whole or in part beyond the
+	    leftEdge you have specified.
+	state -- Select how and which icon image should be drawn;
+	    see @{"intuition/imageclass.h" Link "INCLUDE:intuition/imageclass.h/Main" 0} for supported states.
+	tags -- Additional drawing options
+
+@{b}   TAGS@{ub}
+	ICONDRAWA_DrawInfo (struct @{"DrawInfo" Link "INCLUDE:intuition/screens.h/Main" 66} *) -- Drawing information data
+	    associated with the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} to draw into. The @{"DrawInfo" Link "INCLUDE:intuition/screens.h/Main" 66}
+	    contents affect the colours of the border drawn around the
+	    icon image and also carry display aspect ratio information.
+	    If this tag is @{"NULL" Link "rexxsupport/NULL"}, the default rendering pens for the
+	    screen selected via IconControl(...,ICONA_SetGlobalScreen,...)
+	    will be used instead.
+
+	    This tag defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+	ICONDRAWA_Frameless (BOOL) -- @{"Draw" Link "graphics/Draw()"} the icon without the
+	    surrounding border.
+
+	    This tag defaults to FALSE.
+
+	ICONDRAWA_Borderless (BOOL) -- @{"Draw" Link "graphics/Draw()"} the icon without the
+	    surrounding border and frame.
+
+	    This tag defaults to FALSE.
+
+	ICONDRAWA_EraseBackground (BOOL) -- When drawing a frameless
+	    icon, erase the icon background before drawing the icon.
+
+	    This tag defaults to TRUE.
+
+	ICONDRAWA_IsLink (BOOL) -- The icon to be drawn refers to a
+	    linked object. This property should visualized. By default,
+	    this means that the icon label will be drawn underlined.
+
+	    This tag defaults to FALSE.
+
+@{b}   EXAMPLE@{ub}
+	\* @{"Draw" Link "graphics/Draw()"} the icon in its normal state, without
+	 * a label but including a frame.
+	 *\
+	struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp;
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon;
+
+	DrawIconStateA(rp,icon,@{"NULL" Link "rexxsupport/NULL"},0,0,IDS_NORMAL,NULL);
+
+	\* The same again, but without a frame. *\
+	DrawIconState(rp,icon,@{"NULL" Link "rexxsupport/NULL"},0,0,IDS_NORMAL,
+	    ICONDRAWA_Frameless,TRUE,
+	TAG_DONE);
+
+	\* @{"Draw" Link "graphics/Draw()"} the icon in selected state with a border; the
+	 * frame colours come from the given @{"DrawInfo" Link "INCLUDE:intuition/screens.h/Main" 66}.
+	 *\
+	struct @{"DrawInfo" Link "INCLUDE:intuition/screens.h/Main" 66} *drawInfo;
+
+	DrawIconState(rp,icon,@{"NULL" Link "rexxsupport/NULL"},0,0,IDS_SELECTED,
+	    ICONDRAWA_DrawInfo,drawInfo,
+	TAG_DONE);
+
+@{b}   SEE ALSO@{ub}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+	@{"intuition/imageclass.h" Link "INCLUDE:intuition/imageclass.h/Main" 0}
+	@{"intuition/screens.h" Link "INCLUDE:intuition/screens.h/Main" 0}
+	@{"intuition.library/DrawImageState" Link "intuition/DrawImageState()"}
+	@{"icon.library/GetIconRectangleA" Link "icon/GetIconRectangleA()"}
+	@{"icon.library/IconControlA" Link "icon/IconControlA()"}
+
+@EndNode
+
+@Node "DupDiskObjectA()" "icon.library/DupDiskObjectA"
+
+@{b}   NAME@{ub}
+	DupDiskObjectA -- Duplicate an icon (V44)
+
+@{b}   SYNOPSIS@{ub}
+	icon = DupDiskObjectA(icon,tags);
+	D0                    A0   A1
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} * DupDiskObjectA(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                                   struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *tags);
+
+	icon = DupDiskObject(icon,tag1,...);
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} * DupDiskObject(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                                  @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1,...);
+
+@{b}   FUNCTION@{ub}
+	This function is used to create a duplicate of a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}
+	in memory. It can also be used to create an extended
+	("native") @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} data structure from an existing,
+	traditional format @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} data structure.
+
+@{b}   INPUTS@{ub}
+	icon -- Pointer to the icon to be duplicated.
+	tags -- Control options.
+
+@{b}   TAGS@{ub}
+	ICONDUPA_DuplicateDrawerData (BOOL) -- Duplicate the @{"DrawerData" Link "INCLUDE:workbench/workbench.h/Main" 52},
+	    if available.
+
+	    This tag defaults to TRUE.
+
+	ICONDUPA_DuplicateImages (BOOL) -- Duplicate the icon images;
+	    note that this DOES NOT include the associated image
+	    data. To get the image data duplicated, too, also use
+	    the ICONDUPA_DuplicateImageData tag.
+
+	    This tag defaults to TRUE.
+
+	ICONDUPA_DuplicateImageData (BOOL) -- Duplicate the icon image
+	    data; this tag works together with the ICONDUPA_DuplicateImages
+	    tag. If ICONDUPA_DuplicateImageData is set to TRUE, you must
+	    also set ICONDUPA_DuplicateImages to TRUE.
+
+	    This tag defaults to TRUE.
+
+	ICONDUPA_DuplicateDefaultTool (BOOL) -- Duplicate the icon default
+	    tool, if available.
+
+	    This tag defaults to TRUE.
+
+	ICONDUPA_DuplicateToolTypes (BOOL) -- Duplicate the icon tool
+	    types, if available.
+
+	    This tag defaults to TRUE.
+
+	ICONDUPA_DuplicateToolWindow (BOOL) -- Duplicate the icon tool
+	    window if available.
+
+	    This tag defaults to TRUE.
+
+	ICONDUPA_ActivateImageData (BOOL) -- If the source icon contains
+	    palette mapped image data that was never put to use (this
+	    happens if it is retrieved with the @{"GetDiskObject()" Link "GetDiskObject()"} call rather
+	    than the new @{"GetIconTagList()" Link "GetIconTagList()"} call), this tag will cause the
+	    image data to be analyzed and an attempt to be made to use that
+	    image data in the duplicate. The resulting icon will be remapped
+	    for display on the default screen, such as the Workbench screen
+	    unless you use the ICONGETA_Screen tag (see below).
+
+	    This tag defaults to FALSE.
+
+	ICONGETA_Screen (struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} *) -- If you specified that the
+	    palette mapped image data attached to an icon should be
+	    activated (via "ICONDUPA_ActivateImageData,TRUE") this
+	    tag allows you to choose the screen the icon is to be remapped
+	    to. It works just like the corresponding tag for the
+	    @{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"} call.
+
+	    There is no default value for this tag, i.e. if the tag is
+	    omitted, the icon will be remapped to the default screen.
+
+	    This tag was introduced in icon.library 44.535.
+
+	ICONA_ErrorCode (LONG *) -- Pointer to a @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} word variable to
+	    store error codes in. Note that this variable will be
+	    initialized regardless of whether an error occured or not.
+	    Thus, you can check for an error condition by comparing the
+	    variable contents against 0; 0 indicates success, all other
+	    values are error codes as defined by dos.library.
+
+@{b}   RESULT@{ub}
+	icon -- Pointer to a struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} or @{"NULL" Link "rexxsupport/NULL"} in case of error.
+	    You can use @{"IoErr()" Link "dos/IoErr()"} to retrieve the error code or use the
+	    ICONA_ErrorCode tag instead.
+
+@{b}   NOTES@{ub}
+	Any data you chose not to have duplicated will be set to @{"NULL" Link "rexxsupport/NULL"}.
+	For example, if you specified "ICONDUPA_DuplicateImages,FALSE",
+	then the resulting icon's do_Gadget.GadgetRender and
+	do_Gadget.SelectRender will both be @{"NULL" Link "rexxsupport/NULL"}.
+
+@{b}   BUGS@{ub}
+	icon.library will try to preserve the original bitmapped image
+	data loaded with a palette mapped icon. If you duplicated this
+	type of icon, the preserved original bitmapped image data would
+	not be transferred to the copy. This was fixed in V44.527.
+	For this feature to work, you must specify that the image data
+	should be duplicated via "ICONDUPA_DuplicateImages,TRUE".
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+
+@EndNode
+
+@Node "FindToolType()" "icon.library/FindToolType"
+
+@{b}   NAME@{ub}
+	FindToolType - find the value of a ToolType variable.
+
+@{b}   SYNOPSIS@{ub}
+	value = FindToolType(toolTypeArray, typeName)
+	  D0                      A0           A1
+
+	@{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} FindToolType(STRPTR *, STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This function searches a tool type array for a given entry,
+	and returns a pointer to that entry.  This is useful for
+	finding standard tool type variables.  The returned
+	value is not a new copy of the string but is only
+	a pointer to the part of the string after typeName.
+
+@{b}   INPUTS@{ub}
+	toolTypeArray -- an array of strings (STRPTR *).
+	typeName -- the name of the tooltype entry (STRPTR).
+
+@{b}   RESULTS@{ub}
+	value -- a pointer to a string that is the value bound to typeName,
+	        or @{"NULL" Link "rexxsupport/NULL"} if typeName is not in the toolTypeArray.
+
+@{b}   EXAMPLE@{ub}
+	Assume the tool type array has two strings in it:
+	    "FILETYPE=text"
+	    "TEMPDIR=:t"
+
+	FindToolType( toolTypeArray, "FILETYPE" ) returns "text"
+	FindToolType( toolTypeArray, "filetype" ) returns "text"
+	FindToolType( toolTypeArray, "TEMPDIR" )  returns ":t"
+	FindToolType( toolTypeArray, "MAXSIZE" )  returns @{"NULL" Link "rexxsupport/NULL"}
+	FindToolType( toolTypeArray, "text" )     returns @{"NULL" Link "rexxsupport/NULL"}
+	FindToolType( toolTypeArray, ":t" )       returns @{"NULL" Link "rexxsupport/NULL"}
+
+@{b}   NOTES@{ub}
+	icon.library V44 tolerates tool type strings with additional
+	blanks around the '=' character, such as in "FILETYPE = text".
+	Older icon.library versions did not support this.
+
+@{b}   SEE ALSO@{ub}
+	@{"icon.library/MatchToolValue" Link "icon/MatchToolValue()"}
+
+@EndNode
+
+@Node "FreeAlloc()" "icon.library/FreeAlloc"
+
+@{b}   NAME@{ub}
+	FreeAlloc - allocate memory and add it to a free list (V36).
+
+@{b}   SYNOPSIS@{ub}
+	memory = FreeAlloc( free, len, type )
+	  D0                 A0   A1   A2
+
+	@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} FreeAlloc(struct @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} *, ULONG, ULONG);
+
+@{b}   FUNCTION@{ub}
+	This routine allocates the amount of memory specified and
+	then adds it to the free list.  The free list will be extended
+	(if required).  If there is not enough memory to complete the call,
+	a null is returned.
+
+	Note that FreeAlloc not only allocates the requested memory
+	but also records the memory in the free list.
+
+@{b}   INPUTS@{ub}
+	free -- a pointer to a @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} structure
+	len -- the length of the memory to be recorded; must be > 0
+	type -- the type of memory to be allocated
+
+@{b}   RESULTS@{ub}
+	memory -- a pointer to the newly allocated memory chunk
+	          or zero if the call failed.
+
+@{b}   NOTES@{ub}
+	This function was implemented in all icon.library versions starting
+	with V36. However, it was never documented.
+
+@{b}   SEE ALSO@{ub}
+	@{"AllocEntry" Link "exec/AllocEntry()"}, @{"FreeEntry" Link "exec/FreeEntry()"}, @{"FreeFreeList" Link "icon/FreeFreeList()"}, @{"FreeFree" Link "icon/FreeFree()"}
+
+@EndNode
+
+@Node "FreeDiskObject()" "icon.library/FreeDiskObject"
+
+@{b}   NAME@{ub}
+	FreeDiskObject - free all memory in a Workbench disk object.
+
+@{b}   SYNOPSIS@{ub}
+	FreeDiskObject(diskobj)
+	               A0
+
+	void FreeDiskObject(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *);
+
+@{b}   FUNCTION@{ub}
+	This routine frees all memory in a Workbench disk object, and the
+	object itself.  It is implemented via @{"FreeFreeList()" Link "FreeFreeList()"}.
+
+	@{"GetDiskObject()" Link "GetDiskObject()"} takes care of all the initialization required
+	to set up the object's free list.  This procedure may ONLY
+	be called on a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} allocated via @{"GetDiskObject()" Link "GetDiskObject()"}.
+
+@{b}   INPUTS@{ub}
+	diskobj -- a pointer to a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} structure; as of V44,
+	    a @{"NULL" Link "rexxsupport/NULL"} diskobj pointer will be ignored.
+
+@{b}   SEE ALSO@{ub}
+	@{"icon.library/GetDiskObject" Link "icon/GetDiskObject()"}
+	@{"icon.library/PutDiskObject" Link "icon/PutDiskObject()"}
+	@{"icon.library/DeleteDiskObject" Link "icon/DeleteDiskObject()"}
+	@{"icon.library/FreeFreeList" Link "icon/FreeFreeList()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+
+@EndNode
+
+@Node "FreeFree()" "icon.library/FreeFree"
+
+@{b}   NAME@{ub}
+	FreeFree - free memory tracked by a free list (V44).
+
+@{b}   SYNOPSIS@{ub}
+	found = FreeFree( free, memory )
+	                   A0     A1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} FreeFree(struct @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} *, APTR);
+
+@{b}   FUNCTION@{ub}
+	This routine is the counterpart to @{"FreeAlloc()" Link "FreeAlloc()"}. Unlike
+	@{"FreeFreeList()" Link "FreeFreeList()"}, which releases all the memory allocated in the
+	tracking list, only a single entry is deallocated.
+
+@{b}   INPUTS@{ub}
+	free -- a pointer to a @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} structure
+	memory -- pointer to the memory chunk to be deallocated;
+	    it is safe to pass @{"NULL" Link "rexxsupport/NULL"} or the address of a memory
+	    chunk which is not even part of the @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102}
+
+@{b}   RESULTS@{ub}
+	found -- TRUE if the memory chunk was found in the @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102}
+	    and could be released, FALSE otherwise. The result code
+	    was introduced in V46; older library implementations will
+	    not return any meaningful result
+
+@{b}   NOTES@{ub}
+	This function was implemented in all icon.library versions starting
+	with V44. However, it was never documented.
+
+	Deallocating single chunks is an expensive operation owing to the
+	design of the @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} data structure. It takes time to search
+	for the right list entry to be deallocated, and when the
+	deallocation is performed, an used memory tracking slot will
+	remain that will be deallocated until @{"FreeFreeList()" Link "FreeFreeList()"} is called.
+
+	Calling @{"FreeFreeList()" Link "FreeFreeList()"} and calling FreeFree() for every memory
+	chunk tracked is not equivalent! As part of the memory tracking
+	process additional memory is allocated for every memory chunk
+	which can be freed only by calling @{"FreeFreeList()" Link "FreeFreeList()"}.
+
+@{b}   BUGS@{ub}
+	This function name is not particularly meaningful...
+
+@{b}   SEE ALSO@{ub}
+	@{"AllocEntry" Link "exec/AllocEntry()"}, @{"FreeEntry" Link "exec/FreeEntry()"}, @{"FreeFreeList" Link "icon/FreeFreeList()"}, @{"FreeAlloc" Link "icon/FreeAlloc()"}
+
+@EndNode
+
+@Node "FreeFreeList()" "icon.library/FreeFreeList"
+
+@{b}   NAME@{ub}
+	FreeFreeList - free all memory in a free list.
+
+@{b}   SYNOPSIS@{ub}
+	FreeFreeList(free)
+	             A0
+
+	void FreeFreeList(struct @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} *);
+
+@{b}   FUNCTION@{ub}
+	This routine frees all memory in a free list, and the
+	free list itself.  It is useful for easily getting
+	rid of all memory in a series of structures.  There is
+	a free list in a Workbench object, and this contains
+	all the memory associated with that object.
+
+	A @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} is a list of @{"MemList" Link "INCLUDE:exec/memory.h/Main" 54} structures.  See the
+	@{"MemList" Link "INCLUDE:exec/memory.h/Main" 54} and @{"MemEntry" Link "INCLUDE:exec/memory.h/Main" 38} documentation for more information.
+
+	If the @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} itself is in the free list, it must be
+	in the first @{"MemList" Link "INCLUDE:exec/memory.h/Main" 54} in the @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102}.
+
+@{b}   INPUTS@{ub}
+	free -- a pointer to a @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} structure; as of V44
+	    a @{"NULL" Link "rexxsupport/NULL"} free parameter will be ignored.
+
+@{b}   SEE ALSO@{ub}
+	@{"exec.library/AllocEntry" Link "exec/AllocEntry()"}
+	@{"exec.library/FreeEntry" Link "exec/FreeEntry()"}
+	@{"icon.library/AddFreeList" Link "icon/AddFreeList()"}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+
+@EndNode
+
+@Node "GetDefDiskObject()" "icon.library/GetDefDiskObject"
+
+@{b}   NAME@{ub}
+	GetDefDiskObject - read default wb disk object from disk.       (V36)
+
+@{b}   SYNOPSIS@{ub}
+	diskobj = GetDefDiskObject(def_type)
+	  D0                          D0
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *GetDefDiskObject(LONG);
+
+@{b}   FUNCTION@{ub}
+	This routine reads in a default Workbench disk object from disk.
+	The valid def_types can be found in @{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0} and
+	currently include WBDISK thru WBKICK. If the call fails,
+	it will return @{"NULL" Link "rexxsupport/NULL"}. The reason for the failure may be obtained
+	via @{"IoErr()" Link "dos/IoErr()"}.
+
+	Using this routine protects you from any future changes to
+	the way default icons are stored within the system.
+
+@{b}   INPUTS@{ub}
+	def_type -- default icon type (WBDISK thru WBKICK).
+
+@{b}   RESULTS@{ub}
+	diskobj -- the default Workbench disk object in question
+
+@{b}   NOTES@{ub}
+	icon.library V36 through V40 did not support the WBDEVICE default
+	icon type.
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/PutDefDiskObject" Link "icon/PutDefDiskObject()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+
+@EndNode
+
+@Node "GetDiskObject()" "icon.library/GetDiskObject"
+
+@{b}   NAME@{ub}
+	GetDiskObject - read in a Workbench disk object from disk.
+
+@{b}   SYNOPSIS@{ub}
+	diskobj = GetDiskObject(name)
+	  D0                      A0
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *GetDiskObject(STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This routine reads in a Workbench disk object in from disk.  The
+	name parameter will have ".info" postpended to it, and the
+	icon file of that name will be read.  If the call fails,
+	it will return @{"NULL" Link "rexxsupport/NULL"}.  The reason for the failure may be obtained
+	via @{"IoErr()" Link "dos/IoErr()"}.
+
+	Using this routine protects you from any future changes to
+	the way icons are stored within the system.
+
+	A @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} structure is allocated just after the @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}
+	structure; @{"FreeDiskObject" Link "icon/FreeDiskObject()"} makes use of this to get rid of the
+	memory that was allocated.
+
+@{b}   INPUTS@{ub}
+	name -- name of the object (STRPTR) or @{"NULL" Link "rexxsupport/NULL"} if you just want a
+	        @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} structure allocated for you (useful when
+	        calling AddAppIcon() in workbench.library).
+
+@{b}   RESULTS@{ub}
+	diskobj -- the Workbench disk object in question
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/DeleteDiskObject" Link "icon/DeleteDiskObject()"}
+	@{"icon.library/FreeDiskObject" Link "icon/FreeDiskObject()"}
+	@{"icon.library/GetDiskObjectNew" Link "icon/GetDiskObjectNew()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/NewDiskObject" Link "icon/NewDiskObject()"}
+	@{"icon.library/PutDiskObject" Link "icon/PutDiskObject()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+	@{"workbench.library/AddAppIconA" Link "wb/AddAppIconA()"}
+
+@EndNode
+
+@Node "GetDiskObjectNew()" "icon.library/GetDiskObjectNew"
+
+@{b}   NAME@{ub}
+	GetDiskObjectNew - read in a Workbench disk object from disk.    (V36)
+
+@{b}   SYNOPSIS@{ub}
+	diskobj = GetDiskObjectNew(name)
+	  D0                      A0
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *GetDiskObjectNew(STRPTR);
+
+@{b}   FUNCTION@{ub}
+	This routine reads in a Workbench disk object in from disk.  The
+	name parameter will have ".info" postpended to it, and the
+	icon file of that name will be read.  If the call fails,
+	it will return zero.  The reason for the failure may be obtained
+	via @{"IoErr()" Link "dos/IoErr()"}.
+
+	Using this routine protects you from any future changes to
+	the way icons are stored within the system.
+
+	A @{"FreeList" Link "INCLUDE:workbench/workbench.h/Main" 102} structure is allocated just after the @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}
+	structure; @{"FreeDiskObject" Link "icon/FreeDiskObject()"} makes use of this to get rid of the
+	memory that was allocated.
+
+	This call is functionally identical to @{"GetDiskObject()" Link "GetDiskObject()"} with one
+	exception. If its call to @{"GetDiskObject()" Link "GetDiskObject()"} fails, this function calls
+	@{"GetDefDiskObject()" Link "GetDefDiskObject()"}. This is useful when there is no .info file for the
+	icon you are trying to get a disk object for. Applications that use
+	workbench application windows MUST use this call if they want to handle
+	the user dropping an icon (that doesn't have a ".info" file) on their
+	window. The V2.0 icon editor program is an example of a Workbench
+	application window that uses this call.
+
+@{b}   INPUTS@{ub}
+	name -- name of the object (STRPTR) or @{"NULL" Link "rexxsupport/NULL"} if you just want a
+	        @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} structure allocated for you (useful when
+	        calling AddAppIcon() in workbench.library).
+
+@{b}   RESULTS@{ub}
+	diskobj -- the Workbench disk object in question
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/FreeDiskObject" Link "icon/FreeDiskObject()"}
+	@{"icon.library/GetDiskObject" Link "icon/GetDiskObject()"}
+	@{"icon.library/PutDiskObject" Link "icon/PutDiskObject()"}
+	@{"icon.library/DeleteDiskObject" Link "icon/DeleteDiskObject()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+	@{"workbench.library/AddAppIconA" Link "wb/AddAppIconA()"}
+
+@EndNode
+
+@Node "GetIconRectangleA()" "icon.library/GetIconRectangleA"
+
+@{b}   NAME@{ub}
+	GetIconRectangleA -- Query the size of the area an icon renders into (V44)
+
+@{b}   SYNOPSIS@{ub}
+	success = GetIconRectangleA(rp,icon,label,rectangle,tags)
+	D0                          A0 A1   A2    A3        A4
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} GetIconRectangleA(struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp,struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                       @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} label,struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} *rectangle,
+	                       struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *tags);
+
+	success = GetIconRectangle(rp,icon,label,rectangle,...);
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} GetIconRectangle(struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp,struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                      @{"STRPTR" Link "INCLUDE:exec/types.h/Main" 137} label,struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} *rectangle,...);
+
+@{b}   FUNCTION@{ub}
+	This function will calculate the size of the area icon rendering
+	would affect.
+
+@{b}   INPUTS@{ub}
+	rp -- Pointer to the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} to use for calculating the
+	    the size of the label with respect to the font and
+	    style options currently in use; this parameter may be
+	    @{"NULL" Link "rexxsupport/NULL"} if the label is @{"NULL" Link "rexxsupport/NULL"}, too.
+	icon -- Pointer to a struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}.
+	label -- Pointer to a NUL-terminated string, or @{"NULL" Link "rexxsupport/NULL"} if
+	    no label text is to enter the calculation.
+	rectangle -- Pointer to a struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} to fill in. The
+	    contents will take the size of the icon image, the icon
+	    border size and -- if you provide @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} and label
+	    text -- the icon label into account. Due to how labels
+	    are printed, the rectangle->MinX and rectangle->MinY
+	    members may be negative.
+	tags -- Additional drawing options to be taken into account.
+
+@{b}   TAGS@{ub}
+	ICONDRAWA_DrawInfo (struct @{"DrawInfo" Link "INCLUDE:intuition/screens.h/Main" 66} *) -- Drawing information data
+	    associated with the @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} parameter passed in.
+
+	    This tag defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+	ICONDRAWA_Borderless (BOOL) -- When calculating the size of
+	    the rectangle, this tag allows you to leave the icon
+	    border size out of the equation.
+
+	    This tag defaults to FALSE.
+
+@{b}   RESULTS@{ub}
+	success -- TRUE if the parameters were well-formed and
+	    the output data fits into the @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} data
+	    structure (which may not be the case if the image
+	    is too large for a signed 16 bit integer to hold).
+
+@{b}   EXAMPLE@{ub}
+	\* Find out how large an icon is. *\
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon;
+	struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} rect;
+
+	if(GetIconRectangleA(NULL,@{"NULL" Link "rexxsupport/NULL"},icon,@{"NULL" Link "rexxsupport/NULL"},&rect,NULL))
+	{
+	    @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} width,height;
+
+	    width = rect.MaxX - rect.MinX + 1;
+	    height = rect.MaxY - rect.MinY + 1;
+
+	    Printf("icon is %ld×%ld pixels in size.\n",
+	        width,height);
+	}
+
+	\* Find out which area the icon rendering would
+	 * cover if a label would be printed below it.
+	 *\
+	struct @{"RastPort" Link "INCLUDE:graphics/rastport.h/Main" 52} *rp;
+
+	if(GetIconRectangle(rp,@{"NULL" Link "rexxsupport/NULL"},icon,"a rather long label text",&rect,TAG_DONE))
+	{
+	    Printf("icon plus label would cover the area %ld,%ld×%ld,%ld\n",
+	        rect.MinX,rect.MinY,rect.MaxX,rect.MaxY);
+	}
+
+@{b}   NOTES@{ub}
+	This function can be used to optimize on-screen rendering by
+	precalculating the area rendering would cover. To make sure that
+	the precalculated area size matches the one covered by the actual
+	drawing operation, the RastPorts you use for measuring and for
+	drawing should share the same font and the same text styles.
+
+	The image size calculated by this function can be
+	slightly larger than the data you will find in the icon's
+	do_Gadget.GadgetRender @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} structure since the icon border
+	will be taken into account. This happens regardless of whether
+	icon.library was switched into frameless icon rendering mode
+	or whether the icon is frameless. To obtain the size of the
+	icon without taking the border into account, use the
+	ICONDRAWA_Borderless tag.
+
+	The size of the icon, as returned by this function, may be different
+	depending upon whether @{"LayoutIconA()" Link "LayoutIconA()"} has been called or not.
+
+@{b}   SEE ALSO@{ub}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+	icon.library/DrawIconState
+	@{"icon.library/IconControlA" Link "icon/IconControlA()"}
+	@{"icon.library/LayoutIconA" Link "icon/LayoutIconA()"}
+
+@EndNode
+
+@Node "GetIconTagList()" "icon.library/GetIconTagList"
+
+@{b}   NAME@{ub}
+	GetIconTagList -- Retrieve an icon (V44)
+
+@{b}   SYNOPSIS@{ub}
+	icon = GetIconTagList(name,tags);
+	D0                    A0   A1
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} * GetIconTagList(STRPTR name,struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *tags);
+
+	icon = GetIconTags(name,tag1,...);
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} * GetIconTags(STRPTR name,@{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1,...);
+
+@{b}   FUNCTION@{ub}
+
+	This function is used to retrieve an icon; the icon can
+	belong to a file/drawer/volume or it can be a default icon.
+
+@{b}   INPUTS@{ub}
+	name -- Name of the object an icon is to be retrieved for,
+	    or @{"NULL" Link "rexxsupport/NULL"} if a default icon is to be retrieved.
+	tags -- Retrieval options.
+
+@{b}   TAGS@{ub}
+	ICONGETA_GetDefaultType (LONG) -- Type of the default icon
+	    to retrieve; must be one of WBDISK, WBDRAWER, WBTOOL,
+	    WBPROJECT, WBGARBAGE, WBDEVICE or WBKICK.
+
+	    If this tag is used, the "name" parameter will be ignored.
+
+	ICONGETA_GetDefaultName (STRPTR) -- Name of the default object
+	    type to retrieve a default icon for. If the named default
+	    icon cannot be found, @{"NULL" Link "rexxsupport/NULL"} will be returned. To avoid
+	    this, also specify ICONGETA_GetDefaultType: this will provide
+	    a fall-back and return a "default" default icon instead.
+
+	    If this tag is used, the "name" parameter will be ignored.
+
+	ICONGETA_FailIfUnavailable (BOOL) -- If there is no icon for
+	    the specified object, this tag will control how to
+	    proceed: if ICONGETA_FailIfUnavailable is set to TRUE,
+	    @{"NULL" Link "rexxsupport/NULL"} and an error code will be returned; if set to FALSE,
+	    icon.library will first invoke the global identification
+	    hook (see icon.library/IconControlA) and then, if necessary,
+	    provide a default icon for the object in question.
+
+	    This tag defaults to TRUE.
+
+	ICONGETA_GetPaletteMappedIcon (BOOL) -- By default, icon.library
+	    will try to retrieve the palette mapped version of an icon. To
+	    change this, set the ICONGETA_GetPaletteMappedIcon tag to FALSE.
+
+	    This tag defaults to TRUE.
+
+	ICONGETA_RemapIcon (BOOL) -- Palette mapped icons will usually
+	    be automatically remapped for display on the screen
+	    selected using @{"IconControlA()" Link "IconControlA()"}. If you do not want this to
+	    happen because, for example, you want to use LayoutIcon()
+	    instead, you can set the ICONGETA_RemapIcon tag to FALSE.
+	    Take care when doing this as the icon returned to you
+	    will have @{"NULL" Link "rexxsupport/NULL"} pointers in the do_Gadget.GadgetRender
+	    and do_Gadget.SelectRender members.
+
+	    This tag defaults to TRUE.
+
+	ICONGETA_IsDefaultIcon (LONG *) -- When retrieving an icon with
+	    the ICONGETA_FailIfUnavailable tag set to FALSE, you may
+	    receive a default icon because there is no on-disk icon
+	    file for the object you wanted to retrieve it for. This
+	    type of default icon is also known as a "fake" icon.
+	    To find out whether you have received a fake icon, use the
+	    ICONGETA_IsDefaultIcon tag.
+
+	ICONGETA_GenerateImageMasks (BOOL) -- When loading icons with
+	    transparent colours or backfill imagery, bit plane masks
+	    will be generated for later use with @{"DrawIconStateA()" Link "DrawIconStateA()"}.
+	    If you do not need these masks, set this tag to FALSE.
+
+	    This tag defaults to TRUE.
+
+	ICONGETA_Screen (struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} *) -- Pointer to the screen
+	    to remap the icon to; if set to @{"NULL" Link "rexxsupport/NULL"}, this keeps the
+	    icon from getting remapped in the first place (see
+	    ICONGETA_RemapIcon for the consequences).
+
+	    This tag defaults to the default screen to remap to, as
+	    preset by @{"IconControlA()" Link "IconControlA()"}.
+
+	ICONGETA_Label (STRPTR) -- The label text to be printed below
+	    the icon when it is put to use lateron. This parameter
+	    can be useful to figure out the type of the icon to
+	    be retrieved by the identification hook. For example,
+	    Workbench may label unreadable disk icons as "DF0:????".
+	    The identification hook could key on this and supply an
+	    appropriate icon for the disk.
+
+	    This tag defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+	ICONGETA_IdentifyBuffer (STRPTR) -- @{"Request" Link "intuition/Request()"} the type of the
+	    actual file whose icon is being loaded by GetIconTagList(),
+	    as determined by the global identification hook. If this tag
+	    is passed, the file is identified even if it has a real icon.
+	    The value of this tag must be a pointer to a text buffer of
+	    at least 256 bytes, or @{"NULL" Link "rexxsupport/NULL"} (which is ignored).
+	    This tag only works with actual files (tools and projects),
+	    not volumes, directories or trashcans.
+	    If the file cannot get identified, the supplied buffer will
+	    contain an empty string (a single NUL byte) on the function's
+	    return. (V47)
+
+	    This tag defaults to @{"NULL" Link "rexxsupport/NULL"}.
+
+	ICONGETA_IdentifyOnly (BOOL) -- When using ICONGETA_IdentifyBuffer,
+	    you can ask not to actually load an icon, but just identify
+	    the file with the specified name (which is quicker if all you
+	    need is the file type, and doesn't require you to free an icon
+	    afterwards). If you pass this tag with a TRUE value,
+	    GetIconTagList() will return @{"NULL" Link "rexxsupport/NULL"} with a zero error code in
+	    ICONA_ErrorCode.
+	    Note: this tag will be ignored if a valid buffer is not also
+	    passed with ICONGETA_IdentifyBuffer. (V47)
+
+	    This tag defaults to FALSE.
+
+	ICONA_ErrorCode (LONG *) -- Pointer to a @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} word variable to
+	    store error codes in. Note that this variable will be
+	    initialized regardless of whether an error occured or not.
+	    Thus, you can check for an error condition by comparing the
+	    variable contents against 0; 0 indicates success, all other
+	    values are error codes as defined by dos.library.
+
+@{b}   RESULT@{ub}
+	icon -- Pointer to a struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} or @{"NULL" Link "rexxsupport/NULL"} in case of error.
+	    You can use @{"IoErr()" Link "dos/IoErr()"} to retrieve the error code or use the
+	    ICONA_ErrorCode tag instead.
+
+@{b}   EXAMPLE@{ub}
+
+	\* Retrieve the default drawer icon. *\
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon;
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} errorCode;
+
+	icon = GetIconTags(NULL,
+	    ICONGETA_GetDefaultType,WBDRAWER,
+	    ICONA_ErrorCode,&errorCode,
+	TAG_DONE);
+
+	if(icon == NULL)
+	{
+	    Printf("could not retrieve default drawer icon;\n");
+	    PrintFault(errorCode,NULL);
+	}
+
+	\* Retrieve the default "picture" icon. *\
+	icon = GetIconTags(NULL,
+	    ICONGETA_GetDefaultName,"picture",
+	TAG_DONE);
+
+	\* Retrieve the default "picture" icon; if there is no
+	 * such default icon, retrieve the default project
+	 * icon instead.
+	 *\
+	icon = GetIconTags(NULL,
+	    ICONGETA_GetDefaultName,"picture",
+	    ICONGETA_GetDefaultType,WBPROJECT,
+	TAG_DONE);
+
+	\* Retrieve the regular, non-palette-mapped version of
+	 * an icon.
+	 *\
+	icon = GetIconTags("file",
+	    ICONGETA_GetPaletteMappedIcon,FALSE,
+	TAG_DONE);
+
+	\* Retrieve the icon for a file; if there is no icon associated
+	 * with it, retrieve a default icon that matches the file.
+	 * Also, remember whether we got a real icon or a fake one.
+	 *\
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} isFakeIcon;
+
+	icon = GetIconTags("file",
+	    ICONGETA_FailIfUnavailable,FALSE,
+	    ICONGETA_IsDefaultIcon,&isFakeIcon,
+	TAG_DONE);
+
+	if(icon != NULL)
+	{
+	    Printf("got an icon at 0x%08lx, and it is a %s icon.\n",
+	        icon,isFakeIcon ? "fake" : "real");
+	}
+
+@{b}   NOTES@{ub}
+	This function is a superset of @{"GetDefDiskObject()" Link "GetDefDiskObject()"}, @{"GetDiskObject()" Link "GetDiskObject()"}
+	and @{"GetDiskObjectNew()" Link "GetDiskObjectNew()"}.
+
+	If a palette-mapped icon is set to allocate its colours from the
+	default screen, such as the Workbench screen, icon.library may
+	resort to remap its colours in the course of Workbench screen
+	close/reopen transitions. This means that you cannot depend upon
+	the icon's image bitmaps to stay the same size, shape or colour.
+	If this is what you need, you should either create your own images
+	from the palette mapped data or make copies of the icon image
+	bitmaps and the associated colour table.
+
+	If during Workbench close/open transitions the global remap
+	screen becomes @{"NULL" Link "rexxsupport/NULL"}, GetIconTagList() may refuse to return a
+	remapped icon and return with an error (ERROR_REQUIRED_ARG_MISSING)
+	instead.
+
+@{b}   SEE ALSO@{ub}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+	@{"icon.library/GetDiskObject" Link "icon/GetDiskObject()"}
+	@{"icon.library/GetDiskObjectNew" Link "icon/GetDiskObjectNew()"}
+	@{"icon.library/GetDefDiskObject" Link "icon/GetDefDiskObject()"}
+	@{"icon.library/IconControlA" Link "icon/IconControlA()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+
+@EndNode
+
+@Node "IconControlA()" "icon.library/IconControlA"
+
+@{b}   NAME@{ub}
+	IconControlA -- Set and get icon and icon.library options (V44)
+
+@{b}   SYNOPSIS@{ub}
+	processed = IconControlA(icon,tags);
+	D0                       A0   A1
+
+	ULONG IconControlA(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *,struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *);
+
+	processed = IconControl(icon,tag1,...);
+
+	ULONG IconControl(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *,@{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1,...);
+
+@{b}   FUNCTION@{ub}
+
+	This function is used to modify and query icon and icon.library
+	options.
+
+@{b}   INPUTS@{ub}
+	icon -- Pointer to a struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}, or @{"NULL" Link "rexxsupport/NULL"} if global
+		options are to be modified/queried.
+	tags -- Options to modify/query.
+
+@{b}   TAGS@{ub}
+	ICONCTRLA_SetGlobalScreen (struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} *) -- Pointer to the
+	    screen to remap palette mapped icons to. This is commonly
+	    used by workbench.library after it has initialized itself
+	    and before/after screen open/close transitions. If the
+	    screen is set to @{"NULL" Link "rexxsupport/NULL"}, the icon colour remapping strategy is
+	    changed: colours are no longer allocated from a screen
+	    and the colours to map to will come from a default colour
+	    colour table with four palette entries. Please note that
+	    once you select a screen to remap to, you cannot tell
+	    icon.library to use a different screen; you first need to
+	    tell icon.library to "let go" of the previously selected
+	    screen by passing a @{"NULL" Link "rexxsupport/NULL"} ICONCTRLA_SetGlobalScreen parameter.
+	    You can set a different screen only after this is done.
+
+	ICONCTRLA_GetGlobalScreen (struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} **) -- Pointer to the
+	    screen to remap palette mapped icons to.
+
+	ICONCTRLA_SetGlobalPrecision (LONG) -- Set the global colour
+	    allocation precision used when remapping icons for
+	    display. Default is PRECISION_ICON.
+
+	OBP_Precision (LONG) -- Can be used as an alias for the
+	    ICONCTRLA_SetGlobalPrecision tag.
+
+	ICONCTRLA_GetGlobalPrecision (LONG *) -- Get the global colour
+	    allocation precision used when remapping icons for
+	    display.
+
+	ICONCTRLA_SetGlobalEmbossRect (struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} *) -- Set the
+	    frame sizes used for drawing icons. The @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41}
+	    must be initialized as follows:
+
+	        Rectangle->MinX  Width of left edge border (negative),
+	                         must be in the range [-255..-1]
+	        Rectangle->MinY  Height of top edge border (negative),
+	                         must be in the range [-255..-1]
+	        Rectangle->MaxX  Width of right edge border (positive),
+	                         must be in the range [1..255]
+	        Rectangle->MaxY  Height of bottom edge border (positive),
+	                         must be in the range [1..255]
+
+	ICONCTRLA_GetGlobalEmbossRect (struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} *) -- Get the
+	    frame sizes used for drawing icons.
+
+	ICONCTRLA_SetGlobalFrameless (BOOL) -- Select whether icons
+	    should always be drawn without a surrounding frame.
+	    This option defaults to FALSE.
+
+	ICONCTRLA_GetGlobalFrameless (LONG *) -- Query whether icons
+	    are always drawn without a surrounding frame.
+
+	ICONCTRLA_SetGlobalIdentifyHook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *) -- Set the
+	    hook that is invoked when trying to find an icon
+	    for a file/drawer/volume that does not have an
+	    icon associated with it. If set to @{"NULL" Link "rexxsupport/NULL"}, no hook
+	    will be called. The hook will be called with the
+	    following parameters:
+
+	    hookFunc(hook,reserved,iim)
+	              A0     A2    A1
+
+	    VOID hookFunc(struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *hook,@{"APTR" Link "INCLUDE:exec/types.h/Main" 75} reserved,
+	                  struct @{"IconIdentifyMsg" Link "INCLUDE:workbench/icon.h/Main" 278} *iim);
+
+	    The reserved parameter will be set to @{"NULL" Link "rexxsupport/NULL"} (V44).
+
+	    The icon identification message contents are as follows:
+
+	        iim_SysBase
+	        iim_DOSBase
+	        iim_UtilityBase
+	        iim_IconBase
+	            @{"Library" Link "INCLUDE:exec/libraries.h/Main" 32} base pointers set up for your use.
+
+	        iim_FileLock
+	            A lock on the object to return an icon for.
+	            This lock is guaranteed to be non-NULL.
+
+	        iim_ParentLock
+	            A lock on the object's parent directory. This
+	            may be @{"NULL" Link "rexxsupport/NULL"} if iim_FileLock points to a volume's
+	            root directory. In such a case you should return
+	            a WBDISK type icon instead of a WBDRAWER icon.
+
+	        iim_FIB
+	            An initialized @{"FileInfoBlock" Link "INCLUDE:dos/dos.h/Main" 60} structure; prior
+	            to passing iim_FIB to you, Examine(iim_FileLock,iim_FIB)
+	            was called. Unlike the other members of this data
+	            structure, you may modify the contents of iim_FIB.
+
+	        iim_FileHandle
+	            If the object to return an icon for is a file,
+	            this member will contain a file handle that can
+	            be used to @{"Read()" Link "dos/Read()"} its contents. The file read
+	            position will be set to the beginning of
+	            the file. Note that this member can be @{"NULL" Link "rexxsupport/NULL"}.
+
+	        iim_Tags
+	            A copy of the tag item list passed to GetIconTagList();
+	            if you are going to call @{"GetIconTagList()" Link "GetIconTagList()"} in your
+	            hook, be sure to include this list as part of the
+	            tag list you pass to it.
+
+	            NOTE: This list does not include the tag
+	                  ICONA_FailIfUnavailable. Keep in mind that
+	                  the use of this tag can trigger a recursion
+	                  if the icon you tried to retrieve via
+	                  @{"GetIconTagList()" Link "GetIconTagList()"} does not exist: your hook
+	                  code will be invoked again.
+
+	    With the exception of iim_FIB, all members of the
+	    @{"IconIdentifyMsg" Link "INCLUDE:workbench/icon.h/Main" 278} are read-only; you may pass them to
+	    functions like @{"Read()" Link "dos/Read()"}, @{"Examine()" Link "dos/Examine()"}, etc. but you
+	    may not @{"Close()" Link "printer/Close()"} files, @{"UnLock()" Link "dos/UnLock()"} locks or perform
+	    other functions that may result in the data structures
+	    getting deallocated or trashed.
+
+	    When you manage to find the right icon type for the object
+	    to be examined, you should return a pointer to a
+	    struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} that can be freed using @{"FreeDiskObject()" Link "FreeDiskObject()"}
+	    lateron. Note that you cannot just return a pointer to a
+	    statically initialized data structure in your code, you
+	    must return a pointer to a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} allocated by icon.library
+	    itself, such as through @{"GetIconTagList()" Link "GetIconTagList()"}, @{"DupDiskObjectA()" Link "DupDiskObjectA()"}
+	    or @{"NewDiskObject()" Link "NewDiskObject()"}.
+
+	    The icon you return will be checked to make sure that its
+	    type matches the corresponding object. For example, returning
+	    a WBDRAWER icon for a volume root directory will cause that
+	    icon to be released and to be ignored.
+
+	ICONCTRLA_GetGlobalIdentifyHook (struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} **) -- Get the
+	    hook that is invoked when trying to find an icon
+	    for a file/drawer/volume that does not have an
+	    icon associated with it.
+
+	ICONCTRLA_SetGlobalMaxNameLength (LONG) -- icon.library has
+	    a built-in file name length limit that affects whether
+	    icon files are read and written. Currently, the default
+	    for this value is 25 characters. This is sufficient for
+	    an icon file name acceptable with the ROM filing system.
+	    This limit has two effects: if an icon file is to be
+	    written whose name would be longer than the limit,
+	    icon.library will silently abort the write attempt and
+	    pretend that the icon file has been written; this is done
+	    in order to avoid overwriting the original data file with
+	    the icon file. If an icon file was read that turns out to
+	    contain invalid icon data, another test is done in order to
+	    find out whether the file name was longer than the limit. If
+	    this is the case, it is assumed that the data was read from
+	    the original file rather than from the icon file. The library
+	    then pretends that the icon file was not found.
+
+	    This tag can be used to set this length limit. The limit
+	    must be in the range [8..255].
+
+	ICONCTRLA_GetGlobalMaxNameLength (LONG *) -- Retrieve the
+	    file name length limit used by icon.library.
+
+	ICONCTRLA_SetGlobalNewIconsSupport (BOOL) -- Select whether
+	    icon.libray should read and return coloured icon images stored
+	    in NewIcons format.
+	    This option defaults to TRUE.
+
+	ICONCTRLA_GetGlobalNewIconsSupport (LONG *) -- Query whether
+	    icon.library will read and return coloured icon images
+	    stored in NewIcons format.
+
+	ICONCTRLA_SetGlobalColorIconSupport (BOOL) -- Select whether
+	    icon.libray should read and return coloured icon images.
+	    This option defaults to TRUE.
+
+	ICONCTRLA_GetGlobalColorIconSupport (LONG *) -- Query whether
+	    icon.library will read and return coloured icon images.
+
+	ICONA_ErrorCode (LONG *) -- Pointer to a @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} word variable to
+	    store error codes in. Note that this variable will be
+	    initialized regardless of whether an error occured or not.
+	    Thus, you can check for an error condition by comparing the
+	    variable contents against 0; 0 indicates success, all other
+	    values are error codes as defined by dos.library.
+
+	ICONA_ErrorTagItem (struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} **) -- When an error occurs
+	    whilst processing the tag item list passed to IconControl(),
+	    you can have a pointer to the item that caused the error
+	    passed back via the ICONA_ErrorTagItem tag. Note that for
+	    @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} lists allocated from the stack the address passed
+	    back to you may no longer be valid when control returns from
+	    IconControl().
+
+	The following tags need a valid icon parameter to operate on.
+	If the parameter is missing or invalid, it will be registered
+	as an error.
+
+	ICONCTRLA_GetImageMask1 (PLANEPTR *) -- Pointer to the mask plane
+	    for the regular icon image (icon->do_Gadget.GadgetRender).
+	    Note that this may be @{"NULL" Link "rexxsupport/NULL"}.
+
+	ICONCTRLA_GetImageMask2 (PLANEPTR *) -- Pointer to the mask plane
+	    for the alternate icon image (icon->do_Gadget.SelectRender).
+	    Note that this may be @{"NULL" Link "rexxsupport/NULL"}.
+
+	ICONCTRLA_SetTransparentColor1 (LONG) -- Set the transparent
+	    colour for a palette mapped icon image, in this case the
+	    regular icon image (icon->do_Gadget.GadgetRender). The
+	    colour must be among the valid palette entries, e.g. for
+	    a 16 colour image, the transparent colour may not be
+	    larger than 15. To make the icon image opaque, set its
+	    transparent colour to -1.
+
+	ICONCTRLA_GetTransparentColor1 (LONG *) -- Get the transparent
+	    colour for a palette mapped icon image, in this case the
+	    regular icon image (icon->do_Gadget.GadgetRender). If
+	    the image is opaque, its "transparent colour" will be
+	    returned as -1. Note that this data is valid only for
+	    palette mapped icons; for other types, you may not
+	    receive any meaningful result.
+
+	ICONCTRLA_SetTransparentColor2 (LONG) -- Set the transparent
+	    colour for a palette mapped icon image, in this case the
+	    alternate icon image (icon->do_Gadget.SelectRender). The
+	    colour must be among the valid palette entries, e.g. for
+	    a 16 colour image, the transparent colour may not be
+	    larger than 15. To make the icon image opaque, set its
+	    transparent colour to -1. Please note that you can set
+	    the alternate image transparent colour only if there is
+	    an alternate image.
+
+	ICONCTRLA_GetTransparentColor2 (LONG *) -- Get the transparent
+	    colour for a palette mapped icon image, in this case the
+	    alternate icon image (icon->do_Gadget.SelectRender). If
+	    the image is opaque, its "transparent colour" will be
+	    returned as -1. Note that this data is valid only for
+	    palette mapped icons; for other types, you may not
+	    receive any meaningful result. Likewise, if there is
+	    no alternate image, no information may be available.
+
+	ICONCTRLA_SetPalette1 (struct @{"ColorRegister" Link "INCLUDE:datatypes/pictureclass.h/Main" 286} *) -- Set the colour
+	    palette for a palette mapped icon image, in this case the
+	    regular icon image (icon->do_Gadget.GadgetRender).
+
+	ICONCTRLA_GetPalette1 (struct @{"ColorRegister" Link "INCLUDE:datatypes/pictureclass.h/Main" 286} **) -- Get the colour
+	    palette for a palette mapped icon image, in this case the
+	    regular icon image (icon->do_Gadget.GadgetRender). Note
+	    that this data is valid only for palette mapped icons; for
+	    other types, you may not receive any meaningful result.
+	    Note that the number of palette entries in this table
+	    matches the number of colours in use when the icon
+	    was first created.
+
+	ICONCTRLA_SetPalette2 (struct @{"ColorRegister" Link "INCLUDE:datatypes/pictureclass.h/Main" 286} *) -- Set the colour
+	    palette for a palette mapped icon image, in this case the
+	    alternate icon image (icon->do_Gadget.SelectRender).
+
+	ICONCTRLA_GetPalette2 (struct @{"ColorRegister" Link "INCLUDE:datatypes/pictureclass.h/Main" 286} **) -- Get the colour
+	    palette for a palette mapped icon image, in this case the
+	    alternate icon image (icon->do_Gadget.SelectRender). Note
+	    that this data is valid only for palette mapped icons; for
+	    other types, you may not receive any meaningful result.
+	    If there is no alternate image, no information may be
+	    available.
+	    Note that the number of palette entries in this table
+	    matches the number of colours in use when the icon
+	    was first created.
+
+	ICONCTRLA_SetPaletteSize1 (ULONG) -- Set the size of the colour
+	    palette to be used for a palette mapped icon image, in
+	    this case the regular icon image (icon->do_Gadget.GadgetRender).
+	    This value must be in the range [1..256].
+
+	ICONCTRLA_GetPaletteSize1 (ULONG *) -- Get the size of the colour
+	    palette to be used for a palette mapped icon image, in
+	    this case the regular icon image (icon->do_Gadget.GadgetRender).
+	    Note that this data is valid only for palette mapped icons; for
+	    other types, you may not receive any meaningful result.
+
+	ICONCTRLA_SetPaletteSize2 (ULONG) -- Set the size of the colour
+	    palette to be used for a palette mapped icon image, in
+	    this case the alternate icon image (icon->do_Gadget.SelectRender).
+	    This value must be in the range [1..256].
+
+	ICONCTRLA_GetPaletteSize2 (ULONG *) -- Get the size of the colour
+	    palette to be used for a palette mapped icon image, in
+	    this case the alternate icon image (icon->do_Gadget.SelectRender).
+	    Note that this data is valid only for palette mapped icons; for
+	    other types, you may not receive any meaningful result.
+	    If there is no alternate image, no information may be
+	    available.
+
+	ICONCTRLA_SetImageData1 (UBYTE *) -- Set the image data to be used for
+	    a palette mapped icon image, in this case the regular icon
+	    image (icon->do_Gadget.GadgetRender). There must be exactly
+	    as many bytes of image data as the image width multiplied
+	    by its height requires.
+
+	    To drop the palette mapped image data associated with an icon,
+	    use "ICONCTRLA_SetImageData1,NULL,".
+
+	ICONCTRLA_GetImageData1 (UBYTE **) -- Get the image data to be used for
+	    a palette mapped icon image, in this case the regular icon
+	    image (icon->do_Gadget.GadgetRender). Note that this data is
+	    valid only for palette mapped icons; for other types, you may
+	    not receive any meaningful result.
+
+	ICONCTRLA_SetImageData2 (UBYTE *) -- Set the image data to be used for
+	    a palette mapped icon image, in this case the alternate icon
+	    image (icon->do_Gadget.SelectRender). There must be exactly
+	    as many bytes of image data as the image width multiplied
+	    by its height requires.
+
+	    To drop the palette mapped image data associated with the alternate
+	    image of an icon, use "ICONCTRLA_SetImageData2,NULL,".
+
+	ICONCTRLA_GetImageData2 (UBYTE **) -- Get the image data to be used for
+	    a palette mapped icon image, in this case the alternate icon
+	    image (icon->do_Gadget.SelectRender). Note that this data is
+	    valid only for palette mapped icons; for other types, you may
+	    not receive any meaningful result. If there is no alternate
+	    image, no information may be available.
+
+	ICONCTRLA_SetFrameless (BOOL) -- Select whether the icon should be
+	    drawn without a frame. This option defaults to FALSE.
+
+	ICONCTRLA_GetFrameless (LONG *) -- Query whether the icon should be
+	    drawn without a frame.
+
+	ICONCTRLA_SetNewIconsSupport (BOOL) -- Select whether palette mapped
+	    icon images that were originally stored in NewIcons format
+	    should be written back in the same format. This option
+	    defaults to TRUE.
+
+	ICONCTRLA_GetNewIconsSupport (LONG *) -- Query whether palette mapped
+	    icon images that were originally stored in NewIcons format
+	    should be written back in the same format.
+
+	ICONCTRLA_SetAspectRatio (UBYTE) -- Set the icon aspect ratio; this
+	    consists of a numerator and a denominator packed into a
+	    single byte (the PACK_ICON_ASPECT_RATIO() macro can be used
+	    for encoding this parameter). If the icon aspect ratio is
+	    unknown, ICON_ASPECT_RATIO_UNKNOWN should be used.
+
+	ICONCTRLA_GetAspectRatio (UBYTE *) -- Get the icon aspect ratio; this
+	    consists of a numerator and a denominator packed into a
+	    single byte (the UNPACK_ICON_ASPECT_RATIO() macro can be used
+	    for decoding this value). If the icon aspect ratio is unknown,
+	    ICON_ASPECT_RATIO_UNKNOWN will be returned.
+
+	ICONCTRLA_SetWidth (ULONG) -- Select the palette mapped icon image
+	    width. This value must be in the range [1..256].
+
+	ICONCTRLA_GetWidth (ULONG *) -- Query the palette mapped icon image
+	    width. Note that this data is valid only for palette mapped icons;
+	    for other types, you may not receive any meaningful result.
+
+	ICONCTRLA_SetHeight (ULONG) -- Select the palette mapped icon image
+	    height. This value must be in the range [1..256].
+
+	ICONCTRLA_GetHeight (ULONG *) -- Query the palette mapped icon image
+	    height. Note that this data is valid only for palette mapped icons;
+	    for other types, you may not receive any meaningful result.
+
+	ICONCTRLA_IsPaletteMapped (LONG *) -- Query whether the icon is using
+	    palette mapped icon images.
+
+	ICONCTRLA_IsNewIcon (LONG *) -- Query whether the icon is of the
+	    NewIcon type.
+
+	ICONCTRLA_IsNativeIcon (LONG *) -- There is an important difference
+	    between struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} icons allocated by icon.library itself
+	    (these are the so-called "native" icons) and statically initialized
+	    icons which consist solely of a simple struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} which may
+	    be part of a program's static data area. For example, you can
+	    attach a palette mapped icon image to a "native" icon, which is
+	    something you cannot do with a statically allocated icon. To help
+	    you tell the two types apart, you can use the ICONCTRLA_IsNativeIcon
+	    query tag.
+
+	ICONGETA_IsDefaultIcon (LONG *) -- Query whether this icon is associated
+	    with a file/drawer/volume or is a "fake" icon that was constructed
+	    for an object that has no icon associated with it.
+
+	ICONCTRLA_GetScreen (struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} **) -- Get the screen this icon
+	    has been remapped to and whose colour map it uses. Note that this
+	    data is valid only for palette mapped icons; for other types, you
+	    may not receive any meaningful result.
+
+	    This tag may return @{"NULL" Link "rexxsupport/NULL"} if the icon is not currently associated
+	    with a screen.
+
+	ICONCTRLA_HasRealImage2 (LONG *) -- icon.library may generate an
+	    alternate image for palette mapped icons if there is no image
+	    data stored for this image. To find out whether an icon
+	    was generated or is part of the original icon image, use the
+	    ICONCTRLA_HasRealImage2 tag.
+
+@{b}   RESULT@{ub}
+	processed -- Number of tags that were processed correctly, i.e.
+	    the number of tags whose parameters are in order, for which
+	    information could be returned, etc. If processing stops because of
+	    an error, the number returned by this function will be smaller
+	    than the number of tag items passed in. The same happens if
+	    the information you wanted to obtain is unavailable. In any
+	    case, check the error code this routine can set up for you.
+
+@{b}   EXAMPLE@{ub}
+	\* Check if the icon is palette mapped. *\
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} isPaletteMapped;
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} errorCode;
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon;
+
+	if(IconControl(icon,
+	    ICONCTRLA_IsPaletteMapped,&isPaletteMapped,
+	    ICONA_ErrorCode,&errorCode,
+	TAG_DONE) == 1)
+	{
+	    Printf("the icon %s palette mapped\n",
+	        isPaletteMapped ? "is" : "is not");
+	}
+	else
+	{
+	    Printf("could not query icon information;\n");
+	    PrintFault(errorCode,NULL);
+	}
+
+	\* Set the icon colour remapping precision. *\
+	IconControl(NULL,
+	    ICONCTRLA_SetGlobalPrecision,PRECISION_EXACT,
+	TAG_DONE);
+
+	\* Query the embossing rectangle dimensions and
+	 * the identification hook.
+	 *\
+	struct @{"Rectangle" Link "INCLUDE:graphics/gfx.h/Main" 41} rect;
+	struct @{"Hook" Link "INCLUDE:utility/hooks.h/Main" 26} *hook;
+
+	if(IconControl(NULL,
+	    ICONCTRLA_GetGlobalEmbossRect,&rect,
+	    ICONCTRLA_GetGlobalIdentifyHook,&hook,
+	TAG_DONE) == 2)
+	{
+	    Printf("embossing rect: %ld,%ld,%ld,%ld\n",
+	        rect.MinX,rect.MaxX,rect.MinY,rect.MaxY);
+	    Printf("identification hook: 0x%08lx\n",
+	        hook);
+	}
+
+@{b}   NOTES@{ub}
+	Changing an icon's palette or image data does not automatically
+	produce a different icon image you can use. To do this, you
+	must re-layout it using LayoutIcon().
+
+	When querying parameters, make sure to always pass in a pointer
+	to a @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} word variable to store the result in.
+
+	Some get/set operations may cause additional memory to be
+	allocated. This may fail; be prepared.
+
+	IconControl() processes the tag item list in sequential order.
+	This has consequences for several tags, such as the palette size
+	and the transparent colour. For example, if you want to make
+	colour #14 of an icon image transparent, make sure to have the
+	palette size set to at least 15 colours before you try to change
+	the transparent colour. Otherwise, IconControl() may refuse to
+	set the transparent colour to #14 since it won't know that there
+	should be more than 14 colours in that image at the time you try
+	to set it. Therefore, if you wanted to change the palette size and
+	the transparent colour in the same tag item list, make sure that the
+	palette size change tag appears before the transparent colour change
+	tag.
+
+	As described above, some of the operations on icons are not
+	supported for DiskObjects not allocated through icon.library. In
+	such cases you will receive an error code ERROR_ACTION_NOT_KNOWN.
+
+	When you set an icon's palette or image data (with one of the
+	following tags: ICONCTRLA_SetPalette1, ICONCTRLA_SetPalette2,
+	ICONCTRLA_SetImageData1, ICONCTRLA_SetImageData2), icon.library
+	will only update the respective data pointers in the icon, it
+	will not copy the data pointed to. This means that the palette
+	and image data information must stay valid until the icon they
+	are attached to is disposed of. If you want to play it safe and
+	be able to release the palette and image data as soon as possible,
+	make a copy of the icon with @{"icon.library/DupDiskObjectA" Link "icon/DupDiskObjectA()"}.
+
+	When you create a palette mapped icon from an old one, make sure
+	that if your new icon should use only a single icon image the
+	second image needs to be set to @{"NULL" Link "rexxsupport/NULL"}. Otherwise, the image data
+	the icon started with will remain attached to it. Since the new
+	icon size may not match the old icon size the result may not look
+	too pretty. To tell icon.library that the second image is not needed
+	use "IconControl(icon,ICONCTRLA_SetImageData2,NULL,TAG_DONE);".
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/DupDiskObjectA" Link "icon/DupDiskObjectA()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	icon.library/LayoutIcon
+	@{"icon.library/NewDiskObject" Link "icon/NewDiskObject()"}
+	@{"graphics.library/BltMaskBitMapRastPort" Link "graphics/BltMaskBitMapRastPort()"}
+	@{"graphics.library/ObtainBestPenA" Link "graphics/ObtainBestPenA()"}
+	@{"utility.library/CallHookPkt" Link "utility/CallHookPkt()"}
+	@{"graphics/view.h" Link "INCLUDE:graphics/view.h/Main" 0}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+
+@EndNode
+
+@Node "LayoutIconA()" "icon.library/LayoutIconA"
+
+@{b}   NAME@{ub}
+	LayoutIconA -- Adapt a palette-mapped icon for display (V44)
+
+@{b}   SYNOPSIS@{ub}
+	success = LayoutIconA(icon,screen,tags);
+	D0                    A0   A1     A2
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} LayoutIconA(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} *screen,
+	                 struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *tags);
+
+	success = LayoutIcon(icon,screen,...);
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} LayoutIcon(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,struct @{"Screen" Link "INCLUDE:intuition/screens.h/Main" 139} *screen,...);
+
+@{b}   FUNCTION@{ub}
+	This function will prepare an icon for display, either on a
+	specific screen or using a default colour palette. It is
+	useful only for palette mapped icons.
+
+@{b}   INPUTS@{ub}
+	icon -- The icon to be remapped. This must be a palette mapped
+	    icon.
+	screen -- Pointer to a screen to remap the icon for or @{"NULL" Link "rexxsupport/NULL"}
+	    to remap the icon to use the system default colour palette
+	    or something very similar to it (this means: four colours
+	    only).
+	tags -- Additional rendering options.
+
+@{b}   TAGS@{ub}
+	OBP_Precision (LONG) -- Pen colour allocation precision.
+	    Default is the same precision as set in the global
+	    icon.library settings (see @{"IconControlA()" Link "IconControlA()"}).
+
+@{b}   OUTPUTS@{ub}
+	success -- TRUE if the icon could be remapped, FALSE if
+	    the remapping failed for some reason. In case of
+	    of failure, icon.library will try its best to keep
+	    the icon in a presentable state, but this may fail.
+	    In case of failure, the error code can be retrieved
+	    using @{"dos.library/IoErr" Link "dos/IoErr()"}.
+
+@{b}   NOTES@{ub}
+	You must make sure that the screen you remap to does not
+	go away while there is an icon to use its colours. For
+	a public screen, the easiest way to guarantee this is
+	to keep it locked (see intuition.library/LockPubScreen).
+	For custom screens, just don't close them! If you have to close
+	the screen or need to keep your icon around until after a screen
+	is closed, you should call LayoutIcon() with a @{"NULL" Link "rexxsupport/NULL"} screen
+	parameter. This will release all pens the icon has allocated
+	and remap the icon to a default set of colours. Alternatively,
+	you can dispose of the icon via @{"FreeDiskObject()" Link "FreeDiskObject()"} which
+	will also release all pens the icon has allocated, including
+	the icon itself, of course.
+
+	Icons remapped to the global default screen (normally, that
+	would be the Workbench screen) may get changed and remapped
+	again during Workbench close/open transitions. To prevent
+	this from taking place, just make sure that the Workbench
+	screen does not close (e.g. via LockPubScreen("Workbench")).
+
+	The sizes of the bitmapped icon imagery and the palette mapped
+	icon imagery may not agree. Thus, the size of the icon may be
+	reported differently before and after LayoutIconA() is called.
+	Therefore, don't cache the icon size if you must call
+	LayoutIconA()! First call LayoutIconA(), then determine the
+	size of the icon.
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"graphics.library/ObtainBestPenA" Link "graphics/ObtainBestPenA()"}
+	@{"graphics.library/ReleasePen" Link "graphics/ReleasePen()"}
+	@{"icon.library/FreeDiskObject" Link "icon/FreeDiskObject()"}
+	@{"icon.library/GetIconRectangleA" Link "icon/GetIconRectangleA()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	icon.library/IconControl
+	@{"intuition.library/LockPubScreen" Link "intuition/LockPubScreen()"}
+	@{"intuition.library/UnlockPubScreen" Link "intuition/UnlockPubScreen()"}
+	@{"graphics/view.h" Link "INCLUDE:graphics/view.h/Main" 0}
+
+@EndNode
+
+@Node "MatchToolValue()" "icon.library/MatchToolValue"
+
+@{b}   NAME@{ub}
+	MatchToolValue - check a tool type variable for a particular value.
+
+@{b}   SYNOPSIS@{ub}
+	result = MatchToolValue(typeString, value)
+	  D0                        A0        A1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} MatchToolValue(STRPTR, STRPTR);
+
+@{b}   FUNCTION@{ub}
+	MatchToolValue is useful for parsing a tool type value for
+	a known value.  It knows how to parse the syntax for a tool
+	type value (in particular, it knows that '|' separates
+	alternate values).  Note that the parsing is case insensitive.
+
+@{b}   INPUTS@{ub}
+	typeString -- a ToolType value (as returned by FindToolType)
+	value -- you are interested if value appears in typeString
+
+@{b}   RESULTS@{ub}
+	result -- TRUE if the value was in typeString else FALSE.
+
+@{b}   EXAMPLE@{ub}
+	Assume there are two type strings:
+	    type1 = "text"
+	    type2 = "a|b|c"
+
+	MatchToolValue( type1, "text" ) returns TRUE
+	MatchToolValue( type1, "TEXT" ) returns TRUE
+	MatchToolValue( type1, "data" ) returns FALSE
+	MatchToolValue( type2, "a" )    returns TRUE
+	MatchToolValue( type2, "b" )    returns TRUE
+	MatchToolValue( type2, "d" )    returns FALSE
+	MatchToolValue( type2, "a|b" )  returns FALSE
+
+@{b}   NOTES@{ub}
+	icon.library V44 skips blank spaces surrounding the typeString
+	options and the value string. Older icon.library versions did
+	not support this.
+
+@{b}   SEE ALSO@{ub}
+	@{"icon.library/FindToolType" Link "icon/FindToolType()"}
+	@{"utility.library/Stricmp" Link "utility/Stricmp()"}
+
+@EndNode
+
+@Node "NewDiskObject()" "icon.library/NewDiskObject"
+
+@{b}   NAME@{ub}
+	NewDiskObject -- Create an empty icon (V44)
+
+@{b}   SYNOPSIS@{ub}
+	icon = NewDiskObject(type)
+	D0                   D0
+
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} * NewDiskObject(LONG type);
+
+@{b}   FUNCTION@{ub}
+	This function is used to create an "empty" @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}
+	structure, which has no image data associated with it.
+	Still, all the necessary structures are in place,
+	you just have to fill them in.
+
+@{b}   INPUTS@{ub}
+	type -- Icon type to create, this must be one of WBDISK,
+	    WBDRAWER, WBTOOL, WBPROJECT, WBGARBAGE, WBDEVICE or WBKICK.
+
+@{b}   RESULT@{ub}
+	icon -- Pointer to a struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} or @{"NULL" Link "rexxsupport/NULL"} in case of error.
+	    You can use @{"IoErr()" Link "dos/IoErr()"} to retrieve the error code.
+
+@{b}   NOTES@{ub}
+	The @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} returned by this function will have a zero
+	width and height @{"Image" Link "INCLUDE:intuition/intuition.h/Main" 710} in the do_Gadget.GadgetRender member
+	and the do_Gadget.Width/do_Gadget.Height members will both
+	be 0, too.
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+
+@EndNode
+
+@Node "PutDefDiskObject()" "icon.library/PutDefDiskObject"
+
+@{b}   NAME@{ub}
+	PutDefDiskObject - write disk object as the default for its type.  (V36)
+
+@{b}   SYNOPSIS@{ub}
+	status = PutDefDiskObject(diskobj)
+	  D0                        A0
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} PutDefDiskObject(struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *);
+
+@{b}   FUNCTION@{ub}
+	This routine writes out a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} structure, and its
+	associated information.  If the call fails, FALSE will
+	be returned.  The reason for the failure may be obtained
+	via @{"IoErr()" Link "dos/IoErr()"}.
+
+	Note that this function calls @{"PutDiskObject()" Link "PutDiskObject()"} internally which means
+	that this call (if sucessful) notifies workbench than an icon has
+	been created/modified.
+
+	Using this routine protects you from any future changes to
+	the way default icons are stored within the system.
+
+@{b}   INPUTS@{ub}
+	diskobj -- a pointer to a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}
+
+@{b}   RESULTS@{ub}
+	status -- TRUE if the call succeeded else FALSE
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/GetDefDiskObject" Link "icon/GetDefDiskObject()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/PutDiskObject" Link "icon/PutDiskObject()"}
+
+@EndNode
+
+@Node "PutDiskObject()" "icon.library/PutDiskObject"
+
+@{b}   NAME@{ub}
+	PutDiskObject - write out a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} to disk.
+
+@{b}   SYNOPSIS@{ub}
+	status = PutDiskObject(name, diskobj)
+	 D0                    A0      A1
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} PutDiskObject(STRPTR, struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *);
+
+@{b}   FUNCTION@{ub}
+	This routine writes out a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} structure, and its
+	associated information.  The file name of the info
+	file will be the name parameter with ".info" postpended
+	to it.  If the call fails, FALSE will be returned.  The
+	reason for the failure may be obtained via @{"IoErr()" Link "dos/IoErr()"}.
+
+	As of release V2.0, PutDiskObject() (if successful) notifies Workbench
+	when an icon has been created/modified.
+
+	Using this routine protects you from any future changes to
+	the way icons are stored within the system.
+
+@{b}   INPUTS@{ub}
+	name -- name of the object (pointer to a character string)
+	diskobj -- a pointer to a @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81}
+
+@{b}   RESULTS@{ub}
+	status -- TRUE if the call succeeded else FALSE
+
+@{b}   NOTES@{ub}
+	It is recommended that if you wish to copy an icon from one place
+	to another than you use @{"GetDiskObject()" Link "GetDiskObject()"} and PutDiskObject()
+	and do not copy them directly.
+
+@{b}   SEE ALSO@{ub}
+	@{"dos.library/IoErr" Link "dos/IoErr()"}
+	@{"icon.library/DeleteDiskObject" Link "icon/DeleteDiskObject()"}
+	@{"icon.library/FreeDiskObject" Link "icon/FreeDiskObject()"}
+	@{"icon.library/GetDiskObject" Link "icon/GetDiskObject()"}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/PutIconTagList" Link "icon/PutIconTagList()"}
+
+@EndNode
+
+@Node "PutIconTagList()" "icon.library/PutIconTagList"
+
+@{b}   NAME@{ub}
+	PutIconTagList -- Store an icon (V44)
+
+@{b}   SYNOPSIS@{ub}
+	success = PutIconTagList(name,icon,tags);
+	D0                       A0   A1   A2
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} PutIconTagList(STRPTR name,struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+	                    struct @{"TagItem" Link "INCLUDE:utility/tagitem.h/Main" 30} *tags);
+
+	success = PutIconTags(name,icon,tag1,...);
+
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} PutIconTags(STRPTR name,struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon,
+                        @{"Tag" Link "INCLUDE:utility/tagitem.h/Main" 28} tag1,...);
+
+@{b}   FUNCTION@{ub}
+	This function is used to store an icon; the icon can
+	belong to a file/drawer/volume or it can be a default icon.
+
+@{b}   INPUTS@{ub}
+	name -- Name of the object the icon is to be stored for,
+	    or @{"NULL" Link "rexxsupport/NULL"} if a default icon is to be stored.
+	icon -- The icon to be stored.
+	tags -- Storage options.
+
+@{b}   TAGS@{ub}
+	ICONPUTA_NotifyWorkbench (BOOL) -- Set this to TRUE to notify
+	    Workbench of the fact that an icon was changed.
+
+	    This tag defaults to FALSE.
+
+	ICONPUTA_PutDefaultType (LONG) -- Type of the default icon
+	    this icon is to replace; must be one of WBDISK, WBDRAWER,
+	    WBTOOL, WBPROJECT, WBGARBAGE, WBDEVICE or WBKICK.
+
+	    If this tag is used, the "name" parameter will be ignored.
+
+	ICONPUTA_PutDefaultName (STRPTR) -- Name of the default object
+	    type this icon is to be stored as.
+
+	    If this tag is used, the "name" parameter will be ignored.
+
+	ICONPUTA_DropPlanarIconImage (BOOL) -- If you decide that the
+	    palette mapped icon imagery is sufficient to represent
+	    an icon, you can tell icon.library not to store the original,
+	    planar icon image data with the icon file. To do this,
+	    set this tag to TRUE. Instead of the planar icon images,
+	    a single default image will be stored. This can result
+	    in space savings but may not look too pretty.
+
+	    This tag defaults to FALSE.
+
+	ICONPUTA_DropChunkyIconImage (BOOL) -- This tag can be used to
+	    keep the chunky icon image data from getting written
+	    to disk.
+
+	    This tag defaults to FALSE.
+
+	ICONPUTA_DropNewIconToolTypes (BOOL) -- This tag controls whether
+	    any NewIcon tool types will be omitted when writing the
+	    icon to disk. TRUE will omit the data.
+
+	    This tag defaults to FALSE.
+
+	ICONPUTA_OptimizeImageSpace (BOOL) -- A palette mapped icon
+	    image might not use the entire icon palette. By default,
+	    icon.library does not bother about this, it expects the
+	    creator of the icon to choose its palette efficiently.
+	    But just in case, you can tell icon.library to attempt
+	    to identify how many colours are really in use and to
+	    optimize its image compressor for them. This may take
+	    extra time and is not recommended for daily use. This tag
+       is not yet implemented so currently does nothing.
+
+	    This tag defaults to FALSE.
+
+	ICONPUTA_OnlyUpdatePosition (BOOL) -- This tag can be used to
+	    reduce the overhead in updating icon information on disk
+	    if the only information changed is the icon position.
+	    For this case, you can set this tag to TRUE. The icon
+	    to be modified will have only its do_CurrentX/do_CurrentY
+	    member values changed, the remainer will stay unmodified.
+	    Please note that this tag only takes effect if the
+	    ICONPUTA_PutDefaultType and ICONPUTA_PutDefaultName tags
+	    are omitted.
+
+	    This tag defaults to FALSE.
+
+	ICONPUTA_PreserveOldIconImages (BOOL) -- Before writing a
+	    palette mapped icon back to disk, icon.library will make
+	    sure that the original planar image data is stored in the
+	    file. If you don't want that to happen, set this option to
+	    FALSE. This tag will allow you to change the planar icon
+	    image data written back to disk.
+
+	    This tag defaults to TRUE.
+
+	ICONA_ErrorCode (LONG *) -- Pointer to a @{"LONG" Link "INCLUDE:exec/types.h/Main" 112} word variable to
+	    store error codes in. Note that this variable will be
+	    initialized regardless of whether an error occured or not.
+	    Thus, you can check for an error condition by comparing the
+	    variable contents against 0; 0 indicates success, all other
+	    values are error codes as defined by dos.library.
+
+@{b}   RESULT@{ub}
+	success -- TRUE if the icon file could be stored, FALSE otherwise.
+	    You can use @{"IoErr()" Link "dos/IoErr()"} to retrieve the error code or use the
+	    ICONA_ErrorCode tag instead.
+
+@{b}   EXAMPLE@{ub}
+	\* Store an icon as the default "picture" icon. *\
+	struct @{"DiskObject" Link "INCLUDE:workbench/workbench.h/Main" 81} *icon;
+	@{"LONG" Link "INCLUDE:exec/types.h/Main" 112} errorCode;
+	@{"BOOL" Link "INCLUDE:exec/types.h/Main" 168} success;
+
+	success = PutIconTags(NULL,icon,
+	    ICONPUTA_PutDefaultName,"picture",
+	    ICONA_ErrorCode,&errorCode,
+	TAG_DONE);
+
+	if(success == FALSE)
+	{
+	    Printf("could not store default picture icon;\n");
+	    PrintFault(errorCode,NULL);
+	}
+
+@{b}   NOTES@{ub}
+	This function is a superset of @{"PutDefDiskObject()" Link "PutDefDiskObject()"} and @{"PutDiskObject()" Link "PutDiskObject()"}.
+
+	If the name of the icon file to be stored would be too long to fit
+	(as set with IconControl(..., ICONCTRLA_SetGlobalMaxNameLength, ...))
+	then PutIconTagList() will silently pretend that the icon file has
+	been written to disk. However, it will not store the icon file on the
+	disk since there would a risk of accidentally overwriting the file the
+	icon belongs to. If you want to know whether the icon you wrote was
+	in fact written to disk, provide an error code pointer with the
+	ICONA_ErrorCode tag. If the name of the file was too long,
+	PutIconTagList() will still pretend that the icon file was written
+	successfully, but the error code ERROR_TOO_MANY_LEVELS will be stored
+	in the variable you passed in with the ICONA_ErrorCode tag.
+
+@{b}   SEE ALSO@{ub}
+	@{"workbench/icon.h" Link "INCLUDE:workbench/icon.h/Main" 0}
+	@{"workbench/workbench.h" Link "INCLUDE:workbench/workbench.h/Main" 0}
+	@{"icon.library/GetIconTagList" Link "icon/GetIconTagList()"}
+	@{"icon.library/PutDefDiskObject" Link "icon/PutDefDiskObject()"}
+	@{"icon.library/PutDiskObject" Link "icon/PutDiskObject()"}
+
+@EndNode
+

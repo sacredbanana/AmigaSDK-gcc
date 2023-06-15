@@ -13,5 +13,8 @@
 
 /* "translator.library" */
 #pragma libcall TranslatorBase Translate 1e 190804
+#pragma libcall TranslatorBase TranslateAs 24 A190805
+#pragma libcall TranslatorBase LoadAccent 2a 801
+#pragma libcall TranslatorBase SetAccent 30 801
 
 #endif /* PRAGMAS_TRANSLATOR_PRAGMAS_H */

@@ -1,0 +1,1533 @@
+TABLE OF CONTENTS
+
+Area.mui/Area.mui
+Area.mui/MUIA_Background
+Area.mui/MUIA_BottomEdge
+Area.mui/MUIA_ContextMenu
+Area.mui/MUIA_ContextMenuTrigger
+Area.mui/MUIA_ControlChar
+Area.mui/MUIA_CycleChain
+Area.mui/MUIA_Disabled
+Area.mui/MUIA_Draggable
+Area.mui/MUIA_Dropable
+Area.mui/MUIA_ExportID
+Area.mui/MUIA_FillArea
+Area.mui/MUIA_FixHeight
+Area.mui/MUIA_FixHeightTxt
+Area.mui/MUIA_FixWidth
+Area.mui/MUIA_FixWidthTxt
+Area.mui/MUIA_Font
+Area.mui/MUIA_Frame
+Area.mui/MUIA_FramePhantomHoriz
+Area.mui/MUIA_FrameTitle
+Area.mui/MUIA_Height
+Area.mui/MUIA_HorizDisappear
+Area.mui/MUIA_HorizWeight
+Area.mui/MUIA_InnerBottom
+Area.mui/MUIA_InnerLeft
+Area.mui/MUIA_InnerRight
+Area.mui/MUIA_InnerTop
+Area.mui/MUIA_InputMode
+Area.mui/MUIA_LeftEdge
+Area.mui/MUIA_MaxHeight
+Area.mui/MUIA_MaxWidth
+Area.mui/MUIA_Pressed
+Area.mui/MUIA_RightEdge
+Area.mui/MUIA_Selected
+Area.mui/MUIA_ShortHelp
+Area.mui/MUIA_ShowMe
+Area.mui/MUIA_ShowSelState
+Area.mui/MUIA_Timer
+Area.mui/MUIA_TopEdge
+Area.mui/MUIA_VertDisappear
+Area.mui/MUIA_VertWeight
+Area.mui/MUIA_Weight
+Area.mui/MUIA_Width
+Area.mui/MUIA_Window
+Area.mui/MUIA_WindowObject
+Area.mui/MUIM_AskMinMax
+Area.mui/MUIM_Cleanup
+Area.mui/MUIM_ContextMenuBuild
+Area.mui/MUIM_ContextMenuChoice
+Area.mui/MUIM_CreateBubble
+Area.mui/MUIM_CreateShortHelp
+Area.mui/MUIM_DeleteBubble
+Area.mui/MUIM_DeleteShortHelp
+Area.mui/MUIM_DragBegin
+Area.mui/MUIM_DragDrop
+Area.mui/MUIM_DragFinish
+Area.mui/MUIM_DragQuery
+Area.mui/MUIM_DragReport
+Area.mui/MUIM_Draw
+Area.mui/MUIM_DrawBackground
+Area.mui/MUIM_HandleEvent
+Area.mui/MUIM_HandleInput
+Area.mui/MUIM_Hide
+Area.mui/MUIM_Setup
+Area.mui/MUIM_Show
+Area.mui/Area.mui
+
+	Area class is a super class for every other MUI class
+	except windows and applications. It holds information
+	about an objects current position, size and weight
+	and manages frames, fonts and backgrounds.
+
+	Additionally, area class handles the user input. By
+	setting an objects MUIA_InputMode, you can make it
+	behave like a button or like a toggle gadget. That's
+	why MUI doesn't offer an extra button class. A button
+	is simply a text object with a raised frame and a relverify
+	input mode. Since especially group class is a subclass
+	of area, you can create rather complex buttons consisting
+	of many other display elements.
+Area.mui/MUIA_Background
+
+    NAME
+	MUIA_Background -- (V4 ) [IS.], LONG
+
+    FUNCTION
+	Adjust the background for an object.
+
+	Every MUI object has its own background setting.
+	The background is displayed "behind" the actual
+	object contents, e.g. behind a the text of a
+	text object or behind the image of an image object.
+
+	This attribute takes the same values as MUIA_Image_Spec,
+	please refer to autodocs of image class for a complete
+	description.
+
+	An object without a specific background setting will
+	inherit the pattern from its parent group. The default
+	background for a window and many other background
+	patterns are adjustable with the preferences program.
+
+	Only a few MUII_xxxxxxx tags make sense as background.
+	Important are:
+
+	MUII_ButtonBack:
+	   You have to set this when you create a button gadget.
+	   Thus, your button will be displayed in the users
+	   preferred style.
+
+	MUII_TextBack:
+	   Set this when you create a text object with a TextFrame,
+	   e.g. some kind of status line. Do *not* use MUII_TextBack
+	   for simple text without frame (e.g. gadget labels).
+
+	MUII_BACKGROUND
+	MUII_SHADOW
+	MUII_SHINE
+	MUII_FILL
+	MUII_SHADOWBACK
+	MUII_SHADOWFILL
+	MUII_SHADOWSHINE
+	MUII_FILLBACK
+	MUII_FILLSHINE
+	MUII_SHINEBACK
+	MUII_SHINEBACK2:
+	   One of MUI's predefined pattern. These are not
+	   configurable by the user and will always look the
+	   same.
+
+	Note: It is *important* that you test your programs with
+	      a fancy pattern configuration. With the default
+	      setting you won't notice any errors in your backgrounds.
+Area.mui/MUIA_BottomEdge
+
+    NAME
+	MUIA_BottomEdge -- (V4 ) [..G], LONG
+
+    FUNCTION
+	You can use this to read the current position and
+	dimension of an object, if you e.g. need it to pop
+	up some requester below.
+
+	Of course, this attribute is only valid when the
+	parent window of the object is currently open.
+
+    SEE ALSO
+	MUIA_TopEdge, MUIA_Width, MUIA_Height,
+	MUIA_RightEdge, MUIA_LeftEdge
+Area.mui/MUIA_ContextMenu
+
+    NAME
+	MUIA_ContextMenu -- (V11) [ISG], Object *
+
+    FUNCTION
+	Specifies a context sensitive popup menu for the current
+	object. For MUI, popup menus are nothing else but standard
+	intuition menus, so you must specify a pointer to a
+	MUI menustrip object (e.g. something returned from
+	MUI_MakeObject(MUIO_MenustripNM,...)) here.
+
+	Whenever the user hits the RMB and the mouse is above the parent
+	object, MUI will present the popup menu instead of the windows
+	menu.
+
+	Note: MUI will *not* dispose the MUIA_ContextMenu object when
+	the object is disposed. You must take care of the menustrip
+	object yourself. This is because menustrip objects of
+	MUIA_ContextMenu do not actually "belong" to their parent
+	objects, it's just a "reference". You are allowed to use
+	a single menustrip object as MUIA_ContextMenu for different
+	objects of the same window. Do *not* share with objects in
+	other windows or with the default menu of a window or
+	an application!
+
+	If the user selects an item, the object will receive
+	a MUIM_ContextMenuChoice method containing the selected
+	menuitem object. If you built your menustrip tree with
+	MUI_MakeObject(MUIO_MenustripNM,...), you will find the
+	nm_UserData of your menu entry in muiUserData(menuitem).
+	If you have control over methods because you are a
+	subclass, you can immediately take approriate actions 
+	when receiving MUIM_ContextMenuChoice.
+
+	If you dont have a subclass or dont override
+	MUIM_ContextMenuChoice, the method will finally reach
+	area class and will set the attribute MUIA_ContextMenuTrigger
+	to the appropriate menuitem object. This allows you to react on
+	context menu selections by simple notification and eliminates
+	the need of writing a subclass just for this purpose.
+
+	Note: Subclasses are always the better solution!
+
+	There is also a possibility to dynamically create popup menus
+	on the fly. See MUIM_ContextMenuBuild for details.
+
+    NOTES
+	MUI uses the same tree-like technique as always (e.g. with
+	drag&drop) to find out whichs context menu to use on a
+	certain mouse position. This allows you to have a context
+	menu for a group and different context menus for its
+	children. The MUI preferences program makes use of that
+	feature by allowing to control a single gadget or a whole
+	page of gadgets with popup menus.
+
+    SEE ALSO
+	MUIA_ContextMenuTrigger, MUIM_ContextMenuChoice,
+	MUIM_ContextMenuBuild
+Area.mui/MUIA_ContextMenuTrigger
+
+    NAME
+	MUIA_ContextMenuTrigger -- (V11) [..G], Object *
+
+    FUNCTION
+	Allows reacting on context menus with notificaton.
+	When the MUIM_ContextMenuChoice method reaches area class
+	because you did not override it in a subclass, it sets
+	MUIA_ContextMenuTrigger to the received paremeter which
+	is a pointer to the user-selected menuitem object.
+
+	See MUIA_ContextMenu for details.
+
+    SEE ALSO
+	MUIA_ContextMenu, MUIM_ContextMenuChoice, MUIM_ContextMenuBuild
+Area.mui/MUIA_ControlChar
+
+    NAME
+	MUIA_ControlChar -- (V4 ) [ISG], char
+
+    FUNCTION
+	Pressing the control char will have the same effect
+	as pressing return if the object was active.
+	
+	This can be used to create old style key shortcuts.
+
+	Note: Using an uppercase control char will force
+	      the user to press shift.
+
+    SEE ALSO
+	mui.h / KeyButton() macro
+Area.mui/MUIA_CycleChain
+
+    NAME
+	MUIA_CycleChain -- (V11) [ISG], LONG
+
+    FUNCTION
+	MUI 3 introduces a new keyboard cycle chain system. All you 
+	have to do is to set  MUIA_CycleChain to 1 for every object 
+	that you want to have in your chain, MUI does the rest 
+	automatically. The old MUIM_Window_SetCycleChain will continue 
+	to work but is considered obsolete.
+
+    SEE ALSO
+	Window.mui/MUIM_Window_SetCycleChain
+Area.mui/MUIA_Disabled
+
+    NAME
+	MUIA_Disabled -- (V4 ) [ISG], BOOL
+
+    FUNCTION
+	Disable or enable a gadget. Setting this attribute
+	causes a gadget to become disabled, it gets a ghost
+	pattern and doesn't respond to user input any longer.
+
+	Disabled gadgets cannot be activated with the TAB key.
+
+	Using MUIA_Disable on a group of objects will disable
+	all objects within that group.
+
+    EXAMPLE
+	/* we have a radio button gadget with three         */
+	/* entries, the third should enable a string gadget */
+	/* with additional parameters                       */
+
+	DoMethod(radio, MUIM_Notify, MUIA_Radio_Active, 0,
+	   string, 3, MUIM_Set, MUIA_Disabled, TRUE);
+
+	DoMethod(radio, MUIM_Notify, MUIA_Radio_Active, 1,
+	   string, 3, MUIM_Set, MUIA_Disabled, TRUE);
+
+	DoMethod(radio, MUIM_Notify, MUIA_Radio_Active, 2,
+	   string, 3, MUIM_Set, MUIA_Disabled, FALSE);
+Area.mui/MUIA_Draggable
+
+    NAME
+	MUIA_Draggable -- (V11) [ISG], BOOL
+
+    FUNCTION
+	Set this if you want the complete object to be
+	dragable for D&D operations.
+Area.mui/MUIA_Dropable
+
+    NAME
+	MUIA_Dropable -- (V11) [ISG], BOOL
+
+    FUNCTION
+	Only objects with this attribute set to TRUE will be asked
+	if they want to become an active Drag & Drop destination
+	at all. Though this attribute defaults to TRUE, this doesnt
+	mean that every object automatically aceppts D&D actions,
+	because the MUIM_DragQuery method is answered FALSE when
+	it arrives at area class.
+
+    SEE ALSO
+	MUIM_DragQuery
+Area.mui/MUIA_ExportID
+
+    NAME
+	MUIA_ExportID -- (V4 ) [ISG], ULONG (OBSOLETE)
+
+    FUNCTION
+	Objects with a non NULL MUIA_ExportID export their
+	contents during MUIM_Application_Save and import
+	them during MUIM_Application_Load.
+
+	You have to use different ExportIDs for your objects!
+
+    NOTE
+	This attribute is renamed to MUIA_ObjectID since
+	muimaster.library V12.
+
+    SEE ALSO
+	MUIM_Application_Save, MUIM_Application_Load
+Area.mui/MUIA_FillArea
+
+    NAME
+	MUIA_FillArea -- (V4 ) [IS.], BOOL
+
+    FUNCTION
+	Set this if you are a custom class and dont want area class to
+	clear your background during the DoSuperMethod() in your
+	draw method. Note that if you set this, your draw method
+	is responsible for filling every pixel of your objects
+	rectangle, otherwise some display trash will remain there.
+Area.mui/MUIA_FixHeight
+
+    NAME
+	MUIA_FixHeight -- (V4 ) [I..], LONG
+
+    FUNCTION
+	Give your object a fixed pixel height. This tag is
+	absolutely not needed in a general MUI application
+	and only present for emergency situations. Please
+	think twice before using it!
+
+    EXAMPLE
+	/* create an 8x8 pixel rectangle with FILLPEN */
+
+	RectangleObject,
+	   MUIA_FixWidth  , 8,
+	   MUIA_FixHeight , 8,
+	   MUIA_Background, MUII_FILL,
+	   End;
+
+    SEE ALSO
+	MUIA_FixWidth, MUIA_FixWidthTxt, MUIA_FixHeightTxt
+Area.mui/MUIA_FixHeightTxt
+
+    NAME
+	MUIA_FixHeightTxt -- (V4 ) [I..], STRPTR
+
+    FUNCTION
+	Give your object a fixed pixel height. The height
+	will match the height of the given string. This tag is
+	absolutely not needed in a general MUI application
+	and only present for emergency situations. Please
+	think twice before using it!
+
+    EXAMPLE
+	/* create a fixed size rectangle with FILLPEN */
+
+	RectangleObject,
+	   MUIA_FixWidthTxt , "00:00:00",
+	   MUIA_FixHeightTxt, "\n\n",
+	   MUIA_Background  , MUII_FILL,
+	   End;
+
+    SEE ALSO
+	MUIA_FixHeight, MUIA_FixWidth, MUIA_FixWidthTxt
+Area.mui/MUIA_FixWidth
+
+    NAME
+	MUIA_FixWidth -- (V4 ) [I..], LONG
+
+    FUNCTION
+	Give your object a fixed pixel width. This tag is
+	absolutely not needed in a general MUI application
+	and only present for emergency situations. Please
+	think twice before using it!
+
+    EXAMPLE
+	/* create an 8x8 pixel rectangle with FILLPEN */
+
+	RectangleObject,
+	   MUIA_FixWidth  , 8,
+	   MUIA_FixHeight , 8,
+	   MUIA_Background, MUII_FILL,
+	   End;
+
+    SEE ALSO
+	MUIA_FixHeight, MUIA_FixWidthTxt, MUIA_FixHeightTxt
+Area.mui/MUIA_FixWidthTxt
+
+    NAME
+	MUIA_FixWidthTxt -- (V4 ) [I..], STRPTR
+
+    FUNCTION
+	Give your object a fixed pixel width. The width
+	will match the width of the given string. This tag is
+	absolutely not needed in a general MUI application
+	and only present for emergency situations. Please
+	think twice before using it!
+
+    EXAMPLE
+	/* create a fixed size rectangle with FILLPEN */
+
+	RectangleObject,
+	   MUIA_FixWidthTxt , "00:00:00",
+	   MUIA_FixHeightTxt, "\n\n",
+	   MUIA_Background  , MUII_FILL,
+	   End;
+
+    SEE ALSO
+	MUIA_FixHeight, MUIA_FixWidth, MUIA_FixHeightTxt
+Area.mui/MUIA_Font
+
+    NAME
+	MUIA_Font -- (V4 ) [I.G], struct TextFont *
+
+    SPECIAL INPUTS
+	MUIV_Font_Inherit
+	MUIV_Font_Normal
+	MUIV_Font_List
+	MUIV_Font_Tiny
+	MUIV_Font_Fixed
+	MUIV_Font_Title
+	MUIV_Font_Big
+	MUIV_Font_Button
+
+    FUNCTION
+	Every MUI object can have its own font, just set it with
+	this tag. Objects without an explicit font setting will
+	inherit it from their parent group.
+
+	You normally won't need to open a font yourself, just
+	use one of the predefined values to get a font from
+	the users preferences.
+
+    EXAMPLE
+	/* since the text contains tabs,           */
+	/* use the fixed width font for displaying */
+
+	msgread = FloattextObject,
+	   MUIA_Font, MUIV_Font_Fixed,
+	   ...,
+	   End;
+Area.mui/MUIA_Frame
+
+    NAME
+	MUIA_Frame -- (V4 ) [I..], LONG
+
+    SPECIAL INPUTS
+	MUIV_Frame_None
+	MUIV_Frame_Button
+	MUIV_Frame_ImageButton
+	MUIV_Frame_Text
+	MUIV_Frame_String
+	MUIV_Frame_ReadList
+	MUIV_Frame_InputList
+	MUIV_Frame_Prop
+	MUIV_Frame_Gauge
+	MUIV_Frame_Group
+	MUIV_Frame_PopUp
+	MUIV_Frame_Virtual
+	MUIV_Frame_Slider
+	MUIV_Frame_Count
+
+    FUNCTION
+	Define a frame for the current object. Since area class
+	is a superclass for all elements in a window, you can
+	assign frames to every object you wish.
+
+	You don't adjust the style of your frame directly,
+	instead you only specify a type:
+
+	MUIV_Frame_Button
+	   for standard buttons with text in it.
+
+	MUIV_Frame_ImageButton
+	   for small buttons with images, e.g. the arrows
+	   of a scrollbar.
+
+	MUIV_Frame_Text
+	   for a text field, e.g. a status line display.
+
+	MUIV_Frame_String
+	   for a string gadget.
+
+	MUIV_Frame_ReadList
+	   for a read only list.
+
+	MUIV_Frame_InputList
+	   for a list that handles input (has a cursor).
+
+	MUIV_Frame_Prop
+	   for proportional gadgets.
+
+	MUIV_Frame_Group
+	   for groups.
+
+	How the frame is going to look is adjustable via the
+	preferences program.
+
+	Four spacing values belong to each frame that tell
+	MUI how many pixels should be left free between the
+	frame and its contents. These spacing values are also
+	user adjustable as long as you don't override them
+	with one of MUIA_InnerLeft, MUIA_InnerRight, MUIA_InnerTop,
+	or MUIA_InnerBottom.
+
+	Note: The first object in a window (MUIA_Window_RootObject)
+	      may *not* have a frame. If you need this you will have
+	      to create a dummy group with just one child.
+
+    EXAMPLE
+	strobj = StringObject,
+	   MUIA_Frame, MUIV_Frame_String,
+	   End;
+
+    SEE ALSO
+	MUIA_InnerLeft, MUIA_InnerRight, MUIA_InnerTop,
+	MUIA_InnerBottom
+Area.mui/MUIA_FramePhantomHoriz
+
+    NAME
+	MUIA_FramePhantomHoriz -- (V4 ) [I..], BOOL
+
+    FUNCTION
+	Setting this to TRUE causes the specified frame to be
+	a horizontal phantom frame. The frame will not appear
+	but its vertical components (frame height, inner
+	top and inner bottom spacing) will be used to calculate
+	positions and dimensions (horizontal components are
+	treated as 0).
+
+	This is extremely useful for a correct labeling of objects.
+	You would e.g. label a string gadget by using a text object
+	with a phantom string frame. Thus, the label text will
+	be always on the same vertical position as the string
+	gadget text, no matter what spacing values the user
+	configured.
+
+    SEE ALSO
+	Label() macros in "mui.h".
+Area.mui/MUIA_FrameTitle
+
+    NAME
+	MUIA_FrameTitle -- (V4 ) [I..], STRPTR
+
+    FUNCTION
+	This tag identifies a text string that will be displayed
+	centered in the top line of a frame. This can become
+	handy if you want to name groups of objects.
+
+	You may not use MUIA_FrameTitle without defining
+	a MUIA_Frame.
+
+    EXAMPLE
+	VGroup,
+	   MUIA_Frame     , MUIV_Frame_Group,
+	   MUIA_FrameTitle, "Spacing",
+	   ...
+
+    SEE ALSO
+	MUIA_Frame
+Area.mui/MUIA_Height
+
+    NAME
+	MUIA_Height -- (V4 ) [..G], LONG
+
+    FUNCTION
+	You can use this to read the current position and
+	dimension of an object, if you e.g. need it to pop
+	up some requester below.
+
+	Of course, this attribute is only valid when the
+	parent window of the object is currently open.
+
+    SEE ALSO
+	MUIA_TopEdge, MUIA_Width, MUIA_LeftEdge,
+	MUIA_RightEdge, MUIA_BottomEdge
+Area.mui/MUIA_HorizDisappear
+
+    NAME
+	MUIA_HorizDisappear -- (V11) [ISG], LONG
+
+    FUNCTION
+	Objects with a disappear level disappear automatically
+	when their parent window gets too small to display them.
+	Use this for things that make your GUI look nicer
+	(e.g. Imagery) but are not absolutely necessary.
+
+	By using disappearing objects, you can make nice GUIs
+	which still work on crappy 640x200 screens.
+
+	You can give horizontal or vertical disappear levels
+	to objects which are used for horizontal or vertical
+	layout calculations respectively.
+
+	Objects with a small disappear level disappear before
+	objects with a big disappear level.
+
+    SEE ALSO
+	MUIA_VertDisappear
+Area.mui/MUIA_HorizWeight
+
+    NAME
+	MUIA_HorizWeight -- (V4 ) [ISG], WORD
+
+    FUNCTION
+	Adjust the horizontal weight of an object. Usually
+	you can simply use MUIA_Weight instead of this tag
+	but in some two-dimensional groups it may become
+	handy to have different horizontal and vertical 
+	weights.
+
+    SEE ALSO
+	MUIA_Weight
+Area.mui/MUIA_InnerBottom
+
+    NAME
+	MUIA_InnerBottom -- (V4 ) [I.G], LONG
+
+    FUNCTION
+	Adjust the space between an object and its frame.
+	Usually you shouldn't use this tag since you will
+	override the users preferred default setting.
+
+    SEE ALSO
+	MUIA_Frame
+Area.mui/MUIA_InnerLeft
+
+    NAME
+	MUIA_InnerLeft -- (V4 ) [I.G], LONG
+
+    FUNCTION
+	Adjust the space between an object and its frame.
+	Usually you shouldn't use this tag since you will
+	override the users preferred default setting.
+
+    SEE ALSO
+	MUIA_Frame
+Area.mui/MUIA_InnerRight
+
+    NAME
+	MUIA_InnerRight -- (V4 ) [I.G], LONG
+
+    FUNCTION
+	Adjust the space between an object and its frame.
+	Usually you shouldn't use this tag since you will
+	override the users preferred default setting.
+
+    SEE ALSO
+	MUIA_Frame
+Area.mui/MUIA_InnerTop
+
+    NAME
+	MUIA_InnerTop -- (V4 ) [I.G], LONG
+
+    FUNCTION
+	Adjust the space between an object and its frame.
+	Usually you shouldn't use this tag since you will
+	override the users preferred default setting.
+
+    SEE ALSO
+	MUIA_Frame
+Area.mui/MUIA_InputMode
+
+    NAME
+	MUIA_InputMode -- (V4 ) [I..], LONG
+
+    SPECIAL INPUTS
+	MUIV_InputMode_None
+	MUIV_InputMode_RelVerify
+	MUIV_InputMode_Immediate
+	MUIV_InputMode_Toggle
+
+    FUNCTION
+	Adjust the input mode for an object.
+
+	MUI has no distinct button class. Instead you can make
+	every object (even groups) behave like a button by
+	setting an input mode for them. Several input modes
+	area available:
+
+	MUIV_InputMode_None:
+	   No input, this is not a gadget.
+
+	MUIV_InputMode_RelVerify:
+	   For buttons and similar stuff.
+
+	MUIV_InputMode_Immediate:
+	   Used e.g. in a radio button object.
+
+	MUIV_InputMode_Toggle:
+	   For things like checkmark gadgets.
+
+	The input mode setting determines how a user action
+	will trigger the attributes MUIA_Selected, MUIA_Pressed
+	and MUIA_Timer. See their documentation for details.
+
+    EXAMPLE
+	/* A traditional button, just a text object with */
+	/* a button frame and a relverify input mode:    */
+
+	okbutton = TextObject,
+	   MUIA_Frame        , MUIV_Frame_Button,
+	   MUIA_InputMode    , MUIV_InputMode_RelVerify,
+	   MUIA_Text_Contents, "OK",
+	   ...
+
+    SEE ALSO
+	MUIA_Selected, MUIA_Timer, MUIA_Pressed
+Area.mui/MUIA_LeftEdge
+
+    NAME
+	MUIA_LeftEdge -- (V4 ) [..G], LONG
+
+    FUNCTION
+	You can use this to read the current position and
+	dimension of an object, if you e.g. need it to pop
+	up some requester below.
+
+	Of course, this attribute is only valid when the
+	parent window of the object is currently open.
+
+    SEE ALSO
+	MUIA_TopEdge, MUIA_Width, MUIA_Height,
+	MUIA_RightEdge, MUIA_BottomEdge
+Area.mui/MUIA_MaxHeight
+
+    NAME
+	MUIA_MaxHeight -- (V11) [I..], LONG
+
+    FUNCTION
+	Specify a maximum height for an object (in pixels).
+
+    SEE ALSO
+	MUIA_MaxWidth, MUIA_FixWidth, MUIA_FixHeight
+Area.mui/MUIA_MaxWidth
+
+    NAME
+	MUIA_MaxWidth -- (V11) [I..], LONG
+
+    FUNCTION
+	Specify a maximum width for an object (in pixels).
+
+    SEE ALSO
+	MUIA_MaxHeight, MUIA_FixWidth, MUIA_FixHeight
+Area.mui/MUIA_Pressed
+
+    NAME
+	MUIA_Pressed -- (V4 ) [..G], BOOL
+
+    FUNCTION
+	Learn if a button is pressed (or released).
+	The MUIA_Pressed attribute of a gadget is triggered
+	by some user action, depending on the input mode:
+
+	MUIV_InputMode_RelVerify:
+	   - set when lmb is pressed.
+	   - cleared when lmb is released and the mouse
+	     is still over the gadget (otherwise it will
+	     be cleared too, but without triggering a
+	     notification event).
+
+	MUIV_InputMode_Immediate:
+	   - undefined, use MUIA_Selected for this.
+
+	MUIV_InputMode_Toggle:
+	   - undefined, use MUIA_Selected for this.
+
+	Waiting for MUIA_Pressed getting FALSE is the usual
+	way to react on button gadgets.
+
+    EXAMPLE
+	DoMethod(btcancel,MUIM_Notify,MUIA_Pressed,FALSE,
+	   app,2,MUIM_Application_ReturnID,ID_CANCEL);
+
+    SEE ALSO
+	MUIA_Selected, MUIA_Timer, MUIA_ShowSelState, MUIA_InputMode
+Area.mui/MUIA_RightEdge
+
+    NAME
+	MUIA_RightEdge -- (V4 ) [..G], LONG
+
+    FUNCTION
+	You can use this to read the current position and
+	dimension of an object, if you e.g. need it to pop
+	up some requester below.
+
+	Of course, this attribute is only valid when the
+	parent window of the object is currently open.
+
+    SEE ALSO
+	MUIA_TopEdge, MUIA_Width, MUIA_Height,
+	MUIA_LeftEdge, MUIA_BottomEdge
+Area.mui/MUIA_Selected
+
+    NAME
+	MUIA_Selected -- (V4 ) [ISG], BOOL
+
+    FUNCTION
+	Get and set the selected state of a gadget.
+	This attribute can be triggered by the user
+	clicking on the gadget (or using the keyboard),
+	depending on the input mode:
+
+	MUIV_InputMode_RelVerify:
+	   - set when lmb is pressed.
+	   - cleared when lmb is released.
+	   - cleared when the gadget is selected and the
+	     mouse leaves the gadget box.
+	   - set when the mouse reenters the gadget box.
+
+	MUIV_InputMode_Immediate:
+	   - set when lmb is pressed.
+
+	MUIV_InputMode_Toggle:
+	   - toggled when lmb is pressed.
+
+	Of course you may set this attribute yourself, e.g.
+	to adjust the state of a checkmark gadget.
+
+	A selected gadget will display its border reverse
+	and get the configured MUII_SelectedBack background.
+	This can be avoided using the MUIA_ShowSelState tag.
+
+    SEE ALSO
+	MUIA_Pressed, MUIA_Timer, MUIA_ShowSelState, MUIA_InputMode
+Area.mui/MUIA_ShortHelp
+
+    NAME
+	MUIA_ShortHelp -- (V11) [ISG], STRPTR
+
+    FUNCTION
+	Specify a string that is to be used as bubble help for this
+	object.
+Area.mui/MUIA_ShowMe
+
+    NAME
+	MUIA_ShowMe -- (V4 ) [ISG], BOOL
+
+    FUNCTION
+	Objects with this attribute set are not displayed. You can
+	set MUIA_ShowMe at any time, causing objects to appear and
+	to disappear immediately. A new layout is calculated whenever
+	some objects are shown or hidden. When necessary, MUI will
+	resize the parent window to make place for the new objects.
+
+    NOTE
+	Currently, MUI does a complete window refresh after
+	showing/hiding objects. This behaviour might get improved
+	in the future.
+Area.mui/MUIA_ShowSelState
+
+    NAME
+	MUIA_ShowSelState -- (V4 ) [I..], BOOL
+
+    FUNCTION
+	Normally a gadget will reverse its frame and
+	display the configured MUII_SelectetBack background
+	pattern in its selected state. For some objects
+	(e.g. checkmarks) this is not recommended and
+	can be supressed by setting MUIA_ShowSelState
+	to FALSE.
+
+    SEE ALSO
+	MUIA_Selected
+Area.mui/MUIA_Timer
+
+    NAME
+	MUIA_Timer -- (V4 ) [..G], LONG
+
+    FUNCTION
+	MUIA_Timer gets triggered when a relverify button is 
+	pressed and (after a little delay) increases every 
+	INTUITICK as long as the mouse remains over the gadget.
+
+	This makes it possible to have buttons repeatedly
+	cause some actions, just like the arrow gadgets of
+	a scrollbar.
+
+    EXAMPLE
+	DoMethod(btmore,MUIM_Notify,MUIA_Timer,MUIV_EveryTime,
+	   app,2,MUIM_Application_ReturnID,ID_MORE);
+
+	DoMethod(btless,MUIM_Notify,MUIA_Timer,MUIV_EveryTime,
+	   app,2,MUIM_Application_ReturnID,ID_LESS);
+
+    SEE ALSO
+	MUIA_Pressed, MUIA_Selected
+Area.mui/MUIA_TopEdge
+
+    NAME
+	MUIA_TopEdge -- (V4 ) [..G], LONG
+
+    FUNCTION
+	You can use this to read the current position and
+	dimension of an object, if you e.g. need it to pop
+	up some requester below.
+
+	Of course, this attribute is only valid when the
+	parent window of the object is currently open.
+
+    SEE ALSO
+	MUIA_LeftEdge, MUIA_Width, MUIA_Height,
+	MUIA_RightEdge, MUIA_BottomEdge
+Area.mui/MUIA_VertDisappear
+
+    NAME
+	MUIA_VertDisappear -- (V11) [ISG], LONG
+
+    FUNCTION
+	Objects with a disappear level disappear automatically
+	when their parent window gets too small to display them.
+	Use this for things that make your GUI look nicer
+	(e.g. Imagery) but are not absolutely necessary.
+
+	By using disappearing objects, you can make nice GUIs
+	which still work on crappy 640x200 screens.
+
+	You can give horizontal or vertical disappear levels
+	to objects which are used for horizontal or vertical
+	layout calculations respectively.
+
+	Objects with a small disappear level disappear before
+	objects with a big disappear level.
+
+    SEE ALSO
+	MUIA_HorizDisappear
+Area.mui/MUIA_VertWeight
+
+    NAME
+	MUIA_VertWeight -- (V4 ) [ISG], WORD
+
+    FUNCTION
+	Adjust the vertical weight of an object. Usually
+	you can simply use MUIA_Weight instead of this tag
+	but in some two-dimensional groups it may become
+	handy to have different horizontal and vertical
+	weights.
+
+    SEE ALSO
+	MUIA_Weight
+Area.mui/MUIA_Weight
+
+    NAME
+	MUIA_Weight -- (V4 ) [I..], WORD
+
+    FUNCTION
+	This tag is a shorthand for MUIA_HorizWeight and
+	MUIA_VertWeight, it sets both weights at once.
+
+	The weight of an object determines how much room it
+	will get during the layout process. Imagine you have
+	a 100 pixel wide horizontal group with two string
+	gadgets. Usually, each gadget will get half of the
+	room and be 50 pixels wide. If you feel the left
+	gadget is more important and should be bigger,
+	you can give it a weight of 200 (and 100 for
+	the right gadget). Because the left gadget is
+	twice as "heavy" as the right gadget, it will
+	become twice as big (about 66 pixel) as the
+	right one (34 pixel).
+
+	Of course giving weights only makes sense if the
+	object is resizable. A MUIA_VertWeight for a
+	(always fixed height) string gadget is useless.
+
+	An object with a weight of 0 will always stay
+	at its minimum size.
+
+	By default, all objects have a weight of 100.
+
+    EXAMPLE
+	HGroup,
+	   StringGadget, MUIA_Weight,  50, End,
+	   StringGadget, MUIA_Weight, 100, End,
+	   StringGadget, MUIA_Weight, 200, End,
+	   End;
+
+    SEE ALSO
+	MUIA_HorizWeight, MUIA_VertWeight
+Area.mui/MUIA_Width
+
+    NAME
+	MUIA_Width -- (V4 ) [..G], LONG
+
+    FUNCTION
+	You can use this to read the current position and
+	dimension of an object, if you e.g. need it to pop
+	up some requester below.
+
+	Of course, this attribute is only valid when the
+	parent window of the object is currently open.
+
+    SEE ALSO
+	MUIA_TopEdge, MUIA_LeftEdge, MUIA_Height,
+	MUIA_RightEdge, MUIA_BottomEdge
+Area.mui/MUIA_Window
+
+    NAME
+	MUIA_Window -- (V4 ) [..G], struct Window *
+
+    FUNCTION
+	This attribute can be used to get a pointer to the
+	intuition window structure of the parent window 
+	ot the object. This pointer could e.g. be used
+	in calls to asl.library.
+
+	The result is only valid when the window is opened.
+
+    SEE ALSO
+	MUIA_Window_Window
+Area.mui/MUIA_WindowObject
+
+    NAME
+	MUIA_WindowObject -- (V4 ) [..G], Object *
+
+    FUNCTION
+	You can obtain a pointer to the window object
+	that some gadget belongs to by using this attribute.
+	Useful mainly within callback hooks if you do not want
+	to deal with global variables.
+
+    SEE ALSO
+	MUIA_ApplicationObject
+Area.mui/MUIM_AskMinMax
+
+    NAME
+	MUIM_AskMinMax (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_AskMinMax,struct MUI_MinMax *MinMaxInfo);
+
+    FUNCTION
+	see developer documentation.
+Area.mui/MUIM_Cleanup
+
+    NAME
+	MUIM_Cleanup (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Cleanup);
+
+    FUNCTION
+	see developer documentation.
+Area.mui/MUIM_ContextMenuBuild
+
+    NAME
+	MUIM_ContextMenuBuild (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_ContextMenuBuild,LONG mx, LONG my);
+
+    FUNCTION
+	Allows dynamic creation of context menus.
+	When MUI is about to show a new context menu, it does not
+	simply use the MUIA_ContextMenu field of area class. Instead,
+	it sends a MUIM_ContextMenuBuild to the object in question and
+	uses the return value as the new menustrip object.
+
+	When MUIM_ContextMenuBuild reaches area class, it just return
+	the contents of MUIA_ContextMenu so you neednt care about this
+	method if you only have static, non-changing context menus.
+
+	However, if your context menus depend on some internal states
+	of your objects or on the mouse position within your objects,
+	you have to have a subclass which overrides
+	MUIM_ContextMenuBuild, creates a nice menustrip object and
+	returns it.
+
+    INPUTS
+	mx - current x position of mouse
+	my - current y position of mouse
+
+	Since MUI does (unfortunately) not use relative coordinates 
+	at all, these two aren't relative either.
+
+    RESULT
+	You must return a pointer to a menustrip object or NULL if
+	you failed to create one.
+
+    NOTES
+	MUI will never dispose the object you return. You must be
+	take care of this yourself, e.g. by storing a pointer somewhere
+	in your instance data and killing it on the next invocation
+	of MUIM_ContextMenuBuild and on OM_DISPOSE.
+
+	Even when overriding MUIM_ContextMenuBuild, you *must* set
+	MUIA_ContextMenu of your object to something different from NULL.
+	MUI will find out that your object actually has a popup menu
+	by directly checking the contents of MUIA_ContextMenu in the
+	instance data of area class due to speed reasons.
+
+    SEE ALSO
+	MUIA_ContextMenu, MUIA_ContextMenuTrigger, MUIM_ContextMenuChoice,
+Area.mui/MUIM_ContextMenuChoice
+
+    NAME
+	MUIM_ContextMenuChoice (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_ContextMenuChoice,Object *item);
+
+    FUNCTION
+	Allows reacting on context menus in subclasses.
+
+	See MUIA_ContextMenu for details.
+
+    SEE ALSO
+	MUIA_ContextMenuTrigger, MUIM_ContextMenuChoice,
+	MUIM_ContextMenuBuild
+Area.mui/MUIM_CreateBubble
+
+    NAME
+	MUIM_CreateBubble (V18)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_CreateBubble,LONG x, LONG y, char *txt, ULONG flags);
+
+    FUNCTION
+	Together with MUIM_DeleteBubble, this method provides an
+	interface for MUIs bubble mechanism. Applications can use
+	bubbles for their own purpose, e.g. for indicating error
+	conditions on certain gadgets.
+
+	MUIM_CreateBubble creates a bubble at the specified
+	coordinates with the specified (textual) contents. It
+	returns a bubble "handle" that has to be passed to
+	MUIM_DeleteBubble when the bubble shall disappear.
+
+	There's no limitation on the number of bubbles, you can create
+	lots of them at a time if you wish. Also, these custom bubbles
+	are completely independant of MUI's bubble help system and won't
+	disappear automatically when the mouse is moved.
+
+	Note that bubbles will only show up when the object in question
+	is visible. Otherwise MUIM_CreateBubble returns NULL. You are
+	responsible for deleting the bubble *before* the object get's
+	invisible. Good place to remove a custom bubble is e.g. the
+	MUIM_Hide method of your object.
+
+    INPUTS
+	- x,y: window-relative coordinates of the bubble.
+
+	- txt: custom text for the bubble. If you pass NULL here, MUI
+	       will query the object with MUIM_CreateShortHelp method
+	       for a text (like the automatic help system does).
+
+	- flags: always set to 0 for now!
+
+    RESULT
+	This method returns a pointer to a (black box) bubble handle or
+	NULL on failure. You have to pass the bubble handle to 
+	MUIM_DeleteBubble if you want to delete the bubble later.
+
+    SEE ALSO
+	MUIM_DeleteBubble, MUIM_CreateShortHelp, MUIM_DeleteShortHelp
+Area.mui/MUIM_CreateShortHelp
+
+    NAME
+	MUIM_CreateShortHelp (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_CreateShortHelp,LONG mx, LONG my);
+
+    FUNCTION
+	yet undocumented, complain in the beta mailing list :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+Area.mui/MUIM_DeleteBubble
+
+    NAME
+	MUIM_DeleteBubble (V18)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DeleteBubble,APTR bubble);
+
+    FUNCTION
+	Together with MUIM_CreateBubble, this method provides an
+	interface for MUIs bubble mechanism. Applications can use
+	bubbles for their own purpose, e.g. for indicating error
+	conditions on certain gadgets.
+
+	MUIM_DeleteBubble deletes a bubble that was previously
+	created with MUIM_CreateBubble. Not that bubbles have to
+	be deleted before an object get's invisible!
+
+    INPUTS
+	- bubble: pointer to black box bubble handle as returned by
+	  MUIM_CreateBubble. 
+
+    RESULT
+	The bubble will be removed. The return value is undefined.
+
+    SEE ALSO
+	MUIM_CreateBubble, MUIM_CreateShortHelp, MUIM_DeleteShortHelp
+Area.mui/MUIM_DeleteShortHelp
+
+    NAME
+	MUIM_DeleteShortHelp (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DeleteShortHelp,STRPTR help);
+
+    FUNCTION
+	yet undocumented, complain in the beta mailing list :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+Area.mui/MUIM_DragBegin
+
+    NAME
+	MUIM_DragBegin (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DragBegin,Object *obj);
+
+    FUNCTION
+	Inform an object that it has become the active destination
+	of a drag&drop action. An object will only receive this if
+	it has responded positively to a previous MUIM_DragQuery.
+
+    SEE ALSO
+	MUIM_DragQuery, MUIM_DragFinish, MUIM_DragReport, MUIM_DragDrop
+Area.mui/MUIM_DragDrop
+
+    NAME
+	MUIM_DragDrop (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DragDrop,Object *obj, LONG x, LONG y);
+
+    FUNCTION
+        Indicate that the user dropped something on the current
+	object.
+
+    SEE ALSO
+	MUIM_DragBegin, MUIM_DragFinish, MUIM_DragReport, MUIM_DragQuery
+Area.mui/MUIM_DragFinish
+
+    NAME
+	MUIM_DragFinish (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DragFinish,Object *obj);
+
+    FUNCTION
+	Indicate that an object is no longer the active destination
+	object of a drag&drop action.
+
+    SEE ALSO
+	MUIM_DragQuery, MUIM_DragBegin, MUIM_DragReport, MUIM_DragDrop
+Area.mui/MUIM_DragQuery
+
+    NAME
+	MUIM_DragQuery (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DragQuery,Object *obj);
+
+    FUNCTION
+	MUI offers complete drag & drop capabilities for every object.
+	If enabled, the user is able to grab an object, drag it around
+	and drop it on another object. Currently, D&D is limited to
+	single applications, i.e. you cannot take an object from one
+	program and drop it into another one. D&D between different
+	windows of the same application, however, is fine.
+
+	MUI controls the D&D actions with a set of five methods:
+	MUIM_DragQuery, MUIM_DragBegin, MUIM_DragReport, MUIM_DragDrop
+	and MUIM_DragFinish. Basically things work this way:
+
+	Lets assume the user has taken an object (called the source
+	object) and is now starting to drag it around. During
+	dragging, MUI will find out which object is currently under
+	the mouse pointer and if it found one, send it the
+	MUIM_DragQuery method. An object that receives MUIM_DragQuery
+	can now determine it it wishes to accept drops from the source
+	object or not. If it responds positively, the object will
+	become the current destination object.
+
+	Due to the nature of MUIs layout system, a specific x,y pair
+	of coordinates cannot be bound to a specific object
+	immediately. Instead, the coordinates belong to a whole tree
+	of objects, for example some cycle gadget, its parent group,
+	the parent group of the parent group and so on until the tree
+	reaches the windows root object. To allow complete groups of
+	objects to participate in D&D business, the MUIM_DragQuery is
+	first sent to the deepest nested object (the cycle gadget in
+	the above example). If this one doesn't respond, MUI sends a
+	MUIM_DragQuery to its parent group and so on until it either
+	finds some object who accepts the drop or reaches the end of
+	the tree. If there is an accepting object, it will become the
+	current destination, if there isnt, no destination will be
+	set.
+
+	Objects becoming active destinations of a drag process learn
+	about their current state by receiving a MUIM_DragBegin
+	method. This method, when reaching area class, e.g. draws a
+	special frame around the object to indicate the current state
+	to the user.
+
+	The opposite of MUIM_DragBegin is MUIM_DragFinish will be sent
+	as soon as the object stops being destination of the drag
+	process, i.e. because the user aborted the drag or moved out
+	of the bounding box. MUIM_DragFinish will also be sent after a
+	successful drop, you cant count on receiving a MUIM_DragFinish
+	if you received a MUIM_DragBegin before. Furthermore, only one
+	object will be between MUIM_DragBegin and MUIM_DragFinish at
+	any time.
+
+	Active destination objects (between MUIM_DragBegin and
+	MUIM_DragFinish) receive MUIM_DragReport methods as long as
+	the user moves the mouse within the object. MUIM_DragReport
+	contains the mouse coordinates, so the object can update its
+	display according to the position of the source object. A
+	listview would e.g. indicate the insert position to give the
+	user an idea where the source would be inserted in case of a
+	drop.
+
+	All the method mentioned above are just interim messages that
+	help visualizing the drag process. When the user actually
+	decides to drop its source object, the current destination
+	object (if any) receives a MUIM_DragDrop method and can
+	perfrom whatever operatoin it thinks is suited to handle a D&D
+	action from the source object.
+
+	You probably have noticed that D&D is controlled by methods.
+	This means that you need to write subclasses if you intend to
+	use it. However, you neednt implement all the above mentioned
+	things to reach your goal. In fact, MUIM_DragQuery and
+	MUIM_DragDrop are enough for almost all D&D invocations.
+	Here's a little example of how MUI implements D&D between
+	objects of Pendisplay class. These few lines allow the user to
+	take any Pendisplay (or subclasses from Pendisplay like e.g.
+	Poppen class) and drop it onto another one:
+
+	ULONG mDragQuery(cl,obj,struct MUIP_DragQuery *msg)
+	{
+		char *spec;
+
+		/* refuse to drop on ourselves */
+		if (msg->obj==obj)
+			return(MUIV_DragQuery_Refuse);
+
+		/* if the source object offers the attribute */
+		/* we want, show that we would accept it. */
+		if (get(msg->obj,MUIA_Pendisplay_Spec,&spec))
+			return(MUIV_DragQuery_Accept);
+
+		/* refuse otherwise */
+		return(MUIV_DragQuery_Refuse);
+	}
+
+
+	ULONG mDragDrop(cl,obj,struct MUIP_DragDrop *msg)
+	{
+		char *spec;
+
+		/* copy the attribute from the source object */
+		get(msg->obj,MUIA_Pendisplay_Spec,&spec);
+		set(obj,MUIA_Pendisplay_Spec,spec);
+
+		return(0);
+	}
+
+    SEE ALSO
+	MUIM_DragBegin, MUIM_DragFinish, MUIM_DragReport, MUIM_DragDrop
+Area.mui/MUIM_DragReport
+
+    NAME
+	MUIM_DragReport (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DragReport,Object *obj, LONG x, LONG y, LONG update);
+
+    FUNCTION
+	Interim messages from MOUSEMOVEs and INTUITICKs sent as long
+	as an object is active destination of a drag&drop action.
+
+    SEE ALSO
+	MUIM_DragQuery, MUIM_DragFinish, MUIM_DragBegin, MUIM_DragDrop
+Area.mui/MUIM_Draw
+
+    NAME
+	MUIM_Draw (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Draw,ULONG flags);
+
+    FUNCTION
+	see developer documentation.
+Area.mui/MUIM_DrawBackground
+
+    NAME
+	MUIM_DrawBackground (V11)
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_DrawBackground,LONG left, LONG top, LONG width, LONG height, LONG xoffset, LONG yoffset, LONG flags);
+
+    FUNCTION
+	If you decided to use MUIA_FillArea, FALSE for your custom
+	class, i.e. if you care about background rendering yourself,
+	you can use this method to draw a specific part of your
+	objects background with the defined MUIA_Background.
+
+    INPUTS
+	- left, top, right, bottom: rectangle to draw, be sure to
+	  add your objects _mleft and _mtop coordinates.
+
+	- xoffset, yoffset: offset to use when background is a pattern.
+
+	- flags: always set to 0 for now!
+
+    RESULT
+	The result value of this method is currently undefined.
+
+    SEE ALSO
+	MUIA_Background
+Area.mui/MUIM_HandleEvent
+
+    NAME
+	MUIM_HandleEvent (V16)
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_HandleEvent,struct IntuiMessage *imsg, LONG muikey);
+
+    FUNCTION
+	This method is invoked whenever one of an event handlers
+	trigger signals arrives. It's described in area class
+	context but does not really belong here.
+
+    INPUTS
+	imsg - pointer to a struct IntuiMessage that caused the event.
+	       note well that this may be NULL in which case you
+	       simply not parse imsg.
+
+	muikey - if the imsg translates to a predefined keystroke,
+	         this parameter holds the corresponding MUIKEY_XXXX
+	         value. Otherwise it will be MUIKEY_NONE.
+
+    NOTES
+	You must not rely on imsg being non-NULL, regardless whether
+	muikey is set or unset.
+
+    RESULT
+	The result is a bitfield. Currently, only one bit is defined:
+
+	- MUI_EventHandlerRC_Eat
+	  Set this if this event was for you and you want MUI to stop
+	  calling other event handlers in the chain.
+
+	All other bits are reserved for future use and must be zero!
+
+    SEE ALSO
+	window.mui/MUIM_Window_AddEventHandler
+Area.mui/MUIM_HandleInput
+
+    NAME
+	MUIM_HandleInput (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_HandleInput,struct IntuiMessage *imsg, LONG muikey);
+
+    FUNCTION
+	see developer documentation.
+Area.mui/MUIM_Hide
+
+    NAME
+	MUIM_Hide (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Hide);
+
+    FUNCTION
+	see developer documentation.
+Area.mui/MUIM_Setup
+
+    NAME
+	MUIM_Setup (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Setup,struct MUI_RenderInfo *RenderInfo);
+
+    FUNCTION
+	see developer documentation.
+Area.mui/MUIM_Show
+
+    NAME
+	MUIM_Show (V4 )
+	[For use within custom classes only]
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Show);
+
+    FUNCTION
+	see developer documentation.
+

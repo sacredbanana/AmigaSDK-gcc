@@ -1,0 +1,455 @@
+@database "rexxsupport"
+@master "AMIDEV:NDK/Autodocs/rexxsupport.doc"
+
+@Node Main "rexxsupport.doc"
+@toc "Autodocs/AG/INDEX/Main"
+    @{" ALLOCMEM " Link "ALLOCMEM"}
+    @{" BADDR " Link "BADDR"}
+    @{" CLOSEPORT " Link "CLOSEPORT"}
+    @{" DELAY " Link "DELAY"}
+    @{" DELETE " Link "DELETE"}
+    @{" FORBID " Link "FORBID"}
+    @{" FORWARD " Link "FORWARD"}
+    @{" FREEMEM " Link "FREEMEM"}
+    @{" GETARG " Link "GETARG"}
+    @{" GETPKT " Link "GETPKT"}
+    @{" MAKEDIR " Link "MAKEDIR"}
+    @{" NEXT " Link "NEXT"}
+    @{" NULL " Link "NULL"}
+    @{" OFFSET " Link "OFFSET"}
+    @{" OPENPORT " Link "OPENPORT"}
+    @{" PERMIT " Link "PERMIT"}
+    @{" RENAME " Link "RENAME"}
+    @{" REPLY " Link "REPLY"}
+    @{" SHOWDIR " Link "SHOWDIR"}
+    @{" SHOWLIST " Link "SHOWLIST"}
+    @{" STATEF " Link "STATEF"}
+    @{" TYPEPKT " Link "TYPEPKT"}
+    @{" WAITPKT " Link "WAITPKT"}
+@EndNode
+
+@Node "" "rexxsupport.library/"
+
+@{b}    NAME@{ub}
+	rexxsupport.library
+
+@{b}    This library provides several support and utility functions for@{ub}
+@{b}    ARexx. If you want to use functions that are included in this library,@{ub}
+@{b}    it needs to be added explicitly to ARexx to make it aware of its@{ub}
+@{b}    functions. The following AmigaDOS command will import the function@{ub}
+@{b}    definitions in here:@{ub}
+
+	rxlib rexxsupport.library 0 -30 0
+
+@{b}    Alternatively, the library can also be added within a Rexx script@{ub}
+@{b}    as follows:@{ub}
+
+	rv = ADDLIB('rexxmathlib.library',0,-30,0)
+
+	rv is a boolean value that indicates success.
+
+@EndNode
+
+@Node "ALLOCMEM" "rexxsupport.library/ALLOCMEM"
+
+@{b}    NAME@{ub}
+	ALLOCMEM - @{"Allocate" Link "exec/Allocate()"} system memory
+
+@{b}    SYNOPSIS@{ub}
+	addr = ALLOCMEM(size,[reqments])
+
+@{b}    FUNCTION@{ub}
+	Requests the indicated number of bytes from the system and returns
+	an address string as argument. The optional requirements argument
+	specifies memory requires as given in @{"<exec/memory.h>" Link "INCLUDE:exec/memory.h/Main" 0}. If not
+	given, public memory (requirements = 1) is requested.
+
+@EndNode
+
+@Node "BADDR" "rexxsupport.library/BADDR"
+
+@{b}    NAME@{ub}
+	BADDR - convert a BCPL pointer to a C address string
+
+@{b}    SYNOPSIS@{ub}
+	rv = BADDR(bptr)
+
+@{b}    FUNCTION@{ub}
+	Converts a BCPL style pointer encoded as address string to an
+	address string representing a C pointer.
+
+@EndNode
+
+@Node "CLOSEPORT" "rexxsupport.library/CLOSEPORT"
+
+@{b}    NAME@{ub}
+	CLOSEPORT - closes and disposes a public command port
+
+@{b}    SYNOPSIS@{ub}
+	rv = CLOSEPORT(name)
+
+@{b}    FUNCTION@{ub}
+	Closes and disposes a port whose name is given as argument. The
+	port must have been created by @{"OPENPORT" Link "OPENPORT"} before. Returns a boolean
+	success indicator.
+
+@EndNode
+
+@Node "DELAY" "rexxsupport.library/DELAY"
+
+@{b}    NAME@{ub}
+	DELAY - wait for the indicated number of ticks
+
+@{b}    SYNOPSIS@{ub}
+	rv = DELAY(ticks)
+
+@{b}    FUNCTION@{ub}
+	Waits the indicated number of ticks, i.e. 50th of a second, and
+	then returns to the caller. The return value has no particular
+	meaning and can be ignored.
+
+@EndNode
+
+@Node "DELETE" "rexxsupport.library/DELETE"
+
+@{b}    NAME@{ub}
+	DELETE - delete a file by file name
+
+@{b}    SYNOPSIS@{ub}
+	rv = DELETE(filename)
+
+@{b}    FUNCTION@{ub}
+	Deletes the file given by its file name, and returns a boolean
+	success code.
+
+@EndNode
+
+@Node "FORBID" "rexxsupport.library/FORBID"
+
+@{b}    NAME@{ub}
+	FORBID - temporarily disable task switching
+
+@{b}    SYNOPSIS@{ub}
+	rv = FORBID()
+
+@{b}    FUNCTION@{ub}
+	Disables task switching until the next call to FORBID() or until
+	ARexx gives up the CPU voluntarily.
+
+@EndNode
+
+@Node "FORWARD" "rexxsupport.library/FORWARD"
+
+@{b}    NAME@{ub}
+	FORWARD - forwards a message packet to a named port
+
+@{b}    SYNOPSIS@{ub}
+       rv = FORWARD(pkt,portname)
+
+@{b}    FUNCTION@{ub}
+	Forwards the ARexx command packet, given as address string, to
+	the port whose name is given as second argument. Returns 0 if
+	the port could not be found, or the address of the port if found
+	and forwarding worked.
+
+@EndNode
+
+@Node "FREEMEM" "rexxsupport.library/FREEMEM"
+
+@{b}    NAME@{ub}
+	FREEMEM - release memory to the system
+
+@{b}    SYNOPSIS@{ub}
+	rv = FREEMEM(address,size)
+
+@{b}    FUNCTION@{ub}
+	Returns the address block given as first argument, as address
+	string, whose size is given as second argument, back to the system.
+	Returns a boolean success indicator.
+
+@{b}    NOTES@{ub}
+	The function always succeeds, but if the address block or its
+	size is different from what has been allocated before, the
+	system may crash.
+
+@EndNode
+
+@Node "GETARG" "rexxsupport.library/GETARG"
+
+@{b}    NAME@{ub}
+	GETARG - retrieve a given argument from an ARexx command packet
+
+@{b}    SYNOPSIS@{ub}
+	rv = GETARG(packet,[argument])
+
+@{b}    FUNCTION@{ub}
+	Retrieves from the given ARexx command packet the indicated argument
+	number and returns it as a string.
+
+@EndNode
+
+@Node "GETPKT" "rexxsupport.library/GETPKT"
+
+@{b}    NAME@{ub}
+	GETPKT - returns the next ARexx command packet queued on a port
+
+@{b}    SYNOPSIS@{ub}
+	rv = GETPKT(port)
+
+@{b}    FUNCTION@{ub}
+	Retrieves an address string representing the next ARexx command
+	packet queued on a port, also given as address string. If no
+	command packet is queued on the port, returns '0000 0000'x, i.e.
+	the address string representing the @{"NULL" Link "NULL"} pointer.
+
+@EndNode
+
+@Node "MAKEDIR" "rexxsupport.library/MAKEDIR"
+
+@{b}    NAME@{ub}
+	MAKEDIR - create a new directory
+
+@{b}    SYNOPSIS@{ub}
+	rv = MAKEDIR(dirname)
+
+@{b}    FUNCTION@{ub}
+	Creates the directory of the given name, and returns a boolean
+	success indicator.
+
+@EndNode
+
+@Node "NEXT" "rexxsupport.library/NEXT"
+
+@{b}    NAME@{ub}
+	NEXT - retrieve the next node of a linked list in memory
+
+@{b}    SYNOPSIS@{ub}
+	rv = NEXT(address,[offset])
+
+@{b}    FUNCTION@{ub}
+	Retrieves the 4-byte address string at "address" plus "offset".
+	It reads four bytes from memory, and returns the value at this
+	offset.
+
+@EndNode
+
+@Node "NULL" "rexxsupport.library/NULL"
+
+@{b}    NAME@{ub}
+	NULL - return an address string represting the NULL pointer
+
+@{b}    SYNOPSIS@{ub}
+	rv = NULL()
+
+@{b}    FUNCTION@{ub}
+	Retrieves the address string representing the NULL pointer, i.e.
+	'0000 0000'x.
+
+@EndNode
+
+@Node "OFFSET" "rexxsupport.library/OFFSET"
+
+@{b}    NAME@{ub}
+	OFFSET - adds an offset to a pointer given as address string
+
+@{b}    SYNOPSIS@{ub}
+	rv = OFFSET(address,displacement)
+
+@{b}    FUNCTION@{ub}
+	Takes a pointer given as address string and adds a displacement to
+	it, and returns it as address string.
+
+@EndNode
+
+@Node "OPENPORT" "rexxsupport.library/OPENPORT"
+
+@{b}    NAME@{ub}
+	OPENPORT - create a public message port of given name
+
+@{b}    SYNOPSIS@{ub}
+	rv = OPENPORT(name)
+
+@{b}    FUNCTION@{ub}
+	Creates a public message port for retrieving ARexx command packets
+	and returns its address as address string. Returns '0000 0000'x in
+	case of failure.
+
+@EndNode
+
+@Node "PERMIT" "rexxsupport.library/PERMIT"
+
+@{b}    NAME@{ub}
+	PERMIT - re-enable multitasking
+
+@{b}    SYNOPSIS@{ub}
+	rv = PERMIT()
+
+@{b}    FUNCTION@{ub}
+	Re-enables multitasking after calling PERMIT(). The return value
+	is irrelevant and can be ignored.
+
+@EndNode
+
+@Node "RENAME" "rexxsupport.library/RENAME"
+
+@{b}    NAME@{ub}
+	RENAME - Rename a file or directory
+
+@{b}    SYNOPSIS@{ub}
+	rv = RENAME(oldname,newname)
+
+@{b}    FUNCTION@{ub}
+	Renames a file or directory whose original name is given as first
+	argument to the name given as second argument. Returns a boolean
+	success indicator.
+
+@EndNode
+
+@Node "REPLY" "rexxsupport.library/REPLY"
+
+@{b}    NAME@{ub}
+	REPLY - reply a ARexx command packet with a return code to its issuer
+
+@{b}    SYNOPSIS@{ub}
+	rv = REPLY(packet,resultcode)
+
+@{b}    FUNCTION@{ub}
+	Replies the packet, represented as address string, with the given
+	result code to its issuer.
+
+@EndNode
+
+@Node "SHOWDIR" "rexxsupport.library/SHOWDIR"
+
+@{b}    NAME@{ub}
+	SHOWDIR - create list of directory contents
+
+@{b}    SYNOPSIS@{ub}
+	rv = SHOWDIR(dirname,'ALL'|'FILE'|'DIR',separator)
+
+@{b}    FUNCTION@{ub}
+	Creates a string that contains the file names of all files in
+	the directory given as first argument, and that match the type
+	given as second argument. File entries are separated by the
+	string given as third argument.
+
+@{b}    NOTES@{ub}
+	The type FILE also includes hard links to files,
+	the type DIR also includes hard links to directories,
+	but soft links are only included if the type is 'ALL'.
+
+@EndNode
+
+@Node "SHOWLIST" "rexxsupport.library/SHOWLIST"
+
+@{b}    NAME@{ub}
+	SHOWLIST - creates a string of system resources of indicated type
+
+@{b}    SYNOPSIS@{ub}
+	rv = SHOWLIST(type,[name],[separator],['A'])
+
+@{b}     FUNCTION@{ub}
+	Returns a list of system resources of the type given as first
+	argument, or checks for its availability or its address, if
+	the last argument is 'A' or 'Address'. The resource list is
+	returned as a single string where the names of the resources
+	are separated by the string given as third argument, or
+	spaces if the third argument is missing.
+
+	The first argument specifies the type as follows:
+	    'L' System libraries currently in RAM
+	    'D' System devices currently in RAM
+	    'M' Memory nodes registered
+	    'P' Public ports
+	    'R' Resources
+	    'S' Public semaphores
+	    'V'	Volumes registered in the dos.library
+	    'H' Handlers registered in the dos.library
+	    'A' Assigns registered in the dos.library
+	    'T' Tasks that are ready to run
+	    'W' Tasks waiting for a signal
+
+	If the 'name' argument is given, then the function checks for
+	the presence of the given system resource and returns a boolean
+	indicator. If the last argument is 'A' or 'Address', its address
+	is returned as address string, or '0000 0000'x if the resource
+	has not been found.
+	If the separator is given, then the resources are separated it.
+
+@EndNode
+
+@Node "STATEF" "rexxsupport.library/STATEF"
+
+@{b}    NAME@{ub}
+	STATEF - returns information on a file or directory
+
+@{b}    SYNOPSIS@{ub}
+	rv = STATEF(filespec)
+
+@{b}    FUNCTION@{ub}
+	Returns a string describing the type, size, protection bits and
+	creation date of an entry of a directory.
+
+	Each entry consists of the following tokens, separated by blank
+	spaces: <type> <size> <blocks> <flags> <days> <mins> <ticks> <cmt>
+	 type   - either DIR, FILE, DIRLINK, FILELINK, or SOFTLINK
+	 size   - in bytes, as a decimal string
+	 blocks - size in blocks of the file system
+	 flags  - protection flags, as string of HSPAWRED where
+	 	  each character indicates one protection bit if set,
+		  or a dash if the bit is reset.
+	 days   - days since 1.1.1970 of the last modification time
+	 mins   - minutes since the start of the day since last
+	 	  modification of the file or directory.
+	 ticks	- ticks from the last minute of the last modification
+	 	  of the file or directory.
+        cmt    - file comment, if any
+
+@EndNode
+
+@Node "TYPEPKT" "rexxsupport.library/TYPEPKT"
+
+@{b}    NAME@{ub}
+	TYPEPKT - returns a type of an Arexx command packet
+
+@{b}    SYNOPSIS@{ub}
+	rv = TYPEPKT(pkt,[mode])
+
+@{b}    FUNCTION@{ub}
+	Returns the type of an ARexx command packet whose address is given
+	as address string as first argument.
+	If the mode argument is omitted, then the return value is a number
+	that indicates the type in packed form, also available separately
+	through specifying various modes.
+
+	The mode can be one of the following:
+	    'A'	 -   Returns the number of arguments of the packet
+	    	     also as byte 0 of the packed result.
+	    'C'	 -   Returns TRUE if the packet was created as
+	    	     command rather than function. This information
+		     is also available as byte 3 of the packed result,
+		     which is '01'x for commands.
+	    'F'  -   Returns TRUE if the packet was created as
+	    	     function  call. This information is also available
+		     as byte 3 of the packed result, which is '02'x for
+		     function calls.
+	 Byte 2 are modifier flags that are handled automatically by the
+	 @{"REPLY" Link "REPLY"} function.
+
+@EndNode
+
+@Node "WAITPKT" "rexxsupport.library/WAITPKT"
+
+@{b}    NAME@{ub}
+	WAITPKT - wait for a ARexx command packet on a named port
+
+@{b}    SYNOPSIS@{ub}
+	rv = WAITPKT(portname)
+
+@{b}    FUNCTION@{ub}
+	Waits on the port whose name is given as argument for an
+	ARexx command packet to arrive. Returns non-zero if a packet is
+	available, but does not remove it. Use @{"GETPKT" Link "GETPKT"} for this.
+
+@EndNode
+

@@ -1,0 +1,121 @@
+==id $Id: poseidon_lib.sfd 1.2 2002/08/02 12:44:47 hodges Exp $
+==base _PsdBase
+==libname poseidon.library
+==bias 30
+==public
+==include <exec/types.h>
+==include <exec/lists.h>
+==include <exec/interrupts.h>
+==include <exec/semaphores.h>
+==include <exec/devices.h>
+==include <exec/io.h>
+==include <exec/ports.h>
+==include <utility/utility.h>
+==include <devices/timer.h>
+==include <libraries/poseidon.h>
+APTR psdAllocVec(ULONG size) (d0)
+VOID psdFreeVec(APTR memptr) (a1)
+VOID psdLockWritePBase() ()
+VOID psdLockReadPBase() ()
+VOID psdUnlockPBase() ()
+STRPTR psdCopyStr(STRPTR name) (a0)
+VOID psdDelayMS(ULONG milli) (d0)
+APTR psdAddHardware(STRPTR name, ULONG unit) (a0,d0)
+VOID psdRemHardware(APTR phw) (a0)
+APTR psdEnumerateHardware(APTR phw) (a0)
+APTR psdAllocDevice(APTR phw) (a0)
+VOID psdFreeDevice(APTR pd) (a0)
+VOID psdLockReadDevice(APTR pd) (a0)
+VOID psdLockWriteDevice(APTR pd) (a0)
+VOID psdUnlockDevice(APTR pd) (a0)
+APTR psdEnumerateDevice(APTR pp) (a1)
+APTR psdGetNextDevice(APTR pd) (a0)
+LONG psdGetAttrsA(ULONG type, APTR psdstruct, struct TagItem *taglist) (d0,a0,a1)
+==varargs
+LONG psdGetAttrs(ULONG type, APTR psdstruct, ULONG tag1, ...) (d0,a0,a1)
+LONG psdSetAttrsA(ULONG type, APTR psdstruct, struct TagItem *taglist) (d0,a0,a1)
+==varargs
+LONG psdSetAttrs(ULONG type, APTR psdstruct, ULONG tag1, ...) (d0,a0,a1)
+APTR psdAllocPipe(APTR pd, struct MsgPort *mp, APTR ep) (a0,a1,a2)
+APTR psdFreePipe(APTR pp) (a1)
+VOID psdPipeSetup(APTR pp, UWORD rt, UWORD rq, UWORD val, UWORD idx) (a1,d0,d1,d2,d3)
+LONG psdDoPipe(APTR pp, APTR data, ULONG len) (a1,a0,d0)
+VOID psdSendPipe(APTR pp, APTR data, ULONG len) (a1,a0,d0)
+VOID psdAbortPipe(APTR pp) (a1)
+LONG psdWaitPipe(APTR pp) (a1)
+ULONG psdGetPipeActual(APTR pp) (a1)
+LONG psdGetPipeError(APTR pp) (a1)
+STRPTR psdGetStringDescriptor(APTR pp, UWORD idx) (a1,d0)
+BOOL psdSetDeviceConfig(APTR pp, UWORD cfgnum) (a1,d0)
+APTR psdAddClass(STRPTR name, ULONG version) (a1,d0)
+VOID psdRemClass(APTR puc) (a1)
+VOID psdClassScan() ()
+STRPTR psdNumToStr(UWORD type, LONG idx, STRPTR defstr) (d0,d1,a0)
+struct Task * psdSpawnSubTask(STRPTR name, APTR initpc, APTR userdata) (a0,a1,a2)
+APTR psdAddErrorMsgA(UWORD level, STRPTR origin, STRPTR fmtstr, APTR fmtdata) (d0,a0,a1,a2)
+==varargs
+APTR psdAddErrorMsg(UWORD level, STRPTR origin, STRPTR fmtstr, ...) (d0,a0,a1,a2)
+VOID psdRemErrorMsg(APTR pem) (a0)
+VOID psdSafeRawDoFmtA(STRPTR buf, ULONG len, STRPTR fmtstr, APTR fmtdata) (a0,d0,a1,a2)
+==varargs
+VOID psdSafeRawDoFmt(STRPTR buf, ULONG len, STRPTR fmtstr, ...) (a0,d0,a1,a2)
+BOOL psdSetAltInterface(APTR pp, APTR pif) (a1,a0)
+APTR psdFindDeviceA(APTR pd, struct TagItem *taglist) (a0,a1)
+==varargs
+APTR psdFindDevice(APTR pd, ...) (a0,a1)
+APTR psdClaimAppBindingA(struct TagItem *taglist) (a1)
+==varargs
+APTR psdClaimAppBinding(ULONG tag1, ...) (a1)
+APTR psdReleaseAppBinding(APTR pab) (a0)
+APTR psdAddEventHandler(struct MsgPort *mp, ULONG msgmask) (a1,d0)
+VOID psdRemEventHandler(APTR peh) (a0)
+VOID psdSendEvent(ULONG ehmt, APTR param1, APTR param2) (d0,a0,a1)
+VOID psdReleaseDevBinding(APTR pd) (a0)
+VOID psdReleaseIfBinding(APTR pif) (a0)
+
+BOOL psdReadCfg(APTR pic, APTR formdata) (a0,a1)
+APTR psdWriteCfg(APTR pic) (a0)
+APTR psdFindCfgForm(APTR pic, ULONG formid) (a0,d0)
+APTR psdNextCfgForm(APTR pic) (a0)
+BOOL psdRemCfgForm(APTR pic) (a0)
+
+APTR psdAddCfgEntry(APTR pic, APTR formdata) (a0,a1)
+BOOL psdRemCfgChunk(APTR pic, ULONG chnkid) (a0,d0)
+APTR psdGetCfgChunk(APTR pic, ULONG chnkid) (a0,d0)
+VOID psdParseCfg() ()
+VOID psdUnbindAll() ()
+
+BOOL psdSetClsCfg(STRPTR owner, APTR form) (a0,a1)
+APTR psdGetClsCfg(STRPTR owner) (a0)
+BOOL psdSetUsbDevCfg(STRPTR owner, STRPTR devid, STRPTR ifid, APTR form) (a0,a2,a3,a1)
+APTR psdGetUsbDevCfg(STRPTR owner, STRPTR devid, STRPTR ifid) (a0,a2,a3)
+
+APTR psdFindInterfaceA(APTR pd, APTR pif, struct TagItem *taglist) (a0,a2,a1)
+==varargs
+APTR psdFindInterface(APTR pd, APTR pif, ...) (a0,a2,a1)
+APTR psdFindEndpointA(APTR pif, APTR pep, struct TagItem *taglist) (a0,a2,a1)
+==varargs
+APTR psdFindEndpoint(APTR pif, APTR pep, ...) (a0,a2,a1)
+
+STRPTR psdCopyStrFmtA(STRPTR fmtstr, APTR fmtdata) (a0,a1)
+==varargs
+STRPTR psdCopyStrFmt(STRPTR fmtstr, ...) (a0,a1)
+
+BOOL psdSetForcedBinding(STRPTR owner, STRPTR devid, STRPTR ifid) (a2,a0,a1)
+STRPTR psdGetForcedBinding(STRPTR devid, STRPTR ifid) (a0,a1)
+
+APTR psdCheckPipe(APTR pp) (a1)
+
+APTR psdOpenStreamA(APTR ep, struct TagItem *taglist) (a0,a1)
+==varargs
+APTR psdOpenStream(APTR ep, ...) (a0,a1)
+VOID psdCloseStream(APTR pps) (a1)
+LONG psdStreamRead(APTR pps, APTR buffer, LONG length) (a1, a0, d0)
+LONG psdStreamWrite(APTR pps, APTR buffer, LONG length) (a1, a0, d0)
+LONG psdStreamFlush(APTR pps) (a1)
+LONG psdGetStreamError(APTR pps) (a1)
+VOID psdCalculatePower(APTR phw) (a0)
+
+BOOL psdLoadCfgFromDisk(STRPTR filename) (a1)
+BOOL psdSaveCfgToDisk(STRPTR filename, BOOL mode) (a1, d0)
+==end
