@@ -1,0 +1,1262 @@
+TABLE OF CONTENTS
+
+menuclass/--datasheet--
+menuclass/MM_CLEANUP
+menuclass/MM_DELETEMENU
+menuclass/MM_FINDID
+menuclass/MM_GETSTATE
+menuclass/MM_HANDLEHELP
+menuclass/MM_HANDLEPICK
+menuclass/MM_NEWMENU
+menuclass/MM_NEXTCHILD
+menuclass/MM_NEXTSELECT
+menuclass/MM_SCAN
+menuclass/MM_SETSTATE
+menuclass/MM_SETUP
+menuclass/OM_ADDMEMBER
+menuclass/OM_DISPOSE
+menuclass/OM_REMMEMBER
+menuclass/OM_SET
+
+
+menuclass/--datasheet--                                   menuclass/--datasheet--
+
+    NAME
+	menuclass -- base class for menus
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This is a base class for Intuition compatible menu objects.
+
+	It provides an object-oriented API for building and handling menus
+	in applications, allowing to define, read and change properties of
+	menus and menu items through BOOPSI methods and attributes.
+
+	It supports an unlimited number of sub-menu levels and any amount
+	of items in menus and sub-menus.
+
+	For nearly all operations, it transparently synchronizes itself
+	with Intuition and performs automatic menu relayout when needed.
+
+    METHODS
+	OM_NEW -- Create the menuclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroy the menu and then pass to superclass.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	OM_SET -- Set menuclass object attributes.
+
+	OM_ADDMEMBER -- Add a menu object to the children list.
+
+	OM_REMMEMBER -- Remove a menu object from the children list.
+
+	MM_FINDID -- Return address of menu object in tree with given ID.
+
+	MM_NEXTSELECT -- Get next ID in menu item selection chain.
+
+	MM_SCAN -- Do a recursive scan of menu tree with custom hook.
+
+	MM_NEXTCHILD -- Get address of next child of a menu object.
+
+	MM_SETSTATE -- Change checked/disabled state of item with given ID.
+
+	MM_GETSTATE -- Read checked/disabled state of item with given ID.
+
+	MM_HANDLEPICK -- Browse through menu selections, invoking pick hooks.
+
+	MM_HANDLEHELP -- Return menu help ID or invoke help hook if non-NULL.
+
+	MM_NEWMENU -- Build a whole menu (sub-)tree from a tag list.
+
+	MM_DELETEMENU -- Free menu (sub-)tree built by MM_NEWMENU.
+
+	MM_SETUP -- Prepare a menu (sub-)tree for display; normally not needed.
+
+	MM_CLEANUP -- Release all resources allocated during menu setup.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	MA_Type (uint32)
+	    Type of a menuclass object. The possible types are T_ROOT (a menu
+	    tree root, also known as a menu strip), T_MENU (a menu), or T_ITEM
+	    (a menu item or sub-item).
+
+	    Defaults to T_ROOT.
+
+	    Applicability is (OM_NEW)
+
+	MA_Label (STRPTR)
+	    Label of the object, which can be either a menu title or a menu
+	    (sub-)item text, depending on the object's type.
+	    If instead of a string you pass an integer value lying in the range
+	    defined by MA_MinStringID and MA_MaxStringID, that will go through
+	    the hook specified by MA_StringHook (if any) for conversion into a
+	    localized string.
+	    You can embed a keyboard shortcut for a menu item directly in its
+	    label, by prepending it to the actual label string and separating
+	    it with a '|' (e.g. "S|Save").
+	    The shortcut may be a command string of more than one character
+	    (such as "Ctrl z"). In this case, please note that Intuition will
+	    display the string at the right side of the item label but won't
+	    process the corresponding key combination; that has to be handled
+	    separately by the application.
+	    If the shortcut is a single character and MA_EmbeddedKey is TRUE,
+	    you can also use a NUL ('\0') as a separator instead of '|'. This
+	    may prove convenient when using an existing catalog where menu item
+	    labels with shortcuts are defined this way (e.g. "S\0Save").
+	    A special value for an item's label string is ML_SEPARATOR, which
+	    tells menuclass the object is just a separator bar (equivalent to
+	    passing MA_Separator, TRUE).
+
+	    Defaults to NULL (i.e. a blank label).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Level (int32)
+	    How deep the object is in the menu tree. An object's level also
+	    reflects its type, i.e. whether it is the menu root, a menu, or
+	    a menu item. The root's level is -1, a menu has a level of zero,
+	    while any level greater than zero identifies an item. The deeper
+	    an item lies in the menu tree, the higher its level is: items of a
+	    menu have a level of 1, sub-items of these have a level of 2, and
+	    so on.
+	    An appropriate initial level is implicitly set at OM_NEW time when
+	    the object's type is specified via MA_Type; a type of T_ROOT sets
+	    the level to -1, T_MENU sets it to zero, and T_ITEM sets it to 1.
+	    (A menu item's initial level of 1 can then change when the item is
+	    inserted into a menu tree, since menuclass assigns a level to each
+	    object automatically according to its depth in the tree.)
+	    You should never set this attribute programmatically. Applications
+	    are expected to treat MA_Level as read-only.
+
+	    Applicability is (OM_GET)
+
+	MA_Separator (BOOL)
+	    If TRUE, declares the object as a separator bar between two items.
+	    For a separator, any other attribute except MA_Hidden is ignored
+	    and has no meaning.
+	    Only menu item objects (T_ITEM) can be separators.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_ID (uint32)
+	    Menu item ID number assigned by the application. This is an unique
+	    identifier allowing to find out which item was selected when a menu
+	    event occurs. You can assign an ID also to menu titles, not just to
+	    items; this is because the menu help feature offers the possibility
+	    of selecting menu titles in addition to actual items.
+	    For normal menu pick events, you can retrieve all selected item IDs
+	    in sequence by invoking the MM_NEXTSELECT method in a loop on the
+	    menu strip object until it returns NO_MENU_ID (an invalid ID value,
+	    meaning "no more selections"). If the user did not perform multiple
+	    selection, there will be only one ID to be retrieved. In case menu
+	    operations were aborted, or terminated without selecting anything,
+	    MM_NEXTSELECT will return NO_MENU_ID on the first invocation.
+	    For menu help events, your application can find out which menu item
+	    or title the user asked for help about by simply querying the menu
+	    strip object's MA_MenuHelpID attribute (menu help doesn't support
+	    multiple selection).
+	    Note that by returning an absolute ID associated to the picked item
+	    (arbitrarily defined by the application) instead of a "menu number"
+	    encoding the position of the item within the menu tree, selections
+	    of a menuclass item always yield the same result even if the item's
+	    position is changed. This way you don't need to modify your event
+	    handling code when you reorganize the order of menu items.
+	    The ID number may be any value, except zero. This invalid value is
+	    referred to as NO_MENU_ID and has about the same meaning MENUNULL
+	    does for traditional menus. MA_ID defaults to NO_MENU_ID, and must
+	    therefore be set to a valid value for any item or menu title that's
+	    meant to be selectable by the user, or else it will never generate
+	    any meaningful menu pick (or help) events.
+
+	    Defaults to NO_MENU_ID (invalid ID).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Key (STRPTR)
+	    Single-character keyboard shortcut or multicharacter command string
+	    for the menu item object. This overrides any keyboard shortcut or
+	    command string that may be embedded in the item label.
+	    Note that when using a command string of more than one character,
+	    Intuition will display it at the right side of the item label but
+	    won't process the corresponding key combination; that has to be
+	    handled by the application.
+
+	    Defaults to NULL (no keyboard shortcut).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Image (struct Image *)
+	    An Intuition image, either traditional or BOOPSI, to be displayed at
+	    the left side of (or in place of) the menu item label.
+	    If BOOPSI, the image will be automatically disposed of when the menu
+	    item object is; to avoid that, set MA_FreeImage to FALSE.
+
+	    Defaults to NULL (no image).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Disabled (BOOL)
+	    If TRUE, the menu title or item will appear in a disabled look and
+	    won't be selectable. Disabling a menu title automatically makes all
+	    of its menu items disabled as well, and disabling an item does the
+	    same for all of its sub-items.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Toggle (BOOL)
+	    If TRUE, the item represents an option which can be switched on or
+	    off. The user will be able to toggle the state of the item between
+	    checked (on) and unchecked (off), and the item will have a special
+	    checkmark symbol at its left side indicating its state. The actual
+	    state of the item can be read at any time via the MA_Selected
+	    attribute or with the MM_GETSTATE method.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_MX (uint32)
+	    If set to non-zero, the item represents an option which is mutually
+	    exclusive with certain other options, that are thus switched off
+	    when this one gets switched on. The attribute's value is a bit mask
+	    indicating what other items in the same (sub-)menu panel must be
+	    excluded (unselected) when the item is selected. Bit 0 represents
+	    the first item, bit 1 the second one, and so on. A typical value
+	    for MA_MX is ~(1 << N), with N being the bit number of the item
+	    itself: that means "exclude all items except this one". A mutual
+	    exclude item will have a special symbol (usually resembling a radio
+	    button) at its left side indicating its state. The actual state of
+	    the item can be read at any time via the MA_Selected attribute or
+	    with the MM_GETSTATE method.
+
+	    Defaults to zero, i.e. no mutual exclusion at all.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Selected (BOOL)
+	    The state of a toggle or mutual exclude item; if TRUE, the item is
+	    checked (on), otherwise it is unchecked (off). If the object is not
+	    a toggle or MX item, this attribute has no meaning.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_UserData (uint32)
+	    Application-specific user data which can be associated to a menu or
+	    menu item object and read back at any time.
+
+	    Defaults to zero.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Parent (Object *)
+	    The parent of an object in the menu tree; this will be the menu
+	    root for a menu title, a menu title for a menu item, or an item
+	    for a sub-item. The attribute is automatically set when a child
+	    object is added to its parent, and reset to NULL upon the child's
+	    removal.
+
+	    Applicability is (OM_GET)
+
+	MA_EvenSize (BOOL)
+	    If TRUE, all children (items or sub-items) of the object will have
+	    the same height, that is, the height of the tallest item.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Hidden (BOOL)
+	    If TRUE, this object will not appear at menu display time. If this
+	    is a menu object, its title will not be shown in the menu strip;
+	    if this is a (sub-)item object, its label will not be shown in the
+	    (sub-)menu panel of its parent object.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_MenuHelpID (uint32)
+	    The ID number of the menu item or menu title for which the user did
+	    request help during the last menu session.
+	    To obtain this you must invoke OM_GET on the menu root object; do
+	    not attempt to read it from any other member of the menu tree. Only
+	    query this attribute upon an actual menu help event. Be prepared to
+	    handle a NO_MENU_ID value; it means the user pressed the Help key
+	    while the mouse pointer was not positioned over any menu title or
+	    item.
+
+	    Applicability is (OM_GET)
+
+	MA_MenuPosX (int32)
+	    Left edge of the main panel of a context menu. Ignored if the menu
+	    tree is not used as a context menu. The value of this attribute is
+	    expressed in screen pixel coordinates. If you pass the special
+	    constant CMENU_CENTER_MOUSE (defined in intuition/menuclass.h>),
+	    the panel will be horizontally centered relative to the mouse
+	    pointer. By ORing either CMENU_RIGHT or CMENU_CENTER to the desired
+	    coordinate, it will be interpreted as the right edge or the center
+	    of the menu panel, rather than the left edge.
+	    If you pass any negative value, the default from user preferences
+	    will be used.
+	    It's recommended not to use this attribute without a good reason;
+	    user preferences should be honored whenever possible.
+
+	    Defaults to -1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_MenuPosY (int32)
+	    Top edge of the main panel of a context menu. Ignored if the menu
+	    tree is not used as a context menu. The value of this attribute is
+	    expressed in screen pixel coordinates. If you pass the special
+	    constant CMENU_CENTER_MOUSE (defined in intuition/menuclass.h>),
+	    the panel will be vertically centered relative to the mouse
+	    pointer. By ORing either CMENU_BOTTOM or CMENU_CENTER to the
+	    desired coordinate, it will be interpreted as the bottom edge or
+	    the center of the menu panel, rather than the top edge.
+	    If you pass any negative value, the default from user preferences
+	    will be used.
+	    It's recommended not to use this attribute without a good reason;
+	    user preferences should be honored whenever possible.
+
+	    Defaults to -1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_AddChild (Object *)
+	    An object which is to become a child of the current object. The
+	    child object will inherit a number of attributes from its parent,
+	    except those that are explicitly set for the child.
+	    Adding a child via this attribute is equivalent to doing so with
+	    the OM_ADDMEMBER method, but more convenient when building a whole
+	    tree of menuclass objects through a series of nested NewObject()
+	    calls.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	MA_RemoveChild (Object *)
+	    An object which is to be removed from the list of children of the
+	    current object. Removing a child object from its parent resets to
+	    default values any attributes inherited from it, except those of
+	    them that were explicitly set in the meantime.
+	    Removing a child via this attribute is equivalent to doing so with
+	    the OM_REMMEMBER method.
+
+	    Applicability is (OM_SET)
+
+	MA_StringHook (struct Hook *)
+	    A hook used for dynamic localization of menu strings.
+	    Whenever the value of MA_Label or MA_Key lies in the range defined
+	    by MA_MinStringID and MA_MaxStringID, it is considered a numeric
+	    string ID, and menuclass invokes your hook to convert that ID to an
+	    actual string.
+	    The object the hook receives is the menu or item the string ID to
+	    be converted belongs to.
+	    The message the hook receives is a MenuStringMessage structure (see
+	    below for definition) which carries the string ID. If you specify
+	    a value for MA_Catalog and/or MA_CharSet, that information is also
+	    passed back in the message.
+	    Note: if you don't use a string hook, MA_Label and MA_Key should be
+	    real strings and not numeric IDs, otherwise they'll get converted
+	    to "????", which isn't very meaningful.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_Catalog (struct Catalog *)
+	    A catalog used for dynamic localization of menu strings. Ignored
+	    if you don't also set MA_StringHook. If you do, the catalog is
+	    passed to the string hook along with the string ID and (possibly)
+	    a charset specifier.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_MinStringID (uint32)
+	    The lower bound of the integer range within which a value passed
+	    via MA_Label or MA_Key must lie to be considered a string ID (used
+	    for dynamic localization) rather than an actual string.
+	    If this attribute is set to a number greater than the upper bound
+	    of the string ID range (MA_MaxStringID), no menu string will ever
+	    be interpreted as a string ID. This is the default behavior.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to ~0UL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_MaxStringID (uint32)
+	    The upper bound of the integer range within which a value passed
+	    via MA_Label or MA_Key must lie to be considered a string ID (used
+	    for dynamic localization) rather than an actual string.
+	    If this attribute is set to a number smaller than the lower bound
+	    of the string ID range (MA_MinStringID), no menu string will ever
+	    be interpreted as a string ID. This is the default behavior.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_CharSet (uint32)
+	    The charset (character set) for the label and keyboard shortcut,
+	    if any, of the current menu or menu item object. The font used
+	    for such strings will be adjusted, if possible, to display them
+	    correctly in the specified charset.
+	    The charset value is also passed back to the string hook in use,
+	    if one was set via MA_StringHook.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to zero (system default charset).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_TextAttr (struct TextAttr *)
+	    The font for the item's label (and shortcut). If NULL, the default
+	    screen font will be used. Note that only menu items and sub-items
+	    can have a custom font; menu titles always use the screen font.
+	    To also request a particular charset, use MA_CharSet.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_EmbeddedKey (BOOL)
+	    If TRUE, menu item labels can have a single letter prepended to
+	    them, separated with a NUL ('\0') character, which will be used
+	    as the item's keyboard shortcut. If you need to have an item label
+	    of just one letter (with no shortcut embedded in the string), set
+	    this attribute to FALSE, otherwise the label will be treated as a
+	    shortcut followed by random bytes!
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_FreeImage (BOOL)
+	    If TRUE, a BOOPSI image passed via MA_Image is automatically
+	    disposed of when the object itself is. Set it to FALSE if you want
+	    to handle the image disposal yourself.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_PickHook (struct Hook *)
+	    A custom hook which is invoked during the processing of menu pick
+	    events to handle the selection of this menu item object.
+	    This is achieved by using the MM_HANDLEPICK method in your event
+	    handling loop in place of MM_NEXTSELECT.
+	    See the MM_HANDLEPICK method autodoc for more information.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to NULL (no pick hook).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_HelpHook (struct Hook *)
+	    A custom hook which is invoked during the processing of menu help
+	    events to handle a help request on this menu object.
+	    This is achieved by using the MM_HANDLEHELP method in your event
+	    handling loop instead of reading MA_MenuHelpID with GetAttr().
+	    See the MM_HANDLEHELP method autodoc for more information.
+
+	    This attribute is inherited by all the object's children, and all
+	    their descendants as well, except those for which it is explicitly
+	    set to a different value.
+
+	    Defaults to NULL (no help hook).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	MA_ErrorCode (int32 *)
+	    Pointer to a longword variable to store error codes in. Note that
+	    this variable will be initialized regardless of whether an error
+	    occurred or not. Thus, you can check for an error condition by
+	    comparing the variable contents against 0; 0 indicates success,
+	    all other values are either error codes as defined by dos.library
+	    or menuclass-specific error codes (see <intuition/menuclass.h> for
+	    definitions).
+
+	MA_ErrorTagItem (struct TagItem **)
+	    When an error occurs whilst processing the tag list passed to
+	    OM_NEW, OM_SET or MM_NEWMENU, you can have a pointer to the item
+	    that caused the error passed back via the MA_ErrorTagItem tag.
+	    Note that for tag lists allocated from the stack the address
+	    passed back to you may no longer be valid when control returns to
+	    your code.
+
+menuclass/MM_CLEANUP                                         menuclass/MM_CLEANUP
+
+    NAME
+	MM_CLEANUP -- Release all resources allocated during menu setup.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+	This method undoes any resource allocations done by the MM_SETUP
+	method.
+	Applications don't normally need to invoke this method themselves,
+	unless they absolutely have to free some memory. Never invoke the
+	MM_CLEANUP method on a menu tree which is attached to a window!
+
+    INPUTS
+	obj - menu object pointer
+	msg - Msg with MethodID = MM_CLEANUP
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is always zero.
+
+    SEE ALSO
+	MM_SETUP
+
+menuclass/MM_DELETEMENU                                   menuclass/MM_DELETEMENU
+
+    NAME
+	MM_DELETEMENU -- Free menu (sub-)tree built by MM_NEWMENU.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpDeleteMenu *msg);
+
+    FUNCTION
+	This method frees a whole menu (sub-)tree that was built via the
+	MM_NEWMENU method.
+
+	MM_DELETEMENU uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpDeleteMenu
+	{
+	    uint32 MethodID;
+	    uint32 mpdm_Reserved;
+	};
+
+	The mpdm_Reserved field should always be set to zero when invoked
+	from an application.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpDeleteMenu
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is always zero.
+
+    SEE ALSO
+	MM_NEWMENU
+
+menuclass/MM_FINDID                                           menuclass/MM_FINDID
+
+    NAME
+	MM_FINDID -- Return address of menu object in tree with given ID.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpFindID *msg);
+
+    FUNCTION
+	This method returns the address of the menuclass object having the
+	specified ID, if it exists in the menu tree, otherwise NULL.
+
+	MM_FINDID uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpFindID
+	{
+	    uint32 MethodID;
+	    uint32 mpfi_Reserved;
+	    uint32 mpfi_ID;
+	};
+
+	The mpfi_Reserved field should always be set to zero when invoked
+	from an application. The mpfi_ID field specifies the ID number of
+	the menuclass object that is being sought.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpFindID
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is the address of the object having the specified
+	ID, or NULL if no such object exists in the menu tree.
+
+    SEE ALSO
+
+
+menuclass/MM_GETSTATE                                       menuclass/MM_GETSTATE
+
+    NAME
+	MM_GETSTATE -- Read checked/disabled state of item with given ID.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpGetState *msg);
+
+    FUNCTION
+	This method examines the state of the "checked" and "disabled"
+	attributes of the menuclass object having the specified ID.
+	The result is a bit mask with a combination of MS_CHECKED and
+	MS_DISABLED.
+
+	If MS_CHECKED is set in the return value, the object is checked;
+	if it is cleared, the object is unchecked.
+
+	If MS_DISABLED is set in the return value, the object is disabled;
+	if it is cleared, the object is enabled.
+
+	Using MM_GETSTATE is equivalent to querying MA_Selected and/or
+	MA_Disabled via GetAttr(), but allows to specify the menuclass
+	object to be examined through its ID rather than its address.
+
+	MM_GETSTATE uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpGetState
+	{
+	    uint32 MethodID;
+	    uint32 mpgs_Reserved;
+	    uint32 mpgs_ID;
+	};
+
+	The mpgs_Reserved field should always be set to zero when invoked
+	from an application. The mpgs_ID field specifies the ID number of
+	the menuclass object whose state is being queried.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpGetState
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is a combination of MS_CHECKED and MS_DISABLED,
+	reflecting the current state of the object having the given ID.
+
+    SEE ALSO
+	MM_SETSTATE
+
+menuclass/MM_HANDLEHELP                                   menuclass/MM_HANDLEHELP
+
+    NAME
+	MM_HANDLEHELP -- Return menu help ID or invoke help hook if non-NULL.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpPick *msg);
+
+    FUNCTION
+	This method checks the menu object the user asked for help about,
+	and if that has a non-NULL help hook, the method invokes it and
+	returns NO_MENU_ID; otherwise, the method returns the object's ID
+	so that it can be handled by the caller's event loop.
+
+	Using this method differs from reading the MA_MenuHelpID attribute
+	of the menu root object in that MM_HANDLEHELP only returns the ID
+	of the object queried for help if it doesn't have a help hook, and
+	handles the help request internally if it does, whereas reading
+	MA_MenuHelpID always returns the object's ID and doesn't perform
+	any handling.
+	This means that if none of your application's menuclass objects has
+	a help hook you never need to use MM_HANDLEHELP; reading the above
+	attribute will yield exactly the same result, through a simpler API.
+
+	NOTE WELL: this method should be invoked on the root object of the
+	menu tree, not on any actual menu title or (sub-)item object.
+
+	MM_HANDLEHELP uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpHandleEvent
+	{
+	    uint32 MethodID;
+	    uint32 mphe_Reserved;
+	    uint32 mphe_CurrentID;
+	    struct Window *mphe_Window;
+	    APTR mphe_UserData;
+	};
+
+	The mphe_Reserved field should always be set to zero when invoked
+	from an application. The mphe_CurrentID field is ignored by this
+	method (see below).
+	You should also initialize mphe_Window with the address of the
+	event's window (e.g. IntuiMessage->IDCMPWindow) and mphe_UserData
+	with any custom data you want to pass to the help hook.
+
+	This method uses the same message structure as MM_HANDLEPICK, but
+	it ignores the mphe_CurrentID field since for a menu help event
+	there is no selection chain to follow.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpHandleEvent
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is the ID of the menu object for which help was
+	requested by the user if that object has a NULL help hook, or
+	NO_MENU_ID if the object's help hook is non-NULL.
+
+    SEE ALSO
+	MM_HANDLEPICK
+
+menuclass/MM_HANDLEPICK                                   menuclass/MM_HANDLEPICK
+
+    NAME
+	MM_HANDLEPICK -- Browse through menu selections, invoking pick hooks.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpPick *msg);
+
+    FUNCTION
+	This method browses through the menu selection list generated by
+	a menu pick event. For each item found in the list, MM_HANDLEPICK
+	checks whether it has a non-NULL pick hook. If it does, the method
+	invokes the pick hook and proceeds to the next item; otherwise, it
+	stops and returns the selected item's ID so that it can be handled
+	by the caller's event loop.
+
+	To start the browsing and obtain the ID of the first selected item
+	without a pick hook (if any exists in the list), pass NO_MENU_ID
+	in mphe_CurrentID; to resume the browsing and possibly get the ID
+	of the subsequent item without a pick hook found in the selection
+	list, pass instead the result of the previous invocation. As soon
+	as NO_MENU_ID is returned, there are no more items in the list.
+
+	This method is used much in the same way as MM_NEXTSELECT; the two
+	methods only differ in that MM_HANDLEPICK only returns the IDs of
+	selected items that don't have a pick hook and handles internally
+	those that do, whereas MM_NEXTSELECT always returns the IDs of all
+	items in the selection list without performing any handling.
+	This means that if none of your application's menuclass objects has
+	a pick hook you never need to use MM_HANDLEPICK; MM_NEXTSELECT will
+	yield exactly the same results, through a simpler API.
+
+	NOTE WELL: this method should be invoked on the root object of the
+	menu tree, not on any actual menu title or (sub-)item object.
+
+	MM_HANDLEPICK uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpHandleEvent
+	{
+	    uint32 MethodID;
+	    uint32 mphe_Reserved;
+	    uint32 mphe_CurrentID;
+	    struct Window *mphe_Window;
+	    APTR mphe_UserData;
+	};
+
+	The mphe_Reserved field should always be set to zero when invoked
+	from an application. The mphe_CurrentID field is used to pass the
+	result of this method's previous invocation, or NO_MENU_ID to get
+	the ID of the first item without a pick hook that is found in the
+	menu selection chain.
+	You should also initialize mphe_Window with the address of the
+	event's window (e.g. IntuiMessage->IDCMPWindow) and mphe_UserData
+	with any custom data you want to pass to the pick hook.
+
+	This method uses the same message structure as MM_HANDLEHELP.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpHandleEvent
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is the ID of the next (or first) selected object
+	in the menu tree which has a NULL pick hook, or NO_MENU_ID when
+	there are no more IDs in the menu selection list.
+
+    SEE ALSO
+	MM_HANDLEHELP, MM_NEXTSELECT
+
+menuclass/MM_NEWMENU                                         menuclass/MM_NEWMENU
+
+    NAME
+	MM_NEWMENU -- Build a whole menu (sub-)tree from a tag list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpNewMenu *msg);
+
+    FUNCTION
+	This method builds a whole menu (sub-)tree from a compact tag-based
+	description, with less typing, more readability, greater efficiency
+	and better error checking than doing so through a series of nested
+	NewObject() calls.
+
+	The tag list passed to this method is made up for the most part of
+	the usual menuclass tags that are used to specify attributes of the
+	individual objects. However, MM_NEWMENU also recognizes three extra
+	tags prepended with NM_ that are actually directives for the method,
+	used to introduce the menu objects themselves.
+
+	These method-specific tags are:
+
+	NM_Menu / NM_Item - indicating to add a new menu or item object at
+	the current level (the tag data is the object's text label);
+
+	NM_SubItems - indicating to move down or up by one level before the
+	next item object is added.
+	If the tag data of NM_SubItems is SI_BEGIN, the next item object
+	will become a child of the most recent one added (i.e. we move down
+	by one level); if it is SI_END, the next item object will become a
+	sibling of the most recent one's parent (i.e. we move up by one
+	level).
+
+	Note that NM_SubItems is not needed to add menus to a menu strip
+	object, nor to add items to a menu object -- its only purpose is to
+	act as a "delimiter" for a list of sub-items of an item object.
+
+	Any menuclass tag that is encountered in the tag list is passed as
+	an attribute to the most recently added object.
+
+	The method should be invoked on an existing menuclass object, which
+	in case of success will become the new tree's root.
+
+	MM_NEWMENU uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpNewMenu
+	{
+	    uint32 MethodID;
+	    uint32 mpnm_Reserved;
+	    struct TagItem *mpnm_AttrList;
+	};
+
+	The mpnm_Reserved field should always be set to zero when invoked
+	from an application. The mpnm_AttrList field points to a tag list
+	describing a menu (sub-)tree to be appended to the object which the
+	method is invoked on.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpNewMenu
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is zero if some error occurred while building the
+	menu tree as described by the passed tags, non-zero if all went ok.
+	The exact reasons for a result indicating failure can be inspected
+	through the MA_ErrorCode and MA_ErrorTagItem tags.
+	See <intuition/menuclass.h> for a list of menuclass error codes and
+	their explanation.
+
+    SEE ALSO
+	MM_DELETEMENU
+
+menuclass/MM_NEXTCHILD                                     menuclass/MM_NEXTCHILD
+
+    NAME
+	MM_NEXTCHILD -- Get address of next child of a menu object.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpNextChild *msg);
+
+    FUNCTION
+	This method returns the object which comes next after the passed
+	one in the children list of the menuclass object it's invoked on.
+	If NULL is passed for mpnc_Current, the first child in the list
+	is returned; if mpnc_Current is the last child in the list, NULL
+	is returned.
+
+	This method can be used in a loop to browse through all children
+	of a given object.
+
+	MM_NEXTCHILD uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpNextChild
+	{
+	    uint32 MethodID;
+	    uint32 mpnc_Reserved;
+	    Object *mpnc_Current;
+	};
+
+	The mpnc_Reserved field should always be set to zero when invoked
+	from an application. The mpnc_Current field specifies the address
+	of the child object of which you want to know the successor in the
+	parent object's children list.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpNextChild
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is the address of the child object which comes
+	right after the specified one in the parent's children list, or
+	NULL if the specified child is the last one in the list.
+
+    SEE ALSO
+
+
+menuclass/MM_NEXTSELECT                                   menuclass/MM_NEXTSELECT
+
+    NAME
+	MM_NEXTSELECT -- Get next ID in menu item selection chain.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpNextSelect *msg);
+
+    FUNCTION
+	This method returns the ID of the next menu item picked by the user
+	during the most recent menu selection operation.
+	To retrieve the ID of the first menu item selected, pass NO_MENU_ID
+	in mpns_CurrentID, else pass the result of the previous invocation
+	of MM_NEXTSELECT which will yield the subsequent ID in the selection
+	list.
+	As soon as NO_MENU_ID is returned, there are no more IDs in the list.
+
+	NOTE WELL: this method should be invoked on the root object of the
+	menu tree, not on any actual menu title or (sub-)item object.
+
+	MM_NEXTSELECT uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpNextSelect
+	{
+	    uint32 MethodID;
+	    uint32 mpns_Reserved;
+	    uint32 mpns_CurrentID;
+	};
+
+	The mpns_Reserved field should always be set to zero when invoked
+	from an application. The mpns_CurrentID field is used to pass the
+	result of this method's previous invocation, or NO_MENU_ID to get
+	the first object ID in the menu selection chain.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpNextSelect
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is the ID of the next (or first) selected object
+	in the menu tree, or NO_MENU_ID when there are no more IDs in the
+	menu selection list.
+
+    SEE ALSO
+	MM_FINDID
+
+menuclass/MM_SCAN                                               menuclass/MM_SCAN
+
+    NAME
+	MM_SCAN -- Do a recursive scan of menu tree with custom hook.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpScan *msg);
+
+    FUNCTION
+	This method performs a recursive scan of the menu tree.
+	For each object in the tree, the specified hook is invoked on it
+	and is passed a MenuScanMessage structure (see below) as message.
+	If the hook returns a non-zero value, the scan stops and the
+	method returns the address of the object on which it stopped.
+	If the hook always returns zero, all objects are scanned and the
+	method returns NULL.
+
+	MM_SCAN uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpScan
+	{
+	    uint32 MethodID;
+	    uint32 mps_Reserved;
+	    struct Hook *mps_Hook;
+	    uint32 mps_Args[4];
+	};
+
+	The mps_Reserved field should always be set to zero when invoked
+	from an application. The mps_Hook field specifies the hook to be
+	invoked on each object found in the menu tree. The four mps_Args
+	variables are for program use; they allow to pass custom arguments
+	to the hook.
+
+	The menu scan hook passed to MM_SCAN receives a menuclass instance
+	pointer as object and the following structure as message:
+
+	struct MenuScanMessage
+	{
+	    uint32 StructSize;  /* For future expansion */
+	    int32 Level;        /* How deep we are in the menu tree */
+	    uint32 Args[4];     /* Custom arguments */
+	};
+
+	The four Args variables hold the same values which were passed in
+	mps_Args upon method invocation.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpScan
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is the address of the object on which the method
+	stopped due to your hook having returned a non-zero value, or NULL
+	if all objects in the menu tree were scanned (i.e. the hook always
+	returned zero).
+
+    SEE ALSO
+
+
+menuclass/MM_SETSTATE                                       menuclass/MM_SETSTATE
+
+    NAME
+	MM_SETSTATE -- Change checked/disabled state of item with given ID.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpSetState *msg);
+
+    FUNCTION
+	This method changes the state of the "checked" and/or "disabled"
+	attribute of the menuclass object having the specified ID.
+	The apply mask defines which attributes are to be changed, and
+	the state mask tells what they should be changed to; these masks
+	can be a combination of the MS_CHECKED and MS_DISABLED bits.
+
+	Using MM_SETSTATE is equivalent to modifying MA_Selected and/or
+	MA_Disabled via SetAttrs(), but allows to specify the menuclass
+	object to be changed through its ID rather than its address.
+
+	MM_SETSTATE uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpSetState
+	{
+	    uint32 MethodID;
+	    uint32 mpss_Reserved;
+	    uint32 mpss_ID;
+	    uint32 mpss_ApplyMask;
+	    uint32 mpss_StateMask;
+	};
+
+	The mpss_Reserved field should always be set to zero when invoked
+	from an application. The mpss_ID field specifies the ID number of
+	the menuclass object whose state is to be changed. The attributes
+	corresponding to the bits that are set in mpss_ApplyMask will be
+	modified by the method, while all others will remain untouched.
+	For the attributes that should be modified, you can specify their
+	new state by setting or clearing their bits in mpss_StateMask.
+
+	Setting or clearing MS_CHECKED makes the menu item object checked
+	or unchecked, respectively (if the object is actually a checkable
+	item, otherwise this bit is ignored).
+
+	Setting or clearing MS_DISABLED makes the menu or menu item object
+	disabled or enabled, respectively.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpSetState
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is zero if an object with the given ID couldn't
+	be found in the menu tree, non-zero otherwise.
+
+    SEE ALSO
+	MM_GETSTATE
+
+menuclass/MM_SETUP                                             menuclass/MM_SETUP
+
+    NAME
+	MM_SETUP -- Prepare a menu (sub-)tree for display; normally not needed.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct mpSetup *msg);
+
+    FUNCTION
+	This method prepares a menu (sub-)tree for display by allocating
+	any needed resources and computing geometric properties.
+	Applications don't normally need to invoke this method themselves;
+	it is done automatically upon the first SetMenuStrip() call and
+	whenever it is required to update the layout of the menu (e.g. when
+	changing certain menu or menu item attributes).
+	Do not invoke this method on a menu tree which is not attached to
+	a window.
+
+	MM_SETUP uses a custom message structure (defined in
+	<intuition/menuclass.h>):
+
+	struct mpSetup
+	{
+	    uint32 MethodID;
+	    uint32 mps_Reserved;
+	    uint32 mps_Initial;
+	};
+
+	The mps_Reserved field should always be set to zero when invoked
+	from an application. The mps_Initial field specifies whether this
+	is the first time the menu (sub-)tree undergoes a layout.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct mpSetup
+	      (see <intuition/menuclass.h>)
+
+    RESULT
+	The return value is zero for failure, non-zero for success.
+
+    SEE ALSO
+	MM_CLEANUP
+
+menuclass/OM_ADDMEMBER                                     menuclass/OM_ADDMEMBER
+
+    NAME
+	OM_ADDMEMBER -- Add a menu object to the children list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember *msg);
+
+    FUNCTION
+	This method tells a menuclass object to add an object to its
+	children list.
+	Passing NULL as the child object address is safe and ignored.
+
+	Using this method is fully equivalent to passing the MA_AddChild
+	tag with the child object address as value via OM_NEW or OM_SET,
+	except you can check the return value for success or failure.
+
+	When the object disposes of itself it will also dispose of any
+	objects remaining on its children list.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is zero on failure (e.g. when trying to add a
+	child to a separator item), non-zero otherwise.
+
+    SEE ALSO
+	OM_REMMEMBER, rootclass/OM_ADDMEMBER, rootclass/OM_REMMEMBER
+
+menuclass/OM_DISPOSE                                         menuclass/OM_DISPOSE
+
+    NAME
+	OM_DISPOSE -- Destroy the menu object and all of its children.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+	This method tells a menuclass object to dispose of itself plus any
+	menuclass objects remaining on its children list.
+
+    INPUTS
+	obj - menu object pointer
+	msg - Msg with MethodID = OM_DISPOSE
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	intuition.library/DisposeObject()
+
+menuclass/OM_REMMEMBER                                     menuclass/OM_REMMEMBER
+
+    NAME
+	OM_REMMEMBER -- Remove a menu object from the children list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember *msg);
+
+    FUNCTION
+	This method tells a menuclass object to remove an object from its
+	children list.
+	Passing NULL as the child object address is safe and ignored.
+
+	Using this method is fully equivalent to passing the MA_RemoveChild
+	tag with the child object address as value via OM_SET, except you
+	can check the return value for success or failure.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is zero on failure (e.g. when trying to remove a
+	child from a separator item), non-zero otherwise.
+
+    SEE ALSO
+	OM_ADDMEMBER, rootclass/OM_REMMEMBER, rootclass/OM_ADDMEMBER
+
+menuclass/OM_SET                                                 menuclass/OM_SET
+
+    NAME
+	OM_SET -- Set menuclass object attributes.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet *msg);
+
+    FUNCTION
+	This method sets the menu object attributes. Some attributes are
+	considered "inheritable" and as such are propagated to all of
+	the object's children, if any exist. See the description of the
+	menuclass attributes to learn which ones are inheritable.
+
+	If any attribute change requires that the menu tree (or a part
+	thereof) undergoes a relayout, this is performed automatically.
+
+    INPUTS
+	obj - menu object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is zero on failure, non-zero otherwise.
+
+    SEE ALSO
+	rootclass/OM_SET
+
+

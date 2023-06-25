@@ -1,0 +1,256 @@
+TABLE OF CONTENTS
+
+strgclass/--datasheet--
+strgclass/OM_NEW
+
+
+strgclass/--datasheet--                                   strgclass/--datasheet--
+
+    NAME
+	strgclass -- string gadget class
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	Intuition compatible string gadgets. The BOOPSI string gadget
+	can either be a plain string gadget or an integer string gadget.
+
+	For more enhanced integer support see integer.gadget.
+
+    METHODS
+	OM_NEW -- Create the strgclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroy the gadget and then pass to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	GM_HITTEST -- Determine if gadget was hit.
+
+	GM_RENDER -- Render the gadget with state.
+
+	GM_GOACTIVE -- Activate the gadget.
+
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+	GM_HANDLEINPUT -- Handle input while active.
+
+	GM_EXTENT -- Inquire about rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	STRINGA_LongVal (int32)
+	    This attribute tells strgclass that this gadget is
+	    an integer string gadget and the new value of the
+	    integer is this attribute's value.
+
+	    It is recommended to use the much more powerful
+	    integer.gadget instead.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	STRINGA_TextVal (STRPTR)
+	    This attribute tells strgclass that this gadget is a
+	    plain string gadget. The attribute points to a string
+	    which the object copies into the string gadget's current
+	    string value buffer.
+
+	    When a strgclass gadget's internal STRINGA_LongVal or
+	    STRINGA_TextVal value changes (usually because the user
+	    manipulated the gadget), it sends itself an OM_NOTIFY
+	    message. The OM_NOTIFY message will contain two
+	    attribute/value pairs, GA_ID and either STRINGA_LongVal or
+	    STRINGA_TextVal (depending on what kind of strgclass gadget
+	    it is). Strgclass gadgets only send a final OM_NOTIFY message
+	    (with the OPUF_INTERIM flag of the opUpdate.opu_Flags
+	    field cleared).
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	STRINGA_Buffer (STRPTR)
+	    Specifies the buffer used for displaying the value to
+	    be edited.
+
+	    Defaults to an internal buffer of size
+	    SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_WorkBuffer (STRPTR)
+	    Specifies the buffer to be used while the user
+	    edits the text in the gadget.
+
+	    Defaults to an internal buffer of size
+	    SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_UndoBuffer (STRPTR)
+	    Specifies the buffer to be used for undo while
+	    the user edits the text in the gadget.
+
+	    Defaults to an internal buffer of size
+	    SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_MaxChars (int16)
+	    The maximum number of characters the user can edit.
+
+	    Defaults to SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_BufferPos (int16)
+	    The current position of the cursor within the buffer
+	    from zero to the current length of the buffer string.
+
+	    Defaults to the end of the buffer string.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_DispPos (int16)
+	    The current position of the cursor within the
+	    displayed buffer area which can range from zero to
+	    the current length of the buffer string.
+
+	    Defaults to the end of the buffer string.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_AltKeyMap (struct KeyMap *)
+	    Alternative key map to use for this string gadget
+	    which will be passed to MapRawKey().
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	STRINGA_Font (struct TextFont *)
+	    This attributes points to an open TextFont structure
+	    that the string gadget uses for rendering its text.
+
+	    Defaults to the RastPort font of the parent Window.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	STRINGA_Pens (uint32)
+	    Pen numbers packed as two uint16 values into a
+	    single uint32 value for rendering inactive gadget
+	    text. The upper uint16 is the background color and
+	    the lower uint16 is the text color.
+
+	    Defaults to DETAILPEN (text) and BLOCKPEN.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_ActivePens (uint32)
+	    Pen numbers packed as two uint16 values into a
+	    single uint32 value for rendering active gadget
+	    text. The upper uint16 is the background color and
+	    the lower uint16 is the text color.
+
+	    Defaults to DETAILPEN (text) and BLOCKPEN.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_EditHook (struct Hook *)
+	    Custom string gadget edit hook. The hook is called
+	    with the following paramters:
+
+	    result = Edit( hook, sgw, msg )
+
+	    int32 Edit(struct Hook * hook, struct SGWork * sgw,
+	               uint32 * msg);
+
+	    See <intuition/sghooks.h> for more details on how
+	    to implement string gadget edit hooks.
+
+	    Defaults to no edit hook.
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_EditModes (uint32)
+	    Value taken from flags defined in
+	    <intuition/sghooks.h> for initial editing modes.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_ReplaceMode (BOOL)
+	    This flag corresponds to the SGM_REPLACE flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_FixedFieldMode (BOOL)
+	    This flag corresponds to the SGM_FIXEDFIELD flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_NoFilterMode (BOOL)
+	    This flag corresponds to the SGM_NOFILTER flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_ExitHelp (BOOL)
+	    This flag corresponds to the SGM_EXITHELP flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_Justification (uint32)
+	    Takes the values GACT_STRINGCENTER, GACT_STRINGRIGHT
+	    and GACT_STRINGLEFT.
+
+	    Defaults to GACT_STRINGLEFT.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_MarkedBlock (uint32)
+	    Mark the given block. The upper uint16 of the uint32
+	    contains the start position and the lower uint16 the
+	    end position. If both values are -1 (0xFFFF) the
+	    current block will be unmarked. (V50)
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+strgclass/OM_NEW                                                 strgclass/OM_NEW
+
+    NAME
+	OM_NEW -- Create the strgclass object.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet* msg);
+
+    FUNCTION
+	This method sets up the strgclass objects's StringInfo and
+	StringExtend structures. It allocates a buffer if needed and
+	will use shared data buffers for UndoBuffer and WorkBuffer if
+	the MaxChars is less than SG_DEFAULTMAXCHARS (128). Default text
+	pens are: Foreground = 1, Background = 0.
+
+	See the rootclass description of the OM_NEW method for
+	more details.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns a pointer to the newly created object or NULL on failure.
+
+    SEE ALSO
+	rootclass/OM_NEW, intuition.library/NewObject()
+
+

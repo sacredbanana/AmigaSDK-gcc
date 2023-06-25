@@ -1,0 +1,832 @@
+
+                 $VER: CatComp_Documentation 52.12 (28.5.2007)
+                 =============================================
+
+CatComp is a program to handle the creation and maintenance of the message
+catalogs used by locale.library. Message catalogs are IFF files read by
+locale.library that contain all the text strings used by an application. By
+providing several of these catalog files, an application can use
+locale.library and transparently adapt itself to the user's preferred language.
+
+CatComp reads and processes two kinds of input files, and produces five types
+of output files.
+
+The first kind of file read by CatComp is a catalog description file. That
+file describes all the strings used by an application. There is one such file
+per localized application. In this file, you assign numbers to all the
+application strings as well as specify their minimum and maximum lengths.
+
+The second kind of file read by CatComp is a catalog translation file. That
+file contains all strings from the application translated to one language.
+There is one catalog translation file per language supported by a localized
+application.
+
+CatComp can produce several different kinds of output files. The first is an IFF
+catalog. These are regular IFF files. There is one catalog produced for every
+catalog text file successfully processed. Catalogs are read directly by
+locale.library whenever the OpenCatalog() call is made.
+
+The second type of file output by CatComp is an empty translation file. This
+is useful when starting a translation. It lets CatComp convert a catalog
+description file into a ready to fill-in translation file.
+
+The third type of file output by CatComp is a new translation file based
+on an old one. This is useful when re-starting a translation after a
+catalog description file was modified, because the new and the modified
+strings will be stored in the the new catalog translation file.
+
+The fourth and fifth type of files output by CatComp are C and Assembly
+language programming source files. These are used by application writers to
+convert catalog description files into source files that can be directly used
+in their applications.
+
+The sixth and seventh type of files output by CatComp are Modula-2 language
+definition and implementation source files, which are used by programmers
+in much the same way C and Assembly files are used.
+
+Finally, the last type of file output by CatComp is an AmigaDOS load file.
+These load files are used by application writers to include a set of strings
+directly inside an application. This is normally used to encode the default
+strings that an application uses when there are no external catalogs available.
+
+
+Invoking CatComp
+----------------
+
+CatComp must be started from the Shell under Kickstart V37 or beyond. Its
+template is:
+
+  DESCRIPTOR/A,TRANSLATION,CATALOG/K,CTFILE/K,CFILE/K,
+  SYMBOLS/M/K,VB=VERBOSITY/N/K,
+  NOOPTIM/S,NONUMBERS/S,NOSTRINGS/S,NOARRAY/S,NOBLOCK/S,NOCODE/S,
+  SORT/S,COMMENTS/S
+
+in the PPC version and
+
+  DESCRIPTOR/A,TRANSLATION,CATALOG/K,CTFILE/K,CFILE/K,ASMFILE/K,M2FILE/K,
+  OBJFILE/K,SYMBOLS/M/K,VB=VERBOSITY/N/K,NOOPTIM/S,NONUMBERS/S,NOSTRINGS/S,
+  NOARRAY/S,NOBLOCK/S,NOCODE/S,XDEF/S,SORT/S,COMMENTS/S
+
+in the 68k version.
+
+  DESCRIPTOR/A
+  Specifies the name of a catalog description file. Typically, the file
+  extension for catalog description files is .cd
+
+  TRANSLATION
+  Specifies the name of a catalog translation file. Typically, the
+  file extension for catalog translation files is .ct
+
+  CATALOG/K
+  Specifies the name of the IFF catalog file to produce. When this option
+  is specified, a translation file must have been given in the previous
+  argument.
+
+  CTFILE/K
+  Specifies the name of the catalog translation file to produce. This
+  option only requires a catalog descriptor file be provided, then the
+  catalog translation file will be blank. When you also specified
+  a source translation file, the version string, language, codeset and
+  strings of the source translation file will be copied to the new
+  translation file.
+
+  CFILE/K
+  Specifies the name of the C-language source file header to produce. This
+  option only requires a catalog descriptor file be provided, there is no need
+  for a translation file.
+
+  ASMFILE/K (68k version only)
+  Specifies the name of the Assembly-language source file header to produce.
+  This option only requires a catalog descriptor file be provided, there is
+  no need for a translation file.
+
+  M2FILE/K (68k version only)
+  Specifies the _base_ name of the Modula-2 source files to produce. Two
+  files are actually generated. The first file has the base name with the
+  extension .def, the second has the extension .mod added.
+
+  OBJFILE/K (68k version only)
+  Specifies the name of the AmigaDOS binary object file to produce.
+  This option only requires a catalog descriptor file be provided, there is
+  no need for a translation file.
+
+  SYMBOLS/M/K
+  Specifies any number of symbols that are used to determine which section
+  of the available strings get included within generated C, Assembly, and
+  object files.
+
+  VERBOSITY/N/K
+  Specifies the amount of information CatComp should output while doing some
+  processing. The lower this number, the less CatComp will output messages.
+  At verbosity level 0, no warnings will appear.
+  At verbosity level 1 or higher, warnings about C-language formatting commands
+  and warnings about missing strings in catalog translation files can appear.
+  At verbosity level 2 or higher, warnings about missing trailing ellipsis
+  (...) in catalog description files can appear.
+  At verbosity level 3 (which is the default) or higher, warnings about
+  trailing blank characters and non-ASCII characters in catalog
+  description files can appear.
+  At verbosity level 4  or higher, CatComp will output every message
+  it could. This includes warnings about identical strings in catalog
+  descriptor and catalog translation files (which are not shown when
+  the NOOPTIM switch was specified).
+
+  NOOPTIM/S
+  When generating a catalog file, CatComp normally skips strings that are
+  identical in the catalog descriptor file and in the catalog translation
+  file and does not include them in the generated catalog file. This
+  option disables this optimization.
+
+  NONUMBERS/S
+  This option is only useful when generate C or Assembly-language header
+  files. It prevents the generation of the CATCOMP_NUMBERS section within
+  the header file.
+
+  NOSTRINGS/S
+  This option is only useful when generate C or Assembly-language header
+  files. It prevents the generation of the CATCOMP_STRINGS section within
+  the header file.
+
+  NOARRAY/S
+  This option is only useful when generate C or Assembly-language header
+  files. It prevents the generation of the CATCOMP_ARRAY section within
+  the header file.
+
+  NOBLOCK/S
+  This option is only useful when generate C or Assembly-language header
+  files. It prevents the generation of the CATCOMP_BLOCK section within
+  the header file.
+
+  NOCODE/S
+  This option is only useful when generate C or Assembly-language header
+  files. It prevents the generation of the CATCOMP_CODE section within
+  the header file.
+
+  XDEF/S (68k version only)
+  This option is only useful when generate Assembly-language header files.
+  It adds XDEF declarations for all IDs (CATCOMP_NUMBERS section) and 
+  string labels (CATCOMP_STRINGS section).
+
+  SORT/S
+  When specified, all strings will be sorted by ID before they are written
+  to header/assembler/object/catalog files. Catalog translation files will,
+  however, get written in the same order in which the strings showed up in
+  the catalog descriptor file.
+
+  COMMENTS/S
+  When both this switch and CTFILE were specified, the comment lines from
+  the catalog description file will be copied into the new catalog
+  translation file.
+
+
+Catalog Description Files
+-------------------------
+
+Catalog description files completely describe the strings used by an
+application. The format for these files is basically a series of two line
+entries separated by an arbitrary number of comment lines. The EBNF (Extended
+Backus Naur Formalism) specification for catalog description files is:
+
+{# command}
+{; comment line}
+<string name> "(" [string id] "/" [min string len] "/" [max string len] ")"
+[string]
+
+The first line indicates special commands that provide control over the
+generation of C, Assembly, and object files. See the section on C and Assembly
+source files below for further information.
+
+<string name> is the symbolic name of the string. Following the name comes
+three optional numbers enclosed in parenthesis and separated with slashes.
+Any number (including 0) of spaces and tabs is accepted around the
+parenthesis and slashes. The first number specifies the string's ID value.
+This is the ID value used to request this string when using the
+GetCatalogStr() call in locale.library. The second number specifies the
+minimum length for the string, while the third number specifies the
+maximum string length.
+
+The next line of an entry contains the actual string. Within the catalog
+description file, the strings are the same as the default strings built into
+the application. The strings can use standard C-language backslash ("\")
+escape sequences. If a string ends with a backslash character, this means
+that the next line in the file should be considered a continuation of the
+current line.
+
+Finally, any string entry can be separated from other entries by comment
+lines. Comment lines start with a semicolon. There can be any number of
+comment lines between two entries. It is not allowed to put comment lines
+between the two lines of a same entry.
+
+Here's an example of two strings in a catalog description file:
+
+MSG_HELLO (0/4/50)
+This is a test string for the world to see
+;
+MSG_BYE (1/14/47)
+This is another test string
+
+The first string is called MSG_HELLO, has 0 as ID value, can be as short
+as 4 characters and as long as 50. The string actually associated with the
+name follows on the next line. Then comes a comment line. Following that is
+the definition of the second string called BYE_WORLD_STR that has 1 as ID
+value, can be as short as 14 characters and as long as 47.
+
+As mentioned above, all three numbers in an entry are optional. If the string
+id number is not specified, then the same id as the previous string in the
+file plus one is used. If the first string defined has no id value, the
+starting id value is 0. If the minimum string length is not specified, it is
+assumed to be 0. And finally, if the maximum string length is not specified,
+it is assumed to be unlimited.
+
+All three numbers can be provided in hexadecimal by preceeding themby
+a $. For string IDs, it is also possible to specify a relative value. That
+is, by providing an ID value of "+1", you are telling CatComp to add one
+to the ID number this string was going to receive. This is useful over
+the course of evolution of a program, when certain strings need to be removed.
+An example would be:
+
+MSG_HELLO (0/4/50)
+This is a test string for the world to see
+;
+MSG_BYE (+1/14/47)
+This is another test string
+;
+MSG_WELCOME (//)
+This is still a test string!
+
+In this case, MSG_HELLO would have the value 0, MSG_BYE the value 2,
+and MSG_WELCOME the value 3.
+
+A note on style here. It is relatively important to choose descriptive
+symbolic names for the strings. These names will be viewed by the translators
+and should be as meaningful as possible. The following conventions are
+suggested:
+
+  - List all names in capital letters. This will make it clear they are
+    constants as this is the convention used in all Amiga include files.
+
+  - Prefix each name with the string MSG_. This will make it clear to the
+    programmer that a given constant is in fact a string ID value.
+
+  - Append the string _GAD to strings that are used for gadget labels.
+
+  - Append the string _MENU to strings that are used for menu titles. For
+    example, MSG_EDIT_MENU.
+
+  - Expand the path leading to a menu item when specifying strings that are
+    used for menu items. For example, for the Cut item in the Edit menu
+    would be written as MSG_EDIT_CUT.
+
+
+Catalog Translation Files
+-------------------------
+
+Catalog translation files contain all the strings of an application translated
+to a different language than the default. The files look very similar to
+catalog description files, except they do not include the string id, minimum
+string length and maximum string length specifications. The EBNF specification
+for catalog translation files is:
+
+{# command}
+{; comment line}
+<string name>
+[string]
+
+The first line indicates special commands that describe attributes of the
+catalog file. Any number of spaces, tabs and '#' characters may appear
+between the first '#' character and the command. There are currently five
+supported commands:
+
+- "version" lets you specify a 2.0-style version string for the catalog.
+
+- "language" lets you list the language that this catalog is in. This
+  string should itself be in the given language and not in English for
+  pre-OS4 catalogs and in English for OS4 catalogs.
+
+- "codeset" lets you specify in which charset this catalog is written.
+  This value should specify the IANA MIBenum charset number of the charset
+  used to write the .ct file which can be found in
+  L:charsets/character-sets or L:charsets/custom-character-sets or
+  http://www.iana.org/assignments/character-sets. OS4 currently supports
+  all 8bit charsets that have a mapping table to Unicode in L:charsets/
+  plus UTF-8. Older AmigaOS versions did only support ISO-8859-1.
+
+- "rcsid" lets you specify a version string using the standard RCS method.
+  That way, versions of catalogs can get updated automatically by RCS.
+
+- "name" can be used in conjunction with the "rcsid" command to specify
+  the name component of a 2.0 version string. For example:
+
+  ## rcsid $Date: 2007-05-29 07:36:41 $ $Revision: 1.17 $
+  ## name myprogram.catalog
+
+  The above will embed "$VER: myprogram.catalog 1.13 (5.2.2007)" inside of the
+  message catalog.
+
+Another example:
+
+## version $VER: myprogram.catalog 51.1 (31.7.2004)
+## codeset 4
+## language french
+;
+MSG_HELLO
+Ceci est une chaine test pour être vue
+;
+MSG_BYE
+Ceci est une autre chaine test
+
+The first three lines are command lines. The following line is a comment line
+as it starts with a semicolon. The following line you list the symbolic name
+of the string, and on the second line the translated string. If a string ends
+with a backslash character, this means that the next line in the file should
+be considered a continuation of the current line.
+
+The symbolic name is the same as the related entry in the catalog description
+file. CatComp uses this name to associate entries from translation files with
+entries in description files. It can then validate the strings in the
+translation files by ensuring they are of the correct length, etc.
+
+
+Escape Sequences Supported
+--------------------------
+
+Regular C-language escape sequences can be specified in strings, along with a
+few additions:
+
+  \a	inserts an audible bell character (ASCII 7)
+  \b    inserts a backspace character (ASCII 8)
+  \c    inserts a control sequence introducer (ISO-8859-1 155)
+  \e    inserts an escape character (ASCII 27)
+  \f    inserts a formfeed character (ASCII 12)
+  \n    inserts a newline character (ASCII 10)
+  \r    inserts a carriage return character (ASCII 13)
+  \t    inserts a tab character (ASCII 9)
+  \v    inserts a vertical tab character (ASCII 11)
+  \"    inserts a quotation mark character (ASCII 34)
+  \\    inserts a backslash character (ASCII 92)
+  \xNN  inserts NN, where NN specifies a character code in hexadecimal
+  \NNN  inserts NNN, where NNN specifies a character code in octal
+
+As well, when any string line within a description or translation file ends
+with a backslash ("\"), it means that the following line within the file is
+to be considered a continuation of the current line.
+
+
+Formatted Output Commands
+-------------------------
+
+By default, CatComp parses strings for C-language formatting commands as
+used in the printf() function. This can be switched off with the
+#printf_check_off command in the catalog description file and switched
+back on with the #printf_check_on command.
+
+The check, when enabled, ensures that the number and type of such commands
+are the same in both the description file and the translation files. This
+guarantees that the application stack frame will not be misinterpreted due
+to incorrect translations of formatting commands.
+
+CatComp warns you if you attempt to use any non-C formatting commands. The
+commands that CatComp does understand are:
+
+    %b %c %d %D %e %E %f %g %G %i %o %p %s %u %U %x %X %N %T
+
+CatComp also knows about the ordering formatting command supported by
+RawDoFmt() whenever locale.library runs in the system, or by locale's
+FormatString() routine. The ordering command lets you specify formatting
+commands within a formatting string in a different order than in the original
+string, while still accessing the stack frame correctly. CatComp validates the
+ordering information and ensures argument types match. See the documentation
+locale.library/FormatString().
+
+Specifying the argument position lets the order of the % commands within your
+strings without affecting how the program performs. Given a string in a
+catalog description file such as:
+
+MSG_AVAIL_MEM (//)
+FAST: %lU, GRAPHIC: %lU
+
+This string could be translated in French as:
+
+MSG_AVAIL_MEM (//)
+GRAPHIQUE: %2$lU, AUTRE %1$lU
+
+Using the first string, the output of the program might look like:
+
+FAST: 1234, GRAPHIC: 5678
+
+while the translation would output:
+
+GRAPHIQUE: 5678, AUTRE: 1234
+
+An example how to use the #printf_check_#? commands:
+
+MSG_ERROR_OPEN_FILE (//)
+Can't open file \"%s\".
+;
+#printf_check_off
+;
+MSG_HPDJ_DENSITY5_TXT (//)
+25% depletion, 50% shingling
+;
+MSG_HPDJ_DENSITY6_TXT (//)
+25% depletion, 25% shingling
+;
+#printf_check_on
+;
+MSG_ERROR_READ_FILE (//)
+Can't read from file \"%s\".
+;
+
+Validation
+----------
+
+CatComp enforces the syntax of catalog description files and catalog
+translation files very strongly. It also ensures that the same number of
+C-language % command appear in both the description and the translation file.
+This guarantees the integrity of the application stack-frame when using
+translated string in printf() statements.
+
+Most errors detected by CatComp are fatal and cause the program to abort.
+Errors are reported to the console with a descriptive error message, a
+filename, and if needed a line and column number. Non-fatal errors (warnings)
+and also sent to the console, but they do not cause the program to abort. The
+printing of these warning messages can be suppressed using the VERBOSITY
+command-line option.
+
+
+Possible Errors
+---------------
+
+Here is an incomplete list of the errors and warnings that CatComp can
+produce, along with an explanation of what went wrong. Most errors
+indicate the file, line and column where the error occurred to help in
+solving the problem. Note that when using strings with the line
+continuation character ("\"), the line numbers printed will refer to the
+last line of the strings, even though the error may be in the first line.
+
+ERROR: string line for token <name> not found
+  A given token was not followed by a string
+
+ERROR: token not found
+  No token was found on a line in a catalog description file. Comment lines
+  must start with ";", any other line must have a valid token definition on
+  it.
+
+ERROR: '(' expected
+  There was no number section after a token in a catalog description file.
+  The number section must start with a (, followed by three optional numbers
+  separated by slashes, and terminated by a ).
+
+ERROR: ')' expected
+  There was no ) after a number section in a catalog description file.
+  The number section must start with a (, followed by three optional numbers
+  separated by slashes, and terminated by a ).
+
+ERROR: '/' expected
+  There was no slash found within a number section after a token in a catalog
+  description file. The number section must start with a (, followed by three
+  optional numbers separated by slashes, and terminated by a ). So there
+  must always be two slashes specified.
+
+ERROR: garbage characters after token <name>
+  There was no number section after a token in a catalog description file,
+  and garbage characters were found instead, The number section must start
+  with a (, followed by three optional numbers separated by slashes, and
+  terminated by a ).
+
+ERROR: <name> is not a valid token
+  A token in a catalog description file was composed of invalid characters.
+  A token must start with a letter and can be followed by letters, numbers and
+  underscores.
+
+ERROR: token <name> not found
+  A token specified in a catalog description file was not present in
+  a translation file and the NOOPTIM switch was used.
+
+ERROR: string too short for token <name>
+  A string in a translation file is shorter than the minimum length
+  specified in the description file.
+
+ERROR: string too long for token <name>
+  A string in a translation file is shorter than the minimum length
+  specified in the description file.
+
+ERROR: negative value for minimum length
+  The minimum string length specified for a token must be positive.
+
+ERROR: negative value for maximum length
+  The maximum string length specified for a token must be positive.
+
+ERROR: non-positive value for % ordering
+  The position information for a % formatting command must be positive and
+  greater than 1.
+
+ERROR: % ordering value too large
+  The position information for a % formatting command is greater than the
+  number of formatting commands provided
+
+ERROR: % size incorrect
+  The size specifier for a % formatting command in a translation file does
+  not match the size in the description file.
+
+ERROR: % command does not match
+  The type specifier for a % formatting command in a translation file does
+  not match the size in the description file.
+
+ERROR: token <name> defined multiple times
+  A token was defined multiple times in either a description or a translation
+  file.
+
+ERROR: id <number> already used for token <name>
+  An attempt was made to reuse an ID value twice within a description file
+
+ERROR: no command found after '#'
+  Command lines start with # and are followed by any number of spaces,
+  tabs and '#' characters and then a command.
+
+ERROR: <name> is not a valid command after '#'
+  A command specified after # is invalid.
+
+ERROR: <number> is not a valid codeset value
+  An incorrect codeset value was specified for a #codeset command.
+
+ERROR: <string> is not a valid rcsid value
+  A string in an incorrect format was specified for an #rcsid command.
+  The format expected is
+  ## rcsid $Date: 2007-05-29 07:36:41 $ $Revision: 1.17 $
+
+ERROR: couldn't write catalog <name>
+  An error occurred while writing the catalog file
+
+WARNING: <name> is an unknown formatting command
+  An unknown % formatting command was specified. CatComp knows only of
+  C-language formatting commands, anything else will be flagged
+  with this warning.
+
+WARNING: string for token <name> matches string in descriptor
+  A string within a translation file matches exactly the original string
+  from the description file. This may mean that the string was not
+  translated. CatComp will not bother putting the string in any
+  generated catalog when this situation occurs, unless the NOOPTIM
+  command-line option is specified
+
+WARNING: original string for token <name> had a trailing ellipsis (...)
+  The original string in the catalog descriptor file had a trailing
+  ellipsis (such as "Open..."), but the translation did not.
+
+WARNING: token <name> not found
+  A token specified in a catalog description file was not present in
+  a translation file and the NOOPTIM switch was not used. Then the string
+  will not be written into the output catalog file.
+
+
+C, Assembly, and Modula-2 Source Files
+--------------------------------------
+
+CatComp has the ability to output C, Assembly and Modula-2 language source
+file. This lets application programmers manipulate a single catalog description
+file and have source files generated for them automatically so they can include
+the strings in their programs.
+
+To generate these files, you need to give CatComp a descriptor file, and either
+a C, Assembly, or Modula-2 output file name using the CFILE/K, ASMFILE/K, and
+M2FILE/K command-line options. The resulting files will be standard C,
+Assembly, and/or Modula-2 source files that can be used from application code.
+
+Both C and Assembly source files contain multiple sections. You can choose
+which sections of these files you want in your application by using standard
+conditional compilation symbol definitions. Here is a list of the various
+symbols and the type of data they hold:
+
+  CATCOMP_NUMBERS
+  Defining this symbol causes the name of each string to be defined with the
+  value of its id, as listed in the catalog description file. So if the .cd
+  file contains a string such as:
+
+      MSG_HELLO (141//)
+      Hello
+
+  then the C file generated would have
+
+      #define MSG_HELLO 141
+
+  and for Assembly:
+
+      MSG_HELLO EQU 141
+
+  CATCOMP_STRINGS
+  Defining this symbol causes each string to be defined. Using the same
+  example as above, you would get the following for C:
+
+      MSG_HELLO_STR "Hello"
+
+  and for Assembly:
+
+      MSG_HELLO_STR: DC.B 'Hello',$00
+
+  CATCOMP_ARRAY
+  Causes a table of the following structures to become available:
+
+      struct CatCompArrayType
+      {
+          LONG         cca_ID;
+          CONST_STRPTR cca_Str;
+      };
+
+  cca_ID contains the id value of a string, and cca_Str points to the string
+  itself. By scanning this array, you can access all of the strings defined
+  for the application.
+
+  CATCOMP_BLOCK
+  Causes a compact table of all the strings and their id values to be
+  generated. The format is:
+
+      1 longword of string id
+      1 word of string length
+      string
+      ..etc...
+
+  This type of table is difficult to parse in C, and generally better handled
+  in Assembly.
+
+  CATCOMP_CODE
+  This causes the generation of source code for a function called GetString().
+  The function takes for argument an initialized LocaleInfo structure and a
+  string number. It returns a string pointer. The LocaleInfo structure is:
+
+    struct LocaleInfo
+    {
+    #ifndef __amigaos4__
+        struct Library     *li_LocaleBase;
+    #else
+        struct LocaleIFace *li_ILocale;
+    #endif
+        struct Catalog     *li_Catalog;
+    }
+
+  li_LocaleBase should be initialized to the return value of
+  OpenLibrary() of locale.library, or NULL if the library can't be opened.
+  li_ILocale should be initialized to the return value of
+  GetInterface() of locale.library, or NULL if the library can't be opened.
+  li_Catalog should be initialized to the result of OpenCatalog() of the
+  application's catalog. This value can be NULL.
+
+Command-line options are available to disable the generation of specific
+sections of header files. These are NONUMBERS/S, NOSTRINGS/S, NOARRAY/S,
+NOBLOCK/S, and NOCODE/S.
+
+Special commands can be embedded in catalog description files to provide
+control over the generation of header files. These commands are introduced
+by a # symbol within the catalog description file. Any number of spaces,
+tabs and '#' characters may appear between the first '#' character and the
+command. The supported commands are:
+
+  #version <version number>
+  This lets you specify which catalog version number is required by the
+  application and should be used in the #version command of the catalog
+  translation file. For example:
+
+      #version 46
+
+      would cause a "#version $VER: sample.catalog 51.1 (31.3.2005)"
+      command in the .ct file to cause a version mismatch error message.
+
+  A version number of 0 means any version will be accepted, this was
+  added for compatibility.
+
+  #header <header name>
+  This lets you indicate the base name of the header files being produced.
+  The base name is then used as the top of header files. For example:
+
+      #header TEXTTABLE
+
+      would cause the following to be added at the start of the C header file:
+
+      #ifndef TEXTTABLE_H
+      #define TEXTTABLE_H
+
+  #array <array base name>
+  This lets you specify the base name of the arrays generated in the header
+  files being produced. The default is "CatCompArray"
+
+  #block <block base name>
+  This lets you specify the base name of the data block generated in the header
+  files being produced. The default is "CatCompBlock"
+
+  #arrayopts <compiler options>
+  This lets you specify which compiler option should be used when
+  generating arrays of data. The default is "static const".
+
+  #function <function name>
+  This lets you specify the name of the function that is generated.
+  The default is "GetString"
+
+  #prototype <function prototype line>
+  This lets you specify the function prototype to output in generated
+  C header files. By default, no prototype is generated. For SAS/C and
+  68k gcc you can do something like:
+
+    #prototype #include <exec/types.h>\n
+       STRPTR ASM GetString(REG(a0, struct LocaleInfo *li),
+                            REG(d0, ULONG id));
+
+  Note that the above three lines actually have to appear on a single line in
+  a descriptor file. They are on separate lines here just so they fit
+  within an 80 column display. The main purpose for generating a prototype
+  is to allow interfacing to the code generated when using the OBJFILE
+  option. The prototype lets you define in which registers the parameters are
+  expected in by the object code. Since the register specification
+  mechanism is compiler-dependant, CatComp can't generate a standard
+  prototype that covers all cases, so it requires the explicit specification
+  of what the generated prototype should be.
+
+  This command is also used when generating Modula-2 source files. It
+  specifies the function definition used when generating a .def file.
+
+  #m2prolog
+  This is used when generating Modula-2 .mod files. It preceeds the
+  M2 code that is generated. You can put IMPORT statements and the
+  function definition in this command.
+
+  #m2epilog
+  This is used when generating Modula-2 .mod files. It follows the
+  M2 code that is generated. This is normally used to include the
+  END <functionname> line after the generated code sequence.
+
+  #ifdef <symbol name>
+  Causes CatComp to enclose the following identifiers within a conditional
+  compilation block.
+
+  #endif <symbol name>
+  Causes CatComp to terminate the current conditional compilation block.
+
+  #printf_check_off
+  Switches off interpreting the following strings as C-language formatting
+  commands.
+
+  #printf_check_on
+  Switches on interpreting the following strings as C-language formatting
+  commands.
+
+  #lengthbytes <number of bytes>
+  Causes CatComp to precede every following strings with 'n' bytes of length
+  information. The default number of bytes is 0. The
+  locale.library/GetCatalogStr() function will then return a pointer
+  to the length bytes, followed by the actual string. The length
+  indicated does NOT include the length bytes themselves.
+
+  #language
+  In a .cd file CatComp simply ignores this command for compatibility.
+
+  #basename
+  In a .cd file CatComp simply ignores this command for compatibility.
+
+
+Object Files
+------------
+
+68k CatComp is capable of generating linkable Amiga load files directly. These
+load files contain all the strings for an application, and a very small and
+fast routine to return a string pointer given a string id value.
+
+The OBJFILE/K option takes the name of an Amiga load file to generate. This
+file can then be linked directly with an application. A single function is
+available within this load file. It is the Assembly version of the GetString()
+function described in the previous section.
+
+
+Sample Use
+----------
+
+This section presents sample uses of CatComp with example command-lines.
+
+Assume you have a catalog description file for an application called "app.cd".
+
+
+To test if this file is a valid .cd file, type:
+
+  CatComp app.cd
+
+and CatComp will respond with either some error messages, or with a message
+saying that 'app.cd' is a valid descriptor file.
+
+
+To do a translation of a .cd file, you need a .ct file. Such a file can be
+generated by doing:
+
+  CatComp app.cd CTFILE app.ct
+
+This will create a blank translation file called app.ct. You can then load
+app.ct in a standard text editor and proceed to translate the strings it
+contains.
+
+Once a .ct file is done being translated, it must be converted in an IFF
+catalog file. This is done by doing:
+
+  CatComp app.cd app.ct CATALOG app.catalog
+
+This will create a file called app.catalog.
+
+
+See the accompanying HelloWorld program for a complete example of a localized
+program using the efficient CATCOMP_CODE approach.

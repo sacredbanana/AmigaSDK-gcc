@@ -1,0 +1,576 @@
+TABLE OF CONTENTS
+
+a1floppy.device/CMD_CLEAR
+a1floppy.device/CMD_READ
+a1floppy.device/CMD_UPDATE
+a1floppy.device/CMD_WRITE
+a1floppy.device/NSCMD_TD_FORMAT64
+a1floppy.device/NSCMD_TD_READ64
+a1floppy.device/NSCMD_TD_SEEK64
+a1floppy.device/NSCMD_TD_WRITE64
+a1floppy.device/TD_ADDCHANGEINT
+a1floppy.device/TD_CHANGENUM
+a1floppy.device/TD_CHANGESTATE
+a1floppy.device/TD_EJECT
+a1floppy.device/TD_FORMAT
+a1floppy.device/TD_GETDRIVETYPE
+a1floppy.device/TD_GETGEOMETRY
+a1floppy.device/TD_GETNUMTRACKS
+a1floppy.device/TD_MOTOR
+a1floppy.device/TD_PROTSTATUS
+a1floppy.device/TD_REMCHANGEINT
+a1floppy.device/TD_SEEK
+a1floppy.device/CMD_CLEAR                           a1floppy.device/CMD_CLEAR
+
+  NAME
+	CMD_CLEAR -- mark the track buffer as containing invalid data.
+
+  FUNCTION
+	This command marks the track buffer as invalid, forcing a
+	reread of the disk on the next operation. CMD_UPDATE
+	would be used to force data out to the disk before turning the motor
+	off. CMD_CLEAR is usually used after having locked out
+	the a1floppy.device via the use of the disk resource, when you
+	wish to prevent the track from being updated, or when you wish to
+	force the track to be re-read. CMD_CLEAR will not do an
+	update, nor will an update command do a clear.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_CLEAR
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  SEE ALSO
+	CMD_WRITE, CMD_UPDATE
+
+a1floppy.device/CMD_READ                             a1floppy.device/CMD_READ
+
+  NAME
+	CMD_READ -- read sectors of data from a disk.
+
+  FUNCTION
+	This command transfers data from the track buffer to a supplied
+	buffer. If the desired sector is already in the track buffer, no disk
+	activity is initiated. If the desired sector is not in the buffer, the
+	track containing that sector is automatically read in. If the data in
+	the current track buffer has been modified, it is written out to the
+	disk before a new track is read.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_READ
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to read, must be a multiple of
+			TD_SECTOR.
+	io_Offset	byte offset from the start of the disk describing
+			where to read data from, must be a multiple of
+			TD_SECTOR.
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+  NOTES
+	Under versions of Kickstart earlier than V36, the io_Data had to
+	point to a buffer in chip memory. This restriction is no longer
+	present as of Kickstart V36 and beyond.
+
+  SEE ALSO
+	CMD_WRITE
+
+a1floppy.device/CMD_UPDATE                         a1floppy.device/CMD_UPDATE
+
+  NAME
+	CMD_UPDATE -- write out the track buffer if it is dirty.
+
+  FUNCTION
+	The A1Floppy device does not write data sectors unless it is
+	necessary (you request that a different track be used) or until the
+	user requests that an update be performed. This improves system speed
+	by caching disk operations. This command ensures that any
+	buffered data is flushed out to the disk. If the track buffer has not
+	been changed since the track was read in, this command does nothing.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_UPDATE
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  SEE ALSO
+	CMD_WRITE
+
+a1floppy.device/CMD_WRITE                           a1floppy.device/CMD_WRITE
+
+  NAME
+	CMD_WRITE -- write sectors of data to a disk.
+
+  FUNCTION
+	This command transfers data from a supplied buffer to the track
+	buffer. If the track that contains this sector is already in the track
+	buffer, no disk activity is initiated. If the desired sector is not in
+	the buffer, the track containing that sector is automatically read in.
+	If the data in the current track buffer has been modified, it is
+	written out to the disk before the new track is read in for
+	modification.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	CMD_WRITE
+	io_Flags	0 or IOF_QUICK
+	io_Data		pointer to the buffer where the data should be put
+	io_Length	number of bytes to write, must be a multiple of
+			TD_SECTOR.
+	io_Offset	byte offset from the start of the disk describing
+			where to write data to, must be a multiple of
+			TD_SECTOR.
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  NOTES
+	Under versions of Kickstart earlier than V36, the io_Data had to
+	point to a buffer in chip memory. This restriction is no longer
+	present as of Kickstart V36 and beyond.
+
+  SEE ALSO
+	CMD_READ, TD_FORMAT
+
+a1floppy.device/NSCMD_TD_FORMAT64           a1floppy.device/NSCMD_TD_FORMAT64
+
+  NAME
+	NSCMD_TD_FORMAT64 -- format tracks of a disk (uses 64-bit addressing).
+
+  IO REQUEST INPUT
+	io_Actual	(high 32 bits of disk address) must be zero.
+	All other fields are the same as CMD_FORMAT.
+
+  FUNCTION
+	This command is equivalent to CMD_FORMAT, but supports 64-bit addressing
+	for compatibility with larger disk drives.
+	Available from version 51.21
+
+a1floppy.device/NSCMD_TD_READ64               a1floppy.device/NSCMD_TD_READ64
+
+  NAME
+	NSCMD_TD_READ64 -- read sectors of data from a disk (uses 64-bit addressing)
+.
+
+  IO REQUEST INPUT
+	io_Actual	(high 32 bits of disk address) must be zero.
+	All other fields are the same as CMD_READ.
+
+  FUNCTION
+	This command is equivalent to CMD_READ, but supports 64-bit addressing
+	for compatibility with larger disk drives.
+	Available from version 51.21
+
+a1floppy.device/NSCMD_TD_SEEK64               a1floppy.device/NSCMD_TD_SEEK64
+
+  NAME
+	NSCMD_TD_SEEK64 -- move drive heads to a specified track (uses 64-bit
+	addressing).
+
+  IO REQUEST INPUT
+	io_Actual	(high 32 bits of disk address) must be zero.
+	All other fields are the same as CMD_SEEK.
+
+  FUNCTION
+	This command is equivalent to CMD_SEEK, but supports 64-bit addressing
+	for compatibility with larger disk drives.
+	Available from version 51.21
+
+a1floppy.device/NSCMD_TD_WRITE64             a1floppy.device/NSCMD_TD_WRITE64
+
+  NAME
+	NSCMD_TD_WRITE64 -- write sectors of data to a disk (uses 64-bit addressing)
+.
+
+  IO REQUEST INPUT
+	io_Actual	(high 32 bits of disk address) must be zero.
+	All other fields are the same as CMD_WRITE.
+
+  FUNCTION
+	This command is equivalent to CMD_WRITE, but supports 64-bit addressing
+	for compatibility with larger disk drives.
+	Available from version 51.21
+
+a1floppy.device/TD_ADDCHANGEINT               a1floppy.device/TD_ADDCHANGEINT
+
+  NAME
+	TD_ADDCHANGEINT -- add a disk change software interrupt handler.
+
+  FUNCTION
+	This command lets you add a software interrupt handler to the
+	disk device that gets invoked whenever a disk insertion or removal
+	occurs.
+
+	You must pass in a properly initialized Exec Interrupt structure
+	and be prepared to deal with disk insertions/removals
+	immediately. From within the interrupt handler, you may only call the
+	status commands that can use IOF_QUICK.
+
+	To set up the handler, an Interrupt structure must be initialized.
+	This structure is supplied as the io_Data to the TD_ADDCHANGEINT
+	command. The handler then gets linked into the handler chain and
+	gets invoked whenever a disk change happens. You must eventually
+	remove the handler before you exit.
+
+	This command only returns when the handler is removed. That is,
+	the device holds onto the IO request until the TD_REMCHANGEINT command
+	is executed with that same IO request. Hence, you must use SendIO()
+	with this command.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_ADDCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to Interrupt structure
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  SEE ALSO
+	TD_REMCHANGEINT, <devices/A1Floppy.h>, <exec/interrupts.h>,
+	exec.library/Cause()
+
+a1floppy.device/TD_CHANGENUM                     a1floppy.device/TD_CHANGENUM
+
+  NAME
+	TD_CHANGENUM -- return the current value of the disk-change counter.
+
+  FUNCTION
+	This command returns the current value of the disk-change counter (as
+	used by the enhanced commands). The disk change counter is incremented
+	each time a disk is inserted or removed from the A1Floppy unit.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_CHANGENUM
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+	io_Actual - if io_Error is 0, this contains the current value of the
+		    disk-change counter.
+
+a1floppy.device/TD_CHANGESTATE                 a1floppy.device/TD_CHANGESTATE
+
+  NAME
+	TD_CHANGESTATE -- check if a disk is currently in a drive.
+
+  FUNCTION
+	This command checks to see if there is currently a disk in a drive.
+
+   IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_CHANGESTATE
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+	io_Actual - if io_Error is 0, this tells you whether a disk is in
+		    the drive. 0 means there is a disk, while anything else
+		    indicates there is no disk.
+
+a1floppy.device/TD_EJECT                             a1floppy.device/TD_EJECT
+
+  NAME
+	TD_EJECT -- eject (or load) the disk in the drive, if possible.
+
+  FUNCTION
+	This command causes the drive to attempt to eject the disk in
+	it, if any.  Note that the current a1floppy.device does not
+	implement this command, but it might in the future, and other
+	A1Floppy-compatible drivers may implement this command.  Some
+	devices may be able to load disks on command also.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_EJECT
+	io_Flags	0 or IOF_QUICK
+	io_Length	0 (load, if supported) or 1 (eject)
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  BUGS
+	The pre-V40 autodoc didn't mention io_Length.  Because of this, for
+	devices that can never support load, a driver might want to eject if
+	io_Length is 0.
+
+a1floppy.device/TD_FORMAT                           a1floppy.device/TD_FORMAT
+
+  NAME
+	TD_FORMAT -- format a track on a disk.
+
+  FUNCTION
+	This command is used to write data to a track that either
+	has not yet been formatted or has had a hard error on a standard write
+	command. TD_FORMAT completely ignores all data currently on a track and
+	does not check for disk change before performing the command. The
+	io_Data field must point to at least one track worth of data. The
+	io_Offset field must be track aligned, and the io_Length field must be
+	in units of track length (that is, NUMSEC*TD_SECTOR).
+
+	The device will format the requested tracks, filling each sector with
+	the contents of the buffer pointed to by io_Data. You
+	should do a read pass to verify the data.
+
+	If you have a hard write error during a normal write, you may find it
+	possible to use the TD_FORMAT command to reformat the track as part of
+	your error recovery process.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_FORMAT
+	io_Flags	0 or IOF_QUICK
+	io_Data		points to a buffer containing the data to write to the
+			track, must be at least as large as io_Length.
+	io_Length	number of bytes to format, must be a multiple of
+			(TD_SECTORS * NUMSEC).
+	io_Offset	byte offset from the start of the disk for the track to
+			format, must be a multiple of (TD_SECTORS * NUMSEC).
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  NOTES
+	Under versions of Kickstart earlier than V36, the io_Data had to
+	point to a buffer in chip memory. This restriction is no longer
+	present as of Kickstart V36 and beyond.
+
+  SEE ALSO
+	CMD_WRITE, TD_RAWWRITE
+
+a1floppy.device/TD_GETDRIVETYPE               a1floppy.device/TD_GETDRIVETYPE
+
+  NAME
+	TD_GETDRIVETYPE -- return the type of disk drive for the unit that was
+			   opened.
+
+  FUNCTION
+	This command returns the type of the disk drive to the user.
+	This number will be a small integer and will come from the set of
+	DRIVEXXX constants defined in <devices/A1Floppy.h>.
+
+	The only way you can actually use this command is if the A1Floppy
+	device understands the drive type of the hardware that is plugged in.
+	This is because the OpenDevice() call will fail if the A1Floppy device
+	does not understand the drive type. To find raw drive identifiers see
+	the disk.resource's DR_GETUNITID entry point.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_GETDRIVETYPE
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+	io_Actual - if io_Error is 0 this contains the drive type connected to
+		    this unit.
+
+  SEE ALSO
+	TD_GETNUMTRACKS, <devices/A1Floppy.h>
+
+a1floppy.device/TD_GETGEOMETRY                 a1floppy.device/TD_GETGEOMETRY
+
+  NAME
+	TD_GETGEOMETRY -- return the geometry of the drive.
+
+  FUNCTION
+	This command returns a full set of information about the
+	layout of the drive. The information is returned in the
+	DriveGeometry structure pointed to by io_Data.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_GETGEOMETRY
+	io_Flags	0 or IOF_QUICK
+	io_Data		Pointer to a DriveGeometry structure
+	io_Length	sizeof(struct DriveGeometry)
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  NOTE
+	This information may change when a disk in inserted when
+	certain hardware is present.
+
+  SEE ALSO
+	TD_GETDRIVETYPE, TD_GETNUMTRACKS
+
+a1floppy.device/TD_GETNUMTRACKS               a1floppy.device/TD_GETNUMTRACKS
+
+  NAME
+	TD_GETNUMTRACKS -- return the number of cylinders for the type of disk
+			   drive for the unit that was opened.
+
+  FUNCTION
+	This command returns the number of cylinders that are available
+	on the disk unit.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_GETNUMTRACKS
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+	io_Actual - if io_Error is 0 this contains the number of cylinders
+		    available on this unit.
+
+  SEE ALSO
+	TD_GETDRIVETYPE
+
+a1floppy.device/TD_MOTOR                             a1floppy.device/TD_MOTOR
+
+  NAME
+	TD_MOTOR -- control the on/off state of a drive motor.
+
+  FUNCTION
+	This command gives control over the disk motor. The motor may be
+	turned on or off. When it is on, the drive light automatically turns
+	on as well.
+
+	If the motor is just being turned on, the device will delay the
+	proper amount of time to allow the drive to come up to speed. Normally,
+	turning the drive on is not necessary, the device does this
+	automatically if it receives a request when the motor is off. However,
+	turning the motor off is the programmer's responsibility.
+
+	In addition, the standard instructions to the user are that it is safe
+	to remove a disk from a drive if and only if the motor is off (that is,
+	if the disk light is off).
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_MOTOR
+	io_Flags	0 or IOF_QUICK
+	io_Length	the requested state of the motor, 0 to turn the motor
+			off, and 1 to turn the motor on.
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+	io_Actual - if io_Error is 0 this contains the previous state of the
+		    drive motor.
+
+a1floppy.device/TD_PROTSTATUS                   a1floppy.device/TD_PROTSTATUS
+
+  NAME
+	TD_PROTSTATUS -- return whether the current disk is write-protected.
+
+  FUNCTION
+	This command is used to determine whether the current disk is
+	write-protected.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_PROTSTATUS
+	io_Flags	0 or IOF_QUICK
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+	io_Actual - if io_Error is 0, this tells you whether the disk in the
+		    drive is write-protected. 0 means the disk is NOT write-
+		    protected, while any other value indicates it is.
+
+a1floppy.device/TD_REMCHANGEINT               a1floppy.device/TD_REMCHANGEINT
+
+  NAME
+	TD_REMCHANGEINT -- remove a disk change software interrupt handler.
+
+  FUNCTION
+	This command removes a disk change software interrupt added
+	by a previous use of TD_ADDCHANGEINT.
+
+  IO REQUEST INPUT
+	The same IO request used for TD_ADDCHANGEINT.
+
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_REMCHANGEINT
+	io_Flags	0
+	io_Length	sizeof(struct Interrupt)
+	io_Data		pointer to Interrupt structure
+
+   IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+  BUGS
+	This command did not function properly under versions of Kickstart
+	earlier than V36. A valid workaround under these older versions of
+	Kickstart is:
+
+		Forbid();
+		Remove(ioRequest);
+		Permit();
+
+	Do not use this workaround in versions of Kickstart >= V36, use
+	TD_REMCHANGEINT instead (for future compatibility with V38+).
+
+  SEE ALSO
+	TD_ADDCHANGEINT, <devices/A1Floppy.h>
+
+a1floppy.device/TD_SEEK                               a1floppy.device/TD_SEEK
+
+  NAME
+	TD_SEEK -- control positioning of the drive heads.
+
+  FUNCTION
+	This command are currently provided for internal diagnostics,
+	disk repair, and head cleaning only.
+
+	TD_SEEK moves the drive heads to the track specified. The
+	io_Offset field should be set to the (byte) offset to which the seek is
+	to occur. TD_SEEK does not verify the head position until the
+	next read. That is, it only moves the heads; it does not actually read
+	any data.
+
+  IO REQUEST INPUT
+	io_Device	preset by the call to OpenDevice()
+	io_Unit		preset by the call to OpenDevice()
+	io_Command	TD_SEEK
+	io_Flags	0 or IOF_QUICK
+	io_Offset	byte offset from the start of the disk describing
+			where to move the head to.
+
+  IO REQUEST RESULT
+	io_Error - 0 for success, or an error code as defined in
+	           <devices/A1Floppy.h>
+
+

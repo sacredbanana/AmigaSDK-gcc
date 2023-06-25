@@ -1,0 +1,497 @@
+TABLE OF CONTENTS
+
+docky.library/-introduction-
+docky/Clone
+docky/DockyGet
+docky/DockyProcess
+docky/DockySet
+docky/Expunge
+docky/Obtain
+docky/Release
+docky.library/-introduction-                     docky.library/-introduction-
+       
+   PREFACE
+       A docky (plural form: 'Dockies') is a plugin for the AmiDock
+       toolbar system. Dockies are able to control most of AmiDocks
+       feature and provide a great way to expand AmiDocks features beyond
+       its default features.
+       Dockies may be invisible to the user or show static or dynamic
+       (animated) content. They may change their behavior, size and look
+       according their current equirements.
+
+       New API functions/tags are marked with the DockyAPI version they first
+       appeared with.
+
+   STANDALONE DOCKIES
+       The most common form of dockies are stand-alone dockies.
+       This docky-type uses the shared library feature of AmigaOS as common
+       interface to the internal properties and behavioural possibilities
+       of a docky.
+
+   APPLICATION DOCKIES
+       The second possible form of dockies are application dockies (short
+       form 'AppDockies'). An AppDocky is a docky which is introduced to the
+       system during runtime by an application using application.libraries
+       registration mechanism for applications.
+       The biggest difference between the two docky types is that
+       AppDockies belong to a running application and usually are
+       used to represent the current state of the owning application.
+
+   DOCKY INITIALIZATION SEQUENCE
+       The following steps are the typical sequence how AmiDock opens
+       a docky:
+
+        1. DockyGet(DOCKYGET_Version, ...);
+        2. DockySet(DOCKYSET_DockyFileName, ...);
+        3. DockySet(DOCKYSET_DockyAttention, ...);
+        4. DockySet(DOCKYSET_DockyPrefs, ...);
+        5. DockySet(DOCKYSET_Screen, ...);
+        6. DockySet(DOCKYSET_Window, ...);
+        7. DockySet(DOCKYSET_DockTypeChange, ...);
+        8. DockySet(DOCKYSET_DockOrientationChange, ...);
+        9. DockyGet(DOCKYGET_InvisibleProcess, ...);
+       10. DockyGet(DOCKYGET_Notifications, ...);
+       11. DockyGet(DOCKYGET_FrameDelay, ...);
+           [- future expansion -]
+       12. DockySet(DOCKYSET_DockFontChange, ...);
+       13. DockyGet(DOCKYGET_RenderMode, ...);
+       14. DockyGet(DOCKYGET_ShowsName, ...);
+       15. DockySet(DOCKYSET_DockScaleFactor, ...);
+       16. DockyGet(DOCKYGET_GetSize, ...);
+       17. DockyGet(DOCKYSET_RenderDestination, ...);
+
+       Description:
+       ~~~~~~~~~~~~
+
+        1.) DOCKYGET_Version
+            AmiDock retrieves the version of the DockyAPI this docky was
+            designed with.
+
+        2.) DOCKYSET_DockyFileName
+            AmiDock tells the docky its own (the dockie's) full file name
+            with this call. This is not done in the case of an AppDocky.
+            You may ignore this call if you don't need this information.
+
+        3.) DOCKYSET_DockyAttention
+            AmiDock provides a filled struct DockyAttention with this call
+            to the docky. The docky may copy the values of this struct
+            To being later able to signal AmiDock asynchronously if
+            something uregent is pending (the docky will be processed
+            as soon as possible if the docky if it responds to the
+            DOCKYGET_NeedsAttention call).
+            You may ignore this call if you don't need this information.
+
+        4.) DOCKYSET_DockyPrefs
+            If AmiDock has some preferences for this docky which were
+            loaded by AmiDock with its won prefs file, AmiDock will
+            provide the read PrefsObject * with this call.
+            You may ignore this call if you don't need this information.
+
+        5.) DOCKYSET_Screen
+            AmiDock sets off this call to let the dockies know about the
+            screen they will be displayed on (probably useful for
+            remapping colours, etc.)
+            You may ignore this call if you don't need this information.
+
+        6.) DOCKYSET_Window
+            The window provided with this call is the dock window this
+            docky will live in. This info isn't very often required,
+            though.
+            You may ignore this call if you don't need this information.
+       
+        7.) DOCKYSET_DockTypeChange
+            This call provides a struct DockyDockType which gives the
+            information about which dock (and what type dock type) this
+            docky is "living" in.
+            You may ignore this call if you don't need this information.
+           
+        8.) DOCKYSET_DockOrientationChange
+            Some dockies may depend on a certain dock orinentation
+            or may at least know about the orientation of the dock
+            they're living in. This call provides this information.
+            You may ignore this call if you don't need this information.
+            
+        9.) DOCKYGET_InvisibleProcess
+            If the docky answers with TRUE to this question, AmiDock
+            even will process the docky if it is currently not visible
+            to the user (for example of the docky resides in a
+            different category or if the docky was is minimized).
+            Do use this feature only for dockies needing this feature
+            as each processed docky of course needs a small amount of
+            CPU time to being processed.          
+   
+       10.) DOCKYGET_Notifications
+            During runtime, AmiDock is able to send off a lot of different
+            notifications about events happening in the context of
+            AmiDocks environment.
+            This DOCKYGET call retrieves a notification mask which allows
+            the docky to specify the which different notifications are of
+            interest to the docky. Notifications not specified here will
+            not be sent to a docky.
+            
+       11.) DOCKYGET_FrameDelay
+            Specifies the update frequency of a Docky.
+            Have a look at the DockyGet function documentation for more
+            information about this topic.
+
+       12.) DOCKYSET_DockFontChange
+            AmiDock notifies the docky everytime the font attribute, front
+            pen, background pen and drawmode changes. To let the docky use
+            the right font and pens right from the start, this is called
+            at startup.
+
+
+       [- room for future expansion -]
+       Never do make any assumptions about what could be sent inbetween here.
+       Always respond to unknown messages with FALSE (not implemented).
+
+
+       13.) DOCKYGET_RenderMode
+            This call allows AmiDock to retrieve the rendermode required by
+            docky in question. You have to return one of
+            enum enDockyRenderMode here.
+       
+       14.) DOCKYGET_ShowsName
+            AmiDock can automatically render the name of the docky under the 
+            image. Returning TRUE/FALSE enables/disables this feature.
+            
+       15.) DOCKYSET_DockScaleFactor
+            Custom dockies that render their own imagery may want to adhere
+            to the users current setting for icon scaling factor. The LONG
+            supplied here is the current user value of that scaling, and can 
+            be used to calculate the size required in the dock. (see below)
+
+       16.) DOCKYGET_GetSize
+            You have to return a correctly filled struct DockySize here.
+            This allows AmiDock to prepare the currect render destination
+            for the docky. Currently the maximum size is the screen size.
+            The docky may wish to use the scaling factor supplied above 
+            in this calculation.
+
+       17.) DOCKYSET_RenderDestination
+            This is the final call within the initialization phase. AmiDock
+            successfully went through all required steps and allocated the
+            render destination (for example bitmap data). The render
+            destination returned by this call is the place where a docky has
+            to render its imaginery to.
+ 
+   SEE ALSO
+       DockyGet(), DockySet(), <libraries/docky.h>
+
+docky/Clone                                                       docky/Clone
+
+   NAME
+      Clone -- Creates a new instance of the current docky
+               interface.
+
+   SYNOPSIS
+      struct DockyIFace *Clone(void)
+
+   FUNCTION
+      This method creates a new instance of a docky. Each time an additional
+      docky is displayed within a dock, AmiDock calls the Clone method to
+      create a new instance of the docky. Internally, this method usually
+      calls IExec->MakeInterface() to allocate the required memory. You also
+      have to initialize your docky data within this method (like you're
+      doing in a C++ constructor).
+
+   RESULT
+      A pointer to the clones docky interface or NULL in case of a failure.
+
+   SEE ALSO
+      Expunge()
+
+docky/DockyGet                                                 docky/DockyGet
+
+   NAME
+      DockyGet -- Used by AmiDock to gather various informations from dockies
+
+   SYNOPSIS
+      BOOL DockyGet(uint32 msgType, uint32 * msgData);
+
+   FUNCTION
+      This function accepts different message types defined in
+      "libraries/docky.h".
+
+      DOCKYGET_Version -- uint32
+          This msgType has to be processed by each docky to get the chance of
+          being accepted by AmiDock. You have to return the define
+          DOCKYVERSION of docky.h here to give AmiDock the chance to know
+          which version of the docky API was used for this docky.
+          Example: 
+          switch (msgType)
+          {
+              case DOCKYGET_Version:
+                  *msgData = DOCKYVERSION;
+                  break;
+              ...
+          }
+ 
+      DOCKYGET_GetSize -- struct DockySize
+          AmiDock retrieves the size needed for the docky to allocate the
+          required render buffer needed for drawing this docky. Currently
+          the maximal size of the render buffer is the screen size.
+
+      DOCKYGET_FrameDelay -- int32
+          The frame delay specifies the update frequency which is required by
+          this docky. A frame delay of 0 means that the docky wants to be
+          updated each 1/50th second. A value of 1 means an update each
+          2/50th second, ...
+          If you sepecify -1 here, AmiDock doesn't update the docky
+          automatically. Specify -1, if your docky doesn't render animations
+          changing content.
+
+      DOCKYGET_RenderMode -- uint32
+          This call allows AmiDock to retrieve the rendermode required by
+          docky in question. You have to return one of
+          enum enDockyRenderMode here. See <libraries/docky.h>
+
+      DOCKYGET_Notifications -- uint32
+          During runtime, AmiDock is able to send off a lot of different
+          notifications about events happening in the context of
+          AmiDocks environment.
+          This DOCKYGET call retrieves a notification mask which allows
+          the docky to specify which different notifications are of
+          interest to the docky. Notifications not specified here will
+          not be sent to a docky. See enum enDockyNotify from
+          <libraries/docky.h>
+
+      DOCKYGET_Name -- STRPTR
+          Return the name of your docky here
+
+      DOCKYGET_DockyPrefs -- PrefsObject **
+          Return a PrefsObject which contains the prefs for this docky
+
+	   DOCKYGET_InvisibleProcess -- void
+
+      DOCKYGET_DockyPrefsChanged -- void
+          Set if prefs have changed an need to be saved (only checked
+          on AmiDock quit)
+
+      DOCKYGET_Icon -- struct DiskObject *
+          If rendermode==DOCKYRENDERMODE_ICON, AmiDock will ask for this tag.
+
+      DOCKYGET_ContextMenu -- Object *
+          For example: DoMethod((Object *)msgData, OM_ADDMEMBER, ...);
+
+      DOCKYGET_NeedsAttention -- uint32 BOOL
+          If true after
+          Signal(dockyAttention->amidockTask,
+                 1L<<dockyAttention->attentionSignalBit),
+          this docky gets immediately processed.
+
+      DOCKYGET_ShowsName -- uint32 BOOL
+
+      DOCKYGET_SizeAttribs -- uint32
+          A mask of enum enDockySizeAttribs...
+
+      DOCKYGET_AllowsRename -- uint32 BOOL
+          If rendermode==DOCKYRENDERMODE_Icon, AmiDock will ask for this tag.
+          Return TRUE if your docky allows renaming.
+
+      DOCKYGET_AllowsIconChange -- uint32 BOOL (53.1)
+          Return TRUE if your docky allows an alternate icon to be set. If
+          this is TRUE, the "Alt.Icon" setting in AmiDock preferences for
+          your docky becomes enabled. Also you must listen to
+          DOCKYNOTIFY_CHANGE to get DOCKYSET_ObjectIconChange.
+
+   INPUTS
+       msgType - one of enum enDockyGet
+
+       msgData - uint32* pointer to a uint32 field to which the result
+                 of this get operation shall be stored to.
+
+   RESULT
+       Returns TRUE if the specified msgType was known to the docky.
+       In that case, a result may be passed back to AmiDock through the
+       msgData pointer.
+       If the docky returns FALSE, the docky indicates, that it didn't
+       implement the requested feature or that it was not wanted at the
+       current moment.
+
+   SEE ALSO
+       <libraries/docky.h>
+
+docky/DockyProcess                                         docky/DockyProcess
+
+   NAME
+      DockyProcess -- Description
+
+   SYNOPSIS
+      BOOL DockyProcess(uint32 turnCount, uint32 *msgType,
+                        uint32 *msgData, BOOL *anotherTurn);
+
+   FUNCTION
+      Within this function, the docky gets the CPU time it requires to do
+      its intended job. This function also provides a way to communicate
+      actively with AmiDock. As you may have seen, the DockyGet() and
+      DockySet() methods are always initiated by AmiDock. There is no
+      chance for a docky to "ask AmiDock a question".
+      This is different for the DockyProcess() function - here, a docky
+      allowed to fire off one ore more requests to AmiDock which will be
+      answered immediately.
+      
+      The operation sequence looks like the following:
+
+      a) in case of no communication:
+         1. result = DockyProcess(0, msgTypePtr, msgDataPtr, anotherTurnPtr);
+            -> the docky returns TRUE/FALSE if it requires redrawing and sets
+               *anotherTurnPtr to FALSE.
+
+      b) in case of two requests:
+         1. DockyProcess(0, msgTypePtr, msgDataPtr, anotherTurnPtr);
+            -> The docky sets *msgTypePtr != 0,  *anotherTurnPtr==TRUE
+            -> AmiDock places a possible result in msgDataPtr, msgTypePtr
+               remains unchanged.
+            -> AmiDock resets *anotherTurnPtr to FALSE
+         2. DockyProcess(1, msgTypePtr, msgDataPtr, anotherTurnPtr);
+            -> similar sequence as before
+         3. result = DockyProcess(2, msgTypePtr, msgDataPtr, anotherTurnPtr);
+            -> the docky returns TRUE/FALSE if it requires redrawing and sets
+               *anotherTurnPtr to FALSE.
+      
+       You will notice, that turnCount is increased by AmiDock each time it
+       re-iterates trough the communication cycle. If for example a
+       programming error within the docky causes an endless loop
+       (for example if *anotherTurnPtr is always TRUE), AmiDock will remove
+       the docky after a limitation of several throusand communication
+       cycles.
+
+   INPUTS
+       turnCount - sequence number within this communication cycle
+
+       msgType - Pointer to a uint32 data location of AmiDock where
+                 the docky can place its request identifier.
+                 The value stored here will remain the same for the
+                 next call of DockyProcess() within this communication
+                 cycle to give the docky a chance to know what type
+                 of result it receives in msgData.
+
+       msgData - Pointer to a uint32 data location of AmiDock where the
+                 docky may place addtional required message data for
+                 AmiDock. AmiDock will also place the result at this
+                 location.
+                 Please remember that all data you receive from AmiDock
+                 is only readable while being in the function call where
+                 you received it! You have to copy every peace of
+                 information to your own data buffer if you want to work
+                 with it in the future!
+
+       anotherTurn - Pointer to a BOOL data location where the docky has
+                     to place TRUE or FALSE wether it wants another
+                     communication cycle or not.
+
+   RESULT
+       The docky has to return TRUE in the last call of DockyProcess()
+       [the call where *anotherTurn is set to FALSE] if AmiDock shall
+       redraw the docky.
+       If the docky returns FALSE here, AmiDock doesn't redraw the docky
+       after that call of DockyProcess().
+
+docky/DockySet                                                 docky/DockySet
+
+   NAME
+      DockySet -- Used by AmiDock to send messages to the docky with
+                  various informations and parameters
+
+   SYNOPSIS
+      BOOL DockySet(uint32 msgType, uint32 msgData);
+
+   FUNCTION
+      This function accepts different message types defined in
+      <libraries/docky.h> which aren't completely listed here.
+
+      DOCKYSET_DockFontChange -- struct DockyDockFont *
+          AmiDock notifies the docky everytime the font attribute, front
+          pen, background pen and drawmode changes.
+
+      DOCKYSET_ObjectIconChange -- struct DockyObjectInfo * (53.1)
+          Sent as DOCKYNOTIFY_CHANGE to the docky if an objects icon gets
+          changed.
+          msgData will contain a pointer to a struct DockyObjectInfo with
+          the field objectIcon set to the full path to the new icon.
+
+
+      ...more definitions in <libraries/docky.h>...
+
+   INPUTS
+       msgType - (uint32) One of DOCKYSET_#?
+       msgData - (uint32) Message specific data
+
+   RESULT
+       TRUE on success
+       FALSE on error or unimplemented message types
+
+   NOTES
+       Please remember that all data you receive from AmiDock is only
+       readable while being in the function call where you received it!
+      	You have to copy every piece of information to your own data buffer
+      	if you want to work with it in the future!
+
+   SEE ALSO
+      <libraries/docky.h>
+
+docky/Expunge                                                   docky/Expunge
+
+   NAME
+      Expunge -- 
+
+   SYNOPSIS
+      void Expunge(void)
+
+   FUNCTION
+      This is the destructor of a docky. Deallocate everything you've
+      allocated before here as it will be the last chance to do so.
+
+   RESULT
+       This function does not return a result.
+
+   SEE ALSO
+       Clone()
+
+docky/Obtain                                                     docky/Obtain
+
+   NAME
+      Obtain -- Description
+
+   SYNOPSIS
+      uint32 Obtain(void)
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       The result ...
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+docky/Release                                                   docky/Release
+
+   NAME
+      Release -- Description
+
+   SYNOPSIS
+      uint32 Release(void)
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       The result ...
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+

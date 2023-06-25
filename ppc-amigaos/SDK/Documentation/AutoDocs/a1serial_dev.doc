@@ -1,0 +1,425 @@
+TABLE OF CONTENTS
+
+a1serial.device/AbortIO
+a1serial.device/BeginIO
+a1serial.device/CMD_CLEAR
+a1serial.device/CMD_FLUSH
+a1serial.device/CMD_READ
+a1serial.device/CMD_RESET
+a1serial.device/CMD_START
+a1serial.device/CMD_STOP
+a1serial.device/CMD_WRITE
+a1serial.device/SDCMD_BREAK
+a1serial.device/SDCMD_QUERY
+a1serial.device/SDCMD_SETPARAMS
+a1serial.device/AbortIO                               a1serial.device/AbortIO
+
+   NAME
+	AbortIO -- abort an I/O request
+
+   SYNOPSIS
+	AbortIO(request)
+
+	VOID AbortIO(struct IOExtSer *);
+
+   FUNCTION
+	This is an exec.library call.
+
+	This function attempts to aborts a specified read or write request.
+	If the request is active, it is stopped immediately. If the request is
+	queued, it is painlessly removed. The request will be returned
+	in the same way any completed request is.
+
+	After AbortIO() you must generally do a WaitIO().
+
+   INPUTS
+	request - pointer to the IOExtSer that is to be aborted.
+
+   RESULTS
+	io_Error - IOERR_ABORTED if successful or IOERR_SUCCESS on error.
+
+   NOTES
+	For backwards compatibility with serial.device io_Flags will have
+	bit 5 set on a successful abort. This is a deprecated feature.
+   Do not use in new code. Check io_Error instead.
+
+a1serial.device/BeginIO                               a1serial.device/BeginIO
+
+   NAME
+	BeginIO -- start up an I/O request
+
+   SYNOPSIS
+	BeginIO(request)
+
+	VOID BeginIO(struct IOExtSer *);
+
+   FUNCTION
+	This is a direct function call to the device. It is intended for
+	more advanced programmers. See exec's DoIO() and SendIO() for
+	the normal method of calling devices.
+
+	This function initiates an I/O request made to the serial
+	device. The IO_QUICK flag is not supported and all requests
+	are queued before processing them.
+
+	Multiple requests are handled via FIFO queueing.
+
+   INPUTS
+	request - pointer to an IOExtSer I/O request (see a1serial.h)
+	          containing a valid command in io_Command to process,
+	          as well as the command's other required parameters.
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if the BeginIO succeeded or an error code.
+	           I/O errors won't be reported until the I/O completes.
+
+   SEE ALSO
+	devices/a1serial.h
+
+a1serial.device/CMD_CLEAR                           a1serial.device/CMD_CLEAR
+
+   NAME
+	CMD_CLEAR -- clear the serial port buffers
+
+   FUNCTION
+	This command resets the serial port's read buffer pointers.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_CLEAR
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+a1serial.device/CMD_FLUSH                           a1serial.device/CMD_FLUSH
+
+   NAME
+	CMD_FLUSH -- clear all queued I/O requests for the serial port
+
+   FUNCTION
+	This command purges the read and write request queues for the
+	serial device. Flush will not affect active requests.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_FLUSH
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+a1serial.device/CMD_READ                             a1serial.device/CMD_READ
+
+   NAME
+	CMD_READ -- read input from serial port
+
+   FUNCTION
+	This command causes a stream of characters to be read in from
+	the serial port buffer. The number of characters is specified
+	in io_Length.
+
+	The SDCMD_QUERY command can be used to check how many characters
+	are currently waiting in the serial port buffer. If more characters
+	are requested than are currently available, the ioRequest will
+	be queued until it can be satisfied.
+
+	The best way to handle reads is to first SDCMD_QUERY to get the number
+	of characters currently in the buffer. Then post CMD_READ for that
+	number of characters (or the maximum size of your buffer).
+
+	If zero characters are in the buffer, post a request for 1 character.
+	When at least one is ready, the device will return it.  Now start
+	over with another query.
+
+	Before the program exits, it must be sure to AbortIO() then WaitIO()
+	any outstanding ioRequests.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_READ
+	io_Length  - number of characters to receive
+	io_Data    - pointer to buffer
+
+   RESULTS
+	io_Error - If the read succeeded io_Error will be IOERR_SUCCESS.
+	           If the read failed, then io_Error will be non-zero.
+	           io_Error will indicate problems such as parity mismatch,
+	           break and buffer overrun.
+
+   SEE ALSO
+	a1serial.device/SDCMD_QUERY
+	a1serial.device/SDCMD_SETPARAMS
+
+   BUGS
+	Old documentaion mentioned a mode where io_Length was set to -1.
+	If you want a NULL terminated read, use the io_TermArray instead.
+
+	The break feature is currently not implemented.
+
+a1serial.device/CMD_RESET                           a1serial.device/CMD_RESET
+
+   NAME
+	CMD_RESET -- reinitializes the serial port
+
+   FUNCTION
+	This command resets the serial port to its freshly initialized
+	condition. It aborts all I/O requests both queued and current,
+	relinquishes the current buffer, obtains a new default sized
+	buffer, and sets the port's flags and parameters to their 
+	boot-up time default values. The functions places the reset
+	parameter values in the I/O request.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_RESET
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+a1serial.device/CMD_START                           a1serial.device/CMD_START
+
+   NAME
+	CMD_START -- restart paused I/O over the serial port
+
+   FUNCTION
+	This function restarts all current I/O on the serial port by 
+	sending an xON to the "other side", and submitting a "logical
+	xON" to "our side", if/when appropriate to current activity.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_START
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+   BUGS
+	Sending an xON to the "other side" is currently not implemented.
+
+a1serial.device/CMD_STOP                             a1serial.device/CMD_STOP
+
+   NAME
+	CMD_STOP -- pause all current I/O over the serial port
+
+   FUNCTION
+	This command halts all current I/O on the serial port by 
+	sending an xOFF to the "other side", and submitting a "logical
+	xOFF" to "our side", if/when appropriate to current activity.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_STOP
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+   BUGS
+	Sending an xOFF to the "other side" is currently not implemented.
+
+a1serial.device/CMD_WRITE                           a1serial.device/CMD_WRITE
+
+   NAME
+	CMD_WRITE -- send output to serial port
+
+   FUNCTION
+	This command causes a stream of characters to be written out
+	the serial port. The number of characters is specified in
+	io_Length, unless -1 is used, in which case output is sent until
+	a null (0x00) is encountered.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_WRITE
+	io_Length  - number of characters to transmit, or if set
+	             to -1 transmit until null encountered in buffer
+	io_Data    - pointer to block of data to transmit
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+   SEE ALSO
+	a1serial.device/SDCMD_SETPARAMS
+
+a1serial.device/SDCMD_BREAK                       a1serial.device/SDCMD_BREAK
+
+   NAME
+	SDCMD_BREAK -- send a break signal over the serial line
+
+   FUNCTION
+	This command sends a break signal (serial line held low for an
+	extended period) out the serial port. 
+
+	After a duration (user specifiable via setparams, default 250000
+	microseconds) the bit is reset and the signal discontinued.
+	If the QUEUEDBRK bit of io_SerFlags is set in the io_Request 
+	block, the request is placed at the back of the write-request 
+	queue and executed in turn. If the QUEUEDBRK bit is not set, 
+	the break is started immediately, control returns to the 
+	caller, and the timer discontinues the signal after the 
+	duration is completed. Be aware that calling BREAK may
+	affect other commands such as ABORT, FLUSH, STOP, START, etc...
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - CMD_SDBREAK
+	io_Flags   - set/reset IO_QUICK per above description
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+   BUGS
+	This command is currently not implemented and always returns
+	IOERR_SUCCESS.
+
+a1serial.device/SDCMD_QUERY                       a1serial.device/SDCMD_QUERY
+
+   NAME
+	SDCMD_QUERY -- query serial port/line status
+
+   FUNCTION
+	This command return the status of the serial port lines and
+	registers. The number of unread bytes in the serial device's
+	read buffer is shown in io_Actual.
+
+	The break send & received flags are cleared by a query, and
+	whenever a read IORequest is returned with an error
+	in io_Error.
+
+   INPUTS
+	io_Message - mn_ReplyPort initialized
+	io_Device  - set by OpenDevice
+	io_Unit    - set by OpenDevice
+	io_Command - SDCMD_QUERY
+
+   RESULTS
+	io_Status -          BIT  ACTIVE  FUNCTION
+
+	            LSB       0    ---    reserved
+	                      1    ---    reserved
+	                      2    low    Ring Indicator
+	                      3    low    Data Set Ready
+	                      4    low    Clear To Send
+	                      5    low    Carrier Detect
+	                      6    low    Request To Send
+	                      7    low    Data Terminal Ready
+	            MSB       8    high   hardware overrun
+	                      9    high   break sent (most recent output)
+	                     10    high   break received (as latest input)
+	                     11    high   transmit x-OFFed       
+	                     12    high   receive x-OFFed       
+	                  13-15    ---    reserved
+
+	io_Actual - set to count of unread input characters
+
+	io_Error - Query will always succeed with IOERR_SUCCESS.
+
+   BUGS
+	Older documentation suggested that the 'ring indicator' signal
+	was active high. This was peculiar to the Classic Amigas.
+
+a1serial.device/SDCMD_SETPARAMS               a1serial.device/SDCMD_SETPARAMS
+
+   NAME
+	SDCMD_SETPARAMS -- change parameters for the serial port
+
+   FUNCTION
+	This command allows the caller to change parameters for the
+	serial device. Except for xON-xOFF enable/disable, it will
+	reject a setparams call if any reads or writes are active 
+	or pending. 
+
+	Note specifically:
+
+	1. Valid input for io_Baud is between 112 and 115200 baud inclusive.
+
+	2. The EOFMODE and QUEUEDBRK bits of io_SerFlags can be set/reset
+	   in the request block without a SETPARAMS command. The SHARED
+	   and 7WIRE bits of io_SerFlags can be used in OpenDevice calls.
+	   ALL OTHER PARAMETERS CAN ONLY BE CHANGED BY THE SETPARAMS
+	   COMMAND.
+
+	3. If not used, io_ExtFlags MUST be set to zero.
+
+	4. xON-xOFF is by default enabled. The XDISABLED bit is the only
+	   parameter that can be changed via a SetParams call while the
+	   device is active. Note that this will return the value
+	   SerErr_DevBusy in the io_Error field.
+
+	   xON/xOFF handshaking is inappropriate for certain binary transfer
+	   protocalls, such as Xmodem.  The binary data might contain the
+	   xON (ASCII 17) and xOFF (ASCII 19) characters.
+
+	5. If you select mark or space parity (see io_ExtFlags in a1serial.h),
+	   this will cause the SERB_PARTY_ON bit to be set, and the setting
+	   of SERB_PARTY_ODD to be ignored.
+
+	6. Note that at this time parity is *not* calculated for the xON-xOFF
+	   characters. If you have a system that is picky about the parity of
+	   these, you must set your own xON-xOFF characters in io_CtlChar.
+
+	7. 7WIRE (CTS/RTS) handshake is bi-directional. The external side
+	   is expected to drop CTS several character times before the external
+	   buffer is full.
+
+   INPUTS
+	io_Message   -  mn_ReplyPort initialized
+	io_Device    -  preset by OpenDevice
+	io_Unit      -  preset by OpenDevice
+	io_Command   -  SDCMD_SETPARAMS (0x0B)
+	                NOTE that the following fields are filled in by Open 
+	                to reflect the serial device's current configuration.
+	io_CtlChar   -  a longword containing byte values for the
+	                xON,xOFF,INQ,ACK fields (respectively)
+	                (INQ/ACK not used at this time)
+	io_RBufLen   -  length in bytes of input buffer
+	                NOTE that any change in buffer size causes the
+	                current buffer to be deallocated and a new,
+	                correctly sized one to be allocated. Thusly,
+	                the CONTENTS OF THE OLD BUFFER ARE LOST.
+	io_ExtFlags  -  additional serial flags (bitdefs in devices/a1serial.h)
+	                mark & space parity may be specified here.
+	io_Baud      -  baud rate for reads AND writes. (See 1 above)
+	io_BrkTime   -  duration of break signal in MICROseconds
+	io_TermArray -  ASCII descending-ordered 8-byte array of
+	                termination characters. If less than 8 chars
+	                used, fill out array w/lowest valid value.
+	                Terminators are checked only if EOFMODE bit of
+	                io_Serflags is set. (e.g. x512F040303030303 )
+	io_ReadLen   -  number of bits in read word (1-8) not including parity
+	io_WriteLen  -  number of bits in write word (1-8) not including parity
+	io_StopBits  -  number of stop bits (0, 1 or 2)
+	io_SerFlags  -  see devices/a1serial.h for bit equates, NOTE that x00
+	                yields exclusive access, xON/OFF-enabled, no
+	                parity checking, 3-wire protocol and TermArray
+	                inactive.
+
+   RESULTS
+	io_Error - IOERR_SUCCESS if successful or an error code.
+
+   BUGS
+	Older documentation suggested that the 'ring indicator' signal
+	was active high. This was peculiar to the Classic Amigas.
+
+	The xON and xOFF feature is currently not implemented.
+
+	The break signal feature is currently not implemented.
+
+   SEE ALSO
+	exec.library/OpenDevice
+
+

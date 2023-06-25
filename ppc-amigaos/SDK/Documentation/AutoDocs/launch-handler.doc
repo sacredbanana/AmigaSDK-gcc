@@ -1,0 +1,231 @@
+TABLE OF CONTENTS
+
+launch-handler
+
+
+launch-handler                                                 launch-handler
+
+   NAME
+	launch_handler -- A DOS handler to launch applications by opening
+	                  a descriptor string with IDOS->Open(). (V53)
+
+   SYNOPSIS
+	BPTR handle = IDOS->Open("URL:http://www.domain.com", MODE_OLDFILE);
+
+	BPTR handle = IDOS->Open("URL:file =Work:docs/demo.html", MODE_OLDFILE);
+
+	BPTR handle = IDOS->Open("URL:mailto name@domain.com", MODE_OLDFILE);
+
+
+   FUNCTION
+	The launch-handler allows applications to asyncronously start selected
+	client programs and pass command lines to them by opening a descriptor
+	string as a virtual AmigaDOS path specification, using IDOS->Open().
+	If the operation succeeded a BPTR filehandle is returned, 
+	(which needs to be immediately IDOS->Close()'ed again).  
+	On failure, the result returned is ZERO.
+
+	Applications such as web browsers and email clients, etc... must be
+	able to operate properly via the shell commandline interface and must
+	support all required features via commandline arguments, applications
+	must also be able to detect multiple instances being started and
+	therefore should take appropriate action when this occurs.
+	Such action for example, using a web browser, would be to not start
+	another GUI instance of the application, but instead open a new window
+	or tab on the existing instance and display the supplied URL. 
+
+	This requirement can be best implemented by using a small "loader"
+	program that runs the initial instance or messages an existing
+	instance of the application.  Such a small loader executable should
+	also be used when the main application takes longer than 2 full seconds
+	to load, or for the user interface to appear, especially on a 
+	"lower end" machine.  The loader should also render a splash window
+	indicating the loading status of the main application so the user
+	receives adequate feedback.
+
+	The commandline format used for applications should be declared in
+	the help prompt using the IDOS->ReadArgs() function template.
+	As each application has its own setup line in the launch-handler
+	configuration, the format used is up to the author of the software,
+	however, it would be advisable to use formats and terminology similar
+	to other software of its type to avoid user confusion.
+
+
+   MOUNTLIST ENTRY
+	The dos.library automatically mounts the handler on system boot.
+	The mount entry for the URL: DOS device is formatted like this;
+
+	   URL:    Handler   = L:launch-handler
+	           Priority  = 5
+	           StackSize = 500000
+	           GlobVec   = -1
+	           Startup   = "APPDIR:URL"
+	   #
+
+	The "StackSize" sets the handler stack size which will be
+	inherited by the clients being started, as a MINIMUM value.
+	Note that individual applications can increase their stack value 
+	by using a "stack cookie", see; IDOS->FindSegmentStackSize() doc
+	for more information on this subject.
+
+	The "Startup" line tells the handler the name and path to the 
+	configuration file editor.  The default is "APPDIR:URL".
+	The "URL" prefs program handles the configuration as described below,
+	so there is no need to manually edit the configuration.
+
+
+   GLOBAL VARIABLES, CONFIGURATION FILES
+	The path and name of the client configuration files are automatically
+	determined from the mounted device name which is used as the directory
+	name, plus the protocol being used as a filename, with ".LH" appended.
+	EG;  "ENVARC:launch-handler/URL/HTTP.LH".
+
+	The protocol part is extracted from the string passed to IDOS->Open(),
+	as all the characters after the first colon of the device name,
+	up to the first non-alpha-numeric character.
+	Any further non-alpha-numeric characters that appear after the protocol
+	name will be automatically removed before being further passed on.
+	(From 53.21 an underscore character is also treated as alpha)
+
+	IDOS->Open("URL:http://www.domain.com",...);
+	Uses the configuration file "HTTP.LH" for the http protocol.
+
+	IDOS->Open("URL:file=Work:docs/demo.html",...);
+	Uses the configuration file "FILE.LH" for the file protocol.
+
+	IDOS->Open("URL:mailto:sales@company.com",...);
+	Uses the configuration file "MAILTO.LH" for the mailto protocol.
+
+	Inside each of these files, there are four keywords to define the way
+	the command line is formatted and executed, the client entry for this
+	protocol must occupy the one single line,  it is also possible to
+	specify more than one client by using additional configuration lines.
+
+	If more than one client line is specified, launch-handler will post a
+	requester asking which client should be started to handle the action.
+	   
+	Available keywords are;  CLIENTNAME, CLIENTPATH, CMDFORMAT, DEBUG
+
+	  CLIENTNAME = "CLIENT NAME"
+	    The label for the client that will be displayed in a requester.
+	    Defaults to the application name from CLIENTPATH if not specified.
+
+	  CLIENTPATH = "APPDIR:client"
+	    The AmigaDOS path to the client program which is to be run.
+
+	  CMDFORMAT  = "<prot>://%s"  where <prot> is "http", "ftp", "mailto",
+	    or other such supported protocol.
+	    The exec RawDoFmt() format string, where the token '%s' will be
+	    where the command line parameter is inserted, the command line to
+	    be passed on will be pre-stripped of extraneous non-alpha-numeric
+	    characters following the protocol characters, which means that the
+	    protocol and any extraneous characters will need to be specified
+	    again litterally within the CMDFORMAT string if they are required.  
+	    This token will generally need to be configured for each client
+	    as they may not use the same commandline template format. 
+
+	    URL's that contain spaces, equal signs, asterisks or other reserved
+	    characters will need to be completely enclosed within double quotes,
+	    therefore the asterisk '*' escape character is available here for
+	    embedding a double quote within the double quoted CMDFORMAT string.
+	    EG: Here is an example of a CMDFORMAT token using a double quoted
+	        hyperlink part, also prefixed with a ReadArgs() commandline
+	        template keyword using "URL=" for the client program.
+	        (Spaces added for clarity)     " URL= *" http://%s *" " 
+
+	  DEBUG 
+	    Specifying this directive will show the command line and all the
+	    relevant configuration information before starting the client.
+	    This is used primarily for development purposes it only needs
+	    to be preset once, the handler will enable debug mode if found.
+
+	    In DEBUG mode, all clients in the configuration file will be shown,
+	    whether they are installed on this machine or not.
+
+
+	For the common protocols, initial default configurations are provided,
+	these are kept in the "defaults" sub-directory and will be used to build
+	the initial working protocol files upon the first handler invocation.
+
+                                ----- 
+
+   EXAMPLE
+	This example will demonstrate how to call the handler from within an
+	application to asyncronously start a web browser on a link.
+
+	    BPTR handle = IDOS->Open("URL:http://www.domain.com",MODE_OLDFILE);
+
+	    if( handle )  /* Check return value and Close() immediately. */
+	    {
+	        IDOS->Close(handle);
+	        IDOS->PutStr("Client started successfully.\n");
+	    }
+	    else
+	    {
+	        IDOS->PutStr("Error: Unable to start client.\n");
+	    }
+	
+                                ----- 
+	
+   EXAMPLE
+	This example allows an application to determine if the URL: handler is
+	currently mounted and to test whether the launch-handler is working
+	without posting any requesters.
+
+	    APTR oldwin = IDOS->SetProcWindow((APTR)-1); 
+	    BPTR handle = IDOS->Open("URL:NIL:",MODE_OLDFILE);
+	                  IDOS->SetProcWindow(oldwin);
+ 
+	    if( handle )  /* Non-zero return values indicates success. */
+	    {
+	        IDOS->Close(handle);  /* Must still close it */
+	        IDOS->PutStr("URL: is operating correctly.\n");
+	    }
+	    else
+	    {
+	        IDOS->PutStr("URL: is not functioning.\n");
+	    }
+
+                                ----- 
+
+   NOTES
+	The open mode is not currently relevant, but use MODE_OLDFILE for now,
+	future changes may require different modes.
+
+	The Open() descriptor string length is currently limited to 4000 bytes.
+ 
+	Read() and Write() actions to the stream currently behave as "NIL:"
+	however, this is reserved for future functional enhancements, so please
+	avoid using it at the moment. 
+
+	The Open() call will return success when the user selects "CANCEL" from
+	the multi-selection requester, this is deemed to be a valid user choice.
+
+	From 53.21 with FILE protocol specifications, the handler will convert 
+	relative filesystem paths to an absolute device-centric full DOS path
+	specification before passing it to the client program.
+
+	From 53.22 with the FILE protocol specification, the handler will remove
+	the "localhost" keyword if present.
+
+	From 53.25 a special test protocol of "NIL:" is avalable that will cause
+	Open() to succeed (or not) to be able to tell quickly if the URL: device
+	is currently mounted.  eg: IDOS->Open("URL:NIL:",MODE_OLDFILE);
+
+	From 53.36, "mailto=me@here.com?subject=hello" will insert a space in
+	place of the '?' for the client ReadArgs() parser.
+
+	From 53.37, all "%20" space encodings in commandline will be converted
+	to a real space character.
+
+	From 53.38, mailto: specifications with a "?subject=" identifier that
+	also have spaces in this section, will be enclosed in double quotes.
+
+	This handler supports ACTION_SHUTDOWN,  therefore it can be dismounted
+	with the C:Dismount command.
+
+
+   SEE ALSO
+	C:URLOpen  
+
+

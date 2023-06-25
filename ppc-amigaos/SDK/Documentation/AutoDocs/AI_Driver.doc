@@ -1,0 +1,205 @@
+TABLE OF CONTENTS
+
+aidriver.library/AINS_CleanUp
+aidriver.library/AINS_InitDriver
+aidriver.library/AINS_Read
+aidriver.library/AINS_Read_KBD
+aidriver.library/AINS_SetEventMode
+aidriver.library/AINS_TestUnit
+aidriver.library/AINS_CleanUp                   aidriver.library/AINS_CleanUp
+
+   NAME
+	AINS_CleanUp -- Frees the Resources for this Unit again
+
+   SYNOPSIS
+	result = AINS_CleanUp(ID);
+
+	BOOL AINS_CleanUp(AIN_DeviceID ID);
+
+   FUNCTION
+       This function frees the resources for the Unit which corresponds
+       to the AIN_DeviceID given as parameter again. If an invalid ID
+       was given this function does nothing. The function is only successful,
+       if a valid ID was given (especially an ID which belongs to this
+       Driver) and if the freeing of the Resources could be successfully
+       performed.
+
+   INPUTS
+       ID              - The ID of the Unit of this device for which the
+                         resources should be freed again.
+					  
+   RESULT
+	result	        - TRUE means valid parameters were given to the 
+                         function, and the resources for the Unit in
+                         question were freed again.
+		     
+   SEE ALSO
+	AINS_InitDriver
+
+aidriver.library/AINS_InitDriver             aidriver.library/AINS_InitDriver
+
+   NAME
+	AINS_InitDriver -- Initializes a specific Unit of a specific device
+
+   SYNOPSIS
+	result = AINS_InitDriver(ID);
+
+	BOOL AINS_InitDriver(AIN_DeviceID ID);
+
+   FUNCTION
+       This function initializes the Driver for a specific Unit. It will
+       fail if the ID provided does not belong to this device, or if the
+       allocation of resources failed (for example if the user tries to
+       allocate a Unit which already has been allocated). If your Driver
+       needs a timer interrupt you also need to initialize that interrupt.
+
+   INPUTS
+       ID              - The ID of the Unit of this device for which the
+                         resources should be allocated
+					  
+   RESULT
+	result	        - TRUE means valid parameters were given to the 
+                         function, and the resources for the Unit in
+                         question were allocated
+		     
+   SEE ALSO
+	AINS_CleanUp, AINS_Read, AINS_TestUnit
+
+aidriver.library/AINS_Read                         aidriver.library/AINS_Read
+
+   NAME
+	AINS_Read -- Reads Data from this Unit and returns it to the User
+
+   SYNOPSIS
+	data = AINS_Read(ID);
+
+	BOOL AINS_Read(AIN_DeviceID ID);
+
+   FUNCTION
+       This function returns the latest AmigaInput Data to the user. In all
+       likelyhood the data was already read out inside an interrupt, for
+       example inside a timer interrupt, and this function just returns it
+       to the user. It is important that this function is very fast.
+       The Unit of which an ID was provided should be read out. An invalid
+       ID (for example an ID of a Unit belonging to a different Driver) shoul
+d
+       cause this function to return 0. Value ranges are as defined by
+       the functions of amigainput.library itselves.
+ 
+  NOTES
+       It is important that the order of the data will be the same as 
+       defined in the corresponding AIN_ModInfo structure, regarding the
+       AxisPointers, ButtonsPointers and HatPointers elements. The Axis
+       come first, then the buttons and the hats last, but it is also
+       important that the various buttons, axis and hats have the same
+       order as in their AIN_ModInfo structure, else you will notice
+       that you get the "wrong buttons" reported when the device is used.
+
+       For a keyboard device this function just returns 0. 
+
+   INPUTS
+       ID              - The ID of the Unit of this device for which the
+                         data should be read out.
+					  
+   RESULT
+	result	        - TRUE means valid parameters were given to the 
+                         function, and the data could be correctly read
+                         out.
+		     
+   SEE ALSO
+	AINS_InitDriver, AINS_CleanUpDriver
+
+aidriver.library/AINS_Read_KBD                 aidriver.library/AINS_Read_KBD
+
+   NAME
+	AINS_Read_KBD -- Reads out the Keyboard Matrix for a Keyboard Driver
+
+   SYNOPSIS
+	result = AINS_Read_KBD(ID,buffer);
+
+	BOOL AINS_InitDriver(AIN_DeviceID ID,UBYTE *buffer);
+
+   FUNCTION
+       This function reads out the keyboard matrix of a keyboard device.
+       For a non-keyboard Driver this function just returns 0. The operation
+       is only performed if the provided ID is valid.
+
+   INPUTS
+       ID              - The ID of the Unit of this device for which the
+                         keyboard matrix should be read out.
+					  
+   RESULT
+	result	        - TRUE means valid parameters were given to the 
+                         function, and the keyboard matrix was read out
+                         successfully.
+		     
+   SEE ALSO
+	AINS_Read
+
+aidriver.library/AINS_SetEventMode         aidriver.library/AINS_SetEventMode
+
+   NAME
+	AINS_SetEventMode -- Sets the event mode for a Driver
+
+   SYNOPSIS
+	result = AINS_SetEventMode(ID,MOD);
+
+	BOOL AINS_SetEventMode(AIN_DeviceID ID, ULONG MOD);
+
+   FUNCTION
+       An AmigaInput Driver has two modes of operation. Either it operates
+       in polling mode or it operates in event mode. Only in event mode
+       can the event function of AmigaInput be used. Usually this function
+       just saves the flag somewhere in the Library Base of the Driver.
+       There might be one flag per Device-Unit, though. The function should
+       only do something if the correct ID for a Unit of this Driver is given
+,
+       and only the Unit in question should be affected then.
+
+   INPUTS
+       ID              - The ID of the Unit of this device for which the
+                         event mode should be set.
+       MOD             - TRUE means "Event Mode", FALSE means "Polling Mode"
+					  
+   RESULT
+	result	        - TRUE means valid parameters were given to the 
+                         function, and the event mode was correctly set
+                         for the Unit in question
+		     
+   SEE ALSO
+	AINS_InitDriver
+
+aidriver.library/AINS_TestUnit                 aidriver.library/AINS_TestUnit
+
+   NAME
+	AINS_TestUnit -- Tests if a device as required for the successful
+                        operation of this Driver is attached to the computer
+
+   SYNOPSIS
+	result = AINS_TestUnit(ID);
+
+	BOOL AINS_TestUnit(AIN_DeviceID ID);
+
+   FUNCTION
+       This function tests the device required for this Driver, if such a
+       device (as needed by the specified unit) is present. If this fails,
+       or if an invalid ID (for example an ID for a different Driver) has
+       been provided, the function returns FALSE. For devices which do not
+       support Unit-Testing this function returns TRUE, as if testing had 
+       been successful. If your Driver only works on a specific hardware
+       (for example only on a ClassicAmiga) this is the place to test for
+       this too.
+
+   INPUTS
+       ID              - The ID of the Unit of this device for which should
+                         be tested if the required device is present.
+					  
+   RESULT
+	result	        - TRUE means valid parameters were given to the 
+                         function, and the required device for the Unit
+                         was found.
+		     
+   SEE ALSO
+	AINS_InitDriver
+
+

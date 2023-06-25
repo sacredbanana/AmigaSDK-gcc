@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="pasemi_dma" basename="PASemiDMABase" openname="PASemi_DMA.resource">
+	<include>exec/types.h</include>
+	<include>resources/pasemi_dma.h</include>
+	<interface name="main" version="1.0" struct="PASDMAIFace" prefix="_PASDMA_" asmprefix="IPASDMA" global="IPASDMA">
+
+		<!-- DMA Engine register access functions -->
+		<method name="ReadDMARegByte" result="uint8">
+			<arg name="register" type="uint32"/>
+		</method>
+		<method name="ReadDMARegWord" result="uint16">
+			<arg name="register" type="uint32"/>
+		</method>
+		<method name="ReadDMARegLong" result="uint32">
+			<arg name="register" type="uint32"/>
+		</method>
+		<method name="WriteDMARegLong" result="void">
+			<arg name="register" type="uint32"/>
+			<arg name="value" type="uint32"/>
+		</method>
+
+		<!-- I/O bridge register access functions -->
+		<method name="WriteIOBRegLong" result="void">
+			<arg name="register" type="uint32"/>
+			<arg name="value" type="uint32"/>
+		</method>
+
+		<!-- DMA channel management -->
+		<method name="AllocChannel" result="struct PASDMAChannel *">
+			<arg name="chanType" type="PASDMAChannelType"/>
+			<arg name="totalSize" type="uint32"/>
+		</method>
+		<method name="FreeChannel" result="void">
+			<arg name="dmaChannel" type="struct PASDMAChannel *"/>
+		</method>
+		<method name="StartChannel" result="void">
+            <arg name="dmaChannel" type="struct PASDMAChannel *"/>
+			<arg name="cmdsta" type="uint32"/>
+		</method>
+		<method name="StopChannel" result="BOOL">
+            <arg name="dmaChannel" type="struct PASDMAChannel *"/>
+		</method>
+
+		<!-- Descriptor ring management -->
+		<method name="AllocRing" result="uint32">
+            <arg name="dmaChannel" type="struct PASDMAChannel *"/>
+			<arg name="numEntries" type="uint32"/>
+		</method>
+		<method name="FreeRing" result="void">
+            <arg name="dmaChannel" type="struct PASDMAChannel *"/>
+		</method>
+
+		<!-- DMA buffer management -->
+		<method name="AllocBuffer" result="APTR">
+			<arg name="numBytes" type="uint32"/>
+		</method>
+		<method name="FreeBuffer" result="void">
+			<arg name="buffer" type="APTR"/>
+		</method>
+
+		<!-- Event management -->
+		<method name="AllocEvent" result="int8">
+			<!-- no args -->
+		</method>
+		<method name="FreeEvent" result="void">
+			<arg name="eventID" type="uint8"/>
+		</method>
+		<method name="SetEvent" result="void">
+			<arg name="eventID" type="uint8"/>
+		</method>
+		<method name="ClearEvent" result="void">
+			<arg name="eventID" type="uint8"/>
+		</method>
+
+		<!-- Function engine management -->
+		<method name="AllocFunction" result="int8">
+			<!-- no args -->
+		</method>
+		<method name="FreeFunction" result="void">
+			<arg name="funcID" type="uint8"/>
+		</method>
+
+	</interface>
+</library>

@@ -1,0 +1,101 @@
+TABLE OF CONTENTS
+
+buttongclass/--datasheet--
+buttongclass/GM_HANDLEINPUT
+
+
+buttongclass/--datasheet--                             buttongclass/--datasheet--
+
+    NAME
+	buttongclass -- button gadget class
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	A class of button gadget that continually sends interim OM_UPDATE
+	messages to its target while the user holds down the button.
+	The button sends a final OM_UPDATE message when the user lets go
+	of the button. The imagery for these objects is not built directly
+	into the gadget. Instead, a buttongclass object uses a BOOPSI
+	image object which it gets from its GA_Image attribute.
+
+    METHODS
+	OM_NEW -- Create the buttongclass object. Passed to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	GM_HITTEST -- Determine if gadget was hit. Passed to image class.
+
+	GM_RENDER -- Render the gadget with state. Passed to image class.
+
+	GM_GOACTIVE -- Activate the gadget.
+
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+	GM_HANDLEINPUT -- Handle input while active.
+
+	GM_EXTENT -- Inquire about rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_Left (int16)
+	GA_Top (int16)
+	GA_Width (int16)
+	GA_Height (int16)
+	GA_RelRight (int16)
+	GA_RelBottom (int16)
+	GA_RelWidth (int16)
+	GA_RelHeight (int16)
+	    Updating any of these attributes will cause the
+	    gadget to refresh its imagery.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Image (struct Image *)
+	    This attribute points to the gadget's BOOPSI image.
+	    Changing this attribute will cause the gadget to refresh
+	    its imagery.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+buttongclass/GM_HANDLEINPUT                           buttongclass/GM_HANDLEINPUT
+
+    NAME
+	GM_HANDLEINPUT -- Handle input while active.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpInput* msg);
+
+    FUNCTION
+	This method continuously issues OM_NOTIFY messages for each
+	IECLASS_TIMER event it gets. The OM_NOTIFY message's
+	OPUF_INTERIM flag (from opUpdate.opu_Flags) is set for all
+	but the final OM_NOTIFY.
+
+	The OM_NOTIFY message contains one attribute/value pair
+	containing GA_ID. If the pointer is currently over the gadget
+	image, the value of this attribute/value pair is the gadget's
+	actual GA_ID. If the pointer isn't over the image, the value is
+	the negative of the gadget's actual GA_ID.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpInput
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	Returns a valid GMR_xxx combination.
+
+    SEE ALSO
+	gadgetclass/GM_HANDLEINPUT
+
+

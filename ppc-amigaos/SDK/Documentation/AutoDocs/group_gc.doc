@@ -1,0 +1,193 @@
+TABLE OF CONTENTS
+
+groupgclass/--datasheet--
+groupgclass/GM_HITTEST
+groupgclass/OM_ADDMEMBER
+groupgclass/OM_REMMEMBER
+groupgclass/OM_SET
+groupglcass/OM_DISPOSE
+
+
+groupgclass/--datasheet--                               groupgclass/--datasheet--
+
+    NAME
+	groupgclass -- gadget group class
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This is a class of objects that maintains an internal list of
+	gadgets. Its purpose is to make it easier to layout a group of
+	gadgets. Any gadgets that are a member of a groupgclass object
+	are rendered relative to the groupgclass object's GA_Left and
+	GA_Top attributes. As new gadgets are added to the groupgclass
+	object the groupgclass object's dimensions grow to enclose the
+	new gadgets. When the groupgclass object receives an OM_DISPOSE
+	message, it not only disposes of itself, it also disposes of all
+	the gadgets in its list. Groupgclass does not support the gadget
+	relative flags (GA_RelWidth, GA_RelHeight, GA_RelBottom and
+	GA_RelRight).
+
+    METHODS
+	OM_NEW -- Create the groupgclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroy the gadget and then pass to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_ADDMEMBER -- Add an object to the group.
+
+	OM_REMMEMBER -- Remove an object from the group.
+
+	GM_HITTEST -- Determine if some gadget was hit.
+
+	GM_RENDER -- Render all the gadgets in the group.
+
+	GM_GOACTIVE -- Activate the gadget that was hit.
+
+	GM_GOINACTIVE -- Deactivate the active gadget.
+
+	GM_HANDLEINPUT -- Active gadget handles the input.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_Left (int16)
+	GA_Top (int16)
+	    These attributes correspond to the embedded Gadget.LeftEdge and
+	    Gadget.TopEdge fields. Setting these attributes in groupgclass
+	    object causes it to change its position as well as the position
+	    of each of the gadgets that have been added to the group gadget.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+groupgclass/GM_HITTEST                                     groupgclass/GM_HITTEST
+
+    NAME
+	GM_HITTEST -- Determine if some gadget was hit.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpHitTest* msg);
+
+    FUNCTION
+	This method works its way through the list of group members,
+	sending each a GM_HITTEST message, looking for the first member
+	in the list that says it has been hit. This member gadget then
+	becomes the active member.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpHitTest
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value is GMR_GADGETHIT if hit or 0 otherwise.
+
+    SEE ALSO
+	gadgetclass/GM_HITTEST
+
+groupgclass/OM_ADDMEMBER                                 groupgclass/OM_ADDMEMBER
+
+    NAME
+	OM_ADDMEMBER -- Add an object to the group.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember * msg);
+
+    FUNCTION
+	This method adds a gadget to the group object's list. The group
+	object will increase the size of its select box to include the
+	new gadget's select box. The group object moves the new member
+	to an absolute location (by changing the new member's GA_Left and
+	GA_Top attributes) relative to the group object's upper-left corner.
+	Note that all members of the groupgclass object will be deleted
+	by OM_DISPOSE.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Always returns 1.
+
+    SEE ALSO
+	OM_REMMEMBER, OM_DISPOSE, intuition.library/DoGadgetMethod()
+
+groupgclass/OM_REMMEMBER                                 groupgclass/OM_REMMEMBER
+
+    NAME
+	OM_REMMEMBER -- Remove an object from the group.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember * msg);
+
+    FUNCTION
+	This method removes a gadget added to the group object's list
+	with OM_ADDMEMBER. Note that all members of the groupgclass
+	object will be deleted by OM_DISPOSE.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Always returns 1.
+
+    SEE ALSO
+	OM_ADDMEMBER, OM_DISPOSE, intuition.library/DoGadgetMethod()
+
+groupgclass/OM_SET                                             groupgclass/OM_SET
+
+    NAME
+	OM_SET -- Set object attributes.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct omSet * msg);
+
+    FUNCTION
+	This method passes most attributes to the superclass but
+	propagates changes in position to its members appropriately.
+	Also, GA_Width and GA_Height are calculated from the position
+	and dimension of the membership.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns zero if refreshed successfully or non-zero if not.
+
+    SEE ALSO
+	rootclass/OM_SET
+
+groupglcass/OM_DISPOSE                                     groupglcass/OM_DISPOSE
+
+    NAME
+	OM_DISPOSE -- Destroy the gadget.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR rootobj, Msg msg);
+
+    FUNCTION
+	This method disposes of the groupgclass object and all its
+	member gadgets.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - Msg with MethodID = OM_DISPOSE
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	intuition.library/DisposeObject()
+
+

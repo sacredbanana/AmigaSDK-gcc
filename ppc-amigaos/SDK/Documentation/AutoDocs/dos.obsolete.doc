@@ -1,0 +1,1262 @@
+TABLE OF CONTENTS
+
+dos.library/AAA-Obsolete-Documentation
+dos.library/AbortPkt
+dos.library/OBSOLETECreateProc
+dos.library/OBSOLETEDeviceProc
+dos.library/OBSOLETEExAll
+dos.library/OBSOLETEExAllEnd
+dos.library/OBSOLETEExamine
+dos.library/OBSOLETEExamineFH
+dos.library/OBSOLETEExecute
+dos.library/OBSOLETEExit
+dos.library/OBSOLETEExNext
+dos.library/OBSOLETEInternalLoadSeg
+dos.library/OBSOLETEInternalUnLoadSeg
+dos.library/OBSOLETESeek
+dos.library/OBSOLETESetFileSize
+dos.library/OBSOLETESetOwner
+dos.library/OBSOLETESetVBuf
+dos.library/OBSOLETEVFWritef
+
+
+dos.library/AAA-Obsolete-Documentation dos.library/AAA-Obsolete-Documentation
+============================================================================
+
+   NAME
+	DOS LIBRARY OBSOLETE DOCUMENTATION
+
+   SYNOPSIS
+	These are the functions that should NOT be used for any new software.
+	Upgraded software should also be reworked to use the new functions.
+
+   WARNING
+	Using these function in software may render it partially non-functional
+	or at least somewhat sub-optimal in future dos.library versions.
+
+	These obsolete functions are basically being kept around for old 68K
+	and other early source compatibility and nothing more, these are not 
+	at all optimised for performance, complaints about speed issues of any
+	deprecated or obsolete functions will be sent >NIL:
+
+	Using many of the obsolete functions will also fail to provide 64 bit
+	file size info and long name support which will cause programs using
+	these to break in unknown ways when long filenames or files larger
+	than 2 or 4 gig are encountered.
+
+============================================================================
+
+
+dos.library/AbortPkt                                     dos.library/AbortPkt
+
+   NAME
+	AbortPkt -- (OBSOLETE) Abort an asynchronous packet. (V36)
+
+   SYNOPSIS
+	AbortPkt(port, pkt)
+
+	void AbortPkt(struct MsgPort *, struct DosPacket *)
+
+   NOTES
+	As of V37, this function does nothing.
+	As of V50, this function is no longer callable from native code.
+
+   BUGS
+	This function was actually never implemented and has been removed
+	entirely for native PPC callers in V50 DOS.
+
+dos.library/OBSOLETECreateProc                 dos.library/OBSOLETECreateProc
+
+   NAME
+
+	OBSOLETECreateProc -- Create a new process. (OBSOLETE)
+	              Use CreateNewProc() from V50+ onwards.
+
+   SYNOPSIS
+	struct MsgPort *port = OBSOLETECreateProc(CONST_STRPTR name, int32 pri,
+	                                  BPTR seglist, int32 stacksize);
+
+   FUNCTION
+	OBSOLETECreateProc() creates a new AmigaDOS process of name 'name'.
+
+	A seglist, as returned by LoadSeg(), is passed as 'seglist'.
+	This represents a section of code which is to be run as a new process.
+
+	From V50, seglists must be created with LoadSeg() or the 
+	AllocSegList() function.
+	( See AllocSegList() docs for more details on pseudo seglists. )
+ 
+	The size of the user stack upon execution is passed as 'stackSize'.
+	'pri' specifies the required priority of the new process.
+	The result will be the process msgport address of the new process,
+	or zero if the routine failed.  The argument 'name' specifies the
+	new process name.  A zero return code indicates error.
+
+	The seglist passed to CreateProc() is not freed when it exits; it
+	is up to the parent process to free it.
+
+	Under V36 and later, you should use CreateNewProc() instead.
+	From V50, this is only a compatible stub that calls CreateNewProc().
+	The various default parameters that are available from CreateNewProc()
+	are not available from this compatibility function.
+
+	Any process started with this function will have;
+	  1) No CLI structure
+	  2) No current directory
+	  3) No program directory
+	  4) No local vars
+	  5) No input stream
+	  6) No output stream
+	  7) No error stream 
+	  8) No arguments.
+	  9) Only the following INPUT values...
+ 
+   INPUTS
+	name      - pointer to a null-terminated string
+	pri       - int32 (range -128 to +127)
+	seglist   - BCPL pointer to a seglist
+	stackSize - integer (will be rounded up to a multiple of 4 bytes)
+
+   RESULT
+	port      - pointer to the new process msgport.
+
+   BUGS
+	Older documentation suggested that this function would return a
+	pointer to a Process structure. This was never the case. It always
+	returned a pointer to the MsgPort embedded in the Process
+	structure of the newly created process.
+
+   SEE ALSO
+	CreateNewProc(), LoadSeg(), UnLoadSeg()
+
+dos.library/OBSOLETEDeviceProc                 dos.library/OBSOLETEDeviceProc
+
+   NAME
+	OBSOLETEDeviceProc -- Return the process MsgPort for a handler. (V31)
+	                                           (OBSOLETE V53)
+   SYNOPSIS
+	struct MsgPort *port = OBSOLETEDeviceProc( CONST_STRPTR name );
+
+   FUNCTION
+	OBSOLETEDeviceProc() returns the MsgPort associated with the process
+	which handles the device associated with the specified name.
+	If the process handler is not running, this function will attempt
+	to start it up.
+	If no process handler can be found then the result is NULL. 
+	If the name refers to an assign then a directory lock is returned
+	in IoErr().   This lock should not be UnLock()ed or Examine()ed 
+	(if you wish to do so, DupLock() it first).
+
+
+   INPUTS
+	name -- name of the object you wish to access.
+
+   RESULT
+	port -- MsgPort of the file system associated with the name of
+	        the file or device you specified. This can be NULL if
+	        the respective file system is not mounted or otherwise
+	        unavailable.
+
+
+   NOTES
+	This very old function is now just a compatibility stub that is
+	equivalent to the following code.
+
+	struct MsgPort *port = NULL;
+	struct DevProc *dp = IDOS->GetDeviceProcFlags(name,0,LDF_ALL);
+	if( dp )
+	{
+	    if( ! (dp->dvp_Flags & DVPF_UNLOCK))
+	    {
+	        IDOS->SetIoErr(dp->dvp_Lock);
+	        port = dp->dvp_Port;
+	    }
+	    IDOS->FreeDeviceProc(dp);
+	}
+	return(port);
+
+
+   BUGS
+	In V36, if you try to DeviceProc() something relative to an assign
+	made with AssignPath(), it will fail.  This is because there's no
+	way to know when to unlock the lock.  If you're writing code for
+	V36 or later, use GetDeviceProc() or GetDeviceProcFlags() instead.
+
+	The values returned from this function are supposed to persist 
+	without any way to tell when, or prevent them from disappearing,
+	therefore this function should be considered quite broken.
+
+   NOTES
+	This function is NOT task callable.
+
+   SEE ALSO
+	GetDeviceProcFlags(), FreeDeviceProc(), DupLock(), UnLock()
+
+dos.library/OBSOLETEExAll                           dos.library/OBSOLETEExAll
+
+   NAME
+	OBSOLETEExAll -- Examine an entire directory (V36)
+            ( OBSOLETE - use ExamineDir() from V52+ )
+
+   SYNOPSIS
+	int32 continue = OBSOLETEExAll(BPTR lock, STRPTR buffer, int32 size,
+	                       int32 type, struct ExAllControl *control);
+
+   FUNCTION
+	Examines an entire directory.  
+
+	This function and Examine(), ExNext(), ExamineFH() are obsolete, none
+	of them are capable of returning accurate information on files larger
+	than 4 gig, use ExamineDir() and ExamineObject() from V52+ for full
+	large file support.
+
+	'Lock' must be on a directory. Size is the size of the buffer
+	supplied. The buffer will be filled with (partial) ExAllData
+	structures, as specified by the 'type' field.
+
+	'Type' is a value from those shown below that determines which 
+	information is to be stored in the buffer.  Each higher value adds
+	a new thing to the list as described in the table below:-
+
+	ED_NAME		FileName
+	ED_TYPE		Type
+	ED_SIZE		Size in bytes
+	ED_PROTECTION	Protection bits
+	ED_DATE		3 longwords of date
+	ED_COMMENT	Comment (will be NULL if no comment)
+	ED_OWNER	owner user-id and group-id (if supported)  (V39)
+
+	Thus, ED_NAME gives only filenames, and ED_OWNER gives everything.
+
+	NOTE: V37 dos.library, when doing ExAll() emulation, and V37
+	filesystems will return an error if passed ED_OWNER. If you get
+	ERROR_BAD_NUMBER, retry with ED_COMMENT to get everything but owner
+	info. All filesystems supporting ExAll() must support ED_NAME through
+	ED_COMMENT, and must check Type and return ERROR_BAD_NUMBER if they
+	don't support the type.
+
+	The ead_Next entry gives a pointer to the next entry in the buffer.
+	The last entry will have NULL in ead_Next.
+
+	The control structure is required so that the file system can keep
+	track if more than one call to ExAll is required. This happens when
+	there are more names in a directory than will fit into the buffer.
+
+	NOTE: the control structure MUST be allocated by AllocDosObject!!!
+
+	The format of the control structure is as follows:
+
+	eac_Entries:
+
+	    This field tells the calling application how many entries are in
+	    the buffer after calling ExAll. Note: make sure your code handles
+	    the 0 entries case, including 0 entries with continue non-zero.
+
+	eac_LastKey:
+
+	    This field ABSOLUTELY MUST be initialised to 0 before calling
+	    ExAll for the first time. Any other value will cause nasty things
+	    to happen. If ExAll returns non-zero, then this field should not
+	    be touched before making the second and subsequent calls to
+	    ExAll. Whenever ExAll returns non-zero, there are more calls
+	    required before all names have been received.
+
+	    As soon as a FALSE return is received then ExAll has completed
+	    (if IoErr() returns ERROR_NO_MORE_ENTRIES - otherwise it returns
+	    the error that occured, similar to ExNext.)
+
+	eac_MatchString:
+
+	    If this field is NULL then all filenames will be returned. If
+	    this field is non-null then it is interpreted as a pointer to a
+	    string that is used to pattern match all file names before
+	    accepting them and putting them into the buffer. The default
+	    AmigaDOS caseless pattern match routine is used. This string MUST
+	    have been parsed by ParsePatternNoCase()!
+
+	eac_MatchFunc:
+
+	    Contains a pointer to a hook for a routine to finally decide if 
+	    the entry will be included in the returned list of entries. 
+	    The entry is filled out first, and then passed to the hook. 
+	    If no MatchFunc is to be called then this entry should be NULL. 
+	    The hook is called with the following parameters; 
+	    (as is standard for hooks):
+
+	        result = MatchFunc( hookptr, typeptr, data )
+	                              a0      a2       a1
+
+	        int32 MatchFunc(struct Hook *hookptr, int32 *typeptr,
+	                       struct ExAllData * data);
+
+	    Note that the long word pointed to by 'typeptr' holds the
+	    same value as the 'type' parameter passed to the ExAll()
+	    function.
+
+	    MatchFunc() should return FALSE if the entry is not to be
+	    accepted, otherwise return TRUE.
+
+
+   INPUTS
+	lock     - Lock on directory to be examined.
+	buffer   - Buffer for data returned (MUST be at least word-aligned,
+	           preferably long-word aligned).
+	size     - Size in bytes of 'buffer'.
+	type     - Type of data to be returned.
+	control  - Control data structure (see notes above).  MUST have been
+	           allocated by AllocDosObject!
+
+   RESULT
+	continue - Boolean;  Whether or not ExAll is done.  
+	           If FALSE is returned, either ExAll has completed,
+	           (check for IoErr() == ERROR_NO_MORE_ENTRIES), or an error
+	           of some sort occurred (check IoErr() again).  
+	           If non-zero is returned, you MUST call ExAll again until
+	           it returns FALSE.
+
+   EXAMPLE
+	struct ExAllControl *eac = IDOS->AllocDosObject(DOS_EXALLCONTROL,NULL);
+	if (!eac)
+	{
+	 ...
+	}
+	eac->eac_LastKey = 0;
+	do 
+	{
+	   more = IDOS->OBSOLETEExAll(lock, EAData,sizeof(EAData),ED_FOO,eac);
+	   if ((!more) && (IDOS->IoErr() != ERROR_NO_MORE_ENTRIES)) 
+	   {
+	       /* ExAll failed abnormally with some other error. */
+	      break;
+	   }
+	   if (eac->eac_Entries == 0) 
+	   {
+	       /* ExAll failed normally with no entries */
+	      continue;                   /* ("more" is *usually* zero here) */
+	   }
+	   for(ead = (struct ExAllData *)EAData; ead; ead = ead->ed_Next) 
+	   {
+	      /* Use ead here until you run out of data. */
+
+	      if( EAD_IS_FILE(ead) )
+	      {
+	         IDOS->Printf("filename=%s\n", ead->ed_Name);
+	      }
+	      else if ( EAD_IS_DRAWER(ead) )
+	      {
+	         IDOS->Printf("dirname=%s\n", ead->ed_Name); 
+	      }
+	      else if ( EAD_IS_LINK(ead) )
+	      {
+	         IDOS->Printf("link=%s\n", ead->ed_Name); 
+	      }
+	   }
+	
+	} while (more);     /* loop back and keep going until NO more */
+	...
+	IDOS->FreeDosObject(DOS_EXALLCONTROL,eac);
+
+   BUGS
+	In V36, there were problems with ExAll (particularily with
+	eac_MatchString, and ed_Next with the old packet based ramdisk and
+	the emulation of it in Dos for handlers that do not support the packet.
+	It is advised you only use this under V37 up to V50.
+
+	See note above regarding extensions to the Type parameter.
+
+	DOS will emulate ExAll() using Examine() and ExNext() if the handler
+	in question does not support the ExAll() packet.
+
+	DOS will also emulate  Examine() and ExNext() if they are unsupported
+	by falling forward to ExamineDir().
+
+   SEE ALSO
+	ExamineDir(), ExamineObject(), MatchPatternNoCase(),
+	ParsePatternNoCase(), AllocDosObject(),
+
+dos.library/OBSOLETEExAllEnd                     dos.library/OBSOLETEExAllEnd
+
+   NAME
+	OBSOLETEExAllEnd -- Stop an ExAll() (V39)   (OBSOLETE)
+
+   SYNOPSIS
+	VOID OBSOLETEExAllEnd(BPTR lock, STRPTR buffer, int32 size, int32 type,
+	              struct ExAllControl *control);
+	                   ( OBSOLETE - use ExamineDir() from V52+ )
+
+   FUNCTION
+	This function is obsolete. 
+
+	Stops an ExAll() on a directory before it hits NO_MORE_ENTRIES.
+	The full set of arguments that had been passed to ExAll() must be
+	passed to ExAllEnd(), so it can handle filesystems that can't abort
+	an ExAll() directly. For those filesystems, ExAll() will be
+	invoked over and over again until the scanning process has
+	finished.
+
+   INPUTS
+	lock    - (BPTR)   Lock on directory to be examined.
+	buffer  - (STRPTR) Buffer for data returned (MUST be at least word-aligned,
+	                   preferably long-word aligned).
+	size    - (int32)  Size in bytes of 'buffer'.
+	type    - (int32)  Type of data to be returned.
+	control - (struct  ExAllControl *) Control data structure (see notes above).
+  
+	                   MUST have been allocated by AllocDosObject!
+
+   SEE ALSO
+	ExAll(), AllocDosObject()
+
+dos.library/OBSOLETEExamine                       dos.library/OBSOLETEExamine
+
+   NAME
+	OBSOLETEExamine -- Examine a directory or file associated with a lock
+              ( OBSOLETE - use ExamineObject() from V52+ )
+
+   SYNOPSIS
+	int32 success = 
+	           OBSOLETEExamine(BPTR lock,struct FileInfoBlock *infoBlock);
+
+   FUNCTION
+	OBSOLETEExamine() fills in information in the FileInfoBlock concerning
+	the file or directory associated with the lock. This information
+	includes the name, size, date and whether it is a file or directory.
+	FileInfoBlock must be longword aligned.  
+
+	You may make a local copy of the FileInfoBlock, as long as it is
+	never passed to ExNext().
+
+   INPUTS
+	lock -- BCPL pointer to a lock, (or ZERO)
+
+	infoBlock -- pointer to a FileInfoBlock, which MUST be longword
+	    aligned. The contents of the FileInfoBlock structure are
+	    arranged as follows:
+
+	        fib_DiskKey
+	            A private field which is typically used for directory
+	            scanning and must be preserved across Examine/ExNext
+	            calls. Do not even look at this field!
+
+	        fib_DirEntryType
+	            Indicates the type of directory entry.
+	            Use the FIB_IS_xxx macros in dos.h to determine the type.
+	            Starting with AmigaOS 2.04 this field may contain
+	            one of the following values:
+
+	                ST_ROOT
+	                    This is the root directory, as created by
+	                    formatting the low level storage medium.
+
+	                ST_USERDIR
+	                    This is a directory created by the user.
+
+	                ST_FILE
+	                    This is a plain file.
+
+	                ST_SOFTLINK
+	                    This is a softlink to a directory or file.
+
+						NOTE: Only available from the ExNext() function.
+	                          Also, the value of ST_SOFTLINK is >0, which
+	                          suggests that you are dealing with a
+	                          directory while the object referred
+	                          to by the link might actually be a file!
+	                          Be prepared to handle this.
+
+	                ST_LINKDIR
+	                    This is a link to a directory. Note that some
+	                    file systems never really return ST_LINKDIR if
+	                    you call Examine() on the link. To find out
+	                    if a directory is a link you would have to
+	                    scan the directory which this entry is found
+	                    in via Examine()/ExNext() or ExAll().
+
+	                ST_LINKFILE
+	                    This is a link to a plain file. Again, some
+	                    file systems never return ST_LINKFILE for a
+	                    directory entry if you examine it through
+	                    Examine().
+
+	                ST_PIPEFILE
+	                    This is a value returned by ExamineFH() and
+	                    not by Examine(). It is described here only
+	                    for completeness. You will find this value
+	                    returned for file handles which refer to
+	                    pipes, which can be read/written, but for
+	                    which you may not call Seek().
+
+	            Note that if you must always check the directory 
+	            entry type, don't limit yourself to verify if the 
+	            fib_DirEntryType value is <0 or >0, test specifically
+	            if it is one of ST_SOFTLINK, ST_LINKDIR, ST_LINKFILE or
+	            ST_PIPEFILE. It is unwise to test for ST_ROOT,
+	            ST_USERDIR or ST_FILE because some file systems may
+	            not return these values at all. Instead, they might
+	            just supply enough information to tell directories
+	            and files apart. In <dos/dos.h> you will find a set
+	            of macros you can use to check the directory entry
+	            type safely, i.e. FIB_IS_FILE(), FIB_IS_DRAWER(),
+	            FIB_IS_LINK(), etc.
+
+	        fib_FileName
+	            The name associated with this directory entry.
+	            This field is limited to 107 bytes only.
+
+	        fib_Protection
+	            This is a collection of flag bits which indicate how
+	            this directory entry may be used. The following flags
+	            are currently defined:
+
+	                FIBF_DELETE
+	                    If set, this directory or directory entry cannot be
+	                    deleted or overwritten ("protected from deletion").
+
+	                FIBF_EXECUTE
+	                    If set, this directory entry cannot be
+	                    used as an executable program.
+
+	                FIBF_WRITE
+	                    If set, this directory entry cannot be
+	                    modified, but unless the FIBF_DELETE
+	                    flag is set, it can still be deleted.
+
+	                FIBF_READ
+	                    If set, this directory entry cannot be
+	                    read from ("protected from reading").
+
+	                FIBF_ARCHIVE
+	                    This flag is cleared automatically by the
+	                    file system whenever a directory or directory entry
+	                    is modified. It can be used to track changes to the
+	                    file system to implement, for example,
+	                    an incremental data backup facility.
+	                    Note that not all older file systems support
+	                    this feature.
+
+	                FIBF_PURE
+	                    If set, this flag indicates that this file
+	                    can be made resident in the shell.
+	                    Note that not all file systems support
+	                    this feature.
+
+	                FIBF_SCRIPT
+	                    If set, this flag indicates that this is
+	                    a script file which can be executed by the
+	                    shell.
+	                    Note that not all file systems support
+	                    this feature.
+
+	                FIBF_HOLD
+	                    This flag is used by the shell in conjunction
+	                    with the FIBF_PURE flag. If both are set,
+	                    the shell will make this command resident
+	                    when it is loaded for the first time.
+	                    Note that not all file systems support
+	                    this feature.
+
+
+	            In addition to the FIBF_READ, FIBF_WRITE, FIBF_EXECUTE
+	            and FIBF_DELETE flags, which restrict the operations
+	            the owner of a file/directory can perform on them,
+	            there are two additional sets of protection bits which
+	            define the rights of the owning group and others. These
+	            are:
+
+	                FIBF_GRP_READ
+	                    If set, then this directory entry can be read
+	                    by members of the group identified by the
+	                    fib_OwnerGID value.
+
+	                FIBF_GRP_WRITE
+	                    If set, then this directory entry can be modified
+	                    by members of the group identified by the
+	                    fib_OwnerGID value.
+
+	                FIBF_GRP_EXECUTE
+	                    If set, then this program can be executed
+	                    by members of the group identified by the
+	                    fib_OwnerGID value.
+
+	                FIBF_GRP_DELETE
+	                    If set, then this program can be deleted
+	                    by members of the group identified by the
+	                    fib_OwnerGID value.
+
+
+	                FIBF_OTR_READ
+	                    If set, then this directory entry can be read
+	                    by users which are not members of the group
+	                    identified by the fib_OwnerGID value and not
+	                    the owner, as identified by the fib_OwnerUID
+	                    value.
+
+	                FIBF_OTR_WRITE
+	                    If set, then this directory entry can be modified
+	                    by users which are not members of the group
+	                    identified by the fib_OwnerGID value and not
+	                    the owner, as identified by the fib_OwnerUID
+	                    value.
+
+	                FIBF_OTR_EXECUTE
+	                    If set, then this program can be executed
+	                    by users which are not members of the group
+	                    identified by the fib_OwnerGID value and not
+	                    the owner, as identified by the fib_OwnerUID
+	                    value.
+
+	                FIBF_OTR_DELETE
+	                    If set, then this directory entry can be deleted
+	                    by users which are not members of the group
+	                    identified by the fib_OwnerGID value and not
+	                    the owner, as identified by the fib_OwnerUID
+	                    value.
+
+	            Note that the FIBF_GRP_ and FIBF_OTR_ flags differ from
+	            the FIBF_READ, FIBF_WRITE, FIBF_EXECUTE and FIBF_DELETE
+	            flags in that have to be clear in order to have the same
+	            effect. For example, to protect a file from deletion by
+	            the user, the FIBF_DELETE flag has to be set. But to
+	            protect it from deletion by group members, the
+	            FIBF_GRP_DELETE flag has to clear!
+
+	        fib_Obsolete
+	            For some file systems, this field contained old application
+	            compatibility data to mirror fib_DirEntryType, which is now
+	            being maintained by the dos.library, starting at V51.103.
+	            It should be not be accessed and be considered obsolete.
+
+	        fib_Size
+	            The number of bytes stored in this file. 
+	            This should be zero for directories. 
+	            This field will NOT contain valid information for files
+	            greater than 4gig, this field should report a maximum of
+	            4gig-1 bytes for all files larger than this.
+	            Use GetFileSize(), ExamineDir() or ExamineObject() for
+	            64 bit file size reporting with V52+ of dos.library.
+
+	        fib_NumBlocks
+	            The number of storage blocks allocated for this directory
+	            entry. This may include blocks allocated for management
+	            information. How large a storage block is is defined by
+	            the low level storage device and may not match the
+	            information provided by the Info() function.
+
+	        fib_Date
+	            Time and date when this directory entry was last modified.
+
+	        fib_Comment
+	            A short comment describing this directory entry. This can 
+	            be an empty string. It is limited to 79 characters here.
+	            Note that not all file systems may support this feature.
+
+	        fib_OwnerUID
+	            The numeric ID assigned to the owner of this directory
+	            entry. This can be 0.
+	            Note that not all file systems may support this feature.
+
+	        fib_OwnerGID
+	            The numeric ID assigned to the group associated with this
+	            directory entry. This can be 0.
+	            Note that not all file systems may support this feature.
+
+   RESULT
+	success -- boolean; (zero or non-zero).
+
+   NOTES
+	FileInfoBlock must be longword-aligned.  
+	AllocDosObject() will allocate them correctly for you.
+
+	Prior to V50, it was undocumented that supplying a lock of ZERO
+	will in fact Examine() the root of the handler that is returned from
+	GetFileSysPort(), this is usually the boot volume assigned as SYS:
+
+	From V53.59 DOS will emulate Examine() using the new ExamineObject()
+	function if the handler in question reports that it does not support
+	this old dospacket.
+
+   SEE ALSO
+	ExamineObject(), ExamineDir(), Lock(), UnLock(),  <dos/dos.h>, 
+
+dos.library/OBSOLETEExamineFH                   dos.library/OBSOLETEExamineFH
+
+   NAME
+	OBSOLETEExamineFH -- Gets information on an open file (V36)
+                ( --OBSOLETE -- use ExamineObject() from V52+ )
+
+   SYNOPSIS
+	int32 success = OBSOLETEExamineFH(BPTR fh, struct FileInfoBlock *fib);
+
+   FUNCTION
+	Examines a filehandle and returns information about the file in an
+	obsolete struct FileInfoBlock.  There are no guarantees as to whether
+	the fib_Size field will reflect any changes made to the file size 
+	if it was opened, though filesystems should attempt to provide as
+	up-to-date information as possible.
+
+   INPUTS
+	fh  - Filehandle you wish to examine.
+	fib - FileInfoBlock, MUST be longword aligned.
+
+   RESULT
+	success - boolean; (zero or non-zero), Failure/Success indication.
+
+   NOTES
+	From V53.58 DOS will emulate ExamineFH() using the new ExamineObject()
+	function, if the handler in question does not support this old
+	ACTION_EXAMINE_FH dospacket.
+	The emulation will truncate the value in fib_Size to 4gig-1 bytes
+	for files greater than 4 gig in size. The fib_Name field will also
+	be truncated for file names greater than 107 bytes long.
+
+   BUGS
+	Prior to V50,  It was unsafe to use ExamineFH() on a "NIL:" 
+	file handle.   Neither did it check if 'fh' or 'fib' == 0
+
+   SEE ALSO
+	ExamineObject(), ExamineDir(), Open(), AllocDosObject()
+
+dos.library/OBSOLETEExecute                       dos.library/OBSOLETEExecute
+
+   NAME
+	OBSOLETEExecute -- Execute a CLI command line.  (--OBSOLETE V50--) 
+	           Use; SystemTags() for new and ported applications in V50+.
+
+   SYNOPSIS
+	int32 success = OBSOLETEExecute( CONST_STRPTR commandString,
+	                           BPTR input_stream, BPTR output_stream );
+
+   FUNCTION (obsolete)
+	This function attempts to execute the string 'commandString' as a
+	Shell command and arguments. The string can contain any valid input
+	that you could type directly in a Shell, including input and output
+	redirection using < and >.  Note that Execute() doesn't return until
+	the command(s) in 'commandString' have returned.
+
+	The input file handle will normally be zero, and in this case
+	Execute() will perform whatever was requested in the 'commandString'
+	and then return. If the input file handle is non zero then after the
+	(possibly empty "") 'commandString' is performed subsequent input is 
+	read from the specified input file handle until end of that file is
+	reached.
+
+	In most cases the output file handle must be provided, and is used
+	by the Shell commands as their output stream unless output
+	redirection was specified. If the output file handle is set to zero
+	then the current window, normally specified as "CONSOLE:", is used. 
+	Note that programs running under the Workbench do not normally have 
+	a current window.
+
+	Execute() may also be used to create a new interactive Shell process
+	just like those created with the NewShell command. In order to do
+	this you would call Execute() with an empty commandString "", and pass
+	a file handle relating to a new window as the input file handle.
+	The output file handle would be set to zero. The Shell will read
+	commands from the new window, and will use the same window for
+	output. This new Shell window can only be terminated by using the
+	EndCLI command.
+
+	Under V37, if an input filehandle is passed, and it's either
+	interactive or a "NIL:" filehandle, the pr_ConsolePort of the new
+	process will be set to that filehandle's process.
+	This function will also send an ACTION_CHANGE_SIGNAL packet to the
+	input stream handler upon startup, and again upon returning, restoring
+	the sigtask to the parent process.  
+	(the same applies to SystemTagList()).
+
+   INPUTS
+	commandString - pointer to a null-terminated string
+	input         - BCPL pointer to a file handle
+	output        - BCPL pointer to a file handle
+
+   RESULT
+	success       - boolean; (zero or non-zero)
+	                Non-zero indicates that Execute was successful in
+	                finding and starting the specified program.  
+	                Note this is NOT the return code of the command(s).
+
+   NOTE
+	This is a very old and limited function that is deprecated from V50+,
+	please use System[tags]() for new and ported software.
+
+   BUGS
+	For this command to work the program 'Run' must be present in "C:" in
+	versions before V36 (except that in 1.3.2 and any later 1.3 versions,
+	the system first checks the resident list for Run).
+
+   SEE ALSO
+	SystemTagList().
+
+dos.library/OBSOLETEExit                             dos.library/OBSOLETEExit
+
+   NAME
+	OBSOLETEExit -- Exit from a BCPL style program.
+
+   SYNOPSIS
+	VOID OBSOLETEExit( int32 returncode );
+
+   NOTES
+	In order to exit, C programs should use the C language exit()
+	function (note the lower case letter "e"). 
+	Or simply 'return' from the entry function to return to DOS.
+
+	As of V50, this function is NOT callable by native PPC code.
+
+	Do not attemp to call this function from V50 onwards.
+
+dos.library/OBSOLETEExNext                         dos.library/OBSOLETEExNext
+
+   NAME
+	OBSOLETEExNext -- Examine the next entry in a directory
+             ( OBSOLETE - use ExamineDir() from V52+ )
+
+   SYNOPSIS
+	int32 success = OBSOLETEExNext( BPTR lock, struct FileInfoBlock *fib );
+
+   FUNCTION
+	This function is obsolete.  Use ExamineDir() from V52+
+
+	This routine is passed a directory lock and a FileInfoBlock that
+	have been initialized by a previous call to Examine(), or updated
+	by a previous call to ExNext().  ExNext() gives a return code of zero
+	on failure.  The most common cause of failure is reaching the end
+	of the list of files in the owning directory.  In this case, IoErr
+	will return ERROR_NO_MORE_ENTRIES and a good exit is appropriate.
+
+	So, follow these steps to examine a directory:
+	1) Pass a Lock and a FileInfoBlock to Examine().
+	   The lock must be on the directory you wish to examine.
+	2) Pass ExNext() the same lock and FileInfoBlock.
+	3) Do something with the information returned in the FileInfoBlock.
+	   Note that the fib_DirEntryType should be tested by using the 
+	   FIB_IS_xxx macros.
+	4) Keep calling ExNext() until it returns FALSE.  Check IoErr()
+	   to ensure that the reason for failure was ERROR_NO_MORE_ENTRIES.
+
+	Note: if you wish to recursively scan the file tree and you find
+	another directory while ExNext()ing you must Lock that directory and
+	Examine() it using a new FileInfoBlock.  Use of the same
+	FileInfoBlock to enter a directory would lose important state
+	information such that it will be impossible to continue scanning
+	the parent directory.  While it is permissible to UnLock() and Lock()
+	the parent directory between ExNext() calls, this is NOT recommended.
+	Important state information is associated with the parent lock, so
+	if it is freed between ExNext() calls this information has to be
+	rebuilt on each new ExNext() call, and will significantly slow down
+	directory scanning.
+
+   WARNING:
+	It is NOT legal to Examine() a file, and then to ExNext() from that
+	FileInfoBlock, you must Examine() the files parent directory instead.
+	You may also make a local copy of a FileInfoBlock to keep the data,
+	as long as the copy is never passed back to the operating system.
+
+   INPUTS
+	lock - BCPL pointer to the lock used for the original Examine() call.
+	fib  - pointer to the same FileInfoBlock used on the previous 
+	       Examine() or ExNext() call.
+
+   RESULT
+	success - boolean; (zero or non-zero)
+
+   NOTES
+	The FileInfoBlock must be longword-aligned.  
+	AllocDosObject() will allocate them correctly for you.
+
+	From V53.59 DOS will emulate ExNext() using the newer ExamineDir()
+	function, if the handler in question does not support this old packet.
+
+   SEE ALSO
+	ExamineDir(), Lock(), UnLock(), IoErr(), ExamineObject()
+	AllocDosObject(), <dos/dos.h>
+
+dos.library/OBSOLETEInternalLoadSeg       dos.library/OBSOLETEInternalLoadSeg
+
+   NAME
+	OBSOLETEInternalLoadSeg -- Low-level (68K only) routine. (V36)
+
+   SYNOPSIS
+	BPTR seglist = OBSOLETEInternalLoadSeg(BPTR fh, BPTR table,
+	                               const APTR *functionarray);
+
+   NOTES
+	To obtain functional 68K compatibility, call the new hunk.library
+	directly using the functions;  LoadHunk() and UnLoadHunk().
+
+	As of V50, this function should NOT be called by native PPC code.
+	This function will disappear entirely in a future DOS release.
+   
+   BUGS
+	Limited V50 Legacy support does NOT include any new native formats.
+	The DOS LoadSeg() function provides full support for all formats.
+
+   SEE ALSO
+	hunk.library/LoadHunk(), hunk.library/UnLoadHunk(), dos/LoadSeg().
+
+dos.library/OBSOLETEInternalUnLoadSeg   dos.library/OBSOLETEInternalUnLoadSeg
+
+   NAME
+	OBSOLETEInternalUnLoadSeg -- (OBSOLETE) Unloads a 68K seglist
+	                    loaded with OBSOLETEInternalLoadSeg()   (V36)
+   SYNOPSIS
+	int32 success = OBSOLETEInternalUnLoadSeg(BPTR seglist, 
+	                                          VOID (*)()FreeFunc);
+
+   NOTES
+	To obtain functional compatibility, call the new hunk.library
+	functions LoadHunk() and UnLoadHunk().
+
+	As of V50, this function should NOT be called by native PPC code.
+	This function will disappear entirely in a future DOS release.
+   
+   BUGS
+	Limited V50 Legacy support does NOT include any new native formats.
+	The DOS UnLoadSeg() function provides full support for all formats.
+
+   SEE ALSO
+	hunk.library/LoadHunk(), hunk.library/UnLoadHunk(), dos/LoadSeg().
+
+dos.library/OBSOLETESeek                             dos.library/OBSOLETESeek
+
+   NAME
+	OBSOLETESeek -- Set the current cursor position (unbuffered) (OBSOLETE)
+	        Use; ChangeFilePosition(), GetFilePosition() for new programs.
+
+   SYNOPSIS
+	int32 oldPosition = OBSOLETESeek(BPTR file,int32 position,int32 mode);
+
+   FUNCTION
+	NB: New applications should use the 64 bit functions;
+	    GetFilePosition(), ChangeFilePosition(),
+	    GetFileSize(), ChangeFileSize().
+
+	OBSOLETESeek() sets the read/write cursor for the file 'file' to the
+	position 'position'. This position is used by both Read() and
+	Write() as a place to start reading or writing. The result is the
+	current absolute position in the file, or -1 if an error occurs, in
+	which case IoErr() can be used to find more information. 'mode' can
+	be OFFSET_BEGINNING, OFFSET_CURRENT or OFFSET_END. It is used to
+	specify the relative start position. For example, 20 from current
+	is a position 20 bytes forward from current, -20 is 20 bytes back
+	from current.
+
+	So that to find out where you are, seek zero from current. The end
+	of the file is a Seek() positioned by zero from end. 
+	You cannot Seek beyond the end of a file.
+
+   INPUTS
+	file     - BCPL pointer to a file handle
+	position - int32
+	mode     - int32 (OFFSET_BEGINNING, OFFSET_CURRENT or OFFSET_END)
+
+   RESULTS
+	oldPosition - int32; this can be negative for file positions
+	    beyond the 2 GByte mark. See the NOTES section for more
+	    information.
+
+
+   NOTES
+	The Seek() function return value is used both to signal errors
+	and to indicate which file position was current before it was
+	changed by the function call. This dual-use return value can lead
+	to misunderstandings. The following approach is recommended when
+	checking the return value:
+
+	    1) If the return value is exactly -1, it can signal an error,
+	       but it might also mean that the file position was set to
+	       the end of a file which is 4 GBytes in size. You can
+	       tell the difference by checking the IoErr() value: it should
+	       be non-zero in case of an error and zero otherwise.
+
+	    2) Never assume that just because the return value is negative
+	       that an error must have occured. Only a return value of -1
+	       signals an error condition.
+
+	When dealing with files larger than 2 GBytes it is not necessarily
+	true that the file system keeping this data also knows how to access
+	it, given a Seek() command to perform. You should be cautious: some
+	file systems may not support seeking to arbitrary file positions if
+	the offsets are beyond the 2 GByte mark, i.e.
+	Seek(fh,2147483649,OFFSET_BEGINNING) may fail. It may be safer to
+	change the current file position in smaller increments, such as
+	an initial Seek(fh,0,OFFSET_BEGINNING) followed by a
+	Seek(fh,1073741824,OFFSET_CURENT) command and finally a
+	Seek(fh,1073741825,OFFSET_CURENT) command.
+
+	A popular technique to find out how large a file is uses the sequence
+	Seek(fh,0,OFFSET_END); size = Seek(fh,0,OFFSET_BEGINNING). While this
+	method has other disadvantages (some file systems are notoriously
+	slow at changing the file position) it can backfire for very large
+	files since the size returned will appear as a signed 32 bit integer
+	whereas is might be a valid file size.
+
+
+   EXAMPLE
+	If updating old source code to use the new functions, a simple Seek64()
+	drop-in replacement function can be constructed like this;
+
+	int64 Seek64(BPTR file, int64 pos, int32 mode)
+	{
+	    int64 result64 = -1LL;  /* default failure code */
+	    int64 oldpos64 = IDOS->GetFilePosition(file);
+
+	    if( IDOS->ChangeFilePosition(file, pos, mode) )
+	    {
+	        result64 = oldpos64; /* Seek() returns old position. */
+	    }
+	    return(result64);
+	}
+
+
+   BUGS
+	The V36 and V37 ROM filesystem (and V36/V37 fastfilesystem)
+	returns the current position instead of -1 on an error.  
+	It sets IoErr() to 0 on success, and an error code on an error.
+	These bugs were fixed in the V39 filesystem.`
+
+   SEE ALSO
+	Read(), Write(), ChangeFileSize(), GetFileSize(), ChangeFilePosition(),
+	GetFilePosition().
+
+dos.library/OBSOLETESetFileSize               dos.library/OBSOLETESetFileSize
+
+   NAME
+	OBSOLETESetFileSize -- Sets the size of a file (V36).  (OBSOLETE)
+	               Use; ChangeFileSize(), GetFileSize() for new programs.
+
+   SYNOPSIS
+	int32 newsize = OBSOLETESetFileSize(BPTR fh, int32 offset, int32 mode);
+
+   FUNCTION
+	NB: New applications should use the 64 bit ChangeFileSize() function.
+
+	This function changes the file size, truncating or extending as needed.
+	Not all handlers may support this; be sure to check the return code.
+	If the file is extended, no values should be assumed for the new bytes.
+	If the new position would be before the filehandle's current position
+	in the file, the filehandle will end with a position at the
+	end-of-file.  If there are other filehandles open onto the file, the
+	new size will not leave any filehandle pointing past the end-of-file.
+	You can check for this by looking at the new size (which would be
+	different than what you requested).
+
+	The seek position should not be changed unless the file is made
+	smaller than the current seek position.  However, see BUGS.
+
+	Do NOT count on any specific values to be in any extended area.
+
+   INPUTS
+	fh      - File to be truncated/extended.
+	offset  - Offset from position determined by mode.
+	mode    - One of OFFSET_BEGINNING, OFFSET_CURRENT, or OFFSET_END.
+
+   RESULT
+	newsize - position of new end-of-file or -1 for error.
+
+   BUGS
+	The "RAM:" filesystem and the normal Amiga filesystem act differently
+	in where the file position is left after SetFileSize().  RAM: leaves
+	you at the new end of the file (incorrectly), while the Amiga ROM
+	filesystem leaves the seek position alone, unless the new position
+	is less than the current position, in which case you're left at the
+	new EOF.
+
+	The best workaround is to not make any assumptions about the seek
+	position after SetFileSize().	
+
+   NOTES
+	This function is NOT callable from a task.
+	This function works on both buffered and unbuffered streams.
+
+	For upward compatibility and the only way to handle files >2GB,
+	use the new ChangeFileSize() replacement function, note, the returncode
+	semantics are different.
+
+	Some file systems may not support the creation or writing to files
+	larger than 2 GBytes. Extending files beyond the 2 GByte mark or the
+	4 GByte mark may not be supported either, leading to unexpected
+	file system behaviour. If your software can be expected to create
+	or maintain files of such sizes you should implement safeguards
+	against accidental data corruption due to overly long files. For
+	example, some file systems may not be able to tell the difference
+	between a file that is a three bytes in excess of 4 GBytes large and
+	a file which is exactly three bytes in size.
+
+	Also, some filesystems may not allow the size of a file to be changed
+	if there is more than one filehandle open on the same file.
+	Always check the returncode on failure with IoErr().
+
+	From DOS 53.60 this function will fall forward by using the new packets
+	ACTION_CHANGE_FILE_SIZE64, followed by ACTION_GET_FILE_SIZE64 for the
+	returncode when the handler in question does not support this old
+	packet.  Legacy limitations will apply by using this function.
+
+   SEE ALSO
+	Read(), Write(), ChangeFileSize(), GetFileSize(), ChangeFilePosition()
+	GetFilePosition()
+
+dos.library/OBSOLETESetOwner                     dos.library/OBSOLETESetOwner
+
+   NAME
+	OBSOLETESetOwner -- Set owner information for a file or directory. (V39)
+	            (OBSOLETE -- Use SetOwnerInfo() for V52+)
+   SYNOPSIS
+	int32 success = OBSOLETESetOwner(CONST_STRPTR name, uint32 owner_info);
+
+   FUNCTION
+	OBSOLETESetOwner() sets the owner information for the file or directory.
+	This value is a 32-bit value that is normally split into 16 bits
+	of owner user id (bits 31-16), and 16 bits of owner group id (bits
+	15-0).  However, other than returning them as shown by the
+	examination functions, the filesystem take no interest in the values.
+	These are primarily for use by networking software (clients and
+	hosts), in conjunction with the EXDF_OTR_xxx and EXDF_GRP_xxx
+	protection bits.
+
+	When creating the 'owner_info' from a new struct ExamineData,
+	use the new function SetOwnerInfo() from V52+.
+  
+   INPUTS
+	name       - pointer to a nul-terminated string identifying the object.
+	owner_info - user id value (31:16) and group id value (15:0)
+
+   RESULT
+	success    - boolean; (zero or non-zero)
+
+	If this function fails for any reason, the value returned will be zero,
+	and a secondary error code will be available by calling IoErr().
+
+   NOTES
+	This function is NOT callable from tasks.
+
+	From V53.87 DOS will emulate SetOwner() by using the new function
+	SetOwnerInfo() if the handler in question does not support the old
+	SetOwner() [ ACTION_SET_OWNER ] dospacket.
+
+   SEE ALSO
+	SetOwnerInfo(), SetProtection(), <dos/dos.h>
+
+dos.library/OBSOLETESetVBuf                       dos.library/OBSOLETESetVBuf
+
+   NAME
+	OBSOLETESetVBuf -- Set buffering modes and size (V39) (OBSOLETE) 
+	           Use; SetFileHandleAttr() for new applications in V51+.
+
+   SYNOPSIS
+	int32 error=OBSOLETESetVBuf(BPTR fh,STRPTR buff,int32 type,int32 size);
+
+   FUNCTION   (obsolete)  - Use SetFileHandleAttr() from V51+
+	Changes the buffering modes and buffer size for a filehandle.
+	With buff == NULL, the current buffer will be deallocated and a
+	new one of (approximately) 'size' will be allocated.  If 'buffer' is
+	non-NULL, it will be used for buffering and must be at least
+	max(size,204) bytes long, and MUST be longword aligned.  
+	If size is -1, then only the buffering mode will be changed.
+
+	Note that a user-supplied buffer will not be freed if it is later
+	replaced by another SetVBuf() call, nor will it be freed if the
+	filehandle is closed.
+
+	Has no effect on the buffersize of filehandles that were not created
+	by AllocDosObject() or opened as buffered streams.
+
+   INPUTS
+	fh   - Filehandle
+	buff - buffer pointer for buffered I/O or NULL. MUST be LONG-aligned!
+	type - buffering mode; this must be one of the following:
+
+	       BUF_LINE -- Flush the buffer when a newline character ('\n')
+	                   is written to it or when the buffer is filled.
+	                   (This is the default value for new FileHandles)  
+
+	       BUF_FULL -- Flush only when the buffer has been filled.
+
+	       BUF_NONE -- Perform no buffering at all.
+
+	size - size of buffer for buffered I/O (sizes less than 204 bytes
+	       [not including -1], will be rounded up to 204).
+
+   RESULT
+	error - boolean; (zero or non-zero), 0 if successful.  
+	        NOTE: opposite of most dos functions!
+	        Also fails if someone has replaced the buffer without
+	        using SetVBuf() - RunCommand() does this.  Remember to
+	        check error before freeing user-supplied buffers!
+
+	        From V50: Returns error, if 'buff' is not longword aligned.
+	        (if it's actually != NULL).
+
+   WARNING
+	This function has been replaced with something not so convoluted
+	for V51.45+    Please use the new SetFileHandleAttr() function for 
+	future extended features and upward compatibility,  this function 
+	will probably go away in some future DOS release.  
+
+	From V51.55 this is simply a compatibility stub that calls the new
+	function:  SetFileHandleAttr();
+
+	NOTES
+	If you need to change the filehandle buffer, do so right after
+	opening the file. The first read/write access (either through the
+	buffered or the unbuffered I/O functions) will permanently
+	wire the filehandle for the respective access mode. Your
+	buffer size change request may have no effect after I/O has
+	taken place.
+
+	From V50, the default minimum buffer size has been increased from
+	204 bytes to 2048 bytes, calling SetVBuf() with new buffer sizes 
+	under 2048 bytes will be bumped up to this new default.
+
+   BUGS
+	Not implemented until after V39.  From V36 up to V39, always
+	returned 0.
+
+   SEE ALSO
+	FputC(), FGetC(), FUnGetC(), FFlush(), FRead(), FWrite(), FGets(),
+	FPuts(), AllocDosObject(), FOpen(), FClose(), SetFileHandleAttr().
+
+dos.library/OBSOLETEVFWritef                     dos.library/OBSOLETEVFWritef
+
+   NAME
+	OBSOLETEVFWritef - Write a BCPL formatted string to a stream.
+
+   SYNOPSIS
+	VOID OBSOLETEVFWritef(BPTR fh, CONST_STRPTR fmt, CONST LONG *argv);
+	              D1  D2    D3
+
+	VOID OBSOLETEFWritef(BPTR fh, CONST_STRPTR fmt, ...);
+
+   FUNCTION
+	Writes the formatted string and values to the specified file.  This
+	routine is assumed to handle all internal buffering so that the
+	formatting string and resultant formatted values can be arbitrarily
+	long.  The formats are in BCPL form.  This routine is buffered.
+
+	Supported formats are:  (Note x is in base 36!)
+		%S  - string (CSTR)
+		%Tx - writes a left-justified string in a field at least
+		      x bytes long.
+		%C  - writes a single character
+		%Ox - writes a number in octal, maximum x characters wide
+		%Xx - writes a number in hex, maximum x characters wide
+		%Ix - writes a number in decimal, maximum x characters wide
+		%N  - writes a number in decimal, any length
+		%Ux - writes an unsigned number, maximum x characters wide
+		%$  - ignore parameter
+
+	Note: 'x' above is actually the character value - '0'.
+
+   INPUTS
+	fh    - filehandle to write to
+	fmt   - BCPL style formatting string
+	argv  - Pointer to array of formatting values
+
+   RESULT
+	none  - this function is VOID.
+
+   BUGS
+	As of V37, VFWritef() does NOT return a valid return value.  In
+	order to reduce possible errors, the prototypes supplied for the
+	system as of V37 have it typed as VOID.
+
+

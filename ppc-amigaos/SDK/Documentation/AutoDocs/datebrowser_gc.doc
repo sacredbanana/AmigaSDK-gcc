@@ -1,0 +1,271 @@
+TABLE OF CONTENTS
+
+datebrowser.gadget/--datasheet--
+datebrowser.gadget/DATEBROWSER_GetClass
+datebrowser.gadget/JulianLeapYear
+datebrowser.gadget/JulianMonthDays
+datebrowser.gadget/JulianWeekDay
+datebrowser.gadget/--datasheet--             datebrowser.gadget/--datasheet--
+
+    NAME
+	datebrowser.gadget -- Monthly calendar gadget
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	bevel.image
+
+    DESCRIPTION
+	The datebrowser gadget class is used to display a month-based array
+	of days in the visual style of traditional calendars.
+
+    METHODS
+	OM_NEW -- Create the gadget. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_DISPOSE -- Delete the gadget.
+
+	OM_UPDATE -- Set object notification attributes.
+	             Passed to superclass first.
+
+	GM_RENDER -- Renders the gadget imagery.
+
+	GM_HITTEST -- Determines if mouse is within the gadget rectangle.
+
+	GM_GOACTIVE -- Handles activation, mutual-exclusion and date-select.
+
+	GM_HANDLEINPUT -- Handles input events once active.
+
+	GM_GOINACTIVE -- Deselects the gadget.
+
+	GM_DOMAIN -- Obtain the minimum, nominal and maximum size.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_HELPTEST -- Determine if gadget help was hit.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support. (V45)
+
+	GM_KEYGOACTIVE -- Handle keyboard activation. (V53.2)
+
+	GM_KEYGOINACTIVE -- Handle keyboard deactivation. (V53.2)
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GA_ReadOnly (BOOL)
+	    Sets the gadget to read-only or not.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_TextAttr (struct TextAttr *)
+	    Used to set the text font to render the labels.
+
+	    Defaults to RPort->Font, which is often the screen or
+	    window font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	DATEBROWSER_Day (uint16)
+	    Set the current day of the month.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	DATEBROWSER_Month (uint16)
+	    Set the current month of the year.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	DATEBROWSER_Year (int32)
+	    Calendar year to display.
+
+	    Defaults to 1978.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	DATEBROWSER_SelectedDays (uint32)
+	   A 32 bit value, each bit represents a day of the month.
+	   If set, each bit corresponds to a selected day. This is
+	   useful for multi-select mode to find out what days are
+	   selected via one packed value.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	DATEBROWSER_FirstWDay (int32)
+	    Gets the first day of the week. 0 is Sunday.
+
+	    Applicability is (OM_GET)
+
+	DATEBROWSER_NumDays (uint16)
+	    Returns the number of days in the currently set month.
+	    A better solution may be using datebrowser's public
+	    julian date functions.
+
+	    Applicability is (OM_GET)
+
+	DATEBROWSER_WeekDay (uint16)
+	    Returns the day of the week for the currently selected
+	    DATEBROWSER_Day. A better solution may be using
+	    datebrowser's public julian date functions.
+
+	    Applicability is (OM_GET)
+
+	DATEBROWSER_ShowTitle (BOOL)
+	    Enables display of the week-day title bar.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	DATEBROWSER_ShowWeek (BOOL)
+	    Enables display of the calendar week in the title bar.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	DATEBROWSER_MultiSelect (BOOL)
+	    Enables multi-selection of calendar days.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	DATEBROWSER_DayTitles (CONST_STRPTR *)
+	    Pointer to an array of strings containing day titles.
+
+	    Defaults to non-localized internal "Mon", "Tue", etc,
+	    if locale.library cannot be opened.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	DATEBROWSER_WeekTitle (CONST_STRPTR)
+	    Pointer to a string containing the week title.
+
+	    Defaults to non-localized internal "Week".
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	DATEBROWSER_CalendarType (UBYTE) (V53.9)
+	    Calendar type.
+
+	    Defaults to the loc_CalendarType value from the current
+	    default locale.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+datebrowser.gadget/DATEBROWSER_GetClassatebrowser.gadget/DATEBROWSER_GetClass
+
+    NAME
+	DATEBROWSER_GetClass -- Gets pointer to the datebrowser class.
+
+    SYNOPSIS
+	Class * class = DATEBROWSER_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "datebrowser.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the datebrowser class.
+
+datebrowser.gadget/JulianLeapYear           datebrowser.gadget/JulianLeapYear
+
+    NAME
+	JulianLeapYear -- Checks for a leap-year.
+
+    SYNOPSIS
+	BOOL JulianLeapYear(int32 year);
+
+    FUNCTION
+	This function will return TRUE if the given year is a leap year.
+
+    INPUTS
+	year -- the year.
+
+    RESULT
+	TRUE when the given year is a leap-year, otherwise FALSE.
+
+    SEE ALSO
+	JulianMonthDays(), JulianWeekDay()
+
+datebrowser.gadget/JulianMonthDays         datebrowser.gadget/JulianMonthDays
+
+    NAME
+	JulianMonthDays -- Returns the length of a month.
+
+    SYNOPSIS
+	int16 JulianMonthDays(int16 month, int32 year);
+
+    FUNCTION
+	Based on the input parameters "month" and "year" this
+	function returns the length of the given month.
+
+    INPUTS
+	month -- the month (1-12).
+	year -- the year.
+
+    RESULT
+	The length of the given month.
+
+    SEE ALSO
+	JulianLeapYear(), JulianWeekDay()
+
+datebrowser.gadget/JulianWeekDay             datebrowser.gadget/JulianWeekDay
+
+    NAME
+	JulianWeekDay -- Determine the week day of a date.
+
+    SYNOPSIS
+	int16 JulianWeekDay(int16 day, int16 month, int32 year);
+
+    FUNCTION
+	Returns the weekday of the given date.
+
+    INPUTS
+	day -- the day (1-31).
+	month -- the month (1-12).
+	year -- the year.
+
+    RESULT
+	The weekday of the given date with 0 being Sunday and
+	6 being Saturday.
+
+    SEE ALSO
+	JulianLeapYear(), JulianMonthDays()
+
+

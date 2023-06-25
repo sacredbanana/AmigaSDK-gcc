@@ -1,0 +1,33 @@
+#
+# make_country_files PPC makefile for gcc 3.4.2
+#
+
+CC	= gcc
+STRIP	= strip
+
+CWFLAGS	= -Wall -W -Wundef -Wshadow -Wpointer-arith \
+	  -Wbad-function-cast -Waggregate-return -Werror
+
+CFLAGS	= $(CWFLAGS) -O3 -I/V/include -fomit-frame-pointer \
+	  -mcpu=604e -DNDEBUG -fno-builtin \
+	  -fstrength-reduce -finline-functions
+
+LFLAGS	= 
+
+LIBS	= -lc
+
+OBJS	= make_country_files.ppc.o
+
+all:	make_country_files.elf
+
+make_country_files.ppc.o: make_country_files.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+make_country_files.elf:	$(OBJS)
+	@echo "Linking $@"
+	$(CC) -o $@.debug $(CFLAGS) $(LFLAGS) $(OBJS) $(LIBS) -Wl,--cref,-M,-Map=$@.map
+	@$(STRIP) -R.comment -R.dstart -R.dend $@.debug -o $@
+	@protect $@ +e
+
+clean:
+	-Delete $(OBJS) make_country_files.elf #?.debug #?.map

@@ -1,0 +1,1377 @@
+TABLE OF CONTENTS
+
+window.class/--datasheet--
+window.class/WINDOW_GetClass
+window.class/WM_ACTIVATEGADGET
+window.class/WM_CLOSE
+window.class/WM_HANDLEINPUT
+window.class/WM_ICONIFY
+window.class/WM_NEWPREFS
+window.class/WM_OPEN
+window.class/WM_RESTORE
+window.class/WM_RETHINK
+window.class/WM_SNAPSHOT
+window.class/WM_UNSNAPSHOT
+
+
+window.class/--datasheet--                                               window.class/--datasheet--
+
+  NAME
+   window.class -- Create Intuition window objects
+
+  SUPERCLASS
+   rootclass
+
+  REQUIRES
+   buttongclass, drawlist.image, label.image, propgclass, sysiclass
+
+  DESCRIPTION
+   This class creates standard Intuition windows and intelligently
+   handles some housekeeping for keyboard control, deferred layout,
+   refresh processing, etc. The window class properly handles
+   processing messages using shared window message ports as well as
+   safely closing Intuition windows. The window class will also
+   initialize your window's parent layout group properly.
+
+   All window.class methods and the callback hooks you provide it are
+   executed in the context of the task you call window.class from.
+   Thus if your application is a process, DOS is safe to use. However,
+   remember the Intuition rules about DOS and IDCMP VERIFY messages.
+
+  WINDOW REFRESH
+   Usually, when all the graphics in your window are handled by
+   Intuition, you should not explicitly set the window refresh method
+   to either smart or simple refresh. This is a user preference
+   setting and window.class will automatically use it. However, if
+   your program, for some reason, requires one or the other refresh
+   method and cannot use the other, set the refresh type in your
+   window object creation taglist. Note that deferred refreshing
+   requires smart refresh.
+
+  BACKFILL PATTERNS
+   The window class will install the default backfill pattern on any
+   window for which you do not pass a pointer to a custom backfill
+   hook. The pattern bitmaps are cached, minimizing memory usage.
+
+   If your windows have elements that look bad or do not work with
+   a backfill pattern, install the default NULL backfill to the
+   layout group(s) containing them.
+
+   The backfill installed by window.class is NOT a standard, global
+   window layer backfill hook. It is in fact passed to each of the
+   layout groups of the window, which will install it during
+   refreshes. This approach was chosen because datatypes fail to
+   render correctly if their background has been backfilled. This
+   method has the side effect that a gadget that is not aware of
+   window.class' method to install a backfill will only have a backfill
+   during window refresh (GM_RENDER coming through from the parent
+   layout), not during GM_HANDLEINPUT. To make the class use the
+   backfill during input handling, it should have GA_BackFill as a
+   settable attribute and install that backfill hook before erasing
+   its imagery.
+
+  GADGET HELPHINTS
+   Prior to version 53.32, window.class required an array of
+   HintInfo to be supplied, and from this was determined which text
+   to show for which gadget. Apart from requiring extra code to
+   localise these strings, it was also very limiting by expecting a
+   fixed array. In order to better fit in with dynamic interfaces,
+   the gadget help strings can now be added by the actual gadget.
+   This makes for a much more flexible system, in that as gadgets
+   are added or removed, the help hints are also added and removed.
+   Also, you can  change the help text by simply changing the
+   GA_HintInfo attribute in any of the gadget classes.
+   GA_HintInfo is a new attribute added to all BOOPSI classes, and
+   the contents of which are collected each time a help text needs
+   to be displayed. This means that by changing the attribute changes
+   the text immediately. Most interface creators will want to specify
+   this attribute at the gadgets OM_NEW time, but can be equally
+   changed via an OM_SET too. No extra work is involved in supplying
+   localised strings with this method as you simply pass the result
+   from the catalog lookup straight to the gadget. The string pointer
+   MUST remain valid for the lifetime of the help string, no caching
+   is done by the system.
+   This functionality is still controlled by the WINDOW_GadgetHelp
+   attribute, and allows a simple way to turn on and off the help
+   texts.
+   As of version 53.37 of window.class, the static hintinfo
+   string array is no longer required at all. You can supply all
+   of the hints via the GA_HintInfo attribute of each gadget, and
+   set the WINDOW_GadgetHelp attribute. WINDOW_HintInfo is now
+   considered obsolete, and is for compatibility only.
+
+  SCROLLWHEEL EVENTS
+   From 52.3, window.class can now pass mouse scrollwheel events
+   on to all gadgets part of the window. Due to the previous way
+   of implementing these events, window.class now looks to see if
+   an IDCMP Hook has been installed via tags, as this is the most
+   common way to implement scrollwheel events. If a hook is not
+   installed, then the built-in event handling is switched on. In
+   order to support this functionality, omit the IDCMP hook and
+   specify the IDCMP_EXTENDEDMOUSE flag in WA_IDCMP, everything
+   will be automatic from there on. If you are using a hook for
+   other purposes, the scrollwheel event handling can be
+   explicitly enabled by setting the WINDOW_BuiltInScroll tag to
+   TRUE at window creation time.
+
+  IDCMP VERIFY EVENTS
+   The RKRM Libraries "Intuition Menus" chapter goes into quite some
+   depth regarding this topic, but we shall cover it very quickly
+   here as a basic reminder. Application programmers will usually
+   open a main window, then potentially open further windows as custom
+   dialogs. In this case, there is a caveat that says if the main window
+   has specified a WINDOW_HintInfo array, there may be possible system
+   repercussions when opening child windows or requesters.
+   By default, when hintinfos are supplied, window.class sets the
+   IDCMP_MENUVERIFY flag to stop any possible rendering clashes between
+   the application and intuition when it tries to render the menus. In
+   order to handle this situation correctly, it is important to make sure
+   that WA_BusyPointer is set to TRUE for the duration that the child
+   window is open. You set this by calling SetAttrs on the window object.
+   Failure to do so may result in a delay or slowdown in menus appearing
+   when multiple windows are opened from the same application. This also
+   applies to IDCMP_REQVERIFY, and if the application is using it, it
+   should call ModifyIDCMP directly to clear the IDCMP_REQVERIFY flag
+   while the child window is open. Internaly, WA_BusyPointer, TRUE,
+   clears the MENUVERIFY IDCMP flag for the duration.
+
+  KEYBOARD CONTROL
+   There are basically two frameworks available to control gadgets
+   via the keyboard when using window.class.
+
+   The first is by using the usual GM_GOACTIVE, GM_HANDLEINPUT and
+   GM_GOINACTIVE methods. This sequence of methods is initiated
+   by calling ActivateGadget() (or the equivalent) after receiving
+   some keyboard input. Once initiated, the gadget's GM_GOACTIVE method
+   is invoked followed by the GM_HANDLEINPUT method. Within the
+   GM_HANDLEINPUT method, the gadget is responsible for processing the
+   IECLASS_RAWKEY events along with all the other other event classes.
+   The gadget is eventually deactivated and GM_GOINACTIVE is invoked.
+   This method allows the most precise control for the gadget but
+   may be some work for the programmer. This method is not dependent
+   on window.class and may be used for any BOOPSI gadget.
+
+   The second way to control gadgets via the keyboard involves
+   window.class and the GM_KEYTEST, GM_KEYGOACTIVE and GM_KEYGOINACTIVE
+   methods. The keys which initiate this sequence are stored using
+   GA_ActivateKey and are used by gadgetclass to determine if GM_KEYTEST
+   succeeds. When hit, a GM_KEYGOACTIVE method is generated by
+   window.class for each IECLASS_RAWKEY event including key down,
+   key up and repeat. When input is terminated (usually via key up)
+   the GM_KEYGOINACTIVE method is used to inform the gadget that no
+   more events are coming. The Escape (ESC) key will always terminate
+   keyboard control and invokes GM_KEYGOINACTIVE with gpki_Abort set
+   to 1. This framework may be simpler to use but provides less control
+   than the usual GM_HANDLEINPUT method. This framework is available
+   using window.class 53.12 or higher.
+
+   It is possible to support both of these keyboard control frameworks
+   simultaneously which is already done by many of the standard gadgets.
+   Note that the default behaviour for the GM_KEYGOACTIVE method is to
+   return GMR_KEYACTIVATE. In this case, window.class calls
+   ActivateGadget() after GM_KEYTEST returns GMR_GADGETHIT.
+
+  RESERVED ID NUMBERS
+   The window.class currently reserves the following ID numbers
+   for its own internal use. Do not use these numbers for any of
+   your gadgets:
+     0xFFFE - Used for iconify gadget
+     0xFFFD - Used for vertical prop gadget
+     0xFFFC - Used for horizonal prop gadget
+     0xFFFB - Used for the popup gadget
+
+  METHODS
+   OM_NEW -- Passed to superclass first, defaults set, then OM_SET.
+
+   OM_SET -- Passed to superclass first, then custom tags set.
+
+   OM_GET -- Returns requested setting or passed to superclass.
+
+   OM_DISPOSE -- Child object disposed then passed to superclass.
+
+   OM_NOTIFY -- Notify target of attribute value changes.
+
+   OM_UPDATE -- Passed to superclass first, then custom tags set.
+
+   OM_ADDMEMBER -- Private method.
+
+   OM_REMMEMBER -- Private method.
+
+   WM_OPEN -- Locks default public screen if needed, domains child
+              layout group min/max size, opens window and attaches
+              layout to window.
+
+   WM_CLOSE -- Closes the Intuition window but does not dispose the
+               child object/layout group.
+
+   WM_ICONIFY -- Puts icon on Workbench and calls WM_CLOSE.
+
+   WM_HANDLEINPUT -- Handles IDCMP input processing, deferred layout,
+                     deferred refresh and returns the item ID and
+                     Code of a selected gadget or menu attached to
+                     the window. Transparently handles keyboard control.
+
+   WM_NEWPREFS -- Handles update and visual refresh upon a preferences
+                  change.
+
+   WM_RETHINK -- Re-evaluates layout requirements and adjusts window
+                 size if needed in support of dynamically changing
+                 layout groups (e.g. adding, replacing and removing
+                 objects).
+
+   WM_ACTIVATEGADGET -- Activates a gadget within the layout.
+
+   WM_SNAPSHOT -- This method will save the intuition size and position
+                  to a file. This same data is then used when the same
+                  window is opened again. To identify the window, the
+                  WINDOW_UniqueID attribute must be set with a valid
+                  unique name. This only needs to be unique within your
+                  application, so each window should have a diffent name
+                  unless you want a window to use the same size and
+                  position as another.
+
+   WM_UNSNAPSHOT -- If the above snapshot data has already been saved,
+                    this method will remove the data for this window.
+                    Again, as above, this window must be identified with
+                    WINDOW_UniqueID in order to suceed.
+
+   WM_RESTORE -- If this identified window has been moved or resized, it
+                 can be restored to it's default size and position as
+                 specified by the saved snapshot data. Requires a valid ID
+                 just like the other methods above.
+
+
+   All other methods are passed to the superclass.
+
+  ATTRIBUTES
+   The following standard Intuition window tags are supported.
+
+   You may set these while the window is NOT open, at NewObject()
+   time or SetAttrs() - between WM_CLOSE and WM_OPEN for example:
+
+       WA_Flags
+       WA_NoCareRefresh
+       WA_SimpleRefresh
+       WA_SmartRefresh
+       WA_CloseGadget
+       WA_DepthGadget
+       WA_SizeGadget
+       WA_SizeBRight
+       WA_SizeBBottom
+       WA_DragBar
+       WA_GimmeZeroZero
+       WA_Borderless
+       WA_Activate
+       WA_RMBTrap
+       WA_ReportMouse
+       WA_Backdrop
+       WA_SuperBitMap
+       WA_MinWidth
+       WA_MinHeight
+       WA_BackFill
+       WA_HelpGroup
+       WA_MenuHelp
+       WA_Zoom
+       WA_NotifyDepth
+       WA_MenuHook
+       WA_ToolBox
+       WA_AutoAdjust
+       WA_AutoAdjustDClip
+       WA_StayTop
+
+   You may set these at any time, NewObject() or SetAttrs():
+
+       WA_Top
+       WA_Left
+       WA_Width (NOTE: Behaves like WA_InnerWidth)
+       WA_Height (NOTE: Behaves like WA_InnerWidth)
+       WA_InnerWidth
+       WA_InnerHeight
+       WA_Title (NOTE: Calls SetWindowTitles() if window is open)
+       WA_ScreenTitle (NOTE: Calls SetWindowTitles() if window is open)
+       WA_IDCMP (NOTE: Calls ModifyIDCMP() if needed)
+       WA_BusyPointer (NOTE: Disables deferred refresh & blocks input)
+       WA_WindowBox
+       WA_Hidden
+       WA_WindowName
+       WA_PubScreen
+       WA_PubScreenName
+       WA_PubScreenFallBack
+       WA_CustomScreen
+       WA_ContextMenuHook
+       WA_AlphaClips
+       WA_AlphaHook
+       WA_Opaqueness
+       WA_OverrideOpaqueness
+       WA_FadeTime
+       WA_NoHitThreshold
+       WA_DropShadows
+       WA_TabletMessages
+
+   You may GetAttr() these at any time:
+
+       WA_Top
+       WA_Left
+       WA_InnerWidth
+       WA_InnerHeight
+       WA_Width
+       WA_Height
+       WA_PubScreen
+       WA_CustomScreen
+       WA_Title
+       WA_ScreenTitle
+       WA_WindowName
+       WA_Zoom
+       WA_IDCMP
+
+   These are the window class specific attributes.
+
+   You may set these while the window is NOT open, at NewObject()
+   time or SetAttrs() - between WM_CLOSE and WM_OPEN for example:
+
+   WINDOW_Position (uint16)
+       Set the initial opening position of the window.
+
+       WPOS_CENTERSCREEN - Center on screen
+       WPOS_CENTERWINDOW - Center in another window
+       WPOS_CENTERMOUSE  - Center under mouse
+       WPOS_TOPLEFT      - Open top/left, just below screen bar
+       WPOS_FULLSCREEN   - Open top/left and fill visible clip
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_LockWidth (BOOL)
+       If TRUE, locks the width of the window. This inhibits
+       resizing on the horizontal axis.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_LockHeight (BOOL)
+       If TRUE, locks the height of the window. This inhibits
+       resizing on the vertical axis.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_SharedPort (struct MsgPort *)
+       Pointer to a custom UserPort this window should share.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   WINDOW_AppPort (struct MsgPort *)
+       Pointer to a MsgPort this window should use for AppMessages.
+       By passing this tag the window can become an AppWindow and
+       you can use the WM_ICONIFY method. Window.class must use the
+       am_ID field of the AppMessages to identify the window to which
+       the message was intended. You can use the am_UserData field.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+   WINDOW_AppWindow (BOOL)
+       By providing an AppPort and setting this to TRUE the window
+       will be made a Workbench AppWindow. If you don't set this
+       attribute the AppPort will only be used to support
+       iconification.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_IconifyGadget (BOOL)
+       Set to TRUE to add an iconification gadget to the window
+       titlebar. Please note that currently window.class detects
+       the iconify gadget being pressed by using the gadget ID
+       0xFFFE. Do not use this ID in your application.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_Iconifiable (BOOL) (V53.30)
+       Set to TRUE if your application implements both
+       WMHI_ICONIFY and WMHI_UNICONIFY but does not have an
+       iconify gadget (i.e. WINDOW_IconifyGadget is FALSE).
+
+       This tag is most useful to allow "skinnable" windows that
+       won't be using a standard iconify gadget but still want
+       to be able to respond to Workbench screen preferences
+       changes.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_AppWindowPtr (struct AppWindow *)
+       Contains the result of the AddAppWindow() call which is
+       used when iconifying the window.
+
+       Applicability is (OM_GET)
+
+   WINDOW_UniqueID (STRPTR) (V53.51)
+       By supplying this attribute and a valid string, you enable
+       certain functions. Firstly, the WM_SNAPSHOT, WM_UNSNAPSHOT
+       and WM_RESTORE methods become available. Some extra items in
+       the windows popup menu are added.
+       This attribute takes a string as its data, and should
+       identify the window with a unique name within your
+       application. If you have also specified WINDOW_PopupGadget,
+       then the user can take advantage of automatically being able
+       to save the window size and position which will be used the
+       next time a window with this unique name is opened.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   WINDOW_PopupGadget (BOOL)
+       Specify that this window should have a popup gadget
+       added to the window titlebar. The popup menu shown
+       when the user selects this gadget includes some standard
+       options depending on which gadgets the window will have.
+       If the window has a close gadget, a "Close" menu option
+       will be available, and if an iconify gadget has been
+       specified, the menu will have an "Iconify" option. If
+       the WINDOW_JumpScreensMenu attribute is set and there
+       is more than one public screen open, the menu will also
+       have a "Jump to Screen" option.
+       if a unique ID string has been supplied for this window,
+       the menu will also include a Snapshot item, and possibly
+       Unsnapshot and Restore if saved data exists.
+       The application may also add items to the popup menu
+       shown when this gadget is activated. Please see the
+       description of the "WINDOW_PopupHook" for more details.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+   WINDOW_TextAttr (struct TextAttr *)
+       The font to use for the window.
+
+       Defaults to the Screen's font.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_BackFillName (CONST_STRPTR)
+       Name for the custom backfill to use instead of preferences
+       backfill. If you use this tag, make it an user preference.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   It is legal and safe to set any of the following tags at any time,
+   OM_NEW or OM_SET regardless of the window being open or not. If not
+   applicable, the setting will be ignored or acted on as soon as the
+   window opens again:
+
+   WA_BusyPointer (BOOL)
+       Set the window to a busy state. If the window is currently
+       open or when it does get opened, the busy pointer is set and
+       a NULL requester is opened to block menu, gadget and keyboard
+       input to the parent window.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_Layout (Object *)
+       Pointer to the parent level layout group object which will
+       be added to the window.
+
+       Note: The tag has 2 aliased definitions which are now
+             obsolete but still supported in the include files.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+   WINDOW_HorizProp (int32)
+   WINDOW_VertProp (int32)
+       Add or remove a scroller (with arrows) in the bottom or right
+       window border. This attribute can have three different values
+       that represent the possible states of the scroller:
+
+        1 = The scroller exists and is displayed in the window border.
+            Pass 1 to have the window open with the scroller already
+            in place or to make the scroller appear if the window is
+            already open. If the scroller is already there, passing 1
+            again will do nothing. If the scroller object doesn't even
+            exist yet, passing 1 will cause it to be created first.
+
+        0 = The scroller doesn't exist. Pass 0 to dispose an existing
+            scroller whether it's displayed or not. If it's displayed,
+            it will be removed from the window border first. If you
+            never free the object yourself with this tag, window.class
+            will do it for you when the window object is disposed so
+            you don't need to use this unless you want to save memory.
+            Passing 0 when no scroller exists will do nothing.
+
+       -1 = The scroller exists but it is hidden. Pass -1 to have the
+            window open without the scroller or to make the scroller
+            disappear if the window is already open. This differs from
+            the previous state in that the object (still) exists in
+            memory, ready to be displayed (again). If the scroller
+            is already hidden, passing -1 again will do nothing. If
+            the scroller object doesn't actually exist yet, passing -1
+            will cause it to be created (but not displayed). (V51)
+
+       Defaults to 0 (no scroller).
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_HorizObject (Object *)
+   WINDOW_VertObject (Object *)
+       Get a pointer to the horizontal or vertical scroller object
+       (possibly) displayed in the window border, as set with the
+       WINDOW_HorizProp and WINDOW_VertProp tags. If the requested
+       scroller doesn't exist, NULL will be returned.
+
+       You can use this object as sender and/or target for BOOPSI
+       notification and modify or query some of its attributes.
+       The scroller object understands most of the propgclass and
+       scroller.gadget attributes.
+
+       Note well: depending on the window.class version, the object
+       is NOT NECESSARILY an instance of either scroller.gadget or
+       propgclass. Also, it might not even be present in the main
+       gadget list of the window. (V51)
+
+       Applicability is (OM_GET)
+
+   WINDOW_Zoom (BOOL)
+       Cause the window to be zipped via ZipWindow().
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_FrontBack (uint8)
+       Change window depth arrangement via WindowToFront() or
+       WindowToBack(). Accepted settings:
+
+       WT_FRONT - bring window to front.
+       WT_BACK  - put window to back
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_UserData (APTR)
+       Pointer to your user data. Take note, this is not the
+       same pointer as the Intuition window's UserData field.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+   WINDOW_GadgetUserData (uint16)
+       Determine how a gadget's UserData field (GA_UserData)
+       should be interpreted. If the UserData is non-NULL and
+       this setting is not WGUD_IGNORE then the hook
+       (or simple function) UserData points to will be called
+       when the gadget is selected.
+
+       Possible values are:
+
+       WGUD_HOOK   - UserData is a hook pointer (struct Hook *).
+       WGUD_FUNC   - UserData is a pointer to function.
+       WGUD_IGNORE - Ignore UserData.
+
+       The Hook function (WGUD_HOOK) will be called as follows:
+
+       void Func(struct Hook *hook, struct Gadget *gadget,
+                 struct IntuiMessage *msg);
+
+       The plain function (WGUD_FUNC) will be called as follows:
+
+       void Func(struct Gadget *gadget, struct IntuiMessage *msg);
+                                A0                           A1
+
+       It is recommended that you use the WGUD_HOOK option to
+       maintain maximum portability.
+
+       Defaults to WGUD_IGNORE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_MenuUserData (uint16)
+       Like the WINDOW_GadgetUserData tag but for menus. Using
+       this implies that WINDOW_MenuStrip has been created with
+       GadTools or otherwise has a 32-bit UserData field after
+       each menu item (i.e. NewMenu.nm_UserData). The window.class
+       uses the GTMENUITEM_USERDATA() macro to extract the data
+       pointer from the menu item.
+       Starting with V54, also BOOPSI menus built with "menuclass"
+       are supported, and their MA_UserData attribute is read to
+       find out the hook or function pointer.
+
+       The Hook function (WGUD_HOOK) will be called as follows:
+
+       void Func(struct Hook *hook, APTR window,
+                 struct IntuiMessage *msg);
+
+       The plain function (WGUD_FUNC) will be called as follows:
+
+       void Func(APTR window, struct IntuiMessage *msg);
+                      A0                           A1
+
+       It is recommended that you use the WGUD_HOOK option to
+       maintain maximum portability.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_MenuStrip (struct Menu *)
+   WA_MenuStrip (struct Menu *)
+       Pointer to a menu to add to the window with SetMenuStrip().
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+   WINDOW_NewMenu (struct NewMenu *)
+       Let window.class create and layout the menus for you.
+       This is useful for iconification and screenchanges.
+       Remember that the NewMenu array must be persistent
+       because it will be referenced every time the window opens.
+       The charset of the menu strings can be specified with the
+       WINDOW_CharSet tag.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_MenuAddress (APTR)
+       Address of the menu strip (traditional or BOOPSI) the
+       latest WMHI_MENUPICK/WMHI_MENUHELP event originated from.
+       This can be different from WINDOW_MenuStrip in case the
+       event came from a context menu.
+       If you don't use context menus you never need to check this
+       attribute. (V54)
+
+       Applicability is (OM_GET)
+
+   WINDOW_MenuType (uint32)
+       The value of the IMTAG_MenuType tag item from the latest
+       WMHI_MENUPICK/WMHI_MENUHELP event's IntuiMessage.
+       This allows to distinguish between a normal window menu
+       selection and one from a context menu, and in the latter
+       case tells exactly which type of context menu generated
+       the menu event.
+       The possible values can be IMT_DEFAULT, IMT_CONTEXT_WINDOW,
+       IMT_CONTEXT_GADGET_APP or IMT_CONTEXT_GADGET_OBJ (for more
+       information see <intuition/intuition.h>).
+       If you don't use context menus you never need to check this
+       attribute. (V54)
+
+       Applicability is (OM_GET)
+
+   WINDOW_MenuContext (APTR)
+       The value of the IMTAG_MenuContext tag item from the latest
+       WMHI_MENUPICK/WMHI_MENUHELP event's IntuiMessage.
+       This can be used to quickly identify the actual "context"
+       a context menu event applies to.
+       If WINDOW_MenuType is IMT_CONTEXT_WINDOW, this is whatever
+       value your window's context menu hook passed back in the
+       ContextMenuMsg.Context field. For IMT_CONTEXT_GADGET_APP and
+       IMT_CONTEXT_GADGET_OBJ, this is the address of the gadget
+       the context menu belongs to.
+       Do not read if WINDOW_MenuType is IMT_DEFAULT (i.e. upon a
+       normal window menu event), as the value is undefined in that
+       case (for more information see <intuition/intuition.h>).
+       If you don't use context menus you never need to check this
+       attribute. (V54)
+
+       Applicability is (OM_GET)
+
+   WINDOW_Window (struct Window *)
+       Pointer to the Intuition window or NULL when the window is
+       closed. Be sure not to use this pointer after closing or
+       iconifying a window and always re-get the pointer whenever
+       the window opens again.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   WINDOW_SigMask (uint32)
+       Window signal bit mask.
+
+       Applicability is (OM_GET)
+
+   WINDOW_IconTitle (CONST_STRPTR)
+       The title of the icon when the window is iconified.
+
+       Defaults to the same as the window title.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_Icon (struct DiskObject *)
+       The icon to use when iconifying. The icon will be disposed of
+       along with the window unless the WINDOW_IconNoDispose attribute
+       has been set to TRUE.
+
+       Defaults to ENV:Sys/def_window.info (if available) or
+       the default project icon.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_IconNoDispose (BOOL)
+       Set to TRUE to prevent the DiskObject pointed to by the
+       WINDOW_Icon tag from being automatically disposed of. (V50)
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_GadgetHelp (BOOL)
+       Set to TRUE to enable gadget help processing.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_ShowingHint (BOOL)
+       A boolean value specifying whether a gadgethelp hint
+       is currently being displayed.
+
+       Applicability is (OM_GET)
+
+   WINDOW_IDCMPHook (struct Hook *)
+       Pointer to a Hook that should be called for any IDCMP message
+       which matches the bit mask set with WINDOW_IDCMPHookBits.
+
+       The Hook function will be called as follows:
+
+       uint32 Func(struct Hook *hook, APTR window,
+                   struct IntuiMessage *msg);
+
+       Defaults to NULL.
+
+       See WINDOW_InterpretIDCMPHook below for more details.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_IDCMPHookBits (uint32)
+       If WINDOW_IDCMPHook is set it will be called for IDCMP
+       messages matching this bit mask.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_InterpretIDCMPHook (BOOL)
+       Setting this attribute to TRUE will cause window.class
+       to interpret the return value from the WINDOW_IDCMPHook
+       function. The hook function must return one of the
+       following:
+
+       WHOOKRSLT_IGNORE        - Ignore return value
+       WHOOKRSLT_CLOSEWINDOW   - Invoke WM_CLOSE and return
+                                 WMHI_CLOSEWINDOW
+       WHOOKRSLT_DISPOSEWINDOW - Invoke OM_DISPOSE and return
+                                 WMHI_DISPOSEDWINDOW
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_IDCMPSnoopHook (struct Hook *)
+       Pointer to a Hook that should be called whenever an
+       unknown IntuiMessage arrives at the shared message port.
+       An unknown IntuiMessage is a message which is not
+       destined for this window object. This is checked for
+       internally by comparing the IntuiMessage.IDCMPWindow
+       field.
+
+       This enables an application to snoop at messages before
+       they are passed on to their ultimate destination and
+       subsequently replied back to Intuition. (V52.6)
+
+       The Hook function will be called as follows:
+
+       void Snoop(struct Hook *hook, APTR window,
+                  struct IntuiMessage *msg);
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_NewPrefsHook (struct Hook *)
+       Some applications may require to know when the global
+       preferences change, supplying a hook with this tag
+       will cause window.class to call the hook when it receives
+       a NEWPREFS notification. Your hook function should look
+       like this:
+
+       VOID NewPrefsHook(struct Hook *hook, APTR window,
+                         APTR reserved);
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   WINDOW_AppMsgHook (struct Hook *)
+       Pointer to a Hook that should be called for AppMessages.
+
+       The Hook function will be called as follows:
+
+       void Func(struct Hook *hook, APTR window,
+                 struct AppMessage *msg);
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_BuiltInScroll (BOOL)
+       This tag explicitly turns on scrollwheel event handling,
+       although without an IDCMP Hook installed, this process
+       is automatic. (See notes above) V52.
+
+       Applicability is (OM_NEW)
+
+   WINDOW_RefWindow (struct Window *)
+       This causes WINDOW_Position to be relative to the specified
+       window instead of the screen. Note this is a Window pointer
+       and not a window object pointer. After deiconification or
+       any other close/open this tag must be reset before trying
+       to open this window. Each window reference must be to a valid
+       currently open window and must be set before opening this
+       window. (V42)
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_InputEvent (struct InputEvent *)
+       Pointer to a "fake" input event which is valid only
+       immediately after receiving WHMI_RAWKEY. This provides all
+       the additional information suitable for you to call
+       MapRawKey(). (V42)
+
+       Defaults to NULL.
+
+       Applicability is (OM_GET)
+
+   WINDOW_Qualifier (uint16)
+       Current qualifiers from the IntuiMessage.Qualifier field.
+       Useful for obtaining the qualifiers after WM_HANDLEINPUT
+       has returned.
+
+       Applicability is (OM_GET)
+
+   WINDOW_HintInfo (struct HintInfo *)
+       Pointer to a gadget HintInfo array. This is similar in concept
+       to Apple's bubble help or Microsoft's help tips. By providing
+       this array of HintInfo and setting WINDOW_GadgetHelp to TRUE
+       the window.class object will transparently manage the hint
+       display. The charset of the help strings can be specified with
+       the WINDOW_CharSet tag. (V43)
+
+       NOTE: As of window.class 53.32, the use of the HintInfo array
+       is now not absolutely required. It has been kept for
+       compatibility. More information is available at the top of
+       this document.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_PreRefreshHook (struct Hook *)
+       Whenever the window needs to refresh, this hook will be invoked
+       BEFORE the gadgets are refreshed. It will be called inside a
+       BeginRefresh() and EndRefresh() pair for simple refresh repair.
+       It may also be invoked when a preferences change occurs.
+
+       The Hook function will be called as follows:
+
+       void Func(struct Hook *hook, APTR window,
+                 struct Gadget *gadget);
+
+       The Gadget pointer will point to the first gadget that is
+       being refreshed which is usually the WINDOW_Layout gadget.
+
+       Note: Deferred layouts (see layout.gadget autodoc) must be
+             used for this to work.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_PostRefreshHook (struct Hook *)
+       Whenever the window needs to refresh, this hook will be invoked
+       AFTER the gadgets are refreshed. It will be called inside a
+       BeginRefresh() and EndRefresh() pair for simple refresh repair.
+       It may also be invoked when a preferences change occurs.
+
+       The Hook function will be called as follows:
+
+       void Func(struct Hook *hook, APTR window,
+                 struct Gadget *gadget);
+
+       The Gadget pointer will point to the first gadget that is
+       being refreshed which is usually the WINDOW_Layout gadget.
+
+       Note: Deferred layouts (see layout.gadget autodoc) must be
+             used for this to work.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   WINDOW_CharSet (uint32)
+       The charset of the WINDOW_NewMenu menu strings and the
+       WINDOW_HintInfo help strings. Usually specified with
+       the Catalog.cat_CodeSet value of the catalog your
+       application opened. (V51.11)
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+    WINDOW_PopupHook (struct Hook *)
+       Apart from the standard menu options, you can optionally
+       add some of your own to the popup menu that will be shown
+       when the user clicks on the WINDOW_PopupGadget.
+       Your hook will be called like so:
+
+       LONG PopupHook( struct Hook *, APTR o, UNUSED APTR reserved )
+
+       The hook pointer is a pointer to your hook, and the object
+       pointer is the popupmenu object which you can add items to
+       with PMA_AddItem.
+
+       This hook is only for adding items to the popup, and the
+       pointers are guaranteed to be valid when the hook is called,
+       but not afterwards. Do NOT cache any of these pointers.
+       You can, however, use the h_Data pointer to supply data your
+       hook may need, as this will always be consistent.
+
+       When adding user items to the popup, it is advisable to
+       supply a separator as the first item. This gives the user a
+       visual distinction between the standard items, and the
+       custom ones. For reasons of consistancy, only add items that
+       are applicable to the window this menu is called from. It is
+       not designed to replace the entire application menus.
+
+       The hook should return the amount of items added to the menu.
+       This is used to verify that we are not going to show an empty
+       menu.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   WINDOW_JumpScreensMenu (BOOL)
+
+       This attribute switches the "Jump to screen" menu on and off.
+       Applications that can support this functionality should enable
+       this option, although it is only applicable when the
+       WINDOW_PopupGadget attribute is set.
+
+       See the WMHI_JUMPSCREEN section for further information on how
+       to support this feature.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET ).
+
+
+    BUGS
+   Versions of window.class prior to 53.12 used GM_KEYTEST but had
+   special private versions of GM_KEYGOACTIVE and GM_KEYGOINACTIVE
+   which are not compatible and no longer supported.
+
+window.class/WINDOW_GetClass                                           window.class/WINDOW_GetClass
+
+    NAME
+	WINDOW_GetClass -- Get the pointer to the window class.
+
+    SYNOPSIS
+	Class * class = WINDOW_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "window.class" public class ID instead.
+
+    RESULT
+	class - Pointer to the window class.
+
+window.class/WM_ACTIVATEGADGET                                       window.class/WM_ACTIVATEGADGET
+
+    NAME
+     WM_ACTIVATEGADGET -- Activate layout gadget.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, struct wmActivateGadget *msg);
+
+    FUNCTION
+     This method is used to activate a gadget somewhere within the
+     layout specified by the WINDOW_Layout tag. Use this method to
+     activate gadgets controlled by a window.class object instead
+     of calling ActivateLayoutGadget() or ActivateGadget() directly.
+
+    INPUTS
+     obj - window object pointer
+     msg - pointer to fully initialized struct wmActivateGadget
+           (see <classes/window.h>)
+
+    RESULT
+     result - Returns TRUE if successful or FALSE on error.
+
+   SEE ALSO
+     layout.gadget/ActivateLayoutGadget,
+     intuition.library/ActivateGadget
+
+window.class/WM_CLOSE                                                         window.class/WM_CLOSE
+
+    NAME
+     WM_CLOSE -- Close the window.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     Closes the Window of this object. The gadgets are not disposed,
+     only detached from the window. If the window is sharing a message
+     port with another window the port will be cleaned of messages
+     intended for this Window. If the window was iconified the icon
+     will be removed unless WINDOW_IconNoDispose is TRUE.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_CLOSE
+           (see <intuition/classusr.h>)
+
+    RESULT
+     Returns non-zero if successful or 0 on error.
+
+window.class/WM_HANDLEINPUT                                             window.class/WM_HANDLEINPUT
+
+    NAME
+     WM_HANDLEINPUT -- IDCMP input handling method.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, struct wmHandle *msg);
+
+    FUNCTION
+     This method is used to handle the IDCMP input of a window. Call
+     this method when the signal bit of the window's UserPort is
+     set. This method will return when it encounters a message that
+     requires notifying your application or when the message port no
+     longer contains messages for the window.
+
+     The return value is two-part. The upper uint16 describes the
+     class of the event the value represents and the lower uint16 is
+     a modifier that describes the event.
+
+     Defined class return codes are:
+
+      WMHI_LASTMSG        No more messages
+      WMHI_IGNORE         Ignore this event
+      WMHI_CLOSEWINDOW    Close gadget hit
+      WMHI_GADGETDOWN     Gadget activated (V53.52)
+      WMHI_GADGETUP       Gadget released
+      WMHI_INACTIVE       Window went inactive
+      WMHI_ACTIVE         Window was activated
+      WMHI_NEWSIZE        Window was resized
+      WMHI_MENUPICK       A menu item was selected
+      WMHI_MENUHELP       Help was pressed in a menu
+      WMHI_GADGETHELP     A gadget sent a help message
+      WMHI_ICONIFY        Window should be iconified
+      WMHI_UNICONIFY      Window was deiconified
+      WMHI_RAWKEY         Raw key code
+      WMHI_VANILLAKEY     Vanilla key code
+      WMHI_CHANGEWINDOW   Window moved (or depth arranged)
+      WMHI_INTUITICK      IDCMP IntuiTick message
+      WMHI_MOUSEMOVE      IDCMP MouseMove message
+      WMHI_MOUSEBUTTONS   IDCMP MouseButtons message
+      WMHI_DISPOSEDWINDOW IDCMP Hook function triggered OM_DISPOSE
+      WMHI_JUMPSCREEN     The User wants the window on another screen
+      WMHI_POPUPMENU      A custom popup menu item was selected
+
+     The value of the lower uint16 is defined for WMHI_GADGETUP and
+     WMHI_GADGETHELP as the ID of the gadget and for WMHI_MENUPICK
+     and WMHI_MENUHELP as the menu code. WMHI_GADGETHELP uses the
+     special values 0 and WMHI_GADGETMASK as messages "pointer not
+     over your window" and "pointer over your window but not over a
+     gadget".This lower uint16 is also used to hold the ID of any
+     custom popup menu item that may have been selected.
+
+     WMHI_RAWKEY returns the raw key ID of the key being pressed
+     (to get the qualifiers see WINDOW_InputEvent) and
+     WMHI_VANILLAKEY returns the ASCII value of the key.
+     WMHI_VANILLAKEY is only returned when you set IDCMP_VANILLAKEY.
+     Window.class itself does not need vanilla key IDCMP.
+
+     WMHI_NEWSIZE returns some extra information in the low uint16:
+     if WMF_ZOOMED is set, the window is now in zoomed state. If
+     WMF_ZIPWINDOW is set, this resize was caused by either a
+     click of the zoom gadget or a call to ZipWindow().
+
+     WMHI_CHANGEWINDOW is returned when the window is moved. For
+     resizing of the window, listen to WMHI_NEWSIZE. By setting
+     WA_NotifyDepth, this event will also be returned for depth
+     arranging. The lower uint16 contains CWCODE_DEPTH in this case.
+
+     WMHI_JUMPSCREEN is returned when the "Jump to screen" option
+     is selected from the popup menu and a valid screen was chosen.
+     The application should query the WA_PubScreen attribute after
+     the event is received to get the screen pointer the user wants
+     this window moved to. This window object should then be closed,
+     the public screen pointer updated with SetAttrs() and then
+     reopened. Because there may be other objects the need to be
+     disposed of when this window object is closed, it is not
+     currently possible to fully automate this process.
+
+     WMHI_POPUPMENU is returned if the user has selected one of the
+     custom menu items added with the hook specified by
+     WINDOW_PopupHook. When adding items to the menu, make sure to
+     keep the IDs in the range of 1-65535. This is because the ID of
+     the menu option selected is returned in the lower 16bits of the
+     result, like gadget IDs. This allows the application to use
+     WMHI_GADGETMASK to extract the ID of the custom menu item that
+     was selected and act accordingly.
+
+     WMHI_ICONIFY and WMHI_UNICONIFY are only functional if you
+     have specified a message port for these events with WINDOW_AppPort.
+     You then need to wait for signals on this port, as well as
+     listening for normal window events. This is usually most used in
+     conjunction with either WINDOW_IconifyGadget or WINDOW_Iconifiable
+     set to TRUE. If you intend to open this window on the Workbench
+     screen, it is good practice to supply an AppPort and listen
+     for iconify/uniconify events.
+
+     This will allow the window to close if the system is trying to
+     update or change the Workbench screen. The user will be presented
+     with the usual "Please close all drawers and windows..." requester
+     if these events are ignored.
+
+     WMHI_CLASSMASK masks the lower word of the result code out,
+     while WMHI_GADGETMASK and WMHI_MENUMASK mask out the high word,
+     leaving only the ID part of the result value.
+
+    INPUTS
+     obj - window object pointer
+     msg - pointer to fully initialized struct wmHandle
+           (see <classes/window.h>)
+
+           The wmh_Code field will be filled with the value from
+           the struct IntuiMessage.Code field.
+
+    EXAMPLE
+     A generic application usage of WM_HANDLEINPUT looks like this:
+
+     GetAttr( WINDOW_SigMask, winobj, &wsig );
+
+     mask = Wait(wsig);  // maybe other signals
+
+     if (mask & wsig)
+         while ((result = IDoMethod( winobj, WM_HANDLEINPUT, &code ))
+                 != WMHI_LASTMSG)
+             switch (result & WMHI_CLASSMASK)
+             {
+             case WMHI_CLOSEWINDOW:
+                 close = TRUE;
+                 break;
+
+             case WMHI_GADGETUP:
+                 switch (result & WMHI_GADGETMASK)
+                 {
+                     // handle the gadgets here
+                 }
+
+             case WMHI_POPUPMENU:
+                 switch (result & WMHI_GADGETMASK)
+                 {
+                     // handle custom popup menu items here
+                 }
+
+             // handle whatever other events you want here
+             }
+
+     if (close)
+         DisposeObject( winobj ); // destroy the window
+
+     If you have set up the window to use a shared message port, you
+     can simply call this method on each of the windows:
+
+     if (mask & wsig)
+     {
+         WmHandleInputWin1();
+         WmHandleInputWin2();
+         WmHandleInputWin3();
+     }
+
+    RESULT
+     Window.class will automatically respond with an appropriate
+     action to many input events. When it does not know what to do
+     with an event, it will return with a value as described above.
+
+window.class/WM_ICONIFY                                                     window.class/WM_ICONIFY
+
+    NAME
+     WM_ICONIFY -- Hide this window to an icon.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     Closes the window and puts an icon on the Workbench for it.
+     The WINDOW_Icon tag may be used to change the image.
+
+     As of V53.46, it is now not required to keep a lock on the
+     public screen this window should open on. If the screen that
+     this window is to open is is closed while the window is
+     iconified, then it will fallback safely to the Workbench.
+     This follows the documentation that you may unlock the screen
+     once your window is open on it.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_ICONIFY
+           (see <intuition/classusr.h>)
+
+    RESULT
+     Returns non-zero if successful or 0 on error.
+
+window.class/WM_NEWPREFS                                                   window.class/WM_NEWPREFS
+
+    NAME
+     WM_NEWPREFS -- Update window prefs and refresh window.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     Re-evaluates preferences settings and relayouts the window.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_NEWPREFS
+           (see <intuition/classusr.h>)
+
+    RESULT
+     Returns non-zero if successful or 0 on error.
+
+window.class/WM_OPEN                                                           window.class/WM_OPEN
+
+    NAME
+     WM_OPEN -- Open an Intuition window.
+
+    SYNOPSIS
+     struct Window *window = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     This function opens the window the object should be handling.
+     If the window is already open it does nothing. If no shared
+     message port is set, a message port will be created for this
+     window.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_OPEN
+           (see <intuition/classusr.h>)
+
+    RESULT
+     window - Pointer to a struct Window or NULL on error.
+
+window.class/WM_RESTORE                                                     window.class/WM_RESTORE
+
+    NAME
+     WM_RESTORE -- Restore a windows saved size/position.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     If the window has been previously snapshot, calling this method will
+     revert the windows size and position back to the values of the last
+     snapshot. As with WM_SNAPSHOT, this method is dependent on the
+     WINDOW_UniqueID attribute.
+
+     Calling this method before the intuition window is open will do nothing,
+     but the return value will tell you whether snapshot data is available
+     for this window object. This may be useful when determing what options
+     to supply to the user when offering snapshotting features.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_RESTORE
+
+    RESULT
+     Returns a TRUE/FALSE value depending whether the data could be read.
+
+    SEE ALSO
+     WM_SNAPSHOT, WM_UNSNAPSHOT
+
+window.class/WM_RETHINK                                                     window.class/WM_RETHINK
+
+    NAME
+     WM_RETHINK -- Rethink an open window layout limits.
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     Re-evaluates layout limits and relayouts window.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_RETHINK
+           (see <intuition/classusr.h>)
+
+    RESULT
+     Returns non-zero if successful or 0 on error.
+
+window.class/WM_SNAPSHOT                                                   window.class/WM_SNAPSHOT
+
+    NAME
+     WM_SNAPSHOT -- Save snapshot data.
+
+    SYNOPSIS
+     uint32 err = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     Saves the window size and position to the system environment.
+     This data is automatically loaded when the "same" window opens
+     again. The identity of the window is dependant on the
+     WINDOW_UniqueID attribute, and should be unique for your
+     application. The data will be saved, and loaded, by using the
+     name of the application then the UniqueID attribute contents.
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_SNAPSHOT
+           (see <classes/window.h>)
+
+    RESULT
+     Returns any dos error code if the saving failed, else ZERO.
+
+    SEE ALSO
+     WM_UNSNAPSHOT, WM_RESTORE
+
+window.class/WM_UNSNAPSHOT                                               window.class/WM_UNSNAPSHOT
+
+    NAME
+     WM_UNSNAPSHOT -- Removes any saved size/position data.
+
+    SYNOPSIS
+     IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+     If this window has been previously snapshot, calling this method
+     will remove any saved data associated with this window. This, like
+     WM_SNAPSHOT, is dependent on the WINDOW_UniqueID attribute.
+
+
+    INPUTS
+     obj - window object pointer
+     msg - Msg with MethodID = WM_UNSNAPSHOT
+
+    RESULT
+     Always returns ZERO.
+
+    SEE ALSO
+     WM_SNAPSHOT, WM_RESTORE
+
+

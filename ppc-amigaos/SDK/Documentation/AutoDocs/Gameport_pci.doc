@@ -1,0 +1,111 @@
+TABLE OF CONTENTS
+
+GamePort_pci.driver/FindNumberOfAxis
+GamePort_pci.driver/InitHardware
+GamePort_pci.driver/ShutdownHardware
+GamePort_pci.driver/TestHardware
+GamePort_pci.driver/FindNumberOfAxis     GamePort_pci.driver/FindNumberOfAxis
+
+   NAME
+	FindNumberOfAxis -- Find out how many axis this Device uses
+
+   SYNOPSIS
+	result = FindNumberOfAxis(IExec);
+
+	int AIN_FindNumberOfAxis(struct ExecIFace *IExec);
+
+   FUNCTION
+       This function calculates how many axis are present (or 0, if this did
+       not work).
+
+   INPUTS
+	IExec  - A pointer to IExec
+
+   RESULT
+       result - The number of axis found on this device 
+
+   SEE ALSO
+	InitHardware, ShutdownHardware
+
+GamePort_pci.driver/InitHardware             GamePort_pci.driver/InitHardware
+
+   NAME
+	InitHardware -- Initializes the PCI Interface for a Analog Joystick
+                       attached to a Soundboard. This little Driver is used
+                       by the actual AmigaInput Driver, and you need to 
+                       install the correct version for the soundboard you use
+
+   SYNOPSIS
+	port = InitHardware(IExec,data,ID);
+
+	int InitHardware(struct ExecIFace *IExec,struct PC_Extra_Data
+                                *data, unsigned int ID);
+
+   FUNCTION
+       This function initializes the PCI Interface for the Gameport of the
+       Soundblaster Card.
+
+   INPUTS
+	IExec  - A pointer to IExec
+       data   - The PC_Extra_Data private structure, as required by the
+                Soundblaster Analog Joystick Driver
+       ID     - The ID of the Unit to initialize
+
+   RESULT
+       port   - Returns the I/O port which should be used, or 0, if the
+                function was not successful.
+
+   SEE ALSO
+	ShutdownHardware
+
+GamePort_pci.driver/ShutdownHardware     GamePort_pci.driver/ShutdownHardware
+   NAME
+	ShutdownHardware -- Frees the resources allocated for the PCI Interface
+                           of the Soundboard again
+
+   SYNOPSIS
+	ShutdownHardware(IExec,data,ID);
+
+	void ShutdownHardware(struct ExecIFace *IExec,struct PC_Extra_Data
+                                *data, unsigned int ID);
+
+   FUNCTION
+       This function frees the PCI Interface for the Gameport of the
+       Soundblaster Card.
+
+   INPUTS
+	IExec  - A pointer to IExec
+       data   - The PC_Extra_Data private structure, as required by the
+                Soundblaster Analog Joystick Driver
+       ID     - The ID of the Unit to shutdown
+
+   SEE ALSO
+	InitHardware
+
+GamePort_pci.driver/TestHardware             GamePort_pci.driver/TestHardware
+
+   NAME
+       TestHardware - tests for the presence of the hardware
+   SYNOPSIS
+	result = TestHardware(IExec,ID);
+
+	int TestHardware(struct ExecIFace *IExec,unsigned int ID);
+
+   FUNCTION
+       This function test, if actually an analogue joystick is attached
+       to the Soundcard. This function should not actually init or close
+       the PCI Interface, but use data which was collected during the
+       initialization (TestHardware will be called after InitHardware was
+       called by the AmigaInput-Driver).
+
+   INPUTS
+	IExec  - A pointer to IExec
+       ID     - The ID of the Unit to test
+
+   RESULT
+       result   - Returns TRUE, if a joystick is present, else FALSE.
+
+   SEE ALSO
+	InitHardware, ShutdownHardware
+
+

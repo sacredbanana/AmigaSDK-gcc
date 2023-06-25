@@ -1,0 +1,445 @@
+TABLE OF CONTENTS
+
+requester.class/--datasheet--
+requester.class/REQUESTER_GetClass
+requester.class/RM_OPENREQ
+requester.class/--datasheet--                   requester.class/--datasheet--
+
+    NAME
+     requester_cl -- Create requester BOOPSI objects.
+
+    SUPERCLASS
+     rootclass
+
+    REQUIRES:
+     penmap.image, label.image, layout.gadget, string.gadget,
+     integer.gadget, chooser.gadget, button.gadget, window.class
+
+    DESCRIPTION
+     The requester class is used to show information and query requesters,
+     to get integer and string information in an easy and consistent way.
+
+     Using this class provides consistent behavior and look in all
+     applications instead of doing their own requester selection routines.
+
+    METHODS
+     OM_NEW -- Passed to superclass, defaults set, then OM_SET.
+
+     OM_SET -- Passed to superclass, custom tags set.
+
+     OM_GET -- Custom tag returned or passed to superclass.
+
+     OM_DISPOSE -- Requester disposed of then passed to superclass.
+
+     RM_OPENREQ -- Invokes the requester.
+
+    ATTRIBUTES
+     REQ_Type (uint32)
+       Type of requester. See <classes/requester.h> for definitions.
+
+       Defaults to REQTYPE_INFO.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+     REQ_TitleText (CONST_STRPTR)
+       Title text of the requester.
+
+       Defaults to none.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+     REQ_BodyText (CONST_STRPTR)
+       Body text of the requester.
+
+       The following codes can be used to change the text appearance:
+
+       ESC u -- Set the soft style to underline.
+
+       ESC b -- Set the soft style to bold.
+
+       ESC i -- Set the soft style to italic.
+
+       ESC n -- Set the soft style back to normal.
+
+       ESC l -- Left justify the following text.
+
+       ESC c -- Center the following text.
+
+       ESC r -- Right justify the following text.
+
+       ESC <n> -- Use pen number n (1-9) as front pen; n must be a valid
+                  DrawInfo pen as specified in <intuition/screens.h>.
+                  Note that this is the offset into the DrawInfo->dri_Pens
+                  array and not an absolute pen number.
+
+       ESC f[<font>/<size>] -- Use the given font with the given size
+                               on the text that follows.
+
+       Example text: "\33b\33f[topaz.font/8]This is bold text in Topaz/8."
+
+       NOTE: Do not use the "\33<pen>" representation when selecting pen
+             to use since the compiler will translate this to the wrong
+             octal number. Instead, use the ESC key on the keyboard, like
+             "<ESC><pen>".
+
+       NOTE: Due to limitations in label.image, the justification codes
+             can only be used once in the text. If you use it more than
+             once, the last one will be used for all of the text. This
+             might change in future versions of label.image.
+
+       Defaults to none.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_VarArgs (APTR) (V50)
+       Varargs data array to supply data for RawDoFmt() when
+       format specifiers are to be used in REQ_BodyText text string.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_GadgetText (CONST_STRPTR)
+       Gadget text(s) for the requester.
+
+       Defaults to "_Ok|_Cancel".
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_EvenButtons (BOOL) (V50)
+       If TRUE the requester buttons will be evenly sized.
+
+       Defaults to FALSE up to version 51.19 and to the system
+       default setting selected with the GUI prefs editor
+       in version 51.20 and higher.
+
+       NOTE: This attribute will be ignored when the buttons would
+             not fit the screen otherwise (V51.15 or higher).
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_ReturnCode (uint32)
+       Last return code of the requester.
+
+       Applicability is (OM_GET)
+
+   REQ_TabSize (uint32)
+       Not yet implemented.
+
+       Defaults to 8.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_Image (struct Image *) (V50)
+       Use this tag to specify the image being displayed in the requester.
+       You can either supply your own BOOPSI image or you can use one of
+       the built-in images:
+
+       REQIMAGE_DEFAULT - Based on the gadget/option count REQIMAGE_INFO
+                          (one gadget/option) or REQIMAGE_QUESTION
+                          (two or more options) is used.
+
+       REQIMAGE_INFO - a '!' sign.
+
+       REQIMAGE_QUESTION - a '?' sign.
+
+       REQIMAGE_WARNING - a warning sign.
+
+       REQIMAGE_ERROR - an error sign.
+
+       REQIMAGE_INSERTDISK - an insert disk sign.
+
+       Defaults to REQIMAGE_DEFAULT.
+
+       NOTE: Versions prior to 53.17 had a rendering issue when a custom 
+       BOOPSI image was supplied, and not disposed of between uses. This 
+       resulted in the images vertical size being increased each use leading
+       to the requester growing in size with each use. As a workaround, add
+       the image into a Label onject, and supply that as the custom image.
+       This workaround still works with versions 53.17 onwards, so the 
+       Label "kludge" can be left with no need to check version numbers and
+       kludge appropriately. Either that or dispose of the image after each
+       use in the requester.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_WrapBorder (int16) (V50)
+       If the bodytext does not contain linefeeds it will be
+       automatically wordwrapped. This tags allows you to set a
+       different border for wordwrapping.
+
+       Defaults to 72.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_TimeOutSecs (uint32) (V51.5)
+       Maximum number of seconds the requester should be displayed
+       before it does time out and return with result -1.
+
+       Defaults to 0 which means no timeout.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_IDCMP_Ptr (uint32 *) (V51.5)
+       Pointer to an uint32 with IDCMP flags that specify which
+       IDCMP flags should terminate the requester with result -1.
+
+       In this case the uin32 will contain the IDCMP flag that
+       caused the termination, otherwise it will contain 0.
+
+       Caution: Currently only IDCMP_DISKINSERTED is supported.
+
+       Defaults to NULL which means no extra IDCMP flags shall
+       be monitored.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_Inactive (BOOL) (V51.8)
+       If TRUE the requester window will not be activated.
+
+       You should for example set this value to TRUE when your requester
+       has keyboard shortcuts and may appear when the user didn't
+       expect it. Otherwise the user can accidently select an option
+       of the requester when he is currently typing something.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQ_CharSet (uint32) (V51.11)
+       The character set for the requester's text and gadgets.
+
+       Defaults to 0, meaning no character set is required.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, RM_OPENREQ)
+
+   REQ_StayOnTop (BOOL) (V53.16)
+       Specify that the requester cannot be depth arranged and
+       must remain on top of all other windows.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, RM_OPENREQ)
+
+   REQI_Minimum (int32)
+       Minimum allowed value.
+
+       Defaults to MININT.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQI_Maximum (int32)
+       Maximum allowed value.
+
+       Defaults to MAXINT.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQI_Invisible (BOOL) (V50)
+       Integer input will be echoed with '*' and not what the user
+       actually types.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQI_Number (int32)
+       Number to show in gadget.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, RM_OPENREQ)
+
+   REQI_Arrows (BOOL)
+       Show arrows to the right of the integer gadget.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQI_MaxChars (uint16)
+       Maximum number of characters for the number (including negative
+       sign).
+
+       Defaults to 10 and 10 is also the highest value allowed.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQI_Mark (BOOL) (V52)
+       Any number displayed in the integer gadget should be
+       automatically marked. This aids replacement of the whole
+       number, entering the new integer automatically deletes the
+       old one.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+   REQI_ReturnEnds (BOOL) (V53.20)
+       When the user presses Return or Enter to confirm the number,
+       this now completes the requester.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+
+   REQS_AllowEmpty (BOOL)
+       Allow empty string to be accepted.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQS_Invisible (BOOL) (V50)
+       String input will be echoed with '*' and not what the user
+       actually types.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQS_Buffer (STRPTR)
+       Buffer used in the string gadget. MUST be provided.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQS_ShowDefault (BOOL)
+       Show content of REQS_Buffer in string gadget.
+
+       Defaults to TRUE.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQS_MaxChars (uint32)
+       Maximum number of characters in string gadget, including
+       the nul-terminator character. Must not be larger than the
+       size of the REQS_Buffer.
+
+       Defaults to 127.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQS_ChooserArray (STRPTR *) (V42)
+       An array of strings that will be added to a chooser gadget
+       to the right of the string gadget. Selecting this gadget
+       will show a hidden popup menu with the options supplied.
+       A selected option will automatically be placed in the
+       requesters string gadget, and can be retrieved via tags.
+
+       Applicability is (OM_NEW, OM_SET, RM_OPENREQ)
+
+   REQS_ChooserActive (uint32) (V42)
+       The current active entry among the strings passed in
+       using REQS_ChooserArray. This attribute ahould not be 
+       required any longer as the chooser item is placed into 
+       the requester automatically now.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, RM_OPENREQ)
+
+   REQS_Mark (BOOL) (V52)
+       Any text displayed in the string gadget should be
+       automatically marked. This aids replacement of the whole
+       string, entering the new string automatically deletes the
+       old one.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+   REQS_ReturnEnds (BOOL) (V53.20)
+       When the user presses Return or Enter to confirm the string,
+       this now completes the requester.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+
+requester.class/REQUESTER_GetClass         requester.class/REQUESTER_GetClass
+
+    NAME
+	REQUESTER_GetClass -- Gets pointer to the requester class.
+
+    SYNOPSIS
+	Class * class = REQUESTER_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "requester.class" public class ID instead.
+
+    RESULT
+	class - Pointer to the requester class.
+
+requester.class/RM_OPENREQ                         requester.class/RM_OPENREQ
+
+    NAME
+	RM_OPENREQ -- Open a requester.
+
+    SYNOPSIS
+	uint32 button_num = IDoMethodA(APTR obj, struct orRequest *msg);
+
+    FUNCTION
+	Opens a requester and returns the number of the button the
+	user selected.
+
+    INPUTS
+	obj - requester object pointer
+	msg - pointer to fully initialized struct orRequest
+	      (see <classes/requester.h>)
+
+    RESULT
+	For REQTYPE_INFO, returns the number of the button the user did
+	select. The buttons are numbered 1, 2, 3, ..., 0. A requester with
+	a single button always returns 0.
+
+	For REQTYPE_INTEGER, returns either TRUE or FALSE (= Cancel).
+
+	For REQTYPE_STRING, returns FALSE if the string was empty and empty
+	strings were not allowed, otherwise returns TRUE.
+
+	For all types, returns 0 when opening the requester failed.
+
+	For all types, returns -1 when a timeout occured or when an IDCMP
+	event specified with REQ_IDCMP_Ptr occurred.
+
+    EXAMPLE
+	struct orRequest reqmsg;
+	struct TagItem   tags[10];
+	char             buffer[100] = "Default string";
+
+	reqmsg.MethodID  = RM_OPENREQ;
+	reqmsg.or_Attrs  = tags;
+	reqmsg.or_Window = NULL;
+	reqmsg.or_Screen = myScreenPtr;
+	tags[0].ti_Tag   = REQ_Type;
+	tags[0].ti_Data  = REQTYPE_STRING;
+	tags[1].ti_Tag   = REQ_TitleText;
+	tags[1].ti_Data  = (Tag)"Requesting a string";
+	tags[2].ti_Tag   = REQ_BodyText;
+	tags[2].ti_Data  = (Tag)"Please enter a string";
+	tags[3].ti_Tag   = REQ_GadgetText;
+	tags[3].ti_Data  = (Tag)"_Ok|_Cancel";
+	tags[4].ti_Tag   = REQS_Buffer;
+	tags[4].ti_Data  = (Tag)buffer;
+	tags[5].ti_Tag   = REQS_MaxChars;
+	tags[5].ti_Data  = sizeof(buffer) - 1;
+	tags[6].ti_Tag   = REQS_ShowDefault;
+	tags[6].ti_Data  = TRUE;
+	tags[7].ti_Tag   = REQS_AllowEmpty;
+	tags[7].ti_Data  = FALSE;
+	tags[8].ti_Tag   = REQS_Invisible;
+	tags[8].ti_Data  = FALSE;
+	tags[9].ti_Tag   = TAG_END;
+	tags[9].ti_Data  = 0;
+
+	uint32 button_num = IDoMethodA(reqobj, (Msg)&reqmsg);
+	if (button_num == 0)
+	{
+	    // Cancel button or failed to open.
+	}
+
+	// Buffer contains result string which is the default when
+	// the user did cancel the requester or it did not open.
+
+

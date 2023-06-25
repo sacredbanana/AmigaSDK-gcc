@@ -1,0 +1,288 @@
+TABLE OF CONTENTS
+
+nvram.resource/GetAmigaNV
+nvram.resource/GetAmigaSize
+nvram.resource/GetUBootNV
+nvram.resource/GetUBootSize
+nvram.resource/Obtain
+nvram.resource/PutAmigaNV
+nvram.resource/PutUBootNV
+nvram.resource/Release
+nvram.resource/GetAmigaNV                                                 nvram.resource/GetAmigaNV
+
+   NAME
+      GetAmigaNV -- Copies contents of AmigaOS NVRAM to a given buffer
+
+   SYNOPSIS
+      valid = GetAmigaNV(buffer);
+   
+      ULONG GetAmigaNV(APTR buffer);
+
+   FUNCTION
+      Copies the contents of AmigaOS NVRAM to a given buffer. The size
+      of the given buffer must be large enough to accomodate the copy.
+
+      The required size of the buffer can be checked with
+      GetAmigaSize().
+
+   INPUTS
+      buffer - A pointer to a previously allocated memory buffer
+
+   RESULT
+      The result of the get operation will be returned.
+
+      Possible results are:
+
+      OK_CRC_VALID - Read was succesful, and CRC32 was correct.
+
+      OK_CRC_INVALID - Read was succesful, but CRC32 was incorrect.
+
+      ERROR - Unspecified error was encountered reading from NVRAM.
+
+   EXAMPLE
+      if (GetAmigaNV(buffer) && OK_CRC_INVALID)
+      {
+         printf("Warning: NVRAM CRC invalid.\n"):
+      }
+
+   NOTES
+      In the event that the CRC of the NVRAM contents is invalid,
+      part of all the NVRAM contents may be corrupt. It may still
+      be beneficial however to examine the NVRAM contents, so the
+      contents will be returned regardless of CRC. It is the
+      responsibility of the caller to verify the CRC by checking
+      the return result.
+
+      The first four bytes of the buffer are the CRC32, and should
+      not be used.
+      
+   SEE ALSO
+      GetUBootNV()
+ 
+nvram.resource/GetAmigaSize                                             nvram.resource/GetAmigaSize
+
+   NAME
+      GetAmigaSize -- Returns the size of the AmigaOS NVRAM in bytes.
+
+   SYNOPSIS
+      size = GetAmigaSize();
+   
+      ULONG GetAmigaSize(void)
+
+   FUNCTION
+      Returns the size (in bytes) of the NVRAM space that is assigned
+      to AmigaOS. By definition it is currently 28 KB (28672 bytes).
+
+   RESULT
+      The size of NVRAM reserved in bytes, should be 28672.
+
+   NOTES
+      The size of NVRAM is set in the header <resources/nvram.h>.
+      It can be modified to accomodate different configurations.
+
+   SEE ALSO
+      GetUBootSize()
+
+nvram.resource/GetUBootNV                                                 nvram.resource/GetUBootNV
+
+   NAME
+      GetUBootNV -- Copies contents of UBoot NVRAM to a given buffer
+
+   SYNOPSIS
+      valid = GetUBootNV(buffer);
+   
+      ULONG GetUBootNV(APTR buffer);
+
+   FUNCTION
+      Copies the contents of UBoot NVRAM to a given buffer. The size
+      of the given buffer must be large enough to accomodate the copy.
+
+   INPUTS
+      buffer - A pointer to a previously allocated memory buffer
+
+   RESULT
+      The result of the get operation will be returned.
+
+      Possible results are:
+
+      OK_CRC_VALID - Read was succesful, and CRC32 was correct.
+
+      OK_CRC_INVALID - Read was succesful, but CRC32 was incorrect.
+
+      ERROR - Unspecified error was encountered reading from NVRAM.
+
+   EXAMPLE
+      if (GetUBootNV(buffer) && OK_CRC_INVALID)
+      {
+         printf("Warning: NVRAM CRC invalid.\n");
+      }
+
+   NOTES
+      In the event that the CRC of the NVRAM contents is invalid,
+      part of all the NVRAM contents may be corrupt. It may still
+      be beneficial however to examine the NVRAM contents, so the
+      contents will be returned regardless of CRC. It is the
+      responsibility of the caller to verify the CRC by checking
+      the return result.
+
+      The first four bytes of the buffer are the CRC32, and should
+      not be used.
+      
+   SEE ALSO
+      GetAmigaNV()
+ 
+nvram.resource/GetUBootSize                                             nvram.resource/GetUBootSize
+
+   NAME
+      GetUBootSize -- Returns the size of the U-Boot NVRAM in bytes.
+
+   SYNOPSIS
+      size = GetUBootSize();
+   
+      ULONG GetUBootSize(void)
+
+   FUNCTION
+      Returns the size (in bytes) of the NVRAM space that is assigned
+      to U-Boot. By definition it is currently 4 KB (4096 bytes).
+
+   RESULT
+      The size of NVRAM reserved in bytes, should be 4096. 
+
+   NOTES
+      The size of NVRAM is set in the header <resources/nvram.h>.
+      It can be modified to accomodate different configuratioins.
+      
+      IMPORTANT: The first four bytes of NVRAM are always reserved for a 32 bit
+      CRC (stored as an unsigned long). 
+      The actual NVRAM available for use is (size - sizeof(ULONG)).
+      
+   SEE ALSO
+      GetAmigaSize()
+
+nvram.resource/Obtain                                                         nvram.resource/Obtain
+
+   NAME
+      Obtain -- Standard Library Obtain.
+
+   SYNOPSIS
+      ULONG Obtain(void)
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       The open count.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+nvram.resource/PutAmigaNV                                                 nvram.resource/PutAmigaNV
+
+   NAME
+      PutAmigaNV -- Stores the contents of the given buffer to AmigaOS
+      NVRAM.
+
+   SYNOPSIS
+      result = PutAmigaNV(buffer);
+   
+      ULONG PutAmigaNV(const APTR buffer);
+
+   FUNCTION
+      Stores the contents of the given buffer to AmigaOS NVRAM.
+      The size of the buffer should not exceed the result of
+      GetAmigaSize(). Any data beyond this size, is ignored and
+      will not be stored.
+
+   INPUTS
+       buffer - A pointer to a memory block with the contents that
+       are to be stored in AmigaOS NVRAM.
+
+   RESULT
+       The result of the put operation will be returned.
+
+       Possible results are:
+
+       OK - Write was succesful.
+
+       ERROR - Unspecified error was encountered writing to NVRAM.
+
+   NOTES
+      This is a low level function. The entire contents of NVRAM
+      are wiped and replaced with the contents of the given buffer!
+      
+      The first four bytes of the given buffer must not be used,
+      they will be replaced with the NVRAM CRC32 when stored.
+
+   SEE ALSO
+      PutUBootNV()
+ 
+nvram.resource/PutUBootNV                                                 nvram.resource/PutUBootNV
+
+   NAME
+      PutUBootNV -- Stores the contents of the given buffer to UBoot
+      NVRAM.
+
+   SYNOPSIS
+      result = PutUBootNV(buffer);
+     
+      ULONG PutUBootNV(const APTR buffer);
+
+   FUNCTION
+      Stores the contents of the given buffer to UBoot NVRAM.
+      The size of the buffer should not exceed the result of
+      GetUBootSize(). Any data beyond this size, is ignored and
+      will not be stored.
+      
+   INPUTS
+      buffer - A pointer to a memory block with the contents that
+      are to be stored in UBoot NVRAM.
+
+   RESULT
+      The result of the put operation will be returned.
+
+      Possible results are:
+
+      OK - Write was succesful.
+
+      ERROR - Unspecified error was encountered writing to NVRAM.
+
+   NOTES
+      This is a low level function. The entire contents of NVRAM
+      are wiped and replaced with the contents of the given buffer!
+
+      The first four bytes of the given buffer must not be used,
+      they will be replaced with the NVRAM CRC32 when stored.
+      
+   SEE ALSO
+      PutAmigaNV()
+
+nvram.resource/Release                                                       nvram.resource/Release
+
+   NAME
+      Release -- Standard Library Release.
+
+   SYNOPSIS
+      ULONG Release(void)
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       The open count.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

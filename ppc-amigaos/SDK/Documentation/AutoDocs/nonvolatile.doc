@@ -1,0 +1,205 @@
+TABLE OF CONTENTS
+
+nonvolatile.library/--background--
+nonvolatile.library/FreeUBootVar
+nonvolatile.library/GetUBootVar
+nonvolatile.library/SetUBootVar
+nonvolatile.library/--background--                               nonvolatile.library/--background--
+
+   PURPOSE
+	The nonvolatile library provides a simple means for an application
+	developer to manage nonvolatile storage.
+
+   OVERVIEW
+	The nonvolatile library is meant to be used transparently across all
+	configurations. Currently, nonvolatile storage may consist of NVRAM
+	and/or disk devices. nonvolatile.library will automatically
+	access the best nonvolatile storage available in the system. Disk
+	based storage will be selected first and if not available, NVRAM
+	storage will be accessed.
+
+	* NVRAM
+
+	On low-end diskless Amiga platforms, NVRAM may be available. This
+	RAM will maintain its data contents when the system is powered down.
+	This is regardless of whether batteries or battery-backed clock are
+	present. The data stored in NVRAM is accessible only through the
+	ROM-based nonvolatile library funtion calls. The size of NVRAM
+	storage	is dependant on the system platform and is attainable through
+	the GetNVInfo() function.
+
+	* Disk
+
+	In keeping with the general configurability of the Amiga, the actual
+	disk location used by nonvolatile library when storing to disk may be
+	changed by the user.
+
+	The prefs directory is used on the Amiga for storing many user
+	configurable options. The location for nonvolatile disk storage
+	is contained in the file prefs/env-archive/sys/nv_location. This
+	file should contain a data string that specifies a lockable location.
+	If the string does not specify a lockable location, the file will
+	be ignored.
+
+	When opened, the nonvolatile library will search all drives within
+	the system until it finds this file and successfully accomplishes
+	a Lock on the location specified in the file. To force a rescan of
+	all drives, the library may be closed and reopened or execute the
+	GetNVInfo() function.
+
+	A simple method for creating a floppy disk for saving nonvolatile
+	data is the following:
+
+	Format a disk with the volume name NV
+	Create a file prefs/env-archive/sys/nv_location on this disk with
+	  the following contents:  NV:nonvolatile
+	Create a directory nonvolatile
+
+	The following is a script file that can be used to make a floppy
+	for use with nonvolatile library:
+
+	.KEY DRIVE/A,DISK
+	.BRA {
+	.KET }
+	format Drive {DRIVE} Name {DISK$NV} noicons ffs
+	makedir {DRIVE}prefs
+	makedir {DRIVE}nonvolatile
+	makedir {DRIVE}prefs/env-archive
+	makedir {DRIVE}prefs/env-archive/sys
+	echo {DISK$NV}:nonvolatile >{DRIVE}prefs/env-archive/sys/nv_location
+
+	!!!NOTE!!!
+
+	Because NVRAM performs disk access, you must open and use its
+	functionality from a DOS process, not an EXEC task.  Normally
+	your CDGS application is invoked as a DOS process so this
+	requirement generally should cause you no concern.  You just
+	need to be aware of this requirement should you create an
+	EXEC task and try to invoke nonvolatile.library from that task.
+
+nonvolatile.library/FreeUBootVar                                   nonvolatile.library/FreeUBootVar
+
+   NAME
+      FreeUBootVar -- Release the memory taken up by a previously fetched value
+
+   SYNOPSIS
+      FreeUBootVar(value);
+
+      void FreeUBootVar(CONST_STRPTR value);
+
+   FUNCTION
+      Releases the memory taken up by a previously returned value from a call
+      to GetUBootVar().
+
+   INPUTS
+      value - A string pointer that was returned from a call to GetUBootVar()
+
+   RESULT
+      This function does not return a result
+
+   EXAMPLE
+      value = INV->GetUBootVar("name");
+      if (value)
+      {
+        printf("Value of 'name' is %s.\n", value);
+        INV->FreeUBootVar(value);
+      }
+      else
+        printf("Environment variable 'name' not found.\n");
+
+   SEE ALSO
+      GetUBootVar()
+
+nonvolatile.library/GetUBootVar                                     nonvolatile.library/GetUBootVar
+
+   NAME
+      GetUBootVar -- Obtains the value of a given UBoot environment variable
+
+   SYNOPSIS
+      value = GetUBootVar(name);
+
+      CONST_STRPTR GetUBootVar(CONST_STRPTR name);
+
+   FUNCTION
+      Returns a constant string pointer to the value of the requested
+      UBoot environment variable. If the variable could not be found, a
+      NULL pointer will be returned.
+
+      If an empty string is provided for the "name" parameter, a buffer
+      containing all UBoot variables will be returned. In this buffer,
+      each named variable is followed by an '=' and its value, and is nul
+      terminated. This is then immediately followed by the next variable, if
+      one exists. The end of the buffer is indicated by an additional nul
+      terminator.
+
+   INPUTS
+      name - A string pointer to the name of the requested variable.
+
+   RESULT
+      The value of the requested variable will be returned, or a NULL
+      pointer if the requested variable could not be found.
+
+      If a value is returned, you must free the memory used by the returned
+      value using FreeUBootVar(), when you have finished with it.
+
+   EXAMPLE
+      value = INV->GetUBootVar("name");
+      if (value)
+      {
+        printf("Value of 'name' is %s.\n", value);
+        INV->FreeUBootVar(value);
+      }
+      else
+        printf("Environment variable 'name' not found.\n");
+
+   NOTES
+      If a value is returned, you must free the memory used by the returned
+      value using FreeUBootVar(), when you have finished with it.
+
+      This function cannot be accessed from the 68k jump table.
+
+   SEE ALSO
+      FreeUBootVar()
+      SetUBootVar()
+
+nonvolatile.library/SetUBootVar                                     nonvolatile.library/SetUBootVar
+
+   NAME
+      SetUBootVar -- Set the value of a given UBoot environment variable
+
+   SYNOPSIS
+      SetUBootVar(name, value)
+
+      ULONG SetUBootVar(CONST_STRPTR name, CONST_STRPTR value);
+
+   FUNCTION
+      The named variable will be created with the provided value. If the
+      named variable already exists, its value will be replaced with the
+      newly provided value.
+
+      If an empty value is provided, the named variable
+      will be deleted.
+
+   INPUTS
+       name - A string pointer to the name of the variable to set.
+       value - A string pointer to the value to set the named variable to.
+
+   RESULT
+      TRUE if the named variable was successfully set, or deleted,
+      FALSE otherwise.
+
+   EXAMPLE
+      if (!SetUBootVar(name, value))
+        printf("Environment variable %s could not be set\n", name );
+      else
+        printf("Environment variable %s set to %s\n", name, value);
+
+   NOTES
+      If you wish to delete a named environment variable, use an empty
+      string for the "value" parameter
+
+   SEE ALSO
+      SetUBootVar()
+      FreeUBootVar()
+
+

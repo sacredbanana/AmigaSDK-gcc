@@ -1,0 +1,750 @@
+TABLE OF CONTENTS
+
+imageclass/--datasheet--
+imageclass/IM_DOMAINFRAME
+imageclass/IM_DRAW
+imageclass/IM_DRAWFRAME
+imageclass/IM_ERASE
+imageclass/IM_ERASEFRAME
+imageclass/IM_EXTENT
+imageclass/IM_EXTENTFRAME
+imageclass/IM_FRAMEBOX
+imageclass/IM_HITFRAME
+imageclass/IM_HITTEST
+imageclass/OM_NEW
+imageclass/OM_SET
+
+
+imageclass/--datasheet--                                 imageclass/--datasheet--
+
+    NAME
+	imageclass -- base class for images
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This class is the base class for BOOPSI Images. These images are
+	backwards compatible with the conventional Intuition Images.
+	Every BOOPSI image has an Intuition Image structure embedded in
+	it so Intuition can access the BOOPSI image as a conventional
+	Image structure when necessary. Normally there are no direct
+	instances of this class and only instances of subclasses of
+	imageclass.
+
+    METHODS
+	OM_NEW -- Create the imageclass object. Passed to superclass.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	IM_DRAW -- Draw image with state.
+
+	IM_DRAWFRAME -- Draw image within frame limits.
+
+	IM_HITFRAME -- Determine if image was hit within frame.
+
+	IM_HITTEST -- Determine if image was hit.
+
+	IM_ERASE -- Erase image with state.
+
+	IM_ERASEFRAME -- Erase image within frame.
+
+	All other methods are passed to the superclass.
+
+    STANDARD METHODS
+	The following methods are described at the imageclass level
+	although it's up to the subclasses to actually implement them.
+	If a class does not implement these methods it should either
+	return zero, indicating that this class does not support the
+	method, or defer processing on to its superclass.
+
+	IM_DOMAINFRAME -- Obtain image sizing requirements.
+
+	IM_FRAMEBOX -- Get recommended frame around some box.
+
+	IM_EXTENT -- Inquire about rendering extent.
+
+	IM_EXTENTFRAME -- Inquire about rendering extent with dimensions.
+
+    ATTRIBUTES
+	IA_Left (int16)
+	    This attribute corresponds to the LeftEdge field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the LeftEdge field in the image object's
+	    embedded Image structure.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Top (int16)
+	    This attribute corresponds to the TopEdge field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the TopEdge field in the image object's
+	    embedded Image structure.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Width (int16)
+	    This attribute corresponds to the Width field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the Width field in the image object's
+	    embedded Image structure.
+
+	    Defaults to arbitrary positive numbers if not set by subclass.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Height (int16)
+	    This attribute corresponds to the Height field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the Height field in the image object's
+	    embedded Image structure.
+
+	    Defaults to arbitrary positive numbers if not set by subclass.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_FGPen (uint8)
+	    This attribute corresponds to the PlanePick field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the PlanePick field in the image object's
+	    embedded Image structure.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_BGPen (uint8)
+	    This attribute corresponds to the PlaneOnOff field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the PlaneOnOff field in the image object's
+	    embedded Image structure.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Data (uint16 *)
+	    This attribute corresponds to the ImageData field in the
+	    Intuition Image structure. The imageclass dispatcher stores
+	    this attribute in the ImageData field in the image object's
+	    embedded Image structure.
+
+	    The data is bit planes for a classic image but other image
+	    classes may use it for other things.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+imageclass/IM_DOMAINFRAME                               imageclass/IM_DOMAINFRAME
+
+    NAME
+	IM_DOMAINFRAME -- Obtain image sizing requirements. (V44)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impDomainFrame * msg);
+
+    FUNCTION
+	The IM_DOMAINFRAME method is used to obtain sizing information
+	from an image object. The imp_Which field is used to determine
+	which domain the caller is interested in: IDOMAIN_MINIMUM,
+	IDOMAIN_NOMINAL or IDOMAIN_MAXIMUM. The image object is expected
+	to fill in the provided imp_Domain with the width and height
+	dimensions. The location coordinates are not used. The imp_Attrs
+	pointer, if not NULL, may contain additional tags which are
+	defined on a per-class basis.
+
+	The domain is most often used by layout gadgets to aid in
+	distributing image objects within the layout.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impDomainFrame
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	Return 1 if this method is supported or 0 if not.
+
+    NOTES
+	Some old ClassAct BOOPSI classes support a private IM_DOMAIN method
+	which was being used in an identical manner. This new method was
+	defined to take over that role. For compatibility, layout.gadget will
+	first try IM_DOMAINFRAME and then fallback to the private IM_DOMAIN
+	if the return value from the IM_DOMAINFRAME method was zero.
+
+imageclass/IM_DRAW                                             imageclass/IM_DRAW
+
+    NAME
+	IM_DRAW -- Draw image with state.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impDraw* msg);
+
+    FUNCTION
+	This method tells an image object to draw itself. Applications
+	should not call this method directly and instead use the
+	intuition.library function DrawImageState().
+
+	The IM_DRAW method uses a custom message structure:
+
+	struct impDraw
+	{
+	    uint32           MethodID;   // IM_DRAW
+	    struct RastPort *imp_RPort;  // RastPort to render into
+	    struct
+	    {                            // X and Y offset relative to
+	        int16 X;                 // the image's IA_Left and
+	        int16 Y;                 // IA_Top attributes
+	    } imp_Offset;
+	    uint32           imp_State;  // Visual state of image
+	    struct DrawInfo *imp_DrInfo; // describing rendering area
+	};
+
+	The imp_State field contains the visual state to render the
+	image. The visual states (see <intuition/imageclass.h) are:
+
+	IDS_NORMAL            Render using normal imagery. This is the
+	                      only kind of imagery available to non-BOOPSI
+	                      images.
+
+	IDS_SELECTED          Render using "selected" imagery. "Selected"
+	                      refers to the state of a gadget's imagery
+	                      when it is the selected gadget.
+
+	IDS_DISABLED          Render using "disabled" imagery. "Disabled"
+	                      refers to the state of a gadget's imagery
+	                      when it is disabled. Typically, a disabled
+	                      image has a ghosting pattern on top of it.
+
+	IDS_BUSY              Render using "busy" imagery as if the object
+	                      was the image of a gadget in a busy state.
+	                      The busy gadget state is not yet supported
+	                      by Intuition.
+
+	IDS_INDETERMINATE     Render using "indeterminate" imagery as if
+	                      the object was the image of a gadget in an
+	                      indeterminate state. The indeterminate gadget
+	                      state is not yet supported by Intuition.
+
+	IDS_INACTIVENORMAL    This is a special version of IDS_NORMAL for
+	                      a "normal" image that is in the border of an
+	                      inactive window.
+
+	IDS_INACTIVESELECTED  This is a special version of IDS_SELECTED for
+	                      a "selected" image that is in the border of
+	                      an inactive window.
+
+	IDS_INACTIVEDISABLED  This is a special version of IDS_DISABLED for
+	                      a "disabled" image that is in the border of
+	                      an inactive window.
+
+	IDS_SELECTEDDISABLED  This is a special version of IDS_DISABLED for
+	                      a "disabled" image that is still selected.
+
+	Most image objects do not have different visual states for each
+	possible imp_State.
+
+	When setting the pens to render an image, use the values from the
+	imp_DrInfo->dri_Pens pen array (it is possible for imp_DrInfo to
+	be NULL). The possible pen values are defined in
+	<intuition/screens.h>.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impDraw
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	IM_DRAWFRAME, intuition.library/DrawImageState()
+
+imageclass/IM_DRAWFRAME                                   imageclass/IM_DRAWFRAME
+
+    NAME
+	IM_DRAWFRAME -- Draw image within frame limits.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impDraw* msg);
+
+    FUNCTION
+	The IM_DRAWFRAME method instructs an image object to render
+	itself within the confiness of a given rectangle.
+
+	This method uses a custom message structure that is basically
+	an extension of the IM_DRAW message:
+
+	struct impDraw
+	{
+	    uint32           MethodID;   // IM_DRAWFRAME
+	    struct RastPort *imp_RPort;  // RastPort to render into
+	    struct
+	    {
+	        int16 X;                 // X and Y offset relative to the
+	        int16 Y;                 // image's IA_Left and IA_Top attrs.
+	    } imp_Offset;
+	    uint32           imp_State;  // Visual state of image
+	    struct DrawInfo *imp_DrInfo;
+	    struct
+	    {
+	        int16 Width;             // Scale, clip, restrict, etc.
+	        int16 Height;            // to these bounds
+	    } imp_Dimensions;
+	};
+
+	The Width and Height fields provide the object's rectangular bounds.
+	How the image object deals with the frame is implementation specific.
+	If the imageclass dispatcher sees this message, it will convert it
+	to an IM_DRAW message and send it back to the image's true class.
+	An image subclass which assigns proper meaning to this method
+	(i.e. frameiclass) should handle this method itself.
+
+	This method is useful to classes of images that can scale or clip
+	themselves to arbitrary dimensions. Typically, an instance of a class
+	that truly supports this method will massage its imagery as best it
+	can to fit into the rectangle.
+
+	In general, applications that use this method to draw an object
+	should use the IM_ERASEFRAME method to erase it. This will ensure
+	that the image erases itself at the proper scale.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impDraw
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	IM_DRAW
+
+imageclass/IM_ERASE                                           imageclass/IM_ERASE
+
+    NAME
+	IM_ERASE -- Erase image with state.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impErase* msg);
+
+    FUNCTION
+	The IM_ERASE method tells an image to erase itself. Applications
+	should not call this method directly but instead they should call
+	the Intuition function EraseImage().
+
+	The IM_ERASE method uses a custom message structure:
+
+	struct impErase
+	{
+	    uint32           MethodID;  // IM_ERASE
+	    struct RastPort *imp_RPort; // The image's RastPort
+	    struct
+	    {
+	        int16 X;                // X and Y offset relative
+	        int16 Y;                // to the image's IA_Left
+	    } imp_Offset;               // and IA_Top attributes.
+	};
+
+	The imageclass dispatcher calls the graphics.library function
+	EraseRect() to erase the image. The imageclass dispatcher gets
+	the position of the image using the offsets from the IM_ERASE
+	message and the dimensions it finds in the object's Image
+	structure. The imageclass dispatcher does not do any bounds
+	checking before calling EraseRect().
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impErase
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	IM_ERASEFRAME, intuition.library/EraseImage(),
+	graphics.library/EraseRect()
+
+imageclass/IM_ERASEFRAME                                 imageclass/IM_ERASEFRAME
+
+    NAME
+	IM_ERASEFRAME -- Erase image within frame.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impErase* msg);
+
+    FUNCTION
+	This method is a special version of IM_ERASE for images that
+	support IM_DRAWFRAME. It asks an image to erase itself as if it
+	were confined (scaled, clipped, etc.) to a rectangular bounds.
+
+	This method uses a custom message structure:
+
+	struct impErase
+	{
+	    uint32           MethodID;  // IM_ERASEFRAME
+	    struct RastPort *imp_RPort; // The image's RastPort
+	    struct
+	    {
+	        int16 X;                // X and Y offset relative to
+	        int16 Y;                // image's IA_Left and IA_Top
+	    } imp_Offset;
+
+	    struct
+	    {
+	        int16 Width;            // Scale, clip, restrict, etc.
+	        int16 Height;           // to these bounds
+	    } imp_Dimensions;
+	};
+
+	The imageclass dispatcher handles an IM_ERASEFRAME message as
+	if it was an IM_ERASE message ignoring the bounds. See the
+	imageclass description for IM_ERASE for more details.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impErase
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	IM_ERASE
+
+imageclass/IM_EXTENT                                         imageclass/IM_EXTENT
+
+    NAME
+	IM_EXTENT -- Inquire about rendering extent. (V51)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impExtent * msg);
+
+    FUNCTION
+	The IM_EXTENT method is used to ask the image object what pixels
+	or areas (at least) it will fully overwrite in its IM_DRAW method.
+
+	This method is identical to the IM_EXTENTFRAME method except for
+	the fact the imp_Frame field is not used. Refer to the
+	IM_EXTENTFRAME method documentation for complete details.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impExtent
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value must be IMR_INVALID, IMR_CLIPDONE or IMR_MASKDONE.
+
+    SEE ALSO
+	IM_EXTENTFRAME, IM_DRAW
+
+imageclass/IM_EXTENTFRAME                               imageclass/IM_EXTENTFRAME
+
+    NAME
+	IM_EXTENTFRAME -- Inquire about rendering extent with dimensions. (V51)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impExtent * msg);
+
+    FUNCTION
+	The IM_EXTENTFRAME method is used to ask the image what pixels
+	(at least) it will fully redraw when its IM_DRAWFRAME method is
+	invoked in the same context.
+
+	By "fully redraw" we mean changing the pixel's color in a way that
+	is totally unrelated to its previous value -- so this doesn't apply
+	to alpha-blended pixels for example.
+
+	Intuition uses that information for optimization purposes. During
+	GUI refreshes, it will skip filling or erasing those pixels that
+	the image would then completely re-render anyway. Supporting this
+	method in your images will help Intuition improve the smoothness
+	of user interface refresh by preventing redundant graphic calls
+	and minimizing "flicker" effects caused by background clearing
+	especially during window resizes.
+
+	The easiest way to support IM_EXTENTFRAME is to make sure your
+	image always fills every pixel within its dimentions and just
+	return the relevant result value (usually IMR_CLIPDONE). In this
+	case, you may safely ignore the actual message contents and the
+	following text.
+
+	If the above solution is not feasible (for instance because the
+	image has an irregular or not fully connected shape) then you
+	should check the imp_Region and imp_RPort message fields: if any
+	of them is non-NULL you may decide to employ a more detailed way
+	to tell the caller exactly what pixels your IM_DRAWFRAME method
+	does fill.
+
+	If imp_Region is non-NULL you can compose in it your image's shape
+	by using graphics.library's XxxxRectRegion() functions. Remember
+	to look at the imp_Action field to determine what function to use.
+	For example, if imp_Action is IEXTENT_ADD you should use
+	OrRectRegion(). Note you must NOT pre-clear or alter the initial
+	region's contents in any way other than to compose your own
+	image's shape. Once finished composing your image's shape in
+	the region, return IMR_CLIPDONE to let the caller know you
+	updated the region's contents.
+
+	If imp_RPort is non-NULL you can draw your image's shape into it
+	just like you would do for a IM_DRAWFRAME message -- however,
+	you're only allowed to use colors 0 or 1 because you're actually
+	drawing into a single-bitplane mask. Again, check the imp_Action
+	field to find out whether you should actually set, clear or
+	invert the pixels making up your image's shape in the mask.
+	You are not allowed to alter any pixels other than those belonging
+	to your image's shape nor to clear the mask's background before
+	rendering. Once finished drawing your image's shape in the mask
+	plane return IMR_MASKDONE to let the caller know you updated
+	the mask's contents.
+
+	If both imp_Region and imp_RPort are non-NULL you may simply choose
+	the method which is most suited for your purposes. You don't have
+	to support both for the same message. If you do, however, you can
+	let the caller know by ORing together the IMR_CLIPDONE and
+	IMR_MASKDONE return values.
+
+	The region solution is best suited for images made up of a few
+	rectangular parts whereas the mask method is better in the case
+	of more complex image shapes.
+
+	If for whatever reasons your IM_EXTENTFRAME method finds itself
+	unable to support any of the described solutions it should return
+	IMR_INVALID. This particular return value will tell Intuition
+	not to clip away the image's shape at all. While this is usually
+	slower and more prone to flickering it will still produce correct
+	graphic results. This is the same fallback applied for any
+	images not recognizing the IM_EXTENTFRAME method.
+
+	NOTE WELL:
+	Since it is very important that a image's IM_DRAWFRAME and
+	IM_EXTENTFRAME methods remain synchronized the default behavior
+	of an image class should be to only handle IM_EXTENTFRAME if it
+	is the "true class" of the object the method is invoked on and
+	just return IMR_INVALID otherwise. This is because a subclass
+	might override the behavior of IM_DRAWFRAME in such a way that
+	your class' IM_EXTENTFRAME results are no longer correct. If an
+	image subclass needs and knows it's ok to let its superclass
+	handle IM_EXTENTFRAME it must set the IMPF_ALLOWSUPER flag in
+	imp_Flags before calling IDoSuperMethodA() and clear it as soon
+	as the call returns. If IMPF_ALLOWSUPER is set in imp_Flags
+	your image should accept and handle IM_EXTENTFRAME regardless
+	of whether it is the true class or not.
+
+	More information about rendering extents can be found in the
+	<intuition/imageclass.h> and <intuition/gadgetclass.h> files.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impExtent
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value must be IMR_INVALID, IMR_CLIPDONE or IMR_MASKDONE.
+
+    NOTES
+	As of Intuition V51 the mask method is not yet implemented.
+
+    SEE ALSO
+	IM_EXTENT, IM_DRAWFRAME
+
+imageclass/IM_FRAMEBOX                                     imageclass/IM_FRAMEBOX
+
+    NAME
+	IM_FRAMEBOX -- Get recommended frame around some box.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impFrameBox * msg);
+
+    FUNCTION
+	This method asks an image object what its dimensions should be
+	if it had to frame some object or set of objects that fit into a
+	rectangular bounds. For example, to draw a frame object around
+	a group of gadgets that fit into a specific rectangle, you first
+	send the frameiclass object an IM_FRAMEBOX message describing
+	the dimensions and position of that rectangle. The frame object
+	reports what its position and dimensions would have to be to
+	surround those gadgets. Then use these results to draw the
+	frameiclass image object.
+
+	IM_FRAMEBOX uses a custom message structure:
+
+	struct impFrameBox
+	{
+	    uint32           MethodID;        // IM_FRAMEBOX
+	    struct IBox     *imp_ContentsBox; // The object fills in this
+	                                      // structure with the
+	                                      // dimensions of a rectangle
+	                                      // big enough to frame...
+	    struct IBox     *imp_FrameBox;    // <------- this rectangle.
+	    struct DrawInfo *imp_DrInfo;
+	    uint32           imp_FrameFlags;
+	};
+
+	The imp_FrameBox field points to an IBox structure (defined in
+	<intuition/intuition.h> describing the dimensions and position of
+	the rectangle to frame. After the framing image determines the
+	position and size it should be in order to properly frame
+	imp_FrameBox, it stores the result in the imp_ContentsBox IBox.
+	This method allows an application to use a framing image without
+	having to worry about image specific details such as the thickness
+	of the frame or centering the frame around the object.
+
+	The imp_FrameFlags field is a bit field used to specify certain
+	options for the IM_FRAMEBOX method. Currently, there is only one
+	defined named FRAMEF_SPECIFY. If this bit is set, the imp_FrameBox
+	contains a width and height that the frame image has to use as its
+	width and height even if the imp_FrameBox is smaller than
+	imp_ContentsBox. The frame is free to adjust its position but it
+	is stuck with the imp_FrameBox dimensions. This allows an
+	application to set the size of the frame image and still allow the
+	frame image to position itself so it is centered on a rectangle.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impFrameBox
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+imageclass/IM_HITFRAME                                     imageclass/IM_HITFRAME
+
+    NAME
+	IM_HITFRAME -- Determine if image was hit within frame.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impHitTest* msg);
+
+    FUNCTION
+	This method is a special version of IM_HITTEST for images that
+	support IM_DRAWFRAME. It asks an image if a point would be inside
+	it if the image was confined (scaled, clipped, etc.) to a
+	rectangular bounds.
+
+	This method uses a custom message structure:
+
+	struct impHitTest
+	{
+	    uint32 MethodID;   // IM_HITFRAME
+	    struct
+	    {
+	        int16 X;       // Coordinates of point to test for hit
+	        int16 Y;
+	    } imp_Point;
+
+	    struct
+	    {
+	        int16 Width;   // Scale, clip, restrict, etc.
+	        int16 Height;  // to these bounds
+	    } imp_Dimensions;
+	};
+
+	The imageclass dispatcher treats IM_HITFRAME just like IM_HITTEST
+	ignoring the restricting dimensions.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impHitTest
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value is TRUE if hit or FALSE otherwise.
+
+    SEE ALSO
+	IM_HITTEST
+
+imageclass/IM_HITTEST                                       imageclass/IM_HITTEST
+
+    NAME
+	IM_HITTEST -- Determine if image was hit.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impHitTest* msg);
+
+    FUNCTION
+	This method returns TRUE if a point is within the old Image
+	structure box defined by the Image structure's LeftEdge, TopEdge,
+	Width and Height fields. Subclasses of imageclass can redefine
+	this method if they need to change the criteria for deciding if
+	a point is within an image. Application programs should not call
+	this method directly and instead use the Intuition function
+	PointInImage(). The IM_HITTEST method uses a custom message
+	structure:
+
+	struct impHitTest
+	{
+	    uint32 MethodID; // IM_HITTEST
+	    struct
+	    {
+	        int16 X;     // Coordinates of point to test for hit
+	        int16 Y;
+	    } imp_Point;
+	};
+
+	If an image object doesn't need to make any changes to how its
+	superclass handles IM_HITTEST it can blindly pass this method
+	on to its superclass.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct impHitTest
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value is TRUE if hit or FALSE otherwise.
+
+    SEE ALSO
+	IM_HITFRAME, intuition.library/PointInImage()
+
+imageclass/OM_NEW                                               imageclass/OM_NEW
+
+    NAME
+	OM_NEW -- Create an image object.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet * msg);
+
+    FUNCTION
+	The instance data for imageclass contains an Image structure and
+	its Depth field is initialized to CUSTOMIMAGEDEPTH which identifies
+	such images to Intuition. The Image's Width and Height fields
+	default to arbitrary positive numbers for safety but an imageclass
+	subclass or an application should set these attributes to something
+	meaningful.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns a pointer to the newly created image or NULL on failure.
+
+    SEE ALSO
+	intuition.library/NewObject()
+
+imageclass/OM_SET                                               imageclass/OM_SET
+
+    NAME
+	OM_SET -- Set image object attributes.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet * msg);
+
+    FUNCTION
+	This method sets the image object attributes and passes
+	the message on to the superclass.
+
+    INPUTS
+	obj - image object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Always returns 1.
+
+    SEE ALSO
+	rootclass/OM_SET
+
+

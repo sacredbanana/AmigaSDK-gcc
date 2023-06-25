@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="realtime" basename="RealTimeBase" openname="realtime.library">
+	<include>exec/types.h</include>
+	<include>libraries/realtime.h</include>
+	<include>utility/tagitem.h</include>
+	<interface name="main" version="1.0" struct="RealTimeIFace" prefix="_RealTime_" asmprefix="IRealTime" global="IRealTime">
+		<method name="Obtain" result="ULONG"/>
+		<method name="Release" result="ULONG"/>
+		<method name="Expunge" result="void" status="unimplemented"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+		<method name="LockRealTime" result="APTR">
+			<arg name="lockType" type="ULONG"/>
+		</method>
+		<method name="UnlockRealTime" result="VOID">
+			<arg name="lock" type="APTR"/>
+		</method>
+		<method name="CreatePlayerA" result="struct Player *">
+			<arg name="tagList" type="const struct TagItem *"/>
+		</method>
+		<method name="CreatePlayer" result="struct Player *">
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="DeletePlayer" result="VOID">
+			<arg name="player" type="struct Player *"/>
+		</method>
+		<method name="SetPlayerAttrsA" result="BOOL">
+			<arg name="player" type="struct Player *"/>
+			<arg name="tagList" type="const struct TagItem *"/>
+		</method>
+		<method name="SetPlayerAttrs" result="BOOL">
+			<arg name="player" type="struct Player *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="SetConductorState" result="LONG">
+			<arg name="player" type="struct Player *"/>
+			<arg name="state" type="ULONG"/>
+			<arg name="time" type="LONG"/>
+		</method>
+		<method name="ExternalSync" result="BOOL">
+			<arg name="player" type="struct Player *"/>
+			<arg name="minTime" type="LONG"/>
+			<arg name="maxTime" type="LONG"/>
+		</method>
+		<method name="NextConductor" result="struct Conductor *">
+			<arg name="previousConductor" type="const struct Conductor *"/>
+		</method>
+		<method name="FindConductor" result="struct Conductor *">
+			<arg name="name" type="CONST_STRPTR"/>
+		</method>
+		<method name="GetPlayerAttrsA" result="ULONG">
+			<arg name="player" type="const struct Player *"/>
+			<arg name="tagList" type="const struct TagItem *"/>
+		</method>
+		<method name="GetPlayerAttrs" result="ULONG">
+			<arg name="player" type="const struct Player *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+	</interface>
+</library>

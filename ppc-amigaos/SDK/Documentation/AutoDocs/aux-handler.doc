@@ -1,0 +1,87 @@
+aux-handler/aux_handler                               aux-handler/aux_handler
+
+   NAME
+	aux_handler -- a console handler for the serial port
+
+   SYNOPSIS
+	Open("AUX:[DEVICE=<name>/BAUD=<speed>/CONTROL=<settings>/
+	      UNIT=<Unit number>]/FLOW={SOFTWARE|HARDWARE|NONE}",...);
+
+   FUNCTION
+	The AUX-Handler is a console handler which which uses the serial port
+	rather than the Amiga screen or keyboard.
+
+	Accessing "AUX:" connects AmigaDOS to the system's default serial
+	port. Following AUX:, the baud rate and some control information can
+	be supplied. This is done in the form "AUX:baud/control" where baud
+	is a number indicating the baud rate, and where control is a 3 letter
+	sequence denoting the number of read/write bits, the parity, and the
+	number of stop bits. For example, "AUX:9600/8N1" connects to the
+	serial port, sets the baud rate to 9600, with 8 bit data, no parity,
+	and 1 stop bit. The possible control settings are:
+
+	     1st character: 7 or 8
+	     2nd character: N (No parity), O (Odd parity), E (Even parity)
+	                    M (Mark parity), S (Space parity)
+	     3rd character: 1 or 2
+
+	To override the flow control settings, use the FLOW parameter with
+	the options "SOFT" or "SOFTWARE" for xON/xOFF software flow control,
+	"HARD", "HARDWARE" or "7WIRE" for 7-wire hardware flow control,
+	or "NONE" for no flow control.
+
+	Specifying no baud rate, flow or control values when accessing AUX:
+	gives you the values set in Serial preferences, or the default
+	settings for the respective serial device driver.
+
+	To override the default unit number, use the UNIT keyword. For
+	example, to access unit 1 with 38400 bps you could use
+	"AUX:38400/UNIT=1".
+
+   PACKETS
+	ACTION_FINDINPUT
+	ACTION_FINDOUTPUT
+	ACTION_FINDUPDATE
+	ACTION_READ
+	ACTION_WRITE
+	ACTION_SCREEN_MODE
+	ACTION_DISK_INFO
+	ACTION_WAIT_CHAR
+	ACTION_END
+	ACTION_DIE
+	ACTION_IS_FILESYSTEM
+
+   MOUNTLIST ENTRIES
+	Starting with V50, you can provide disk-based mount entries which let
+	you use AUX-Handler on various devices and units. The form of these
+	mount entries is:
+
+	   AUX0: EHandler  = L:AUX-Handler
+	         Priority  = 5
+	         StackSize = 1000
+	         GlobVec   = -1
+	         Device    = serial.device
+	         Unit      = 0
+	         Flags     = 0
+	         Control   = "8N1"
+	         Baud      = 9600
+	   #
+
+	The "Device", "Unit" and "Flags" keywords define the parameters that
+	the handler uses for OpenDevice(). "Baud" and "Control" define the
+	default values for baud rate and control information for whenever
+	that serial handler is accessed by name only, without explicit baud
+	rate and control information specified.
+
+   NOTES
+	You can override the device name, speed, unit number, etc. at open
+	time using the following template:
+
+	    AUX:DEVICE/K,BAUD/N,UNIT/K/N,FLOW=HANDSHAKE/K,CONTROL/F
+
+	Instead of blank spaces, keywords must be separated by slashes ("/").
+
+	Here is an example:
+
+	    NewShell AUX:DEVICE=serial.device/BAUD=9600/UNIT=0/CONTROL=8N1
+

@@ -1,0 +1,297 @@
+TABLE OF CONTENTS
+
+hunk.library/LoadHunk
+hunk.library/UnLoadHunk
+
+
+hunk.library/LoadHunk                                   hunk.library/LoadHunk
+
+   NAME
+      LoadHunk     -- Load a binary HUNK format file.
+      LoadHunkTags -- Vararg stub
+
+   SYNOPSIS
+      BPTR seglist = LoadHunk(const struct TagItem * tags);
+      BPTR seglist = LoadHunkTags(...);
+
+   FUNCTION
+      Loads an old style 68K Hunk binary into memory. 
+      (this includes overlay hunk files).
+
+      LoadHunk() will load the specified code and data hunks by calling
+      the hook function to read your data stream.
+      It also ensures that unused portions of Code and Data hunks
+      (as well as BSS hunks) are cleared down.
+
+      This function requires that you specify at least one initialised
+      hook structure to perform the method of reading your data stream.
+      If you do not specify the LH_ReadHook hook, this function will fail.
+
+      Every hook function invocation (for any method) will be called as;
+
+      result = hook_function( struct Hook *hook, APTR userdata, 
+                              struct HunkMessage *hunk_message);
+
+      The hunk_message is a pointer to a struct HunkMessage data 
+      structure supplied by this function that is initialised and passed
+      to all hook function calls.  The data structure looks like this;
+
+          struct HunkMessage 
+          {
+             uint32 hm_StructureSize; /* The size of this structure.   */
+             APTR   hm_Handle;        /* Set by; LH_Handle tag.        */
+             APTR   hm_Library;       /* Set by; LH_Library tag.       */
+             APTR   hm_Memory;        /* The memory/buffer parameter.  */
+             uint32 hm_MemoryAttr;    /* Memory type for allocations.  */
+             uint32 hm_Length;        /* The size/length parameter.    */
+          };
+
+
+   INPUTS
+      tags - a pointer to a TagItem array, see; libraries/hunk.h (& below)
+
+   TAGS
+      LH_ReadHook (struct Hook *) -- (MANDATORY) Pointer to the hook 
+                   structure with the h_Entry field pointing to your 
+                   data reading function. 
+                   The hook function shall return (int32) -1 on error
+                   or the number of bytes read into memory on success.
+
+                   The hm_Length field is the number of bytes to read.
+                   The hm_Memory is the buffer to read the data into.
+
+                   NB:  A valid read hook is mandatory.
+
+
+      LH_AllocHook (struct Hook *) -- (OPTIONAL) Pointer to the hook 
+                   structure with the h_Entry field as your memory 
+                   allocation function. 
+                   The hook function shall return (APTR) NULL on error
+                   or a pointer to the memory block if it succeeds.
+
+                   The hm_Length field is the size in bytes to allocate.
+                   The hm_MemoryAttr is the memory attribute flags.
+
+                   NB: If you do not specify your own hook, a default
+                       hook function calling AllocMem() will be installed. 
+                   
+
+      LH_FreeHook (struct Hook *) -- (OPTIONAL) Pointer to the hook 
+                   structure with the h_Entry field as your memory
+                   deallocation function.
+                   The hook function return type is (VOID).
+
+                   The hm_Length field is the size in bytes.
+                   The hm_Memory is the memory block pointer to free.
+
+                   NB: If you do not specify your own hook, a default
+                       hook function calling FreeMem() will be installed. 
+
+
+      LH_UserData (APTR) -- (OPTIONAL) Anything you wish to pass to all
+                   the hook function calls as your "userdata" argument.
+                   Default 0.
+
+
+      LH_Handle   (APTR) -- (OPTIONAL) Pointer to the value that goes 
+                   into the hm_Handle field when any of the hook 
+                   functions are called.  You could (for example), use
+                   this for a file handle.   Default 0.
+
+                   OVERLAY NOTES:
+                       For overlay style loadables ONLY....
+                       This value also gets used as the filehandle
+                       value that is placed into the ov_Handle field 
+                       of an overlay hunk file.   You are responsible
+                       for closing it prior or during UnLoadHunk(). 
+                       (see; libraries/hunk.h for overlay header.)
+
+
+      LH_Library  (APTR) -- (OPTIONAL) Pointer to a library base or an 
+                   interface you may wish to pass to the hook
+                   function in the hm_Library field.  Default 0.
+
+
+      LH_FileSize (uint32 *) -- (OPTIONAL) Pointer to a longword to return
+                   the size of the binary file.  Default NULL.
+
+
+      LH_FileXSum (uint32 *) -- (OPTIONAL) Pointer to a longword to return
+                   the 32 bit checksum of the binary file. Default NULL.
+
+
+      LH_IoErr    (int32 *) -- (OPTIONAL) Pointer to a longword to return
+                   the DOS error code if the function fails. 
+                   Default NULL.
+
+
+      LH_HunkTable (APTR) -- (OPTIONAL) Pointer to the hunk table memory
+                   allocation, generally used when loading overlay files.
+                   Default 0.  
+    
+   RESULT
+      seglist - (BPTR) Seglist loaded or 0 on failure. 
+
+   WARNING
+      If the file being loaded is an overlay file, this function will 
+      return the resultant BPTR as a negative value;  -(seglist).  
+      All others types will return a normal positive value as the 
+      seglist BPTR.  
+      This is for backward application and DOS compatibility reasons.
+
+   NOTES
+      You do not have to specify LH_FreeHook or LH_AllocHook argument/s
+      for this function to work, default hook functions will be used
+      if you fail to specify the tags or supply a NULL tag value.
+  
+      Any files loaded by this library do not automatically register
+      the seglist allocations with the dos.library segment tracking
+      functions, so, if your loaded code needs to be tracked you will
+      need to make sure the tracking information is available to DOS.
+
+      If dos.library is available and you wish to register your loadable
+      with the dos.library segment tracking functions, do this.....
+
+   EXAMPLE 
+      /***** Employ segment tracking via dos.library *****/
+
+      BPTR seglist = IHunk->LoadHunkTags(...);
+      if( seglist > 0 )       /* Do NOT attempt to track overlay files. */
+      {
+         IDOS->TrackSegmentList(name,seglist,NULL,0);
+      }
+
+      .....
+
+      if( seglist > 0 )       /* You must also remove the entry later.  */
+      {
+         IDOS->UnTrackSegmentList(seglist); /* Remove seglist from list. */
+         IHunk->UnLoadHunkTags(...);        /* Unload the seglist itself.*/
+      }
+
+   SEE ALSO
+      dos/LoadSeg(), dos/UnLoadSeg(), 
+      dos/TrackSegmentList(), dos/UnTrackSegmentList().
+
+
+
+hunk.library/UnLoadHunk                               hunk.library/UnLoadHunk
+
+   NAME
+      UnLoadHunk     -- UnLoad a HUNK file loaded with LoadHunk().
+      UnLoadHunkTags -- Vararg stub
+
+   SYNOPSIS
+      VOID UnLoadHunk(const struct TagItem * tags);
+      VOID UnLoadHunkTags(...);
+
+   FUNCTION
+      Unload a seglist from memory that was loaded by LoadHunk[Tags]().
+
+      UnLoadHunk() will unload the specified code and data hunks by 
+      calling the freemem hook function.
+
+      This function does not require that you specify your own hook.
+      A default hook function calling FreeMem() will be used to free the
+      memory allocations if you do not specify your own version.
+      The default hook function does not support file closing of overlays.
+      (See example below for details)
+
+      If you specify your own freemem hook, the function invocation will
+      be called as;
+
+      VOID freehook_function( struct Hook *hook, APTR userdata, 
+                                     struct HunkMessage *hunk_msg);
+
+      The hunk_msg is a pointer to a struct HunkMessage data structure
+      supplied by this function, that is initialised and passed to all
+      hook function calls.   The data structure looks like this;
+
+          struct HunkMessage 
+          {
+             uint32 hm_StructureSize; /* The size of this structure.   */
+             APTR   hm_Handle;        /* Only !=0 for overlay files.   */
+             APTR   hm_Library;       /* Set by; LH_Library tag.       */
+             APTR   hm_Memory;        /* The memory/buffer parameter.  */
+             uint32 hm_MemoryAttr;    /* Not used in UnLoadHunk[tags]  */
+             uint32 hm_Length;        /* The size/length parameter.    */
+          };
+
+   INPUTS
+      tags - a pointer to a TagItem array, see; libraries/hunk.h (& below)
+
+   TAGS
+      LH_SegList (BPTR) -- (MANDATORY) BCPL Pointer to the seglist to free.
+                   Passing a tag value of 0 is safe.
+                   Passing negative BPTR's from loading an overlay seglist
+                   is also handled by this function.
+                   
+
+      LH_FreeHook (struct Hook *) -- (OPTIONAL) Pointer to the hook 
+                   structure with the h_Entry field pointing to your
+                   memory deallocation function.
+                   The hook function return value is ignored.
+
+                   The hm_Length field is the size in bytes.
+                   The hm_Memory is the memory block pointer to free.
+                   The hm_Handle will be either ZERO for a normal file,
+                       or a BPTR to the filehandle used for an overlay.
+                         
+                   NB: If you do not specify your own hook, a default
+                       hook function calling FreeMem() will be installed.
+                       The default hook does not handle file closing.
+
+
+      LH_UserData (APTR) -- (OPTIONAL) Anything you wish to pass to all
+                   the hook function as your "userdata" argument.
+                   Default 0.
+
+
+      LH_Library  (APTR) -- (OPTIONAL) Pointer to a library base or an 
+                   interface you may wish to pass to the hook
+                   function in the hm_Library field.  Default 0.
+
+   RESULT
+      none
+
+   NOTES
+      You do not have to specify a LH_FreeHook argument for this function
+      to work, a default hook stub calling FreeMem() will be used if you
+      do not supply the tag, or the tag value was NULL. 
+
+      The default hook stub does not support file closing for overlays.
+      
+      Overlay style loadables required you to close the open filehandle
+      that was stored in the ov_Handle field of the root segment.
+      For convenience, this functions determins if you are unloading an
+      overlay file and initialises the hm_Handle field of the message 
+      structure, so you can access it inside your freehook function.
+
+      You are responsible for closing it on the first invocation of the
+      freehook function and clearing the pointer when you have done so,
+      to prevent Close() being called more than once. 
+      
+      For normal hunk files, the hm_Handle will always be NULL.
+ 
+
+   EXAMPLE
+      To handle all types of hunk files, your freehook function should
+      look like this example;
+
+      VOID freehook_function( struct Hook *hook, APTR userdata, 
+                                struct HunkMessage *hunk_msg )
+      {
+          if( hunk_msg->hm_Handle )  /* <- only set for overlay files */
+          { 
+              IDOS->Close((BPTR)hunk_msg->hm_Handle);
+              hunk_msg->hm_Handle = NULL;
+          }
+
+          IExec->FreeMem(hunk_msg->hm_Memory, hunk_msg->hm_Length);
+      }
+
+ 
+   SEE ALSO
+      <libraries/hunk.h>  LoadHunk()
+
+

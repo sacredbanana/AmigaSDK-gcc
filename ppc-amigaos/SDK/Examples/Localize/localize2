@@ -1,0 +1,49 @@
+.key "FILES/A/M"
+.bra {
+.ket }
+
+;
+;	First, extract the strings...
+;
+echo {FILES}
+
+localize >ram:localize.tmp {FILES}
+
+;
+;	Then let the user edit them with emacs
+;
+memacs ram:localize.tmp
+
+;
+;	Finally, patch the changes back in:
+;
+;	MC	"catalog.cd"
+;		The strings from all of the {FILES} will be merged in
+;		the file named 'catalog.cd'
+;
+;	DIR	"work:ls"
+;		The generated source files will be stored in the 'ls'
+;		directory on the 'work:' partition.
+;
+;	Func	S
+;		The name of the function that will be called to
+;		retrieve a string is 'S'
+;
+;	TEMP	"%F(%I)"
+;		The retrival function will be passed one argument
+;		which is the message ID.
+;
+;	PF	getstring.pf
+;		Prepend the contents of 'getstring.pf' to the
+;		generated source file.  'getstring.pf' supplies an
+;		#include, a #define, and a prototype.
+;
+;	AF	getstring.af
+;		Append the file 'getstring.af' to the end of the
+;		generated source file.  'getstring.af' supplies the
+;		function prototyped by 'getstring.pf'.
+;
+;	ram:localize.tmp
+;		This is the source of the string records.
+;
+localize patch MC "catalog.cd" DIR "work:ls" FUNC "S" TEMP "%F(%I)" PF getstring.pf AF getstring.af ram:localize.tmp

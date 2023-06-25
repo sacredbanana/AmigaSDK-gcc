@@ -1,0 +1,69 @@
+TABLE OF CONTENTS
+
+ram-handler.kmod
+
+
+ram-handler.kmod                                             ram-handler.kmod
+
+   NAME
+	ram-handler -- The standard volatile RAM disk filesystem.
+
+   SYNOPSIS
+	RAM Disk Filesystem.
+
+   FUNCTION
+	The ram-handler creates and maintains the "RAM Disk" Volume.
+	The default device name is "RAM" and auto mounts upon system boot.
+	The default volume name is "RAM Disk".
+
+	Certain features of the RAM filesystem can be adjusted by commandline
+	options when the ram-handler.kmod executable is run from a CLI.
+
+	The commandline ReadArgs() template as of V54 is:
+	     MemPools=MP/T, ExtMem=EM/T, DisMountable=DM/T, BlockSize=BS/N,
+	          ShowSizeAsAllMemUsed=MU/T, ResetDefault=RESET/S, Report=SHOW/S
+
+	     MemPools = MP (Toggle)
+	          Toggles memory pools between "ON" and "OFF". (Default; OFF)
+
+	     DisMountable = DM (Toggle)
+	          Toggles the option to allows the filesystem to be dismounted
+	          using the "Dismount" command, this is generally used only
+	          for testing various system components and is not of practical
+	          use for the casual user. (Default; OFF)
+
+	     ExtMem = EM (Toggle)   (Available only for V54+)
+	          Toggles between using the new extended memory feature or not.
+	          This option will map memory into the 32 bit virtual address
+	          space only when an object is accessed, this allows for more
+	          than the normal 2 gig of memory to be used for the RAM Disk.
+	          The total amount of existing address space used to map any
+	          sized file will be one block chunk per concurrent caller.
+	          This option will disable memory pools. (Default; OFF)
+
+	     BlockSize = BS (Number)
+	          Sets the number of bytes in a virtual "Block", this is the
+	          size of the memory chunks used to store file data.
+	          Allowable values are between 4000 - 1000000  (4KB to 1MB)
+	          Values will be rounded up to a multiple of 4. (Default; 16000)
+
+	     ShowSizeAsAllMemUsed = MU (Toggle)
+	          This option toggles between reporting memory usage as only
+	          memory used for file data blocks or as the entire memory used
+	          which would include the meta-data required for internal block
+	          linkage and string buffers, etc...  (Default; ON)
+
+	     ResetDefault = RESET (Keyword Switch)
+	          Specifying this keyword will cause any previous values to be
+	          reset to the default state, it will also delete any previous
+	          configuration file to accomplish this.
+
+	     Report = SHOW (Keyword Switch)
+	          Display current settings without changing anything. 
+
+
+   NOTES
+	All configuration option changes require a warm reboot before they will
+	take effect.
+
+

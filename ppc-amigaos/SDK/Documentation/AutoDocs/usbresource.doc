@@ -1,0 +1,402 @@
+TABLE OF CONTENTS
+
+usbresource.library/--overview--
+usbresource.library/USBResRegisterFDA
+usbresource.library/USBResUnregisterFD
+usbresource.library/USBResRegisterHCDA
+usbresource.library/USBResUnregisterHCD
+usbresource.library/USBResAddNotify
+usbresource.library/USBResRemNotify
+
+usbresource.library/--overview--               usbresource.library/--overview--
+
+   For the USB stack HCD drivers are usually loaded automatically upon
+   startup and FDs are loaded when needed. For the USB stack to know
+   which FDs are available a set of Function Driver Descriptor files are
+   read by the USB stack at stack startup.
+
+   During the Amiga boot process there is no DOS available, and no boot
+   drive either. This makes it impossible for the USB stack to load HCDs
+   and find out which FDs are available early in the startup process.
+   usbresource.library exist for USB HCDs and FDs which are available
+   during the boot process to make their presence known to the USB stack.
+   By registering thru usbresource.library the USB stack can utilize them
+   even before DOS is started.
+
+
+usbresource.library/USBResRegisterFDA     usbresource.library/USBResRegisterFDA
+
+   NAME
+      USBResRegisterFDA -- Add a Function Driver to list of available
+                           Function Drivers.
+
+   SYNOPSIS
+      fdkey = USBResRegisterFDA( taglist )
+       D0                             A0
+
+      APTR USBResRegisterFDA( struct TagItem * );
+
+
+      fdkey = USBResRegisterFD( Tag1, ... )
+
+      APTR USBResRegisterFD( ULONG, ... );
+
+   FUNCTION
+      With this function a USB Function Driver can add itself to the USB
+      stack's list of available Function Drivers.
+      It corresponds to having a Function Driver descriptor placed in
+      "DEVS:USB/fdclasses", only with this call it is possible to add the
+      Function Driver even before DOS is running. This allows reset
+      resident drivers to hook into the USB stack early in the boot
+      process - usable for e.g. mouse and keyboard drivers which should
+      be available in the AmigaOS EarlyStartup menu.
+
+      The Function Driver is described, much as in a Function Driver
+      descriptor file, by name-value pairs. In a descriptor file the names
+      are textual keywords followed by values. In this function call it
+      is tags holding the values.
+
+      If the FD to be added is already present (by its driver title, not
+      library name), this function will return NULL. By using the
+      USBA_ErrorCode tag you can get the reason for failure. If the
+      error is USBERR_ISPRESENT this function failed due to the driver
+      already being present.
+
+   INPUTS
+      taglist  -  Taglist with information about the Function Driver
+                  added. NULL is a valid argument, but will make this
+                  function call fail due to lack of information.
+
+                  USB_ErrorCode
+                     Use this tag to get extended error information in
+                     case of failure. ti_Data must be a pointer to a
+                     LONG where the error code can be stored. If the
+                     function call was successfull the LONG will be
+                     set to USBERR_NOERROR.
+
+                  USBA_FD_Name
+                     This tag specifies the library name of the FD
+                     library which contains the driver code for the
+                     USB device type being registered. ti_Data is
+                     thus a pointer to a NUL terminated string.
+                     This tag is required. If not specified, or if tag
+                     data is NULL USBResRegisterFDA() will fail.
+
+                  USBA_FD_Title
+                     This tag specifies the title of the driver being
+                     registered. The title is used to uniquely identify
+                     an FD within usbresource.library, so it should be
+                     descriptive.
+                     ti_Data is a pointer to a NUL terminated string.
+                     If this tag is not specified USBA_FD_Title will
+                     default to the FD library name set by USBA_FD_Name.
+
+                  USBA_Priority
+                     This tag specifies the FD priority.
+                     If two FDs are registered which handles the same
+                     USB device type the one with the highest priority
+                     will be used.
+                     ti_Data is a LONG holding the priority, but only
+                     values within BYTE range are currently supported.
+                     If not supported the FD will be given a priority
+                     of zero.
+                     Only specify a different FD priority if you have
+                     good reason to do so.
+
+                  USBA_FD_InterfaceDriver
+                     With this tag you indicate that the FD being
+                     registered supports driving USB Interfaces.
+                     ti_Data is a boolean. Specify a value of 1
+                     (exec/types.h TRUE) to indicate Interface support.
+                     Specify zero (FALSE) to indicate no Interface
+                     support.
+                     If not specified this tag defaults to no support
+                     for USB Interfaces.
+
+                  USBA_FD_FunctionDriver
+                     With this tag you indicate that the FD being
+                     registered supports driving entire USB Functions.
+                     ti_Data is a boolean. Specify a value of 1
+                     (exec/types.h TRUE) to indicate Function support.
+                     Specify zero (FALSE) to indicate no Function
+                     support.
+                     If not specified this tag defaults to no support
+                     for USB Functions.
+
+                  USBA_Class
+                     Use this tag to specify the USB device Class the
+                     FD being registered handles.
+                     ti_Data is a LONG holding the USB Class code.
+                     If not specified the registered FD will match
+                     any USB device Class.
+
+                  USBA_Subclass
+                     Use this tag to specify the USB Subclass
+                     the FD being registered handles.
+                     ti_Data is a LONG holding the USB Subclass code.
+                     If not specified the registered FD will match
+                     any USB Subclass.
+
+                  USBA_VendorID
+                     ti_Data is a USB VendorID indicating the company
+                     which has created a USB Function. Use this tag
+                     only for vendor-specific Function drivers.
+
+                  USBA_ProductID
+                     ti_Data is a USB ProductID indicating which products
+                     the FD supports. Note that ProductID codes are
+                     vendor speecific, so this tag should only be used
+                     together with USBA_VendorID.
+                     Use this tag only for vendor specific FDs.
+
+                  USBA_StackSize
+                     ti_Data is a LONG specifying the amount of
+                     stackspace required for the FD being registered.
+                     If not specified the stacksize will default to 4k.
+
+
+   RESULTS
+      fdkey  -  USB System Software private reference to the added USB
+                Function Driver, or NULL on failure.
+
+   SEE ALSO
+      USBResUnregisterFD()
+
+
+usbresource.library/USBResUnregisterFD   usbresource.library/USBResUnregisterFD
+
+   NAME
+      USBResUnregisterFD -- Remove a Function Driver from the list of
+                            available Function Drivers.
+
+   SYNOPSIS
+      USBResUnregisterFD( fdkey )
+                           A0
+
+      void USBResUnregisterFD( APTR );
+
+
+   FUNCTION
+      Using this function a USB Function Driver can remove itself from
+      the USB stack's list of available Function Drivers.
+      Once removed the USB stack will nolonger use the FD for USB
+      Functions attached to the USB bus. However, any running instances
+      of the FD will not be stopped or signalled by the USB stack. The
+      FD is itself responsible for doing such.
+
+      Once this call returns the FD can rest assured that it will not be
+      instantiated by the USB stack again.
+      If the FD has been added more than once (e.g. under a different
+      name or by a Function Driver Descriptor file from disk) the other
+      registrations are still active within the USB stack.
+
+   INPUTS
+      fdkey  -  The value returned by USBResRegisterFDA() when the FD
+                was added.
+
+   RESULTS
+      none
+
+   SEE ALSO
+      USBResRegisterFDA()
+
+
+usbresource.library/USBResRegisterHCDA   usbresource.library/USBResRegisterHCDA
+
+   NAME
+      USBResRegisterHCDA -- Add a Host Controller Driver to list
+                            of available Host Controller Drivers.
+
+   SYNOPSIS
+      hcdkey = USBResRegisterHCDA( taglist )
+        D0                                 A0
+
+      APTR USBResRegisterHCDA( struct TagItem * );
+
+
+      hcdkey = USBResRegisterHCD( Tag1, ... )
+
+      APTR USBResRegisterHCD( ULONG, ... );
+
+   FUNCTION
+      With this function a USB Host Controller Driver can add itself to
+      the USB stack's list of available Host Controller Drivers.
+      It corresponds to having a HCD device placed in "DEVS:USB/hcd",
+      only with this call it is possible to add the HCD even before DOS
+      is running. This allows reset resident HCDs to hook into the USB
+      stack early in the boot process - e.g. making its USB bus available
+      to the USB stack before the EarlyStartup menu to allow USB mice and
+      keyboards to be usable during EarlyStartup. Or to allow a USB
+      harddisk to be available as a boot device for DOS.
+
+      The USB stack only opens HCD devices during its boot process. Any
+      HCD that whish to operate must have added itself before the USB
+      stack boots.
+      It is, however, supported that a HCD device registers extra device
+      units in its device initialization code. The USB stack will trap
+      this and also open these device units.
+
+      Note that the same HCD device name and unit number can only be
+      registered once with usbresource.library. Attempts to register an already
+      registered device unit will result in this function returning NULL
+      indicating that the device unit could not be registered.
+      By using the USBA_ErrorCode tag you can get the reason for failure.
+      If the error is USBERR_ISPRESENT this function failed due to the
+      HCD device unit already being registered.
+
+   INPUTS
+      taglist  -  Taglist with information about the HCD to add.
+                  NULL is a valid argument, but will make this function
+                  call fail due to lack of information.
+
+                  USBA_HCD_Name
+                     This tag specifies the device name of the HCD
+                     device to be added. ti_Data is thus a pointer to
+                     a NUL terminated string.
+                     This tag is required. If not specified, or if tag
+                     data is NULL USBResRegisterHCDA() will fail.
+
+                  USB_HCD_Unit
+                     Use this tag if anything but device unit zero
+                     should be used in the HCD device. The device unit
+                     specified here is the unit the USB stack will open.
+                     If not specified device unit zero will be used.
+
+                  USB_ErrorCode
+                     Use this tag to get extended error information in
+                     case of failure. ti_Data must be a pointer to a
+                     LONG where the error code can be stored. If the
+                     function call was successfull the LONG will be
+                     set to USBERR_NOERROR.
+
+   RESULTS
+      hcdkey -  USB System Software private reference to the added HCD,
+                or NULL on failure.
+
+   SEE ALSO
+      USBResUnregisterHCD()
+
+
+usbresource.library/USBResUnregisterHCD usbresource.library/USBResUnregisterHCD
+
+   NAME
+      USBResUnregisterHCD -- Remove a HCD from the list of available
+                             HCDs.
+
+   SYNOPSIS
+      USBResUnregisterHCD( hcdkey )
+                                 A0
+
+      void USBResUnregisterHCD( APTR );
+
+
+   FUNCTION
+      Using this function a USB HCD can remove itself from the USB stack's
+      list of available HCDs.
+      Once removed the USB stack will not start the HCD if the USB stack
+      is restarted. There is no guarantee that the USB stack will shut
+      down USB operations on an already instantiated HCD. In fact, the
+      current USB stack will most definately not do this - but that is
+      subject to change.
+
+
+   INPUTS
+      hcdkey  -  The value returned by USBResRegisterHCDA() when the
+                 HCD was added.
+
+   RESULTS
+      none
+
+   SEE ALSO
+      USBResRegisterHCDA()
+
+
+usbresource.library/USBResAddNotify         usbresource.library/USBResAddNotify
+
+   NAME
+      USBResAddNotify -- Add a subscription for global USB notifications
+                         (new in v1.8)
+
+   SYNOPSIS
+      subs = USBResAddNotify( type, msgport )
+       D0                      D0      A0
+
+      APTR USBResAddNotify( ULONG, struct MsgPort * );
+
+
+   FUNCTION
+      This function is used for subscribing to a specific global USB stack
+      event. Once subscribed, a notification message is sent to the
+      specified MsgPort every time an event of the specified type occurs.
+      All notification messages received at the port must be ReplyMsg()'ed
+      after use. Once replied the message must nolonger be referenced.
+
+      One example of an event is the detachment event. If subscribed, a
+      message is received every time a USB Function is detached.
+
+      This function returns a reference for the notification subscription.
+      Use this reference to unsubscribe at a later time by calling
+      USBResRemNotify().
+
+   NOTE
+      This global USB stack notification mechanism is *not* for general
+      driver use. It is intended for things such as a USB stack GUI which
+      will need to know when USB stack related things change so that the
+      GUI can be updated.
+      Do not expect USB object pointers (such as UsbRawFunction or
+      UsbRawInterface ptrs) returned in notifications to be comparable to
+      those obtainable thru driverlevel functions (e.g. USBFindFunctionA()
+      and USBFindInterfaceA()). The notification subsystem may operate on
+      an altogether different view of the USB stack, thus using different
+      internal structures and public references.
+      Only compare object pointers from the notification subsystem with
+      pointers from the notification or USB topology readback subsystem,
+      unless noted otherwise for the specific notification type.
+
+      Note that the notification subsystem is not implemented as a
+      critical subsystem. That is, in certain extreme situations events
+      may pass without notification messages being sent. This will e.g.
+      happen if the system is running low on memory so that notification
+      messages cannot be allocated.
+
+   INPUTS
+      type     -  The type of event to receive notifications for.
+                  Specify one of the USB_EVENT_xxx codes.
+      msgport  -  The MsgPort to which notification messages are sent.
+
+   RESULTS
+      subs -  USB System Software private reference for the notification
+              subscription. Use this for canceling the notification
+              subscription at a later time.
+              NULL is returned on failure to setup the notification.
+
+   SEE ALSO
+      USBResRemNotify()
+
+
+usbresource.library/USBResRemNotify         usbresource.library/USBResRemNotify
+
+   NAME
+      USBResRemNotify -- Remove a USB notification subscription. (new in v1.8)
+
+   SYNOPSIS
+      USBResRemNotifyA( subs )
+                         A0
+
+      void USBResRemNotify( APTR );
+
+   FUNCTION
+      With this function you cancel a notification subscription created
+      with USBResAddNotify(). Once this call return you will not receive
+      any further notifications from the notification subscription.
+
+   INPUTS
+      subs  -  The event notification key returned by USBResAddNotify().
+
+   RESULTS
+      none.
+
+   SEE ALSO
+      USBResAddNotify()
+
+

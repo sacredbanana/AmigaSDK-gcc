@@ -1,0 +1,518 @@
+TABLE OF CONTENTS
+
+filesysbox.library/--about-handlers--
+filesysbox.library/--copyright--
+filesysbox.library/--env-variables--
+filesysbox.library/FbxCleanupFS
+filesysbox.library/FbxEventLoop
+filesysbox.library/FbxFuseVersion
+filesysbox.library/FbxInstallTimerCallback
+filesysbox.library/FbxQueryFS
+filesysbox.library/FbxQueryMountMsg
+filesysbox.library/FbxReturnMountMsg
+filesysbox.library/FbxSetSignalCallback
+filesysbox.library/FbxSetupFS
+filesysbox.library/FbxSignalDiskChange
+filesysbox.library/FbxUninstallTimerCallback
+filesysbox.library/FbxVersion
+filesysbox/main/FbxGetSysTime
+
+
+filesysbox.library/--about-handlers--                         filesysbox.library/--about-handlers--
+
+   A filesysbox handler leaves all the work of managing
+   locks, notifications, file handles, packets, update
+   timeouts, etc. to the filesysbox.library.
+
+filesysbox.library/--copyright--                                   filesysbox.library/--copyright--
+
+   LIBRARY
+       Copyright (c) 2008-2011 Leif Salomonsson.
+       Copyright (c) 2013-2019 Fredrik Wikstrom.
+       This library is released under AROS PUBLIC LICENSE v.1.1.
+       See the file LICENSE.APL.
+
+   AUTODOC
+       Copyright (c) 2011 Leif Salomonsson.
+       Copyright (c) 2013-2019 Fredrik Wikstrom.
+       This material has been released under and is subject to
+       the terms of the Common Documentation License, v.1.0.
+       See the file LICENSE.CDL.
+
+filesysbox.library/--env-variables--                           filesysbox.library/--env-variables--
+
+   FBX_DBGFLAGS
+       This environment variable is a hexadecimal mask that enables the
+       various types of debug output in the library.
+
+       To enable all debug output:
+       SetEnv FBX_DBGFLAGS 0xffffffff
+
+filesysbox.library/FbxCleanupFS                                     filesysbox.library/FbxCleanupFS
+
+   NAME
+      FbxCleanupFS -- Delete a filesystem handle
+
+   SYNOPSIS
+      void FbxCleanupFS(struct FbxFS *fs);
+
+   FUNCTION
+       Cleans up any resources managed by the filesystem handle and
+       frees the handle itself.
+
+   INPUTS
+       fs - filesystem handle.
+
+   RESULT
+       This function does not return a result.
+
+   EXAMPLE
+
+   NOTES
+       Passing a NULL pointer as fs is safe and will do nothing.
+
+   BUGS
+
+   SEE ALSO
+       FbxSetupFS()
+
+filesysbox.library/FbxEventLoop                                     filesysbox.library/FbxEventLoop
+
+   NAME
+      FbxEventLoop -- Enter filesystem event loop.
+
+   SYNOPSIS
+      int32 FbxEventLoop(struct FbxFS *fs);
+
+   FUNCTION
+       Starts up the filesystem and makes it visible to the 
+       operating system. Handles incoming packets and calls 
+       the appropriate methods in the fuse_operations table. 
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+
+   RESULT
+       0 for success. no errorcodes are defined for now.
+
+   EXAMPLE
+
+   NOTES
+       When this function returns, the handler should cleanup any 
+       resources and exit.
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxFuseVersion                                 filesysbox.library/FbxFuseVersion
+
+   NAME
+      FbxFuseVersion -- Get FUSE API version.
+
+   SYNOPSIS
+      int32 FbxFuseVersion(void);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       FUSE API version number.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       FbxVersion()
+
+filesysbox.library/FbxInstallTimerCallback               filesysbox.library/FbxInstallTimerCallback
+
+   NAME
+      FbxInstallTimerCallback -- Install timer callback. (V53.23)
+
+   SYNOPSIS
+      struct FbxTimerCallbackData * FbxInstallTimerCallback(
+          struct FbxFS * fs, FbxTimerCallbackFunc func, uint32 period);
+
+   FUNCTION
+       Adds a callback function that will get called as often as specified by
+       the period parameter.
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       func - Callback function.
+       period - Period value in milliseconds.
+
+   RESULT
+       A pointer to a private data structure that can be passed to
+       FbxUninstallTimerCallback() when the callback is no longer
+       needed or NULL for failure.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       FbxUninstallTimerCallback()
+       
+
+filesysbox.library/FbxQueryFS                                         filesysbox.library/FbxQueryFS
+
+   NAME
+      FbxQueryFS -- Query function for FS
+      FbxQueryFSTags -- Vararg stub
+
+   SYNOPSIS
+      void FbxQueryFS(struct FbxFS * fs, const struct TagItem * tags);
+      void FbxQueryFSTags(struct FbxFS * fs, ...);
+
+   FUNCTION
+       Function for reading filesystem attributes.
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       tags - Tags to query.
+
+   TAGS
+       FBXT_FSFLAGS (uint32)
+           Filesystem flags.
+
+       FBXT_FSSM (strut FileSysStartupMsg *)
+           FSSM pointer.
+
+       FBXT_DOSTYPE (uint32)
+           Filesystem DOS type.
+
+       FBXT_GET_CONTEXT (struct fuse_context *)
+           Filesystem context pointer.
+
+       FBXT_ACTIVE_UPDATE_TIMEOUT (uint32)
+           Active update timeout in milliseconds.
+
+       FBXT_INACTIVE_UPDATE_TIMEOUT (uint32)
+           Inactive update timeout in milliseconds.
+
+       FBXT_GMT_OFFSET (int32)
+           Returns a cached TZA_UTCOffset value. Its updated periodically
+           in case it changes because of a locale prefs change or because
+           of DST state change. Using GetTimezoneAttrs() directly from
+           any of the FUSE callbacks is not safe and can cause deadlocks.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxQueryMountMsg                             filesysbox.library/FbxQueryMountMsg
+
+   NAME
+      FbxQueryMountMsg -- Get information from mount message
+
+   SYNOPSIS
+      APTR FbxQueryMountMsg(struct Message *msg, int32 attr);
+
+   FUNCTION
+       Returns information from a mount message (normally
+       the first message passed to a filesystems port).
+
+       The following attributes can be queried:
+
+       FBXQMM_MOUNT_NAME (STRPTR)
+           Device name ("DH3", "USB1").
+
+       FBXQMM_MOUNT_CONTROL (STRPTR)
+           Control string if specified during mount.
+
+       FBXQMM_FSSM (struct FileSysStartupMsg *)
+           File system startup message.
+
+       FBXQMM_ENVIRON (struct DosEnvec *)
+           Disk environment structure.
+
+   INPUTS
+       msg - mount message
+       attr - attribute number
+
+   RESULT
+       The attributes value. If value is pointer to something,
+       do not assume it will be valid after mount message has
+       been returned.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxReturnMountMsg                           filesysbox.library/FbxReturnMountMsg
+
+   NAME
+      FbxReturnMountMsg -- Return mount message
+
+   SYNOPSIS
+      void FbxReturnMountMsg(struct Message *msg, int32 r1, int32 r2);
+
+   FUNCTION
+       Returns mount message given to filesystem at startup.
+       Should never be called by filesystem unless there is a 
+       valid msg AND FbxSetupFS() was never called.
+
+   INPUTS
+       msg - mount message
+       r1 - DOSTRUE for success, DOSFALSE for failure.
+       r2 - error code if failure, else 0.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxSetSignalCallback                     filesysbox.library/FbxSetSignalCallback
+
+   NAME
+      FbxSetSignalCallback -- Set callback function for custom signals.
+                              (V53.23)
+
+   SYNOPSIS
+      void FbxSetSignalCallback(struct FbxFS * fs, 
+          FbxSignalCallbackFunc func, uint32 signals);
+
+   FUNCTION
+       Adds a callback function that will get called when the main filesystem
+       process receives one or more of the specified signals.
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       func - Callback function.
+       signals - Signals to call on.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxSetupFS                                         filesysbox.library/FbxSetupFS
+
+   NAME
+      FbxSetupFS -- Create a filesystem handle.
+      FbxSetupFSTags -- Vararg stub
+
+   SYNOPSIS
+      struct FbxFS * FbxSetupFS(struct Message *msg, 
+          const struct TagItem *tags, struct fuse_operations *ops, 
+          int32 opssize, APTR udata);
+      struct FbxFS * FbxSetupFSTags(struct Message *msg, 
+          struct fuse_operations *ops, int32 opssize, APTR udata, ...);
+
+   FUNCTION
+       Creates a filesystem handle and initialises it.
+       If "msg" is given, it will get replied with either success or failure.
+
+       With filesysbox.library V54 and newer it's recommended that FBXT_FLAGS
+       FBXF_ENABLE_32BIT_UIDS is always set. If this field is left cleared
+       then st_obsolete_uid/st_obsolete_gid will be read instead of st_uid/
+       st_gid by filesysbox.library as a backward compatibility measure with
+       file systems written for older library versions which only supported
+       16-bit user IDs.
+
+   INPUTS
+       msg - mount message, or NULL if no mesage is available.
+       tags - taglist for additional parameters.
+       ops - pointer to fuse_operations table.
+       opssize - size of above table.
+       udata - this value will get inserted into fuse_context.private_data.
+
+   TAGS
+       FBXT_FSFLAGS (uint32)
+           Filesystem flags:
+
+           FBXF_ENABLE_UTF8_NAMES
+               Must be given if filesystem uses UTF-8 encoded filenames.
+               This will tell filesysbox to open needed resources for
+               character conversion.
+
+           FBXF_ENABLE_DISK_CHANGE_DETECTION
+               Enables disk change detection by using TD_ADDCHANGEINT.
+               Only usable with trackdisk device based filesystems
+               (fssm required).
+
+           FBXF_ENABLE_32BIT_UIDS (V54)
+               Enables 32-bit UIDs.
+
+           FBXF_USE_INO (V54.7)
+               Indicates that st_ino is set by the filesystem. If this
+               flag is not set filesysbox will generate a hash from the
+               path string and use this instead of st_ino for the
+               ObjectID.
+
+       FBXT_FSSM (struct FileSysStartupMsg *)
+           Overrides the one in msg.
+           A NULL fssm is OK and will disable ACTION_GET_DISK_FSSM.
+
+       FBXT_DOSTYPE (uint32)
+           Overrides the dostype from fssm->fssm_Environ.
+           Must be given if there is no msg.
+
+       FBXT_GET_CONTEXT (struct fuse_context **)
+           Puts the address of filesystem context in the pointer
+           variable given by reference.
+
+       FBXT_ACTIVE_UPDATE_TIMEOUT (uint32)
+           Active update timeout in milliseconds. Defaults to 10000.
+           Setting this timeout to zero disables it.
+
+       FBXT_INACTIVE_UPDATE_TIMEOUT (uint32)
+           Inactive update timeout in milliseconds. Defaults to 500.
+           Setting this timeout to zero disables it.
+
+   RESULT
+       A filesystem handle or NULL if setup failed.
+
+   EXAMPLE
+
+   NOTES
+       It should be noted that in the varargs version the tagitem list is
+       at the end while in the non-varargs version it is only the second
+       parameter (third if you count the hidden interface pointer).
+
+   BUGS
+
+   SEE ALSO
+       FbxCleanupFS()
+
+filesysbox.library/FbxSignalDiskChange                       filesysbox.library/FbxSignalDiskChange
+
+   NAME
+      FbxSignalDiskChange -- Signal diskchange to filesystem process. (V53.35)
+
+   SYNOPSIS
+      void FbxSignalDiskChange(struct FbxFS * fs);
+
+   FUNCTION
+       Only needed if the standard trackdisk.device method of disk change
+       detection (through FBXF_ENABLE_DISK_CHANGE_DETECTION) does not suit
+       your filesystem for some reason.
+
+   INPUTS
+       fs - filesystem handle.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxUninstallTimerCallback           filesysbox.library/FbxUninstallTimerCallback
+
+   NAME
+      FbxUninstallTimerCallback -- Uninstall timer callback. (V53.23)
+
+   SYNOPSIS
+      void FbxUninstallTimerCallback(struct FbxFS * fs, 
+          struct FbxTimerCallbackData * cb);
+
+   FUNCTION
+       Use to remove a timer callback installed by FbxInstallTimerCallback().
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       cb - The result of FbxInstallTimerCallback().
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+       Passing a NULL pointer as cb is safe and will do nothing.
+
+   BUGS
+
+   SEE ALSO
+       FbxInstallTimerCallback()
+
+filesysbox.library/FbxVersion                                         filesysbox.library/FbxVersion
+
+   NAME
+      FbxVersion -- Get Filesysbox version.
+
+   SYNOPSIS
+      int32 FbxVersion(void);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       Version number.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       FbxFuseVersion()
+
+filesysbox/main/FbxGetSysTime                                         filesysbox/main/FbxGetSysTime
+
+   NAME
+      FbxGetSysTime -- Get the current system time
+
+   SYNOPSIS
+      void FbxGetSysTime(struct FbxFS *fs, struct TimeVal *tv);
+
+   FUNCTION
+       Reads the current system time and stores it in the supplied
+       TimeVal structure. Basically just a convenient way to call
+       GetSysTime() from a filesysbox filesystem that doesn't require
+       the "timer.device" to be opened again.
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       tv - TimeVal structure to store the time in.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

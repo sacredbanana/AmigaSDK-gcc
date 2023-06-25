@@ -1,0 +1,132 @@
+TABLE OF CONTENTS
+
+acpi.resource/-copyright-
+acpi.resource/GetAttr
+acpi.resource/SetAttr
+acpi.resource/Shutdown
+
+
+acpi.resource/-copyright-
+
+ Copyright 2015-2019 Trevor Dickinson.
+
+acpi.resource/GetAttr
+
+   NAME
+      GetAttr -- Get ACPI attribute
+
+   SYNOPSIS
+      BOOL GetAttr(uint32 attr, APTR storage);
+
+   FUNCTION
+      Function for getting ACPI information. Currently only allows
+      to check if software shutdown is supported.
+
+   INPUTS
+      attr - The tag ID of the attribute you want to get
+      storage - Pointer to where the information should be stored
+
+   TAGS
+      ACPIA_ShutdownSupported (uint32)
+          TRUE if software shutdown is supported, otherwise FALSE.
+
+   RESULT
+      TRUE or FALSE depending on if the call was successful or not.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       resources/acpi.h
+
+acpi.resource/SetAttr
+
+   NAME
+      SetAttr -- Set ACPI attribute
+
+   SYNOPSIS
+      BOOL SetAttr(uint32 attr, CONST_APTR value);
+
+   FUNCTION
+      Function for setting ACPI information. Currently does nothing.
+
+   INPUTS
+      attr - The tag ID of the attribute you want to set
+      value - Pointer to value(s) to set the attribute to
+
+   TAGS
+      None supported right now.
+
+   RESULT
+      TRUE or FALSE depending on if the call was successful or not.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       resources/acpi.h
+
+acpi.resource/Shutdown
+
+   NAME
+      Shutdown -- Perform a software shutdown
+
+   SYNOPSIS
+      void Shutdown(void);
+
+   FUNCTION
+      Lowlevel function for performing a software shutdown.
+
+   INPUTS
+      None.
+
+   RESULT
+      None. Should only ever return if software shutdown is not
+      supported on the machine in question.
+
+      This function must be called in supervisor mode.
+
+   EXAMPLE
+      struct ACPIIFace *IACPI;
+      uint32 supports_shutdown = FALSE;
+
+      /* Open the resource */
+      IACPI = IExec->OpenResource("acpi.resource");
+
+      /* Check if shutdown is supported */
+      if (IACPI != NULL)
+          IACPI->GetAttr(ACPIA_ShutdownSupported, &supports_shutdown);
+
+      if (supports_shutdown)
+      {
+          APTR stack;
+
+          /* Enter supervisor mode */
+          stack = IExec->SuperState();
+
+          IACPI->Shutdown();
+
+          /* This point should never be reached, but clean up anyway */
+          if (stack != NULL)
+          {
+              IExec->UserState();
+          }
+      }
+      else
+      {
+          /* Shutdown is not supported on this machine/OS combination */
+      }
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

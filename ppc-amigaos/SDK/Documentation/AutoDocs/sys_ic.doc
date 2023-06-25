@@ -1,0 +1,303 @@
+TABLE OF CONTENTS
+
+sysiclass/--datasheet--
+
+
+sysiclass/--datasheet--                                   sysiclass/--datasheet--
+
+    NAME
+	sysiclass -- image class of scalable images
+
+    SUPERCLASS
+	imageclass
+
+    REQUIRES
+	frameiclass
+
+    DESCRIPTION
+	This is a class of system images and standard application images.
+	As of Intuition version 51 there are 34 possible sysiclass image
+	glyphs to choose from.
+
+	The class caches the image's bitmap to improve rendering speed.
+
+    RENDERING HOOK INTERFACE
+
+	Starting with Intuition V50, sysiclass supports custom rendering
+	hooks. The rendering hook message structure is defined in
+	<intuition/plugins.h>. The object is a struct Image *
+	(the image instance to be drawn). Please note that the object may
+	be NULL in which case the rm_Flags field will hold information on
+	what to render (see flags defined in <intuition/sysiclass.h>).
+
+	The different types of messages that a sysiclass rendering
+	hook can see can be found in the <intuition/sysiclass.h> file.
+	More might be added in future Intuition releases.
+
+	NOTE WELL: In a pen shade level map you render with colors 0-4
+	which correspond to the LEVEL_#? constants defined in
+	<intuition/gui.h>. In an alpha shading map, you render with
+	colors 0-255 which are interpreted as alpha intensity percentages
+	(darkest to brightest). The former method allows to produce 3D
+	effects consistent with the user contrast settings for the GUI;
+	the latter allows for fancy/artistic 3D rendering but can only
+	be used on hicolor/truecolor screenmodes.
+
+    STYLE PLUGIN INTERFACE
+
+	A sysiclass plugin can export graphic styles for system imagery
+	(in the form of a rendering hook and/or an array of struct
+	VectorInfo) as well as geometry information for system gadgets
+	and images (in the form of a geometry hook). As of V50, the
+	style and geometry categories known by sysiclass are the
+	following:
+	  SC_GLOBALSTYLE      Default (fallback) graphic style
+	  SC_GLOBALGEOMETRY   Default (fallback) geometry
+	  SC_WINBORDERSTYLE   Style for window borders
+	  SC_WINBFRAMESTYLE   Style for border gadget frames
+	  SC_WINBGADSTYLE     Style for border gadget symbols
+	  SC_GADGETSTYLE      Style for generic gadget symbols
+	  SC_ARROWGSTYLE      Style for arrow gadget symbols
+	  SC_CYCLEGSTYLE      Style for cycle gadget symbols
+	  SC_KHANDLESTYLE     Style for knob handle symbols
+	  SC_MENUSTYLE        Style for menu images
+	  SC_WINBGADGEOMETRY  Geometry for border gadgets
+	  SC_GADGETGEOMETRY   Geometry for inner gadgets
+
+	Each plugin can export one or more sub-styles for each
+	of the above style categories. It informs clients about
+	this by initializing its SubStyles field: it must point
+	to an array of struct SubStyle each of which represents
+	a specific sub-style for a given category and gives its
+	name and unique ID number (uniqueness only needs to be
+	relative to the plugin and category). The array must be
+	terminated by a NULL Name field.
+
+	Specialized categories should contain at least all the
+	sub-styles of their parent category. The style category
+	hierarchy (as of V50) is as follows:
+
+	+--SC_GLOBALSTYLE
+	|  |
+	|  +--SC_WINBORDERSTYLE
+	|  +--SC_WINBFRAMESTYLE
+	|  +--SC_WINBGADSTYLE
+	|  +--SC_MENUSTYLE
+	|  +--SC_GADGETSTYLE
+	|     |
+	|     +--SC_ARROWGSTYLE
+	|     +--SC_CYCLEGSTYLE
+	|     +--SC_KHANDLESTYLE
+	|
+	+--SC_GLOBALGEOMETRY
+	   |
+	   +--SC_WINBGADGEOMETRY
+	   +--SC_GADGETGEOMETRY
+
+	The main structure exported by a style plugin library
+	is the SysIPlugin structure which is described in
+	<intuition/sysiclass.h>.
+
+	GEOMETRY HOOK INTERFACE
+
+	Intuition may will call the geometry hook to determine
+	the position and size of the specified object. More
+	information about this interface is available in the
+	<intuition/sysiclass.h> file.
+
+    METHODS
+	OM_NEW -- Create the sysiclass object. Passed to superclass first.
+
+	OM_DISPOSE -- Destroy the object and then pass to superclass.
+
+	OM_GET -- Get value of an attribute. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	IM_DRAW -- Draw sysiclass image with state.
+
+	IM_DRAWFRAME -- Draw sysiclass image within limits.
+
+	IM_EXTENT -- Inquire about rendering extent.
+
+	IM_EXTENTFRAME -- Inquire about rendering extent with dimensions.
+
+	IM_HITTEST -- Determine if image was hit in a title bar or pass
+	              to the superclass.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	IA_Left (int16)
+	IA_Top (int16)
+	    These attributes override the default positioning of
+	    the image geometry hook with the specified position.
+
+	    Defaults to SG_IMAGEBOX method positioning.
+	    (see <intuition/sysiclass.h>)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Width (int16)
+	IA_Height (int16)
+	    These attributes override the default positioning of
+	    the image geometry hook with the specified position.
+	    A value of ~0 means calculate the size of the image.
+
+	    Defaults to SG_IMAGEBOX method sizing.
+	    (see <intuition/sysiclass.h>)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_SupportsDisable (BOOL)
+	    All sysiclass images support the IDS_DISABLED and
+	    IDS_SELECTEDDISABLED states. Always returns TRUE.
+
+	    Applicability is (OM_GET)
+
+	SYSIA_RenderHook (struct Hook *)
+	    Custom rendering hook for a sysiclass image. (V50)
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	SYSIA_VectorInfo (struct VectorInfo *)
+	    Custom vector definition for a sysiclass image. (V50)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	SYSIA_Which (uint32)
+	    Specifies which system gadget you want an image for:
+	      DEPTHIMAGE     Window depth gadget image
+	      ZOOMIMAGE      Window zoom gadget image
+	      SIZEIMAGE      Window sizing gadget image
+	      CLOSEIMAGE     Window close gadget image
+	      SDEPTHIMAGE    Screen depth gadget image
+	      LEFTIMAGE      Window left-arrow gadget image
+	      UPIMAGE        Window up-arrow gadget image
+	      RIGHTIMAGE     Window right-arrow gadget image
+	      DOWNIMAGE      Window down-arrow gadget image
+	      CHECKIMAGE     GT/RA checkbox image
+	      MXIMAGE        GT/RA mutual exclude "button" image
+	      MENUCHECK      Menu checkmark image (V39)
+	      AMIGAKEY       Menu Amiga-key image (V39)
+	      SBARLOGO       Screen titlebar logo (V50)
+	      POPUPIMAGE     Window pop-up gadget image (V50)
+	      SETTINGSIMAGE  Window settings gadget image (V50)
+	      SNAPSHOTIMAGE  Window snapshot gadget image (V50)
+	      ICONIFYIMAGE   Window iconify gadget image (V50)
+	      PADLOCKIMAGE   Window padlock gadget image (V50)
+	      TBFRAMEIMAGE   Window titlebar frame image (V50)
+	      HKHANDLEIMAGE  Window horizontal knob handle symbol (V50)
+	      VKHANDLEIMAGE  Window vertical knob handle symbol (V50)
+	      MENUMX         Menu mutualexclude image (V50)
+	      MENUSUB        Menu sub-panel indicator (V50)
+	      CYCLEIMAGE     GT/RA cycle symbol (V50)
+	      CHECKMARKIMAGE GT/RA checkmark symbol (V50)
+	      GLEFTIMAGE     GT/RA left-arrow symbol (V50)
+	      GUPIMAGE       GT/RA up-arrow symbol (V50)
+	      GRIGHTIMAGE    GT/RA right-arrow symbol (V50)
+	      GDOWNIMAGE     GT/RA down-arrow symbol (V50)
+	      GHKHANDLEIMAGE GT/RA horizontal knob handle symbol (V50)
+	      GVKHANDLEIMAGE GT/RA vertical knob handle symbol (V50)
+	      SCLOSEIMAGE    Screen close gadget image (V51)
+	      SCREENSIMAGE   Window screen-jump gadget image (V51)
+	      SORTASCIMAGE   Sort ascending image (V53.25)
+	      SORTDESIMAGE   Sort descending image (V53.25)
+
+	    Defaults to DEPTHIMAGE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	SYSIA_DrawInfo (struct DrawInfo *)
+	    This attribute contains a pointer to a DrawInfo structure
+	    (defined in <intuition/screens.h>) describing the target
+	    screen. The class requires this attribute in order to generate
+	    the image into a bitmap cache.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	SYSIA_ReferenceFont (struct TextFont *)
+	    Font to use as reference for scaling certain sysiclass
+	    images. This attribute will override any SYSIA_Size
+	    provided to provide a scaled image proportional to the
+	    reference font.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	SYSIA_Size (uint32)
+	    This attribute identifies which image size to use for the
+	    object. This generalizes Intuition's older concept of two
+	    different system image dimensions. There are three
+	    possible values for this attribute:
+
+	    SYSISIZE_MEDRES for Hires non-interlaced 640x200/256
+	    SYSISIZE_HIRES  for Hires interlaced 640x400/512
+	    SYSISIZE_LOWRES for Lores 320x200/256
+
+	    These sizes do not apply to all of the glyphs consistently.
+	    See the chart below for image dimensions (width x height)
+	    according to the SYSIA_Size and the glyph category.
+
+	    CATEGORY       LOWRES      MEDRES      HIRES
+	    --------       ------      ------      -----
+	    Title Bar      18 x 11     24 x 11     30 x 11
+	    Window Border  13 x 13     18 x 18     22 x 22
+	    CHECKIMAGE     26 x 11     26 x 11     26 x 11
+	    MXIMAGE        17 x 9      17 x 9      17 x 9
+	    CYCLEIMAGE     22 x 14     22 x 18     22 x 24
+	    Gadget         14 x 14     18 x 18     24 x 24
+	    AMIGAKEY       14 x 8      23 x 8      23 x 8
+	    MENUSUB         6 x 6       8 x 8      12 x 12
+	    Menu            9 x 8      15 x 8      20 x 8
+	    Default        12 x 12     16 x 16     20 x 20
+
+	    Use SYSIA_ReferenceFont instead for a more consistent
+	    look relative to the size of the font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	SYSIA_BitMapCache (uint32)
+	    Level of bitmap caching for sysiclass images. (V50)
+	      0 = None
+	      1 = Deferred
+	      2 = Immediate
+
+	    Defaults to 2 (immediate).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	SYSIA_FullFrame (BOOL)
+	    Specifies whether the sysiclass image must have an
+	    inner frame (if the current style normally has one).
+	    This is useful only with TBFRAMEIMAGE images.
+
+	    Set this to FALSE to get an image suitable as background
+	    for text or TRUE if you want a normal titlebar gadget
+	    image which you can add graphic contents to. (V50)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	SYSIA_Label (CONST_STRPTR)
+	    Pointer to a string to be used as the image's text
+	    label (if it supports one). For example, TBFRAMEIMAGE.
+	    (V50)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	SYSIA_ContentsBox (struct IBox *)
+	    Inquire about the position and size of the inner area
+	    of a TBFRAMEIMAGE image in order to bound your custom
+	    imagery inside that area and avoid overwriting the image's
+	    borders. (V50)
+
+	    Applicability is (OM_GET)
+
+

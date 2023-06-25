@@ -1,0 +1,486 @@
+TABLE OF CONTENTS
+
+rexxsyslib.library/ClearRexxMsg
+rexxsyslib.library/CreateArgstring
+rexxsyslib.library/CreateRexxHostPort
+rexxsyslib.library/CreateRexxMsg
+rexxsyslib.library/DeleteArgstring
+rexxsyslib.library/DeleteRexxHostPort
+rexxsyslib.library/DeleteRexxMsg
+rexxsyslib.library/FillRexxMsg
+rexxsyslib.library/FreeRexxMsg
+rexxsyslib.library/GetRexxVarFromMsg
+rexxsyslib.library/IsRexxMsg
+rexxsyslib.library/LaunchRexxScript
+rexxsyslib.library/LengthArgstring
+rexxsyslib.library/LockRexxBase
+rexxsyslib.library/SetRexxVarFromMsg
+rexxsyslib.library/UnlockRexxBase
+rexxsyslib.library/ClearRexxMsg                                     rexxsyslib.library/ClearRexxMsg
+
+   NAME
+	ClearRexxMsg - Releases and clears the argument array in a RexxMsg
+
+   SYNOPSIS
+	ClearRexxMsg(msgptr, count)
+
+	VOID ClearRexxMsg(struct RexxMsg *,ULONG);
+
+   FUNCTION
+	This function will DeleteArgstring() one or more argstrings from
+	the RexxMsg and clear the slot.  The count is used to select the
+	number of slots to clear.
+
+   INPUTS
+	msgptr - A pointer to a RexxMsg
+	count - The number of slots to be cleared.  The number can be from
+	        1 to 16.  (There are 16 slots)
+
+   RESULTS
+	All of the slots in the given count will be cleared and the argstring
+	will have been released.
+
+   SEE ALSO
+	FillRexxMsg(), DeleteRexxMsg(), DeleteArgstring(), CreateArgstring()
+
+rexxsyslib.library/CreateArgstring                               rexxsyslib.library/CreateArgstring
+
+   NAME
+	CreateArgstring - Create an argument string structure
+
+   SYNOPSIS
+	argstr = CreateArgstring(string, length)
+
+	STRPTR CreateArgstring(STRPTR, ULONG);
+
+   FUNCTION
+	Allocates a RexxArg structure and copies the supplied string into it.
+	The returned pointer points at the string part of the structure
+	and can be treated like an ordinary string pointer.  (However, care
+	must be taken that you do not change the string)
+
+   INPUTS
+	string - A pointer at your input string
+	length - The number of bytes of your input string you wish copied.
+	         (NOTE:  You are limited to 65,535 byte strings)
+
+   RESULTS
+	argstr - A pointer to the argument string.  The results are returned
+	         in both A0 and D0.  You should always check the result
+	         as an allocation failure would cause an error.
+
+   SEE ALSO
+	DeleteArgstring(), LengthArgstring(), ClearRexxMsg(), FillRexxMsg()
+
+rexxsyslib.library/CreateRexxHostPort                         rexxsyslib.library/CreateRexxHostPort
+
+   NAME
+	CreateRexxHostPort - Attempt to create a unique ARexx host
+	    MsgPort (V45)
+
+   SYNOPSIS
+	port = CreateRexxHostPort(port_base_name)
+
+	struct MsgPort * CreateRexxHostPort(STRPTR port_base_name);
+
+   FUNCTION
+	This function will attempt to create a unique ARexx host port.
+	If the base name already exists, nine attempts will be made
+	to find a unique name by appending ".1" .. ".9" to the base
+	name.
+
+   INPUTS
+	port_base_name - The name of the ARexx host port to create
+
+   RESULTS
+	port - Pointer to a public MsgPort or NULL if no unique name
+	    could be generated.
+
+   SEE ALSO
+	DeleteRexxHostPort,
+	exec.library/AddPort, exec.library/FindPort,
+	exec.library/CreateMsgPort
+
+rexxsyslib.library/CreateRexxMsg                                   rexxsyslib.library/CreateRexxMsg
+
+   NAME
+	CreateRexxMsg - Create an ARexx message structure
+
+    SYNOPSIS
+	rexxmsg = CreateRexxMsg(port, extension, host)
+
+	struct RexxMsg *CreateRexxMsg(struct MsgPort *, STRPTR, STRPTR);
+
+   FUNCTION
+	This functions allocates an ARexx message packet.  The RexxMsg
+	consists of a standard EXEC message structure extended to include
+	the ARexx specific information.
+
+   INPUTS
+	port - A pointer to a public or private message port.  This *MUST*
+	       be a valid port as this is where the message will be replied.
+
+	extension - A pointer to a NULL terminated string that is to be used
+	            as the default extension for the REXX scripts.  If this
+	            is NULL, the default is "REXX"
+
+	host - A pointer to a NULL terminated string that is to be used
+	       as the default host port.  The name must be the same as the
+	       name of the public message port that is to be the default host.
+	       If this field is NULL, the default is REXX.
+
+   RESULTS
+	rexxmsg - A RexxMsg structure
+
+   NOTES
+	The extension and host strings must remain valid for as long as the
+	RexxMsg exists as only the pointer to those strings are stored.
+
+   SEE ALSO
+	DeleteRexxMsg(), ClearRexxMsg(), FillRexxMsg()
+
+rexxsyslib.library/DeleteArgstring                               rexxsyslib.library/DeleteArgstring
+
+   NAME
+	DeleteArgstring - Releases an Argstring created by CreateArgstring()
+
+   SYNOPSIS
+	DeleteArgstring(argstring)
+
+	VOID DeleteArgstring(STRPTR);
+
+   FUNCTION
+	Releases an argstring.  The argstring must have been created by ARexx
+
+   INPUTS
+	argstring - A pointer to the string buffer of an argstring.
+
+   SEE ALSO
+	CreateArgstring(), ClearRexxMsg(), FillRexxMsg()
+
+rexxsyslib.library/DeleteRexxHostPort                         rexxsyslib.library/DeleteRexxHostPort
+
+   NAME
+	DeleteRexxHostPort - Remove an ARexx host MsgPort (V45)
+
+   SYNOPSIS
+	DeleteRexxHostPort(port)
+
+	VOID DeleteRexxHostPort(struct MsgPort *port);
+
+   FUNCTION
+	This function will remove an ARexx host port created by
+	the CreateRexxHostPort() function. The port will be removed
+	from the public list and the memory associated with it will
+	be released.
+
+   INPUTS
+	port - The port created by CreateRexxHostPort(); this can
+	    be NULL in which case this function will do nothing.
+
+   SEE ALSO
+	CreateRexxHostPort,
+	exec.library/RemPort
+
+rexxsyslib.library/DeleteRexxMsg                                   rexxsyslib.library/DeleteRexxMsg
+
+   NAME
+	DeleteRexxMsg - Releases a RexxMsg structure created by CreateRexxMsg()
+
+   SYNOPSIS
+	DeleteRexxMsg(packet)
+
+	VOID DeleteRexxMsg(struct RexxMsg *);
+
+   FUNCTION
+	The function releases an ARexx message packet that was allocated
+	with CreateRexxMsg().  Any argument fields in the RexxMsg structure
+	should be cleared before calling this function as it does
+	not release them for you.
+
+   INPUTS
+	packet - A pointer to a RexxMsg structure allocated by CreateRexxMsg()
+
+   EXAMPLE
+	if (rmsg=CreateRexxMsg(myport,"myapp","MYAPP_PORT"))
+	{
+		/* Do my think with rmsg */
+		ClearRexxMsg(rmsg,16);	/* We may not want to clear all 16 */
+		DeleteRexxMsg(rmsg);
+	}
+
+   SEE ALSO
+	CreateRexxMsg(), ClearRexxMsg()
+
+rexxsyslib.library/FillRexxMsg                                       rexxsyslib.library/FillRexxMsg
+
+   NAME
+	FillRexxMsg - Fill the argument strings as needed
+
+   SYNOPSIS
+	result = FillRexxMsg(msgptr, count, mask)
+
+	BOOL FillRexxMsg(struct RexxMsg *,ULONG,ULONG);
+
+   FUNCTION
+	This function will convert and install up to 16 argument strings into
+	a RexxMsg structure.  The message packet's argument fields must be
+	set to either a pointer to a NULL terminated string or an integer value
+	The mask, bits 0 to 15, correspond to the type of value is stored
+	in the argument slot.  If the bit is cleared, the argument is a
+	string pointer; if the bit is set, the argument is an integer.
+
+   INPUTS
+	msgptr - Pointer to a RexxMsg (allocated via CreateRexxMsg)
+	count - The number of argument slots to fill in.  This number should
+	        be from 1 to 16.
+
+	mask - A bit mask corresponding to the 16 fields that is used to
+	       determine the type of the field.
+
+   RESULTS
+	result - A boolean.  If it is TRUE, the call worked.  If it is false,
+	         some allocation did not work.  All argstrings that were
+	         created will be released.
+
+   SEE ALSO
+	ClearRexxMsg(), CreateArgstring(), DeleteArgstring(), CreateRexxMsg()
+
+rexxsyslib.library/FreeRexxMsg                                       rexxsyslib.library/FreeRexxMsg
+
+   NAME
+	FreeRexxMsg - Release a RexxMsg and all its arguments (V45).
+
+   SYNOPSIS
+	FreeRexxMsg(message)
+
+	VOID FreeRexxMsg(struct RexxMsg *message)
+
+   FUNCTION
+	This function will clean up after the RexxMsg returned by
+	the Rexx resident process, as created through the
+	LaunchRexxScript() function.
+
+   INPUTS
+	message - A RexxMsg structure returned to an ARexx host
+	    port. This must not be NULL!
+
+   SEE ALSO
+	LaunchRexxScript
+
+rexxsyslib.library/GetRexxVarFromMsg                           rexxsyslib.library/GetRexxVarFromMsg
+
+   NAME
+	GetRexxVarFromMsg - Obtain the value of an ARexx variable (V45)
+
+   SYNOPSIS
+	error = GetRexxVarFromMsg(name,buffer,message)
+
+	LONG GetRexxVarFromMsg(STRPTR name,STRPTR buffer,
+	                       struct RexxMsg *message);
+
+   FUNCTION
+	This function will attempt to retrieve the value of an ARexx
+	variable, as represented through the context information stored
+	in a RexxMsg structure.
+
+   INPUTS
+	name - Name of the variable to be retrieved.
+
+	buffer - Pointer to at least 256 bytes in which the
+	         value of the variable will be stored as
+	         a NUL-terminated string.
+
+	message - Pointer to a RexxMsg structure associated with
+	          an ARexx program.
+
+   RESULTS
+	error - 0 if the variable could be found and retrieved, otherwise
+	        an error code.
+
+   SEE ALSO
+	SetRexxVarFromMsg
+
+rexxsyslib.library/IsRexxMsg                                           rexxsyslib.library/IsRexxMsg
+
+   NAME
+	IsRexxMsg - Function to determine if a message came from ARexx
+
+   SYNOPSIS
+	result = IsRexxMsg(msgptr)
+
+	BOOL IsRexxMsg(struct RexxMsg *);
+
+   FUNCTION
+	This function can be used to determine if a message came from an
+	ARexx program.
+
+   INPUTS
+	msgptr - A pointer to the suspected RexxMsg.
+
+   RESULTS
+	result - A boolean:  TRUE if it is an ARexx message, FALSE if not.
+
+   SEE ALSO
+	CreateRexxMsg()
+
+rexxsyslib.library/LaunchRexxScript                             rexxsyslib.library/LaunchRexxScript
+
+   NAME
+	LaunchRexxScript - Attempt to make the Rexx resident process execute
+	    an ARexx program/script (V45)
+
+   SYNOPSIS
+	message = LaunchRexxScript(program_name,host_port,extension,
+	                          input_handle, output_handle);
+
+	struct RexxMsg * LaunchRexxScript(STRPTR program_name,
+	                                 struct MsgPort *host_port,
+	                                 STRPTR extension,
+	                                 BPTR input_handle,
+	                                 BPTR output_handle);
+
+   FUNCTION
+	This function will attempt to make the Rexx resident process
+	execute an ARexx program with given name and parameters.
+
+   INPUTS
+	program_name - Name of the ARexx program/script, including
+	               command line parameters.
+
+	host_port - Pointer to the ARexx host MsgPort which launched
+	            the program. This is where the RexxMsg this
+	            function creates will be returned to.
+
+	extension - Name extension to be added to the program/script
+	            name. This defaults to ".rexx".
+
+	input_handle - Input file handle for program/script.
+
+	output_handle - Output file handle for program/script.
+
+   RESULTS
+	message - Pointer to the RexxMsg associated with the program
+	          being executed by the resident Rexx process, or NULL
+	          if the program/script could not be started.
+
+   NOTES
+	When the program/script finishes, a RexxMsg will be returned
+	to the host port specified when this function was called. You
+	must release the memory allocated for this message using the
+	FreeRexxMsg() function.
+
+   SEE ALSO
+	FreeRexxMsg
+
+rexxsyslib.library/LengthArgstring                               rexxsyslib.library/LengthArgstring
+
+    NAME
+	LengthArgstring - Returns the length value stored in the argstring
+
+    SYNOPSIS
+	length = LengthArgstring(argstring)
+
+	ULONG LengthArgstring(STRPTR);
+
+    FUNCTION
+	This function returns the length value stored in the argstring.
+	This is *NOT* the same as doing a strlen() type call on the
+	argstring.  (Note that argstrings may contain NULLs)
+
+    INPUTS
+	argstring - A pointer to an argstring that was created by ARexx
+
+    RESULTS
+	length - The length of the argstring.
+
+    SEE ALSO
+	CreateArgstring()
+
+rexxsyslib.library/LockRexxBase                                     rexxsyslib.library/LockRexxBase
+
+   NAME
+	LockRexxBase - Obtain a semaphore lock on the RexxBase structure
+
+   SYNOPSIS
+	LockRexxBase(resource)
+
+	VOID LockRexxBase(ULONG);
+
+   FUNCTION
+	Secures the specified resource in the ARexx library base.
+
+   INPUTS
+	resource - A manifest constant defining which resource to lock.
+	           ZERO locks all resources.
+
+   NOTES
+	Currently, only ZERO resource type is available.  You *MUST* make
+	sure that you do not call this function with an undefined value
+	as it may become defined at some future date and cause unwanted
+	behavior.
+
+   SEE ALSO
+	UnlockRexxBase()
+
+rexxsyslib.library/SetRexxVarFromMsg                           rexxsyslib.library/SetRexxVarFromMsg
+
+   NAME
+	SetRexxVarFromMsg - Set the value of an ARexx variable (V45)
+
+   SYNOPSIS
+	error = SetRexxVarFromMsg(name,value,message)
+
+	LONG SetRexxVarFromMsg(STRPTR name,STRPTR value,
+	                       struct RexxMsg *message);
+
+   FUNCTION
+	This function will attempt to set the value of an ARexx
+	variable, as represented through the context information stored
+	in a RexxMsg structure.
+
+   INPUTS
+	name - Name of the variable to be set/changed.
+
+	value - The new value of the variable, as a NUL-terminated
+	        string.
+
+	message - Pointer to a RexxMsg structure associated with
+	          an ARexx program.
+
+   RESULTS
+	error - 0 if the variable could be changed/set, otherwise
+	        an error code.
+
+   SEE ALSO
+	GetRexxVarFromMsg
+
+rexxsyslib.library/UnlockRexxBase                                 rexxsyslib.library/UnlockRexxBase
+
+   NAME
+	UnlockRexxBase - Release a semaphore lock on the RexxBase structure
+
+   SYNOPSIS
+	UnlockRexxBase(resource)
+
+	VOID UnlockRexxBase(ULONG);
+
+   FUNCTION
+	Releases the specified resource in the ARexx library base.
+
+   INPUTS
+	resource - A manifest constant defining which resource to unlock.
+	           This value *MUST* match the value used in the matching
+	           LockRexxBase() call.
+
+   NOTES
+	Currently, only ZERO resource type is available.  You *MUST* make
+	sure that you do not call this function with an undefined value
+	as it may become defined at some future date and cause unwanted
+	behavior.  You *MUST* make sure that you only call this function
+	after a matching call to LockRexxBase() was made.
+
+   SEE ALSO
+	LockRexxBase()
+
+

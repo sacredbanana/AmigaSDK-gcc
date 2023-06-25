@@ -1,0 +1,1106 @@
+TABLE OF CONTENTS
+
+camd.library/AddMidiLink
+camd.library/CloseMidiDevice
+camd.library/CreateMidi
+camd.library/DeleteMidi
+camd.library/EndClusterNotify
+camd.library/FindCluster
+camd.library/FindMidi
+camd.library/FlushMidi
+camd.library/GetMidi
+camd.library/GetMidiAttrsA
+camd.library/GetMidiErr
+camd.library/GetMidiLinkAttrsA
+camd.library/GetSysEx
+camd.library/LockCAMD
+camd.library/MidiLinkConnected
+camd.library/MidiMsgLen
+camd.library/MidiMsgType
+camd.library/NextCluster
+camd.library/NextClusterLink
+camd.library/NextMidi
+camd.library/NextMidiLink
+camd.library/OpenMidiDevice
+camd.library/ParseMidi
+camd.library/PutMidi
+camd.library/PutMidiMsg
+camd.library/PutSysEx
+camd.library/QuerySysEx
+camd.library/RemoveMidiLink
+camd.library/RethinkCAMD
+camd.library/SetMidiAttrs
+camd.library/SetMidiLinkAttrs
+camd.library/SkipSysEx
+camd.library/StartClusterNotify
+camd.library/UnlockCAMD
+camd.library/WaitMidi
+camd.library/AddMidiLink                               camd.library/AddMidiLink
+
+   NAME
+       AddMidiLink -- Create a MidiLink to a MidiCluster.
+
+   SYNOPSIS
+       struct MidiLink *AddMidiLinkA (struct MidiNode *mi, LONG type,
+                                               a0                d0
+                struct TagItem *TagsList)
+                        a1
+
+        struct MidiLink *AddMidiLink(struct MidiNode *mi, LONG type,
+                        Tag type1, ...)
+
+   FUNCTION
+       Creates a MidiLink structure and connects it to a MidiCluster.
+
+       The first form of the function expects a tag array pointer or NULL.
+       The second form permits the tag items to exist on the caller's
+       stack.  In both cases, the final tag item must be TAG_END.
+
+   INPUTS
+        mi - MidiNode that the MidiLink should communicate through.
+
+        type - Type of link, either MLTYPE_Receiver or MLTYPE_Sender.
+
+       TagList   - optional pointer to tag array.  May be NULL.  For
+                   OS v1.3, there are restrictions on the tag array
+                   contents.  See NOTE below.
+
+   TAGS
+        See SetMidiLinkAttrsA
+
+   RESULTS
+       A pointer to a MidiLink structure on success or NULL on failure.
+       When FALSE is returned, an error code will be returned if a TagItem
+        with an ti_Tag of MLINK_ErrorCode was provided. The CME_ error code
+        will be put in the ti_Data field.
+
+   NOTE
+       Under 1.3 only a restricted tag array may be passed into this
+       funciton. Specifically, the only special tag values that are
+       supported are TAG_END (or TAG_DONE) and TAG_IGNORE.  All others
+       (e.g. TAG_SKIP, TAG_MORE) are treated as TAG_END.  The full range of
+       TAG list operations are permitted under 2.0.
+
+       This function MUST be called by a Process (not a Task).  It makes a
+       few DOS calls.
+
+   EXAMPLES
+       ml = AddMidiLink (mi,MLTYPE_Receiver,
+               MLINK_Name, "app.in", MLINK_Location,"in.0", TAG_END);
+
+       Creates a receive MidiLink named "app.in" to the MidiCluster named
+        "in.0", where all bytes are recevied through the MidiNide mi.
+
+   SEE ALSO
+       RemoveMidiLinkA(), SetMidiLinkAttrs()
+       2.0 tag docs.
+camd.library/CloseMidiDevice                       camd.library/CloseMidiDevice
+
+   NAME         ****NOT SUPPORTED IN OS4****
+       CloseMidiDevice -- Close a MIDI device driver.
+
+   SYNOPSIS
+       void CloseMidiDevice (struct MidiDeviceData *MidiDeviceData)
+                                         a0
+
+   FUNCTION
+       Closes a MIDI device driver opened by OpenMidiDevice().
+
+   INPUTS
+       MidiDeviceData - pointer to a MidiDeviceData structure returned by
+                    OpenMidiDevice().
+
+   RESULTS
+       None
+
+   SEE ALSO
+       OpenMidiDevice()
+camd.library/CreateMidi                                 camd.library/CreateMidi
+
+   NAME
+       CreateMidi -- Create a MidiNode.
+
+   SYNOPSIS
+       struct MidiNode *CreateMidiA (struct TagItem *TagsList)
+                                               a0
+
+       struct MidiNode *CreateMidi (Tag tag1, ...)
+
+   FUNCTION
+       Creates a MidiNode structure with the desired attributes.
+
+       The first form of the function expects a tag array pointer or NULL.
+       The second form permits the tag items to exist on the caller's
+       stack.  In both cases, the final tag item must be TAG_END.
+
+   INPUTS
+       TagList   - optional pointer to tag array.  May be NULL.  For
+                   OS v1.3, there are restrictions on the tag array
+                   contents.  See NOTE below.
+
+   TAGS
+            See SetMidiAttrsA
+
+   RESULTS
+       A pointer to a MidiNode structure on success or NULL on failure.
+       When FALSE is returned, an error code will be returned if a TagItem
+        with an ti_Tag of MIDI_ErrorCode was provided. The CME_ error code
+        will be put in the ti_Data field.
+
+   NOTE
+       Under 1.3 only a restricted tag array may be passed into this
+       funciton. Specifically, the only special tag values that are
+       supported are TAG_END (or TAG_DONE) and TAG_IGNORE.  All others
+       (e.g. TAG_SKIP, TAG_MORE) are treated as TAG_END.  The full range of
+       TAG list operations are permitted under 2.0.
+
+       This function MUST be called by a Process (not a Task).  It makes a
+       few DOS calls.
+
+       Don't call WaitMidi() with a send-only MidiNode.
+
+   EXAMPLES
+       mi = CreateMidi (
+               MIDI_MsgQueue, 2048, MIDI_SysExSize, 10000L, TAG_END);
+
+       Creates a MidiNode with space to receive 2048 MidiMsg's and 10000
+       bytes of Sys/Ex data.  Note the 'L' on the end of 10000.  This
+       forces correct alignment of the tag items on the stack for 16 bit
+       integer compilation.
+
+   SEE ALSO
+       DeleteMidi(), SetMidiAttrs()
+       2.0 tag docs.
+camd.library/DeleteMidi                                 camd.library/DeleteMidi
+
+   NAME
+       DeleteMidi -- Delete a MidiNode.
+
+   SYNOPSIS
+       void DeleteMidi (struct MidiNode *mn)
+                               a0
+
+   FUNCTION
+       Deletes the specified MidiNode.  A sys/ex queue allocated by
+       CreateMidi() is freed.  The following actions are automatically
+       performed by this function:
+
+       A client-supplied sys/ex queue attached with SetSysExQueue() will
+       not be freed by this function.
+
+   INPUTS
+       mn - MidiNode to delete. Can be NULL.
+
+   RESULTS
+       None
+
+   SEE ALSO
+       CreateMidi(), ClearSysExQueue()
+camd.library/EndClusterNotify                     camd.library/EndClusterNotify
+
+   NAME
+       EndClusterNotify -- Stop notification of cluster changes
+
+   SYNOPSIS
+       void EndClusterNotify (struct ClusterNotifyNode *cn)
+                                       a0
+
+   FUNCTION
+       Terminates notification of CAMD internal state changes
+
+   INPUTS
+       cn - a pointer to a ClusterNotifyNode
+
+   RESULTS
+       None
+
+   SEE ALSO
+       StartClusterNotify
+camd.library/FindCluster                               camd.library/FindCluster
+
+   NAME
+       FindCluster -- Find a MidiCluster by name
+
+   SYNOPSIS
+       struct MidiCluster *FindCluster (name)
+                                  a0
+
+   FUNCTION
+       Find a MidiCluster by name. If node of that exists, the function
+       returns NULL. Midi links (CD_Linkages) must be locked when called.
+
+   INPUTS
+       name - name of MidiCluster to find.
+
+   RESULTS
+       result - A MidiCluster or NULL.
+
+camd.library/FindMidi                                     camd.library/FindMidi
+
+   NAME
+       FindMidi -- Find a MidiNode by name
+
+   SYNOPSIS
+       struct MidiNode *FindMidi (name)
+                                  a0
+
+   FUNCTION
+       Find a MidiNode by name. If node of that exists, the function
+       returns NULL. Midi links (CD_Linkages) must be locked when called.
+
+   INPUTS
+       name - name of MidiNode to find.
+
+   RESULTS
+       result - A MidiNode or NULL.
+
+camd.library/FlushMidi                                   camd.library/FlushMidi
+
+   NAME
+       FlushMidi -- Dispose of all pending messages.
+
+   SYNOPSIS
+       void FlushMidi (struct MidiNode *mi)
+                               a0
+
+   FUNCTION
+       Disposes of all messages waiting to be received by GetMidi() and
+       GetSysEx().  Also clears pending errors.
+
+   INPUTS
+       mi - MidiNode to flush.
+
+   RESULTS
+       None
+camd.library/GetMidi                                       camd.library/GetMidi
+
+   NAME
+       GetMidi -- Get next MidiMsg from buffer.
+
+   SYNOPSIS
+       BOOL GetMidi (struct MidiNode *mn, MidiMsg *msg)
+                             a0                 a1
+
+   FUNCTION
+       Gets the next MidiMsg from mn->MsgQueue.
+
+       It is definitely not safe to call this if there's no MsgQueue.
+
+   INPUTS
+       mn - pointer to MidiNode.
+       msg - pointer to buffer to place MidiMsg removed from
+         queue.
+
+   RESULTS
+       TRUE if a MidiMsg was actually copied in msg.  FALSE
+       if the buffer was empty.
+
+   SEE ALSO
+       WaitMidi()
+camd.library/GetMidiAttrsA                           camd.library/GetMidiAttrsA
+
+   NAME
+       GetMidiAttrsA -- Get the attributes of a MidiNode
+
+   SYNOPSIS
+       ULONG GetMidiAttrsA (struct MidiNode *mi, struct TagItem *attrs)
+                                       a0          a1
+   FUNCTION
+       Gets attributes of a MidiNode.
+
+   INPUTS
+       mi - a pointer to the MidiNode
+
+       attrs - Attributes to get, terminated with TAG_DONE. For each entry
+            in the tag list, ti_Tag identifies the attribute, and ti_Data
+            is a pointer to the long variable where you wish the result
+            to be stored.
+
+   RESULTS
+        Count of attributes understood.
+
+   NOTE
+        See SetMidiAttrs() for tags understood.o
+
+   EXAMPLES
+
+   SEE ALSO
+       SetMidiAttrs()
+camd.library/GetMidiErr                                 camd.library/GetMidiErr
+
+   NAME
+       GetMidiErr -- Read accumulated MIDI error flags.
+
+   SYNOPSIS
+       UBYTE GetMidiErr (struct MidiNode *mn)
+                                 a0
+
+   FUNCTION
+       Returns the current MIDI error flags from the MidiNode.  The error
+       flags are cleared after reading.  Some error flags, such as
+       CMEF_BufferFull, prevent additional MIDI reception and must be
+       cleared in order to restart MIDI reception.
+
+       Only bits enabled by SetMidiErrFilter() are returned as 1 bits.
+
+   INPUTS
+       mn - MidiNode to check.
+
+   RESULTS
+       CMEF_ error flags or 0 if no errors were present.  The upper 24 bits
+       are cleared for the caller's convenience.
+
+   SEE ALSO
+       SetMidiErrFilter(), WaitMidi()
+camd.library/GetMidiLinkAttrsA                   camd.library/GetMidiLinkAttrsA
+
+   NAME
+       GetMidiLinkAttrsA -- Get attributes of a MidiLink
+
+   SYNOPSIS
+       ULONG GetMidiLinkAttrsA (struct MidiLink *ml, struct TagItem *attrs)
+                                       a0             a1
+
+   FUNCTION
+       Gets an attribute of a MidiLink.
+
+   INPUTS
+       mi - a pointer to the MidiLink
+
+       attrs - Attributes to get, terminated with TAG_DONE. For each entry
+            in the tag list, ti_Tag identifies the attribute, and ti_Data
+            is a pointer to the long variable where you wish the result
+            to be stored.
+
+   RESULTS
+        Count of attributes understood.
+
+   NOTE
+        See SetMidiLinkAttrs() for tags understood.o
+
+   EXAMPLES
+
+   SEE ALSO
+       SetMidiLinkAttrs()
+camd.library/GetSysEx                                     camd.library/GetSysEx
+
+   NAME
+       GetSysEx -- Read bytes from Sys/Ex buffer.
+
+   SYNOPSIS
+       ULONG GetSysEx (struct MidiNode *mn, UBYTE *Buf, ULONG Len)
+                              a0              a1          d0
+
+   FUNCTION
+       Reads bytes from the Sys/Ex buffer for the current sys/ex message
+       into the supplied buffer.  This function will not read past the end
+       of the current sys/ex message.  The actual number of bytes read is
+       returned.  0 is returned when there are no more bytes to be read for
+       the current sys/ex message.  If the current message is not a sys/ex
+       message, this function will return 0.
+
+   INPUTS
+       mn      - Pointer to MidiNode.
+       Buf - Output buffer pointer.
+       Len - Max number of bytes to read.
+
+   RESULTS
+       Actual number of bytes read.
+
+   SEE ALSO
+       GetMidi(), SkipSysEx(), QuerySysEx()
+camd.library/LockCAMD                                     camd.library/LockCAMD
+
+   NAME
+       LockCAMD -- Prevent other tasks from changing internal structures
+
+   SYNOPSIS
+       LockCAMD(locktype)
+                d0
+       APTR LockCAMD( ULONG );
+
+   FUNCTION
+       This routine will lock the internal sempahores in the CAMD library.
+       If they are already locked by another task, this routine will wait
+        until they are free.
+
+   INPUTS
+       locktype -- which internal list will be locked.
+        /* CL_LINKS */ CD_Linkages -- locks the internal list of MidiInterfaces, MidiLinks
+             and MidiClusters. Any functions that create or delete
+             these structures (including SetMidiLinkAttrs) will be locked.
+
+   RESULT
+       If locktype is valid, returns a value that must be passed later
+        to UnlockCAMD.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       UnlockCAMD(), CreateMidi(), DeleteMidi(),
+               AddLink(), RemoveMidiLink(), SetMidiLinkAttrs();
+
+camd.library/MidiLinkConnected                   camd.library/MidiLinkConnected
+
+   NAME
+       MidiLinkConnected -- Determine if MidiLink has a connection
+
+   SYNOPSIS
+       BOOL MidiLinkConnected (struct MidiLink *ml)
+                                      a0
+
+   FUNCTION
+       Returns TRUE if a MidiLink can currently send or receive to anyone.
+        For a MidiLink of type MLTYPE_Sender, then there must be at least
+        one MidiLink of type MLTYPE_Receiver linked to the same MidiCluster,
+        and visa versa.
+
+   INPUTS
+       ml - MidiLink to check
+
+   RESULTS
+       result - TRUE if there is a connection, FALSE otherwise
+
+camd.library/MidiMsgLen                                 camd.library/MidiMsgLen
+
+   NAME
+       MidiMsgLen -- Determine the length of a MIDI message
+
+   SYNOPSIS
+       WORD MidiMsgLen (ULONG StatusByte)
+                          d0
+
+   FUNCTION
+       Returns the length in bytes of the MIDI message described by the
+       supplied status byte.  The message length includes the status byte.
+
+   INPUTS
+       StatusByte - UBYTE containing status byte.
+
+   RESULTS
+       length - length of the message in bytes.  For valid messages this
+            will be at least 1.  0 is returned for invalid messages,
+            MS_SysEx and MS_EOX.
+
+            The result is sign extended to 32 bits for assembly
+            programmers.
+
+   SEE ALSO
+       MidiMsgType()
+camd.library/MidiMsgType                               camd.library/MidiMsgType
+
+   NAME
+       MidiMsgType -- Determine the type of a MIDI message
+
+   SYNOPSIS
+       WORD MidiMsgType (MidiMsg *Msg)
+                          a0
+
+   FUNCTION
+       Returns a type bit number (CMB_) for supplied MidiMsg.
+
+   INPUTS
+       Msg - Pointer to a MidiMsg.
+
+   RESULTS
+       CMB_ bit number of message type.  -1 if message is undefined.  Also
+       -1 is returned for MS_EOX or System Exclusive since it's not legal 
+	   to be passed through PutMidi().  The result is sign extended to 32 
+	   bits for assembly programmers.
+
+   SEE ALSO
+       MidiMsgLen()
+camd.library/NextCluster                               camd.library/NextCluster
+
+   NAME
+       NextCluster -- Get next MidiCluster
+
+   SYNOPSIS
+       struct MidiCluster *NextCluster (struct MidiCluster *last)
+                                                  a0
+
+   FUNCTION
+       Returns the next MidiCluster on CAMD MidiCluster list. If last
+        is NULL, returns the first MidiCluster. Returns NULL if no more
+        MidiClusters. Midi links (CD_Linkages) must be locked when called.
+
+   INPUTS
+       last - previous MidiCluster or NULL to get first MidiCluster
+
+   RESULTS
+       next - next MidiCluster or NULL
+
+camd.library/NextClusterLink                       camd.library/NextClusterLink
+
+   NAME
+       NextClusterLink -- Get next MidiLink of one type in a MidiCluster
+
+   SYNOPSIS
+       struct MidiLink *NextClusterLink (struct MidiCluster *mc,
+                                                  a0
+                        struct MidiLink *last, LONG type)
+                                a1                d0
+
+   FUNCTION
+       Returns the next MidiLink of a particular type a MidiCluster's list
+        of MidiLinks. If last is NULL, returns the first MidiLink. Returns
+        NULL if no more MidiLinks. Midi links (CD_Linkages) must be locked
+        when called.
+
+   INPUTS
+       last - previous MidiLink or NULL to get first MidiLink
+
+   RESULTS
+       next - next MidiLink or NULL
+
+camd.library/NextMidi                                     camd.library/NextMidi
+
+   NAME
+       NextMidi -- Get next MidiNode
+
+   SYNOPSIS
+       struct MidiNode *NextMidi (struct MidiNode *last)
+                                  a0
+
+   FUNCTION
+       Returns the next MidiNode on CAMD MidiNode list. If last is NULL,
+        returns the first MidiNode. Returns NULL if no more MidiNodes.
+        Midi links (CD_Linkages) must be locked when called.
+
+   INPUTS
+       last - previous MidiNode or NULL to get first MidiNode
+
+   RESULTS
+       next - next MidiNode or NULL
+
+camd.library/NextMidiLink                             camd.library/NextMidiLink
+
+   NAME
+       NextMidiLink -- Get next MidiLink of one type in a MidiNode
+
+   SYNOPSIS
+       struct MidiLink *NextMidiLink (struct MidiNode *mi,
+                                                  a0
+                        struct MidiLink *last, LONG type)
+                                a1                d0
+
+   FUNCTION
+       Returns the next MidiLink of a particular type a MidiNode's list
+        of MidiLinks. If last is NULL, returns the first MidiLink. Returns
+        NULL if no more MidiLinks. Midi links (CD_Linkages) must be locked
+        when called.
+
+   INPUTS
+       last - previous MidiLink or NULL to get first MidiLink
+
+   RESULTS
+       next - next MidiLink or NULL
+
+camd.library/OpenMidiDevice                         camd.library/OpenMidiDevice
+
+   NAME     ****NOT SUPPORTED IN OS4****
+       OpenMidiDevice -- Open a MIDI device driver.
+
+   SYNOPSIS
+       struct MidiDeviceData *OpenMidiDevice (UBYTE *Name)
+                                                a0
+
+   FUNCTION
+       Opens a MIDI device driver.
+
+       This function should only be called by Preferences program that
+       wishes to interrogate a particular MIDI device driver for such
+       information as number of Ports.
+
+       Otherwise this is a private camd.library function.
+
+   INPUTS
+       Name - name of MIDI device driver.
+
+   RESULTS
+       Pointer to MidiDeviceData structure or NULL on failure.
+
+   SEE ALSO
+       CloseMidiDevice()
+camd.library/ParseMidi                                   camd.library/ParseMidi
+
+   NAME
+       ParseMidi -- Parse a stream of bytes as MIDI messages.
+
+   SYNOPSIS
+       void ParseMidi (struct MidiLink *ml, cosnt UBYTE *Buffer,
+                             a0                 a1
+
+                   ULONG Length)
+                         d0
+
+   FUNCTION
+       Parses an unformated stream of bytes as MIDI data and transmits the
+       resulting messages to mi->SendPort.
+
+       AddMidiParser() must be called prior to calling ParseMidi() in order
+       to attach the necessary parser data to the MidiLink.
+
+   INPUTS
+       mi         - a MidiLink to send on.
+       Buffer - Pointer to buffer containing MIDI data to send.
+       Length - Number of bytes in buffer to send.
+
+   RESULTS
+       None
+
+   SEE ALSO
+       AddMidiParser()
+camd.library/PutMidi                                       camd.library/PutMidi
+
+   NAME
+       PutMidi -- Send a MidiMsg to an output link
+
+   SYNOPSIS
+       void PutMidi (struct MidiLink *link, ULONG Msg)
+                       a0                  d0
+
+   FUNCTION
+       Sends the a MidiMsg to the output link specified.
+       The message is automatically timestamped.
+
+   INPUTS
+       Msg - mm_Msg long word component of a MidiMsg.
+
+   RESULTS
+       None
+
+   NOTE
+       Although this function doesn't require a MidiNode pointer, the
+       caller must have allocated a MidiNode using CreateMidi() in
+       order for any messages to be distributed.
+
+   SEE ALSO
+       PutMidi()
+camd.library/PutMidiMsg                                 camd.library/PutMidiMsg
+
+   NAME
+       PutMidiMsg (MACRO) -- Send a MidiMsg.
+
+   SYNOPSIS
+       void PutMidiMsg (struct MidiLink *ml, MidiMsg *msg)
+                            a0                 a1
+
+   FUNCTION
+       Sends a MidiMsg. This is a macro that calls PutMidi().
+       The value in msg->mm_Port is ignored.
+       This macro exists in both C and Assembly.
+
+   INPUTS
+       ml      - pointer to MidiLink.
+       msg - pointer to a MidiMsg to send.  Only the mm_Msg segment is
+         used.
+
+   RESULTS
+       None
+
+   SEE ALSO
+       GetMidi(), PutMidi()
+camd.library/PutSysEx                                     camd.library/PutSysEx
+
+   NAME
+       PutSysEx -- Send a Sys/Ex Message to a link.
+
+   SYNOPSIS
+       void PutSysEx (struct MidiLink *ml, UBYTE *Buffer)
+                              a0          a1
+
+   FUNCTION
+       Sends the sys/ex message to the specified port.
+
+       Sys/Ex messages are sent to hardware units regardless of transmit
+        buffer size.  Distribution pauses until the entire sys/ex message
+        is placedin the transmit queue.
+
+       Distribution to MidiNodes is a bit different.  If the sys/ex message
+       is greater than the MidiNode's sys/ex buffer, then the message will
+       not be sent to the MidiNode.  If the message is smaller than the
+        MidiNode's sys/ex buffer, but there's not enough room left in the
+        buffer to contain the sys/ex message, CMEF_SysExFull will be sent
+        to the MidiNode. Otherwise the sys/ex message will be sent.
+
+   INPUTS
+       ml     - MidiLink to send Sys/Ex to
+       Buffer - Pointer to a Sys/Ex message beginning with MS_SysEx and
+            ending with MS_EOX.
+
+   RESULTS
+       None
+
+   NOTE
+       Although this function doesn't require a MidiNode pointer, the
+       caller must have allocated a MidiNode using CreateMidi() in
+       order for any messages to be distributed.
+
+   SEE ALSO
+       PutSysEx()
+camd.library/QuerySysEx                                 camd.library/QuerySysEx
+
+   NAME
+       QuerySysEx -- Get number of bytes remaining in current Sys/Ex
+                 message.
+
+   SYNOPSIS
+       ULONG QuerySysEx (struct MidiNode *mn)
+                                a0
+
+   FUNCTION
+       Returns the number of bytes remaining in the current sys/ex message.
+
+   INPUTS
+       mn - pointer to MidiNode
+
+   RESULTS
+       Remaining bytes in sys/ex message.      0 is returned if the last
+       message read from GetMidi() wasn't a sys/ex message.
+
+   SEE ALSO
+       GetSysEx(), GetMidi()
+camd.library/RemoveMidiLink                         camd.library/RemoveMidiLink
+
+   NAME
+       RemoveMidiLink -- Removes a MidiLink from a MidiCluster.
+
+   SYNOPSIS
+       void RemoveMidiLink (struct MidiLink *ml)
+                                  a0
+   FUNCTION
+       Removes a MidiLink structure from a MidiCluster.
+
+   INPUTS
+        ml - MidiLink to remove. Can be NULL.
+
+   SEE ALSO
+       AddMidiLinkA()
+camd.library/RethinkCAMD                               camd.library/RethinkCAMD
+
+   NAME
+       RethinkCAMD -- Force CAMD library to reload MIDI preferences
+
+   SYNOPSIS
+       LONG RethinkCAMD(void)
+
+   FUNCTION
+       Forces CAMD library to reload MIDI preferences and reassign the
+        hardware unit MidiLinks.
+
+   RESULTS
+       result - 0 if everything went OK, else returns a CME_ error code
+
+camd.library/SetMidiAttrs                             camd.library/SetMidiAttrs
+
+   NAME
+       SetMidiAttrs -- Set the attributes of a MidiNode
+
+   SYNOPSIS
+       BOOL SetMidiAttrsA (struct MidiNode *mi, struct TagItem *tags)
+                                       a0          a1
+
+       BOOL SetMidiAttrs (struct MidiNode *mi, ...)
+
+   FUNCTION
+       Sets the attributes of a MidiNode, using a Tag List.
+
+       The first form of the function expects a tag array pointer or NULL.
+       The second form permits the tag items to exist on the caller's
+       stack.  In both cases, the final tag item must be TAG_END.
+
+   INPUTS
+       mi - a pointer to the MidiNode
+
+       TagList   - optional pointer to tag array.  May be NULL.  For
+                   OS v1.3, there are restrictions on the tag array
+                   contents.  See NOTE below.
+
+   TAGS
+         MIDI_Name         STRPTR - ti_Data points to the new name of
+                               the node (generally the Application name)
+
+         MIDI_SignalTask   struct Task * - the task to be signaled whenever
+                   a MidiMsg or Participant change occurs. This is set
+                   by CreateMidi to the current task as a default
+
+         MIDI_RecvHook     struct Hook * - this hook will be called when
+                   new MidiMsgs arrive, if the buffer was empty. If the buffer
+                   was not yet empty, then it is simply added onto the end.
+
+         MIDI_PartHook     struct Hook * - this hook will be called whenever
+                   any of the clusters that this node is linked to either
+                   adds or removes a member.
+
+         MIDI_RecvSignal   BYTE - the signal to send whenever an incoming
+                   MidiMsg arrives in the buffer, or -1 to send no signal
+
+         MIDI_PartSignal   BYTE - the signal to send whenever a cluster
+                   to which this node is linked has a participant change,
+                   or -1 to send no signal
+
+         MIDI_MsgQueue     ULONG - ti_Data specifies the size of the
+                   MsgQueue for this MidiNode. An additional pad MidiMsg
+                   is allocated for overflow protection. It can also be
+                   set to zero to indicate that no buffer should be allocated
+                   (A send-only MidiNode)
+
+         MIDI_SysExSize   ULONG - ti_Data specifies the size of the SysExQueue
+                   in bytes. Like the MsgQueue, an additional byte is
+                   allocated to allow for overflow protection.
+
+         MIDI_TimeStamp   ULONG * - if non-NULL, ti_Data is a pointer to
+                   a longword which is to be used as the source for time
+                   stamps of incoming MidiMsgs for this MidiNode. It is
+                   assumed that the longword pointed to will be updated by
+                   some other mechanism -- for example, the longword could
+                   point to one of the fields in a PlayerInfo structure.
+
+         MIDI_ErrFilter   UWORD - specified the ErrFilter for this MidiNode
+
+         MIDI_ClientType  UWORD - specified the Client Type for this MidiNode
+                   See camd.h for more detail.
+
+         MIDI_Image       struct Image * - pointer to an Intuition Image
+                   structure representing a glyph or icon that is symbolic
+                   if this application. Will be used for a future "patch
+                   bay" application. It is suggested that images be
+                   approximately 32 wide x 32 high, for consistency.
+
+   RESULTS
+       TRUE if all changes were made successfully or FALSE on failure.
+       When FALSE is returned, an error code will be returned if a TagItem
+        with an ti_Tag of MIDI_ErrorCode was provided. The CME_ error code
+        will be put in the ti_Data field.
+
+   NOTE
+       Under 1.3 only a restricted tag array may be passed into this
+       funciton. Specifically, the only special tag values that are
+       supported are TAG_END (or TAG_DONE) and TAG_IGNORE.  All others
+       (e.g. TAG_SKIP, TAG_MORE) are treated as TAG_END.  The full range of
+       TAG list operations are permitted under 2.0.
+
+       This function MUST be called by a Process (not a Task).  It makes a
+       few DOS calls.
+
+       Don't call WaitMidi() with a MidiNode that has no ReceiveSignal.
+
+   EXAMPLES
+       mi = SetMidiAttrs (mi,
+               MIDI_MsgQueue, 2048, MIDI_SysExSize, 10000L, TAG_END);
+
+       Modifies a MidiNode to have space to receive 2048 MidiMsg's and 10000
+       bytes of Sys/Ex data.  Note the 'L' on the end of 10000.  This
+       forces correct alignment of the tag items on the stack for 16 bit
+       integer compilation.
+
+   SEE ALSO
+       CreateMidi(), DeleteMidi()
+       2.0 tag docs.
+camd.library/SetMidiLinkAttrs                     camd.library/SetMidiLinkAttrs
+
+   NAME
+       SetMidiLinkAttrs -- Set the attributes of a MidiNode
+
+   SYNOPSIS
+       BOOL SetMidiLinkAttrsA (struct MidiLink *ml, struct TagItem *tags)
+                                       a0          a1
+
+       BOOL SetMidiLinkAttrs (struct MidiLink *mi, Tag type1, ...)
+
+   FUNCTION
+       Sets the attributes of a MidiLink, using a Tag List.
+
+       The first form of the function expects a tag array pointer or NULL.
+       The second form permits the tag items to exist on the caller's
+       stack.  In both cases, the final tag item must be TAG_END.
+
+   INPUTS
+       ml - a pointer to the MidiLink
+
+       TagList   - optional pointer to tag array.  May be NULL.  For
+                   OS v1.3, there are restrictions on the tag array
+                   contents.  See NOTE below.
+
+   TAGS
+       MLINK_Name         STRPTR - ti_Data points to the new name of
+                             the node
+
+       MLINK_Location     STRPTR - ti_Data points to name of MidiCluster
+                              to link with
+
+        MLINK_ChannelMask  UWORD - ti_Data contains mask of which MIDI
+                              channels to listen for (defaults to ~0)
+
+        MLINK_EventMask    UWORD - ti_Data contains mask of which types
+                              of MIDI events to listen for (defaults to ~0)
+
+        MLINK_UserData     CPTR - ti_Data points to user definable data
+
+        MLINK_Comment      STRPTR - ti_Data points to a comment string. The
+                              highest priority MidiLink in a MidiCluster
+                              has its comment field copied to the
+                              MidiCluster's comment field
+
+        MLINK_PortID       UBYTE - ti_Data contains value to copy into any
+                              MidiMsg's arriving at MidiNode through this
+                              MidiLink (defaults to 0)
+
+        MLINK_Private      BOOL - if ti_Data contains TRUE, then this link
+                              requests to not be shown by patch editors, etc.
+
+        MLINK_Priority     BYTE - ti_Data contains priotity of the MidiLink
+
+        MLINK_SysExFilter  ULONG - ti_Data contains three 1-byte manufacturer
+                              numbers to filter SysEx messages with
+
+        MLINK_SysExFilterX ULONG - ti_Data contains one 3-byte manufacturer
+                              number to filter SysEx messages with
+
+        MLINK_Parse        BOOL - if ti_Data contains true, allocate a parser
+                              for the MidiLink so raw MIDI streams can be
+                              sent though the link
+
+        MLINK_NoLocalEcho  BOOL - An MLTYPE_Receiver link with this TRUE will
+				                  ignore messages sent from the same MidiNode.
+
+        MLINK_ErrorCode    ULONG * - ti_Data points to an error code buffer
+
+   RESULTS
+       TRUE if all changes were made successfully or FALSE on failure.
+       When FALSE is returned, an error code will be returned if a TagItem
+        with an ti_Tag of MLINK_ErrorCode was provided. The CME_ error code
+        will be put in the ti_Data field.
+
+   NOTE
+       Under 1.3 only a restricted tag array may be passed into this
+       funciton. Specifically, the only special tag values that are
+       supported are TAG_END (or TAG_DONE) and TAG_IGNORE.  All others
+       (e.g. TAG_SKIP, TAG_MORE) are treated as TAG_END.  The full range of
+       TAG list operations are permitted under 2.0.
+
+   EXAMPLES
+       mi = SetMidiLinkAttrs (ml,
+               MLINK_Location, "out.0", MLINK_Priority, -5L, TAG_END);
+
+       Modifies a MidiLink so it will be connected to the MidiCluster named
+        "out.0" and makes the MidiLink's priority -5. Note the 'L' on the end
+        of -5. This forces correct alignment of the tag items on the stack
+        for 16 bit integer compilation.
+
+   SEE ALSO
+       AddMidiLink(), RemoveMidiLink()
+       2.0 tag docs.
+camd.library/SkipSysEx                                   camd.library/SkipSysEx
+
+   NAME
+       SkipSysEx -- Skip the next sys/ex message in the Sys/Ex buffer.
+
+   SYNOPSIS
+       void SkipSysEx (struct MidiNode *mn)
+                              a0
+
+   FUNCTION
+       Skips the remaining bytes of the current sys/ex message.  Nothing
+       happens if the last message read from GetMidi() wasn't a sys/ex
+       message.
+
+   INPUTS
+       mn - Pointer to MidiNode.
+
+   RESULTS
+       None.
+
+   SEE ALSO
+       GetSysEx()
+camd.library/StartClusterNotify                 camd.library/StartClusterNotify
+
+   NAME
+       StartClusterNotify -- Notify task of cluster changes
+
+   SYNOPSIS
+       void StartClusterNotify (struct ClusterNotifyNode *cn)
+                                       a0
+
+   FUNCTION
+       Allow an external task to receive notification via a signal that
+       CAMD's internal state has changed. This function is mostly useful
+       to patch editors, etc.
+       In OS4, this signals only when a Cluster is added or Removed.
+
+   INPUTS
+       cn - a pointer to a ClusterNotifyNode
+
+   RESULTS
+       None
+
+   EXAMPLES
+
+        struct ClusterNotifyNode cnn;
+
+        cnn.cnn_Task = FindTask(NULL);
+        cnn.cnn_SigBit = AllocSignal(-1);
+        StartClusterNotify(&cnn);
+
+                /* later in code */
+
+        Wait(1L << cnn.cnn_SigBit);
+
+        /* someone changed the state of a cluster */
+
+   SEE ALSO
+       EndClusterNotify
+camd.library/UnlockCAMD                                 camd.library/UnlockCAMD
+
+   NAME
+       UnlockCAMD -- Unlock internal lists
+
+   SYNOPSIS
+       UnlockCAMD(lock)
+                   a0
+       void UnlockCAMD( APTR );
+
+   FUNCTION
+       Undoes the effects of LockCAMD().
+
+   INPUTS
+       lock -- value returned by LockCAMD(). Can be NULL.
+
+   EXAMPLE
+
+   SEE ALSO
+       LockCAMD()
+
+camd.library/WaitMidi                                     camd.library/WaitMidi
+
+   NAME
+       WaitMidi -- Wait for next MidiMsg and get it.
+
+   SYNOPSIS
+       BOOL WaitMidi (struct MidiNode *mn, MidiMsg *msg)
+                              a0                 a1
+
+   FUNCTION
+       Waits for the next MidiMsg to arrive at the MidiNode.  On reception,
+       the MidiMsg is removed and copied to the supplied buffer.
+
+       WaitMidi() first checks for errors detected at the MidiNode.  If
+       none are detected, GetMidi() is called.  If the buffer was empty,
+       Wait() is called until the MidiNode is signalled.  Once the signal
+       arrives, this process is repeated.
+
+   INPUTS
+       mn  - pointer to MidiNode.
+       msg - pointer to buffer to place MidiMsg removed from queue.
+
+   RESULTS
+       TRUE if a MidiMsg was received.  FALSE if an error was detected.
+
+   SEE ALSO
+       GetMidi()
+

@@ -1,0 +1,717 @@
+TABLE OF CONTENTS
+
+usbhcd.hcd/--overview--
+usbhcd.hcd/USBHCInitRootHub
+usbhcd.hcd/USBHCUninitRootHub
+usbhcd.hcd/USBHCAddFunction
+usbhcd.hcd/USBHCRemFunction
+usbhcd.hcd/USBHCAddEndPoint
+usbhcd.hcd/USBHCRemEndPoint
+usbhcd.hcd/USBHCGetAttrs
+usbhcd.hcd/CMD_READ
+usbhcd.hcd/CMD_WRITE
+
+usbhcd.hcd/--overview--                                 usbhcd.hcd/--overview--
+
+   A Host Controller Driver is a piece of software laying between the USB
+   System Software and a USB hardware implementation, allowing the System
+   Software to communicate with USB Functions on the USB bus. As such the
+   HCD acts as an abstraction layer, as the USB System Software does not
+   know about the actual implementation of the USB bus hardware.
+
+   A Host Controller Driver is an Exec device. It is opened by the USB
+   System Software at startup, and allows the USB System Software to
+   transfer data on specific USB implementations.
+
+   On booting the USB System Software will look for HCDs in one place only -
+   the "DEVS:usb/hcd" drawer. All devices in this drawer are treated as HCD
+   devices, and opened for use.
+   HCD device files should all be named with the extension ".usbhcd" instead
+   of ".device", as is normally used for exec devices. This makes them stand
+   out, and (hopefully) avoids any name clashes with existing Exec devices.
+
+   Note that the USB System Software is a terminatable program. All HCDs
+   must therefore be able to shutdown and have their device closed and
+   reopened (without expunge), in case the user restarts the USB System
+   Software!
+
+   A HCD is to act as a port between the USB System Software and the USB
+   hardware. It should therefore (generally) not try to understand the
+   information it is passing, rather just pass it.
+   The HCD is, however, allowed to peek at transfers if it is certain
+   that it understands what it is doing. This allows the HCD to e.g.
+   cache static USB descriptors for faster returning of descriptors, or
+   snoop on configuration changes on Default Control Pipe EndPoints.
+
+   Developers *must* keep in mind that the USB is a LittleEndian bus!
+   HCDs should *not* do Endianness conversion - it is not possible, as
+   data has no defined structure on the USB bus. The USS and its Function
+   Drivers are themselves responsible for formatting the data they read
+   or write.
+
+
+usbhcd.hcd/USBHCInitRootHub                         usbhcd.hcd/USBHCInitRootHub
+
+   NAME
+      USBHCInitRootHub -- Initialize and start the Root Hub driver of
+                          a HCD unit.
+
+   SYNOPSIS
+      error = USBHCInitRootHubA( hcunit, usifc, hcfkt, taglist )
+       D0                          A0      A1     A2     A3
+
+       LONG USBHCInitRootHubA( APTR, struct UsbRawInterface *, APTR *,
+                               struct TagItem * );
+
+
+       error = USBHCInitRootHub( hcunit, usifc, hcfkt, Tag1, ... )
+
+       LONG USBHCInitRootHub( APTR, struct UsbRawInterface *, APTR *,
+                              ULONG, ... );
+
+   FUNCTION
+      This function is called by the USB stack when it has opened a unit
+      in the HCD device and is preparing to put it to use.
+      What the USB stack expects of this function is that it should setup
+      the internal Root Hub driver of the HCD to be ready to handle the
+      USB bus at the HCD unit.
+
+      This function will be called twice by the USB stack during setup.
+      The first time called the USB stack is querying for a reference to
+      the Root Hub. This reference will be used as hub argument to calls
+      to USBHCAddFunction() when USB Functions are being attached to the
+      Root Hub. It thus serves as an anchor for the USB stack into the
+      USB topology of the HCD's USB bus.
+      The second time called the USB stack has prepared its internal
+      structures for the Root Hub and is now ready to actually handle the
+      USB bus at the HCD unit. This second call is therefore a go-signal
+      to the HCD that it can start the Root Hub driver.
+      The HCD determines which call it is (first or second) by looking
+      at the arguments. If <usifc> is NULL it is the first call and the
+      HCD should return the Root Hub reference only.
+      If <usifc> is non-NULL it is the second call and the HCD may start
+      its Root Hub driver.
+      Always rely on the <usifc> argument to determine the course of
+      action. Do *not* implement any internal call counters!
+
+      To be honest the USB stack does not care much about the HCD Root Hub
+      initialized/added by this function. The returned reference is used
+      for USBHCAddFunction() calls only, and only when USB Functions are
+      being attached to the Root Hub (which, by the way, is only done by
+      the HCD's Root Hub driver). The USB stack will not try to launch a
+      driver for the Root Hub, neither try to create EndPoints at it.
+
+      A UsbRawInterface for the Root Hub is handed to the HCD by the USB
+      stack. The HCD's Root Hub driver must USBClaimFunction() this to
+      obtain a pointer to a UsbInterface. This UsbInterface must be used
+      by the Root Hub driver for calling USBAddFunction() when something
+      is being attached at the HCD Root Hub. This is the *only* supported
+      use of the UsbInterface of the Root Hub.
+
+      When the HCD has added all USB Functions attached to the RootHub it
+      *must* call USBIfcDriverRunning() on the RootHub UsbInterface. The
+      idead behind this is, that the USBs tack will then know when the HCD
+      is done adding the initially attached USB Functions.
+      See USBIfcDriverRunning() for more information on this.
+      This requirement is new per USB stack v1.13. Old HCDs which do not
+      call USBIfcDriverRunning() will result in a boot delay of the OS in
+      the magnitude of seconds if the USB stack is installed as a kernel
+      module, since the USB stack will then have to rely on a timeout to
+      guess when the entire USB topology has been added.
+
+      When the USB stack is terminating the HCD unit, it will call
+      USBHCUninitRootHub() on the HCD unit.
+
+   NOTE
+      This function only has meaning for HCDs which need a non-standard
+      hub driver for its Root Hub - e.g. USB hardware with a registerized
+      Root Hub.
+      HCDs controlling hardware with a built-in standard USB hub as Root
+      Hub, or HCDs which implement an emulated standard USB hub for its
+      Root Hub does not need the functionality presented with this API
+      call. Although they might not need the functionality, this call
+      must still be implemented, but a dummy <hcfkt> value can be
+      returned. Only the HCD itself will ever user the <hcfkt> value, so
+      everything is possible :) Just remember that the returned <hcfkt>
+      value *will* be passed as <hchub> argument to USBHCAddFunction()
+      when something is attached to the Root Hub.
+
+      HCDs with a builtin (emulated) standard USB hub will call
+      USBAddFunction() on the claimed <usifc> UsbRawInterface instead of
+      launching a Root Hub driver, making the USB stack add the builtin
+      USB hub and assign the default Hub driver to handle it.
+      Calling USBAddFunction() may, in turn, call back into
+      USBHCAddFunction(), so beware of deadlocks! If in doubt, signal
+      your HCD main loop instead, and let /it/ call USBAddFunction()
+      in /its/ task context asynchronously to the USBHCInitRootHub() call.
+
+
+   INPUTS
+      hcunit   -  The HCD device unit of which to initialize Root Hub.
+                  This is the io_Unit field of the IORequest used for
+                  opening the HCD device unit.
+      usifc    -  The UsbRawInterface identifying the Root Hub in the
+                  USB stack. This must be claimed by the Root Hub driver
+                  and used for all subsequent USBAddFunction() calls.
+      hcfkt    -  This is a pointer to an APTR where the HCD must store
+                  its private reference to the initialized Root Hub.
+                  The USB stack will not use the returned reference for
+                  peeking, but will use the reference in calls into the
+                  HCD API where the Root Hub is the target object.
+                  An example of this could be:
+
+                     LONG USBHCInitRootHub( struct MyDeviceUnit *hcunit,
+                                             ... all the other args ... )
+
+                        if ( !hcifc ) { // Setup/Query call
+                           if ( hcunit->RootHub = AllocMem( ... ) ) {
+                              // .. setup your RootHub stuff
+                              *hcfkt = hcunit->RootHub; // Return RH ref
+                              return( TRUE ); // Root Hub setup
+                           }
+                        }
+                        ...
+                     };
+
+      taglist  -  Ptr to TagList with extra arguments. May be NULL.
+                  There are currently no defined tags for this call.
+
+   RESULTS
+      The primary result, the function return value, defines whether the
+      call was successfull. This is done by returning a USBERR_xxx error
+      code. USBERR_NOERROR must be returned if the initialization was
+      successfull. Anything else will be interpreted as an error.
+      The sendary return value is the Root Hub reference stored in the
+      APTR pointed to by the <hcfkt> argument. The Root Hub reference may
+      take on any value the HCD might fancy.
+
+   SEE ALSO
+      usbhcd.hcd/USBHCUninitRootHub, usbhcd.hcd/USBHCAddFunction
+
+
+usbhcd.hcd/USBHCUninitRootHub                     usbhcd.hcd/USBHCUninitRootHub
+
+   NAME
+      USBHCUninitRootHub -- Uninitialize and terminate the Root Hub
+                            driver of a HCD unit.
+
+   SYNOPSIS
+      USBHCUninitRootHubA( hcunit, hcfkt, taglist )
+                             A0      A1     A2
+
+      void USBHCUninitRootHubA( APTR, APTR, struct TagItem * );
+
+
+      USBHCUninitRootHub( hcunit, hcfkt, Tag1, ... )
+
+      void USBHCUninitRootHub( APTR, APTR, ULONG, ... );
+
+   FUNCTION
+      This function is called by the USB stack during the process of
+      terminating use of a HCD device unit.
+      What the USB stack expects of this function is that it terminates
+      the HCD unit Root Hub driver and performs internal cleanup.
+
+      When this function is called the USB stack has already removed all
+      other EndPoints and Functions from the HCD unit.
+
+      It is guranteed that the USB stack will call this function before
+      closing the HCD device unit if USBHCInitRootHub() succeeded.
+
+   INPUTS
+      hcunit   -  The HCD device unit of which to uninitialize Root Hub.
+                  This is the io_Unit field of the IORequest used for
+                  opening the HCD device unit.
+      hcfkt    -  This is the HCD private reference for the Root Hub
+                  which was returned by USBHCInitRootHub() when the HCD
+                  unit was initialized.
+      taglist  -  Ptr to TagList with extra arguments. May be NULL.
+                  There are currently no defined tags for this call.
+
+   RESULTS
+      none
+
+   SEE ALSO
+      usbhcd.hcd/USBHCInitRootHub, usbhcd.hcd/USBHCAddFunction
+
+
+usbhcd.hcd/USBHCAddFunction                         usbhcd.hcd/USBHCAddFunction
+
+   NAME
+      USBHCAddFunction -- Add a USB Function to a HCD
+
+   SYNOPSIS
+      hcfkt = USBHCAddFunctionA( hcunit, hchub, usfkt, taglist )
+       D0                          A0      A1     A2     A3
+
+      APTR USBHCAddFunctionA( APTR, APTR, struct UsbRawFunction *,
+                              struct TagItem * );
+
+
+      hcfkt = USBHCAddFunction( hcunit, hchub, usfkt, Tag1, ... )
+
+      APTR USBHCAddFunction( APTR, APTR, struct UsbRawFunction *,
+                             ULONG, ... );
+
+   FUNCTION
+      This function is called by the System Software when a new USB
+      Function is to be added to the USB bus controlled by the HCD.
+      This call is a result of a Hub driver detecting a Function
+      attachment at a hub, and adding the Function to the USB System
+      by calling the usbsys.device USBAddFunction() function.
+
+      The HCD is expected to setup its internal structures needed for
+      handling the new function (not neccesarily its endpoints) and
+      returning a (private) reference for the Function.
+      All information about the new USB Function is supplied using a tag
+      list. This abstracts the USB Function information from the HCD,
+      allowing easier extensions to the USB Function information in the
+      future.
+
+      The <hchub> argument is the reference returned by a
+      USBHCAddFunction() call for the hub Function into which the new
+      Function has been inserted. This allows the HCD to keep its topology
+      information up to date.
+      If the new Function has been inserted into the Root Hub of the HCD
+      then the <hchub> argument will be the reference returned by
+      USBHCInitRootHub() when the HCD unit was initialized.
+
+      The <usfkt> argument holds a USB System Software private reference
+      to the USB Function being added. This reference must be used by the
+      HCD if refering to the Function in a call to the USB System.
+
+   NOTE
+      All HCDs must be able to correctly handle a USBHCAddFunction() call
+      even though there is no new USB Function attached to the USB bus.
+      In such a case the USBHCAddFunction() call should return a NULL
+      as for any other error condition prohibiting the adding of a new
+      USB Function.
+
+      It may happen (due to versin mix of USB stack and drivers) that this
+      function gets called without a USBA_HubPort tag. For USB1.1-only HCDs
+      this should pose no problem. For USB2 HCDs this will pose problems if
+      the attached Function is operating af LOW og FULL speed. The HCD must
+      in such a case fail the attachment by returning NULL, and setting
+      USB_ErrorCode (if the tag is specified) to USBERR_BADARGS. Preferably
+      the HCD will also add a log entry to the USB log using USBLogPuts()
+      so the reason for attachment failure can be found by user inspection.
+
+   INPUTS
+      hcunit   -  The HCD device unit targeted by this call. This is the
+                  io_Unit of the IORequest which opened the HCD device.
+      hchub    -  The HCD private reference for the hub into which the new
+                  Function has been inserted.
+      usfkt    -  USB System Software private reference for the USB
+                  Function which is being added to the HCD.
+      taglist  -  Tags with extra information on the USB Function. NULL is
+                  a valid argument.
+
+                  USBA_DeviceSpeed (ULONG)
+                     This tag is used for specifying the speed of the
+                     USB Function to add. This defines how the
+                     hardware driver should actually be communicating
+                     with the Function.
+                     ti_Data is a ULONG holding a speed indicator:
+                     USB_SPEED_LOW  for a LowSpeed Function (1.5 Mb/s).
+                     USB_SPEED_FULL for a FullSpeed Function (12 Mb/s).
+                     USB_SPEED_HIGH for a HighSpeed Function (480 Mb/s).
+
+                     If not specified the HCD *must* default to
+                     USB_SPEED_LOW for the added Function.
+                     If specified, but an unknown value is supplied, the
+                     attachment must be failed. In this case
+                     USBERR_UNSUPPORTED should be returned in the
+                     USBA_ErrorCode tag if supplied and supported.
+
+                  USBA_HubPort (LONG)
+                     This tag specifies the hub port number at which the
+                     USB Function has been attached.
+                     Port numbers are zero based.
+
+                     This tag may, or may not, be specified at the
+                     discretion of the hub driver. Be prepared to handle
+                     the abscense of this tag in a polite manner.
+
+                  USBA_DeviceAddress (LONG *) (new in v2)
+                     This tag specifies a pointer to a LONG where the HCD
+                     must store the Device Address assigned to the attached
+                     USB Function.
+
+                     Support for this tag is *required*. The USB stack
+                     will, however, supply a benign default value suitable
+                     for HCDs compiled for pre-v2 USB stack versions.
+
+                  USBA_ErrorCode (LONG *)
+                     This tag specifies a pointer to a LONG where the HCD
+                     can store a USBERR_xxx error code hinting at the
+                     reason for failure, if this call fails.
+
+                     This tag may or may not be specified. If specified,
+                     the caller is responsible for a benign default value,
+                     i.e. USBERR_NOERROR, so it is safe for HCDs to ignore
+                     handling of the USBA_ErrorCode tag.
+
+
+   RESULTS
+      A HCD private reference to the added USB Function. The USB System
+      Softare will use this reference in communications with the HCD
+      regarding the added USB Function.
+      A NULL pointer must be returned if the HCD was unable to add the
+      new USB Function for any reason.
+
+   SEE ALSO
+      usbhcd.hcd/USBHCRemFunction, usbsys.device/USBAddFunction
+
+
+usbhcd.hcd/USBHCRemFunction                         usbhcd.hcd/USBHCRemFunction
+
+   NAME
+      USBHCRemFunction -- Remove a USB Function from a HCD.
+
+   SYNOPSIS
+      USBHCRemFunction( hcunit, hcfkt )
+                          A0     A1
+
+      void USBHCRemFunction( APTR, APTR );
+
+   FUNCTION
+      This function is called by the USS when a USB Function has been
+      removed (detached) from the USB bus.
+      The HCD must free whatever ressources used for the USB Function.
+      On exit of this function the USB System Software private reference
+      given for the Function at USBHCAddFunction() time becomes invalid
+      and must nolonger be used by the HCD.
+
+      The USS will postpone calling this function until all users are
+      done with the USB Function (it is declaimed and unlocked). The
+      HCD need not add logic to handle correct removal order of Functions
+      and EndPoints - the USB System Software guarantees correct removal
+      order (first EndPoints, then the Function). Also, the System
+      Software will not call USBHCRemFunction() for hub Functions which
+      still has Functions attached to them.
+      In other words, the USS guarantees a valid USB topology - no loose
+      EndPoints or Functions will be generated.
+
+   INPUTS
+      hcunit   -  The HCD device unit targeted by this call. This is the
+                  io_Unit of the IORequest which opened the HCD device.
+      hcfkt    -  HCD private reference for the USB Function to remove.
+
+   SEE ALSO
+      usbhcd.hcd/USBHCAddFunction
+
+
+usbhcd.hcd/USBHCAddEndPoint                         usbhcd.hcd/USBHCAddEndPoint
+
+   NAME
+      USBHCAddEndPoint -- Add an EndPoint to a Function.
+
+   SYNOPSIS
+      hcep = USBHCAddEndPointA( hcunit, hcfkt, usep, epnum, taglist )
+       D0                         A0     A1     A2     D0     A3
+
+      APTR USBHCAddEndPointA( APTR, APTR, APTR, LONG, struct TagItem * );
+
+
+      hcep = USBHCAddEndPoint( hcunit, hcfkt, usep, epnum, Tag1, ... )
+
+      APTR USBHCAddEndPoint( APTR, APTR, APTR, LONG, ULONG, ... );
+
+   FUNCTION
+      This function is called by the USS to add an EndPoint to a USB
+      Function. The HCD must setup internal structures for handling the
+      EndPoint at the USB Function, and return a reference which will
+      be used by the USS on all future communication with the EndPoint.
+      The HCD is responsible for ensuring that the bandwidth required
+      by the EndPoint can be sustained, as discussed in the USB
+      specifications.
+
+      If unable to add the EndPoint (due to lack of ressources, bandwidth
+      or otherwise) the HCD must return a NULL reference, indicating the
+      failure.
+
+   INPUTS
+      hcunit   -  The HCD device unit targeted by this call. This is the
+                  io_Unit of the IORequest which opened the HCD device.
+      hcfkt    -  HCD private reference for the USB Function to which the
+                  EndPoint should be added.
+      usep     -  USB System Software private reference for the new
+                  EndPoint. Use this for System Software function calls
+                  regarding the EndPoint.
+      epnum    -  The EndPoint number of the EndPoint to add, as per the
+                  USB specification. This number is a copy of the
+                  EndPoint descriptor's ed_Address field. When adding the
+                  Deafult Control Pipe, where no EndPoint Descriptor exist,
+                  this argument is always zero.
+      taglist  -  Tags with extra information on the USB Function. NULL
+                  is a valid argument.
+                  The following tags are defined af the moment:
+
+                  USBA_EndPointDesc (struct USBBusEPDsc *)
+                     Will deliver a pointer to a USB EndPoint descriptor, as
+                     read from a USB Function.
+                     If specified for a Default Control EndPoint the
+                     value of this tag will be NULL, as no descriptor exist
+                     for a Default Control Pipe. A Default Control Pipe is
+                     described in the USB Device Descriptor.
+
+                  USBA_InterfaceDesc (struct USBBusIntDsc *)
+                     ti_Data is a pointer to a USB Interface descriptor, as
+                     read from a USB Function, for the Interface the EndPoint
+                     is part of. The tag value will be NULL, if the EndPoint
+                     is not part of any Interfaces (e.g. the Default Control
+                     Pipe EndPoint).
+
+                  USBA_DeviceDesc (struct USBBusDevDsc *)
+                     ti_Data is a pointer to a USB Device descriptor, as
+                     read from a USB Function, for the USB Function the
+                     EndPoint belongs to.
+
+                  USBA_ErrorCode (LONG)
+                     This tag specifies a pointer to a LONG where the HCD
+                     can store a USBERR_xxx error code hinting at the
+                     reason for failure, if this call fails.
+
+                     This tag may or may not be specified. If specified,
+                     the caller is responsible for a benign default value,
+                     i.e. USBERR_NOERROR, so it is safe for HCDs to ignore
+                     handling of the USBA_ErrorCode tag.
+
+
+   RESULTS
+      hcep  -  HCD private reference to the created EndPoint. The USS
+               will use this reference to identify the EndPoint on all
+               subsequent communication/data transfer with the HCD.
+
+   SEE ALSO
+      usbhcd.hcd/USBHCRemEndPoint
+
+
+usbhcd.hcd/USBHCRemEndPoint                         usbhcd.hcd/USBHCRemEndPoint
+
+   NAME
+      USBHCRemEndPoint -- Remove an EndPoint from a USB Function
+
+   SYNOPSIS
+      USBHCRemEndPoint( hcunit, hcep )
+                          A0     A1
+
+      void USBHCRemEndPoint( APTR, APTR );
+
+   FUNCTION
+      The USS will call this function when an EndPoint at a USB Function
+      is nolonger needed. The HCD must free ressources taken by the
+      EndPoint.
+      On return from this function the USS expects the EndPoint to be
+      expunged, and will not reference it again. The HCD must, likewise
+      not reference the USS private EndPoint reference associated with
+      the EndPoint.
+
+   INPUTS
+      hcep  -  The HCD private reference for the EndPoint to remove.
+
+   BUGS
+      The current USB stack implementation has a bug regarding removal of
+      EndPoints when a USB Function is detached or an Interface is shut.
+      At these two events the USB stack aborts pending IO and continues
+      to call USBHCRemEndPoint() for all involved EndPoints. If some IO
+      did not successfully abort immediately then the EndPoint might still
+      contain pending IO when USBHCRemEndPoint() is called.
+
+   SEE ALSO
+      usbhcd.hcd/USBHCAddEndPoint
+
+
+usbhcd.hcd/USBHCGetAttrs                               usbhcd.hcd/USBHCGetAttrs
+
+   NAME
+      USBHCGetAttrs -- Query a HCD for its properties.
+
+   SYNOPSIS
+      USBHCGetAttrsA( taglist )
+                        A0
+
+      void USBHCGetAttrsA( struct TagItem * );
+
+      USBHCGetAttrs( Tag1, ... )
+
+      void USBHCGetAttrs( ULONG, ... );
+
+
+   FUNCTION
+      The USS will call this function to obtain various information
+      about the HCD.
+      The HCD should only respond to tags it recognizes, and leave
+      all other tag values at their preset value.
+
+
+   TAGS
+      USBA_FD_SignalsRunning (LONG *)
+         The USB stack will use this tag when querying if the HCDs
+         RootHub Function Driver will call USBIfcDriverRunning() on the
+         RootHub UsbInterface.
+
+         The LONG pointed to by ti_Data must be set to TRUE making the HCD
+         responsible for calling USBIfcDriverRunning().
+         Since USBIfcDriverRunning() is a requirement for proper USB stack
+         startup since v1.13, all HCDs designed for v1.13 and higher of
+         the USB stack must set this property to TRUE and call
+         USBIfcDriverRunning() as described for USBHCInitRootHub().
+
+      USBA_DeviceSpeed (ULONG *)
+         The HCD must store the speed of the USB controller in the ULONG
+         pointed to by ti_Data. The speed is specified using one of the
+         USB_SPEED_xxx constants from usb/system.h.
+         Since USBA_DeviceSpeed usage was not added until v2 of the USB
+         stack, the USB stack will fall back to expect USB_SPEED_FULL speed
+         (i.e. 12MBit/s) for the HCD if it does not respond to this tag.
+         USB2+ capable HCDs are required to support this tag, or they will
+         only see USB1 device attachments.
+
+      USBA_HCD_APIVersion (ULONG *)
+         The HCD must store its API version number in the ULONG pointed to
+         by ti_Data. The API version is the value of the USBHCD_APIVERSION
+         constant stored in the USB stack include files for the API
+         version the HCD supports.
+         If the USB stack cannot support the API version then it may
+         choose to not use the HCD device.
+
+   INPUTS
+      taglist  -  Pointer to the first TagItem of a taglist. The HCD
+                  must respond to supported tags in this list.
+
+
+   SEE ALSO
+      usbhcd.hcd/USBHCInitRootHub, usbsys.device/USBIfcDriverRunning
+
+
+usbhcd.hcd/CMD_READ                                         usbhcd.hcd/CMD_READ
+
+   NAME
+      CMD_READ -- Read data from a USB Function EndPoint.
+
+   FUNCTION
+      Using this request the USB System Software reads data from an
+      EndPoint. The actual IO Request is a struct USBIOReqHCD.
+
+      The USS may request larger data transfers than the EndPoint is
+      able to handle in a single packet. In such cases the HCD is
+      responsible for breaking up the transfer into smaller packets.
+      While the IO Request is in progress the HCD owns all public
+      fields of the USBIOReqHCD structure, allowing the HCD to e.g. use
+      io_Offset for transfers split into separate packets.
+
+      Upon completing the transfer for the IO Request, it must be
+      replied to the USS, which will forward the transfer completion
+      to the initiator of the IO Request.
+
+      When working with Control EndPoints a setup packet is sent to
+      initiate each transfer. The data for the setup packet is
+      described by the io_SetupXXX fields of the IO Request. If the
+      io_SetupLength is 0 there is no setup packet to send for the
+      transfer.
+
+      When working with Interrupt EndPoints only up to the EndPoints
+      MaxPacketSize bytes of data can be expected received from the
+      EndPoint per interrupt period. That is, if more than MaxPacketSize
+      bytes are to be read, then the transaction will be split into
+      several interrupt packets received one at a time using the
+      interrupt frequency of the EndPoint.
+      Normal transfer termination rules also apply for Interrupt
+      EndPoints (such as short-packet termination, NAK etc.)
+
+      Upon completion, the io_Error field must be set to indicate the
+      completion status.
+      In case of a read buffer overflow (more USB data bytes were
+      received than could fit the io_Data/io_Length buffer) all data
+      bytes received up to the buffer limit must be returned in the
+      buffer. In this case io_Actual must, as always, reflect the
+      buffer contents, and io_Error be set to USBERR_BUFFEROVERFLOW.
+      The USS will still return the data to the request originator,
+      but be aware that a buffer overflow occured on the USB bus.
+      That is, USBERR_BUFFEROVERFLOW is not a true error, rather
+      a warning that excess data has been dumped.
+      The request originator may not be made aware of the buffer
+      overflow - this is at the discretion of the USS, which may
+      choose to return USBERR_NOERROR to the request originator.
+
+
+   IO REQUEST
+      io_Command     CMD_READ
+      io_Data        Pointer to buffer where read data must be stored.
+      io_Length      Number of bytes to read from EndPoint.
+      io_SetupData   Pointer to buffer holding Setup packet data.
+                     Only used for Control EndPoint transfers.
+      io_SetupLength Number of bytes in Setup data buffer.
+                     If zero no Setup packet should be sent.
+      io_EndPoint    HCD private reference for EndPoint to read data
+                     from.
+
+   RESULTS
+      io_Actual      Number of bytes actually read from EndPoint.
+      io_Error       Error code indicating completion status.
+                     Zero on success.
+
+   SEE ALSO
+      usb/system.h, exec/errors.h
+
+
+usbhcd.hcd/CMD_WRITE                                       usbhcd.hcd/CMD_WRITE
+
+   NAME
+      CMD_WRITE -- Write data to a USB Function EndPoint.
+
+   FUNCTION
+      Using this request the USB System Software writes data to an
+      EndPoint. The actual IO Request is a struct USBIOReqHCD.
+
+      The USS may request larger data transfers than the EndPoint is
+      able to handle in a single packet. In such cases the HCD is
+      responsible for breaking up the transfer into smaller packets.
+      While the IO Request is in progress the HCD owns all public
+      fields of the USBIOReqHCD structure, allowing the HCD to e.g. use
+      io_Offset for transfers split into separate packets.
+
+      Upon completing the transfer for the IO Request, it must be
+      replied to the USS, which will forward the transfer completion
+      to the initiator of the IO Request.
+
+      When working with Control EndPoints a setup packet is sent to
+      initiate each transfer. The data for the setup packet is
+      described by the io_SetupXXX fields of the IO Request. If the
+      io_SetupLength is 0 there is no setup packet to send for the
+      transfer.
+
+      When working with Interrupt EndPoints only up to the EndPoints
+      MaxPacketSize bytes of data may be sent per interrupt period.
+      That is, if more than MaxPacketSize bytes are to be written, then
+      the transaction must be split into several interrupt packets sent
+      one at a time using the interrupt frequency of the EndPoint.
+
+      A Zero length data write is valid on the USB bus. A zero length
+      data packet must be generated if io_Data is non-NULL and io_Length
+      is zero. If io_Data is NULL no data packet should be generated
+      on the bus. This behavior must be obayed for any type of EndPoint.
+
+      Upon completion, the io_Error field must be set to indicate the
+      completion status.
+
+   IO REQUEST
+      io_Command     CMD_WRITE
+      io_Data        Pointer to buffer holding write data.
+      io_Length      Number of bytes to write to EndPoint.
+      io_SetupData   Pointer to buffer holding Setup packet data.
+                     Only used for Control EndPoint transfers.
+      io_SetupLength Number of bytes in Setup data buffer.
+                     If zero no Setup packet should be sent.
+      io_EndPoint    HCD private reference for EndPoint to write data to.
+
+   RESULTS
+      io_Actual      Number of bytes actually written to EndPoint.
+      io_Error       Error code indicating completion status.
+                     Zero on success.
+
+   SEE ALSO
+      usb/system.h, exec/errors.h
+
+

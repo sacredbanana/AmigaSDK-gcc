@@ -1,0 +1,368 @@
+TABLE OF CONTENTS
+
+i2c.resource/-copyright-
+i2c.resource/-introduction-
+i2c.resource/bus/GetDeviceId
+i2c.resource/bus/GetName
+i2c.resource/bus/Lock
+i2c.resource/bus/Probe
+i2c.resource/bus/Read
+i2c.resource/bus/ReadTagList
+i2c.resource/bus/SetSpeed
+i2c.resource/bus/Unlock
+i2c.resource/bus/Write
+i2c.resource/bus/WriteTagList
+i2c.resource/GetBusByName
+i2c.resource/GetBusByNumber
+
+
+i2c.resource/-copyright-
+
+ Copyright 2015-2019 Trevor Dickinson.
+
+i2c.resource/-introduction-
+
+   SYNOPSIS
+       i2c.resource is the AmigaOS kernel's interface to read data from and
+       write data to devices connected to the machine's I2C bus.
+
+       Currently supported are:
+         - AmigaOne X5000
+         - AmigaOne A1222
+
+       For and introduction or more information about the I2C bus, please
+       refer to the officially available documentation and various other
+       resources on the world wide web.
+
+       i2c.resource tries to make it as easy as possible to communicate with
+       any I2C device. All you need to know is the bus number or name the
+       device is connected to as well as its (usually 7-bit) chip address on
+       the bus.
+
+   EXAMPLE
+       Here is an example in pseudo code of how to open i2c.resource and use
+       it to probe for the existance of a certain device on I2C bus #0 (of
+       course, your should always check return values for errors):
+
+       #include <interfaces/i2c.h>
+       #include <resources/i2c.h>
+
+       ...
+
+       /* Open the resource */
+       struct I2CResourceIFace *II2CRes = IExec->OpenResource(I2C_NAME);
+
+       /* Get an interface handle to bus #0 */
+       struct I2CIFace *II2CBus0 = II2CRes->GetBusByNumber(0);
+
+       /* Probe for device with chip address 0x57 */
+       if (II2CBus0->Probe(0x57))
+       {
+          /* Device found :-) */
+       }
+
+   NOTE
+      The chip address is automatically shifted by 1 by the respective
+      functions to accomodate for the read/write bit at position 0. This
+      means, if a datasheet tells you the chip address would be b1010 111x,
+      you MUST provide b0101 0111 (= 0x57) as chip address to all functions!
+
+i2c.resource/bus/GetDeviceId
+
+   NAME
+      GetDeviceId - Returns the I2C device ID of the given slave
+
+   SYNOPSIS
+      uint32 GetDeviceId(uint32 chip);
+
+   FUNCTION
+      This function returns the I2C device ID of the given slave. The I2C
+      device ID is specified as a value of 3 bytes, divided in:
+         - manufacturer (Bits 13-24)
+         - part identification (Bits 3-12)
+         - revision (Bits 0-2)
+
+      This is specified as optional in the I2C specification and might not be
+      available on all slaves. In this case, only 0 is returned.
+
+   EXAMPLE
+     uint32 deviceId = 0L;
+
+     deviceId = II2CBusX->GetDeviceId(0x57);
+
+     /* Might be just 0 if not available */
+     printf("Manufacturer: %d\n", (deviceId >> 12) & 0xFFF);
+     printf("Part Ident..: %d\n", (deviceId >>  3) & 0x1FF);
+     printf("Revision....: %d\n", deviceId & 0x7);
+
+   INPUTS
+      chip - Slave address
+
+   RESULT
+      On success the I2C device ID in the 3 least significant bytes,
+      prepended by a pad byte (always being zero).
+      Zero if the slave doesn't provide a device ID.
+
+
+i2c.resource/bus/GetName
+
+   NAME
+      GetName - Return a human readable name for this bus
+
+   SYNOPSIS
+      STRPTR GetName();
+
+   FUNCTION
+      This function simply returns the name of the bus. This is
+      useful for enumerating or displaying information about available
+      busses.
+
+   RESULT
+      A string pointer to the name of the bus.
+
+
+i2c.resource/bus/Lock
+
+   NAME
+      Lock - Gain exclusive access to the bus
+
+   SYNOPSIS
+      BOOL Lock()
+
+   FUNCTION
+	   This function reserves this bus for exclusive access. While the
+	   lock is held, no other entity can access it. Since this reserves
+	   the bus, not the single device, locks should only be held as long
+	   as they are necessary.
+
+	   Software may call this function multiple times if they already own
+	   the lock, but every Lock call must be matched with an appropriate
+	   Unlock call.
+
+	   The bus MUST be locked every time it is accessed in a multithreaded
+	   environment
+
+	NOTES
+	   This function blocks until the bus is available
+
+
+i2c.resource/bus/Probe
+
+   NAME
+      Probe - Probe the bus for available chips
+
+   SYNOPSIS
+      BOOL Probe(uint32 chip);
+
+   FUNCTION
+      The I2C bus is probed for presence of a slave on the address
+      given by chip.
+
+   INPUTS
+      chip - Slave address. The number of bits supported is hardware
+             dependent, usually, 7 bits
+
+   RESULT
+      TRUE if a chip is present, FALSE otherwise
+
+   SEE ALSO
+      Read, Write
+
+i2c.resource/bus/Read
+
+   NAME
+      Read - Read from the I2C bus
+
+   SYNOPSIS
+      int32 Read(uint32 chip, uint32 addr, uint8 *buffer, uint32 bufferLen)
+
+   FUNCTION
+      Read bytes from the i2c bus into a given buffer. This function assumes
+      that one byte of addresses has to be written.
+
+   INPUTS
+      chip - Slave address
+      addr - Address offset for chip
+      buffer - Pointer to a buffer to be filled
+      bufferLen - Number of bytes to be read
+
+   RESULT
+      Number of bytes read (can be 0), or -1 for error
+
+   SEE ALSO
+      ReadAddrLen(), Write(), WriteAddrLen()
+
+i2c.resource/bus/ReadTagList
+
+   NAME
+      ReadTagList -- Read from the I2C bus with extended control
+
+   SYNOPSIS
+      int32 ReadTagList(uint32 chip, uint32 addr, uint8 *buffer,
+                        uint32 bufferLen, struct TagItem *tags);
+
+      int32 ReadTags(uint32 chip, uint32 addr, uint8 *buffer,
+                     uint32 bufferLen, uint32 tag1, ...);
+
+   FUNCTION
+      Read bytes from the i2c bus into a given buffer.
+
+   INPUTS
+      chip - Slave address
+      addr - Address offset for chip, e.g. a register
+      buffer - Pointer to a buffer to be filled
+      bufferLen - Number of bytes to be read
+      tags - Pointer to a tag list. Currently, the following tags are
+             defined:
+
+             I2CRWT_AddressLength - Define the amount of address bytes. If
+                this is set to 0, the address offset parameter is ignored.
+                Default is 1
+
+   RESULT
+      Number of bytes read (can be 0), or -1 for error
+
+   SEE ALSO
+      Read(), Write(), WriteTagList()
+
+i2c.resource/bus/SetSpeed
+
+   NAME
+      SetSpeed - Set the transmit rate for the bus
+
+   SYNOPSIS
+      BOOL SetSpeed(uint32 speed);
+
+   FUNCTION
+      This function tries to set the transmit speed of the bus to the
+      given speed. Clock granularity might result in slightly inaccurate
+      values.
+
+   INPUTS
+      speed - bit rate for the bus, in bits/second
+
+   RESULT
+      TRUE if the speed was sucessfully set, FALSE otherwise
+
+i2c.resource/bus/Unlock
+
+   NAME
+      Unlock - Revoke exclusive access to the bus
+
+   SYNOPSIS
+      void Unlock()
+
+   FUNCTION
+	   This function revokes the exclusive access to the bus. Each
+	   call to Lock must be pared by an appropriate call to this
+	   function
+
+i2c.resource/bus/Write
+
+   NAME
+      Write - Write to the I2C bus
+
+   SYNOPSIS
+      int32 Write(uint32 chip, uint32 addr, uint8 *buffer, uint32 bufferLen)
+
+   FUNCTION
+      Write a specified number of bytes given in buffer to the i2c bus.
+      This function assumes that one byte of addresses has to be written.
+
+   INPUTS
+      chip - Slave address
+      addr - Address offset for chip, e.g. a register
+      buffer - Pointer to a buffer to be written
+      bufferLen - Number of bytes to be written
+
+   RESULT
+      Number of bytes written (can be 0), or -1 for error
+
+   SEE ALSO
+      Read(), ReadAddrLen(), WriteAddrLen()
+
+i2c.resource/bus/WriteTagList
+
+   NAME
+      WriteTagList - Write to the I2C bus with extended control
+
+   SYNOPSIS
+      int32 WriteTagList(uint32 chip, uint32 addr, uint8 *buffer,
+                         uint32 bufferLen, struct TagItem *tags);
+
+      int32 WriteTags(uint32 chip, uint32 addr, uint8 *buffer,
+                      uint32 bufferLen, uint32 tag1, ...);
+
+   FUNCTION
+      Write a specified number of bytes given in buffer to the i2c bus.
+
+   INPUTS
+      chip - Slave address
+      addr - Address offset for chip, e.g. a register
+      buffer - Pointer to a buffer to be written
+      bufferLen - Number of bytes to be written
+      tags - Pointer to a tag list. Currently, the following tags are
+             defined:
+
+             I2CRWT_AddressLength - Define the amount of address bytes. If
+                this is set to 0, the address offset parameter is ignored.
+                Default is 1
+
+   RESULT
+      Number of bytes written (can be 0), or -1 for error
+
+   SEE ALSO
+      Read(), ReadTagList()
+
+i2c.resource/GetBusByName
+
+   NAME
+      GetBusByName - Get a bus handle for the named bus
+
+   SYNOPSIS
+      struct I2CIFace *GetBusByName(CONST_STRPTR name);
+
+   FUNCTION
+      This function returns an I2CIFace structure to handle the bus
+      with a given name. Note that availability of busses depends
+      on the machine you run on, as well as available hardware.
+
+   INPUTS
+      name - Bus name
+
+   RESULT
+      An interface pointer corresponding to this bus.
+
+	EXAMPLE
+      /* Use the first bus on an AmigaOne X5020 */
+      struct I2CIFace *internal_bus = I2CRes->GetBusByName("I2C 0");
+
+   SEE ALSO
+      GetBusByNumber()
+
+i2c.resource/GetBusByNumber
+
+   NAME
+      GetBusByNumber - Get a bus handle for the given number
+
+   SYNOPSIS
+      struct I2CIFace *GetBusByNumber(uint32 number);
+
+   FUNCTION
+      This function returns an I2CIFace structure to handle the bus
+      with a given number. Note that numbering might be machine dependent.
+
+   INPUTS
+      number - Bus number to use
+
+   RESULT
+      An interface pointer corresponding to this bus.
+
+   NOTES
+      Bus numbering depends on the order of initialization, and hardware
+      availability. It is therefore better to use bus names.
+
+   SEE ALSO
+      GetBusByName()
+
+

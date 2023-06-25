@@ -1,0 +1,1269 @@
+TABLE OF CONTENTS
+
+console.device/CD_ASKDEFAULTKEYMAP
+console.device/CD_ASKKEYMAP
+console.device/CD_ASKKEYMAP_POINTERS
+console.device/CD_GETATTRS
+console.device/CD_SETATTRS
+console.device/CD_SETDEFAULTKEYMAP
+console.device/CD_SETKEYMAP
+console.device/CD_SETKEYMAP_POINTERS
+console.device/CDInputHandler
+console.device/CloseDevice
+console.device/CMD_CLEAR
+console.device/CMD_READ
+console.device/CMD_WRITE
+console.device/OpenDevice
+console.device/RawKeyConvert
+
+
+console.device/CD_ASKDEFAULTKEYMAP         console.device/CD_ASKDEFAULTKEYMAP
+
+    NAME
+	CD_ASKDEFAULTKEYMAP -- get the current default keymap (obsolete)
+
+    FUNCTION
+	Fill the io_Data buffer with the current console device
+	default keymap, which is used to initialize console unit
+	keymaps when opened, and by RawKeyConvert with a null
+	keyMap parameter.
+
+   IO REQUEST
+	io_Message	mn_ReplyPort set if quick I/O is not possible
+	io_Device	preset by the call to OpenDevice
+	io_Unit		preset by the call to OpenDevice
+	io_Command	CD_ASKDEFAULTKEYMAP
+	io_Flags	IOF_QUICK if quick I/O possible, else zero
+	io_Length	sizeof(*keyMap)
+	io_Data		struct KeyMap *keyMap
+			pointer to a structure that describes 
+			the raw keycode to byte stream conversion.
+
+    RESULTS
+	This function sets the io_Error field in the IOStdReq, and fills
+	the structure pointed to by io_Data with the current device 
+	default key map.
+
+    NOTES
+	This command is obsolete, use keymap.library/AskKeyMapDefault().
+
+    BUGS
+
+    SEE ALSO
+	keymap.library/AskKeyMapDefault(), exec/io.h, libraries/keymap.h,
+	devices/console.h
+
+console.device/CD_ASKKEYMAP                       console.device/CD_ASKKEYMAP
+
+   NAME
+	CD_ASKKEYMAP -- Get the current key map structure for this
+	                console (obsolete).
+
+    FUNCTION
+	Fill the io_Data buffer with the current KeyMap structure in
+	use by this console unit.
+
+    IO REQUEST INPUT
+	io_Message	mn_ReplyPort set if quick I/O is not possible
+	io_Device	preset by the call to OpenDevice
+	io_Unit		preset by the call to OpenDevice
+	io_Command	CD_ASKKEYMAP
+	io_Flags	IOF_QUICK if quick I/O possible, else zero
+	io_Length	sizeof(*keyMap)
+	io_Data		struct KeyMap *keyMap
+			pointer to a structure that describes 
+			the raw keycode to byte stream conversion.
+
+    IO REQUEST RESULT
+	This command sets the io_Error field in the IOStdReq, and fills
+	the structure pointed to by io_Data with parts of the current
+	key map.
+
+    NOTES
+	This command is obsolete, use CD_ASKKEYMAP_POINTERS with
+	console.device 51.19 or higher.
+
+    SEE ALSO
+	CD_ASKKEYMAP_POINTERS, exec/io.h, libraries/keymap.h,
+	devices/console.h
+
+console.device/CD_ASKKEYMAP_POINTERS     console.device/CD_ASKKEYMAP_POINTERS
+
+   NAME
+	CD_ASKKEYMAP_POINTERS -- Get pointers to the current key map
+	                         structures for this console (V51.19).
+
+    FUNCTION
+	Fill the io_Data buffer with the current ConsoleKeyMapPointers
+	structure in use by this console unit.
+
+    IO REQUEST INPUT
+	io_Message	mn_ReplyPort set if quick I/O is not possible
+	io_Device	preset by the call to OpenDevice
+	io_Unit		preset by the call to OpenDevice
+	io_Command	CD_ASKKEYMAP_POINTERS
+	io_Flags	IOF_QUICK if quick I/O possible, else zero
+	io_Length	sizeof(struct ConsoleKeyMapPointers)
+	io_Data		struct ConsoleKeyMapPointers *keyMapPointers
+			pointer to a structure that describes 
+			the raw keycode to byte stream conversion.
+
+    IO REQUEST RESULT
+	This function sets the io_Error field in the IOStdReq, and fills
+	the structure pointed to by io_Data with pointers to the current
+	key map.
+
+    SEE ALSO
+	exec/io.h, libraries/keymap.h, devices/console.h
+
+console.device/CD_GETATTRS                         console.device/CD_GETATTRS
+
+   NAME
+   CD_GETATTRS -- Get current attributes from a unique console unit
+
+   FUNCTION
+   Copy a selected set of attributes of the console unit to a user
+   buffer. The data copied is described by a Tag list, the tags are
+   defined in devices/conunit.h.
+
+   IO REQUEST INPUT
+   io_Message      mn_ReplyPort set if quick I/O is not possible
+   io_Device       preset by the call to OpenDevice
+   io_Unit         preset by the call to OpenDevice
+   io_Command      CD_GETATTRS
+   io_Flags        IOF_QUICK if quick I/O possible, else zero
+   io_Length       length of tag list in bytes
+   io_Data         (Tag, ...) *
+                   pointer to a list of Tags and their arguments
+
+   IO REQUEST RESULT
+   This command sets the io_Error field in the IOStdReq and copies
+   the data from the console private storage area to the user buffer.
+   io_Actual:    Set to the size of the data transferred.
+
+   NOTES
+   Supported tags and their parameters are defined in devices/console.h
+   All results are obtained only from the console to which the request is
+   directed.
+
+   The old method of reading private settings by directly reading the
+   console's data structure is DEPRECATED (V53) and is not guaranteed
+   to work.
+
+   The tags currently supported are:
+
+   CDT_GETCONUNIT      (struct ConUnit *)
+       The tag Data field contains a pointer to an area where a dummy ConUnit
+       structure can be copied. This tag is provided for minimal conversion
+       of legacy programs that currently read the address of the ConUnit 
+       structure from the request->io_Unit field. The preferred method is to
+       specify the actual data required in specific tags (see below).
+
+       Note that the size of the destination is not checked.
+
+       Only some fields from the ConUnit structure are copied to the user
+       buffer. The fields that are currently returned are:
+       cu_Window
+       cu_XCP, cu_YCP
+       cu_XMax, cu_YMax
+       cu_XROrigin, cu_YROrigin
+       cu_XRExtant, cu_YRExtant
+       cu_PrivateKeyMapStruct
+       cu_Font
+
+   CDT_GETPREFS        (struct ConsolePrefs *)
+       The tag Data field contains a pointer to an area where the current
+       Console Prefs can be copied. This area must be at least 
+       (sizeof (struct ConsolePrefs)). The size of the destination is not
+       checked.
+
+       Note that the data transferred is the copy of the Prefs settings as
+       held by that Console, and may be different from those settings held by
+       another Console.
+
+   CDT_GETROWS         (int32 *)
+   CDT_GETCOLUMNS      (int32 *)
+       The tag Data field contains a pointer to an int32 destination.
+       These tags return the current height and width (rows and columns) of
+       the text area in the console.
+
+   CDT_GETYCP          (int32 *)
+   CDT_GETXCP          (int32 *)
+       The tag Data field contains a pointer to an int32 destination.
+       The request returns the current cursor Row and Column respectively.
+       Note that since the console queues input and output for processing,
+       the cursor position may change after this call. The result should be
+       taken as a snapshot of the current position.
+
+   CDT_GETWINSTATE     (int32 *)
+       The tag Data field contains a pointer to an int32 destination.
+       The request will return one of the values described in the enum
+       described in devices/console.h.
+
+   CDT_GETWINDOW       (struct Window **)
+       The tag Data field contains a pointer to a (struct Window *).
+       It returns the address of the currently open window or NULL if
+       the window is currently closed (eg iconified).
+
+   CDT_GETTEXTSPACE    (struct Rectangle *)
+       The tag Data field contains a pointer to a struct Rectangle.
+       The request returns the rectangle bounding the text area of the
+       console, as (pixel) offsets from the Top and Left of the window.
+
+   CDT_GETTEXTFONT     (struct TextFont *)
+       The tag Data field contains a pointer to a struct TextFont.
+       The request returns the description of the font currently used to
+       display the console text in its window.
+
+   CDT_GETIOSTATE      (BOOL[2] *)
+       The tag Data field contains a pointer to an int32 destination.
+       The request will return TRUE or FALSE in the two 16-bit BOOL
+       variables addressed by the pointer. The high word describes the
+       Read (input) status, the low word describes the Write (output)
+       status. In both cases, a TRUE indicates Busy, ie there are 
+       unprocessed characters in the queue. Only if both fields are
+       FALSE (zero) can the device be regarded as IDLE.
+       Note that the indicated IO state can change without warning and
+       should be regarded as a snapshot of the status.
+       Do NOT loop on this test, waiting for the state to change!
+
+   CDT_CURSONSCREEN	(BOOL)
+       The tag Data field contains a pointer to a 16-bit BOOL destination.
+       The request will write TRUE into the destination if the console
+       cursor is currently on screen, else FALSE.
+       Note that the result is a snapshot of the current state and could
+       change at any time without warning.
+
+   SEE ALSO
+
+console.device/CD_SETATTRS                         console.device/CD_SETATTRS
+
+   NAME
+   CD_SETATTRS -- Set various attributes for a unique console unit
+
+   FUNCTION
+   Copy the nominated attributes to this console unit.
+
+   IO REQUEST INPUT
+   io_Message    mn_ReplyPort set if quick I/O is not possible
+   io_Device     preset by the call to OpenDevice
+   io_Unit       preset by the call to OpenDevice
+   io_Command    CD_SETATTRS
+   io_Flags      IOF_QUICK if quick I/O possible, else zero
+   io_Length     length of tag list in bytes
+   io_Data       (Tag, ...) *
+           pointer to a list of Tags and their arguments
+
+   IO REQUEST RESULT
+   This command sets the io_Error field in the IOStdReq, and copies
+   the tag data from the TAG List to the console unit.
+
+   NOTES
+
+   Supported tags and their parameters are defined in devices/console.h
+   All tags affect only the console to which they are directed, that is,
+   if the console unit is one of a number of units sharing a tabbed window,
+   the other units willl not be affected.
+
+   The tags applicable to the SETATTRS request are:
+
+   CDT_SETPALETTE, int32 palette number, (followed immediately by)
+           CDT_PALETTEADDRESS, uint32 * ColorTable[16]
+       (palette number PALETTE_PENS - PALETTE_USER12)
+       The colour table must contain at least 16 uint32s of form AARRGGBB.
+       The first eight values will be used as the foreground colours,
+       the next eight as the background colours.
+       The table contents are not copied and any change in their values
+       will be seen when the display is refreshed, so the pointer must 
+       remain valid. The table contents must be in SHARED memory, as it
+       will be read by the ConsoleDevice task during refreshing.
+       The palette number must be between the values of PALETTE_USER0 and
+       PALETTE_USER12 (inclusive) and the pointer must be non-null.
+       If either of these conditions is not satisfied, IOERR_BADADDRESS
+       is returned.
+       Note: the PALETTEADDRESS tag must immediately follow the SETPALETTE
+       tag and is only valid in that context.
+
+   CDT_SELECTTPALETTE, uint32 <palette number>
+       The palette number can be any of these values:
+       PALETTE_PENS    default setting, selects the system palette.
+       PALETTE_ANSI    selects an internal set of ANSI-compliant colours.
+       PALETTE_ANSIF   selects an internal set of "faint" colours.
+       PALETTE_USERnn  selects the user's palette as specified with the
+       CDT_SETPALETTE tag above. If no user palette has been specified by
+       the time characters are rendered to the display using that palette,
+       the system pens will be used. Values of nn from 0-12 (if previously 
+       specified with SETPALETTE) are valid, any other value generates an
+       error return IOERR_BADADDRESS.
+
+   CDT_SETTABSPACING, uint32 <spacing>
+       The tag parameter is used as default tab spacing, allowing for values
+       different from the traditional eight. Only values 2-16 are accepted,
+       any value outside this range causes a IOERR_BADADDRESS error to be
+       returned in io_Error.
+       The default setting takes effect immediately and all existing tab
+       stops are cleared to tab stops at the new spacing.
+       Existing characters spaced by tabs on the display will not 
+       be affected. Old rows in the history, when scrolled back onto the 
+       display, will be displayed in the old tab spacing.
+
+   CDT_SETWINDOWTITLE, STRPTR <text string>
+       The tag parameter is the address of the text string to be applied to
+       the top border of the console window. If the console window was
+       created by the console device, either by explicit request or by
+       default, then the string will be written to the window border. If
+       the window was not created by the console, this command will be
+       ignored.
+       The Window Title string may contain field descriptors of the form %x.
+        In addition to the descriptors described in the Shell documentation,
+       the console supports these descriptors in the Window Title:
+           %D    Show Date (in Locale format).
+           %H    Show number of buffered History rows (in memory).
+           %T    Show number of filed rows (written to disk file).
+
+   CDT_SETAPPWINDOWPORT, struct MsgPort *<port address>
+       The tag parameter is the address of the message port where the caller
+       wants AppWindow messages to be passed. It is only necessary to use
+       this tag if a tabbed window has been created by the console and 
+       more than one client is or will be using different tabs in the 
+       window. In that case the console must intercept all AppWindow
+       messages and steer them to the appropriate client (most often the
+       currently active Shell window). The console does not receive or
+       alter the AppMessage, but merely directs it to the right client.
+       
+   CDT_UNICONIFYWINDOW, <no parameter>
+       Tell the console to uniconify its window. This is an internal command
+       from the con-handler to the console.
+
+   CDT_SETNOTIFYHOOK    (struct Hook *)
+       This installs a Hook in the console. When the status of the console
+       window changes (eg it opens, closes, becomes iconified), the console
+       will call this Hook.
+       The Hook structure must contain:
+           h_Entry:        the address of the Hook handler.
+           h_Data:         APTR for user data (will be returned in "object"
+                           when the Hook is called).
+
+       The data passed to the caller when the Hook is called are:
+           object:         the APTR from the Hook structure field h_Data.
+           message:        pointer to a Tag Item. The values of the tags
+                           and their data are defined in devices/console.h.
+
+       To cancel the Hook, call CDT_SETNOTIFYHOOK again with a NULL value.
+
+   CDT_HANDLER_VERSION     (Version/Revision/Date)
+       Declare the calling task's version, revision and date string.
+       This is an internal command from the con-handler to the console.
+
+   SEE ALSO
+
+console.device/CD_SETDEFAULTKEYMAP         console.device/CD_SETDEFAULTKEYMAP
+
+    NAME
+	CD_SETDEFAULTKEYMAP -- set the current default keymap (obsolete)
+
+    FUNCTION
+	This console command copies/uses the keyMap structure pointed to
+	by io_Data to the console device default keymap, which is used
+	to initialize console units when opened, and by RawKeyConvert
+	with a null keyMap parameter.
+
+    IO REQUEST
+	io_Message	mn_ReplyPort set if quick I/O is not possible
+	io_Device	preset by the call to OpenDevice
+	io_Unit		preset by the call to OpenDevice
+	io_Command	CD_SETDEFAULTKEYMAP
+	io_Flags	IOF_QUICK if quick I/O possible, else zero
+	io_Length	sizeof(*keyMap)
+	io_Data		struct KeyMap *keyMap
+			pointer to a structure that describes 
+			the raw keycode to byte stream conversion.
+
+    RESULTS
+	This function sets the io_Error field in the IOStdReq, and fills
+	the current device default key map from the structure pointed to
+	by io_Data.
+
+    NOTES
+	This command is obsolete, use keymap.library/SetKeyMapDefault().
+
+    BUGS
+	As of V36, this command no longer copies the keymap structure,
+	and the keymap must remain in memory until the default key map
+	is changed.  In general there is no reason for applications to
+	use this command.  The default key map will generally be set by
+	the user using a system provided command/tool.
+
+    SEE ALSO
+	keymap.library/SetKeyMapDefault(), exec/io.h, libraries/keymap.h,
+	devices/console.h
+
+console.device/CD_SETKEYMAP                       console.device/CD_SETKEYMAP
+
+    NAME
+	CD_SETKEYMAP -- set the current key map structure for this
+	                console (obsolete)
+
+    FUNCTION
+	Set the current KeyMap structure used by this console unit to
+	the structure pointed to by io_Data.
+
+    IO REQUEST
+	io_Message	mn_ReplyPort set if quick I/O is not possible
+	io_Device	preset by the call to OpenDevice
+	io_Unit		preset by the call to OpenDevice
+	io_Command	CD_SETKEYMAP
+	io_Flags	IOF_QUICK if quick I/O possible, else zero
+	io_Length	sizeof(*keyMap)
+	io_Data		struct KeyMap *keyMap
+			pointer to a structure that describes 
+			parts of the raw keycode to byte stream conversion.
+
+    RESULTS
+	This function sets the io_Error field in the IOStdReq, and fills
+	the current key map from the structure pointed to by io_Data.
+
+    NOTES
+	This command is obsolete, use CD_SETKEYMAP_POINTERS with
+	console.device 51.19 or higher. console.device is unable to
+	close the keymap when closing the unit.
+
+    BUGS
+
+    SEE ALSO
+	CD_SETKEYMAP_POINTERS, exec/io.h, libraries/keymap.h,
+	devices/console.h
+
+console.device/CD_SETKEYMAP_POINTERS     console.device/CD_SETKEYMAP_POINTERS
+
+    NAME
+	CD_SETKEYMAP_POINTERS -- set the current key map structures for this
+	                         console (V51.19).
+
+    FUNCTION
+	Set the current KeyMap structures used by this console unit to
+	the structures pointed to by io_Data.
+
+    IO REQUEST
+	io_Message	mn_ReplyPort set if quick I/O is not possible
+	io_Device	preset by the call to OpenDevice
+	io_Unit		preset by the call to OpenDevice
+	io_Command	CD_SETKEYMAP_POINTERS
+	io_Flags	IOF_QUICK if quick I/O possible, else zero
+	io_Length	sizeof(struct ConsoleKeyMapPointers)
+	io_Data		struct ConsoleKeyMapPointers *keyMapPointers
+			pointer to a structure that describes 
+			the raw keycode to byte stream conversion.
+
+    RESULTS
+	This function sets the io_Error field in the IOStdReq, and fills
+	the current key map pointers from the structure pointed to by
+	io_Data.
+
+    NOTES
+	The pointers in the passed in structure must be obtained
+	from keymap.library.
+	A previous keymap set with this command will be closed.
+	The new keymap will be closed when closing the unit.
+
+    BUGS
+
+    SEE ALSO
+	exec/io.h, libraries/keymap.h, devices/console.h
+
+console.device/CDInputHandler                   console.device/CDInputHandler
+
+	NAME
+	CDInputHandler -- handle an input event for the console device
+
+	SYNOPSIS
+	NULL = CDInputHandler (events, consoleDevice)
+
+	FUNCTION
+	Accept input events from the producer, which is usually the
+	Intuition input task.
+
+	INPUTS
+	events - a pointer to a list of input events.
+	consoleDevice - a pointer to the library base address of the
+	console device.  This has the same value as ConsoleDevice
+	described below.
+
+	Returns:	NULL
+
+	NOTES
+	This function is available for historical reasons.  It is
+	preferred that input events be fed to the system via the
+	WriteEvent command of the input.device.
+
+	This function is different from standard device commands in
+	that it is a function in the console device library vectors.
+	In order to obtain a valid library base pointer for the 
+	console device (a.k.a. ConsoleDevice) call
+	OpenDevice("console.device", -1, IOStdReq, 0),
+	and then grab the io_Device pointer field out of the IOStdReq
+	and use as ConsoleDevice.
+
+	BUGS
+
+	SEE ALSO
+	input.device
+
+console.device/CloseDevice                         console.device/CloseDevice
+
+    NAME
+       Close -- close the console device
+
+    SYNOPSIS
+       CloseDevice(IOStdReq)
+
+    FUNCTION
+	This function closes software access to the console device,
+	and informs the system that access to this device/unit which was
+	previously opened has been concluded.  The device may perform
+	certain house-cleaning	operations.  The I/O request structure
+	is now free to be recycled.
+
+    INPUTS
+	IOStdReq - pointer to an IOStdReq structure, set by OpenDevice
+
+    SEE ALSO
+	console.device/function/OpenDevice, exec/io.h
+
+console.device/CMD_CLEAR                             console.device/CMD_CLEAR
+
+    NAME
+    CMD_CLEAR -- Clear console input buffer.
+
+    FUNCTION
+    Remove from the console input buffer any reports waiting to
+    satisfy read requests.
+
+    IO REQUEST INPUT
+    io_Message	mn_ReplyPort set if quick I/O is not possible
+    io_Device	preset by the call to OpenDevice
+    io_Unit		preset by the call to OpenDevice
+    io_Command	CMD_CLEAR
+    io_Flags	IOB_QUICK set if quick I/O is possible, else 0
+
+    SEE ALSO
+    exec/io.h, devices/console.h
+
+console.device/CMD_READ                               console.device/CMD_READ
+
+   NAME
+   CMD_READ -- return the next input from the keyboard
+
+   FUNCTION
+   Read the next input, generally from the keyboard.  The form of
+   this input is as an ANSI byte stream: i.e. either ASCII text
+   or control sequences.  Raw input events received by the
+   console device can be selectively filtered via the aSRE and aRRE
+   control sequences (see the write command).  Keys are converted
+   via the keymap associated with the unit, which is modified
+   with AskKeyMap and SetKeyMap
+
+   If, for example, raw keycodes had been enabled by writing
+   <CSI>1{ to the console (where <CSI> is $9B or Esc[), keys
+   would return raw keycode reports with the information from
+   the input event itself, in the form:
+   <CSI>1;0;<keycode>;<qualifiers>;0;0;<seconds>;<microseconds>q
+
+   If there is no pending input, this command will not be
+   satisfied, but if there is some input, but not as much as can
+   fill io_Length, the request will be satisfied with the input
+   currently available (the length of data returned may be less than the
+   size specified in io_Length).
+
+   IO REQUEST
+   io_Message    mn_ReplyPort set if quick I/O is not possible
+   io_Device     preset by the call to OpenDevice
+   io_Unit       preset by the call to OpenDevice
+   io_Command    CMD_READ
+   io_Flags      IOF_QUICK if quick I/O possible, else zero
+   io_Length     sizeof(*buffer)
+   io_Data       char buffer[]
+           a pointer to the destination for the characters to read
+           from the keyboard.
+
+   RESULTS
+   This function sets the error field in the IOStdReq and fills
+   in the io_Data area with the next input and io_Actual with
+   the number of bytes read.
+
+   BUGS
+
+   SEE ALSO
+   exec/io.h, devices/console.h
+
+console.device/CMD_WRITE                             console.device/CMD_WRITE
+
+   NAME
+   CMD_WRITE -- Write ANSI text to the console display.
+
+   FUNCTION
+   Write a text record to the display.  Interpret the ANSI
+   control characters in the data as described below.  Note
+   that the RPort of the console window is in use while this
+   write command is pending.
+
+   IO REQUEST INPUT
+   io_Message    mn_ReplyPort set if quick I/O is not possible
+   io_Device     preset by the call to OpenDevice
+   io_Unit       preset by the call to OpenDevice
+   io_Command    CMD_WRITE
+   io_Flags      IOF_QUICK if quick I/O possible.
+                 IOF_WAIT_WRITE to force a wait-until-done.
+   io_Length     sizeof(*buffer), or -1 if io_Data is null
+                 terminated
+   io_Data       a pointer to a buffer containing the ANSI text
+                 to write to the console device.
+
+   IO REQUEST RESULTS
+   io_Error      the error result (no errors are reported as of V36)
+   io_Actual     the number of bytes written from io_Data
+   io_Length     zero
+   io_Data       original io_Data plus io_Actual
+
+   NOTE: (V53.38+ only)
+   Normally, return from the Write call means that the data has been 
+   transferred from the caller's buffer and the IORequest structure 
+   contents are no longer required. The data may not yet have been written 
+   to the display and any effects caused by the data (eg change of cursor 
+   position) may not yet have started or been completed. You can force the 
+   Write operation to block until completed by opening the Console with the
+   CONFLAG_SYNCWRITES set or (for a Shell) including the option "SYNCWRITES"
+   in the command line. If the Console was opened in legacy mode (no TABBED
+   or HISTORY options), then the SYNCWRITES option is forced for greater
+   compatibility with older applications.
+   If you do not want to wait for ALL Write requests, but only some, you can
+   set the IOF_WAIT_WRITE bit in the io_Flags byte before calling CMD_WRITE.
+   This flag bit has the same effect as opening the console with the 
+   "CONFLAG_SYNCWRITES" set, but its scope is only for the current request.
+
+   ANSI CODES SUPPORTED
+   Codes are specified in the standard fashion for ANSI documents,
+   as the two 4 bit nibbles that comprise the character code,
+   high nibble first, separated by a slash.  Thus 01/11 (ESC) is
+   a character with the hex value 1B (or the decimal value 27).
+
+   A character on the Amiga falls into one of the following four
+   ranges:
+   00/00-01/15     C0: ASCII control characters.  See below.
+   02/00-07/15     G0: ASCII graphic characters.  These characters
+                   have an image that is displayed.  Note that the
+                   DEL character is displayed by the Console Device:
+                   it is not treated as a control character here.
+   08/00-09/15     C1: ANSI 3.41 control characters.  See below.
+   10/00-15/15     G1: ECMA 94 Latin 1 graphic characters.
+
+   Independent Control Functions (no introducer) --
+   Code    Name    Definition
+   -----    ---    ----------------------------------------------
+   00/07    BEL    BELL: actually an Intuition DisplayBeep()
+   00/08    BS     BACKSPACE
+   00/09    HT     HORIZONTAL TAB
+   00/10    LF     LINE FEED
+   00/11    VT     VERTICAL TAB
+   00/12    FF     FORM FEED
+   00/13    CR     CARRIAGE RETURN
+   00/14    SO     SHIFT OUT: causes all subsequent G0 (ASCII)
+                   characters to be shifted to G1 (ECMA 94/1)
+                   characters.
+   00/15    SI     SHIFT IN: cancels the effect of SHIFT OUT.
+   01/11    ESC    ESCAPE
+
+   Code or  Esc    Name Definition
+   -----    ---    ---- ---------------------------------------------
+   08/04    D      IND  INDEX: move the active position down one line.
+   08/05    E      NEL  NEXT LINE
+   08/ 8    H      HTS  HORIZONTAL TABULATION SET
+   08/13    M      RI   REVERSE INDEX
+   09/11    [      CSI  CONTROL SEQUENCE INTRODUCER: see next list
+
+   ISO Compatible Escape Sequences (introduced by Esc) --
+   Esc   Name Definition
+   ----- ---- ---------------------------------------------------
+   c     RIS  RESET TO INITIAL STATE: reset the console display.
+
+   Control Sequences, with the number of indicated parameters.
+   i.e. <CSI><parameters><control sequence letter(s)>.  Note the
+   last entries consist of a space and a letter.  CSI is either
+   9B or Esc[.  A minus after the number of parameters (#p)
+   indicates that fewer is valid.  Parameters are separated by
+   semicolons, e.g. Esc[14;80H sets the cursor position to row
+   14, column 80.
+
+   CSI #p   Name    Definition
+   --- ---  ----    -------------------------------------------------
+   @   1-   ICH     INSERT CHARACTER
+   A   1-   CUU     CURSOR UP
+   B   1-   CUD     CURSOR DOWN
+   C   1-   CUF     CURSOR FORWARD
+   D   1-   CUB     CURSOR BACKWARD
+   E   1-   CNL     CURSOR NEXT LINE
+   F   1-   CPL     CURSOR PRECEDING LINE
+   G        CHA     not implemented
+   H   2-   CUP     CURSOR POSITION
+   I   1-   CHT     CURSOR HORIZONTAL TABULATION
+   J   1-   ED      ERASE IN DISPLAY
+   K   1-   EL      ERASE IN LINE
+   L   1-   IL      INSERT LINE
+   M   1-   DL      DELETE LINE
+   N        EF      not implemented
+   O        EA      not implemented
+   P   1-   DCH     DELETE CHARACTER
+   Q        SSE     not implemented
+   R   2    CPR     CURSOR POSITION REPORT (in Read stream only)
+   S   1-   SU      SCROLL UP
+   T   1-   SD      SCROLL DOWN
+   U   1-   NP      NEXT PAGE
+   V   1-   PP      PREVIOUS PAGE
+   W   n    CTC     CURSOR TABULATION CONTROL
+   X   n    ECH     Erase Character
+   Y        CVT     not implemented
+   Z   1-   CBT     CURSOR BACKWARD TABULATION
+   f   2-   HVP     HORIZONTAL AND VERTICAL POSITION
+   g   1-   TBC     TABULATION CLEAR
+   h   n    SM      SET MODE: see modes below.
+   l   n    RM      RESET MODE: see modes below.
+   m   n    SGR     SELECT GRAPHIC RENDITION
+   n   1-   DSR     DEVICE STATUS REPORT
+   o                not used
+   p                not used
+   q                not used
+   r                not used
+   s   1    aSCP    Set Colour Palette (private Amiga sequence)
+   t   1-   aSLPP   SET PAGE LENGTH (private Amiga sequence)
+   u   1-   aSLL    SET LINE LENGTH (private Amiga sequence)
+   v        aSDU    Scroll Display Up (private Amiga sequence)
+   w        aSDD    Scroll Display Down (private Amiga sequence)
+   x   1-   aSLO    SET LEFT OFFSET (private Amiga sequence)
+   y   1-   aSTO    SET TOP OFFSET (private Amiga sequence)
+   {   n    aSRE    SET RAW EVENTS (private Amiga sequence)
+   |   8    aIER    INPUT EVENT REPORT (private Amiga Read sequence)
+   }   n    aRRE    RESET RAW EVENTS (private Amiga sequence)
+   ~   1    aSKR    SPECIAL KEY REPORT (private Amiga Read sequence)
+
+   Additional private sequences ('_' represents a space character)
+
+   _p  1-   aSCR    SET CURSOR RENDITION (private Amiga sequence)
+   _q  0    aWSR    WINDOW STATUS REQUEST (private Amiga sequence)
+   _r  4    aWBR    WINDOW BOUNDS REPORT (private Amiga Read sequence)
+                    (not implemented)
+   _s  0    aSDSS   SET DEFAULT SGR SETTINGS (private Amiga sequence-V39)
+   _t	0	 aPRD	 Put Read Data (private Amiga sequence-V53)
+   _u               not used
+   _v  1    aRAV    RIGHT AMIGA V PRESS (private Amiga Read sequence-V37)
+
+   Modes, set with <CSI><mode-list>h, and cleared with
+   <CSI><mode-list>l, where the mode-list is one or more of the
+   following parameters, separated by semicolons --
+   Mode    Name  Definition
+   -----   ----  -------------------------------------------------
+   20      LNM   LINEFEED NEWLINE MODE: if a linefeed is a newline
+   >1      ASM   AUTO SCROLL MODE: if scroll at bottom of window
+   ?7      AWM   AUTO WRAP MODE: if wrap at right edge of window
+
+   NOTES
+   The console.device recognizes these SGR sequences.
+   Note that some of these are new to V36.
+
+   SGR (SELECT GRAPHICS RENDITION)
+       Selects colors and other display characteristics for text.
+
+   Syntax:
+       <ESC>[graphic-rendition...m
+
+   Example:
+       <ESC>[1;7m   (sets bold, and reversed text)
+
+   Parameters:
+
+       00    - Normal colors and attributes
+       01    - Set bold
+       02    - Set faint (secondary color)
+       03    - Set italic
+       04    - Set underscore
+       05    - Set slow character blink     (V53.5)
+       06    - Set fast character blink     (V53.5)
+       07    - Set reversed character/cell colors
+       08    - Set concealed mode.
+       09    - Set strikethrough (V53.5)
+       22    - Set normal color, not bold    (V36)
+       23    - Italic off                    (V36)
+       24    - Underscore off                (V36)
+       25    - Slow blink off                (V53.5)
+       26    - Fast blink off                (V53.5)
+       27    - Reversed off                  (V36)
+       28    - Concealed off                 (V36)
+       29    - Strikethrough off             (V53.5)
+
+       30-37 - Set character color
+       39    - Reset to default character color
+
+       40-47 - Set character cell color
+       49    - Reset to default character cell color
+
+       >0-7  - Set background color        (V36)
+             Used to set the background color before
+             any text is written.  The numeric parameter
+             is prefixed by ">".  This also means that if
+             you issue an SGR command with more than one
+             parameter, you must issue the digit only
+             parameters first, followed by any prefixed
+             parameters.
+
+   V39 console.device takes advantage of the ability to mask
+   bitplanes for faster scrolling, clearing, and rendering.
+   The actual number of bitplanes scrolled depends on which
+   colors you set via the SGR sequences.  For those using
+   the defaults of PEN color 1, and cell color 0, console.device
+   only needs to scroll 1 bitplane.  The actual number
+   of bitplanes scrolled is reset when ESCc is sent, and when
+   the console window is entirely cleared (e.g., FF).  In
+   general this should cause no compatibility problems, unless
+   you are mixing console rendering with graphic.library calls
+   in the same portions of your window.  Console.device considers
+   the number of bitplanes it must scroll, and the screen display
+   depth so that interleaved bitplane scrolling can be taken
+   advantage of in cases where performance is not significantly
+   affected (interleaved scrolling, and masking are mutually
+   exclusive).  The determination of how many planes to scroll
+   is undefined, and may change in the future. It has changed
+   with V44.
+
+   V39 console.device supports a new private sequence (aSDSS)
+   intended for use by users who prefer to change their default
+   SGR settings.  When this private Amiga sequence is sent to the
+   console, the current Pen color, Cell color, Text style, and
+   Reverse mode (on or off), are set as defaults.  When ESC[0m
+   is issued, the settings are restored to the preferred settings.
+   ESC[39m, and ESC[49m are likewise affected.  In general
+   applications should not make use of this private sequence as it
+   is intended for users who would normally include it as part of
+   their shell startup script.  The normal defaults are reset
+   when ESCc is issued.
+
+   Escape sequences generated by the Console
+   -------------------------------------
+   Some Write sequences solicit responses from the Console in the form of
+   an extended string headed by a <CSI> (\x9B) and terminated by a
+   printable ASCII character. The response is NOT terminated by a NewLine
+   character, thus the caller must engage RAW mode and read the characters
+   one at a time until the terminating character is received. Note that a
+   Read request for N characters can be satisfied by any number of 
+   characters up to and including N and the string that is returned from a
+   Read request may not be the full string including the terminator.
+
+   Window Status Request (WSR): the request to the Console consists of the
+   sequence "<CSI> q", where "CSI" is either the "\x9B" character or the 
+   character pair "ESC[". The response is posted to the Console read buffer
+   and should be read from there. The response consists of the string:
+   "<CSI>1;1;HH;WW r", where HH is the number of text rows in the window
+   and WW is the number of characters across the window. HH and WW are ASCII
+   characters describing a decimal number (eg "82", "29".
+   Note that these data can also be obtained by the GetAttrs() call.
+
+   Device Status Report (DSR): the request to the Console consists of the
+   sequence "<CSI6n". The response consists of the string:
+   "<CSI>XX;YYR", where XX and YY are the column and row values of the
+   current cursor position.
+   Note that these data can also be obtained by the GetAttrs() call.
+
+   Intuition-Triggered Outputs
+   The user can elect to receive notification of Intuition events by use of
+   the SRE (Set Raw Events) sequence. This sequence consists of the string
+   "<CSI>EE{", where EE is the numeric value of an Intuition event for which
+   the caller wishes to receive notification.
+   For example, the string "<CSI>12{" would cause the Console to send a 
+   notification to the caller whenever the window is resized 
+   (IECLASS_SIZEWINDOW == 12). The string that is sent (for all events) is:
+   "<CSI>Cl;Sc;Co;Qu;X;Y;SS;MM|", where the parameters are the contents of
+   the InputEvent received by the Console. Some "InputEvents" are simulated
+   by the Console for events not generated by Intuition. The codes in the
+   transmitted string are:
+   Cl is the ie_Class;
+   Sc is the ie_SubClass;
+   Co is the ie_Code;
+   Qu is the ie_Qualifier;
+   X is the X-ordinate of the mouse pointer at the time of the event;
+   Y is the Y-ordinate of the mouse pointer at the time of the event;
+   SS is the Timestamp of the event (seconds);
+   MM is the Timestamp of the event (microseconds).
+   Note: in the case of simulated "events", only the "Class" field is 
+   accurate, all other fields are zero.
+
+   BUGS
+   Does not correctly display cursor in SuperBitMap layers for
+   versions prior to V36.
+
+   Concealed mode should not be used prior to V39 console.device.
+   Prior to V39 concealed mode masked all rastport output, the
+   effect of which varied.  As of V39, text output is simply
+   hidden by setting the pen colors.  Scrolling, clearing,
+   cursor rendering, etc., are unaffected.  For maximum
+   compatibility it is recommended you simply set the colors
+   yourself, and not used concealed mode.
+
+   V36-V37 character mapped mode console.device windows could
+   crash, or behave erratically if you scroll text DOWN more
+   than a full window-worth of text.  This bug has been fixed
+   in V39 console.  The only work-around is to avoid sending
+   scroll down, or cursor up commands which exceed the window
+   rows (this is not a problem for unit 0 console windows).
+
+   SPECIAL NOTES FOR NEW_STYLE CONSOLE WINDOWS
+   -------------------------------------------
+   New-style console windows (ie those opened with a Unit number of
+   CONU_HISTORY or greater) have several behavioural differences from
+   "legacy" consoles. These Notes describe some of those differences.
+
+   Multi-row Lines
+   ---------------
+   When text is added to a line until it overflows the window, the text will
+   overflow and "wrap around" to a new row. In console.device up to V53.1,
+   it was left to the application to maintain the logical connection between
+   those rows.
+   In V53.20 and above, the console maintains the rows as a logical group.
+   There is no limit to the number of rows associated within such a group.
+   Expanding or shrinking the window size causes multi-row groups to wrap
+   or unwrap to maintain the connection.
+   * If a character is inserted or deleted within a multi-row line, *all* 
+   the rows of text will scroll as the insertion/deletion ripples through 
+   the whole group of rows.
+   * The DL (Delete Line) and IL (Insert Line) sequences delete or insert
+   only the number of rows in the argument. In this context, rows are 
+   considered as separate entities, but the logical connection between them
+   is maintained. Thus, if the cursor is placed on the second row of a multi
+   row group and IL 3 is called, three new blank rows are inserted between
+   the first row and the old row that contained the cursor. The cursor is
+   moved down to the old row so that it remains under the same character and
+   the group of rows is now three rows larger.
+   * If an EL (1) (Erase to End of Line) is performed in a new-style console
+   window, the row containing the cursor is cleared from the cursor to the
+   end of that row, any following overflow rows will be deleted and the
+   display will be scrolled up or down to fill the gap.
+   * Tab stops in a new-style console can be of any numerical value up to
+   65534. Tab stops "wrap around" to following rows of logical groups and
+   are counted from the start of the first row in the group.
+
+   Effect of Clearing the Display when Display History is being saved
+   ------------------------------------------------------------------
+   There are three ways in which the application can clear the display,
+   using FF (Form Feed, ASCII 0x0C), Erase Display (CSI n K) and Reset to
+   Initial State (RIS or ESC c).
+
+   The implementations of FF and Erase Display attempt to preserve any
+   display history that occurred prior to the clear action. This is done by
+   saving to the history buffer all lines of the display prior to and
+   including the line that contained the cursor at the time the request was
+   issued (the display is scrolled up before being cleared).
+
+   On the other hand, the ResetInitial Sequence (RIS) or (Esc c) sequence
+   erases all history up to and including the line containing the cursor
+   when the sequence "ESC c" is issued. This is in line with the ANSI
+   standard.
+
+   Parameter ranges for Commands EL (Erase Line) and ED (Erase Display)
+   --------------------------------------------------------------------
+   In accordance with ANSI standards, these control sequences can have
+   a parameter of 0, 1 or 2 (default 0). The meanings are:
+
+   0:    Erase from cursor position to end of area (line or display),
+         inclusive.
+   1:    Erase from start of area (line or display) to cursor position,
+         non-inclusive.
+   2:    Erase entire area.
+
+   Note that the behaviour has changed in V53. Older versions of the console
+   used to perform an "erase to end" function no matter what parameter was
+   supplied. This behaviour is unchanged for legacy windows (CONU_CHARMAP
+   and below).
+   Some existing programs issue an EL (1) command to erase to end of line.
+   To maintain compatibility with existing software, the sequence EL/ED (1)
+	performs the same action as EL/ED (0) (Erase to end of line or display).
+
+   SEE ALSO
+   ROM Kernel Manual (Volume 1), exec/io.h
+
+console.device/OpenDevice                           console.device/OpenDevice
+
+   NAME
+   OpenDevice -- a request to open a Console device
+
+   SYNOPSIS
+   error = OpenDevice ("console.device", unit, IOStdReq, flags)
+
+   FUNCTION
+   The open routine grants access to a device. 
+
+   This open command differs from most other device open commands
+   in that it requires some information to be supplied in the
+   IOStdReq block.  This initialisation information specifies how
+   the console output window is to be created.
+
+   INPUTS
+   "console.device" - a pointer to the name of the device to be opened.
+   unit - the unit number to open on that device.
+   IOStdReq - a pointer to a standard request block. Fields io_Data,
+   io_Length and io_Actual have special meaning - see below.
+   flags - contains special control bits - see below
+
+   The unit number that is a standard parameter for an open call
+   is used in a special manner by this device.
+   See devices/conunit.h for defined valid unit numbers.
+
+   unit number: -1 (CONU_LIBRARY)
+
+   Used to get a pointer to the device library vector
+   which is returned in the io_Device field of the IOStdReq
+   block.  No actual console is opened.  You must still close
+   the device when you have finished with it.
+
+   unit number: 0 (CONU_STANDARD)
+
+   A unit number of zero binds the supplied window to
+   a unique console.  Sharing a console must be done at a level
+   higher than the device.
+
+   unit number: 1 (CONU_CHARMAP) (V36)
+
+   A unit number of one is similar to a unit number of
+   zero, but a console map is also created, and maintained by
+   the console.device.  The character map is used by the console
+   device to restore obscured portions of windows which are
+   revealed, and to redraw a window after a resize.
+
+   The character map is currently for internal use
+   only, and is not accessible by the programmer.  The character
+   map stores characters, attributes, and style information for
+   each character written with the CMD_WRITE command. 
+
+   unit number 2: not used
+
+   unit number: 3 (CONU_SNIPMAP) (V36)
+
+   A unit number of three is similar to a unit number
+   of one, but also gives the user the ability to highlight
+   text with the mouse. Highlighted text can be copied by pressing
+   RIGHT AMIGA C.  See NOTES below.
+
+   unit number: 4 (CONU_HISTORY) (V53)
+
+   A unit number of four is similar to a unit number of three,
+   but allows the console to maintain a history of display lines 
+   that have scrolled out of the window; these old lines may be
+   scrolled back onto the window by using the scrollbar, mousewheel
+   or keyboard shortcut keys.
+   Unit number four also allows tabbed windows, supporting
+   several different consoles.
+
+   Flags parameter:
+
+   Bit 0 (CONFLAG_NODRAW_ON_NEWSIZE) (V37)
+   This flags bit is ignored under V36, so can be set, though it
+   will have no effect.  When bit 0 is set, it means that you don't
+   want the console.device to redraw the window when the window
+   size is changed (assuming you have opened the console.device
+   with a character map - unit numbers 1, or 3).  This flag is
+   ignored if you have opened a console.device with a unit
+   number of 0.  Typically you would use this flag when you
+   want to perform your own window refresh on a newsize, and
+   you want the benefits of a character mapped console.
+
+   Bits [2:3] (CONFLAG_CREATE_WINDOW and CONFLAG_TABBED_WINDOW) (V53)
+   These bits define the combinations of window source, tabs and sharing.
+   Tabbed windows are only available when the Unit opened is CONUNIT_HISTORY
+   or greater.
+
+   Create Tabbed Effect
+      0      0   Opens Unit without Tabs in existing window (legacy input).
+      1      0   Opens Unit without Tabs in new Window.
+      1      1   Creates new Tabbed Window (allows sharing).
+      0      1   Open new Tab in existing Tabbed Window.
+
+   The default combination (both bits zero) gives the legacy behaviour.
+
+   Bit 4 (CONFLAG_SYNC_WRITES) (V53) (optional)
+   This bit forces a task issuing a Write request to wait until the request
+   is complete before returning to the caller. This blocking action is 
+   forced for legacy windows but optional for new-style windows with Tabs
+   or History.
+
+   io_Data field:
+   This field is used to pass the address of an existing Window when a Unit
+   is opened (see CONFLAG_xxx definitions above).
+   Either the address of an existing "struct Window" or the address of a
+   TagList can be passed in this field. If io_Length is zero, io_Data is 
+   assumed to be the address of a "struct Window".
+   If io_Length is non-zero, io_Data is assumed to be the address of a 
+   TagList (struct TagItem *), containing the tags to define the Window.
+   Not all Window tags are used, only those that define the geometry of the
+   window. These tags are obeyed, all others are ignored:
+   WA_AutoAdjust
+   WA_Zoom
+   WA_PubScreenName
+   WA_Left, WA_Top
+   WA_Width, WA_Height, WA_MinWidth, WA_MinHeight, WA_MaxWidth, WA_MaxHeight
+   WA_Title
+   WA_Flags (WFLG_CLOSEGADGET, WFLG_SIZEGADGET, WFLG_BACKDROP,
+           WFLG_DEPTHGADGET and WFLG_DRAGBAR,
+           WFLG_BORDERLESS and WFLG_ACTIVATE)
+   WINDOW_IconifyGadget
+   WINDOW_VertProp            (scrollbar)
+   
+   An Iconify gadget will be created with a new Window unless the option
+   "NOICONIFY" is included in the command options.
+
+   A scrollbar will be added to the right border of the window if the Unit
+   number is at least CONU_HISTORY. It can be prevented by the option
+   "NOSCROLLBAR" in the command options.
+
+   A menu will always be included with a new window. A menu will never be
+   added to a window whose address is supplied to the console in an Open
+   call.
+
+   io_Length field:
+   This field must contain the length (in bytes) of the Tag List
+   supplied when io_Data contains a pointer to the Tag List.
+   If io_Data contains the address of a Window structure, then io_Length
+   must be zero. If io_Length is non-zero, io_Data will be assumed to be
+   a TagList address and the request will probably fail.
+
+   RESULTS
+   error: zero if successful, else an error is returned. This error value
+   is also returned in io_Error.
+   io_Actual: contains a pointer to the Window structure. If an existing
+   Window structure was passed in the io_Data field, that value will be 
+   echoed in the io_Actual field. If a window is created (either default
+   or as specified in a TagList), a pointer to its Window structure will
+   be returned in io_Actual.
+
+   NOTES
+   Clipboards
+   As noted above, opening the console.device with a unit number of 3
+   allows the user to drag select text, and copy the selection with
+   RIGHT AMIGA C.  The snip is copied to a private buffer managed
+   by the console.device (as of V36).  The snip can be copied to
+   any console.device window unless you are running a console to
+   clipboard utility such as that provided with V37.
+
+   The user pastes text into console.device windows by pressing
+   RIGHT AMIGA V.  Both RIGHT AMIGA V, and RIGHT AMIGA C are swallowed
+   by the console.device (unless you have asked for key presses as
+   RAW INPUT EVENTS).  Text pasted in this way appears in the
+   console read stream as if the user had typed all of the characters
+   manually.  Additional input (e.g., user input, RAW INPUT EVENTS)
+   are queued up after pastes.  Pastes can theoretically be quite
+   large, though they are no larger than the amount of text
+   which is visible in a console.device window.
+
+   When running the console to clipboard utility, text snips
+   are copied to the clipboard.device, and RIGHT AMIGA V key
+   presses are broadcast as an escape sequence as part of the 
+   console.device read stream ("<CSI>0 v" - $9B,$30,$20,$76).
+
+   It is left up to the application to decide what to do when this
+   escape sequence is received.  Ideally the application
+   will read the contents of the clipboard and paste the text
+   by using successive writes to the console.device.
+
+   Because the contents of the clipboard.device can be quite
+   large, your program should limit the size of writes to something
+   reasonable (e.g., no more than 1K characters per CMD_WRITE, and
+   ideally no more than 256 characters per write).  Your program
+   should continue to read events from the console.device looking
+   for user input and possibly RAW INPUT EVENTS.  How you decide
+   to deal with these events is left up to the application.
+
+   Raw Events
+   If you are using a character mapped console you should receive
+   Intuition events as RAW INPUT EVENTS from the console.device.
+   By doing this you will hear about these events after the console
+   device does.  This allows the console.device to deal with events
+   such as window resizing and refresh before your application.
+
+   Tab Labels
+   When a window is opened with a ClickTab gadget, each Tab can be given
+   a label to identify its associated Unit. The general form of the string
+   can be chosen using the Console Preferences Editor. The user may embed
+   formatting characters in the string, similarly to a Window Title or
+   Shell prompt. Unlike those examples, however, the case of the characters
+   in the Tab labels is significant, as this list of currently supported 
+   formatting characters shows:
+   Format      Replaced by
+     %N         Shell Process number.
+     %H         Number of lines of Display History in memory.
+     %S         Full path of current directory.
+     %s         Partial path of current directory (last part only).
+
+   Keyboard Shortcuts
+   The console supports several unique keyboard shortcuts to assist the
+   user. These shortcuts are all generated by the combination of the Right
+   Amiga key and one of the characters in this list:
+   Key       Action
+    C         Copy selected string from window.
+    I         Iconify window (if Unit = CONU_HISTORY or greater).
+    N         Open a new Shell in a new Tab (if a Tabbed window and typed
+              in a Shell). The new Shell is a clone of the existing Shell.
+    V         Paste from Clipboard.
+
+   Window Size
+   In early versions, a console window with a character map attached could
+   not be resized to become larger than the screen it resided on, or it
+   could crash. That restriction has been removed in V53.
+   As a consequence, any new console window is no longer clipped to the
+   screen size.
+
+   BUGS
+   Legacy applications that call Open() with previously-undefined
+   bits set in the flags longword will probably fail.
+
+   SEE ALSO
+   exec/io.h, intuition/intuition.h, prefs/console.h
+
+console.device/RawKeyConvert                     console.device/RawKeyConvert
+
+    NAME
+	RawKeyConvert -- decode raw input classes
+
+    SYNOPSIS
+	actual = RawKeyConvert(event, buffer, length, keyMap)
+
+    FUNCTION
+	This console function converts input events of type
+	IECLASS_RAWKEY to ANSI bytes, based on the keyMap, and
+	places the result into the buffer.
+
+    INPUTS
+	event -  an InputEvent structure pointer.
+	buffer - a byte buffer large enough to hold all anticipated
+	    characters generated by this conversion.
+	length - maximum anticipation, i.e. the buffer size in bytes.
+	keyMap - a KeyMap structure pointer, or null if the default
+	    key map is to be used.
+
+    RESULTS
+	actual - the number of characters in the buffer, or -1 if
+	    a buffer overflow was about to occur.
+
+    ERRORS
+	if actual is -1, a buffer overflow condition was detected.
+	Not all of the characters in the buffer are valid.
+
+    NOTES
+	This function is different from standard device commands in
+	that it is a function in the console device library vectors.
+	In order to obtain a valid library base pointer for the
+	console device (a.k.a. ConsoleDevice) call
+	OpenDevice("console.device", -1, IOStdReq, 0),
+	and then grab the io_Device pointer field out of the IOStdReq
+	and use as ConsoleDevice.
+
+    BUGS
+
+    SEE ALSO
+	exec/io.h, devices/inputevent.h, libraries/keymap.h
+
+

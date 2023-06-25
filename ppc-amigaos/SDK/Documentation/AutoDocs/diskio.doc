@@ -1,0 +1,509 @@
+TABLE OF CONTENTS
+
+diskio.library/AddDiskChangeHandler
+diskio.library/Cleanup
+diskio.library/FlushBlocks
+diskio.library/FlushIOCache
+diskio.library/IsDiskPresent
+diskio.library/IsWriteProtected
+diskio.library/Query
+diskio.library/ReadBlocks
+diskio.library/ReadBytes
+diskio.library/RemDiskChangeHandler
+diskio.library/Setup
+diskio.library/Update
+diskio.library/WriteBlocks
+diskio.library/WriteBytes
+diskio.library/AddDiskChangeHandler                             diskio.library/AddDiskChangeHandler
+
+   NAME
+      AddDiskChangeHandler -- Add a diskchange handler. (V53.13)
+      AddDiskChangeHandlerTags -- Vararg stub.
+
+   SYNOPSIS
+      struct DiskChangeHandler * AddDiskChangeHandler(CONST_STRPTR name, 
+          DiskChangeHandlerFunc func, APTR udata, 
+          const struct TagItem * tags);
+      struct DiskChangeHandler * AddDiskChangeHandlerTags(
+          CONST_STRPTR name, DiskChangeHandlerFunc func, APTR udata, ...);
+
+   FUNCTION
+
+   INPUTS
+       name - DOS device name ("USB0", "DH5", ...).
+       func - Function of form: void DiskChangeHandlerFunc(APTR udata);
+       udata - Userdata to be passed to the above.
+       tags - Taglist for future expansion.
+
+   RESULT
+       Pointer to a created DiskChangeHandler structure or NULL for failure.
+
+   EXAMPLE
+
+   NOTES
+       As your function will be called from a software interrupt normal
+       interrupt code restrictions apply and you should not do any more work
+       in it than what is strictly necessary to signal your program that a
+       diskchange has happened.
+
+   BUGS
+
+   SEE ALSO
+       RemDiskChangeHandler()
+
+diskio.library/Cleanup                                                       diskio.library/Cleanup
+
+   NAME
+      Cleanup -- Delete a DiskIO handle
+
+   SYNOPSIS
+      void Cleanup(struct DiskIO *dio);
+
+   FUNCTION
+       Cleans up any resources managed by the DiskIO handle and
+       frees the handle itself.
+
+   INPUTS
+       dio - DiskIO handle.
+
+   RESULT
+       This function does not return a result.
+
+   EXAMPLE
+
+   NOTES
+       Passing a NULL pointer as dio is safe and will do nothing.
+
+   BUGS
+
+   SEE ALSO
+       Setup()
+
+diskio.library/FlushBlocks                                               diskio.library/FlushBlocks
+
+   NAME
+      FlushBlocks -- Flushes pending writes in the specified block range.
+
+   SYNOPSIS
+      int32 FlushBlocks(struct DiskIO * dio, uint64 block, 
+          uint32 blocks);
+
+   FUNCTION
+       Flushes cached writes for the specified range of blocks. Does nothing
+       if either block cache or write caching is disabled.
+
+   INPUTS
+       dio - DiskIO handle.
+       block - Start block.
+       blocks - Number of blocks from start block.
+
+   RESULT
+       0 sucess for success, otherwise an (as yet) undefined error code.
+
+   EXAMPLE
+
+   NOTES
+       In diskio.library < 54.13 calling this function is equivalent to
+       calling FlushIOCache().
+
+   BUGS
+
+   SEE ALSO
+       FlushIOCache()
+
+diskio.library/FlushIOCache                                             diskio.library/FlushIOCache
+
+   NAME
+      FlushIOCache -- Flush all pending writes.
+
+   SYNOPSIS
+      int32 FlushIOCache(struct DiskIO * dio);
+
+   FUNCTION
+       Flush any cached writes to disk. Does nothing if either block cache
+       or write caching is disabled.
+
+   INPUTS
+       dio - DiskIO handle.
+
+   RESULT
+       0 sucess for success, otherwise an (as yet) undefined error code.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       FlushBlocks()
+
+diskio.library/IsDiskPresent                                           diskio.library/IsDiskPresent
+
+   NAME
+      IsDiskPresent -- Description
+
+   SYNOPSIS
+      BOOL IsDiskPresent(struct DiskIO *dio);
+
+   FUNCTION
+       Return if a disk is present.
+
+   INPUTS
+       dio - DiskIO handle.
+
+   RESULT
+       TRUE if a disk was detected, FALSE otherwise.
+
+   EXAMPLE
+
+   NOTES
+       Currently this is equivalent to the Query() DIOQ_DiskPresent tag.
+
+   BUGS
+
+   SEE ALSO
+       Query()
+
+diskio.library/IsWriteProtected                                     diskio.library/IsWriteProtected
+
+   NAME
+      IsWriteProtected -- Get write protection status
+
+   SYNOPSIS
+      BOOL IsWriteProtected(struct DiskIO *dio);
+
+   FUNCTION
+       Get write protection status of current disk.
+
+   INPUTS
+       dio - DiskIO handle.
+
+   RESULT
+       TRUE if write protected, FALSE if write enabled.
+
+   EXAMPLE
+
+   NOTES
+       Currently this is equivalent to the Query() DIOQ_WriteProtected tag.
+
+   BUGS
+
+   SEE ALSO
+       Query()
+
+diskio.library/Query                                                           diskio.library/Query
+
+   NAME
+      Query -- Get information on current disk/partition.
+      QueryTags -- Vararg stub
+
+   SYNOPSIS
+      void Query(struct DiskIO *dio, const struct TagItem *tags);
+      void QueryTags(struct DiskIO *dio, ...);
+
+   FUNCTION
+       Get information on current disk/partition.
+
+   INPUTS
+       dio - DiskIO handle.
+       tags - taglist with attributes to query.
+
+   TAGS
+       DIOQ_DiskPresent (uint32)
+           TRUE if a disk is present, FALSE otherwise.
+
+       DIOQ_DiskValid (uint32)
+           TRUE if a disk is present and is usable, i.e. big enough to hold
+           this partition and with necessary command support in the device
+           driver. Otherwise FALSE.
+
+       DIOQ_WriteProtected (uint32)
+           TRUE if write protected, FALSE if write enabled.
+
+       DIOQ_TotalSectors (uint64)
+           Total number of sectors in disk or partition.
+
+       DIOQ_TotalBytes (uint64)
+           Total number of bytes in disk or partition. (V53.6)
+
+       DIOQ_BytesPerSector (uint32)
+           Sector size in bytes.
+
+       DIOQ_SectorShift (uint32)
+           Number of bits to shift to convert between sector and byte units.
+           (V53.6)
+
+       DIOQ_SectorMask (uint32)
+           Can be used to mask out the sector component from a byte offset
+           to obtain a byte offset into the sector. (V53.6)
+
+       DIOQ_DOSDevName (CONST_STRPTR)
+           Name of DOS device including colon ("USB0:", "DH1:"). (V53.8)
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+diskio.library/ReadBlocks                                                 diskio.library/ReadBlocks
+
+   NAME
+      ReadBlocks -- Description
+
+   SYNOPSIS
+      int32 ReadBlocks(struct DiskIO *dio, uint64 block, APTR buffer, 
+          uint32 blocks);
+
+   FUNCTION
+       Reads a number of blocks starting with the one specified
+       by the block parameter.
+
+   INPUTS
+       dio - DiskIO handle.
+       block - block to start reading from.
+       buffer - buffer to read to.
+       blocks - number of blocks to read.
+
+   RESULT
+       0 sucess for success, otherwise an (as yet) undefined error code.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       ReadBytes()
+
+diskio.library/ReadBytes                                                   diskio.library/ReadBytes
+
+   NAME
+      ReadBytes -- Description
+
+   SYNOPSIS
+      int32 ReadBytes(struct DiskIO *dio, uint64 offset, APTR buffer, 
+          uint32 bytes);
+
+   FUNCTION
+       Reads a number of bytes from the specified byte offset.
+
+   INPUTS
+       dio - DiskIO handle.
+       offset - byte offset into disk/partition.
+       buffer - buffer to read to.
+       bytes - number of bytes to read.
+
+   RESULT
+       0 sucess for success, otherwise an (as yet) undefined error code.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       ReadBlocks()
+
+diskio.library/RemDiskChangeHandler                             diskio.library/RemDiskChangeHandler
+
+   NAME
+      RemDiskChangeHandler -- Remove a diskchange handler. (V53.13)
+
+   SYNOPSIS
+      void RemDiskChangeHandler(struct DiskChangeHandler * dch);
+
+   FUNCTION
+
+   INPUTS
+       dch - Pointer returned from AddDiskChangeHandler().
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       AddDiskChangeHandler()
+
+diskio.library/Setup                                                           diskio.library/Setup
+
+   NAME
+      Setup -- Create a DiskIO handle.
+      SetupTags -- Vararg stub.
+
+   SYNOPSIS
+      struct DiskIO * Setup(CONST_STRPTR name, 
+          const struct TagItem *tags);
+      struct DiskIO * SetupTags(CONST_STRPTR name, ...);
+
+   FUNCTION
+       Creates a DiskIO handle and initialises it according to the provided
+       taglist.
+
+   INPUTS
+       name - DOS device name ("USB0", "DH5", ...).
+       tags - taglist for additional parameters.
+
+   TAGS
+       DIOS_Error (int32 *)
+           If Setup() fails a more detailed error code will be stored here.
+           (V53.7)
+
+       DIOS_Cache (BOOL)
+           Enable/disable block cache. Defaults to TRUE. (V53.5)
+
+       DIOS_WriteCache (BOOL)
+           Enable/disable write caching. Defaults to TRUE. (V53.5)
+
+       DIOS_DOSType (uint32)
+           Make sure that the device filesystem is of the correct dostype.
+           Defaults to 0 which means that no checking is done. (V53.7)
+
+       DIOS_DOSTypeMask (uint32)
+           Specifies which bits of dostype should be checked and which should
+           be ignored. Defaults to ~0 which means that all bits are checked
+           if DIOS_DOSType is specified. (V53.7)
+
+       DIOS_Inhibit (BOOL)
+           Set to TRUE to inhibit the device filesystem. Defaults to FALSE.
+           (V53.7)
+
+       DIOS_ReadOnly (BOOL)
+           Set to TRUE to only allow reading from this DiskIO handle.
+           Defaults to FALSE. (V53.14)
+
+   RESULT
+       Pointer to the created DiskIO handle or NULL for failure.
+
+   EXAMPLE
+       int32 setup_error;
+       struct DiskIO *dio;
+
+       setup_error = DIO_ERROR_UNSPECIFIED;
+       dio = IDiskIO->Setup(device_name,
+                            DIOS_Error, &setup_error,
+                            /* ... */
+                            TAG_END);
+       if (dio != NULL) {
+           /* Success */
+       } else {
+           IExec->DebugPrintF("IDiskIO->Setup() failed, error code: %ld\n",
+                              setup_error);
+       }
+
+   NOTES
+       As of version 53.6 Setup() also accepts device names with a trailing
+       colon character.
+
+       As of version 53.7 Setup() should also work when passed a volume name.
+
+   BUGS
+
+   SEE ALSO
+       Cleanup()
+
+diskio.library/Update                                                         diskio.library/Update
+
+   NAME
+      Update -- Prepare for accessing a new disk.
+
+   SYNOPSIS
+      void Update(struct DiskIO *dio);
+
+   FUNCTION
+       This function does everything that is needed to access a newly
+       inserted disk or other storage medium including obtaining geometry
+       data and re-creating the block cache.
+
+       This function is called implicitly by Setup().
+
+   INPUTS
+       dio - DiskIO handle
+
+   RESULT
+       This function does not return a result (yet)
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       Setup()
+
+diskio.library/WriteBlocks                                               diskio.library/WriteBlocks
+
+   NAME
+      WriteBlocks -- Description
+
+   SYNOPSIS
+      int32 WriteBlocks(struct DiskIO *dio, uint64 block, 
+          CONST_APTR buffer, uint32 blocks);
+
+   FUNCTION
+       Writes a number of blocks starting at the one specified
+       by the block parameter.
+
+   INPUTS
+       dio - DiskIO handle.
+       block - block to start writing at.
+       buffer - buffer to write from.
+       blocks - number of blocks to write.
+
+   RESULT
+       0 sucess for success, otherwise an (as yet) undefined error code.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       WriteBytes()
+
+diskio.library/WriteBytes                                                 diskio.library/WriteBytes
+
+   NAME
+      WriteBytes -- Description
+
+   SYNOPSIS
+      int32 WriteBytes(struct DiskIO *dio, uint64 offset, 
+          CONST_APTR buffer, uint32 bytes);
+
+   FUNCTION
+       Writes a number of bytes to the specified byte offset.
+
+   INPUTS
+       dio - DiskIO handle.
+       offset - byte offset into disk/partition.
+       buffer - buffer to write from.
+       bytes - number of bytes to write.
+
+   RESULT
+       0 sucess for success, otherwise an (as yet) undefined error code.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       WriteBlocks()
+
+

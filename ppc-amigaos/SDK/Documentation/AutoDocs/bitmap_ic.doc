@@ -1,0 +1,438 @@
+TABLE OF CONTENTS
+
+bitmap.image/--datasheet--
+bitmap.image/BITMAP_GetClass
+bitmap.image/--datasheet--                         bitmap.image/--datasheet--
+
+    NAME
+	bitmap.image -- Create image object using datatypes.
+
+    SUPERCLASS
+	imageclass
+
+    DESCRIPTION
+	This image class can create an image given the name of a source
+	file. It uses the datatypes system to create a bitmap used for
+	rendering the image. Bitmap supports drawing itself in a selected
+	or disabled state, supports transparent images provided that the
+	datatype supports transparency, and supports image scaling.
+
+	Instead of a source file name, a ready-to-use bitmap may be
+	used as well.
+
+    METHODS
+	OM_NEW -- Create the bitmap image. Passed to superclass then OM_SET.
+
+	OM_DISPOSE -- Destroy the bitmap image.
+
+	OM_GET -- Get object attributes. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	IM_DRAW -- Render the image. Overrides the superclass.
+
+	IM_DRAWFRAME -- Render the image at the frame size.
+
+	IM_EXTENT -- Inquire about image rendering extent.
+
+	IM_EXTENTFRAME -- Inquire about rendering extent at the frame size.
+
+	IM_DOMAINFRAME -- Query image for domain frame.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	IA_Top (int16)
+	IA_Left (int16)
+	IA_Width (int16)
+	IA_Height (int16)
+	    Set position and size of the image. If given, the size must be
+	    greater than or equal to the maximum dimensions of the bitmaps
+	    used, unless IA_Scalable is TRUE (see below).
+
+	    If IA_Scalable is FALSE and the image size is larger than one
+	    of the bitmap sizes, the bitmap will be drawn centered within
+	    the image. The area surrounding the bitmap is only erased if.
+	    IA_EraseBackground is TRUE, otherwise it is left untouched.
+
+	    If IA_Scalable is TRUE, the bitmap will be drawn stretched
+	    according to the image size, rather than centered. In this
+	    case, it is possible for the image size to be smaller than
+	    the bitmap size.
+
+	    As long as the image sizes have not been specified, the image
+	    will automatically size itself to be as large as the largest
+	    of its bitmaps. You can get back to this behavior at any time
+	    by setting the image sizes to -1 (via OM_SET).
+
+	    Defaults to the maximum of the dimensions of the normal,
+	    selected and disabled bitmaps.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Scalable (BOOL)
+	    If TRUE, the image will scale its bitmap, stretching it as
+	    needed to cover the whole image size. If FALSE, the bitmap
+	    will be centered within the image area. (V45)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_EraseBackground (BOOL)
+	    If TRUE, when the image is drawn the background of its
+	    whole area is first cleared with EraseRect(). (V53.7)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	BITMAP_SourceFile (CONST_STRPTR)
+	    Source file name of the image file to create the bitmap from
+	    using the datatypes system.
+
+	    To save video memory, only one bitmap for a given source file
+	    is generated and shared among all bitmap.image instances which
+	    load their data from that file, as long as they all also use
+	    the same screen (and the same color precision if it is 8-bit).
+
+	    Defaults to NULL, which means the bitmap is expected to be
+	    provided by the caller (see BITMAP_BitMap).
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_Screen (struct Screen *)
+	    Pointer to the screen to use the image on. This attribute must
+	    be provided when creating an object of this class using the
+	    datatypes system.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_Precision (uint32)
+	    Precision to use when obtaining colors. See the PRECISION_#?
+	    defines in <graphics/view.h>.
+
+	    Defaults to PRECISION_ICON.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_Masking (BOOL)
+	    If set to TRUE, the image will be drawn using a transparency
+	    mask or an alpha blending map if the image source contains a
+	    transparent color or an alpha channel.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	BITMAP_HasAlpha (BOOL)
+	    If set to TRUE, the bitmaps supplied by the caller will be
+	    assumed to contain a valid alpha channel, which shall then
+	    be used to achieve a blending effect when rendering. This
+	    requires BITMAP_Masking to be TRUE as well.
+	    This attribute will be ignored for any bitmap which is not
+	    in hicolor or truecolor format.
+	    It will also be ignored for bitmaps loaded from disk. (V53)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	BITMAP_Transparent (BOOL)
+	    If set to TRUE and the image source doesn't have a transparent
+	    color, color zero will be considered transparent and used to
+	    build a transparency mask. Ignored if the image source already
+	    provides its own mask, or if it's in hicolor/truecolor format.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_BitMap (struct BitMap *)
+	    Instead of letting the class create the bitmap using datatypes,
+	    you can create your own bitmap and pass it to the class.
+
+	    Either BITMAP_SourceFile or BITMAP_BitMap must be given.
+	    In case both attributes are specified, BITMAP_SourceFile
+	    will take precedence.
+
+	    Starting with V53.7, if a bitmap cannot be loaded from the
+	    specified source file for any reason, the one passed with
+	    BITMAP_BitMap (if any) is used instead. This way you can
+	    try using an external picture file, and provide a fallback
+	    if that operation fails, with just one NewObject() call.
+
+	    If you supply your own bitmap, you must pass BITMAP_Width
+	    and BITMAP_Height as well.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_Width (int32)
+	BITMAP_Height (int32)
+	    Set the dimensions of your own bitmap passed with
+	    BITMAP_BitMap or get the dimensions of the bitmap created
+	    by the datatype.
+
+	    You may specify dimensions which are smaller than those of
+	    the whole bitmap; in that case, only a bitmap section of the
+	    requested size will be used for rendering.
+
+	    Starting with V53.7, you may specify a smaller section with
+	    BITMAP_Width and BITMAP_Height even for bitmaps loaded via
+	    datatypes. Note however that at OM_NEW time these attributes
+	    are always set to the dimensions read from the picture file,
+	    therefore you have to change them afterwards using OM_SET if
+	    you want to take advantage of this feature.
+
+	    Also starting with V53.7, setting BITMAP_Width and/or
+	    BITMAP_Height to -1 will reset their values to the sizes
+	    originally read from the picture file. (If the bitmap does
+	    not come from a picture file, this operation will have no
+	    effect.)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	BITMAP_MaskPlane (APTR)
+	    A mask plane. Only set this if you supply your own bitmap
+	    with BITMAP_BitMap. The mask plane will only be used if
+	    BITMAP_Masking is TRUE.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_AlphaBitMap (struct BitMap *)
+	    A chunky 8-bit bitmap (in RGBFB_ALPHA8 format) defining the
+	    alpha channel for the "normal state" bitmap, to be used if
+	    BITMAP_Masking is TRUE. Overrides BITMAP_HasAlpha.
+	    Note that this alpha bitmap must be of the same size as the
+	    normal bitmap, and will be ignored if the normal bitmap is
+	    not in hicolor or truecolor format.
+	    It will also be ignored if the normal bitmap is loaded from
+	    disk. (V53)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_OffsetX (int32)
+	BITMAP_OffsetY (int32)
+	    Together with BITMAP_BitMap, BITMAP_Width and BITMAP_Height
+	    these attributes determine which part of the bitmap to use
+	    for the image.
+
+	    We used to state "these attributes will be ignored if the
+	    bitmap was created by the class using datatypes"; this
+	    however is actually no longer the case ever since V45.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_SelectSourceFile (CONST_STRPTR)
+	    Source file name of the selected state image to create the
+	    bitmap from using the datatypes system.
+
+	    To save video memory, only one bitmap for a given source file
+	    is generated and shared among all bitmap.image instances which
+	    load their data from that file, as long as they all also use
+	    the same screen (and the same color precision if it is 8-bit).
+
+	    Defaults to NULL, which means the bitmap is expected to be
+	    provided by the caller (see BITMAP_SelectBitMap). In case
+	    that's not done either, the normal bitmap will be used also
+	    for the selected state.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_SelectBitMap (struct BitMap *)
+	    Your own bitmap to use for the selected state.
+
+	    In case both BITMAP_SelectSourceFile and BITMAP_SelectBitMap
+	    are specified, BITMAP_SelectSourceFile will take precedence.
+
+	    Starting with V53.7, if a bitmap cannot be loaded from the
+	    specified source file for any reason, the one passed with
+	    BITMAP_SelectBitMap (if any) is used instead. This way you
+	    can try using an external picture file, and provide a fallback
+	    if that operation fails, with just one NewObject() call.
+
+	    If you supply your own bitmap you must pass BITMAP_SelectWidth
+	    and BITMAP_SelectHeight as well.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_SelectWidth (int32)
+	BITMAP_SelectHeight (int32)
+	    Set the dimensions of your own selected state bitmap passed
+	    with BITMAP_SelectBitMap or get the dimensions of the selected
+	    state bitmap created by the datatype.
+
+	    You may specify dimensions which are smaller than those of
+	    the whole bitmap; in that case, only a bitmap section of the
+	    requested size will be used for rendering.
+
+	    Starting with V53.7, you may specify a smaller section with
+	    BITMAP_SelectWidth and BITMAP_SelectHeight also for bitmaps
+	    loaded via datatypes. Note however that at OM_NEW time these
+	    attributes are always set to the dimensions read from the
+	    picture file, therefore you have to change them afterwards
+	    using OM_SET if you want to take advantage of this feature.
+
+	    Also starting with V53.7, setting BITMAP_SelectWidth and/or
+	    BITMAP_SelectHeight to -1 will reset their values to the sizes
+	    originally read from the picture file. (If the selected state
+	    bitmap does not come from a picture file, this operation will
+	    have no effect.)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	BITMAP_SelectMaskPlane (APTR)
+	    A mask plane for the selected state bitmap. Only set this if
+	    you supply your own bitmap with BITMAP_SelectBitMap. The
+	    mask plane will only be used if BITMAP_Masking is TRUE.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_SelectAlphaBitMap (struct BitMap *)
+	    A chunky 8-bit bitmap (in RGBFB_ALPHA8 format) defining the
+	    alpha channel for the "selected state" bitmap, to be used if
+	    BITMAP_Masking is TRUE. Overrides BITMAP_HasAlpha.
+	    Note that this alpha bitmap must be of the same size as the
+	    selected bitmap, and will be ignored if the selected bitmap
+	    is not in hicolor or truecolor format.
+	    It will also be ignored if the selected bitmap is loaded
+	    from disk. (V53)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_SelectOffsetX (int32)
+	BITMAP_SelectOffsetY (int32)
+	    Together with BITMAP_SelectBitMap, BITMAP_SelectWidth and
+	    BITMAP_SelectHeight these attributes determine which part
+	    of the bitmap to use for the selected state image.
+
+	    We used to state "these attributes will be ignored if the
+	    bitmap was created by the class using datatypes"; this
+	    however is actually no longer the case ever since V45.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_DisabledSourceFile (CONST_STRPTR)
+	    Source file name of the disabled state image to create the
+	    bitmap from, using the datatypes system.
+
+	    To save video memory, only one bitmap for a given source file
+	    is generated and shared among all bitmap.image instances which
+	    load their data from that file, as long as they all also use
+	    the same screen (and the same color precision if it is 8-bit).
+
+	    Defaults to NULL, which means the bitmap is expected to be
+	    provided by the caller (see BITMAP_DisabledBitMap). In case
+	    that's not done either, the normal bitmap will be used also
+	    for the disabled state. (V51)
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_DisabledBitMap (struct BitMap *)
+	    Your own bitmap to use for the disabled state.
+
+	    In case both BITMAP_DisabledSourceFile and BITMAP_DisabledBitMap
+	    are specified, BITMAP_DisabledSourceFile will take precedence.
+
+	    Starting with V53.7, if a bitmap cannot be loaded from the
+	    specified source file for any reason, the one passed with
+	    BITMAP_DisabledBitMap (if any) is used instead. This way you
+	    can try using an external picture file, and provide a fallback
+	    if that operation fails, with just one NewObject() call.
+
+	    If you supply your own bitmap you must pass BITMAP_DisabledWidth
+	    and BITMAP_DisabledHeight as well. (V51)
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_DisabledWidth (int32)
+	BITMAP_DisabledHeight (int32)
+	    Set the dimensions of your own disabled state bitmap passed
+	    with BITMAP_DisabledBitMap or get the dimensions of the disabled
+	    state bitmap created by the datatype. (V51)
+
+	    You may specify dimensions which are smaller than those of
+	    the whole bitmap; in that case, only a bitmap section of the
+	    requested size will be used for rendering.
+
+	    Starting with V53.7, you may specify a smaller section with
+	    BITMAP_DisabledWidth and BITMAP_DisabledHeight also for bitmaps
+	    loaded via datatypes. Note however that at OM_NEW time these
+	    attributes are always set to the dimensions read from the
+	    picture file, therefore you have to change them afterwards
+	    using OM_SET if you want to take advantage of this feature.
+
+	    Also starting with V53.7, setting BITMAP_DisabledWidth and/or
+	    BITMAP_DisabledHeight to -1 will reset their values to the
+	    sizes originally read from the picture file. (If the disabled
+	    state bitmap does not come from a picture file, this operation
+	    will have no effect.)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	BITMAP_DisabledMaskPlane (APTR)
+	    A mask plane for the disabled state bitmap. Only set this if
+	    you supply your own bitmap with BITMAP_DisabledBitMap.
+
+	    The mask plane will only be used if BITMAP_Masking is TRUE. (V51)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_DisabledAlphaBitMap (struct BitMap *)
+	    A chunky 8-bit bitmap (in RGBFB_ALPHA8 format) defining the
+	    alpha channel for the "disabled state" bitmap, to be used if
+	    BITMAP_Masking is TRUE. Overrides BITMAP_HasAlpha.
+	    Note that this alpha bitmap must be of the same size as the
+	    disabled bitmap, and will be ignored if the disabled bitmap
+	    is not in hicolor or truecolor format.
+	    It will also be ignored if the disabled bitmap is loaded
+	    from disk. (V53)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	BITMAP_DisabledOffsetX (int32)
+	BITMAP_DisabledOffsetY (int32)
+	    Together with BITMAP_DisabledBitMap, BITMAP_DisabledWidth and
+	    BITMAP_DisabledHeight these attributes determine which part
+	    of the bitmap to use for the disabled state image.
+
+	    We used to state "these attributes will be ignored if the
+	    bitmap was created by the class using datatypes"; this
+	    however has never actually been the case. (V51)
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+bitmap.image/BITMAP_GetClass                     bitmap.image/BITMAP_GetClass
+
+    NAME
+	BITMAP_GetClass -- Gets pointer to the bitmap class.
+
+    SYNOPSIS
+	Class * class = BITMAP_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "bitmap.image" public class ID instead.
+
+    RESULT
+	class - Pointer to the bitmap class.
+
+

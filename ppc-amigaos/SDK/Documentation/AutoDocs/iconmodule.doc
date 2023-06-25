@@ -1,0 +1,745 @@
+TABLE OF CONTENTS
+
+generic.iconmodule/--background--
+generic.iconmodule/AllocIconDataA
+generic.iconmodule/DupIconDataA
+generic.iconmodule/FreeIconDataA
+generic.iconmodule/LoadIconA
+generic.iconmodule/ModuleControlA
+generic.iconmodule/SaveIconA
+generic.iconmodule/ScaleIconA
+generic.iconmodule/--background--           generic.iconmodule/--background--
+
+    NOTE
+	This document provides the specifications of an icon loader/saver
+	module as supported by icon.library 51.15 and higher. It is meant
+	to be useful to third-party icon module implementors.
+
+	Its autodoc entries are to be interpreted as a description of the
+	API any icon module should conform to, and not usage instructions
+	for an icon module client; there are no icon module clients other
+	than icon.library.
+
+    OVERVIEW
+	Icon modules act as an interface between third-party icon formats
+	and the standard Amiga icon framework (the icon.library API).
+
+	An icon module is a library of functions, called by icon.library,
+	specialized in the processing of one or more icon file formats.
+	Each icon module must reside in LIBS:IconModules and is opened by
+	icon.library on system startup. Its properties are queried and it
+	is then provided the address of icon.library's base and interface
+	in order to be able to call icon.library functions.
+
+	An icon module may be read-only (just an icon loader), write-only
+	(just an icon saver) or it may support both loading and saving of
+	icons. If an icon module reports itself as capable of loading (or
+	saving), it must support that operation for all file formats that
+	it declares to be able to handle.
+
+generic.iconmodule/AllocIconDataA           generic.iconmodule/AllocIconDataA
+
+    NAME
+	AllocIconDataA -- Allocate format-specific data and attach it to an icon
+
+    SYNOPSIS
+	Success = AllocIconDataA(Icon, TagList)
+
+	uint32 AllocIconDataA(struct DiskObject *, struct TagItem *);
+
+	Success = AllocIconData(Icon, ...)
+
+	uint32 AllocIconData(struct DiskObject *, ...);
+
+    FUNCTION
+	This function allocates memory to hold any private format-specific
+	data an icon needs to carry around in order for the icon module to
+	recognize it and be able to operate upon it.
+	The function initializes the allocated data to reasonable default
+	values, and attaches it to the passed icon with IconControlA()'s
+	ICONCTRLA_SetIconModuleData tag.
+	Any memory allocations involved in the process should be made with
+	icon.library/FreeAlloc() on the FreeList passed to the function,
+	so that all the data can then be freed at once by FreeDiskObject().
+
+	If the icon module is able to fully handle an icon without needing
+	to have any private information attached to it, the function shall
+	do nothing and always return success.
+
+	The basic purpose of this function is to add to the icon all the
+	essential information that the icon module's functions require to
+	be able to handle the icon "as if" it had been loaded by the icon
+	module itself, even if it was in fact loaded by icon.library from
+	a native Amiga icon file. The main envisioned use of this is to
+	allow icon.library clients to permanently change the file format
+	associated to an icon, so that there is no need to (for instance)
+	specify it explicitly at save time by passing ICONPUTA_FileFormat.
+	Note that this may not be possible for certain file formats where
+	the private format-specific icon data cannot be fabricated out of
+	thin air because it requires information that can only originate
+	from an actual existing icon file. In that case, the function can
+	do nothing but return failure.
+
+	As of icon.library V51, this function is never called, but should
+	nevertheless be implemented in the icon module (even as a no-op
+	always returning failure) for future compatibility.
+
+	The function shall return TRUE to indicate success, or FALSE for
+	failure. The exact reason for a failure can be communicated to the
+	caller by setting an error code in the variable whose address is
+	passed to the function with the IMA_ErrorCode tag.
+
+    INPUTS
+	Icon -- The icon for which the icon module data should be allocated.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, which should be used (wherever possible) for all
+	    the non-temporary memory allocations required in the process of
+	    allocating the icon's private icon module data. The function
+	    should always read this TagItem.
+
+	IMA_ErrorCode (uint32 *) -- A pointer to a longword where a DOS error
+	    code can be stored before returning in case of failure. If the
+	    function succeeds, this should be set to zero instead.
+
+    RESULT
+	Success -- TRUE for success, FALSE for failure.
+
+    SEE ALSO
+	FreeIconDataA()
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/FreeAlloc()
+	icon.library/IconControlA()
+
+generic.iconmodule/DupIconDataA               generic.iconmodule/DupIconDataA
+
+    NAME
+	DupIconDataA -- Duplicate the icon module data associated to an icon
+
+    SYNOPSIS
+	IconData = DupIconDataA(Icon, TagList)
+
+	APTR DupIconDataA(struct DiskObject *, struct TagItem *);
+
+	IconData = DupIconData(Icon, ...)
+
+	APTR DupIconData(struct DiskObject *, ...);
+
+    FUNCTION
+	This function will attempt to make a duplicate of the private icon
+	module data associated to an icon, if any such data exists.
+
+	It is called by icon.library's DupDiskObjectA() function to allow
+	a duplicate of an icon to maintain any information specific to the
+	icon module which generated the original icon. As some icon module
+	functions might need the information stored in an icon's private
+	icon module data to correctly perform their job, it is desirable
+	that this information be duplicated along with the icon itself at
+	DupDiskObjectA() time. This way, the duplicate will be able (for
+	instance) to be saved in the same file format, or scaled with the
+	same accuracy as the original icon would.
+
+	To gain access to the icon module data attached to the passed icon,
+	the function uses IconControlA()'s ICONCTRLA_GetIconModuleData tag.
+	If the data can be duplicated, any memory allocations needed to do
+	so should be made with icon.library/FreeAlloc() on the FreeList
+	passed to the function, so that the data can later be automatically
+	freed at FreeDiskObject() time.
+
+	The function shall return a pointer to a duplicate of the passed
+	icon's private icon module data, or NULL to indicate failure. The
+	exact reason for a failure can be communicated to the caller by
+	setting an error code in the variable whose address is passed to
+	the function with the IMA_ErrorCode tag.
+	Note: the private icon module data may be of a type that can't be
+	easily duplicated. In that case, it's ok to return NULL with zero
+	as failure code (meaning it wasn't actually a failure), provided
+	that SaveIconA() and ScaleIconA() are able to operate even if the
+	icon module data is not present.
+
+	If the passed icon carries no private icon module data at all,
+	the function shall also return NULL with a failure code of zero.
+
+    INPUTS
+	Icon -- The icon whose private icon module data is to be duplicated.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, which should be used (wherever possible) for all
+	    the non-temporary memory allocations required in the process of
+	    duplicating the icon's private icon module data. The function
+	    should always read this TagItem.
+
+	IMA_TagList (struct TagItem *) -- The tag list which was originally
+	    passed to the icon.library function calling DupIconDataA(), namely
+	    DupDiskObjectA(). The function should normally not need it.
+
+	IMA_ErrorCode (uint32 *) -- A pointer to a longword where a DOS error
+	    code can be stored before returning in case of failure. If the
+	    function succeeds, this should be set to zero instead.
+
+    RESULT
+	IconData -- A pointer to valid duplicated data in case of success,
+	    or NULL to indicate failure.
+
+    NOTES
+	The function should always check if the passed icon was actually
+	loaded by the icon module it belongs to, and return failure otherwise
+	with an error code of ERROR_OBJECT_WRONG_TYPE.
+
+	A safe way to identify the icon module associated to an icon is, for
+	instance, to make LoadIconA() store its library base address in the
+	first longword of the icon's private icon module data. This address
+	can then be read by DupIconDataA() and compared with its own library
+	base address. Of course, if the icon module data can be duplicated,
+	this address should be copied as well!
+
+    SEE ALSO
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/DupDiskObjectA()
+	icon.library/FreeAlloc()
+	icon.library/IconControlA()
+
+generic.iconmodule/FreeIconDataA             generic.iconmodule/FreeIconDataA
+
+    NAME
+	FreeIconDataA -- Free the module-specific data attached to an icon
+
+    SYNOPSIS
+	FreeIconDataA(Icon, TagList)
+
+	void FreeIconDataA(struct DiskObject *, struct TagItem *);
+
+	FreeIconData(Icon, ...)
+
+	void FreeIconData(struct DiskObject *, ...);
+
+    FUNCTION
+	This function frees any private module-specific data attached to
+	an icon by LoadIconA() or AllocIconDataA(). It is called once by
+	FreeDiskObject() before disposing of the icon itself.
+
+	To retrieve the icon's private icon module data, the function
+	shall use IconControlA()'s ICONCTRLA_GetIconModuleData tag.
+
+	The function does not need to free any memory that was allocated
+	via icon.library/FreeAlloc() on the icon's FreeList, as this will
+	be done by icon.library itself; it is however harmless to do so.
+
+	The purpose of this function is to allow the icon module to free
+	any memory that might have been allocated by other means, like for
+	instance AllocVec(), AllocBitMap() or AllocRaster().
+
+    INPUTS
+	Icon -- The icon whose private icon module data should be freed.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, needed by icon.library/FreeFree() as a parameter.
+	    It is only useful if the function decides to free by hand some
+	    memory that was allocated with icon.library/FreeAlloc(); this
+	    is, however, completely unnecessary.
+
+    NOTES
+	The function should always check if the passed icon was actually
+	loaded by the icon module it belongs to, and ignore it if it wasn't.
+
+	A safe way to identify the icon module associated to an icon is, for
+	instance, to make LoadIconA() store its library base address in the
+	first longword of the icon's private icon module data. This address
+	can then be read by FreeIconDataA() and compared with its own library
+	base address.
+
+    SEE ALSO
+	AllocIconDataA()
+	LoadIconA()
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/FreeAlloc()
+	icon.library/FreeDiskObject()
+	icon.library/FreeFree()
+
+generic.iconmodule/LoadIconA                     generic.iconmodule/LoadIconA
+
+    NAME
+	LoadIconA -- Load the specified file and build an icon from it
+
+    SYNOPSIS
+	Result = LoadIconA(Name, Icon, TagList)
+
+	struct DiskObject *LoadIconA(STRPTR, struct DiskObject *,
+	                             struct TagItem *);
+
+	Result = LoadIcon(Name, Icon, ...)
+
+	struct DiskObject *LoadIcon(STRPTR, struct DiskObject *, ...);
+
+    FUNCTION
+	This function will extract information from a file and try to build
+	an icon from it. It shall fail if the format of the file is not one
+	of those supported by the icon module. Any data found in the file
+	that has meaning for an Amiga icon (i.e. imagery, tool types...)
+	will be used to set up the empty DiskObject instance passed to the
+	function by icon.library, either by modifying its fields by hand or
+	by setting its attributes by way of IconControlA().
+
+	If any (non-temporary) memory allocation needs to be performed in
+	the process, it should be done on the provided FreeList using the
+	FreeAlloc() function of icon.library, so that all the memory can
+	then be freed automatically at FreeDiskObject() time.
+
+	The function shall store any special information the other module
+	functions will need to handle the icon (such as format-specific
+	data extracted from the file, or pointers to custom allocations)
+	into a private chunk of memory, and attach it to the icon using
+	IconControlA()'s ICONCTRLA_SetIconModuleData tag. This data will
+	later be retrieved by other functions of the same module with the
+	corresponding ICONCTRLA_GetIconModuleData tag.
+	It is the responsibility of the function to allocate the private
+	memory chunk for the icon module data; this, too, can be done on
+	the passed FreeList, so that the module won't have to worry about
+	freeing it later.
+
+	The file name passed to the function by icon.library always comes
+	with the ".info" suffix already appended to it.
+
+	The function shall return the same DiskObject pointer it was passed
+	in case of success, or NULL to indicate failure. The exact reason
+	for a failure can be communicated to the caller by setting an error
+	code in the variable whose address is passed to the function with
+	the IMA_ErrorCode tag.
+
+	Note: the passed DiskObject pointer may be NULL, which means that
+	the function should only check whether the format of the specified
+	file is one of those supported by the icon module. If it is, the
+	function shall return NULL with an error code of zero (no error),
+	otherwise the error code shall be ERROR_OBJECT_WRONG_TYPE. If the
+	file format is recognized, it shall be returned via IMA_LoadFormat
+	just like it would happen if the file were actually loaded.
+
+    INPUTS
+	Name -- Name of the file the icon information shall be loaded from.
+	Icon -- An empty DiskObject structure preallocated by icon.library.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, which should be used (wherever possible) for all
+	    the non-temporary memory allocations required in the process of
+	    building the icon. The function should always read this TagItem.
+
+	IMA_TagList (struct TagItem *) -- The tag list which was originally
+	    passed to the icon.library function calling LoadIconA(), namely
+	    GetIconTagList(). The function should normally not need it.
+
+	IMA_ErrorCode (uint32 *) -- A pointer to a longword where a DOS error
+	    code can be stored before returning in case of failure. If the
+	    function succeeds, this should be set to zero instead.
+
+	IMA_LoadFormat (STRPTR *) -- A pointer to a string pointer to be set
+	    to the address of a string holding the name of the format of the
+	    loaded file (if recognized). This string will be considered as
+	    read-only by the caller, so it can be defined as a constant.
+
+	IMA_Width (uint16) -- A specific width requested for the icon to be
+	    returned. If the icon module doesn't support scaling (as it is
+	    normally the case for any module handling a non-vector format)
+	    this tag shall be ignored by the function. If the function uses
+	    the passed width value, it should first filter it through the
+	    WANTED_ICON_WIDTH() macro defined in <workbench/iconmodule.h>.
+
+	IMA_Height (uint16) -- A specific height requested for the icon to be
+	    returned. If the icon module doesn't support scaling (as it is
+	    normally the case for any module handling a non-vector format)
+	    this tag shall be ignored by the function. If the function uses
+	    the passed height value, it should first filter it through the
+	    WANTED_ICON_HEIGHT() macro defined in <workbench/iconmodule.h>.
+
+    RESULT
+	Result -- The address of the passed DiskObject structure to indicate
+	    success, or NULL to indicate failure.
+
+    SEE ALSO
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/IconControlA()
+	icon.library/GetIconTagList()
+	icon.library/IconControlA()
+
+generic.iconmodule/ModuleControlA           generic.iconmodule/ModuleControlA
+
+    NAME
+	ModuleControlA -- Set and get icon and icon module options and attributes
+
+    SYNOPSIS
+	Processed = ModuleControlA(Object, TagList)
+
+	uint32 ModuleControlA(APTR, struct TagItem *);
+
+	Processed = ModuleControl(Object, ...)
+
+	uint32 ModuleControl(APTR, ...);
+
+    FUNCTION
+	This function is used to modify and query options and attributes
+	of the icon module or those of some specific object belonging to
+	the icon module, such as an icon that was loaded by it.
+	If NULL is specified as an object, the client must only pass tags
+	that do not require a particular object to operate upon. Likewise,
+	if an object is specified, the client must only pass tags that are
+	valid for that type of object.
+
+	If any (non-temporary) memory allocation needs to be performed by
+	the function, it should be done on the provided FreeList using the
+	FreeAlloc() function of icon.library, so that all the memory can
+	then be freed at once automatically at FreeDiskObject() time.
+	A FreeList will only be provided by icon.library when the passed
+	object is an icon.
+
+	The function shall return the number of tags that were processed
+	without errors. If the processing stops because of an error, the
+	returned value will be smaller than the number of passed TagItems,
+	indicating a (partial or complete) failure. The exact reason for a
+	failure can be communicated to the caller by setting an error code
+	in the variable whose address is passed to the function with the
+	IMA_ErrorCode tag. Additionally, the address of the TagItem that
+	triggered the error can also be returned in the pointer whose
+	address is passed to the function with the IMA_ErrorTagItem tag.
+
+    INPUTS
+	Object -- The object whose attributes are to be changed or queried,
+	    or NULL to change or query global icon module options.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	These are the tags that always apply to all ModuleControlA() calls:
+
+	IMA_ErrorCode (uint32 *) -- A pointer to a longword where a DOS error
+	    code can be stored before returning in case of failure. If the
+	    function succeeds, this should be set to zero instead.
+
+	IMA_ErrorTagItem (struct TagItem **) -- A pointer to a pointer to a
+	    TagItem where the address of the TagItem causing an error can be
+	    stored before returning in case of failure. If the function
+	    succeeds, this should be set to NULL instead.
+
+	These are the global tags that apply to the icon module itself:
+
+	IMA_GetFormatNames (STRPTR **) -- Returns a NULL-terminated array of
+	    single-word names for the formats supported by the module. This
+	    is supposed to be read-only for the client, so it is possible to
+	    return statically allocated data.
+
+	IMA_GetFormatDescs (STRPTR **) -- Returns a NULL-terminated array of
+	    short descriptions for the formats supported by the module. This
+	    is supposed to be read-only for the client, so it is possible to
+	    return statically allocated data.
+
+	IMA_SetIconBase (struct Library *) -- Tells the module icon.library
+	    is all set up and ready to use, and passes its library base
+	    address to it. The module must not attempt to open icon.library
+	    by itself, as unwanted recursion could occur in that case.
+
+	IMA_SetIconIFace (struct IconIFace *) -- Tells the module icon.library
+	    is all set up and ready to use, and passes its interface address
+	    to it. The module must not attempt to open icon.library by itself,
+	    as unwanted recursion could occur in that case.
+
+	IMA_SetMaxUnknownDataSize (uint32) -- Tells the module how much
+	    additional memory (approximately) should be allocated at most for
+	    each icon, to carry around data coming from the original file
+	    that isn't useful for the icon itself, but would be desirable to
+	    write back to the file when the icon is saved. This does NOT
+	    include the data that is essential to produce a valid icon file,
+	    which should always be carried around regardless of its size.
+	    The size is expressed in bytes, and defaults to 128.
+
+	IMA_GetLoadSupport (uint32 *) -- Returns TRUE if the module supports
+	    loading, FALSE otherwise.
+
+	IMA_GetSaveSupport (uint32 *) -- Returns TRUE if the module supports
+	    saving, FALSE otherwise.
+
+	IMA_GetScaleSupport (uint32 *) -- Returns TRUE if the module supports
+	    scaling, FALSE otherwise.
+
+	IMA_GetConvertSupport (uint32 *) -- Returns TRUE if the module supports
+	    converting a generic icon to one of its supported file formats,
+	    FALSE otherwise. If this is FALSE, the module will only be able to
+	    save an icon to disk if the icon was originally loaded by the
+	    module itself (typically because some essential format-specific
+	    information, which is not carried around by normal icons, is
+	    required in order to build the icon file).
+
+	These are the tags that apply to an icon loaded by the icon module:
+
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, which should be used (wherever possible) for all
+	    the non-temporary memory allocations required in the process
+	    of modifying the icon as requested by the client. The function
+	    should always read this TagItem.
+
+	IMA_GetFileFormat (STRPTR *) -- Returns the format of the file the
+	    icon passed as object was loaded from, if it was loaded by this
+	    module. If the icon is not recognized, ERROR_OBJECT_WRONG_TYPE
+	    is returned via IMA_ErrorCode. The information used to determine
+	    this can be kept, for instance, in the private data attached to
+	    the icon at load time with ICONCTRLA_SetIconModuleData.
+
+    RESULT
+	Processed -- The number of successfully processed tags.
+
+    NOTES
+	The function should always check if the passed icon was actually
+	loaded by this icon module, and return failure otherwise with an
+	error code of ERROR_OBJECT_WRONG_TYPE.
+
+	A safe way to identify the icon module associated to an icon is, for
+	instance, to make LoadIconA() store its library base address in the
+	first longword of the icon's private icon module data. This address
+	can then be read by ModuleControlA() and compared to its own library
+	base address. (The icon's private icon module data can be retrieved
+	with ICONCTRLA_GetIconModuleData.)
+
+    SEE ALSO
+	LoadIconA()
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/FreeAlloc()
+	icon.library/IconControlA()
+
+generic.iconmodule/SaveIconA                     generic.iconmodule/SaveIconA
+
+    NAME
+	SaveIconA -- Save an icon to a file in a particular format
+
+    SYNOPSIS
+	Success = SaveIcon(Name, Icon, TagList)
+
+	uint32 SaveIconA(STRPTR, struct DiskObject *, struct TagItem *);
+
+	Success = SaveIcon(Name, Icon, ...)
+
+	uint32 SaveIcon(STRPTR, struct DiskObject *, ...);
+
+    FUNCTION
+	This function will encode the contents of an icon into a file in a
+	particular format. It shall fail if the file format requested by
+	the client is not one of those supported by the icon module. The
+	data put into the file can include standard Amiga icon information
+	from the passed DiskObject instance (either read directly from its
+	fields or obtained by getting its attributes with IconControlA()),
+	as well as any additional format- or module-specific data that was
+	attached to the icon at load time, which can be retrieved by the
+	function with IconControlA()'s ICONCTRLA_GetIconModuleData tag.
+
+	If any (non-temporary) memory allocation needs to be performed in
+	the process, it should be done on the provided FreeList using the
+	FreeAlloc() function of icon.library, so that all the memory can
+	later be freed automatically at FreeDiskObject() time.
+
+	The file name passed to the function by icon.library always comes
+	with the ".info" suffix already appended to it.
+
+	The function shall return TRUE if it succeeded in saving the icon
+	to disk in the requested file format, or FALSE if it failed. The
+	exact reason for a failure can be communicated to the caller by
+	setting an error code in the variable whose address is passed to
+	the function with the IMA_ErrorCode tag.
+
+    INPUTS
+	Name -- Name of the file the icon information shall be stored to.
+	Icon -- The DiskObject structure whose contents are to be saved.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, which should be used (wherever possible) for all
+	    the non-temporary memory allocations required in the process of
+	    saving the icon. The function should always read this TagItem.
+
+	IMA_TagList (struct TagItem *) -- The tag list which was originally
+	    passed to the icon.library function calling SaveIconA(), namely
+	    PutIconTagList(). The function should make sure to check whether
+	    { ICONPUTA_OnlyUpdatePosition, TRUE } was passed, and if so avoid
+	    changing anything in the saved file except the icon position; if
+	    this can't be done in an efficient way, the fallback should be
+	    rereading the whole icon from disk, updating its position and
+	    writing it back again (or just failing, and letting icon.library
+	    do it). Any other PutIconTagList() tags should be ignored by the
+	    function at the moment.
+
+	IMA_ErrorCode (uint32 *) -- A pointer to a longword where a DOS error
+	    code can be stored before returning in case of failure. If the
+	    function succeeds, this should be set to zero instead.
+
+	IMA_SaveFormat (STRPTR) -- A string specifying an explicit format
+	    for the file the icon is to be saved to. If the requested file
+	    format is not one of those supported by the icon module, the
+	    save operation shall fail with a return value of FALSE and an
+	    error code of ERROR_ACTION_NOT_KNOWN. If no particular format
+	    is requested, the function should save the icon using the same
+	    format of the file it was loaded from (this information can be
+	    kept, for instance, in the private icon module data attached
+	    to the icon at load time with ICONCTRLA_SetIconModuleData).
+
+    RESULT
+	Success -- TRUE if the passed DiskObject could be saved to a file in
+	    the requested format, FALSE otherwise.
+
+    NOTES
+	The function may be unable to save an icon if it was not originally
+	loaded by the icon module the function belongs to. In that case, the
+	function shall fail with an error code of ERROR_OBJECT_WRONG_TYPE.
+
+	A safe way to identify the icon module associated to an icon is, for
+	instance, to make LoadIconA() store its library base address in the
+	first longword of the icon's private icon module data. This address
+	can then be read by SaveIconA() and compared with its own library
+	base address. (As said, the private icon module data can be retrieved
+	from the icon with ICONCTRLA_GetIconModuleData.)
+
+    SEE ALSO
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/FreeAlloc()
+	icon.library/IconControlA()
+	icon.library/PutIconTagList()
+
+generic.iconmodule/ScaleIconA                   generic.iconmodule/ScaleIconA
+
+    NAME
+	ScaleIconA -- Return a scaled version of an icon's image data
+
+    SYNOPSIS
+	Success = ScaleIconA(Icon, IconScaleRequest, TagList)
+
+	uint32 ScaleIconA(struct DiskObject *, struct IconScaleRequest *,
+	                  struct TagItem *);
+
+	Success = ScaleIcon(Icon, IconScaleRequest, ...)
+
+	uint32 ScaleIcon(struct DiskObject *, struct IconScaleRequest *, ...);
+
+    FUNCTION
+	This function will attempt to build a scaled version of the passed
+	icon's imagery, according to the requested width and height. It is
+	intended to be only implemented in icon modules that support vector
+	icon formats, or raster icon formats that carry differently sized
+	instances of the same imagery.
+	For icon formats where the request cannot be fulfilled with greater
+	graphic accuracy than what a simple "resize with average" operation
+	would provide, the function shall do nothing, return failure, and
+	let icon.library do the scaling job on its own.
+
+	For this function to be able to work, the icon to be scaled needs
+	to carry around all the information required to build the resized
+	imagery, such as the vector data describing the icon's appearance.
+	Therefore, LoadIconA() should always attach that information to the
+	icon, so that ScaleIconA() can then retrieve and use it. The proper
+	way to achieve this is to use the ICONCTRLA_SetIconModuleData and
+	ICONCTRLA_GetIconModuleData tags of IconControlA().
+
+	The function will receive an IconScaleRequest structure supplying
+	the wanted width and height for the new imagery. It shall allocate
+	a buffer of the appropriate size to contain the image data, fill
+	the buffer with the new imagery and store its address and format
+	in the IconScaleRequest structure before returning.
+
+	The IconScaleRequest structure, as of icon.library V51, contains
+	the following fields:
+
+	uint16 Version, Size;
+	    These are to allow future extensions of the structure.
+
+	uint16 Width, Height;
+	    The requested size for the icon. You should never use these
+	    two values directly, but rather filter them first through the
+	    WANTED_ICON_WIDTH() and WANTED_ICON_HEIGHT() macros that
+	    are defined in <workbench/iconmodule.h>. This is because the
+	    passed values don't always represent simple exact sizes; they
+	    may need to be interpreted, possibly also using the original
+	    icon width and height as a reference (for instance, they could
+	    indicate a percentage of the original sizes).
+
+	uint16 State;
+	    This is the icon state for which new imagery is being requested.
+	    As of icon.library V51, the only values that will be passed here
+	    are IDS_NORMAL or IDS_SELECTED (corresponding to the normal and
+	    the selected image of an Amiga icon).
+
+	uint16 BytesPerPixel;
+	    This field must be filled in by the function, and indicates the
+	    format of the image data it is returning. The only allowed values
+	    are 1 (for palette mapped image data where each byte corresponds
+	    to a pixel) or 4 (for truecolor image data where there are four
+	    bytes per pixel, specifying its ARGB components).
+	    Note well: the function may only return palette mapped data if
+	    LoadIconA() returned a palette mapped icon in the first place; in
+	    that case, the original palette will keep being used also for the
+	    scaled imagery. In any other case, the function MUST return ARGB
+	    data, or the scaled imagery will lack a palette (and therefore be
+	    effectively unusable).
+
+	uint8 *ImageBuffer;
+	    This field must be filled in by the function with the address of
+	    the image data buffer it allocated and initialized with the new
+	    scaled imagery. The buffer's image data format must match the
+	    value of the BytesPerPixel field (see above). The actual buffer
+	    shall be allocated with icon.library/FreeAlloc() on the FreeList
+	    passed to the function via the IMA_FreeList tag, so that later
+	    icon.library can automatically free it when the returned image
+	    data is no longer needed.
+
+	The function shall return TRUE to indicate success, or FALSE in case
+	of failure. The exact reason for a failure can be communicated to the
+	caller by setting an error code in the variable whose address is
+	passed to the function with the IMA_ErrorCode tag. If the icon module
+	doesn't implement scaling at all, the function shall return failure
+	with an error code of ERROR_NOT_IMPLEMENTED.
+
+    INPUTS
+	Icon -- The DiskObject instance whose imagery should be scaled.
+	IconScaleRequest -- Pointer to an IconScaleRequest structure.
+	TagList -- Array of TagItems providing additional information.
+
+    TAGS
+	IMA_FreeList (struct FreeList *) -- The FreeList associated to the
+	    passed icon, which should be used (wherever possible) for all
+	    the non-temporary memory allocations required in the process of
+	    scaling the icon's imagery, and particularly for allocating the
+	    returned image data buffer. The function should always read this
+	    TagItem.
+
+	IMA_ErrorCode (uint32 *) -- A pointer to a longword where a DOS error
+	    code can be stored before returning in case of failure. If the
+	    function succeeds, this should be set to zero instead.
+
+    RESULT
+	Success -- TRUE for success, FALSE for failure.
+
+    NOTES
+	The function should always check if the passed icon was actually
+	loaded by the icon module it belongs to, and return failure otherwise
+	with an error code of ERROR_OBJECT_WRONG_TYPE.
+
+	A safe way to identify the icon module associated to an icon is, for
+	instance, to make LoadIconA() store its library base address in the
+	first longword of the icon's private icon module data. This address
+	can then be read by ScaleIconA() and compared with its own library
+	base address. (As said, the private icon module data can be retrieved
+	from the icon with ICONCTRLA_GetIconModuleData.)
+
+    SEE ALSO
+	workbench/iconmodule.h
+	workbench/icon.h
+	icon.library/FreeAlloc()
+	icon.library/IconControlA()
+
+

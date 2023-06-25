@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="i2c" basename="I2CBase" openname="i2c.resource">
+
+  <copyright>Copyright (C) 2019-2020 Trevor Dickinson</copyright>
+
+  <include>interfaces/i2c.h</include>
+
+  <interface name="main" version="1.0" struct="I2CResourceIFace" prefix="main" global="II2CRes">
+    <method name="Obtain" result="uint32"/>
+    <method name="Release" result="uint32"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="GetBusByNumber" result="struct I2CIFace *">
+      <arg name="num" type="uint32"/>
+    </method>
+
+    <method name="GetBusByName" result="struct I2CIFace *">
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+  </interface>
+
+  <interface name="i2c" version="1.0" struct="I2CIFace" prefix="main" global="II2CBus">
+    <method name="Obtain" result="uint32"/>
+    <method name="Release" result="uint32"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="Probe" result="BOOL">
+      <arg name="address" type="uint32"/>
+    </method>
+
+    <method name="SetSpeed" result="BOOL">
+      <arg name="speed" type="uint32"/>
+    </method>
+
+    <method name="Read" result="int32">
+      <arg name="chip" type="uint32"/>
+      <arg name="addr" type="uint32"/>
+      <arg name="buffer" type="uint8 *"/>
+      <arg name="bufferLen" type="uint32"/>
+    </method>
+
+    <method name="ReadTagList" result="int32">
+      <arg name="chip" type="uint32"/>
+      <arg name="addr" type="uint32"/>
+      <arg name="buffer" type="uint8 *"/>
+      <arg name="bufferLen" type="uint32"/>
+      <arg name="tags" type="struct TagItem *"/>
+    </method>
+
+    <method name="ReadTags" result="int32">
+      <arg name="chip" type="uint32"/>
+      <arg name="addr" type="uint32"/>
+      <arg name="buffer" type="uint8 *"/>
+      <arg name="bufferLen" type="uint32"/>
+      <vararg name="Tag1" type="uint32"/>
+    </method>
+
+    <method name="Write" result="int32">
+      <arg name="chip" type="uint32"/>
+      <arg name="addr" type="uint32"/>
+      <arg name="buffer" type="uint8 *"/>
+      <arg name="bufferLen" type="uint32"/>
+    </method>
+
+    <method name="WriteTagList" result="int32">
+      <arg name="chip" type="uint32"/>
+      <arg name="addr" type="uint32"/>
+      <arg name="buffer" type="uint8 *"/>
+      <arg name="bufferLen" type="uint32"/>
+      <arg name="tags" type="struct TagItem *"/>
+    </method>
+
+    <method name="WriteTags" result="int32">
+      <arg name="chip" type="uint32"/>
+      <arg name="addr" type="uint32"/>
+      <arg name="buffer" type="uint8 *"/>
+      <arg name="bufferLen" type="uint32"/>
+      <vararg name="Tag1" type="uint32"/>
+    </method>
+
+    <method name="GetName" result="STRPTR">
+    </method>
+
+    <method name="GetDeviceId" result="uint32">
+      <arg name="address" type="uint32"/>
+    </method>
+
+    <method name="Lock" result="void">
+    </method>
+
+    <method name="Unlock" result="void">
+    </method>
+  </interface>
+</library>

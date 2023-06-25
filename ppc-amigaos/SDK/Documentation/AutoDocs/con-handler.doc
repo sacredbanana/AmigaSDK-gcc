@@ -1,0 +1,247 @@
+con-handler/con_handler                               con-handler/con_handler
+
+   NAME
+   con-handler -- standard console window handler
+
+   SYNOPSIS
+   NewShell WINDOW "CON:x/y/width/height/title/options"
+
+   Open("CON:x/y/width/height/title/options",...);
+   Open("RAW:x/y/width/height/title/options",...);
+
+   FUNCTION
+   The con-handler is typically used by the Shell. The user enters
+   commands or edits the command line, and the output produced by
+   the command is displayed in a console window. The window can be
+   sized, dragged, zoomed and depth-adjusted like most other
+   Amiga windows.
+
+   The console window is a 'virtual terminal' which data can be
+   exchanged with using standard file I/O operations.
+
+   WINDOW SPECIFICATION
+   You select the initial dimensions, location, title and other
+   properties of the console window through a window specification
+   like this:
+
+       CON:x/y/width/height/title/options
+
+   where:
+
+       x
+           Is the number of pixels from the left edge of the screen to
+           the left border of the console window. Use no value (//) to
+           specify the minimum possible pixels. Use the value -1 to
+           generate a window that is centred horizontally on the screen.
+
+       y
+           Is the number of pixels from the top of the screen to the top
+           of the console window. Use no value (//) to specify the
+           minimum possible pixels. Use the value -1 to generate a window
+           that is centred vertically on the screen.
+
+       width
+           Is the width of the console window, in pixels. Use no value
+           (//) to specify the full width of the screen.
+
+       height
+           Is the height of the console window, in pixels. Use no value
+           (//) to specify minimum possible height.
+
+       title
+           Is the text that appears in the console window title bar.
+
+   Use slashes to separate the parameters and options.
+
+   The allowable options are:
+
+       AUTO
+           The window automatically appears when the program needs input
+           or produces output. Selecting the Shell's close gadget closes
+           the window, but it re-opens immediately since it is expecting
+           input.
+
+       ALT
+           The window appears in the specified size and position when the
+           zoom gadget is clicked. The four parameters must be separated
+           with slashes (for example, ALT30/30/200/200).
+
+       BACKDROP
+           The window appears on the backdrop, behind all the Workbench
+           windows. This console window cannot be brought to the front of
+           the screen; you have to resize the Workbench windows to see it.
+
+       CHARSET
+           The window font will be opened with the specified charset if
+           possible. The charset is specified as a string, e.g.
+           CHARSET=ISO-8859-15.
+
+       CLOSE
+           The window has all the standard gadgets, including a close
+           gadget.
+
+       COLUMNS
+           Specify the number of columns in the window to be opened, given
+           as the number of characters rather than as pixels. This option
+           overrides the 'width' parameter of the window specification.
+
+       FORCEVISIBLE
+           By default, a console window is opened with the "AutoAdjust"
+           option, meaning that Intuition can move or shrink the window to
+           make it fit on the screen. The actual implementation is undefined
+           in the Intuition documentation and no action is performed on the
+           "Alt" window position.
+           The "ForceVisible" option causes the console to check the window
+           size and position (for both "normal" and "Alt" settings) and will
+           guarantee that the top left-hand corner of the window opens on the
+           screen. The "Top" and "Left" settings are adjusted as necessary,
+           but the window size is not changed. If the screen size is larger
+           than the displayed size, the console window can still appear off
+           the visible screen, but will appear when the screen is scrolled.
+           If "ForceVisible" is specified, the "AutoAdjust" option is 
+           disabled.
+
+       HISTORY (Obsolete)
+           This option is now the default and is ignored.
+
+       INACTIVE
+           The window opens, but is not made the active window.
+
+       LEGACY
+           This option forces the window to be opened without history, 
+           ClickTab or a scrollbar. It might be useful to use with older,
+           non-conforming applications that use the console. If this option
+           and the TABBED option are both present on the command line, the
+           LEGACY option will take precedence.
+           The NOHISTORY option is a synonym for this option but can be
+           over-ruled by a later TABBED option.
+           Refer also to the notes for the TABBED option.
+
+       NEWLOOKMENUS
+           The window will open with the WFLG_NEWLOOKMENUS flag
+           set which affects the menu color scheme. Normally this
+           option is only set by applications which want to add a
+           menu with the GTMN_NewLookMenus flag to the window.
+           Ignored in console V53.x.
+
+       NOAPPWINDOW
+           The window is not registered as an AppWindow, you can't drop
+           icons onto it, and workbench.library wont be opened.
+           This flag may be useful when you need a shell window
+           which does not prevent quitting Workbench.
+
+       NOBORDER
+           The window opens without any left or bottom window border.
+           Only the zoom, depth, and sizing gadgets are available.
+
+       NOCLOSE
+           The window does not have a close gadget. If you open a console
+           normally, there is no close gadget. If you open a console
+           using the AUTO option, there is automatically a close gadget
+           on the window.
+
+       NODEPTH
+           The window has no window depth gadget.
+
+       NODRAG
+           The window cannot be dragged. It has zoom, depth and sizing
+           gadgets, but no close gadget.
+
+       NOHISTORY (Obsolete, use the LEGACY option)
+           This is a synonym for the LEGACY option, but differs in that it
+           can be over-ruled by a later TABBED option.
+           Default: disabled (HISTORY enabled).
+
+       NOICONIFY
+           The window is opened without an iconify gadget. The window can
+           still be iconified by use of the Right-Amiga+I keyboard shortcut.
+
+       NOSIZE
+           The window only has a depth gadget.
+
+       NOSCROLLBAR
+           The window opens without a scrollbar in the right border. This
+           option is forced if both the HISTORY and TABBED options are
+           missing.
+
+       ROWS
+           Specify the number of rows in the window to be opened, given as
+           the number of characters rather than as pixels. This option
+           overrides the 'height' parameter of the window specification.
+
+       SCREEN
+           The window opens on a public screen. The screen does not have to
+           be already open. You specify the name of the screen after the
+           SCREEN keyword. You can interpose spaces or one "=" sign between
+           the SCREEN keyword and the screen name. For instance, all these
+           four versions work the same:
+           SCREENScreenName
+           SCREEN ScreenName
+           SCREEN=ScreenName
+           SCREEN = ScreenName
+           If the window is to open on the frontmost public screen, use 
+           two * (asterisks) in place of the screen name. Note that a single
+           asterisk will be "swallowed" by DOS before the con-handler sees
+           it, so two are required.
+           If the name after the SCREEN option is null (and not an asterisk),
+           the window opens by default on the same screen as the caller.
+
+       SIMPLE
+           If you enlarge the window, the text expands to fill the newly
+           available space, allowing you to see text that had been
+           scrolled out of the window (always the case with the console
+           V53.x).
+
+       SMART
+           If you enlarge the window, the text does not expand to fill
+           the newly available space (ignored in console V53.x).
+
+       SYNCWRITES
+           This option forces all Write commands to block within the console
+           until the operation is completed. Without this option, all "new"
+           consoles (those created with the TABBED or HISTORY options) will
+           return to the caller immediately and process Write operations
+           asynchronously, meaning that internal console variables may
+           not always represent the state of the finished operation. With
+           this option, the console duplicates the behaviour of legacy
+           windows for compatibility with older programs.
+
+       TABBED
+           The window is opened with a ClickTab gadget, allowing subsequent
+           Shells to share the window frame. The currently visible and
+           active Shell may then be selected by clicking on the Tab gadget
+           or by using a keyboard shortcut. Closing individual Shells does
+           not close the Tabbed window until all Shells have been closed.
+           This option is not available with a pre-existing Window.
+           If the window is opened with History enabled (ie without the
+           LEGACY option), but the TABBED option is omitted, you can still
+           open multiple Shells in the window, but there will be no ClickTab
+           gadget. You will have to use shortcut keys or the console menu
+           to switch the display from one Shell to another.
+			Default: not Tabbed.
+
+       WAIT
+           The window can only be closed by selecting the close gadget or
+           typing Ctrl-\ (typing EndCLI will not close the window). If 
+           WAIT is specified without the CLOSE option, there is no close
+           gadget and the window can only be closed by typing Ctrl-\.
+
+       WINDOW
+           A window previously opened through intuition.library/OpenWindow
+           or intuition.library/OpenWindowTagList should be attached to
+           the new console. The window's address must be given as a
+           hexadecimal number. Any leading "0x" prefix is ignored.
+
+   NOTES
+   The COLUMNS and ROWS options were added in V51. Older releases will
+   ignore these options and use the window dimensions given in the
+   window specification instead.
+
+   The NEWLOOKMENUS, CHARSET and NOAPPWINDOW options were added
+   in V51, older releases will ignore it.
+
+   Prior to V51, options and their parameters could be separated by
+   exactly one blank space. Starting with V51, any number of blank
+   spaces and exactly one '=' character can be used to separate
+   options and their parameters.
+

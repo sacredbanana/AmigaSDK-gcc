@@ -1,0 +1,1062 @@
+TABLE OF CONTENTS
+
+gadgetclass/--datasheet--
+gadgetclass/GM_DOMAIN
+gadgetclass/GM_EXTENT
+gadgetclass/GM_GOACTIVE
+gadgetclass/GM_GOINACTIVE
+gadgetclass/GM_HANDLEINPUT
+gadgetclass/GM_HELPTEST
+gadgetclass/GM_HITTEST
+gadgetclass/GM_LAYOUT
+gadgetclass/GM_RENDER
+gadgetclass/OM_NEW
+gadgetclass/OM_NOTIFY
+
+
+gadgetclass/--datasheet--                               gadgetclass/--datasheet--
+
+    NAME
+	gadgetclass -- base class for gadgets
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This is a base class for Intuition compatible gadget objects.
+	The dispatcher for this class takes care of creating an
+	Intuition Gadget structure as part of its local instance data.
+	All of the standard BOOPSI gadget classes build on this class.
+	Normally there are no direct instances of this class, only
+	instances of subclasses of gadgetclass.
+
+	The behavior of a BOOPSI gadget depends on how it handles the
+	six BOOPSI gadget methods: GM_HITTEST, GM_HELPTEST, GM_RENDER,
+	GM_GOACTIVE, GM_HANDLEINPUT and GM_GOINACTIVE. Intuition controls
+	a BOOPSI gadget by sending it these types of messages. The
+	structures that these methods use for their messages begin with
+	the method's ID followed by a pointer to a GadgetInfo structure
+	(defined in <intuition/cghooks.h>). The GadgetInfo structure is
+	a read-only structure that contains information about the
+	gadget's rendering environment. The gadget uses this to find
+	things like its window, screen or pen array. Although this
+	structure does contain a pointer to a RastPort for the gadget,
+	the gadget must not use this RastPort for rendering. The gadget
+	can obtain a RastPort for rendering by calling the Intuition
+	function ObtainGIRPort() using the GadgetInfo structure. See
+	the intuition.library autodocs for more details.
+
+	These methods are not defined directly by gadgetclass. It is
+	up to subclasses of gadgetclass to implement them.
+
+	Like all BOOPSI methods, these methods run on the context of
+	the task that called the method. Normally, Intuition is the
+	only entity that calls these methods so these normally operate
+	in the input.device's task. Because a gadget may have to
+	process a large number of input events, poor implementations
+	of gadget methods (especially the GM_HANDLEINPUT method) can
+	degrade system performance.
+
+    METHODS
+	OM_NEW -- Create the gadgetclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroy the gadget and then pass to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	OM_NOTIFY -- Notify target of attribute value changes.
+
+	ICM_SETLOOP -- Set/increment loop counter.
+
+	ICM_CLEARLOOP -- Clear/decrement loop counter.
+
+	ICM_CHECKLOOP -- Get loop counter.
+
+	GM_HITTEST -- Determine if gadget was hit.
+
+	GM_HELPTEST -- Determine if gadget help was hit.
+
+	GM_RENDER -- Render the gadget with state.
+
+	GM_GOACTIVE -- Activate the gadget.
+
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+	GM_HANDLEINPUT -- Handle input while active.
+
+	GM_KEYTEST -- Determine if gadget key was hit.
+
+	GM_KEYGOACTIVE -- Activate the gadget by keyboard. (V53)
+
+	GM_KEYGOINACTIVE -- Deactivate the gadget by keyboard. (V53)
+
+	All other methods are passed to the superclass.
+
+    STANDARD METHODS
+	The following methods are described at the gadgetclass level
+	although it's up to the subclasses to actually implement them.
+	If a class does not implement these methods it should either
+	return zero, indicating that this class does not support the
+	method or defer processing on to its superclass.
+
+	GM_DOMAIN -- Obtain gadget sizing requirements.
+
+	GM_EXTENT -- Inquire about gadget rendering extent.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+    ATTRIBUTES
+	GA_Left (int16)
+	GA_Top (int16)
+	    These attribute corresponds to the LeftEdge and TopEdge
+	    fields in the Intuition Gadget structure.
+
+	    Defaults to zero.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Width (int16)
+	GA_Height (int16)
+	    These attribute corresponds to the Width and Height fields
+	    in the Intuition Gadget structure.
+
+	    Defaults to arbitrary positive number.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_RelRight (int16)
+	GA_RelBottom (int16)
+	GA_RelWidth (int16)
+	GA_RelHeight (int16)
+	    These attribute are used to position the gadget relative
+	    to the respective window's edge or dimension. Setting one
+	    of these attributes will set the corresponding Gadget flag:
+	    GFLG_RELRIGHT, GFLG_RELBOTTOM, GFLG_RELWIDTH and
+	    GFLG_RELHEIGHT.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_RightBorder (BOOL)
+	GA_LeftBorder (BOOL)
+	GA_TopBorder (BOOL)
+	GA_BottomBorder (BOOL)
+	    Indicates whether the gadget is in the respective
+	    window border or not. The attributes correspond to the
+	    the Gadget structure GACT_RIGHTBORDER, GACT_LEFTBORDER,
+	    GACT_TOPBORDER and GACT_BOTTOMBORDER activation flags.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_ID (uint16)
+	    This attribute corresponds to the GadgetID field in the
+	    Intuition Gadget structure. The gadgetclass dispatcher stores
+	    this attribute in the GadgetID field in the gadget object's
+	    embedded Gadget structure.
+
+	    Note that gadget IDs 0xFFFE to 0xFFFB are currently reserved
+	    by window.class and should be avoided. All other values are
+	    valid.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GA_UserData (APTR)
+	    Application specific data. This attribute corresponds
+	    to the UserData field of the Gadget structure.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Disabled (BOOL)
+	    Indicate whether gadget is disabled or not. This
+	    attribute corresponds to the GFLG_DISABLED flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Selected (BOOL)
+	    Indicate whether gadget is selected or not. This
+	    attribute corresponds to the GFLG_SELECTED flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_EndGadget (BOOL)
+	    When set tells the system that when this gadget is
+	    selected the requester is to be ended. This attribute
+	    corresponds to the GACT_ENDGADGET activation flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Immediate (BOOL)
+	    When set indicates that the gadget is to notify the
+	    application when it becomes active. This attribute
+	    corresponds to the GACT_IMMEDIATE activation flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_RelVerify (BOOL)
+	    When set indicates that the application wants to verify
+	    that the pointer was still over the gadget when the select
+	    button is released. This attribute corresponds to the
+	    GACT_RELVERIFY activation flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_FollowMouse (BOOL)
+	    When set indicates that the application wants to be notified
+	    of mouse movements while the gadget is active. It is
+	    recommmended that GA_Immediate and GA_RelVerify are also
+	    used so that the active gadget can be tracked by the
+	    application. This attribute corresponds to the
+	    GACT_FOLLOWMOUSE activation flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_ToggleSelect (BOOL)
+	    Indicate whether the gadget is toggle-selected or not.
+	    This attributes corresponds to the GACT_TOGGLESELECT
+	    activation flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Titlebar (BOOL)
+	    Set this to TRUE if you want the gadget to be automatically
+	    positioned by Intuition in the window titlebar (at the left
+	    or at the right side depending on the state of GFLG_RELRIGHT).
+	    The layout is done according to the current style and
+	    geometry settings for window border gadgets. Please use an
+	    appropriate sysiclass object as imagery for a titlebar gadget
+	    such as ICONIFYIMAGE or TBFRAMEIMAGE. (V50)
+
+	    This attribute corresponds to the GTYP_TBARGADGET gadget type.
+
+	    Note: This property also implies { GA_TopBorder, TRUE }.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_TabCycle (BOOL)
+	    Indicates whether this gadget is a part of a TAB/SHIFT-TAB
+	    cycle activation. This attribute corresponds to the
+	    GFLG_TABCYCLE flag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_RelSpecial (BOOL)
+	    Indicate whether this gadget has special relativity or not.
+	    This attribute corresponds to the GFLG_RELSPECIAL flag. (V39)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_GZZGadget (BOOL)
+	    Indicates whether this gadget is for WFLG_GIMMEZEROZERO
+	    window borders or not. This attribute corresponds to the
+	    GTYP_GZZGADGET gadget type.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_GadgetHelp (BOOL)
+	    Indicates whether the gadget is to send an IDCMP_GADGETHELP
+	    message or not. This attribute corresponds to the
+	    GMORE_GADGETHELP flag in the ExtGadget structure.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Hidden (BOOL)
+	    Indicates whether the gadget is currently hidden or not.
+	    This attribute corresponds to the GMORE_HIDDEN flag in
+	    the ExtGadget structure.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	    Note: This is Gettable from 53.39+
+
+	GA_ReadOnly (BOOL)
+	    Defines whether this gadget object is read-only
+	    (i.e. not selectable) or not. (V42)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_NoFilterMenuKeys (BOOL)
+	    Set this flag to enable menu shortcuts even when the
+	    gadget object is currently active. (V50)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_NoFilterWheel (BOOL)
+	    Set this flag to enable mouse wheel events even when
+	    the gadget object is currently active. (V51)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	    Note: This is Gettable from 53.39+
+
+	GA_SpecialInfo (APTR)
+	    Gadget specific data used by some gadget objects.
+	    This attribute corresponds to the SpecialInfo field
+	    of the Gadget structure.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Next (struct Gadget *)
+	    The next gadget in the linked list of Gadgets.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Previous (struct Gadget *)
+	    The previous gadget in the linked list of Gadgets.
+
+	    This attribute cannot be used to link new gadgets
+	    into the gadget list of an already open window or
+	    requester (see intuition.library/AddGList()).
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_Image (struct Image *)
+	GA_Border (struct Border *)
+	    The gadget uses either an Image or a Border for rendering
+	    its imagery.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_SelectRender (struct Image *)
+	GA_Highlight (uint16)
+	    The gadget uses either an Image or algorithmic highlighting
+	    for rendering its selected state.
+
+	    The algorithmic highlight choices are GFLG_GADGHNONE,
+	    GFLG_GADGHBOX, GFLG_GADGHCOMP or GFLG_GADGHIMAGE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Text (CONST_STRPTR)
+	GA_IntuiText (struct IntuitText *)
+	GA_LabelImage (Object *)
+	    The gadget label is a null terminate string, IntuiText
+	    structure or an imageclass object.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_HintInfo (CONST STRPTR)
+	    A pointer to a string to use as the help text when hovering 
+	    the mouse over the gadget. This may be changed at any time
+	    in order to create a more dynamic help system. This attribute
+	    will override any string set in the array supplied via
+	    WINDOW_HintInfo.
+
+	    Some gadgets may also allo different help strings for various
+	    sections of a gadget (ListBrower and ClickTab, for example),
+	    which is described in the relevent autodoc for the gadget.
+
+	    More information can be found in window_cl.doc,
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GA_Bounds (struct IBox *)
+	    Defines the bounding box for the gadget object. (V39)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_Underscore (uint8)
+	    Underscore/escape character for keyboard shortcuts. (V44)
+
+	    Defaults to the '_' character. (V44)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_ActivateKey (CONST_STRPTR)
+	    Defines the gadget's shortcut/activation key(s). (V44)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_TextAttr (struct TextAttr *)
+	    Defines which font to use for the gadget object. (V42)
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_ContextMenu (APTR)
+	    The default context menu for this gadget. It can be either a
+	    traditional menu or a BOOPSI menu tree from menuclass. (V54)
+
+	    Defaults to NULL (no default context menu).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_SysGadget (BOOL)
+	GA_SysGType (uint16)
+	GA_GadgetHelpText (CONST_STRPTR)
+	    Reserved for system use.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	ICA_TARGET (Object *)
+	ICA_MAP (struct TagItem *)
+	ICSPECIAL_CODE (pseudo attribute)
+	    These tags are used to control the gadget object
+	    notification used by the OM_NOTIFY method. See the
+	    icclass autodoc for more information on how to setup
+	    and use these attributes.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+gadgetclass/GM_DOMAIN                                       gadgetclass/GM_DOMAIN
+
+    NAME
+	GM_DOMAIN -- Obtain gadget sizing requirements.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpDomain* msg);
+
+    FUNCTION
+	The GM_DOMAIN method is used to obtain sizing information from
+	an object. The gpd_Which field is used to determine which domain
+	the caller is interested in: GDOMAIN_MINIMUM, GDOMAIN_NOMINAL or
+	GDOMAIN_MAXIMUM. The object is expected to fill in the provided
+	gpd_Domain with the width and height dimensions. The location
+	coordinates are not used. The gpd_Attrs pointer, if not NULL,
+	may contain additional tags which are defined on a per-class
+	basis.
+
+	The domain is most often used by layout gadgets to aid in
+	distributing the gadgets within the layout.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpDomain
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	GM_LAYOUT
+
+gadgetclass/GM_EXTENT                                       gadgetclass/GM_EXTENT
+
+    NAME
+	GM_EXTENT -- Inquire about rendering extent. (V51)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpExtent * msg);
+
+    FUNCTION
+	The GM_EXTENT method is used to ask the gadget what pixels
+	(at least) it will fully redraw when its GM_RENDER method is
+	invoked in the same context.
+
+	By "fully redraw" we mean changing the pixel's color in a way that
+	is totally unrelated to its previous value -- so this doesn't apply
+	to alpha-blended pixels for example.
+
+	Intuition uses that information for optimization purposes. During
+	GUI refreshes, it will skip filling or erasing those pixels that
+	the gadget would then completely re-render anyway. Supporting this
+	method in your gadgets will help Intuition improve the smoothness
+	of user interface refresh by preventing redundant graphic calls
+	and minimizing "flicker" effects caused by background clearing
+	especially during window resizes.
+
+	The easiest way to support GM_EXTENT is to make sure your gadget
+	always fills every pixel within its dimentions and just return
+	the relevant result value (GMR_FULLHBOX or GMR_FULLBBOX). In this
+	case, you may safely ignore the actual message contents and the
+	following text.
+
+	If the above solution is not feasible (for instance because the
+	gadget has an irregular or not fully connected shape) then you
+	should check the gpe_Region and gpe_RPort message fields: if any
+	of them is non-NULL you may decide to employ a more detailed way
+	to tell the caller exactly what pixels your GM_RENDER method
+	does fill.
+
+	If gpe_Region is non-NULL you can compose in it your gadget's shape
+	by using graphics.library's XxxxRectRegion() functions. Remember
+	to look at the gpe_Action field to determine what function to use.
+	For example, if gpe_Action is GEXTENT_ADD you should use
+	OrRectRegion(). Note you must NOT pre-clear or alter the initial
+	region's contents in any way other than to compose your own
+	gadget's shape. Once finished composing your gadget's shape in
+	the region, return GMR_CLIPDONE to let the caller know you
+	updated the region's contents.
+
+	If gpe_RPort is non-NULL you can draw your gadget's shape into it
+	just like you would do for a GM_RENDER message -- however,
+	you're only allowed to use colors 0 or 1 because you're actually
+	drawing into a single-bitplane mask. Again, check the gpe_Action
+	field to find out whether you should actually set, clear or
+	invert the pixels making up your gadget's shape in the mask.
+	You are not allowed to alter any pixels other than those belonging
+	to your gadget's shape nor to clear the mask's background before
+	rendering. Once finished drawing your gadget's shape in the mask
+	plane return GMR_MASKDONE to let the caller know you updated
+	the mask's contents.
+
+	If both gpe_Region and gpe_RPort are non-NULL you may simply choose
+	the method which is most suited for your purposes. You don't have
+	to support both for the same message. If you do, however, you can
+	let the caller know by ORing together the appropriate return values.
+
+	The region solution is best suited for gadgets made up of a few
+	rectangular parts whereas the mask method is better in the case
+	of more complex gadget shapes.
+
+	If all or part of your gadget's rendering is performed by some
+	BOOPSI image you could also try asking the image for its extent
+	information by way of an IM_EXTENT or IM_EXTENTFRAME message
+	(see imageclass autodoc).
+
+	If for whatever reasons your GM_EXTENT method finds itself
+	unable to support any of the described solutions it should return
+	GMR_INVALID. This particular return value will tell Intuition
+	not to clip away the gadget's shape at all. While this is usually
+	slower and more prone to flickering it will still produce correct
+	graphic results. This is the same fallback applied for any
+	gadgets not recognizing the GM_EXTENT method.
+
+	NOTE WELL:
+	Since it is very important that a gadget's GM_RENDER and
+	GM_EXTENT methods remain synchronized the default behavior
+	of a gadget class should be to only handle GM_EXTENT if it
+	is the "true class" of the object the method is invoked on and
+	just return GMR_INVALID otherwise. This is because a subclass
+	might override the behavior of GM_RENDER in such a way that
+	your class' GM_EXTENT results are no longer correct. If a
+	gadget subclass needs and knows it's ok to let its superclass
+	handle GM_EXTENT it must set the GPEF_ALLOWSUPER flag in
+	gpe_Flags before calling IDoSuperMethodA() and clear it as soon
+	as the call returns. If GPEF_ALLOWSUPER is set in gpe_Flags
+	your gadget should accept and handle GM_EXTENT regardless
+	of whether it is the true class or not.
+
+	More information about rendering extents can be found in the
+	<intuition/imageclass.h> and <intuition/gadgetclass.h> files.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpExtent
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value must be GMR_INVALID, GMR_FULLHBOX, GMR_FULLBBOX,
+	GMR_CLIPDONE, GMR_MASKDONE or some valid combination.
+
+    NOTES
+	As of Intuition V51 the mask method is not yet implemented.
+
+    SEE ALSO
+	GM_RENDER, imageclass/GM_EXTENT, imageclass/GM_EXTENTFRAME
+
+gadgetclass/GM_GOACTIVE                                   gadgetclass/GM_GOACTIVE
+
+    NAME
+	GM_GOACTIVE -- Activate the gadget.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpInput* msg);
+
+    FUNCTION
+	This method asks a gadget if it is OK to make it the active
+	gadget. The active gadget is the gadget that is currently
+	receiving user input. Intuition sends this message after a
+	gadget responds affirmatively to the GM_HITTEST method. A
+	gadget becomes active because it needs to process input events
+	(like a prop gadget or string gadget).
+
+	Some types of gadgets do not need to become active. These
+	gadgets do not have to process input from the user. They only
+	have to deal with a single mouse click to toggle their state.
+	Because that mouse click triggered this method, the button
+	already has all of the user input it requires. Note that the
+	behavior of the GadTools button differs from a BOOPSI
+	buttongclass gadget which processes other input events besides
+	a single mouse click. See the autodoc for buttongclass for more
+	details.
+
+	GM_GOACTIVE uses a custom message structure (defined in
+	<intuition/gadgetclass.h>):
+
+	struct gpInput
+	{
+	    uint32             MethodID;   // GM_GOACTIVE
+	    struct GadgetInfo *gpi_GInfo;
+	    struct InputEvent *gpi_IEvent; // The input event that triggered
+	                                   // this method (can be NULL)
+	    int32             *gpi_Termination; // For GADGETUP
+	                                        // IntuiMessage.Code
+	    struct
+	    {
+	        int16 X;            // Mouse position relative to upper
+	        int16 Y;            // left corner of the gadget
+	    } gpi_Mouse;            // (LeftEdge, TopEdge)
+	    struct TabletData *gpi_TabletData;
+	};
+
+	The gpi_IEvent field points to the struct InputEvent that
+	triggered the GM_GOACTIVE message. If gpi_IEvent is NULL, the
+	GM_GOACTIVE message was triggered by a function like
+	intuition.library's ActivateGadget() and not by the user
+	clicking the gadget.
+
+	For gadgets that only want to become active as a direct result
+	of a mouse click this difference is important. For example, the
+	prop gadget becomes active only when the user clicks on its knob.
+	Because the only way the user can control the prop gadget is via
+	the mouse, it would not make sense for it to be activated by
+	anything besides the mouse. On the other hand, a string gadget
+	gets input from the keyboard, so a string gadget doesn't care
+	what activates it. Its input comes from the keyboard rather than
+	the mouse.
+
+	A gadget's GM_GOACTIVE method returns GMR_MEACTIVE (defined in
+	<intuition/gadgetclass.h>) if it wants to be the active gadget.
+	Otherwise it returns GMR_NOREUSE. For a description of what
+	these values mean, see their description in the gadgetclass's
+	GM_HANDLEINPUT method.
+
+	If necessary, a gadget's GM_GOACTIVE method can precalculate
+	and cache information before it becomes the active gadget.
+	The gadget will use this information while it's processing
+	user input with the GM_HANDLEINPUT method. When it is time for
+	the active gadget to become inactive, Intuition will send the
+	gadget a GM_GOINACTIVE message. The gadget can clean up its
+	precalculations and cache in the GM_GOINACTIVE method. See
+	the GM_GOINACTIVE method for more information.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpInput
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	Returns GMR_MEACTIVE to become the active gadget otherwise
+	GMR_NOREUSE is returned.
+
+    SEE ALSO
+	GM_HANDLEINPUT, GM_GOINACTIVE, intuition.library/ActivateGadget()
+
+gadgetclass/GM_GOINACTIVE                               gadgetclass/GM_GOINACTIVE
+
+    NAME
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpGoInactive* msg);
+
+    FUNCTION
+	This method tells the active gadget to become inactive.
+
+	GM_GOINACTIVE uses a custom message structure (defined in
+	<intuition/gadgetclass.h>):
+
+	struct gpGoInactive
+	{
+	    uint32             MethodID;   // GM_GOINACTIVE
+	    struct GadgetInfo *gpgi_GInfo;
+
+	    uint32             gpgi_Abort; // gpgi_Abort=1 if gadget was
+	                                   // aborted by Intuition and 0
+	                                   // if gadget went inactive at
+	                                   // its own request.
+	};
+
+	The gpgi_Abort field contains either a 0 or 1. If it is 0 the
+	gadget became inactive at its own request (because the
+	GM_HANDLEINPUT method returned something besides GMR_MEACTIVE.
+	If gpgi_Abort is 1 Intuition aborted this active gadget. Some
+	cases where Intuition aborts a gadget include: the user clicked
+	in another window or screen, an application removed the active
+	gadget with RemoveGList() and an application called
+	ActivateWindow() on a window other than the gadget's window.
+
+	If the gadget allocated any resources to cache or precalculate
+	information in the GM_GOACTIVE method it should deallocate
+	those resources in this method.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpGoInactive
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	GM_GOACTIVE, GM_HANDLEINPUT
+
+gadgetclass/GM_HANDLEINPUT                             gadgetclass/GM_HANDLEINPUT
+
+    NAME
+	GM_HANDLEINPUT -- Handle input while active.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpInput* msg);
+
+    FUNCTION
+	This method asks an active gadget to handle an input event.
+	After getting an OK to make this gadget object active
+	(see the GM_GOACTIVE method) Intuition starts sending input
+	events to the gadget. Intuition sends them in the form of a
+	GM_HANDLEINPUT message. This method uses the same custom
+	message structure as GM_GOACTIVE.
+
+	The information in the gpInput structure is the same for
+	GM_HANDLEINPUT as it is for GM_GOACTIVE. The only difference
+	is that the GM_HANDLEINPUT message's gpi_IEvent can never be NULL.
+	It always points to an InputEvent structure.
+
+	The gadget has to examine the incoming InputEvents to see how its
+	state may have changed. For example, a string gadget processes
+	key presses, inserting them into the gadget's string. When the
+	string changes, the gadget has to update its visual state to
+	reflect that change. Another example is the prop gadget. If the
+	user picks up the prop gadget's knob, the prop gadget has to
+	track the mouse to process changes to the gadget's internal
+	values. It does this by processing IECLASS_RAWMOUSE events.
+
+	If the GM_HANDLEINPUT method needs to do some rendering, it must
+	call ObtainGIRPort on the GM_HANDLEINPUT message's gpi_GInfo to
+	get a pointer to a RastPort. To relinquish this RastPort the
+	GM_HANDLEINPUT method must call ReleaseGIRPort(). The
+	GM_HANDLEINPUT method has to allocate and release this RastPort
+	and it cannot be cached in the GM_GOACTIVE method.
+
+	The return value from GM_HANDLEINPUT informs Intuition if the
+	gadget wants to remain active. The return values for the
+	GM_HANDLEINPUT are similar to GM_GOACTIVE. The gadget tells
+	Intuition that it wants to remain active by returning
+	GMR_MEACTIVE. A gadget tells Intuition it wants to become
+	inactive by returning one of the "go inactive" return values:
+
+	GMR_NOREUSE     Tells Intuition to throw away the
+	                gpInput.gpi_IEvent InputEvent.
+
+	GMR_REUSE       Tells Intuition to reprocess the
+	                gpInput.gpi_IEvent InputEvent after
+	                deactivating the gadget.
+	GMR_NEXTACTIVE  Tells Intuition to throw away the
+	                gpInput.gpi_IEvent InputEvent and activate
+	                the next GFLG_TABCYCLE gadget.
+
+	GMR_PREVACTIVE  Tells Intuition to throw away the
+	                gpInput.gpi_IEvent InputEvent and activate
+	                the previous GFLG_TABCYCLE gadget.
+
+	GMR_NOREUSE tells Intuition that the gadget does not want to
+	be active and should throw away the InputEvent that triggered
+	the GM_HANDLEINPUT message (or the GM_GOACTIVE message). For
+	example, an active prop gadget returns GMR_NOREUSE when the
+	user lets go of the left mouse button (thus letting go of the
+	prop gadget's knob).
+
+	A gadget can also return GMR_REUSE which tells Intuition to
+	reuse the InputEvent. For example, if the user clicks outside
+	of an active string gadget that string gadget returns GMR_REUSE
+	so Intuition can process that mouse click which could be over
+	another gadget. Another case where a string gadget returns
+	GMR_REUSE is when the user pushes the right mouse button
+	(the menu button). The string gadget becomes inactive and the
+	menu button InputEvent gets reused by Intuition so it can pop
+	up the menu bar.
+
+	The other two possible return values GMR_NEXTACTIVE and
+	GMR_PREVACTIVE tell Intuition that a gadget no longer wants to
+	be active and that the GM_HANDLEINPUT message InputEvent should
+	be discarded. Intuition then looks for the next non-disabled
+	(GMR_NEXTACTIVE) or previous (GMR_PREVACTIVE) gadget that has
+	its GFLG_TABCYCLE flag set in its Gadget.Activation field
+	(see the GA_TabCycle attribute) and attempts to activate it.
+
+	For both GM_GOACTIVE and GM_HANDLEINPUT the gadget can bitwise
+	OR any of these "go inactive" return values with GMR_VERIFY.
+	The GMR_VERIFY flag tells Intuition to send an IDCMP_GADGETUP
+	IntuiMessage to the gadget's window. If the gadget uses
+	GMR_VERIFY it has to supply a value for the IntuiMessage's
+	Code field. It does this by passing a value in the gpInput's
+	gpi_Termination field. This field points to an int32 word
+	the lower 16-bits of which Intuition copies into the Code
+	field. The upper 16-bits are for future enhancements so
+	clear these bits.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpInput
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	Returns a valid GMR_xxx combination as described above.
+
+    SEE ALSO
+	GM_GOACTIVE, GM_GOINACTIVE
+
+gadgetclass/GM_HELPTEST                                   gadgetclass/GM_HELPTEST
+
+    NAME
+	GM_HELPTEST -- Determine if gadget help was hit.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpHitTest* msg);
+
+    FUNCTION
+	This method is identical to the GM_HITEST method except it
+	is used by Intuition to determine if the help key context is
+	within the gadget object.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpHitTest
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value is one of three different values:
+	  GMR_NOHELPHIT - no help hit
+	  GMR_HELPHIT   - help hit with return code of 0xFFFF
+	  GMR_HELPCODE  - help hit with return code in lower uint16
+
+	Typically, return GMR_HELPHIT if you were hit. It is possible
+	to pass a uint16 to the application via the Code field of
+	the IDCMP_GADGETHELP message. Return GMR_HELPCODE with the
+	lower uint16-sized result you wish to return.
+
+	GMR_HELPHIT yields a Code value of ((uint16) ~0) which
+	should mean "nothing in particular" to the application.
+
+    SEE ALSO
+	GM_HITTEST, intuition.library/DoGadgetMethodA()
+
+gadgetclass/GM_HITTEST                                     gadgetclass/GM_HITTEST
+
+    NAME
+	GM_HITTEST -- Determine if gadget was hit.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpHitTest* msg);
+
+    FUNCTION
+	This method asks a gadget if a point is within its bounds.
+	Usually the point corresponds to a mouse click. Intuition
+	sends a gadget this message when the user clicks inside the
+	rectangular bounds found in the object's Gadget structure
+	(using its TopEdge, LeftEdge, Width and Height fields). Because
+	the gadget decides if it was hit the gadget can be almost any
+	shape or pattern. BOOPSI gadgets that default to using the
+	bounds of their Gadget structure should always return
+	GMR_GADGETHIT.
+
+	GM_HITTEST uses a custom message structure (defined in
+	<intuition/gadgetclass.h>):
+
+	struct gpHitTest
+	{
+	    uint32             MethodID;    // GM_HITTEST
+	    struct GadgetInfo *gpht_GInfo;
+	    struct
+	    {
+	        int16 X;                    // Is this point inside
+	        int16 Y;                    // gadget?
+	    } gpht_Mouse;
+	};
+
+	The gpht_Mouse.X and gpht_Mouse.Y fields make up the X and
+	Y coordinates of the hit point. These coordinates are relative
+	to the upper-left corner of the gadget (LeftEdge, TopEdge).
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpHitTest
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value is GMR_GADGETHIT if hit or 0 otherwise.
+
+    SEE ALSO
+	GM_HELPTEST, intuition.library/DoGadgetMethodA()
+
+gadgetclass/GM_LAYOUT                                       gadgetclass/GM_LAYOUT
+
+    NAME
+	GM_LAYOUT -- Calculate relative gadget coordinates. (V39)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpLayout* msg);
+
+    FUNCTION
+	Intuition sends GM_LAYOUT to any GREL_#? gadget when the gadget
+	is added to the window, when the window opens or when the
+	window is resized. The gpLayout.gpl_Initial field is used
+	to determine when the method was invoked. If gpl_Initial is
+	set to zero it means the method was invoked during window
+	resizing. Otherwise it will be some non-zero value.
+
+	Your gadget can set the GA_RelSpecial property to get GM_LAYOUT
+	events without Intuition changing the interpretation of your
+	gadget's select box. The select box is considered to be in
+	absolute values. This allows for completely arbitrary resizing
+	and repositioning based on window size.
+
+	The gadget is expected to re-evaluate its size based on the
+	GadgetInfo.gi_Domain field and change it as required.
+
+	The gadget must not try and render itself after receiving
+	this message. The GM_RENDER method will be invoked when
+	it is time to render.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpLayout
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	GM_DOMAIN
+
+gadgetclass/GM_RENDER                                       gadgetclass/GM_RENDER
+
+    NAME
+	GM_RENDER -- Render the gadget with state.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpRender* msg);
+
+    FUNCTION
+	This method tells a gadget to render itself.
+
+	GM_RENDER uses a custom message structure (defined in
+	<intuition/gadgetclass.h>):
+
+	struct gpRender
+	{
+	    uint32             MethodID;   // GM_RENDER
+	    struct GadgetInfo *gpr_GInfo;
+	    struct RastPort   *gpr_RPort;  // ready for use
+	    int32              gpr_Redraw; // might be a "highlight pass"
+	};
+
+	The GM_RENDER message contains a pointer to the Gadget's RastPort
+	which it can use for rendering. The Gadget renders itself
+	according to how much imagery it needs to replace. The gpr_Redraw
+	field contains one of three values:
+
+	GREDRAW_REDRAW  Redraw the entire gadget.
+
+	GREDRAW_UPDATE  The user has manipulated the gadget changing the
+	                imagery. Update only that part of the gadget's
+	                imagery that is effected by the user manipulating
+	                the gadget. For example, the knob and scrolling
+	                field of a prop gadget.
+
+	GREDRAW_TOGGLE  If this gadget supports it, toggle to or from the
+	                highlighting imagery.
+
+	The DoRender() method should always be used by class implementors
+	to invoke a GM_RENDER method on a gadget object. Applications use
+	the RefreshGList() function which will invoke GM_RENDER for the
+	caller in the proper context.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct gpRender
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	intuition.library/DoRender(), intuition.library/RefreshGList()
+
+gadgetclass/OM_NEW                                             gadgetclass/OM_NEW
+
+    NAME
+	OM_NEW -- Create the gadgetclass object.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet * msg);
+
+    FUNCTION
+	This method allocates space for an embedded struct Gadget
+	(defined in <intuition/intuition.h>) and initializes some
+	of the attributes defined by gadgetclass.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns a pointer to the newly created gadget or NULL on failure.
+
+    SEE ALSO
+	intuition.library/NewObject()
+
+gadgetclass/OM_NOTIFY                                       gadgetclass/OM_NOTIFY
+
+    NAME
+	OM_NOTIFY -- Notify target of attribute value changes.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method tells a gadget to send an OM_UPDATE message to
+	its target object. BOOPSI gadgets have a function similar to
+	icclass objects--each gadget can have an ICA_TARGET and ICA_MAP
+	in order to notify some target object of attribute changes.
+	When a BOOPSI gadget sends an OM_NOTIFY message it always includes
+	its GA_ID. This makes it easy for an application to tell which
+	gadget initially sent the OM_NOTIFY. See the description of
+	icclass's OM_NOTIFY and OM_UPDATE and the rootclass's OM_NOTIFY
+	and OM_UPDATE methods for more details.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	icclass/OM_NOTIFY, icclass/OM_UPDATE, rootclass/OM_NOTIFY,
+	rootclass/OM_UPDATE
+
+

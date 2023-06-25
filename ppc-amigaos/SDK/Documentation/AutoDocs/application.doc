@@ -1,0 +1,2319 @@
+TABLE OF CONTENTS
+
+application.library/-IMPORTANT
+application.library/-preface-
+application.library/application/-messages-
+application.library/application/-registration-
+application.library/application/FindApplication
+application.library/application/FreeApplicationList
+application.library/application/GetAppLibAttrsA
+application.library/application/GetApplicationAttrsA
+application.library/application/GetApplicationList
+application.library/application/LockApplicationIcon
+application.library/application/NotifyA
+application.library/application/RegisterApplicationA
+application.library/application/SendApplicationMsg
+application.library/application/SetAppLibAttrsA
+application.library/application/SetApplicationAttrsA
+application.library/application/UnlockApplicationIcon
+application.library/application/UnregisterApplicationA
+application.library/Arexx/NOTIFY
+application.library/Arexx/REGISTERAPP
+application.library/Arexx/UNREGISTERAPP
+application.library/prefsobjects/-prefsobjects-
+application.library/prefsobjects/BeginDeserialization
+application.library/prefsobjects/DictGetBoolForKey
+application.library/prefsobjects/DictGetIntegerForKey
+application.library/prefsobjects/DictGetObjectForKey
+application.library/prefsobjects/DictGetOptionForKey
+application.library/prefsobjects/DictGetStringForKey
+application.library/prefsobjects/DictSetObjectForKey
+application.library/prefsobjects/PrefsArrayA
+application.library/prefsobjects/PrefsBaseObjectA
+application.library/prefsobjects/PrefsBinaryA
+application.library/prefsobjects/PrefsDateA
+application.library/prefsobjects/PrefsDictionaryA
+application.library/prefsobjects/PrefsNumberA
+application.library/prefsobjects/PrefsStringA
+application.library/prefsobjects/ReadPrefsA
+application.library/prefsobjects/WritePrefsA
+application.library/-IMPORTANT                                                           application.library/-IMPORTANT
+
+   NEW INTERFACE VERSIONS
+       Starting with application.library v53.11 a new version 2 of both
+       interfaces "application" and "prefsobjects" were introduced which MUST
+       be used from now on!
+
+       This was necessary because the tag definitions in the application.h
+       header file and the tag parsing code were broken and had to be fixed
+       to allow TAG_IGNORE, TAG_SKIP and TAG_MORE to work correctly.
+
+       Thus from now on you MUST open version 2 of the interfaces, e.g.:
+
+           IApplication = (struct ApplicationIFace *) GetInterface(appBase,
+                          "application", 2L, NULL);
+
+
+       !! VERSION 1 INTERFACES WILL *NOT* WORK WITH THE NEW HEADER !!
+
+       If you mix the interface versions with the wrong header, the functions
+       will show a requester informing you about the problem and fail. Where
+       appropriate your error variable is set to ALPOEF_ILLEGAL_PARAMETER.
+       Using a v2 interface with an old header might lead to very unexpected
+       results, including crashes!
+
+       You have been warned!
+
+application.library/-preface-                                                             application.library/-preface-
+
+   INTRODUCTION
+       What is an application? How can I send common actions to an
+       application? How do applications store their preferences?
+       How could a system like a application task bar be implemented?
+       How can applications show programmatically a icon or docky
+       within a dock utility like AmiDock? How can a application tell
+       other applications that it does not want to be disturbed at the
+       moment? How can screen blanker utilities be controlled? How
+       could a list of last used documents and last used applications
+       be done?
+
+       Those are examples for the main questions which cried for a solution
+       for several years now. Up to now it was impossible for AmigaOS to
+       differenciate between background tasks like drivers, spoolers, etc.
+       and the real "big" and "visible" user applications like for example
+       a Web Browser or a DTP program.
+
+       application.library solves these problems by introducing several
+       new functions:
+
+       - Registration / Unregistration of applications
+       - Application message system for common actions
+       - Easy to use XML-based preferences system
+       - Functions for controlling the displayable state of
+         applications within a dock utility like AmiDock
+       - Methods for controlling and accessing lists of last used
+         documents/applications, screen savers, ...
+
+application.library/application/-messages-                                   application.library/application/-messages-
+
+   INTRODUCTION
+       application.library allows to send messages to applications to inform
+       about some special actions. Examples for such actions would be to
+       tell an application that it should quit, open a document,
+       create a new blank document, come to front, etc.
+
+   APPLICATION MESSAGES
+
+       // ********** App-Notifications
+
+       All applications which have the AppNotifications flag set will
+       receive the following messages:
+
+       APPLIBMT_AppRegister
+           An application registered itself in the system. Toolbar-like
+           applications can now show the icon of the new application
+           in its toolbar.
+
+       APPLIBMT_AppUnregister
+           An application unregistered itself from the system.
+
+       APPLIBMT_AppWantsChangeIconType
+           If you receive this message and if you locked a application icon
+           of the corresponding application, you have to unlock it as you
+           lock the icon type change until all applications unlocked the
+           icon.
+
+       APPLIBMT_AppDidChangeIconType
+           An application changed its icon type.
+
+       APPLIBMT_AppDidChangeHidden
+           An application changed its hidden state.
+
+       APPLIBMT_LastAppDocChange
+           The last used applications/documents list has been modified.
+
+       // ********** Messages usually sent to single applications
+
+       APPLIBMT_Quit
+           The application shall quit. If necessary, it may also ask for
+           "Document XY is not saved. Save it now?".
+
+       APPLIBMT_ForceQuit
+           Same as before but this time the application shall quit
+           immediately; without asking for saving documents etc.
+
+       APPLIBMT_Hide
+           The application shall hide itself (iconfiy).
+
+       APPLIBMT_Unhide
+           The application shall unhide itself (uniconofy).
+
+       APPLIBMT_ToFront
+           The application shall come to front.
+           This means that the application shall do a ScreenToFront()
+           and WindowToFront(), ActivateWindow() for its main (document-)
+           window so that the user can immediately begin with his/her
+           input.
+
+       APPLIBMT_Unique
+           If the application registered itself as wanting to be unique,
+           the application.library sends a APPLIBMT_Unique to the application
+           when someone tries to start it a second time.
+
+       APPLIBMT_OpenPrefs
+           The application shall open its preferences window.
+
+       APPLIBMT_NewBlankDoc
+           The application shall open a new blank document.
+
+       APPLIBMT_OpenDoc
+           The application shall try to open the provided document.
+
+       APPLIBMT_PrintDoc
+           The application shall try to print the provided document.
+           When receiving this message, the application shall immediately
+           start printing without asking the user anything. If there are
+           special settings needed for printing, these settings should be
+           made configurable in the application's preferences interface.
+
+       // ********** Blanker Notifications
+
+       All applications which have the BlankerNotifications flag set will
+       receive the following messages. These messages are only interesting
+       for screen blanker tools.
+
+       APPLIBMT_BlankerAllow
+           After receiving this message, the screen blanker is allowed
+           to become active.
+
+       APPLIBMT_BlankerDisallow
+           After receiving this message, the screen blanker is not allowed
+           to become active again. If the blanker is already blanking, it
+           has to immediately stop doing do.
+           Don't forget to react to APPLIBMT_GameModeEntered, too!!!
+
+       APPLIBMT_BlankerBlank
+           If a screen blanker receives this message, it should immediately
+           start with blanking.
+
+       APPLIBMT_BlankerMonitorOff
+           If a blanker supporting DPMS energy saving modes receives this
+           message, it should immediately switch off the monitor.
+
+       APPLIBMT_BlankerUnBlank
+           If a blanker receives this message, it should immediately
+           stop blanking. This doesn't mean disabling any further blanking.
+           The behaviour should be the same as if the user moved the mouse
+           a short moment.
+
+       // ********** Messages always sent to all applications
+
+       The following messages are sent *always* to all applications:
+
+       APPLIBMT_GameModeEntered
+           After receiving this message, all applications should behave
+           "honest". That means, the applications shall not pop up
+           windows, come to front, play alert sounds, etc.
+           If the game mode was entered you always should think of
+           "Let the user play his/her game - DO NOT DISTURB!!!".
+
+           Entering the game mode is also meant for multimedia applications.
+           If for example a presentation program starts its presentation,
+           there never should happen any interruption from other
+           applications!
+
+       APPLIBMT_GameModeLeft
+           After receiving this message, the applications can continue
+           with disturbing the user as (s)he obviously stopped doing
+           important stuff.
+
+   EXAMPLE
+       ...
+
+       struct ApplicationMsg *msg;
+       BOOL running=TRUE;
+
+       while (running)
+       {
+           WaitPort(appPort);
+
+           while (msg=(struct ApplicationMsg *) GetMsg(appPort))
+           {
+               switch (msg->type)
+               {
+                   case APPLIBMT_Quit:
+                       running=FALSE;
+                       break;
+                       ...
+               }
+
+               ReplyMsg((struct Message *)msg);
+           }
+       }
+
+       ...
+
+application.library/application/-registration-                           application.library/application/-registration-
+
+   APPLICATION REGISTRATION PROCESS
+       Applications need to intruduce theirselves to the operating system
+       to give AmigaOS an idea about what is an application and where/how
+       it can be reached. For this reason, two functions,
+       RegisterApplication() and UnregisterApplication() are available:
+
+       RegisterApplication()
+           Does what its name says... it registers a application... ;-)
+           But there is a bit more to know about how this is done:
+           - After a application is registered, it is accessible over a
+             unique applicatin ID (appID).
+           - When registering, the developer can specify if the
+             application shall open its preferences over the PrefsObjects
+             system. If this is done, the developer needs not to write
+             even one line of code to read even very complex preferences
+             scenarios.
+
+       UnregisterApplication()
+           This function removes the registration of an application. It
+           is very important to call this function as it does care about
+           much more:
+
+           - If the application icon (or docky) is used by dock
+             utilities, it tells those tools to release the icon/docky as
+             it soon is no longer available.
+           - If REGAPP_SavePrefs was set to TRUE at registration time or
+             during runtime, the application preferences file is
+             automatically written back while unregistering.
+           - If the application entered game mode or forbid screen savers
+             to blank but forgot to undo this action,
+             UnregisterApplication() does this automatically.
+
+   IDENTIFIERS
+       Applications are identified by a unique identifier which is a
+       combination of the application name, an optional counter and an
+       optional URLIdentifier:
+       <ApplicationName>[_counter][.URLIdentifier]
+
+       Example:
+           The name of the application is "TestApp" and the domain is
+           called "qdev.de". For the first started instance of TestApp
+           this results in a application identifier "TestApp.qdev.de",
+           for the second in "TestApp_1.qdev.de", etc.
+
+       You do not need to worry about the application identifiers,
+       they're created automatically and ususally of no interest for the
+       developer. However, this naming scheme is used as base name for
+       the preferences files of applications.
+application.library/application/FindApplication                         application.library/application/FindApplication
+
+   NAME
+       FindApplicationA -- Find an application.
+       FindApplication -- Varargs stub for FindApplicationA().
+
+   SYNOPSIS
+       appID = FindApplicationA(tags);
+
+       uint32 FindApplicationA(struct TagItem *tags);
+
+       appID = FindApplication(Tag1, ...);
+
+       uint32 FindApplication(...);
+
+   FUNCTION
+       This function allows to search for a previously registered
+       application.
+
+   INPUT
+       tags - a taglist of options; see descriptions below.
+
+       FINDAPP_Name
+           Searched for the given application name (e.g. "TestApp").
+
+       FINDAPP_FileName
+           Searches for the given application filename
+           (e.g. "Work:TestApp/TestApp").
+           If this tag is specified, FINDAPP_FileName is
+           ignored.
+
+       FINDAPP_AppIdentifier
+           Searches for the given application identifier
+           (e.g. "TestApp.qdev.de").
+           If this tag is specified, FINDAPP_FileName and
+           FINDAPP_Name is ignored.
+
+   RESULTS
+       appID - application ID of the found application or NULL (not found).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+application.library/application/FreeApplicationList                 application.library/application/FreeApplicationList
+
+   NAME
+       FreeApplicationList -- Frees a list of applications which was
+       generated by GetApplicationList().
+
+   SYNOPSIS
+       FreeApplicationList(list);
+
+       void FreeApplicationList(struct MinList *list);
+
+   FUNCTION
+       Frees and destroys a list generated with GetApplicationList().
+
+   INPUTS
+       list - a list generated with GetApplicationList().
+
+   RESULTS
+       None.
+
+   SEE ALSO
+       GetApplicationList()
+application.library/application/GetAppLibAttrsA                         application.library/application/GetAppLibAttrsA
+
+   NAME
+       GetAppLibAttrsA -- Get global application.library attributes.
+       GetAppLibAttrs -- Varargs stub for GetAppLibAttrsA().
+
+   SYNOPSIS
+       success = GetAppLibAttrsA(tags);
+
+       BOOL GetAppLibAttrsA(struct TagItem *tags);
+
+       success = GetAppLibAttrs(Tag1, ...);
+
+       BOOL GetAppLibAttrs(...);
+
+   FUNCTION
+
+   INPUTS
+       tags - a taglist of options; see descriptions below.
+
+       APPLIBATTR_LastUsedAppsArray - (PrefsObject *)
+           Retrieving this option will return a PrefsObjects array
+           containing the last used applications. The returned
+           array is a copy the real array, that means that you can
+           alter it without causing an effect to the real array.
+           Note: You have to ALPO_Release the returned array object yourself
+           after finishing usage!
+
+       APPLIBATTR_LastUsedAppsMaxCount - (uint32)
+           This integer value is the number of max. stored entries in the
+           global last used applications list.
+
+       APPLIBATTR_LastUsedDocsArray - (PrefsObject *)
+           Retrieving this option will return a PrefsObjects array
+           containing the last used documents. The returned
+           array is a copy the real array, that means that you can
+           alter it without causing an effect to the real array.
+           Note: You have to ALPO_Release the returned array object yourself
+           after finishing usage!
+
+       APPLIBATTR_LastUsedDocsMaxCount - (uint32)
+           This integer value is the number of max. stored entries in the
+           global last used documents list.
+
+       APPLIBATTR_BlankerIsAllowed - (BOOL)
+           If the value returned is set to TRUE, a screenblanker is allowed
+           to become active.
+
+       APPLIBATTR_GameModeIsActive - (BOOL)
+           If the value returned is set to TRUE, the system is meant to be
+           in "Game Mode" - that means, that no background sounds shall
+           be played, no popup requesters shall open, no order in screens
+           shall be done, etc.
+
+   RESULTS
+       success - TRUE, if all get-operations were successful,
+                 FALSE otherwise.
+
+   EXAMPLE
+       PrefsObject *array;
+
+       if (GetAppLibAttrs(APPLIBATTR_LastUsedAppsArray, &array, TAG_DONE))
+       {
+           struct ALPOObjIndex ai;
+           int32 count;
+
+           PrefsArray(array, NULL, ALPOARR_GetCount, &count, TAG_DONE);
+
+           printf("List of last used applications:\n");
+
+           for(ai.index=0; ai.index<count; ai.index++)
+           {
+               if (PrefsArray(array, NULL,
+                              ALPOARR_GetObjAtIndex, &ai, TAG_DONE))
+               {
+                   CONST_STRPTR str=DictGetStringForKey(ai.obj,
+                                   LUA_APPNAME_KEY, "no name");
+                   printf("  %s\n", str);
+               }
+           }
+
+           PrefsArray(array, NULL, ALPO_Release, 0, TAG_DONE);
+       }
+
+   BUGS
+
+   SEE ALSO
+       SetAppLibAttrsA(), RegisterAppLibA()
+application.library/application/GetApplicationAttrsA               application.library/application/GetApplicationAttrsA
+
+   NAME
+       GetApplicationAttrsA -- Get application attributes.
+       GetApplicationAttrs -- Varargs stub for GetApplicationAttrsA().
+
+   SYNOPSIS
+       success = GetApplicationAttrsA(appID, tags);
+
+       BOOL GetApplicationAttrsA(uint32 appID, struct TagItem *tags);
+
+       success = GetApplicationAttrs(appID, Tag1, ...);
+
+       BOOL GetApplicationAttrs(uint32 appID, ...);
+
+   FUNCTION
+       This function allows to retrieve settings of a registered
+       application. Please have a look at the section SetApplicationAttrs()
+       for more information for more information about the used tags.
+
+   INPUTS
+       appID - the application ID of the application.
+
+       tags - a taglist of options; see descriptions below.
+
+       APPATTR_Port - (struct MsgPort *)
+       This tag returns the application message port for the current
+       application (if it was registrated before).
+
+       The remaining tags are identical to the tags used in
+       RegisterApplication():
+
+       APPATTR_FileName - STRPTR
+       APPATTR_Name - STRPTR
+       APPATTR_URLIdentifier - STRPTR
+       APPATTR_AppIdentifier - STRPTR
+       APPATTR_Hidden - BOOL
+       APPATTR_IconType - struct ApplicationIconInfo *
+       APPATTR_UniqueApplication - BOOL
+       APPATTR_SavePrefs - BOOL
+       APPATTR_AppNotifications - BOOL
+       APPATTR_BlankerNotifications - BOOL
+       APPATTR_MainPrefsDict - PrefsObject *
+       APPATTR_AllowsBlanker - BOOL
+       APPATTR_NeedsGameMode - BOOL
+       APPATTR_AppIdentifierCounter - BOOL
+       APPATTR_LastUsedDocsArray - PrefsObject *
+       APPATTR_HasPrefsWindow - BOOL
+       APPATTR_HasIconifyFeature - BOOL
+       APPATTR_CanCreateNewDocs - BOOL
+       APPATTR_CanPrintDocs - BOOL
+       APPATTR_Description - STRPTR (V53.2)
+
+   RESULTS
+
+   EXAMPLE
+       ...
+       struct MsgPort *port;
+
+       if (GetApplicationAttrs(appID, APPATTR_Port, (uint32)&port, TAG_DONE))
+       {
+           ... receive messages ...
+       }
+       ...
+
+   BUGS
+
+   SEE ALSO
+       SetApplicationAttrsA(), RegisterApplicationA()
+application.library/application/GetApplicationList                   application.library/application/GetApplicationList
+
+   NAME
+       GetApplicationList -- Obtain a list of all currently registered
+       applications.
+
+   SYNOPSIS
+       list = GetApplicationList();
+
+       struct MinList *GetApplicationList(void);
+
+   FUNCTION
+       Tries to generate a list of all currently registered applications.
+       The generated list has to be destroyed using FreeApplicationList().
+
+   INPUTS
+       None.
+
+   RESULTS
+       list - a MinList of nodes with type struct ApplicationNode
+
+   EXAMPLE
+       ...
+       struct MinList *appList;
+
+       appList = GetApplicationList();
+       if (appList)
+       {
+           struct MinNode *node;
+
+           printf("Currently registered applications:\n");
+
+           for(node = appList->mlh_Head;
+               node->mln_Succ;
+               node = node->mln_Succ)
+           {
+               ApplicationNode *an=(struct ApplicationNode *)node;
+               printf("  id: %ld    name: %s\n", an->appID, an->name);
+           }
+
+           FreeApplicationList(appList);
+       }
+       ...
+
+   BUGS
+
+   SEE ALSO
+       FreeApplicationList()
+application.library/application/LockApplicationIcon                 application.library/application/LockApplicationIcon
+
+   NAME
+       LockApplicationIcon -- Attempts to lock a application icon.
+
+   SYNOPSIS
+       success = LockApplicationIcon(appID);
+
+       BOOL LockApplicationIcon(uint32 appID);
+
+   FUNCTION
+       If a tool wants to access a icon of a registered application, it has
+       to look it before it can use it. If a icon is locked, the application
+       which owns the icon is not allowed to change its icon until the lock
+       is removed. Locking an icon is the only way to get access to an
+       application icon or application docky.
+       This ensures that the icon structure (or docky) is valid during the
+       whole locking-time. The application which owns the icon even is
+       disallowed to unregister until all locks are removed to prevent
+       accesses to invalid memory/data structures.
+
+       * Use with care! *
+       As long as you lock an application icon, the application which owns
+       the icon is not allowed to quit!
+
+       LockApplicationIcon nests; that means, the number of locks has to be
+       be equal to the number of unlocks.
+
+   INPUTS
+       appID - the application ID of the application.
+
+   RESULTS
+       success - TRUE if the icon was successfully locked,
+       FALSE if the locking failed.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       UnlockApplicationIcon()
+application.library/application/NotifyA                                         application.library/application/NotifyA
+
+   NAME
+       NotifyA -- show a pop-up message on a given screen. (V53.2)
+       Notify -- Varargs stub for NotifyA().
+
+   SYNOPSIS
+       result = NotifyA(uint32 appID, tags);
+
+       uint32 NotifyA(uint32 appID, struct TagItem *tags);
+
+       result = Notify(uint32 appID, Tag1, ...)
+
+       uint32 Notify(uint32 appID, ...);
+
+   FUNCTION
+       This routine is used to display a pop-up message on a given screen 
+       and/or to log a message.
+
+       The message will be passed to a server which will handle pop-up
+       windows (fading-in, fading-out, screen positioning, themes etc.).
+
+       It's possible to modify at run time the graphical aspect of the
+       pop-up messages as well other parameters via the GUI preference
+       editor.
+
+       There are several options available for this function, please
+       refer to the INPUTS section below for more information.
+
+   INPUTS
+       appID - application ID obtained with RegisterApplicationA().
+
+       tags - a taglist of options; see descriptions below.
+
+       APPNOTIFY_Title - (CONST_STRPTR)
+           If specified, will show a title on the pop-up message.
+           NOTE: A maximum length of 31 characters is implied on any titles
+           supplied, and will be truncated if the length exceeds this limit.
+
+           Defaults to NULL.
+
+       APPNOTIFY_Update - (BOOL)
+           If specified, allow the application to close all its notifications
+           on the screen or in queue, and display a new one.
+           Useful to display updated information.
+
+           Defaults to FALSE.
+
+       APPNOTIFY_Pri - (uint32)
+           Notification priority. If the priority is greater than 8, then the
+           screen will "flash" when the notification is posted.
+           A priority of 10 will cause the notification to be permanently
+           displayed until the user clicks on the "Close" gadget. It may also be
+           closed by double-clicking it if APPNOTIFY_CloseOnDC is TRUE.
+
+           Defaults to ZERO.
+
+       APPNOTIFY_PubScreenName - (CONST_STRPTR)
+           Name of the public screen where to display the pop-up.
+           Use "FRONT" to show on the most front active screen.
+           Will use "Workbench" as default.
+
+       APPNOTIFY_ImageFile - (CONST_STRPTR)
+           Full path to an image file to be displayed in the pop-up message.
+           Any image format supported by datatypes could be used (alpha
+           channel is supported)
+
+           Defaults to NULL.
+
+       APPNOTIFY_BackMsg - (CONST_STRPTR)
+           A message to be sent back to your application when a user
+           double-clicks on a pop-up message.
+           The message will be sent via SendApplicationMsg() and you'll
+           receive an APPLIBMT_CustomMsg type message.
+           An alternative, it's possible to open an URL into a browser,
+           just use something like: "URL:http://www.yoururl.net".
+           Requires launch-handler or OpenUrl to be installed.
+
+           Defaults to NULL.
+
+       APPNOTIFY_CloseOnDC - (BOOL)
+           If specified, will close the pop-up message on double-click
+           Useful in conjuction with APPNOTIFY_BackMsg.
+
+           Defaults to FALSE.
+
+       APPNOTIFY_ConfirmClose - (BOOL)
+           If a notification has been posted with a "BackMsg", the usual
+           process is to wait for it in an event loop, but if the
+           notification times-out or is closed by the user, then your
+           application may end up waiting forever. Setting this attribute
+           to TRUE will send a message to your applications MsgPort of type
+           APPLIBMT_ConfirmClose. You will receive one of these for each
+           notification posted with this attribute set.
+
+           Defaults to FALSE.
+
+       APPNOTIFY_Text - (CONST_STRPTR)
+           If specified, will show a text on the pop-up message.
+
+           Defaults to NULL.
+
+       APPNOTIFY_ImageVertAlign - (uint32) (V53.12)
+           Vertical alignment for the image to be displayed within the pop-up 
+           message, the allowed values are: 0=TOP, 1=MIDDLE, 2=BOTTOM
+
+           Defaults to TOP.
+
+       APPNOTIFY_LogOnly - (BOOL) (V53.12)
+           Starting with application.library 53.12 a log facility has been
+           introduced, each notification is recorded into a circular buffer,
+           and saved every 10 seconds into T:
+           With this tag is possible to log a message in the buffer without
+           the need to display a notification pop-up message as well.
+
+           Defaults to FALSE.
+
+   RESULTS
+       See libraries/application.h for a list of return codes.
+
+   EXAMPLE
+
+       uint32 appID = IApplication->RegisterApplication("MYAPPLICATION",
+           REGAPP_URLIdentifier, "mydomain.org",
+           REGAPP_Description, "This is a very useful application",
+           REGAPP_UniqueApplication, TRUE,
+           REGAPP_AppNotifications, FALSE,
+           TAG_DONE);
+
+       if (appID != 0)
+       {
+           uint32 result = IApplication->Notify(appID,
+               APPNOTIFY_Title,         "This is a title",
+               APPNOTIFY_Update,        FALSE,
+               APPNOTIFY_Pri,           0,
+               APPNOTIFY_PubScreenName, "FRONT",
+               APPNOTIFY_ImageFile,     "PROGDIR:images/test.png",
+               APPNOTIFY_BackMsg,       "Send me back this message",
+               APPNOTIFY_CloseOnDC,     TRUE,
+               APPNOTIFY_Text,          "Some text to display !!!",
+               TAG_DONE);
+       }
+
+   BUGS
+       Beta versions of this function did not have TAG_USER set
+       in the tags and some of the tags were renamed.
+
+   NOTES
+       Always pay attention to the return code. If NotifyA() fails and
+       your application really needs to show a message to the user,
+       use some another method (e.g. Requesters).
+
+       The notification server provides an ARexx interface to display
+       pop-up messages as well. This is useful for integrating old and
+       no-longer developed applications or could be used with ARexx scripts.
+
+       From version 53.22 onwards, the server will not remove the notification
+       automatically after the display period unless some user input has been
+       detected very recently. This allows for notifications to remain on-screen
+       while the user is away from the computer, and the countdown timer will
+       resume after input is detected. This means you will no longer miss any
+       messages from applications when you are not using the computer.
+
+   SEE ALSO
+       RegisterApplicationA(), SendApplicationMsg()
+
+application.library/application/RegisterApplicationA               application.library/application/RegisterApplicationA
+
+   NAME
+       RegisterApplicationA -- Register a application within the system.
+       RegisterApplication -- Varargs stub for RegisterApplicationA().
+
+   SYNOPSIS
+       appID = RegisterApplicationA(appName, tags);
+
+       uint32 RegisterApplicationA(CONST_STRPTR appName,struct TagItem *tags);
+
+       appID = RegisterApplication(appName, Tag1, ...)
+
+       uint32 RegisterApplication(CONST_STRPTR appName, ...);
+
+   FUNCTION
+       This routine is used to register a task as application to the system.
+       The registered application will automatically become a publically
+       reachable message port which will allow the application to receive
+       common application messages.
+
+   INPUTS
+       appName - pointer to a C-string containing the name of the
+                 application.
+                 You always should provide a REGAPP_URLIdentifier tag
+                 aswell, as it helps to avoid name conflicts.
+                 See RegisterApplication() for more information about the
+                 URL identifier.
+
+       tags - a taglist of options; see descriptions below.
+
+       REGAPP_UniqueApplication - (BOOL) Defaults to FALSE.
+           If set to TRUE, this application will be unique within the system.
+           That means, that it is impossible to register the same program a
+           second time. In such an attempt, the first registered application
+           will receive an APPLIBMT_Unique message.
+           If set to FALSE, application.library will append a counter
+           (e.g. ".1", ".2", ...) to the urlIdentifier until a unique name is
+           found.
+
+      REGAPP_URLIdentifier - (STRPTR)
+           If specified, the to-be-registered application identifier will be
+           concatenated with the provided string to create a more unique
+           application identifier.
+
+       REGAPP_Hidden - (BOOL) Defaults to FALSE.
+           Set this option to TRUE, if your application starts up in
+           iconified (hidden) mode.
+
+       REGAPP_LoadPrefs - (BOOL) Defaults to FALSE.
+           Set this option to TRUE if application.library shall load the
+           application preferences identified by urlIdentifier.
+
+       REGAPP_SavePrefs - (BOOL) Defaults to FALSE.
+           Set this option to TRUE if application.library shall save the
+           application preferences identified by urlIdentifier when calling
+           UnregisterApplication().
+
+       REGAPP_CustomPrefsFileName - (STRPTR)
+           By specifiying this option, a custom preferences file name for
+           the application preferences is used. This automatically sets
+           REGAPP_UsesPrefs to TRUE and lets application.library use this
+           file name instead of the preferences file identified by
+           urlIdentifier.
+
+       REGAPP_CustomPrefsBaseName - (STRPTR)
+           This option allows an application to have a base name
+           for the prefs file different to it's app name.
+           As example, an application could register as "TestApp" and set
+           this option to "MyConfig". The application.library then would
+           use the following prefs file name: ENV(ARC):(ENVDir/)MyConfig.xml
+
+       REGAPP_ENVDir - (STRPTR)
+           If this option is specified, a subdirectory in the ENV-Path
+           is used for storing the application preferences file.
+
+           Example:
+               appName: "TestApp"
+               urlIdentifier: "qdev.de"
+               REGAPP_ENVDir: "test/blah"
+               will result in the filename
+               "ENV:test/blah/TestApp.qdev.de.xml"     (ENV:)
+               and
+               "ENVARC:test/blah/TestApp.qdev.de.xml"  (ENVARC:)
+
+       REGAPP_WBStartup - (struct WBStartup *)
+           If specified, application.library will be able to get the
+           application name and path from the WBStartup structure.
+
+       REGAPP_FileLock - (BPTR)
+           If specified, application.library will try to obtain the
+           application name and path from the given file lock.
+
+       REGAPP_FileName - (STRPTR)
+           This tag allows to directly specify the application path.
+
+       REGAPP_NoIcon - (BOOL) Defaults to FALSE.
+           If set to TRUE, a application task bar (like AmiDock) shall
+           not display the current application along with the other
+           application. The application then is running "invisible" in
+           the background.
+
+       REGAPP_AppIconInfo - (struct ApplicationIconInfo *)
+           Defaults to APPLIBIT_ProgramIcon.
+           This option specifies the icon type which shall be displayed in
+           a application task bar (e.g. AmiDock).
+           Possible values are:
+           - APPLIBIT_None -- no icon ("invisible" application)
+           - APPLIBIT_ProgramIcon -- the application's .info is used
+           - APPLIBIT_CustomIcon -- custom icon is used
+           - APPLIBIT_Docky -- active application docky
+
+       REGAPP_AppNotifications - (BOOL) Defaults to FALSE.
+           If set to TRUE, the application will receive application
+           registration/unregistration notifications, icon type changes,
+           hidden change notifications and LastAppDoc-list changes.
+           This option is mostly only useful for application task bars
+           like AmiDock.
+
+       REGAPP_BlankerNotifications - (BOOL) Defaults to FALSE.
+           If set to TRUE, the application will receive blanker
+           notifications. This option should only be used by screen blankers.
+
+       REGAPP_AllowsBlanker - (BOOL) Defaults to TRUE.
+           By setting this option to FALSE, the application tells the system
+           that it does not want to be disturbed by screenblankers comming
+           to front. This option is also changeable during runtime using
+           SetApplicationAttrs().
+           The support for this mechanism has to be added to a screenblanker
+           to be functional.
+           See SetApplicationAttrs(), too.
+
+       REGAPP_NeedsGameMode - (BOOL) Defaults to FALSE.
+           If set to TRUE, the application indicates that it doesn't want to
+           be disturbed by other applications. This means, that no other
+           applications shall come to front, pop up windows, play sounds or
+           do performance critical stuff.
+           This option has to be implemented by third-party applications.
+           Note that setting this option to TRUE does *notguarantee that
+           applications will not disturb your application.
+           See SetApplicationAttrs(), too.
+
+       REGAPP_Description - (STRPTR) (V53.2)
+           A string with a short description of your application purpose.
+           Used by the Notification server (chech NotifyA())
+
+   RESULTS
+       appID - 0 if application registration failed, otherwise an
+       application ID (== handle) is returned.
+       An application ID is always unique and is guaranteed to be
+       NOT reused after an application unregisters itself.
+
+   EXAMPLE
+       void wbmain(struct WBStartup *wb)
+       {
+           ...
+
+           if (appID = IApplication->RegisterApplication("TestApp",
+               REGAPP_URLIdentifier, "qdev.de",
+               REGAPP_LoadPrefs, TRUE,
+               REGAPP_WBStartup, wb,
+               TAG_DONE))
+           {
+               ...
+
+   BUGS
+
+   SEE ALSO
+       UnregisterApplication(), NotifyA()
+application.library/application/SendApplicationMsg                   application.library/application/SendApplicationMsg
+
+   NAME
+       SendApplicationMsg -- Sends a message to one or many applications.
+
+   SYNOPSIS
+       success = SendApplicationMsg(senderAppID,
+           receiverAppID,
+           msg,
+           msgType);
+
+       BOOL SendApplicationMsg(uint32 senderAppID,
+           uint32 receiverAppID,
+           struct ApplicationMsg *msg,
+           uint32 msgType);
+
+   FUNCTION
+       This funztion is used to send application.library messages between
+       applications.
+
+   INPUTS
+       senderAppID - sending application ID
+
+       receiverAppID - receiving application ID
+           (usually the value returned by FindApplication)
+           use 0 to broadcast to all apps
+
+       msg - NULL or one of the following types:
+
+           struct ApplicationMsg
+           struct ApplicationOpenPrintDocMsg
+           struct ApplicationCustomMsg
+
+       msgType - one of the following msg types:
+
+           // ------- APPLIBAIF_APPNOTIFY
+           // these messages are always broadcast
+           APPLIBMT_AppRegister
+           APPLIBMT_AppUnregister
+           APPLIBMT_AppWantsChangeIconType
+           APPLIBMT_AppDidChangeIconType
+           APPLIBMT_AppDidChangeHidden
+           APPLIBMT_LastAppDocChange
+
+           // ------- sent to single applications
+           APPLIBMT_Quit
+           APPLIBMT_ForceQuit
+           APPLIBMT_Hide
+           APPLIBMT_Unhide
+           APPLIBMT_ToFront
+           APPLIBMT_Unique
+
+           APPLIBMT_OpenPrefs
+           APPLIBMT_ReloadPrefs
+
+           APPLIBMT_NewBlankDoc
+           APPLIBMT_OpenDoc
+           APPLIBMT_PrintDoc
+
+           APPLIBMT_CustomMsg (V53.2)
+
+           // ------- APPLIBAIF_BLANKERNOTIFY
+           // these messages are always broadcast
+           APPLIBMT_BlankerAllow
+           APPLIBMT_BlankerDisallow
+           APPLIBMT_BlankerBlank
+           APPLIBMT_BlankerMonitorOff
+           APPLIBMT_BlankerUnBlank
+
+           // ------- sent to all applications
+           APPLIBMT_GameModeEntered
+           APPLIBMT_GameModeLeft
+
+   RESULTS
+       success - TRUE, if the message was sent successfully,
+                 FALSE otherwise.
+
+   EXAMPLE
+       struct ApplicationCustomMsg cmsg = { 0 };
+
+       uint32 recvID = IApplication->FindApplication(FINDAPP_Name,"ACME",TAG_DONE);
+
+       if (recvID)
+       {
+           cmsg.almsg.senderAppID = myappID;
+           cmsg.almsg.type = APPLIBMT_CustomMsg;
+           cmsg.customMsg = "This is an example of custom message";
+
+           success = IApplication->SendApplicationMsg(ringhio.regID,
+               recvID,
+               (struct ApplicationMsg *)&cmsg,
+               APPLIBMT_CustomMsg);
+       }
+
+   BUGS
+
+   SEE ALSO
+       RegisterApplicationA() FindApplication()
+application.library/application/SetAppLibAttrsA                         application.library/application/SetAppLibAttrsA
+
+   NAME
+       SetAppLibAttrsA -- Set/Change global application.library attributes.
+       SetAppLibAttrs -- Varargs stub for SetAppLibAttrsA().
+
+   SYNOPSIS
+       success = SetAppLibAttrsA(dummy, tags);
+
+       BOOL SetAppLibAttrsA(uint32 dummy, struct TagItem *tags);
+
+       success = SetAppLibAttrs(dummy, ...);
+
+       BOOL SetAppLibAttrs(uint32 dummy, ...);
+
+   FUNCTION
+       This function allows to change global application.library attributes.
+       application.library stores and loads its settings from
+       "ENV(ARC):Sys/com.amiga.application_library.xml".
+       A write access (set) to global application.library attributes causes
+       an immediate write of these prefs.
+
+   INPUTS
+       dummy - set this to 0.
+
+       tags - a taglist of options; see descriptions below.
+
+       APPLIBATTR_LastUsedAppsMaxCount - (uint32)
+           This integer attribute changes the number of applications which
+           shall be held in the global last used applications list.
+           The possible value ranges from 0 to 25.
+
+       APPLIBATTR_ClearLastUsedApps - (BOOL)
+           If set to TRUE, the last used applications list will be cleared.
+
+       APPLIBATTR_LastUsedDocsMaxCount - (uint32)
+           This integer attribute changes the number of documents which
+           shall be held in the global last used documents list.
+           The possible value ranges from 0 to 25.
+
+       APPLIBATTR_ClearLastUsedDocs - (BOOL)
+           If set to TRUE, the last used documents list will be cleared.
+
+   RESULTS
+       success - TRUE, if all get-operations were successful,
+                 FALSE otherwise.
+
+   EXAMPLE
+       // Clear the last used applications and last used documents lists
+       SetAppLibAttrs(   APPLIBATTR_ClearLastUsedApps, TRUE,
+                         APPLIBATTR_ClearLastUsedDocs, TRUE,
+                         TAG_DONE);
+
+   BUGS
+
+   SEE ALSO
+       GetAppLibAttrsA()
+application.library/application/SetApplicationAttrsA               application.library/application/SetApplicationAttrsA
+
+   NAME
+       SetApplicationAttrsA -- Set/Change application attributes.
+       SetApplicationAttrs -- Varargs stub for SetApplicationAttrsA().
+
+   SYNOPSIS
+       success = SetApplicationAttrsA(appID, tags);
+
+       BOOL SetApplicationAttrsA(uint32 appID, struct TagItem *tags);
+
+       success = SetApplicationAttrs(appID, ...);
+
+       BOOL SetApplicationAttrs(uint32 appID, ...);
+
+   FUNCTION
+       This function allows to change settings of a registered application.
+       Normally, most application options are specified when calling
+       RegisterApplication(). Some options need to be changeable after
+       registering, though.
+       Please have a look at the section RegisterApplication() for more
+       information for more information about the undescribed tags.
+
+   INPUTS
+       appID - the application ID of the application.
+
+       tags - a taglist of options; see descriptions below.
+
+       APPATTR_Hidden - (BOOL)
+           Update this option each time you did (un)iconfied your
+           application as task bar applications may use this information for
+           displaying the hidden state visually.
+
+       APPATTR_IconType - (struct ApplicationIconInfo *)
+           You can change the applications icon type by calling
+           SetApplicationAttrs() with this tag. The available icon types are
+           described with the enum enAppIconTypes in the application.library
+           header file.
+           Please note that changing the application icon type may not
+           necessarily succeed. The reason for this is that the icon type of
+           an application could be locked by another application (like a
+           toolbar [e.g. AmiDock]).
+           If SetApplicationAttrs() failed changing the icon type, you have
+           to wait and retry later - application.library automatically sends
+           a APPLIBMT_AppWantsChangeIconType when trying to change a locked
+           icon type. Therefore, after a short time-delay it is very likely
+           that the next APPATTR_IconType will succeed.
+
+       APPATTR_SavePrefs - (BOOL)
+           Identical to REGAPP_SavePrefs of RegisterApplication().
+
+       APPATTR_AppNotifications - (BOOL)
+           Identical to REGAPP_AppNotifications of RegisterApplication().
+
+       APPATTR_BlankerNotifications - (BOOL)
+           Identical to REGAPP_BlankerNotifications of RegisterApplication().
+
+       APPATTR_MainPrefsDict - (PrefsObject *)
+           The MainPrefsDict is the preferences dictionary of an application.
+           If there is the need to use another dictionary al application
+           dictionary, then you can use this tag.
+           Please note, that the former dictionary is ALPO_Release'ed and the
+           given one from this moment on is owned by the application.
+
+       APPATTR_AllowsBlanker - (BOOL)
+           See RegisterApplication(), too.
+           If for example a game shows a configuration dialog on the
+           workbench prior it starts in full screen mode, it is a good idea
+           to register the application with NeedsGameMode set to FALSE.
+           Right before entering full screen mode, set APPATTR_NeedsGameMode
+           to TRUE. You should set APPATTR_NeedsGameMode to FALSE after
+           leaving full screen mode; this is done when calling
+           UnregisterApplication() anyway, though.
+
+       APPATTR_NeedsGameMode - (BOOL)
+           See RegisterApplication(), too.
+           If for example a game shows a configuration dialog on the
+           workbench prior it starts in full screen mode, it is a good idea
+           to register the application with NeedsGameMode set to FALSE.
+           Right before entering full screen mode, set APPATTR_NeedsGameMode
+           to TRUE. You should set APPATTR_NeedsGameMode to FALSE after
+           leaving full screen mode; this is done when calling
+           UnregisterApplication() anyway, though.
+
+       APPATTR_FlushPrefs - (NULL)
+           By setting this flag, the preferences dictionary of the
+           application is immediately written back and not only after calling
+           UnregisterApplication().
+           This option only has an effect if REGAPP_SavePrefs (or
+           APPATTR_SavePrefs) was set to TRUE.
+
+       APPATTR_AppOpenedDocument - (STRPTR)
+           Everytime you did open a document, you should provide its file
+           name with this tag. The reason for this is, that
+           application.library needs to know what documents were opened to
+           update its last used documents list correctly.
+
+   RESULTS
+       success - TRUE if changing the application attributes was
+                 successfully, FALSE otherwise.
+
+   EXAMPLE
+       ...
+       struct ApplicationIconInfo aii;
+       aii.iconType=APPICONT_ProgramIcon;
+
+       success = SetApplicationAttrs(appID,
+                                     APPATTR_IconType, (uint32)&aii,
+                                     TAG_DONE);
+       ...
+
+       The above example tries to change the application icon type to
+       APPICONT_ProgramIcon. "success" is TRUE if the operation was
+       succcessfully.
+
+   BUGS
+
+   SEE ALSO
+       GetApplicationAttrsA(), RegisterApplicationA()
+application.library/application/UnlockApplicationIcon             application.library/application/UnlockApplicationIcon
+
+   NAME
+       UnlockApplicationIcon -- Unlock a previously locked application icon.
+
+   SYNOPSIS
+       UnlockApplicationIcon(appID);
+
+       void UnlockApplicationIcon(uint32 appID);
+
+   FUNCTION
+       Unlocks a previously locked application icon. The number of unlocks
+       has to be equal to the number of locks.
+
+   INPUTS
+       appID - the application ID of the application.
+
+   RESULTS
+       None.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       LockApplicationIcon()
+application.library/application/UnregisterApplicationA           application.library/application/UnregisterApplicationA
+
+   NAME
+       UnregisterApplication -- Unregister a application.
+
+   SYNOPSIS
+       success = UnregisterApplicationA(appID, tags);
+
+       BOOL UnregisterApplicationA(uint32 appID, struct TagItem *tags);
+
+       success = UnregisterApplication(appID, Tag1, ...)
+
+       BOOL UnregisterApplication(uint32 appID, ...);
+
+   FUNCTION
+       By calling this function, the application specified with appID will be
+       unregistered from the application.library system.
+       If REGAPP_SavePrefs was set to TRUE, application.library will also
+       save the preferences of this application before unregistering it.
+
+   INPUTS
+       appID - the application ID of the application which shall be
+       unregistered.
+
+       tags - NULL or a taglist of options; see descriptions below.
+
+       UNREGAPP_WaitForUnlock - (BOOL) Defaults to TRUE.
+       If set to TRUE, UnregisterApplication() waits until the applications
+       icon/docky is released and registration was possible because of this.
+       This is necessary because if an application provided a custom icon or
+       a application docky, the memory assigned for this would no longer be
+       available after unregistering and a dock utility like AmiDock would
+       crash if it would try to access this data.
+       If set to FALSE, you have to check the return code of this function
+       and poll yourself until UnregisterApplication() was successful.
+
+   RESULTS
+       success - TRUE if unregistration was successfully,
+       FALSE if the application with appID was not found or its icon
+       is still locked.
+
+   EXAMPLE
+       UnregisterApplication(appID, NULL);
+
+   BUGS
+
+   SEE ALSO
+       RegisterApplicationA()
+application.library/Arexx/NOTIFY                                                       application.library/Arexx/NOTIFY
+
+  The notification system of application.library is usually accessed via the
+  NotifyA() function, but Arexx scripts can also interact with the user in the
+  form of Notification messages. This is achieved by the use of some simple
+  commands.
+
+
+  NAME
+    NOTIFY
+
+  SYNOPSIS
+    NOTIFY APP/K/A, UPDATE/S, CLOSEONDC/S, PRI/K, SCREEN/K, IMG/K,
+           IMGVALIGN/K/N, LOGONLY/S, TITLE/K, AREXXPORT/K, BACKRXMSG/K,
+           TEXT/F
+
+  FUNCTION
+    Issue a notification that the user can view and interact with. Although you can
+    post a notification when registering your "application", this command gives much
+    greater control over the options available.
+
+
+  INPUTS
+    APP/K/A       - This is the name of the "application" to register. This MUST
+                    be supplied, and it MUST be the same in every command issued
+                    to the server from your script. It is used to identify the
+                    caller.
+    UPDATE/S      - If this switch is supplied, and previous notifications from
+                    this "application" will be removed before displaying this one.
+    CLOSEONDC/S   - If this switch is supplied, the notification can be closed
+                    immediately by the user when double-clicking inside it.
+    PRI/K         - Priority of the message (from 0 to 10), notifications with a
+                    priority higher than 8 will do a DisplayBeep, Notifications
+                    with a priority = 10 will remain on screen until the user
+                    explicitly closes it.
+    SCREEN/K      - The name of the public screen to show the notification on. If
+                    not supplied, it will use the Workbench screen. You may also
+                    supply SCREEN=FRONT to use the frontmost public screen.
+    IMG/K         - The path to an image to display in the notification. Currently
+                    there is no restriction on the size of the image, but there is
+                    only so much room in the notification window, so try and keep
+                    and images as small as possible for the sake of the layout.
+                    The IMG and ICON parameters are mutually exclusive, and any
+                    specified IMG will take precedence.
+    ICON/K        - The path to an icon to display in the notification. Currently
+                    there is no restriction on the size of the image, but there is
+                    only so much room in the notification window, so try and keep
+                    and images as small as possible for the sake of the layout.
+                    The IMG and ICON parameters are mutually exclusive, and any
+                    specified IMG will take precedence.
+    IMGVALIGN/K/N - The vertical alignment for the icon/image to be displayed within
+                    the notification. Allowable values are: 0=TOP, 1=MIDDLE, 2=BOTTOM
+    LOGONLY/S     - If this switch is supplied, then the notification will not be
+                    shown, instead the text supplied will be added to the 
+                    "Notification.log" in T:. You may view this log with the
+                    LogViewer utility.
+    TITLE/K       - The title for the notification. A default title will be used
+                    if none is supplied.
+    AREXXPORT/K  - The name of an Arexx port to send any "Back Messages" you may
+                   supply in your script.
+    BACKRXMSG/K   - A string to send back to the "application" when the user
+                    double-clicks this notification.
+    TEXT/F        - The text to show in the notification. This text will be added
+                    to the "Notification.log".
+
+  RESULT
+    If successful, the return value will be ZERO. If there is any error, then RC1
+    will contain RETURN_FAIL, and a secondary error code will be in RC2. These
+    error codes can be found in the "libraries/application.h" include file.
+
+  EXAMPLE
+    
+  NOTES
+    Your "application" MUST be registered with application.library prior to using
+    this command, or an error will be returned. Use the REGISTERAPP command to
+    register your "application" first, then use this command. You can also issue
+    a notification directly with REGISTERAPP if that method is preferred.
+
+  BUGS
+    
+  SEE ALSO
+    REGISTERAPP, UNREGISTERAPP, "libraries/application.h"
+
+application.library/Arexx/REGISTERAPP                                             application.library/Arexx/REGISTERAPP
+
+  The notification system of application.library is usually accessed via the
+  NotifyA() function, but Arexx scripts can also interact with the user in the
+  form of Notification messages. This is achieved by the use of some simple
+  commands.
+
+
+  NAME
+    REGISTERAPP
+
+  SYNOPSIS
+    REGISTERAPP APP/K/A, UPDATE/S, IMG/K, ICON/K, TITLE/K, TEXT/F
+
+  FUNCTION
+    Register an "application" with  application.library and show a simple
+    notification. Your script should use this command to be able to issue
+    further notifications, should they be required. The command arguments also
+    supply sufficient information to issue a notification while registering.
+    You should always use the "UNREGISTERAPP" command before your script
+    finishes otherwise your application will remain registered with the system
+    until the next reboot.
+
+  INPUTS
+    APP/K/A      - This is the name of the "application" to register. This MUST
+                   be supplied, and it MUST be the same in every command issued
+                   to the server from your script. It is used to identify the
+                   caller.
+    UPDATE/S     - If this switch is supplied, and previous notifications from
+                   this "application" will be removed before displaying this one.
+    IMG/K        - The path to an image to display in the notification. Currently
+                   there is no restriction on the size of the image, but there is
+                   only so much room in the notification window, so try and keep
+                   and images as small as possible for the sake of the layout.
+                   The IMG and ICON parameters are mutually exclusive, and any
+                   specified IMG will take precedence.
+    ICON/K       - The path to an icon to display in the notification. Currently
+                   there is no restriction on the size of the image, but there is
+                   only so much room in the notification window, so try and keep
+                   and images as small as possible for the sake of the layout.
+                   The IMG and ICON parameters are mutually exclusive, and any
+                   specified IMG will take precedence.
+    TITLE/K      - The title for the notification. A default title will be used
+                   if none is supplied.
+    TEXT/K       - The text to show in the notification. If no text is supplied,
+                   then the notification will not be shown. However, your script
+                   will still be registered with application.library so that you
+                   may post notifications later on in your script.
+
+  RESULT
+    If successful, the return value will be ZERO. If there is any error, then RC1
+    will contain RETURN_FAIL, and a secondary error code will be in RC2. These
+    error codes can be found in the "libraries/application.h" include file.
+
+  EXAMPLE
+    
+  NOTES
+    
+  BUGS
+    
+  SEE ALSO
+    NOTIFY, UNREGISTERAPP, "libraries/application.h"
+
+application.library/Arexx/UNREGISTERAPP                                         application.library/Arexx/UNREGISTERAPP
+
+  The notification system of application.library is usually accessed via the
+  NotifyA() function, but Arexx scripts can also interact with the user in the
+  form of Notification messages. This is achieved by the use of some simple
+  commands.
+
+
+  NAME
+    UNREGISTERAPP
+
+  SYNOPSIS
+    UNREGISTERAPP APP/K/A
+
+  FUNCTION
+    Unregister your "application" from application.library. You will not be able
+    to issue notifications to users after using this command.
+
+  INPUTS
+    APP/K/A - The name of the application you used in the REGISTERAPP command.
+
+  RESULT
+    If successful, the return value will be ZERO. If there is any error, then RC1
+    will contain RETURN_FAIL, and a secondary error code will be in RC2. These
+    error codes can be found in the "libraries/application.h" include file.
+
+    The only real failure might be that your "application" was not registered
+    when using this command
+
+  EXAMPLE
+    
+  NOTES
+    
+  BUGS
+    
+  SEE ALSO
+    REGISTERAPP, NOTIFY, "libraries/application.h"
+
+application.library/prefsobjects/-prefsobjects-                         application.library/prefsobjects/-prefsobjects-
+       
+   INTRODUCTION
+       The need for a standardized and easy way to store and retrieve
+       application preferences was a long outstanding issue of AmigaOS.
+       Up to now, every programmer did implement his own preferences
+       system in either plain text or as proprietary IFF or binary
+       files. Neither of these systems were optimal as it did cost the
+       application developer time to implement and verify his/her own
+       system. Additionally, users were mostly unable to see whats
+       going on and if something went wrong, there was no chance to
+       "help" the applications in any way with a probably defective
+       preferences file.
+       
+       application.library uses XML encoding for the preferences system.
+       The reason for this decision were: human-readability, very good
+       platform-interoperability, unicode-support [foreign charsets]
+       and finally: XML is world-wide highly accepted standard for
+       storing structured data.
+       
+       The preferences system of application.library is very simple
+       to use for programmers. There is no need to know even anything
+       about XML or stuff like that. The whole accesses to preferences
+       are done using a new object-oriented system called
+       "PrefsObjects".
+       
+       The PrefsObjects-System is a set of functions which represent
+       different objects, each of them with a different set of
+       methods.
+       
+       There are objects for
+       - arrays
+       - dictionaries
+       - numbers
+       - strings
+       - binary data
+       - date informations
+       
+       Example:
+       ~~~~~~~~
+           ...
+       
+           PrefsObject *dict, *array;
+       
+           dict=PrefsDictionary(NULL, NULL, ALPO_Alloc, 0, TAG_DONE);
+       
+           array=PrefsArray(NULL, NULL,
+               ALPO_Alloc, 0,
+               ALPOARR_AddObj, (uint32)PrefsNumber(NULL, NULL,
+                                           ALPONUM_AllocSetLong, 1,
+                                           TAG_DONE),
+               ALPOARR_AddObj, (uint32)PrefsNumber(NULL, NULL,
+                                           ALPONUM_AllocSetLong, 2,
+                                           TAG_DONE),
+       
+               ALPOARR_AddObj, (uint32)PrefsNumber(NULL, NULL,
+                                           ALPONUM_AllocSetLong, 3,
+                                           TAG_DONE),
+               TAG_DONE);
+       
+           DictSetObjectForKey(dict, array, "this is an array");
+       
+           ...
+       
+           The above code stores an array of three numbers to a dictionary
+           with the access key of "this is an array".
+       
+           Later or after loading the object hierarchy from disk, for
+           example the array can be retrieved using
+       
+           array = DictGetObjectForKey(dict, "this is an array");
+       
+           If you are interested how the corresponding XML-part looks like
+           for this example:
+       
+           <dict>
+               <key>this is an array</key>
+               <array>
+                   <integer>1</integer>
+                   <integer>2</integer>
+                   <integer>3</integer>
+               </array>
+           </dict>
+       
+           Please refer to the PrefsObjectsExample demo about more examples
+           on how to use the PrefsObjects system.
+       
+   (DE)ALLOCATION   
+       As in other object oriented systems, PrefsObjects need to be
+       allocated before they can be used and need to be deallocated
+       to release the memory for it after they are not longer needed.
+       
+       Allocation is done using the ALPO_Alloc method as shown in the
+       above example. Similarily, the ALPO_Release method is used to
+       deallocate the object. Here is the code for the above example:
+       
+       PrefsDictionary(dict, NULL, ALPO_Release, 0, TAG_DONE);
+       
+   RETAIN COUNTING
+       Objects know about how often they are used. For this reason,
+       a reference counting system is used in all PrefsObjects objects.
+       
+       The need for this mechanism can be found in the array and
+       dictionary objects. These objects usually *own* all added
+       objects. That means in our example that after calling
+       ALPO_Release of the dictionary releases also the array and
+       its contents.
+       
+       Sometimes, this is behaviour not wanted. An example would be
+       a move of the above array to a new dictionary. In such a case,
+       the remove of the array from our dictionary shall not destroy
+       the array. To prevent this, it is possible to call the
+       ALPO_Retain-method of the array prior to removing it from the
+       dictionary.
+       
+       The mechanism behind the retain counting is simple:
+       ALPO_Alloc sets the retain counter to 1   (counter == 1)
+       ALPO_Retain increases this counter by 1   (counter == 2)
+       ALPO_Release decrements the counter by 1  (counter == 1)
+       
+       If the decrementing of ALPO_Release caused the counter to be 0,
+       the object is destroyed. In the above mentioned example with
+       dictionary and array, the array previously owned by the
+       dictionary is now "free" and can be used otherwise.
+       
+       For more information about retain counting, please refer to the
+       PrefsObjectsExample demonstration.
+       
+   (DE)SERIALIZATION
+       Serialization is a mechanism of converting an object into a
+       stream of bytes which can be later deserialized again to
+       recreate the object.
+       
+       The (de)serialization mechanism of objects normally is done
+       invisible in the background and the programmer doesn't need
+       to care about it.
+       
+       In some cases - for example to visualize how the XML structure
+       of PrefsObjects - it is possible to do (de)serialization of
+       objects directly by using the ALPO_Serialize and
+       ALPO_Deserialize methods.
+       
+       Please have a look at the PrefsObjectsExample for an example.
+       
+   COMMON METHODS
+       PrefsObjects share some common methods which are identical for
+       all object types.
+       Below you find a list of all common methods:
+       
+       ALPO_Alloc - (NO PARAM)
+           Allocate an object.
+       
+       ALPO_Copy - (NO PARAM)
+           Copy an object (needs input PrefsObject * set).
+       
+       ALPO_Release - (NO PARAM)
+           Release an object (if retain count is 0).
+       
+       ALPO_Retain - (NO PARAM)
+           Increment the reatain counter of an object.
+       
+       ALPO_Identify - (uint32 *)
+           Retrieve the type of an object (one of enum enALPOType).
+       
+       ALPO_Serialize - (struct ALPOPutProcInfo *)
+           Serialize an object using the given PutProc function.
+       
+       ALPO_Deserialize - (struct ALPOGetProcInfo *)
+           Deserialize an object using the given GetProc function.
+       
+       ALPO_GetRetainCount - (int32 *)
+           Retrieves the reatin counter. Normally not necessary.
+       
+       (NO PARAM) means that no specific param is necessary. As all
+       parameters are provided as TagList, it is necessary to provide
+       0 as value here.
+application.library/prefsobjects/BeginDeserialization             application.library/prefsobjects/BeginDeserialization
+   
+   NAME
+       BeginDeserialization -- Begins the deserialization of a prefs objects
+       XML data stream.
+       
+   SYNOPSIS
+       type = BeginDeserialization(info);
+       
+       uint32 BeginDeserialization(struct ALPOGetProcInfo *info);
+       
+   FUNCTION
+       This function is needed for the rare cases where you want to
+       deserialize a prefs objects XML data stream yourself. Normally, you
+       will use ReadPrefs() as it already covers most of the needed
+       deserialization stuff.
+       
+       However, if you decide to do the deserialization "on your own", you
+       will need this function to correctly begin the deserialization of an
+       unknown prefs objects XML data stream.
+       All prefs objects provide the methods ALPO_Serialize and
+       ALPO_Deserialize. As it is not known to you in case of an alian data
+       stream which prefs objects object type is the first within the stream,
+       there needs to be a common way to read and determin the first prefs
+       objects open tag.
+       This is the job of this function. It reads the first open tag,
+       compares it with the available prefs objects type and returnes the
+       found object type as result (or ALPOT_None if it was no known prefs
+       objects type).
+       
+   INPUTS
+       info - struct ALPOGetProcInfo where all needed attributes have been
+              correctly initialized. It is important to allocate
+              TAGBUFFER_SIZE bytes of memory for the key_otag attribute.
+              It is also important to specify the proper encoding type of
+              the data stream.
+       
+   RESULTS
+       type - one of enum enALPOType
+       ALPOT_None is returned in case of an error or unknown type.
+       
+   EXAMPLE
+       
+   BUGS
+       
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/DictGetBoolForKey                   application.library/prefsobjects/DictGetBoolForKey
+   
+   NAME
+       DictGetBoolForKey -- Get a bool value for a key.
+       
+   SYNOPSIS
+       value = DictGetBoolForKey(dict, key, defBool);
+       
+       BOOL DictGetBoolForKey(PrefsObject *dict, CONST_STRPTR key, BOOL defBool);
+       
+   FUNCTION
+       This function is a convinience function to make it easy retrieving
+       a boolean value from a dictionary.
+       If either the dict-parameter is a NULL-pointer or if there is no
+       boolean entry stored for the given key within the dictionary, the
+       default value defBool is returned.
+       
+   INPUTS
+       dict    - pointer to a PrefsObjects-dictionary
+       
+       key     - key to search the dictionary for the boolean value
+       
+       defBool - default boolean value to return if dict is NULL or if no
+                 entry was found for the given key
+       
+   RESULTS
+       value - a boolean value
+       
+   EXAMPLE
+       value = DictGetBoolForKey(dict, "MyBooleanValue", FALSE);
+       
+   BUGS
+       
+   SEE ALSO
+       PrefsDictionaryA(), application.library/-prefsobjects-
+application.library/prefsobjects/DictGetIntegerForKey             application.library/prefsobjects/DictGetIntegerForKey
+   
+   NAME
+       DictGetIntegerForKey -- Get an integer value for a key.
+       
+   SYNOPSIS
+       value = DictGetIntegerForKey(dict, key, defInt);
+       
+       int32 DictGetIntegerForKey(PrefsObject *dict,
+                                  CONST_STRPTR key, int32 defInt);
+       
+   FUNCTION
+       This function is a convinience function to make it easy retrieving
+       an integer value from a dictionary.
+       If either the dict-parameter is a NULL-pointer or if there is no
+       integer entry stored for the given key within the dictionary, the
+       default value defInt is returned.
+       
+   INPUTS
+       dict - pointer to a PrefsObjects-dictionary
+       
+       key - key to search the dictionary for the boolean value
+       
+       defInt - default integer value to return if dict is NULL or if no
+       entry was found for the given key
+       
+   RESULTS
+       value - an integer value
+       
+   EXAMPLE
+       value = DictGetIntegerForKey(dict, "MyIntegerValue", 42);
+       
+   BUGS
+       
+   SEE ALSO
+       PrefsDictionaryA(), application.library/-prefsobjects-
+application.library/prefsobjects/DictGetObjectForKey               application.library/prefsobjects/DictGetObjectForKey
+   
+   NAME
+       DictGetObjectForKey -- Get an object value for a key.
+       
+   SYNOPSIS
+       object = DictGetObjectForKey(dict, key);
+       
+       PrefsObject *DictGetObjectForKey(PrefsObject *dict, CONST_STRPTR key);
+       
+   FUNCTION
+       This function is a convinience function to make it easy retrieving
+       a prefs object from a dictionary.
+       If either the dict-parameter is a NULL-pointer or if there is no
+       object stored for the given key within the dictionary, NULL is
+       returned.
+       
+   INPUTS
+       dict - pointer to a PrefsObjects-dictionary
+       
+       key - key to search the dictionary for the object
+       
+   RESULTS
+       object - pointer to the retrieved object or NULL if not found
+       
+   EXAMPLE
+       object = DictGetObjectForKey(dict, "MyObject");
+       
+   BUGS
+       
+   SEE ALSO
+       PrefsDictionaryA(), application.library/-prefsobjects-
+application.library/prefsobjects/DictGetOptionForKey               application.library/prefsobjects/DictGetOptionForKey
+
+   NAME
+       DictGetOptionForKey -- Get a option table number for a key.
+
+   SYNOPSIS
+       option = DictGetOptionForKey(dict, key, optionsTable, defaultOption);
+
+       int32 DictGetOptionForKey(PrefsObject *dict, CONST_STRPTR key,
+       CONST_STRPTR *optionsTable, int32 defaultOption);
+
+   FUNCTION
+       This function tries to retrieve an option string from a dictionary.
+       The provided optionsTable is searched for the found option; if it was
+       found, the index for the found option within the table is returned.
+       If dict or the optionsTable is NULL or there was no option contained
+       within the optionsTable was found, the gived defaultOption is
+       returned.
+
+   INPUTS
+       dict - pointer to a PrefsObjects-dictionary
+
+       key - key to search the dictionary for the object
+
+       optionsTable - table containing the possible option strings.
+       This table needs to be NULL-terminated.
+
+       defaultOption - default option which is returned in case of
+       no success
+
+   RESULTS
+       option - index (0 .. n-1) of the found option
+
+   EXAMPLE
+       STRPTR optionsTable[] =
+       {
+           "FirstOption",  // index 0
+           "SecondOption", // index 1
+           "ThirdOption",  // index 2
+           NULL // termination
+       };
+
+       option = DictGetOptionForKey(dict, "MyOption", optionsTable, -1);
+
+       // If the dictionary contained "SecondOption" for the key
+       // "MyOption", the index returned will be 1.
+       // If the dictionary contained nothing which could be found within
+       // the list, the default value -1 will be returned.
+
+   BUGS
+
+   SEE ALSO
+       PrefsDictionaryA(), application.library/-prefsobjects-
+application.library/prefsobjects/DictGetStringForKey               application.library/prefsobjects/DictGetStringForKey
+   
+   NAME
+       DictGetStringForKey -- Get a PrefsString for a key.
+       
+   SYNOPSIS
+       string = DictGetIntegerForKey(dict, key, defStr);
+       
+       CONST_STRPTR DictGetStringForKey(PrefsObject *dict,
+                                  CONST_STRPTR key, CONST_STRPTR defStr);
+       
+   FUNCTION
+       This function is a convinience function to make it easy retrieving
+       a string value from a dictionary.
+       If either the dict-parameter is a NULL-pointer or if there is no
+       string entry stored for the given key within the dictionary, the
+       default value defInt is returned.
+       
+   INPUTS
+       dict - pointer to a PrefsObjects-dictionary
+       
+       key - key to search the dictionary for the boolean value
+       
+       defInt - default string value to return if dict is NULL or if no
+       entry was found for the given key
+       
+   RESULTS
+       string - a string
+       
+   EXAMPLE
+       string = DictGetStringForKey(dict, "MyString", "Default string");
+       
+   BUGS
+       
+   SEE ALSO
+       PrefsDictionaryA(), application.library/-prefsobjects-
+application.library/prefsobjects/DictSetObjectForKey               application.library/prefsobjects/DictSetObjectForKey
+   
+   NAME
+       DictSetObjectForKey -- Set a PrefsObject for a key.
+       
+   SYNOPSIS
+       success = DictSetObjectForKey(dict, obj, key);
+       
+       BOOL DictSetObjectForKey(PrefsObject *dict,
+                                PrefsObject *obj,
+                                STRPTR key);
+       
+   FUNCTION
+       This function adds the given prefs object "obj" to the
+       dictionary "dict" for the key "key". If there is already
+       a object stored for the given key, the stored object is
+       released and replaced by the given object.
+       This function fails if either dict, obj or key is NULL.
+       
+   INPUTS
+       dict - the dictionary which shall store the object
+       
+       obj - the object which shall be stored
+       
+       key - the key string for the dictionary
+       
+   RESULTS
+       success - success of this operation (TRUE or FALSE)
+       
+   EXAMPLE
+       success = DictSetObjectForKey(dict,
+                     PrefsString(NULL, NULL, 
+                         ALPOSTR_AllocSetString, "this is a string", 
+                         TAG_DONE),
+                     "my key");
+       if (!success)
+           printf("Houston, we have a problem!\n");
+       
+   BUGS
+       
+   SEE ALSO
+       PrefsDictionaryA(), application.library/-prefsobjects-
+application.library/prefsobjects/PrefsArrayA                               application.library/prefsobjects/PrefsArrayA
+
+   NAME
+       PrefsArrayA -- PrefsObjects array object access function.
+       PrefsArray -- Varargs stub for PrefsArrayA().
+
+   SYNOPSIS
+       PrefsObject *PrefsArrayA(PrefsObject *obj,
+       uint32 *error,
+       struct TagItem *tags);
+
+       PrefsObject *PrefsArray(PrefsObject *obj, uint32 *error, ...);
+
+   FUNCTION
+       ALPOARR_Clear - (NO PARAM)
+       ALPOARR_GetCount - (int32 *)
+
+       ALPOARR_AddObj - (PrefsObject *)
+       ALPOARR_InsertObjAtIndex - (struct ALPOObjIndex *)
+       ALPOARR_GetObjAtIndex - (struct ALPOObjIndex *)
+       ALPOARR_RemoveObjAtIndex - (int32)
+       ALPOARR_ReplaceObjAtIndex - (struct ALPOObjIndex *)
+       ALPOARR_RemoveObj - (PrefsObject *)
+       ALPOARR_GetIndexForObj - (struct ALPOObjIndex *)
+
+   INPUTS
+       obj - the string object which shall be accessed, NULL for Alloc- and
+       Copy-methods.
+
+       error - NULL or a pointer to a uint32 where the success of the access
+       is stored.
+
+       tags - a taglist of methods; see descriptions below.
+
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly
+                created object).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/PrefsBaseObjectA                     application.library/prefsobjects/PrefsBaseObjectA
+   
+   NAME
+       PrefsBaseObjectA -- PrefsObjects base object access function.
+       PrefsBaseObject -- Varargs stub for PrefsDateA().
+       
+   SYNOPSIS
+       PrefsObject *PrefsBaseObjectA(PrefsObject *obj, uint32 *error,
+                               struct TagItem *tags);
+
+       PrefsObject *PrefsBaseObject(PrefsObject *obj, uint32 *error, ...);
+       
+   FUNCTION
+       
+   INPUTS
+       obj - the object which shall be accessed
+       
+       error - NULL or a pointer to a uint32 where the success of the
+               access is stored.
+       
+       tags - a taglist of methods
+       
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly
+                created object).
+       
+   EXAMPLE
+       
+   BUGS
+       
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/PrefsBinaryA                             application.library/prefsobjects/PrefsBinaryA
+
+   NAME
+       PrefsBinaryA -- PrefsObjects binary object access function.
+       PrefsBinary -- Varargs stub for PrefsBinaryA().
+
+   SYNOPSIS
+       PrefsObject *PrefsBinaryA(PrefsObject *obj, uint32 *error,
+       struct TagItem *tags);
+
+       PrefsObject *PrefsBinary(PrefsObject *obj, uint32 *error, ...);
+
+   FUNCTION
+       ALPOBIN_AllocWithSize - (int32)
+       ALPOBIN_AllocWithData - (struct ALPOBinData *)
+
+       ALPOBIN_ClearData - (NO PARAM)
+       ALPOBIN_GetData - (uint8 **)
+       ALPOBIN_GetSize - (int32 *)
+       ALPOBIN_GetDataStruct - (struct ALPOBinData *)
+       ALPOBIN_SetData - (struct ALPOBinData *)
+
+   INPUTS
+       obj - the string object which shall be accessed, NULL for Alloc- and
+       Copy-methods.
+
+       error - NULL or a pointer to a uint32 where the success of the access
+       is stored.
+
+       tags - a taglist of methods; see descriptions below.
+
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly
+       created object).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/PrefsDateA                                 application.library/prefsobjects/PrefsDateA
+
+   NAME
+       PrefsDateA -- PrefsObjects date object access function.
+       PrefsDate -- Varargs stub for PrefsDateA().
+
+   SYNOPSIS
+       PrefsObject *PrefsDateA(PrefsObject *obj, uint32 *error,
+                               struct TagItem *tags);
+
+       PrefsObject *PrefsDate(PrefsObject *obj, uint32 *error, ...);
+
+   FUNCTION
+       ALPODAT_AllocSetTimeVal - (struct timeval *)
+       ALPODAT_AllocSetCTime - (c_time)
+
+       ALPODAT_SetCurrentTime - (NO PARAM)
+       ALPODAT_SetTimeVal - (struct timeval *)
+       ALPODAT_GetTimeVal - (struct timeval *)
+       ALPODAT_SetSecsSince1978 - (uint32)
+       ALPODAT_GetSecsSince1978 - (uint32 *)
+
+   INPUTS
+       obj - the string object which shall be accessed, NULL for Alloc- and
+       Copy- methods.
+
+       error - NULL or a pointer to a uint32 where the success of the access
+       is stored.
+
+       tags - a taglist of methods; see descriptions below.
+
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly
+       created object).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/PrefsDictionaryA                     application.library/prefsobjects/PrefsDictionaryA
+
+   NAME
+       PrefsDictionaryA -- PrefsObjects dictionary object access function.
+       PrefsDictionary -- Varargs stub for PrefsDictionaryA().
+
+   SYNOPSIS
+       PrefsObject *PrefsDictionaryA(PrefsObject *obj, uint32 *error,
+       struct TagItem *tags);
+
+       PrefsObject *PrefsDictionary(PrefsObject *obj, uint32 *error, ...);
+
+   FUNCTION
+       ALPODICT_Clear - (NO PARAM)
+       ALPODICT_GetCount - (int32 *)
+
+       ALPODICT_SetObjForKey - (struct ALPOObjKey *)
+       ALPODICT_GetObjForKey - (struct ALPOObjKey *)
+       ALPODICT_RemoveObjForKey - (STRPTR)
+       ALPODICT_ReplaceObjForKey - (struct ALPOObjKey *)
+       ALPODICT_GetObjAndKeyAtIndex - (struct ALPOObjKeyIndex *)
+       ALPODICT_InsertObjAtIndex - (struct ALPOObjKeyIndex *)
+
+       ALPODICT_GetObjAtIndex - (struct ALPOObjIndex *)
+       ALPODICT_RemoveObjAtIndex - (int32)
+       ALPODICT_RelaceObjAtIndex - (struct ALPOObjIndex *)
+
+       ALPODICT_RemoveObj - (PrefsObject *)
+       ALPODICT_GetKeyAndIndexForObj - (struct ALPOObjKeyIndex *)
+
+   INPUTS
+       obj - the string object which shall be accessed, NULL for Alloc-
+             and Copy-methods.
+
+       error - NULL or a pointer to a uint32 where the success of the
+               access is stored.
+
+       tags - a taglist of methods; see descriptions below.
+
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly
+       created object).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/PrefsNumberA                             application.library/prefsobjects/PrefsNumberA
+
+   NAME
+       PrefsNumberA -- PrefsObjects number object access function.
+       PrefsNumber -- Varargs stub for PrefsNumberA().
+
+   SYNOPSIS
+       PrefsObject *PrefsNumberA(PrefsObject *obj, uint32 *error,
+       struct TagItem *tags);
+
+       PrefsObject *PrefsNumber(PrefsObject *obj, uint32 *error, ...);
+
+   FUNCTION
+       ALPONUMT_Long, ALPONUMT_Bool
+
+       ALPONUM_AllocSetLong - (int32)
+       ALPONUM_AllocSetBool - (BOOL)
+       ALPONUM_AllocSetDouble - (double *)
+
+       ALPONUM_GetType - (int32 *)
+
+       ALPONUM_SetLong - (int32)
+       ALPONUM_GetLong - (int32 *)
+
+       ALPONUM_SetBool - (BOOL)
+       ALPONUM_GetBool - (BOOL *)
+
+       ALPONUM_SetDouble - (double *)
+       ALPONUM_GetDouble - (double *)
+
+   INPUTS
+       obj - the string object which shall be accessed, NULL for Alloc- and
+       Copy-methods.
+
+       error - NULL or a pointer to a uint32 where the success of the access
+       is stored.
+
+       tags - a taglist of methods; see descriptions below.
+
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly
+       created object).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/PrefsStringA                             application.library/prefsobjects/PrefsStringA
+
+   NAME
+       PrefsStringA -- PrefsObjects string object access function.
+       PrefsString -- Varargs stub for PrefsStringA().
+
+   SYNOPSIS
+       object = PrefsStringA(obj, error, tags);
+
+       PrefsObject *PrefsStringA(PrefsObject *obj, uint32 *error,
+                                 struct TagItem *tags);
+
+       object = PrefsString(obj, error, Tag1, ...);
+
+       PrefsObject *PrefsString(PrefsObject *obj, uint32 *error, ...);
+
+   FUNCTION
+       ########## PrefsString object stores 8bit C-strings which
+       ########## follow the PrefsObjects
+       ########## rules (usage in Arrays and Dictionaries and support for
+       ########## (de)serialization).
+
+   INPUTS
+       obj   - the string object which shall be accessed, NULL for Alloc and
+               Copy methods.
+
+       error - NULL or a pointer to a uint32 where the success of the access
+               is stored.
+
+       tags  - a taglist of methods; see descriptions below.
+
+       ALPO_Alloc - (NULL)
+           This method creates an empty string.
+
+       ALPOSTR_AllocSetString - (STRPTR)
+           This method creates a string which contains a COPY of the given
+           string.
+
+       ALPOSTR_GetLength - (int32 *)
+           This method returns the length (characters) of the stored string.
+
+       ALPOSTR_SetString - (STRPTR)
+           This method free's the stored string and replaces it with a COPY
+           of the given string.
+
+       ALPOSTR_GetString - (STRPTR *)
+           This method returns a pointer to the stored null-terminated
+           string.
+
+       ###############################
+       ###############################
+
+   RESULTS
+       object - a pointer to the object (or a pointer to the newly created
+                object).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       application.library/-prefsobjects-
+application.library/prefsobjects/ReadPrefsA                                 application.library/prefsobjects/ReadPrefsA
+
+   NAME
+       ReadPrefsA -- Read prefs (==a prefs dictionary) from a file.
+       ReadPrefs -- Varargs stub for ReadPrefsA().
+
+   SYNOPSIS
+       uint32 ReadPrefsA(PrefsObject *dict, struct TagItem *tags);
+       uint32 ReadPrefs(PrefsObject *dict, ...);
+
+   FUNCTION
+       READPREFS_AppID - (uint32)
+       READPREFS_FileName - (STRPTR)
+       READPREFS_LastAppDocs - (BOOL) Defaults to FALSE.
+       READPREFS_ReadENV - (BOOL) Defaults to TRUE.
+       READPREFS_ReadENVARC - (BOOL) Defaults to TRUE.
+       //done if ReadENV failed)
+
+   INPUTS
+       The dictionary is automatically cleared (ALPODICT_Clear) before
+       it will be filled with data.
+
+   RESULTS
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       PrefsDictionaryA(), WritePrefsA(), RegisterApplicationA()
+application.library/prefsobjects/WritePrefsA                               application.library/prefsobjects/WritePrefsA
+
+   NAME
+       WritePrefsA -- Write prefs (==a prefs dictionary) to a file.
+       WritePrefs -- Varargs stub for WritePrefsA().
+
+   SYNOPSIS
+       uint32 WritePrefsA(PrefsObject *dict, struct TagItem *tags);
+       uint32 WritePrefs(PrefsObject *dict, ...);
+
+   FUNCTION
+       WRITEPREFS_AppID - (uint32)
+       WRITEPREFS_FileName - (STRPTR)
+       WRITEPREFS_LastAppDocs - (BOOL) Defaults to FALSE.
+       // automatically broadcasts a APPLIBMT_LastAppDocChange message
+       WRITEPREFS_WriteENV - (BOOL) Defaults to TRUE.
+       WRITEPREFS_WriteENVARC - (BOOL) Defaults to FALSE.
+
+   INPUTS
+
+   RESULTS
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+       PrefsDictionaryA(), ReadPrefsA(), RegisterApplicationA()
+

@@ -1,0 +1,1015 @@
+TABLE OF CONTENTS
+
+elf.library/--hooks--
+elf.library/AddressToSection
+elf.library/CloseElf
+elf.library/CopyDataSegment
+elf.library/DLClose
+elf.library/DLOpen
+elf.library/DLSym
+elf.library/ElfLoadSeg
+elf.library/FreeDataSegmentCopy
+elf.library/GetElfAttrs
+elf.library/GetElfString
+elf.library/GetSection
+elf.library/GetSectionHeader
+elf.library/InitSHLibs
+elf.library/OpenElf
+elf.library/RelocateSection
+elf.library/ScanSymbolTable
+elf.library/SetElfAttrs
+elf.library/SymbolQuery
+elf.library/UnloadSection
+elf.library/--hooks--                                                         elf.library/--hooks--
+
+   NAME
+       DOSHook, MEMHook - Hooks invoked for loading ELF files
+
+   SYNOPSIS
+       ULONG HookFunc(struct Hook *hook, Elf32_Handle ElfHandle,
+       struct ElfHookMsg *msg);
+
+   FUNCTION
+
+       elf.library uses a pair of hooks to  communicate with the user
+       program when special  handling of  I/O (for example,   loading
+       from a network) or memory is required. The DOS hook is invoked
+       whenever a read or seek is to be executed. Likewise the memory
+       hook is invoked for allocating and freeing memory.
+
+       Hooks get called with the Elf32_Handle as the object, and an
+       ElfHookMsg as message. The first word of the message specifies
+       the desired operation. Depending on the operation, one to
+       three arguments may be defined.
+
+       The following commands are sent to the DOS hook:
+
+       ELFCMD_DOS_READ:
+
+           Read from the ELF stream. The first argument is an APTR to
+           the buffer to read into. The second argument is an ULONG
+           specifying the number of bytes to read from the
+           stream. This operation is supposed to advance the current
+           position in the file. The function is supposed to return
+           the actual number of bytes read, or -1 if an error
+           occurred.
+
+       ELFCMD_DOS_SEEK:
+
+           Seek to a specified position within the "file". The only
+           argument is the absolute new position of the file
+           pointer, i.e. this operation always executes a Seek with
+           OFFSET_CURRENT set. The function is supposed to return the
+           previous position in the file. Seeks outside the file's
+           defined area should be ignored, and should return -1.
+
+       ELFCMD_DOS_CLOSE:
+
+           Close the "file", i.e. free all resources associated with
+           it. The operation has no arguments and no return value.
+
+       The following commands are sent to the Memory hook:
+
+       ELFCMD_MEM_ALLOC
+
+           Allocate a number of bytes and return the address of the
+           allocation. The first argument is an ULONG indicating the
+           number of bytes to reserve. Argument 2 is an STRPTR
+           representing the section name for which this allocation is
+           done (in order to handle special sections). Finally
+           argument 3 is an ULONG representing the section's flags
+           from the ELF file (Alloc, Executable, Read, Write). The
+           function should return an APTR to the allocated memory
+           region, or NULL if no memory was available.
+
+       ELFCMD_MEM_FREE
+
+           Free a pointer previously allocated by
+           ELFCMD_MEM_ALLOC. Argument one is an APTR to the allocated
+           block, as returned by ELFCMD_MEM_ALLOC. Argument 2 and 3
+           are the same as for the Alloc command. This function has
+           no return value.
+
+elf.library/AddressToSection                                           elf.library/AddressToSection
+
+   NAME
+       AddressToSection -- Map an address to a loaded section
+
+   SYNOPSIS
+       uint32 AddressToSection(ElfHandle handle, APTR Address);
+
+   FUNCTION
+       This function takes an address in memory as an input and tries
+       to determine which section it belongs to.
+
+   INPUTS
+       ElfHandle - the handle of the ELF file
+
+       Address - the address to search for
+
+   RESULT
+       If the address was part of the Elf file's memory image, this
+       function returns the section index of the section where this
+       address belongs to (which might or might not be part of the
+       process image). Otherwise, it returns the error code
+       ELF32_NO_SECTION. You must not make any assumption about this
+       error code (simply comparing against < 0 is not supported).
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/CloseElf                                                           elf.library/CloseElf
+
+   NAME
+       CloseElf -- Close an elf handle after use (V50)
+       CloseElfTags -- Vararg stub
+
+   SYNOPSIS
+       VOID CloseElf(Elf32_Handle ElfHandle, struct TagItem *taglist);
+       VOID CloseElfTags(Elf32_Handle ElfHandle, ULONG tag1, ...);
+
+   FUNCTION
+       This function closes an Elf handle or the associated input
+       stream, or both. The tag items passed in determine which part
+       of the handle is closed. In the case of the input stream, the
+       elf handle might still be used as long as no disk/stream
+       operations need to be carried out.
+
+   INPUTS
+       ElfHandle - the handle previously opened by OpenElf.
+       taglist - a list of tag item. Valid tag items are
+
+           CET_CloseInput
+               If TRUE, the Close function of the DOS hook is invoked
+               on the input stream, essentially freezing the
+               handle. Further DOS operations are not permitted, and
+               their result might be undefined.
+               Defaults to TRUE.
+
+           CET_UnloadSeg
+               Unload the process image of the ELF handle and close
+               the handle.
+               Defaults to FALSE.
+
+           CET_FreeUnneeded
+               Free all sections that are not needed for the process
+               image.
+               Defaults to TRUE.
+
+           CET_CloseAll
+               If TRUE, closes the input handle, frees all sections,
+               and frees the handle. This tag must be given exactly
+               once and will free all storage associated with the
+               handle.
+
+   RESULT
+       This function does not return a result.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       elf.library/OpenElf
+
+elf.library/CopyDataSegment                                             elf.library/CopyDataSegment
+
+   NAME
+	CopyDataSegment -- Copy the data segment and relocate it         (V51)
+
+   SYNOPSIS
+	void *CopyDataSegment(Elf32_Handle ElfHandle, uint32 *baseOffset);
+
+   FUNCTION
+	This function's purpose is to assist baserel programs to create a copy
+	of their data segment and relocating it.
+
+   INPUTS
+	ElfHandle - the handle of the program who's data section should be
+	            copied.
+	baseOffset - Pointer to an uint32 variable that will hold the
+	             base offset. For -mbaserel-compiled binaries, it is
+	             necessary to set r2 to the base of the .data section.
+	             The .data section might not be the first one, so this
+	             offset has to be added to the base of the copied data
+	             segment to get the correct value.
+
+   RESULT
+	The base address of the copied data segment. This must be passed
+	to FreeDataSegmentCopy to free it again.
+
+   SEE ALSO
+	FreeDataSegmentCopy
+
+elf.library/DLClose                                                             elf.library/DLClose
+
+   NAME
+      	DLClose -- Close a shared object
+
+   SYNOPSIS
+      	Elf32_Error DLClose(Elf32_Handle RootHandle, APTR Handle);
+
+   FUNCTION
+		This function closes the given shared object handle and unloads
+ 		the shared object as well as all shared objects that where loaded
+ 		due to this.
+
+   INPUTS
+ 		RootHandle - The ELF handle of the program using this function.
+ 			The user program is responsible for passing this, which MUST be
+ 			a valid elf handle and MUST be this program's elf handle, plus
+ 			it must have been re-opened. The handle may be re-closed after
+ 			this call, but must be open anytime a DL#? function is called.
+       Handle - A handle to the shared object as obtained by DLOpen()
+
+   RESULT
+       The result or this function is an ELF32_Error code. ELF32_NO_ERROR
+ 		means that the object has been sucessfully unloaded.
+
+   NOTES
+ 		This function is available in elf.library 52.2 or later
+
+   SEE ALSO
+ 		DLOpen(), DLSym()
+
+elf.library/DLOpen                                                               elf.library/DLOpen
+
+   NAME
+		DLOpen -- Open a shared object
+
+   SYNOPSIS
+      	APTR DLOpen(Elf32_Handle RootHandle, CONST_STRPTR Name, uint32 Flags);
+
+   FUNCTION
+ 		This function opens the specified external shared object
+ 		and makes it part of the current process memory image. The
+ 		shared object's unresolved symbols are resolved using the
+ 		main program and all loaded shared objects, and all referenced
+ 		shared objects in the loaded SO's _DYNAMIC array (with DT_NEEDED
+ 		tag) are recursively loaded as well, re-using any already in-memory
+ 		versions.
+
+ 		The name can either be a fully-qualified path name or a relative
+ 		path. If the name is absolute, only the file referenced (if it exists)
+ 		is considered. Otherwise, shared objects are looked for in the following
+ 		order:
+
+ 		- Current directory
+ 		- PROGDIR:
+ 		- PROGDIR:sobjs/
+ 		- SOBJS: assign
+
+ 		An DT_RPATH in the main program (or any shared object) is currently
+ 		ignored.
+
+ 		This function accepts a flags word as the second parameter. The flags
+ 		modify the behavior of DLSym with respect to this object file.
+
+   INPUTS
+ 		RootHandle - The ELF handle of the program using this function.
+ 			The user program is responsible for passing this, which MUST be
+ 			a valid elf handle and MUST be this program's elf handle, plus
+ 			it must have been re-opened. The handle may be re-closed after
+ 			this call, but must be open anytime a DL#? function is called.
+       Name - Name of the shared object to load. If the name is NULL,
+ 			then the return value is a handle for the main program which
+ 			can be passed to DLSym to find symbols within the main program.
+       Flags - Flags that may modify the operation. Currently there are two
+ 			flags defined:
+ 			ELF32_RTLD_GLOBAL - if this flag is used, all symbols in the shared
+ 				object become globally available, that is, if a special
+ 				handle like ELF32_RTLD_DEFAULT is used in DLSym(), this
+ 				shared object's symbols are searched as well.
+ 			ELF32_RTLD_LOCAL - if this flag is used, symbols in this shared
+ 				object are not found by special handles.
+
+ 			If neither of these flags is specified, RLF32_RTLD_GLOBAL is
+ 			assumed.
+
+   RESULT
+       The result of this function is an abstract "library handle" that cannot
+ 		be interpreted in any form by the user. The handle can be passed only
+ 		to DLSym or DLClose.
+
+ 		A NULL pointer is returned if the object or one of the objects
+ 		referenced in DT_NEEDED cannot be loaded.
+
+ 		This function is available in elf.library 52.2 or later
+
+   BUGS
+ 		DT_RPATH is currently ignored.
+
+   SEE ALSO
+ 		DLSym(), DLClose()
+
+elf.library/DLSym                                                                 elf.library/DLSym
+
+   NAME
+      	DLSym -- Look up a symbol in a shared object
+
+   SYNOPSIS
+      	APTR DLSym(Elf32_Handle RootHandle, APTR Handle,
+ 			CONST_STRPTR SymbolName, APTR* Result);
+
+   FUNCTION
+ 		This function looks for a dynamic symbol in a shared object
+ 		or objects. The handle specifies where to search for the specified
+ 		symbol name.
+
+ 		There is a special handle ELF32_RTLD_DEFAULT that can be used for
+ 		a global symbol lookup. That is, if this handle is used, the main
+ 		program, all link-time DT_NEEDED shared objects and all objects
+ 		that are loaded with the ELF32_RTLD_GLOBAL flag in DLOpen() are
+ 		searched for the specified symbol.
+
+ 		If the handle is the handle of a shared object file, only that object
+ 		file and all link-time objects loaded via DT_NEEDED are searched for
+ 		the symbol.
+
+ 		If the handle is the handle of the main program, the main program
+ 		and all link-time shared object specified in the DT_NEEDED section
+ 		are searched, but no objects that have been loaded at a later time.
+
+   INPUTS
+ 		RootHandle - The ELF handle of the program using this function.
+ 			The user program is responsible for passing this, which MUST be
+ 			a valid elf handle and MUST be this program's elf handle, plus
+ 			it must have been re-opened. The handle may be re-closed after
+ 			this call, but must be open anytime a DL#? function is called.
+       Handle - A handle returned by DLOpen() or a special handle. Currently,
+ 			the only special handle is ELF32_RTLD_DEFAULT which looks for
+ 			the symbol in the global symbol space that includes all objects
+ 			loaded with a DLOpen flag of
+       SymbolName - The name of the symbol to look up. This is the plain symbol
+ 			name without any underscore or similar characters prepended
+ 		Result - A pointer to a storage space where the result of the lookup
+ 			will be stored. Since a symbol might be NULL, a NULL result might
+ 			not indicate an error.
+
+   RESULT
+       The result of this function is an Elf32_Error code. If the symbol
+ 		was found, an ELF32_NO_ERROR is returned. Otherwise the function
+ 		returns ELF32_SYMBOL_NOT_FOUND, and the Result pointer is not modified.
+
+   NOTES
+ 		This function is available in elf.library 52.2 or later
+
+   SEE ALSO
+ 		DLOpen(), DLClose()
+
+elf.library/ElfLoadSeg                                                       elf.library/ElfLoadSeg
+
+   NAME
+       ElfLoadSeg -- Make a runnable image from an ELF file
+       ElfLoadSegTags -- Vararg stub
+
+   SYNOPSIS
+       Elf32_Error ElfLoadSeg(Elf32_Handle ElfHandle, struct TagItem *tags);
+       Elf32_Error ElfLoadSegTags(Elf32_Handle ElfHandle, ...);
+
+   FUNCTION
+       This function generates an executable image from an Elf
+       file. It loads all ALLOC sections from the input stream and
+       relocates them to their final address, and tries to resolve
+       all unresolved symbols in the file.
+
+   INPUTS
+       ElfHandle - the handle of the file to load.
+
+       taglist - A list of tag items to pass additional
+       parameters. The currently valid tag items are
+
+       ELS_Offset
+           Specify an offset to add to any relocation done. This can
+           be used to relocate an image to a different address than
+           where it was loaded. Default is 0.
+
+       ELS_FreeUnneeded
+           If set to TRUE, the function frees all unneeded sections
+           from the memory, that is, it frees all sections that dont
+           have the ALLOC bit set and hence don't belong to the
+           process image. Default is FALSE.
+
+       ELS_ProgramEntry
+           If present, this tag's ti_Data should point to a memory
+           location where the Elf loader will store the "_start"
+           symbol's address. Calling the "_start" symbol will "run"
+           the program. Default is NULL.
+
+   RESULT
+       This function returns an error code. If the error is
+       ELF32_NO_ERROR, the image is ready to run and this call is to
+       be considered successful. Otherwise, the error code indicates
+       the reason for failure.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/FreeDataSegmentCopy                                     elf.library/FreeDataSegmentCopy
+
+   NAME
+	FreeDataSegmentCopy -- Release memory of a copyied data segment (V51)
+
+   SYNOPSIS
+	void FreeDataSegmentCopy(Elf32_Handle ElfHandle, void *Base);
+
+   FUNCTION
+	This function frees a copy of a data segment previously allocated with
+	CopyDataSegment.
+
+   INPUTS
+	ElfHandle - Elf handle. This must be the same as the one supplied with
+	            CopyDataSegment.
+	Base - The base address of the data segment. This is the value
+	       returned by CopyDataSegment.
+
+   SEE ALSO
+	CopyDataSegment
+
+elf.library/GetElfAttrs                                                     elf.library/GetElfAttrs
+
+   NAME
+       GetElfAttrs -- Get Attributes from an ELF handle
+       GetElfAttrsTags -- Vararg stub
+
+   SYNOPSIS
+       ULONG GetElfAttrs(Elf32_Handle handle, struct TagItem *taglist);
+       ULONG GetElfAttrsTags(Elf32_Handle handle, ULONG tag1, ...);
+
+   FUNCTION
+
+       This function queries an ELF handle for attributes. The
+       attributes are passed in in the form of a taglist where the
+       ti_Data field points to a memory location to store the result
+       in. If the queried item can be found, the result is stored in
+       the memory location pointed to be ti_Data; otherwise the
+       memory is left unchanged.
+
+   INPUTS
+       handle - An Elf handle previously opened by OpenElf.
+
+       taglist - a list of tagitems. Possible tagitems are:
+
+       EAT_NumSections
+           Returns the number of sections in this file.
+
+       EAT_ElfHeader
+           Retuns a pointer to the ELF header...
+
+       EAT_SectionStringTable
+           Returns the section index of the section string table
+
+       EAT_FileName
+           Returns the name of the ELF file, if any.
+
+   RESULT
+       This function returns an ULONG value, representing the number
+       of queries that could be satisfied. Unknown queries are
+       silently ignored.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       elf.library/SetElfAttrs
+
+elf.library/GetElfString                                                   elf.library/GetElfString
+
+   NAME
+       GetElfString -- Read a string from a string table section
+
+   SYNOPSIS
+       const STRPTR GetElfString(Elf32_Handle ElfHandle,
+           UWORD SectionIndex, UWORD StringIndex);
+
+   FUNCTION
+       Retrieves a string pointer from the specified string
+       table. The table is loaded from the handle if it isn't already
+       present in memory. This only returns a reference of the
+       string, and the memory must not be modified.
+
+   INPUTS
+       ElfHandle - the handle of the ELF file
+
+       SectionIndex - the index of the string section
+
+       StringIndex - the index of the string itself
+
+   RESULT
+       A pointer to the string, or NULL if either of the indices
+       was out of range
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/GetSection                                                       elf.library/GetSection
+
+   NAME
+       GetSection -- Get/Load a section from an ELF handle
+       GetSectionTags -- Vararg stub
+
+   SYNOPSIS
+       APTR GetSection(Elf32_Handle ElfHandle, struct TagItem *taglist);
+       APTR GetSectionTags(Elf32_Handle ElfHandle, ULONG tag1, ...);
+
+   FUNCTION
+       This function searches for a section in the elf file, possibly
+       loading it from the input stream, and returns a pointer to the
+       start of the section. An in-memory copy of the section will
+       be preferred. If the section hasn't been loaded yet, and the
+       GST_Load tag is TRUE, the section is loaded from the input
+       stream, otherwise this function returns NULL.
+
+   INPUTS
+       ElfHandle - an ELF handle previously opened by OpenElf.
+
+       taglist - a list of tag items specifying the loading
+       operation. Currently the following items are valid:
+
+       GST_SectionIndex
+           Specifies the index of the section to load, starting at
+           0. If the section index is higher than the number of
+           sections in the file, this call fails.
+
+       GST_SectionName
+           Specifies the name of the section to load. If a section by
+           that name is not found, the call fails.
+
+       GST_SearchAddress
+           Find the section where the specified address belongs
+           to. This assumes that the section must already be loaded,
+           and hence implies GST_Load to be FALSE.
+
+       GST_Load
+           A boolean flag indicating that the section should be
+           loaded from the input stream if it hasn't been loaded
+           yet. The default is TRUE, meaning to perform the load. If
+           set to FALSE, the section is not loaded, and this call
+           fails if the section isn't found in memory.
+
+   RESULT
+       An APTR pointing to the beginning of the section in memory, or
+       NULL on failure.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       elf.library/OpenElf, elf.library/GetSectionHeader
+
+elf.library/GetSectionHeader                                           elf.library/GetSectionHeader
+
+   NAME
+       GetSectionHeader -- Get a section header from an ELF handle
+       GetSectionHeaderTags -- Vararg stub
+
+   SYNOPSIS
+       Elf32_Shdr * GetSectionHeader(Elf32_Handle ElfHandle, struct TagItem *taglist);
+       Elf32_Shdr * GetSectionHeaderTags(Elf32_Handle ElfHandle, ULONG tag1, ...);
+
+   FUNCTION
+       This function searches the elf file for a section header and
+       returns a pointer to the sectiion header. The specification of
+       the section in question is carried out via the taglist.
+
+   INPUTS
+       ElfHandle
+           A pointer to an Elf32_Handle previously opened by OpenELF.
+
+       taglist
+           A list of tag items. Currently the following tag items are
+           valid:
+
+           GST_SectionIndex
+               Search for the section header with the given section
+               index. Section indices start at 0, but section 0
+               usually is the NULL section.
+
+           GST_SectionName
+               Search for the section header whose name matches the
+               given string. Sections are usually named ".text",
+               ".data" and so on, with a matching ".rela.text" or
+               ".rela.data" section which contains relocation
+               information.
+
+   RESULT
+       This function returns a pointer to the ELF section header, or
+       NULL if the section could not be found.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       elf.library/OpenElf
+
+elf.library/InitSHLibs                                                       elf.library/InitSHLibs
+
+   NAME
+		InitSHLibs -- Initialize the shared object system (V52)
+
+   SYNOPSIS
+		void InitSHLibs(Elf32_Handle ElfHandle, BOOL DoInit);
+
+   FUNCTION
+ 		This function goes through all loaded libraries of a binary,
+ 		executing some actions on each of them depending on circumstances:
+
+ 			- If DoInit == TRUE and a function __shlib_call_constructors exists
+ 			  in the shared object, that function is called
+ 			- If DoInit == TRUE and the shared object has a DT_INIT function,
+ 			  that function is called
+ 			- If DoInit == FALSE and a function __shlib_call_destructors exists
+ 			  in the shared object, that function is called
+ 		    - If DoInit == FALSE and the shared object has a DT_FINI function,
+ 			  that function is called
+
+ 		ELF library internally keeps track of the shared objects that have been
+ 		initialized this way; calling this function multiple times has no
+ 		harmful effects and is indeed called internally after DLOpen has been
+ 		called from this handle.
+
+   INPUTS
+       ElfHandle - An ELF root handle. The handle must be of type ET_EXEC,
+ 					or this function does nothing.
+ 		DoInit	  - A boolean to select whether init or exit functions are
+ 					called. See above
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+ 		Program startup code should call this function. Usually there is no
+ 		need to call this yourself, the startup code should take care of it.
+ 		On a program with no shared objects attached, this function does
+ 		nothing.
+
+ 		This function is available in elf.library 52.2 or later.
+
+ 		Special note: This function may be called on an elf handle that is
+ 		already closed, without reopening it.
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/OpenElf                                                             elf.library/OpenElf
+
+   NAME
+       OpenElf -- Open an ELF file (V50)
+       OpenElfTags -- Vararg version
+
+   SYNOPSIS
+      Elf32_Handle OpenElf(struct TagItem *taglist);
+      Elf32_Handle OpenElfTags(ULONG tag1, ...);
+
+   FUNCTION
+      This function opens an ELF image and returns an abstract handle to
+      the image, or NULL on failure.
+
+   INPUTS
+      taglist - a taglist, consisting of any number of there currently
+               defined tags:
+
+           OET_Filename - (STRPTR) try to open a disk file with the given name.
+               The call will fail if the file does not exist or is not an ELF file.
+
+           OET_FileHandle - (BPTR) try to use an existing file handle. The ELF image
+               must start at the current offset or opening will fail. Opening
+               will also fail if no ELF image is found in the file.
+
+           OET_MemoryAddr - (APTR) try to use an existing ELF image in memory.
+
+           OET_ElfHandle - (Elf32_Handle) try to re-open an existing ELF handle. This
+               can be used for example when a different program crashed and a debugger
+               wants to examine the crashed program (for example to find the crash
+               address in a .stabs section).
+
+           All of the above tags are mutually exclusive. A maximum of one of these
+           may be defined, or the call will fail. In addition the following
+           tags can be used to modify the standard behaviour of the elf library:
+
+           OET_DOSHook - (struct Hook *) A hook to be invoked when more data is
+               needed from the ELF image. By default, this (and OET_MEMHook) is
+               set up according to the major open type specified with one of the
+               four above tags. If you want to make your own handler for that,
+               specify a struct Hook here, and read the documentation in
+               elf.library/--hooks--.
+           OET_MEMHook - (struct Hook *) A hook to be invoked when memory should
+               be allocated or freed. By default, this maps to AllocMem and FreeMem
+               with ELF section flags mapped to their correct MEMF_ flags. For
+               special purposes you can override these functions by providing a
+               hook. Read the documentation in elf.library/--hooks--.
+
+           OET_Executable - (BOOL) A bool indicating wether X flagged sections
+               should be put into Executable memory (TRUE) or not (FALSE). The
+               default is to put them into Executable memory.
+           OET_ReadOnlyCopy - (BOOL) A bool indicating whether the handle
+               should be a read-only copy or not. This flag is only valid
+               with OET_ElfHandle. The handle returned is a read-only handle
+               that is a copy (not the original handle), and the user MUST NOT
+               modify anything in this handle, i.e. there must not be any
+               DOS activity on this handle (the file is not reopened) and
+               there must not be any sort of modifications to the handle.
+
+           OET_NoDOS - (BOOL) Only valid with OET_ElfHandle. If specified,
+               the file handle will NOT be re-opened, meaning that any attempt
+               to load a section from disk that hasn't been opened before
+               will fail. This is useful for dynamic object files which are
+               loaded with all relevant information in SWF_ALLOC sections.
+
+   RESULT
+       An initialized Elf32_Handle is returned when the function succeeded, or
+       NULL to indicate failure.
+
+   BUGS
+
+   SEE ALSO
+       elf.library/CloseELF
+
+elf.library/RelocateSection                                             elf.library/RelocateSection
+
+   NAME
+		RelocateSection -- Relocate a section
+       RelocateSectionTags -- Vararg stub
+
+   SYNOPSIS
+		BOOL RelocateSection(Elf32_Handle handle, struct TagItem *tags);
+       BOOL RelocateSectionTags(Elf32_Handle handle, ...);
+
+   FUNCTION
+		This function relocates a loaded section to its new place in memory
+       by applying any matching reloc section.
+
+   INPUTS
+       ElfHandle - the handle of the file to load.
+
+       taglist - A list of tag items to pass additional
+       parameters. The currently valid tag items are
+
+       GST_SectionIndex
+       Relocate the section specified by this index. Mutually exclusive
+       with GST_SectionName.
+
+       GST_SectionName
+       Relocate the section specified by this name. Mutually exclusive
+       with GST_SectionIndex.
+
+       GST_Load
+       If set to TRUE, try to load any section that is not yet in memory
+       from the input stream. If FALSE, then all sections must be in memory
+       or the relocation may fail.
+
+   RESULT
+		Returns a value of TRUE when the operation was a success, otherwise
+       FALSE is returned.
+
+   NOTES
+       Note: If the section was absolute, or no reloc could be found for the
+       section, nothing happens and this function will return TRUE. The reason
+       for this is that really the intention was to have a usable, relocated
+       section. It's not my fault if there was nothing to do...
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/ScanSymbolTable                                             elf.library/ScanSymbolTable
+
+   NAME
+       ScanSymbolTable -- Scan the symbol table.
+       ScanSymbolTableTags -- vararg stub
+
+   SYNOPSIS
+       void ScanSymbolTable(ElfHandle ElfHandle, struct Hook *Hook,
+                              struct TagItem *tagList);
+
+       void ScanSymbolTableTags(ElfHandle ElfHandle, struct Hook
+                                *hook, ...);
+
+   FUNCTION
+       This function scans through the file's symbol table(s) and
+       invokes a hook on every symbol encountered. The hook uses a
+       messages structure that looks like this:
+
+       struct SymbolMsg
+       {
+           Elf32_Sym *Sym;
+           uint32 AbsValue;
+           STRPTR Name;
+       };
+
+       The fields have the following meaning:
+
+       Sym
+       A pointer to the symbol's entry in the symbol table.
+
+       AbsValue
+       The value of the symbol. Other than the Sym->st_value entry,
+       this specifies the absolute value for relative symbols that
+       are defined relative to a section.
+
+       Name
+       A null-terminated character string representing the symbol's
+       name.
+
+       All fields in the structure and the memory pointed to are
+       strictly read-only, and may not be valid outside the hook. If
+       you need any of this information, you need to store it in your
+       own memory area.
+
+       Your hook should have the following prototype:
+
+       BOOL hookFunc(struct Hook *hook, Elf32_Handle handle, struct
+                     SymbolMsg *msg);
+
+       The function should return TRUE to continue scanning, and
+       FALSE if scanning should be aborted.
+
+   INPUTS
+       ElfHandle - the handle of an ELF file opened by OpenElf
+       hook - the hook to be invoked for every symbol
+
+
+   RESULT
+       No result is returned by this function
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/SetElfAttrs                                                     elf.library/SetElfAttrs
+
+   NAME
+       SetElfAttrs -- Set Attributes of an ELF handle
+       SetElfAttrsTags -- Vararg stub
+
+   SYNOPSIS
+       ULONG SetElfAttrs(struct TagItem *taglist);
+       ULONG SetElfAttrsTags(ULONG tag1, ...);
+
+   FUNCTION
+
+       This function can modify certain attributes within an ELF
+       handle after the handle has been created. It scans the taglist
+       for entries it knows, and returns the number of known and
+       modified entires. If an entry is known but cannot be modified,
+       or no entry was known, 0 is returned.
+
+   INPUTS
+
+       taglist - a list of tagitems. Possible tagitems are:
+
+       EAT_DOSHook
+
+           Replace the currently installed DOS hook by the one
+           specified.
+
+       EAT_MEMHook
+
+           Replace the currently installed MEM hook by the one
+           specified.
+
+   RESULT
+       This function returns an ULONG value, representing the number
+       of successfully set attributes.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       elf.library/SetElfAttrs
+
+elf.library/SymbolQuery                                                     elf.library/SymbolQuery
+
+   NAME
+       SymbolQuery -- Search for a set of symbols in an ELF file
+
+   SYNOPSIS
+       ULONG SymbolQuery(Elf32_Handle ElfHandle, ULONG NumQueries,
+                         struct Elf32_SymbolQuery *Queries);
+
+   FUNCTION
+       This function searches the Elf file for a set of specified
+       symbols, trying to match as many of them as possible. The
+       functions works through an array of Elf32_SymbolQuery
+       structures and fills in all fields from the information of the
+       Elf file. The Elf32_SymbolQuery structure looks like this:
+
+       struct Elf32_SymbolQuery
+       {
+           uint32     Flags;
+           STRPTR     Name;
+           uint32     NameLength;
+         	uint32     Value;
+           BOOL       Found;
+       	uint16     pad1;
+       	Elf32_Sym  Sym;
+       };
+
+       There are two cases for symbol lookup: By name, or by
+       value. The exact type of a query is determined by the Flags
+       field, if the ELF32_SQ_BYNAME flag is set, then the symbol is
+       searched by name, otherwise by value.
+
+       Lookup by Name:
+       The Name field must be filled in by the client program. It
+       represents the name of the symbol to be searched. Note that
+       the Elf32 PowerPC ABI does not generate an underscore at the
+       start of each function name.
+
+       All other values are filled in by the function. Value is the
+       value of the symbol, the interpretation of it depends on the
+       type of the symbol. The Found field is set to TRUE of the
+       symbol was found and FALSE otherwise (testing Value for zero
+       is not sufficient since the Symbols value might be zero).
+
+       Finally, the Sym field is a copy of the symbol table entry in
+       the Elf file.
+
+       Nothing is filled in (except the Found field, which is set to
+       FALSE) when the symbol is not found in the file.
+
+       Lookup by Value:
+       The Value field must be filled in by the client program, as
+       well as the fields Name and NameLength. The Name field must be
+       set to a buffer to hold the name of the symbol if found, and
+       NameLength should be set to the length of this buffer. If the
+       symbol is found, its name is copied to the Name field, but at
+       most NameLength characters are filled in (including the
+       trailing zero). Found is set to TRUE, and Sym will contain a
+       copy of the symbols sybol table entry.
+
+       If the symbol was not found, the Found field is set to FALSE
+       and no other field is modified.
+
+   INPUTS
+       ElfHandle - an opened handle to an Elf file
+
+       NumQueries - the number of queries to perform. Practically, it
+       is the size of the array pointed to be the third parameter.
+
+       Queries - a pointer to an Array of Elf32_SymbolQuery
+       structures to be filled in by this function.
+
+   RESULT
+       The function returns an ULONG value representing the number of
+       symbols successfully retrieved.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+elf.library/UnloadSection                                                 elf.library/UnloadSection
+
+   NAME
+       UnloadSection -- Unload a memory-resident section
+       UnloadSectionTags -- vararg stub
+
+   SYNOPSIS
+       void UnloadSection(Elf32_Handle ElfHandle, struct TagItem *taglist);
+       void UnloadSectionTags(Elf32_Handle ElfHandle, ...);
+
+   FUNCTION
+       This function unloads a loaded section from memory, invoking
+       the memory hook to free the associated storage.
+
+   INPUTS
+       ElfHandle - an opened ElfHandle obtained from OpenElf
+
+       taglist - a list of tag items. Valid tagitems are
+
+           UTS_SectionIndex
+               Unload the section with this index
+
+           UTS_NonAlloc
+               Unload all sections that don't have the ALLOC flag
+               set, i.e. all sections that are not part of the ELF
+               file's Process image.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

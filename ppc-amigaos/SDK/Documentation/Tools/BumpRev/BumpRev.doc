@@ -1,0 +1,255 @@
+BumpRev 53.1
+============
+
+1. Purpose
+
+"bumprev" updates version and revision information and makes this available
+for program code to use it. It generates header file for 'C' and assembly
+language programs to use. The typical application is to "bump" (i.e.
+increment) the revision number of a program, library, device, etc. after it
+has been changed and before it is released.
+
+
+2. How to use it
+
+"bumprev" is a shell command. It uses the following Unix-style command line
+template:
+
+   bumprev [-q]
+           [-v <version number]
+           [-r <revision number>]
+           [-n <name>]
+           [-b <base file name]
+           [-d <depend list file name>]
+           [-e <file name suffixes to exclude>]
+           [-i <file name suffixes to include>]
+           [<version number> <base file name> [depend list file name]]
+
+The options do the following:
+
+   -q
+
+      Activates "quiet" operation, i.e. will not print any warning or
+      progress messages, but will print error message.
+
+   -v <version number>
+
+      Set the version number to use. This must be a number > 0. Note
+      that version numbers > 255 are unsafe to use for some applications
+      since a "struct Resident" only reserves an unsigned 8 bit integer
+      for storing a version number in it.
+
+   -r <revision number>
+
+      Set the revision number to use rather than let "bumprev" read
+      and increment it instead. This must be a number > 0.
+
+   -n <name>
+
+      Set the name of the program, library, device, etc. if it is not
+      the same as the base name (see below). This can be useful for
+      software built on systems which do not use a case-insensitive
+      file system.
+
+   -b <base file name>
+
+      Set the base file name all the work and header file names are
+      generated from. This also becomes the name that is written
+      to the files unless you override this with the "-n" option
+      (see above).
+
+   -d <depend list file name>
+
+      A file which contains a list of file names whose modification
+      times should be compared against the modification time of the
+      file which contains the revision number. If any of these files
+      has been modified after the revision number file has a new
+      revision will be created; otherwise "bumprev" will exit
+      immediately. There must be one file name per line. Note that
+      if you give "-" as the file name, "bumprev" will try to read
+      the file name list from standard input.
+
+   -e <file name suffixes to exclude>
+
+      By default "bumprev" generates three header files: one for
+      use with 'C' and two for use with assembly language. The
+      'C' header file name ends with ".h" and the two assembly
+      language file names end with ".i" and ".s", respectively.
+      You can tell "bumprev" not to create all of these files
+      with the "-e" option.
+
+   -i <file name suffixes to include>
+
+      This controls which header files should be created, with the
+      default being the ".h", ".i" and ".s" files. The difference
+      between the "-i" option and "-e" option is that with "-i"
+      you say exactly what header files you want, and not what
+      you do not want.
+
+   -D <Add DEVNAME to files>
+
+      Adds a DEVNAME definition to the output files.
+
+   -L <Add LIBNAME to files>
+
+      Adds a LIBNAME definition to the output files.
+
+
+The typical usage works like this:
+
+   1> bumprev 1 foo
+   bumprev: Creating new file "foo_rev.rev".
+   bumprev: Bumped "foo" to version 1.1.
+
+This creates or updates a revision file ("foo_rev.rev") unless it already
+exists, and three more header files:
+
+   foo_rev.h
+
+      #define VERSION     1
+      #define REVISION    1
+      #define DATE        "9.12.2006"
+      #define VERS        "foo 1.1"
+      #define VSTRING     "foo 1.1 (9.12.2006)\r\n"
+      #define VERSTAG     "\0$VER: foo 1.1 (9.12.2006)"
+
+   foo_rev.i
+
+      VERSION     EQU 1
+      REVISION    EQU 1
+
+      DATE    MACRO
+              dc.b '9.12.2006'
+              ENDM
+
+      VERS    MACRO
+              dc.b 'foo 1.1'
+              ENDM
+
+      VSTRING MACRO
+              dc.b 'foo 1.1 (9.12.2006)',13,10,0
+              ENDM
+
+      VERSTAG MACRO
+              dc.b 0,'$VER: foo 1.1 (9.12.2006)',0
+              ENDM
+
+   foo_rev.s
+
+      VERSION = 1
+      REVISION = 1
+
+      .macro DATE
+      .ascii "9.12.2006"
+      .endm
+
+      .macro VERS
+      .ascii "foo 1.1"
+      .endm
+
+      .macro VSTRING
+      .ascii "foo 1.1 (9.12.2006)"
+      .byte 13,10,0
+      .endm
+
+      .macro VERSTAG
+      .byte 0
+      .ascii "$VER: foo 1.1 (9.12.2006)"
+      .byte 0
+      .endm
+
+
+If you invoke "bumprev" with the same parameters again, the revision file will
+be updated, incrementing the revision number:
+
+   1> bumprev 1 foo
+   bumprev: Bumped "foo" to version 1.2.
+
+The three header files will be updated, too, e.g.:
+
+   foo_rev.h
+
+      #define VERSION     1
+      #define REVISION    2
+      #define DATE        "9.12.2006"
+      #define VERS        "foo 1.2"
+      #define VSTRING     "foo 1.2 (9.12.2006)\r\n"
+      #define VERSTAG     "\0$VER: foo 1.2 (9.12.2006)"
+
+
+The name you give "bumprev" goes into the names of the header files, and it
+also becomes the name printed in each string. This can be overridden with the
+"-n" option, e.g.:
+
+   1> bumprev -n Bar 1 bar
+   bumprev: Creating new file "bar_rev.rev".
+   bumprev: Bumped "Bar" to version 1.1.
+
+The resulting files still use the same base name, but the names printed in the
+files are different, e.g.:
+
+   bar_rev.h
+
+      #define VERSION     1
+      #define REVISION    1
+      #define DATE        "9.12.2006"
+      #define VERS        "Bar 1.1"
+      #define VSTRING     "Bar 1.1 (9.12.2006)\r\n"
+      #define VERSTAG     "\0$VER: Bar 1.1 (9.12.2006)"
+
+
+"bumprev" defaults to create three header files, but at times there may be
+only one you need. To create just the 'C' language header file, you would use
+the "-e" option like this:
+
+   1> bumprev -e si 1 baz
+
+This would create only "baz_rev.h" and omit "baz_rev.i" and "baz_rev.s".
+
+
+
+You can specify the base name, the version number and the dependecies file
+name both using options and as regular parameters. But you do not need to
+specify both. For example, the following commands are equivalent:
+
+   bumprev -b foo 1
+   bumprev 1 foo
+   bumprev -v 1 foo
+   bumprev -v 1 -b foo
+
+The following commands are equivalent, too:
+
+   bumprev 1 bar dependencies_file
+   bumprev -b bar 1 dependencies_file
+   bumprev -v 1 -d dependencies_file bar
+   bumprev -v 1 -b bar dependencies_file
+
+
+3. When to use it
+
+There are two common practices to use "bumprev":
+
+   1) Update the revision number whenever the software is rebuilt
+
+   2) Update the revision number only when a new release is created
+
+The advantage of 1) is that you can integrate it into your build process, and
+you won't ever forget to bump a revision number when something has changed.
+The disadvantage is that revision numbers can increase very quickly (don't
+worry: you have 65535 revisions to spare).
+
+The advantage of 2) is that it saves revision numbers (which can become
+scarce), but the disadvantage is that you might forget to bump a revision
+number before you rebuild a new release.
+
+Practice 1) has a lot going for it, and it was the preferred default at
+Commodore when AmigaOS 2.x/3.x were created.
+
+
+4. Notes
+
+"bumprev" version 52.1 is a rewrite of the older portable version of the
+command. The old version did not support any of the options described above.
+It only supported a version number, a base name and (optionally) a
+dependencies file. If you want to maintain compatibility with the older
+versions, use only these parameters and no options whatsoever.

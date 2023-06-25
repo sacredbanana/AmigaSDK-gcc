@@ -1,0 +1,737 @@
+TABLE OF CONTENTS
+
+popupmenu.class/--datasheet--
+popupmenu.class/OM_ADDMEMBER
+popupmenu.class/OM_REMMEMBER
+popupmenu.class/PM_CHANGESTATE
+popupmenu.class/PM_FINDITEM
+popupmenu.class/PM_HANDLEINPUT
+popupmenu.class/PM_INSERT
+popupmenu.class/PM_LAYOUT
+popupmenu.class/PM_OPEN
+popupmenu.class/POPUPMENU_FreeIDList
+popupmenu.class/POPUPMENU_GetClass
+popupmenu.class/POPUPMENU_MakeIDListA
+popupmenu.class/POPUPMENU_MakeMXListA
+popupmenuitem.class/--datasheet--
+popupmenuitem.class/PM_CHECKABORT
+popupmenuitem.class/POPUPMENU_GetItemClass
+popupmenu.class/--datasheet--                   popupmenu.class/--datasheet--
+
+    NAME
+	popupmenu.class -- Create popupmenu objects.
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	popupmenu.library
+
+    DESCRIPTION
+	This class creates standard popupmenus, it currently acts as
+	a BOOPSI wrapper around popupmenu.library. Future releases will
+	use Intuition popupmenus once they are implemented.
+
+	All popupmenuclass methods and the callback hooks you provide are
+	run in the context of the task you call popupmenuclass from. Thus if
+	your application is a Process, DOS is safe to use. However,
+	remember the Intuition rules about DOS and IDCMP VERIFY messages.
+
+	Note: The popupmenu.class binary actually consists of two classes,
+	one for the menus (popupmenu.class) and one for the menu items
+	(popupmenuitem.class).
+
+    METHODS
+	OM_NEW -- Passed to superclass first, defaults set, then OM_SET.
+
+	OM_DISPOSE -- Child objects disposed then passed to superclass.
+
+	OM_SET -- Passed to superclass first, then custom tags set.
+
+	OM_UPDATE -- Passed to superclass first, then custom tags updated.
+
+	OM_GET -- Returns requested setting or passed to superclass
+
+	OM_ADDMEMBER -- Add an item to the menu.
+
+	OM_REMMEMBER -- Remove an item from the menu.
+
+	PM_OPEN -- Open the menu.
+
+	PM_LAYOUT -- Loads and remaps images and lays out the menu.
+
+	PM_HANDLEINPUT -- Handles IDCMP input processing, namely the
+	                  keyboard shortcuts of the popupmenu items.
+
+	PM_CHANGESTATE -- Alters the (un)select state of several menu items
+	                  at once.
+
+	PM_FINDITEM -- Find an item in a popupmenu hierarchy.
+
+	PM_INSERT -- Insert an item after the given object.
+
+    ATTRIBUTES
+	You may set these while the menu is not open at NewObject() or
+	SetAttrs() time.
+
+	PMA_AddItem (Object *)
+	    Pointer to an object you wish to add to the list of menuitems for
+	    this menu object.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_Left (int16)
+	    Left edge of the popupmenu relative to its parent window.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_Top (int16)
+	    Top edge of the popupmenu relative to its parent window.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_RelRight (int16)
+	    Left edge of the popupmenu relative to the right edge of its
+	    parent window.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_RelBottom (int16)
+	    Top edge of the popupmenu relative to the bottom edge of its
+	    parent window.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_PullDown (BOOL)
+	    Turn the menu into a pulldown menu.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	PMA_MenuHandler (struct Hook *)
+	    Hook to call whenever the user selects an item from the menu.
+
+	    Your hook function will be called as follows:
+	      uint32 ItemSelected(struct Hook *hook, APTR item, APTR msg);
+
+	    The item argument is a pointer to the selected popupmenuitem
+	    object. The msg argument is not used and reserved for future use.
+	    Always return 0 from your hook function.
+
+	    Applicability is (OM_NEW)
+
+	PMA_CenterScreen (BOOL)
+	    Center the menu on the screen.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_UseLMB (BOOL)
+	    Reverses the function of the mouse buttons. Left button will
+	    be used to select items and right button to select multiple
+	    items. This tag is only required when multiselect is used and
+	    the menu is opened with LMB.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMA_LocaleHook (struct Hook *)
+	    'GetString' hook used to get localized strings.
+
+	    Your hook function will be called as follows:
+	      CONST_STRPTR GetString(struct Hook *hook, APTR item,
+	                             struct pmLocaleHookMsg *msg);
+
+	    The item argument is a pointer to the selected popupmenuitem
+	    object. The msg argument is a pointer to a pmLocaleHookMsg
+	    described in <classes/popupmenu.h>. Always return a localized
+	    string that will be displayed to the user.
+
+	    Applicability is (OM_NEW)
+
+	PMA_Font (struct TextFont *)
+	    Render the menu with the given font.
+
+	    Defaults to the RastPort font of the parent Window.
+
+	    Applicability is (OM_NEW)
+
+	PMA_HintBox (BOOL)
+	    Make the menu dissappear when the mouse is moved.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	PMA_AutoPullDown (BOOL)
+	    Set this to TRUE if you want a pulldown menu opened automatically
+	    when the user presses RMB. You will have to use WFLG_RMBTRAP and
+	    IDCMP_MOUSEBUTTONS to get it working.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+popupmenu.class/OM_ADDMEMBER                     popupmenu.class/OM_ADDMEMBER
+
+    NAME
+	OM_ADDMEMBER -- Append item to the end of a menu.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember *msg);
+
+    FUNCTION
+	Inserts an item at the end of the menu.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns non-zero if successful or zero on error.
+
+    SEE ALSO
+	PM_INSERT, OM_REMMEMBER
+
+popupmenu.class/OM_REMMEMBER                     popupmenu.class/OM_REMMEMBER
+
+    NAME
+	OM_REMMEMBER -- Remove an item from a menu.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember *msg);
+
+    FUNCTION
+	Removes an item from the menu.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns non-zero if successful or zero on error.
+
+    SEE ALSO
+	PM_INSERT, OM_ADDMEMBER
+
+popupmenu.class/PM_CHANGESTATE                 popupmenu.class/PM_CHANGESTATE
+
+    NAME
+	PM_CHANGESTATE -- Simulate a (de)selection of a checked item.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmChangeState *msg);
+
+    FUNCTION
+	This function will change the state of checkable/mx items in the
+	list of IDs depending on their kind (exclude/include/reflect/inverse)
+	and the action.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct pmChangeState
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	The return value is not defined.
+
+popupmenu.class/PM_FINDITEM                       popupmenu.class/PM_FINDITEM
+
+    NAME
+	PM_FINDITEM -- Find pointer to an item using the ID.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmFindItem *msg);
+
+    FUNCTION
+	Find the pointer to an item using the ID number.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct pmFindItem
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	The popupmenuitem object or NULL if not found.
+
+popupmenu.class/PM_HANDLEINPUT                 popupmenu.class/PM_HANDLEINPUT
+
+    NAME
+	PM_HANDLEINPUT -- IDCMP input handling method.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmHandleInput *msg);
+
+    FUNCTION
+	This function handles keyboard shortcuts (needs IDCMP_RAWKEY
+	or IDCMP_VANILLAKEY). If PMA_AutoPullDown is set it also
+	opens the popupmenu when user presses RMB.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct pmHandleInput
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	The popupmenuitem object selected by the user or NULL
+	for nothing selected.
+
+popupmenu.class/PM_INSERT                           popupmenu.class/PM_INSERT
+
+    NAME
+	PM_INSERT -- Insert an item at the given position.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmInsert *msg);
+
+    FUNCTION
+	Inserts an item at the given position.
+
+	struct pmInsert
+	{
+	    uint32  MethodID; // PM_INSERT
+	    Object *object;   // popupmenuitem to insert
+	    Object *Pred;     // Item after which to insert. Use NULL to
+	                      // insert at the top or ~0 for the bottom.
+	};
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct pmInsert
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	Returns non-zero if successful or zero on error.
+
+    SEE ALSO
+	OM_ADDMEMBER, OM_REMMEMBER
+
+popupmenu.class/PM_LAYOUT                           popupmenu.class/PM_LAYOUT
+
+    NAME
+	PM_LAYOUT -- Layout the menu.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmLayout *msg);
+
+    FUNCTION
+	Loads and remaps images and lays out the menu. Use with large menus
+	that will only be used on one screen. This will speed up the menu
+	significantly.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct pmLayout
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	Returns TRUE if successful or FALSE on error.
+
+popupmenu.class/PM_OPEN                               popupmenu.class/PM_OPEN
+
+    NAME
+	PM_OPEN -- Open the menu.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmOpen *msg);
+
+    FUNCTION
+	This method is used to open a popup menu.
+
+    INPUTS
+	obj - popupmenu object pointer
+	msg - pointer to fully initialized struct pmOpen
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	The popupmenuitem object selected by the user or NULL
+	for nothing selected.
+
+popupmenu.class/POPUPMENU_FreeIDList     popupmenu.class/POPUPMENU_FreeIDList
+
+    NAME
+	POPUPMENU_FreeIDList -- Free an ID list.
+
+    SYNOPSIS
+	void POPUPMENU_FreeIDList(APTR list);
+
+    FUNCTION
+	This function is used to free an ID list created by
+	POPUPMENU_MakeIDListA() or PM_MakeMXListA(). Normally ID lists are
+	freed when disposing the menu item but when PMIA_ExcludeShared is
+	used this feature is disabled and freeing must be done with this
+	function.
+
+    INPUTS
+	list - Pointer to an ID list to free.
+
+    SEE ALSO
+	POPUPMENU_MakeIDListA(), POPUPMENU_MakeMXListA()
+
+popupmenu.class/POPUPMENU_GetClass         popupmenu.class/POPUPMENU_GetClass
+
+    NAME
+	POPUPMENU_GetClass -- Gets pointer to the popupmenu class.
+
+    SYNOPSIS
+	Class * class = POPUPMENU_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "popupmenu.class" public class ID instead.
+
+    RESULT
+	class - Pointer to the popupmenu class.
+
+popupmenu.class/POPUPMENU_MakeIDListA   popupmenu.class/POPUPMENU_MakeIDListA
+
+    NAME
+	POPUPMENU_MakeIDList -- Create list of ID's for exclusion/inclusion.
+
+    SYNOPSIS
+	APTR list = POPUPMENU_MakeIDListA(struct TagItem *tags);
+
+	APTR list = POPUPMENU_MakeIDList(Tag tag1, ...);
+
+    FUNCTION
+	This function is used to create a list of ID's that is used to
+	tell which items an item should include, exclude, reflect or
+	inverse reflect.
+
+    TAGS
+	PMA_ExcludeID (uint32)
+	    ID of an item that should be unselected when when this
+	    item is selected.
+
+	PMA_IncludeID (uint32)
+	    ID of an item that should be selected when when this
+	    item is selected.
+
+	PMA_ReflectID (uint32)
+	    ID of an item that should copy the state of this item
+	    when it gets selected/unselected.
+
+	PMA_InverseID (uint32)
+	    ID of an item that should copy the inverse state of this item
+	    when it gets selected/unselected. Useful if you want to make
+	    sure only one of two items is selected at a time.
+
+    INPUTS
+	tags - Pointer to a tag list.
+
+    SEE ALSO
+	POPUPMENU_FreeIDList(), POPUPMENU_MakeMXListA()
+
+popupmenu.class/POPUPMENU_MakeMXListA   popupmenu.class/POPUPMENU_MakeMXListA
+
+    NAME
+	POPUPMENU_MakeMXListA -- Build list of ID numbers for mutual exclusion.
+
+    SYNOPSIS
+	APTR list = POPUPMENU_MakeMXListA(uint32 *id);
+
+	APTR list = POPUPMENU_MakeMXList(uint32 id1, ...);
+
+    FUNCTION
+	This function is used to build lists of ID numbers that are required
+	by the PMIA_ExcludeList tag. The array of IDs is NULL terminated.
+
+    INPUTS
+	id - Array of NULL terminated ID numbers.
+
+    RESULT
+	Returns a list of IDs or NULL on error.
+
+    SEE ALSO
+	POPUPMENU_FreeIDList(), POPUPMENU_MakeIDListA()
+
+popupmenuitem.class/--datasheet--           popupmenuitem.class/--datasheet--
+
+    NAME
+	popupmenuitem.class -- Create popupmenu item objects.
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	popupmenu.library
+
+    DESCRIPTION
+	This class creates standard popupmenu item objects for use by
+	popupmenus objects.
+
+	Note: The popupmenu.class binary actually consists of two classes,
+	one for the menus (popupmenu.class) and one for the menu items
+	(popupmenuitem.class).
+
+    METHODS
+	OM_NEW -- Passed to superclass first, defaults set then OM_SET.
+
+	OM_DISPOSE -- Data disposed then passed to superclass.
+
+	OM_SET -- Passed to superclass first then custom tags set.
+
+	OM_GET -- Returns requested setting or passed to superclass.
+
+	PM_CHECKABORT -- Find out whether the user has canceled the menu
+	                 operation.
+
+    ATTRIBUTES
+	You may set these while the menu is not open at NewObject() or
+	SetAttrs() time.
+
+	ICA_TARGET (Object *)
+	    Object to notify when the user selects this item. The ID of the
+	    item and the PMIA_Checked state (if checkable item) can be found
+	    in the taglist of the OM_UPDATE message. See icclass autodoc for
+	    more information.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	ICA_MAP (struct TagItem *)
+	    Optional attribute mapping list. See icclass autodoc for more
+	    information.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PMIA_Title (CONST_STRPTR)
+	    Pointer to the menutext you want. A value of ~0 causes a
+	    horizontal separator to be drawn.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_TitleID (uint32)
+	    Locale string ID which will be passed to your locale hook.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_WideTitleBar (BOOL)
+	    Causes a wide horizontal separator to be drawn.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_ID (uint32)
+	    An ID number, only needed if you want to be able to read or
+	    change the attributes of this item later.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	PMIA_ReadOnly (BOOL)
+	    If this attribute is set to FALSE for items with submenus,
+	    they will become selectable. Note that this is not currently
+	    reversable.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_UserData (APTR)
+	    For your own use.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PMIA_SubMenu (Object *)
+	    A pointer to a popupmenu object. The item will automatically get an
+	    arrow to the right showing that it has a sub menu. Setting this
+	    attribute will automatically dispose the previous submenu object
+	    of this item.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PMIA_TextPen (BOOL)
+	PMIA_FillPen (BOOL)
+	PMIA_ShinePen (BOOL)
+	PMIA_ShadowPen (BOOL)
+	PMIA_Shadowed (BOOL)
+	PMIA_Italic (BOOL)
+	PMIA_Bold (BOOL)
+	PMIA_Underlined (BOOL)
+	    These tags allow you to change the appearance of the menu text.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_CheckIt (BOOL)
+	    Leave some space for a checkmark.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_Checked (BOOL)
+	    Put a checkmark to the left of the item.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	PMIA_Toggle (BOOL)
+	    Turn checkmark toggling on/off. It is recommended to set this
+	    attribute to FALSE (to turn toggling off) for mutual exclusion
+	    items. Toggling means that the items state will be alternating
+	    between checked and not checked every time it is selected.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_Disabled (BOOL)
+	    Makes the item unselectable and draws a disable pattern over
+	    the item.
+
+	    Defauls to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PMIA_Hidden (BOOL)
+	    Prevent this item from being rendered.
+
+	    Defauls to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PMIA_Image (struct Image *)
+	PMIA_SelectImage (struct Image *)
+	    Specifies an image to be rendered under the item title.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_Icon (struct Image *)
+	PMIA_SelectIcon (struct Image *)
+	    Specifies an image to be rendered to the left of the item title.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_Object (Object *)
+	    A BOOPSI object should be used to render this item.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_CommKey (CONST_STRPTR)
+	    Keyboard shortcut for this item. Only the first character will be
+	    used. This is a string pointer just to make it easier to use
+	    locale strings for the shortcuts.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_ColourBox (uint16)
+	    Draws a filled rectangle using the specified pen.
+	    The box will be drawn at the end of the line in PMIA_CheckIt
+	    items and at the beginning in other items.
+
+	    Applicability is (OM_NEW)
+
+	PMIA_Members (Object *)
+	    Turns this item into a group and adds the objects pointed to by
+	    ti_Data. The list of objects are created just like a (sub)menu.
+	    The previous members will be disposed when setting new members.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PMIA_LayoutMode (uint32)
+	    Layout method (applies only to group items).
+
+	    Available layout methods are:
+
+	    PMLM_None       - Normal item.
+	    PMLM_Horizontal - Items are laid out horizontally.
+	    PMLM_Vertical   - Items are laid out vertically.
+	    PMLM_Table      - Items are laid out in a table.
+
+	    Defaults to PMLM_Horizontal.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_ExcludeList (APTR)
+	PMIA_SharedExcludeList (APTR)
+	    List of items to be selected or unselected when this item gets
+	    selected. The list can be created with POPUPMENU_MakeIDListA() or
+	    POPUPMENU_MakeMXListA(). This list will be freed when the menu is
+	    disposed and can not be shared between items. For shared lists
+	    use POPUPMENU_SharedExcludeList.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_SubMenuConstruct (struct Hook *)
+	    This hook will be called before the submenu pointed to by
+	    PMIA_SubMenu is opened. Using this hook you can create the menu
+	    just before it is opened and show for example, directory contents
+	    in  the menu.
+
+	    Your hook function will be called as follows:
+	      Object *Construct(struct Hook *hook, APTR parent, APTR private);
+
+	    The parent argument is a pointer to the selected parent menu item.
+	    The private parameter must be passed to PM_CHECKABORT. Your hook
+	    must return the submenu object or NULL in which case nothing
+	    is displayed.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PMIA_SubMenuDestruct (struct Hook *)
+	    This hook is called after the submenu has been closed and is
+	    typically used when you need to free user data.
+
+	    Your hook function will be called as follows:
+	      void Destruct(struct Hook *hook, APTR parent, APTR unused);
+
+	    The parent argument is a pointer to the parent menu item.
+	    The unused parameter is currently unused. There is no defined
+	    return code.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+popupmenuitem.class/PM_CHECKABORT           popupmenuitem.class/PM_CHECKABORT
+
+    NAME
+	PM_CHECKABORT -- Find out if user wants to abort menu operation.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pmCheckAbort *msg);
+
+    FUNCTION
+	This method is used to find out if the user has moved the mouse
+	pointer outside of the region which opens the menu. It should be
+	called periodically (as often as possible) in your submenu construct
+	hook. This method may redraw the menu when it is called, if the delay
+	since last call has passed a certain treshold (default is 80 ms).
+
+	struct pmCheckAbort
+	{
+	    uint32 MethodID;  // PM_CHECKABORT
+	    APTR   Handle;    // Private handle passed to your hook function
+	                      // via the PMIA_SubMenConstruct tag.
+	};
+
+    INPUTS
+	obj - popupmenuitem object pointer
+	msg - pointer to fully initialized struct pmCheckAbort
+	      (see <classes/popupmenu.h>)
+
+    RESULT
+	TRUE when the user has canceled the operation otherwise FALSE.
+
+popupmenuitem.class/POPUPMENU_GetItemClassnuitem.class/POPUPMENU_GetItemClass
+
+    NAME
+	POPUPMENU_GetItemClass -- Gets pointer to the popupmenuitem class.
+
+    SYNOPSIS
+	Class * class = POPUPMENU_GetItemClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "popupmenuitem.class" public class ID instead.
+
+    RESULT
+	class - Pointer to the popupmenuitem class.
+
+

@@ -1,0 +1,180 @@
+Cloning gluecode
+----------------
+
+PPC gluecode (LIBS:libname.l.main) is needed for 68k libraries
+that shall be callable from PPC applications. Such gluecode is
+normally created with
+
+fdtrans -s libname_lib.sfd
+
+to get a libname.c file, plus
+
+fdtrans -x libname_lib.sfd
+
+to get a libname.xml file, plus
+
+idltool -c libname.xml
+
+to get a libname_vectors.c file, and the binary is created with e.g.
+
+gcc -o libname.l.main -nostartfiles libname.c
+
+(and eventually stripped). However, there exist two special cases
+where such PPC gluecode will not work as expected.
+
+The first case is when you need to be able to flush the 68k library from
+memory to replace it with a different version. Example: An 68k
+bsdsocket.library that is part of an 68k TCP/IP stack must be flushed
+before you can use the PPC bsdsocket.library of RoadShow. This is not
+possible with the standard gluecode because it keeps the 68k library
+opened until you reboot.
+
+The second case is an 68k library that returns a different library base
+to each opener. Example: The 68k usergroup.library that is part of an
+68k TCP/IP stack does this, and it does remember which task or process
+did open it and refuse to work with other tasks or processes. With the
+standard gluecode the process that opens the 68k library base which is
+used for all later PPC calls to the library is the ramlib process.
+
+It follows a description how to create special "cloning gluecode"
+that avoids the two problems described above. The method is based on
+the behaviour of GetInterface(), it does store the actual copy of the
+68k library base in a cloned copy of a gluecode interface when the
+interface was created with the flags "MIT_Flags, IFLF_PRIVATE" and
+does provide a Clone() method. Lets take usergroup.l.main as example.
+We call
+
+fdtrans -s usergroup_lib.sfd
+
+which will create a usergroup.c file that is the source code for a
+usergroup.l.main binary. We edit that file first, remove the
+"volatile static" attribute from the ROMTag to avoid that gcc optimizes
+it away. We edit the version number and the version string. We add
+Clone() and Expunge() functions and do modify the Release() and Init()
+functions:
+
+Modified Release() function:
+ULONG _UserGroup_Release(struct UserGroupIFace *Self)
+{
+    ULONG ret = --Self->Data.RefCount; /* Self will become invalid after Expunge */
+    if (ret == 0)
+    {
+        Self->Expunge();
+    }
+    return ret;
+}
+
+New Expunge() function:
+VOID _UserGroup_Expunge(struct UserGroupIFace *Self)
+{
+    struct ExecIFace *IExec = (struct ExecIFace *)Self->Data.IExecPrivate;
+    ULONG addr = (ULONG)Self - Self->Data.NegativeSize;
+
+    IExec->FreeVec((void *)addr);
+}
+
+New Clone() function:
+struct UserGroupIFace * _UserGroup_Clone(struct UserGroupIFace *Self)
+{
+    struct ExecIFace *IExec = (struct ExecIFace *)Self->Data.IExecPrivate;
+    ULONG size = Self->Data.PositiveSize + Self->Data.NegativeSize;
+    struct UserGroupIFace *new_instance;
+    ULONG addr;
+    
+    addr = (ULONG)IExec->AllocVec(size, MEMF_SHARED|MEMF_CLEAR);
+    if (addr == 0)
+    {
+	return NULL;
+    }
+    new_instance = (struct UserGroupIFace *) (addr + Self->Data.NegativeSize);
+    IExec->CopyMem((APTR)Self, (APTR)new_instance, Self->Data.PositiveSize);
+    new_instance->Data.Flags |= IFLF_CLONED;
+    return new_instance;
+}
+
+Modified Init() function:
+#define LIBNAME "usergroup.library"
+#define LIBVERSION 4
+#define IFACENAME "usergroup.library.main"
+STATIC struct Interface * InitFunction(APTR dummy, ULONG SegList, struct ExecBase *ExecBase)
+{
+    struct Library *LibBase;
+    struct Interface *NewInterface = NULL;
+    struct ExecIFace *IExec = (struct ExecIFace *)ExecBase->MainInterface;
+	
+    /* We need a LibBase to be able to tell exec to add ourself to
+     * the list of foreign interfaces.
+     */
+    LibBase = IExec->OpenLibrary(LIBNAME, LIBVERSION);
+    if (LibBase)
+    {
+        NewInterface = IExec->MakeInterfaceTags(NULL,
+                                                MIT_VectorTable, main_vectors,
+                                                MIT_Version,     1,
+                                                MIT_Name,        IFACENAME,
+ /* We are private and have a clone method
+  * so GetInterface() will give us a new
+  * LibBase each time.
+  */
+                                                MIT_Flags,       IFLF_PRIVATE,
+                                                TAG_END);
+        if (NewInterface)
+        {
+            NewInterface->Data.IExecPrivate = (APTR)IExec;
+            /* Add ourself to foreign interfaces list */
+            IExec->AddInterface(LibBase, NewInterface);
+        }
+        /* No longer needed. It did remember the wrong opener task
+         * anyway ("Ramlib opening usergroup.l.main")
+         */
+        IExec->CloseLibrary(LibBase);
+    }
+    return NewInterface;
+}
+
+Modified ROMTag:
+struct Resident MyResident =
+{
+    RTC_MATCHWORD,
+    (struct Resident *)&MyResident,
+    (struct Resident *)&MyResident+1,
+    RTF_NATIVE,
+    51, /* Version */
+    NT_UNKNOWN,
+    -120,
+    IFACENAME,
+    &"\0$VER: "IFACENAME" 51.1 (15.10.2004)\r\n"[7],
+    InitFunction
+};
+
+Modified _start() function that is called if someone tries to execute
+our gluecode:
+long _start(void)
+{
+    return 100;
+}
+
+Then call
+
+idltool -c usergroup.xml
+
+which will create a usergroup_vectors.c file included by usergroup.c
+(Use "fdtrans -x usergroup_lib.sfd to create the .xml file if you dont
+have one already). Here we have to add prototypes and pointers to the
+Clone() and Expunge() methods:
+
+extern VOID                    VARARGS68K _UserGroup_Expunge(struct UserGroupIFace *);
+extern struct UserGroupIFace * VARARGS68K _UserGroup_Clone  (struct UserGroupIFace *);
+[...]
+static void *main_vectors[] = {
+	(void *)_UserGroup_Obtain,
+	(void *)_UserGroup_Release,
+	(void *)_UserGroup_Expunge, /* was NULL */
+	(void *)_UserGroup_Clone,   /* was NULL */
+[...]
+
+Then call e.g.
+
+gcc -o usergroup.l.main -Wall -O2 -nostartfiles usergroup.c
+
+and eventually strip. Copy usergroup.l.main to LIBS: and you're done.

@@ -1,0 +1,351 @@
+MiniGL V2.24 preliminary documentation
+--------------------------------------
+
+MiniGL is a 3D API which is compatible to OpenGL(tm). It implements a subset
+of that API and was designed for speed, therefore it directly interfaces with
+Warp3D. This also means that there is currently no software mode.
+
+This release is the second release of MiniGL as a set of shared libraries.
+There are two such libraries: minigl.library, which is the GL part,
+and mglut.library, which implements some of the GLUT API.
+
+The new shared library interface drops a lot of the original functions (mgl*)
+in favor of GLUT. Unfortunately, no documentation exists yet. Refer to the
+glut source code and src/context.c to get an idea on how it works.
+
+Installing the Developer files
+------------------------------
+Simply copy the contents of the SDK directory into SDK:.
+
+IMPORTANT: Anyone with MiniGL 1.5.1 or lower developer files in their SDK *must* delete the
+old files from their SDK first. These can be found in the local/clib2 and local/newlib
+directories. In particular, delete the header files contained within these directories.
+
+Changes in v2.24
+----------------------
+- Fix: overwriting memory in stars-demo.
+- changed makefile's bumprev entry and an rev.h include so that there's no
+  useless src/ prefix in the revision strings anymore.
+- glGet(GL_VENDOR) now returns "The MiniGL Team (minigl.library X.YY)", so it now contains
+  the MiniGL lib's version number.
+
+Changes in v2.23
+----------------
+- no more deprecated AllocVec. Disabled for now, eventual crash on exit.
+- some more simple Tabor ifdefs (replace those by asm later).
+- Fix: alpha.c demo prog was missing filter-settings and blend-func to actually produce
+  the desired output in a correct way. That it did produce the same output before is
+  actually a bug in MiniGL (wrong / not enforced context defaults for blend-func
+  and texture filters).
+  However I decided to fix the demo prog for now so that we have a well defined test.
+- Fix: glEvalMesh1 created wrong coordinates.
+- Fix: mipmapping/closestFit eventually unitialized variable.
+- Fix: const-correct in texture-converters etc.
+- Fix: const-correct in eval etc.
+- Fix: const-correct in glClipPlane.
+- removed lots of unused variables.
+- no more deprecated Create/Delete(Msg)Port usage.
+- no more deprecated p96ReadPixelArray usage.
+- Fix: nurbtess, eventually unitialized variables.
+- got rid of almost all warnings (which hid true issues by their sheer amount).
+- new config define MGL_USE_ALTIVEC to toggle compilation of altivec code.
+- new config define MGL_TABOR_NO_ABI_BRIDGE to optionally disable the creation of the
+  PPC-ABI <-> SPE-ABI bridge code. If you define MGL_TABOR and MGL_TABOR_NO_ABI_BRIDGE
+  then you'll get a pure SPE minigl / mglut to be used by native SPE programs.
+- new config define MGL_HAS_NO_SPE_NEWLIB to enabled replacement of functions like cos, sin, etc.
+  note: for the demo progs this also means that some printf("%f") etc. is not being compiled or has
+  been modified to spit out ints.
+- taborized for the scenario std-PPC-prog -> native-SPE-TCL-minigl/mglut with PPC<->SPE bridge.
+- taborized for the scenario SPE-prog -> native-SPE-minigl/mglut.
+- provided my own messy makefiles for all three variants.
+- provided precompiled libs and demos for all variants.
+- Known issues with the SPE builds:
+  - glut timerfunc is not working. Use the non-SPE-mglut for now if you tap into this issue
+    (when using the 100% native SPE variants you're lost, of course)
+  - some demo-progs refuse to work if compiled for SPE because of alignment problems.
+  - the fogging-demo runs extremely slow if *not* using the bridged-variant with the std. mglut,
+    reason unknown.
+  - be aware! On my setup gcc's -L flag apparently has a lower priority than its built-in
+    library path! This means that it won't link the newly created libs but the (wrong) ones
+    that exist in the SDK! Better rename those in the SDK (libGL.a etc.) before building!
+- Fix: cgl_GLEvalPoint1 and cgl_GLEvalPoint2 computed nonsense if p (q respectively) was equal to
+  the order of the map.
+- Added support the GL_ARB_draw_elements_base_vertex and GL_ARB_map_buffer_range extensions.
+  New functions: glDrawElementsBaseVertex(), glDrawRangeElementsBaseVertex() and glMapBufferRange().
+- Fix: const-corrret glDrawRangeElements
+- Added experimental libtxc_dxtn, because the S3TC patents have expired.
+  Unstable as of now, therefore S2TC is still active.
+- Fix: glTexImage2D didn't recreate a texture if only the width or the height changed and not both.
+  Thanks to Hubert Maier and Juha Niemimäki for reporting.
+- Fix: same thing for glCopyTexImage2D
+- Fix: BuildExtensionString was buggy, potentially overwriting memory because the extension_string's
+  alloc-size was falsely computed. Thanks to Capehill for spotting! Cleaned it up nicely so that
+  sth. like that will never happen again.
+- Fix: color-fetching for indexed GL_POLYGON was broken, it falsely increased the index pointer one
+  extra time.
+- Fix: built-in fps stats output was completely broken in multiple ways.
+- Fixed the return value of MGLUpdate in case the texture compression fails.
+- Fix: glLockArrays could eventually allocate not enough memory for the underlying vertex data
+  because the semantic of the first / count parameters was falsely interpreted.
+- Fix: glLockArrays / glUnlockArrays lacked proper GL error handling.
+
+Changes in v2.22
+----------------
+- Fixed cgl_GLGetTexLevelParameteriv. The 5th parameter was falsely implemented as float*,
+  so the function created a float[] result-set while the caller expected an int[] result-set.
+  This bug could also cause other malfunction because the function is being used in mipmapping
+  code.
+- PREFER_SMART_LOCK config define
+- added explicit hw-locking to glReadPixels(GL_DEPTH_COMPONENT).
+- experimental support for glDrawPixels(GL_DEPTH_COMPONENT).
+
+Changes in v2.21
+----------------
+- glGet*() now returns the value of GL_BLEND_DST, GL_BLEND_SRC, GL_COLOR_CLEAR_VALUE,
+  GL_STENCIL_BITS, 
+- GL_ALPHA8 and GL_LUMINANCE8_ALPHA8 are now recognized as valid internal formats
+- Added missing stub for glGetPointerv()
+- Added fake VBO support. For source code compatibility only, the buffers are stored
+  in the system memory. New functions: glGenBuffers(), glDeleteBuffers(), glBindBuffer(),
+  glBufferSubData(), glBufferData(), glGetBufferSubData(), glMapBuffer(), glUnmapBuffer(),
+  glGetBufferParameteriv()
+- glTexEnvi no longer sets GL_INVALID_ENUM unnecessarily when multitexturing is used
+- Fixed glCopyTexImage2D and glCopyTexSubImage2D with GL_RGB textures
+- glTexGenfv() now supports GL_EYE_PLANE
+- Added S3TC texture compression using the S2TC compressor. Supports all of the S3TC,
+  DTXn and ARB formats
+- Fixed glCopyTexImage2D()
+- Added GL_DEPTH_COMPONENT support to glReadPixels(). Only supports GL_FLOAT type
+- Added support for the GL_INCR_WRAP and GL_DECR_WRAP stencil ops
+- glTexSubImage2D and glCopyTexSubImage2D now work on mip levels larger than 0
+- Added support for the GL_ARB_vertex_array_bgra extension
+
+Changes in v2.20
+----------------
+- Fixed the GL_BGRA GL_UNSIGNED_INT_8_8_8_8_REV packer used by glReadPixels() (caused
+  incorrect colours and mouse trails when pop-up menus were shown in Freespace 2)
+
+Changes in v2.19
+----------------
+- Fixed a texture conversion issue that caused pixels to be in the incorrect order (caused the
+  text in Freespace 2 to be scrambled, amongst other things)
+
+Changes in v2.18
+----------------
+- The backface cull fix (for Frogatto) caused missing triangles elsewhere. So, fixed this issue yet
+  again. This time it looks like everything works
+- Profiling was accidentally left enabled in 2.17. Disabled it again
+
+Changes in v2.17
+----------------
+- Added support for loading textures with the format GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV
+ (ResidualVM uses it for Myst III: Exile)
+- Fixed yet another backface cull issue with vertex arrays and triangle-strips (caused missing 
+  triangles in Frogatto)
+- Reworked the bitmap/texture conversion system to use ARGB internally, so that updating 
+  ARGB textures can skip one conversion step (lowers the overhead under some circumstances)
+
+Changes in v2.16
+----------------
+- Fixed another issue with fogging for drivers that use standard Warp3D fogging rather than
+  z-fogging
+- Added some missing blend modes
+
+Changes in v2.15
+----------------
+- Added a Warp3D version check to make sure that anisotropic filtering really is available
+
+Changes in v2.14
+----------------
+- Fixed a bug in quad rendering that caused some quads to be culled incorrectly (e.g., caused
+  missing quads in the GLexcess demo)
+- Fixed a bug in rendering of tri-fan vertex arrays that caused missing triangles, especially
+  in flat shade mode (caused missing triangles in PrBoom)
+
+Changes in V2.13
+----------------
+- Triangle-strip rendering of vertex arrays broke in 2.11 (half the triangles weren't rendered).
+  FIXED
+- Backface culling could be incorrectly left enabled under certain circumstances (caused areas
+  to be missing in Homeworld). FIXED
+- Added some more Warp3D flush points where needed
+
+Changes in V2.12
+----------------
+- Fixed the comparison used to intercept invalid fog parameters before they're sent to Warp3D
+  (caused most graphics in SpeedDreams to be rendered black with some graphics cards)
+
+Changes in V2.11
+----------------
+- Tweaked the include files so that glext.h does generate function prototype typedefs (needed
+  to compile some programs properly (e.g., Cube 2: Sauerbraten)
+- Added some missing const specifiers to certain functions, to make them OpenGL spec. 
+  compliant (e.g., glFogfv())
+- Vertex arrays were being drawn in one colour if flat shading was enabled. FIXED
+- Flat shading in immediate mode (i.e., using glBegin()/glEnd()) now uses the colour/normals/etc.
+  from the last vertex in a primitive as per the specification (except for with GL_POLYGON, which is
+  supposed to use the colour from the first vertex).
+- Strange colour changes could occur with flat shaded polygons that were being clipped. FIXED
+- Added the GL_SUBTRACT multitexturing combine operation
+- Now indicates that it supports the GL_EXT_texture_env_combine extension (which is a.k.a.
+  GL_ARB_texture_env_combine)
+- Added support for the GL_EXT_texture_env_dot3 combine types (they're equivalent to 
+  GL_ARB_texture_env_dot3, but have different values)
+- Now indicates that it supports GL_ARB_texture_env_dot3 GL_EXT_texture_env_dot3 if the hardware
+  supports GL_ARB_texture_env_crossbar
+- GlTexImage*()/glTexSubImage*() functions now respect the pixel transfer mode
+- Texture mapping could be left enabled, if the texture units weren't disabled in exactly the right
+  order. FIXED
+- Fixed some unpack functions that could cause a buffer overrun (caused Aquaria to crash when
+  moving from one cavern to the next)
+- Now flush Warp3D before blitting the front buffer to the window
+- Worked around an issue where unused but invalid fog parameters could prevent the fog setting from 
+  being updated
+- GlGetString(GL_RENDERER) can now get the Warp3D driver's name without needing to know its chip
+  ID
+
+Changes in V2.10
+----------------
+- Fixed a bug introduced somewhere in versions 2.6-2.8 that caused GL_RGBA textures to be 
+  uploaded incorrectly. FIXED
+- Fixed the ARGB unpacker (rarely used, but don't want the channels to be swapped)
+- Now enable W3D_FOG_COORD explicitly instead of expecting Warp3D to implicitly enable it
+- Fixed the AutoInstall script
+
+
+Changes in V2.9
+---------------
+- Version 2.8 caused Blender to lockup on startup. FIXED
+- Fixed a bug that caused crashes if the Warp3D's max-texture-units exceeded MiniGL's 
+  max-texture-units
+
+Changes in V2.8
+---------------
+ - Reworked various gl getter functions to eliminate duplicated code, fixed some bugs in
+   the behaviour of glGetBooleanv() when requesting parameters internally represented as
+   floating point data.
+ - Added support for anisotropic filtering on supported Warp3D drivers
+ - Added support for Z hinting on supported Warp3D drivers (not yet operational on Radeon)
+ - Numerius bug fixes
+
+Changes in V2.7
+---------------
+ - Fixed bug introduced in 2.6's handling of logical operations
+ - Implemented single-texture support for Permedia2
+ - Improved performance of display list execution
+
+Changes in V2.6
+---------------
+ - Recompiled with GCC 4.4.3
+ - Code refactor, exposing many minor bugs that were fixed.
+ - Fixed several thread-safety issues.
+ - Significantly reduced stack overhead for clipping code.
+ - Implemented faster conversions for normalized floats to 8 and 16-bit unsigned integers.
+ - Added profiler for debug builds
+
+Changes in V2.5
+---------------
+- Fixed the graphics corruption problems introduced in V2.4
+- LodePaint's momentary freezes eliminated
+
+Changes in V2.4
+---------------
+- Implemented a faster square-root function using the frsqrte (get faster performance in some cases)
+- Implemented a reciprocal square-root using the frsqrte assembly code (another small performance boost)
+- A few other optimizations
+
+Changes in V2.3
+---------------
+- Fixed a bug in display lists for draw elements (cause trouble with the Blender Game Engine)
+- Line drawing with shade mode GL_FLAT was ignoring the colours. Fixed.
+- Fixed a bug that would reset GL_TEXTURE_ENV_MODE to GL_MODULATE when a new texture
+ is created and bound (caused trouble for Torque Game Engine)
+- Fixed a bug in GL_POLYGON rendering that occurred when polygon offset fill was enabled
+- The MiniGL Watchdog thread now only uses 16 KiB stack (or whatever is set as the minimum
+ in DOS prefs) instead of the same amount of stack that the main process has
+- The read-buffer was set to GL_FRONT every time, whereas it should be GL_BACK for
+  double-buffered displays
+
+Changes in V2.2
+---------------
+- Added support for 1D textures
+- Added cel-shading demo (NeHe lesson 37) as a demo of 1D texture use
+- Implemented spotlights support
+- Added spots demo (demonstrates spotlights)
+- Added glGetPointerv()
+- Add improved support for applications that want to provide their own bitmaps for rendering
+  to, incuding the option of callback function to allow the app to know when the display needs
+  updating
+- Fix alignment loop bug in displaylists where the number of elements was odd and data type was
+  GL_UNSIGNED_BYTE
+- Fix to infinite loop bug in select mode and DrawTriangles
+- Added AltiVec support to vertex transformation and matrix multiplication
+  AltiVec pipeline can be disable by setting ENV:MiniGl/UseVectorUnit to '0' or 'off'
+- GlCopyPixels() has a special fast routine when depth-testing is disabled and no colour
+  scaling/bias is being used
+- Fixed a deadlock condition in glCopyPixels()
+- It was still possible to overflow the vertex buffer; fixed.
+- Fixed a bug in glRasterPos##() that occurred when w != 1.0
+- GlutMotionFunc() hook wasn't called when the mouse was close to the right and bottom borders
+  of the window; fixed.
+- Fixed possible deadlock conditions with the smartlock.
+- Fixed a bug in quad rendering code that caused missing polygons
+- Fixed a GL selection bug; rendering of triangle primitives would result in triangles being
+  rendered instead of being added to the selection list
+- Added a stack cookie to the trim demo so that it no longer crashes if the default stack
+  size is too small
+- GlBitmap() was ignoring GL_UNPACK_ROW_LENGTH; fixed.
+- Fixed the lighting bug that caused planet tinting in Celestia when text overlay was enabled
+  (e.g., when labels were enabled)'
+- Fixed the issues with altivec code and non-altivec machines
+- More bug fixes
+
+Changes in V2.1
+---------------
+- Fixed the bug in the MiniGL watchdog task. GL screensavers should no longer freeze.
+- Fixed a problem that occurred when vertex arrays were included in a display list
+- Fixed a bug in rendering huge vertex arrays
+- Fixed rendering of line strips and line loops. No more spurious extra lines (e.g. Celestia,
+  GLBoxed blanker and the Dr. Fungi demo)
+- Lots of other bug fixes
+- Added pop up requesters informing users of problems (e.g., wrong MiniGL.library version)
+- Added stack cookies to demos using GLU NURBS functions in order to ensure that they have
+  enough stack
+- GLUT now only requests a stencil buffer when applications ask for one
+- No longer need -DMINIGL defined when compiling OpenGL apps
+
+Changes in V2.0
+---------------
+- Added support for evaluators (glMap*, glEvalCoord*, glMapGrid*, glEvalMesh*,
+  glEvalPoint*)
+- Added selection support (glListBase(), glNewList(), glInitNames(),
+  glLoadName(), glPushName(), glPopName(), glSelectBuffer(), and glRenderMode())
+- Added gluPickMatrix()
+- Added gluProject()/gluUnProject()
+- Added glGetDoublev()
+- Added glIsTexture()
+- Added glGetTexEnviv()
+- Added glGetLight*() functions
+- Added GL_PROXY_TEXTURE support
+- Fixed some rendering bugs (e.g., a bug causing incorrect lighting for clipped
+  primitives)
+- Added const qualifiers to improve OpenGL compliance
+- Mglut.library now has glutKeyboardUpFunc(), glutSpecialUpFunc(), and
+  glutIgnoreKeyRepeat()
+- Added text functions to Mglut.library (glutBitmap*(),  glutStroke*())
+- Added glPushClientAttrib()/glPopClientAttrib()
+- Added glDrawPixels()
+- Added game mode to mglut.library
+- Added glutDeviceGet(), glutLayerGet(), glutGetModifiers(), glutSetOptions() and expanded
+  the number of attributes supported by   glutGet()
+- Added glut geometry rendering functions including the teapot functions
+- Added glut overlay function stubs for completeness (overlay is not actually supported)
+- Added glGetMaterial*()
+- Added the complete set of glNormal*() functions
+- Added glGetTexImage
+- Added full set of glPixelStore modes, as well as glPixelTransfer
+- Added glutTimerFunc(), glutCloseFunc(), glutWMCloseFunc()
+- Added glutWarpPointer()
+- Added glutExtensionSupported(), glutIgnoreKeyRepeat(), glutSetKeyRepeat(), glutKeyUp(),
+  glutSpecialUp(), and glutForceJoystickFunc() (note: no joystick support yet)
+- Added stubs for glutSetColor(), glutGetColor(), and glutCopyColormap() (note: these functions really don't make sense

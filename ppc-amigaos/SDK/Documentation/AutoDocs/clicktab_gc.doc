@@ -1,0 +1,565 @@
+TABLE OF CONTENTS
+
+clicktab.gadget/--datasheet--
+clicktab.gadget/AllocClickTabNodeA
+clicktab.gadget/CLICKTAB_GetClass
+clicktab.gadget/FreeClickTabList
+clicktab.gadget/FreeClickTabNode
+clicktab.gadget/GetClickTabNodeAttrsA
+clicktab.gadget/SetClickTabNodeAttrsA
+clicktab.gadget/--datasheet--                   clicktab.gadget/--datasheet--
+
+    NAME
+   clicktab.gadget -- File folder tabs gadget.
+
+    SUPERCLASS
+   gadgetclass
+
+    REQUIRES
+   chooser.gadget
+
+    DESCRIPTION
+   The tabs gadget class provides a custom control that has imagery
+   similar in style to the tabs seen in a drawer full of file folders.
+
+   The action of the gadget is the same as a conventional
+   mutual-exclusion control in that only one tab can be active at a
+   time and a tab is selected by clicking upon it.
+
+   Tabs may also have an optional close gadget attached to them, which
+   can be used to close the relevant item. Close gadgets are 
+   non-functional on inactive tabs, only the currently active tab can be 
+   closed. This is to stop accidental closures by trying to select a tab.
+
+   The tabs gadget class is best used in combination with a page.gadget
+   so the user can select a tab and the appropriate page is displayed.
+   The tab "bar" allows strumming across the selections. The current
+   selection is displayed differently according to various GUI
+   preferences.
+
+    DYNAMIC TABS
+   With version 53, the clicktab.gadget has been updated to allow tabs
+   to be added and removed dynamically. Simply detaching the label list
+   from the gadget, adding or removing clicktab nodes, and reattaching
+   the list is sufficient to induce this behaviour.
+
+   When using dynamic tabs it is possible too many tabs are added that
+   can possibly fit within the drawing bounds. When this situation
+   occurs, clicktab will hide tabs that will not fit and a chooser
+   gadget will automatically appear to enable the user to select any
+   hidden tabs.
+
+   Dynamic tabs also change the way GM_DOMAIN is handled. Normally,
+   there are a fixed number of tabs and the tab labels do not change.
+   This means the GM_DOMAIN does not change and any layout gadgets
+   can work normally. With dynamic tabs, the GM_DOMAIN changing as
+   tabs are added, removed and renamed. The CLICKTAB_AutoFit tag has
+   been introduced to handle this situation and should always be set
+   when working with dynamic tabs so that the GM_DOMAIN remains
+   constant at a reasonable minimal size.
+
+   Do not forget to call WM_RETHINK or equivalent when not using the
+   CLICKTAB_AutoFit tag. Otherwise the graphics may render outside of
+   the window boundaries due to the changing GM_DOMAIN.
+
+   More details can be found in the SDK examples directory.
+
+    METHODS
+   OM_NEW -- Create the object. Passed to superclass then OM_SET.
+
+   OM_GET -- Get an object attribute.
+
+   OM_SET -- Set object attributes. Passed to superclass first.
+
+   OM_UPDATE -- Set object notification attributes.
+                Passed to superclass first.
+
+   OM_NOTIFY -- Sets taglist for notification and pass to superclass.
+
+   GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+                GDOMAIN_MAXIMUM dimensions.
+
+   GM_RENDER -- Renders the gadget imagry.
+
+   GM_HITTEST -- Determines if mouse is within the gadget rectangle.
+
+   GM_GOACTIVE -- Handles object activation.
+
+   GM_GOINACTIVE -- Deactivates object.
+
+   GM_HANDLEINPUT -- Handles object input.
+
+   GM_HELPTEST -- Handles gadget help. When the mouse is over a tab,
+                  the method returns GMR_HELPCODE along with the tab
+                  index.
+
+   GM_LAYOUT -- Calculate relative gadget coordinates.
+
+   GM_EXTENT -- Reports gadget rendering extent.
+
+   GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+   GM_KEYTEST -- Determines if key hit a tab shortcut. (V53.19)
+
+   GM_KEYGOACTIVE -- Handle keyboard activation.
+                     Passed to page object when required. (V53.9)
+
+   GM_KEYGOINACTIVE -- Handle keyboard deactivation.
+                     Passed to page object when required. (V53.9)
+
+   All other methods are passed to the superclass.
+
+    ATTRIBUTES
+   GA_ID (uint16)
+       Unique ID number for the gadget.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_Disabled (BOOL)
+       Determines whether the gadget is disabled or not.
+       Changing disable state will invoke GM_RENDER.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_BackFill (struct Hook *)
+       A layer backfill hook to provide a more complex
+       background pattern. See InstallLayerHook() for
+       more details about the backfill hook.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TextAttr (struct TextAttr *)
+       Optional text attribute for the font to use for the labels.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_Text (CONST_STRPTR *) (V45.1)
+       A NULL terminated array of strings to use as labels.
+
+       The array of strings is copied internally and automatically
+       handled by the clicktab.gadget since V53.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_HintInfo (CONST_STRPTR)
+       Specify the text to use as the hint info for this gadget.
+       You can change this attribute at any time, and it will over-
+       ride any text specified in the windows HintInfo array. See
+       window.class autodoc for more information.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET).
+
+   CLICKTAB_Labels (struct List *)
+       A list of clicktab node structures used to indicate the labels
+       for each of the tabs.
+
+       Note this list of nodes is the application's responsibility and
+       will not be automatically freed when the clicktab.gadget is
+       deleted.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_GET, OM_SET)
+
+   CLICKTAB_Current (uint16)
+       Currently selected tab.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_GET, OM_SET, OM_NOTIFY)
+
+   CLICKTAB_CurrentNode (struct Node *)
+       Currently selected tab node.
+
+       Defaults to NULL.
+
+       Applicability is (OM_GET, OM_SET, OM_NOTIFY)
+
+   CLICKTAB_PageGroup (APTR) (V42)
+       Embedded page.gadget object child pointer.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_PageGroupBorder (BOOL) (V53.7)
+       Specify whether to draw a border around the pages of
+       the gadget.
+
+       Defaults to TRUE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   CLICKTAB_PageGroupBackFill (struct Hook *) (V42)
+       Embedded page.gadget object selected ClickTab
+       backfill pointer.
+
+       A layer backfill hook to provide a more complex
+       background pattern. See InstallLayerHook() for
+       more details about the backfill hook.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_AutoTabNumbering (BOOL) (V53.23)
+       Automatically number the tabs from 0..N corresponding to the
+       order of the nodes in the CLICKTAB_Labels list. The head of
+       the list is tab number 0, the next node is 1 and so on. The
+       tab number is stored using the TNA_Number tag
+       (see SetClickTabNodeAttrsA()).
+
+       This is most useful when combining dynamic tabs and the
+       CLICKTAB_PageGroup tag. Otherwise, it would be up to the
+       programmer to renumber all the tabs each time a page is
+       inserted or removed which can become tedious.
+
+       The actual renumbering occurs every time you reattach the
+       labels with the CLICKTAB_Labels tag.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_LabelTruncate (BOOL) (V51)
+       Allow labels to become truncated when gadget width is compressed.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_FlagImage (struct Image *) (V52.6)
+       You can supply an image to be rendered into the upper left hand
+       corner of the clicktab when it has the TNA_Flagged attribute
+       set. Pass this pointer to the clicktab object at creation time.
+
+       As there may not be a great deal of free room in the clicktabs
+       imagery, try to keep this image as small as possible, it can get
+       crowded in there.
+
+       This is useful in multi-page objects to show if something on that
+       page has changed, and gives a visual indication that that page
+       requires attention from the user. An example may be: a file in a
+       tabbed editor may have changed and require saving.
+
+       You can set this attribute at any time but it will change
+       the image displayed for all tabs.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   CLICKTAB_CloseImage (Object *) (V53.29)
+       Specify the image you want to use as the close gadget. Ideally
+       this should be at least a pointer to a dual state BOOPSI image,
+       so that it changes visibly when pressed. You may allocate this
+       multi-state image using the bitmap.image class. Check the 
+       CloseTest example program for further information on creating the 
+       BOOPSI image. In the interests of not confusing the user, you 
+       should avoid changing images after the gadget has been created, as
+       this image applies to all tabs. The image will not be freed when
+       the gadget is disposed of, this is your responsibility. This does
+       mean, however, that you may share the same image between multiple 
+       clicktab.gadget instances.
+       NB: Only the currently active tab will display the close gadget,
+       as closing inactive tabs is not supported.
+
+       Defaults to NULL (no gadget displayed).
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_ClosePlacement (ULONG) (V53.30)
+       Specify which side of the tab to place the close gadget. Choices
+       are PLACECLOSE_LEFT and PLACECLOSE_RIGHT.
+
+       Defaults to PLACECLOSE_LEFT.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_Closed (ULONG) (V53.29)
+       You should read this attribute whenever you receive a GADGETUP event, 
+       and the returned value will be the number of the tab where the close 
+       gadget was used, or the default if no close gadget was hit. When used 
+       in conjunction with dynamic tabs, this number is not constant as tabs
+       are automatically renumbered, and in this case you should use 
+       CLICKTAB_NodeClosed. Once this attribute has been read the value is 
+       reset to avoid false effects, so reading it again will return the 
+       default if no other GADGETUP event was received in the meantime. 
+       Always check for this.
+
+       Defaults to ~0.
+
+       Applicability is (OM_GET)
+
+   CLICKTAB_NodeClosed (struct Node *) (V53.29)
+       After receiving a GADGETUP event you should check this attribute to 
+       see if the user selected a tabs close gadget. See CLICKTAB_Closed for 
+       further information. You should also check the TNA_CloseGadget 
+       attribute documentation in the AllocClickTabNode function to see how 
+       to set the close gadget for each node. Like the above, this is also 
+       reset once either attribute is read.
+
+       Defaults to NULL.
+
+       Applicability is (OM_GET)
+
+   CLICKTAB_EvenSize (BOOL) (V53.1)
+       By default, the size of the tabs is controlled by the settings
+       specified by the GUI prefs. While it is discouraged, this
+       attribute allows the user to override that setting. This can be
+       usefull if it is possible that adding tabs dynamically to the
+       gadget is likely to take up more space in the domain than is
+       available if all tabs are sized equally.
+
+       Setting it to TRUE will force all tabs to be the same size as
+       the widest. A setting of FALSE will set the tabs to be an optimal
+       size for its imagery. Not specifying this attribute will default
+       the setting to that specified in the GUI preferences.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   CLICKTAB_Total (uint32) (V53.3)
+       This attribute will return the total number of nodes currently
+       attached to the gadget.
+
+       Applicability is (OM_GET)
+
+   CLICKTAB_AutoFit (BOOL) (V53.20)
+       Enables auto-fit mode which tries to fit as many tabs as
+       possible within the current bounds while keeping the GM_DOMAIN
+       constant at a reasonable size.
+
+       This is especially important when your application invokes the
+       WM_RETHINK method when dynamically adding/removing objects
+       in a layout for example.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+    NOTES
+       This class is best suited for use in a gadget layout group
+       and requires receiving GM_DOMAIN prior to the first GM_RENDER
+       in order to size & position its imagery correctly.
+
+clicktab.gadget/AllocClickTabNodeA         clicktab.gadget/AllocClickTabNodeA
+
+    NAME
+   AllocClickTabNodeA -- Allocate a ClickTab node.
+
+    SYNOPSIS
+   struct Node *node = AllocClickTabNodeA(struct TagItem *tags);
+
+   struct Node *node = AllocClickTabNode(Tag tag1, ...);
+
+    FUNCTION
+   Allocates a node that can be added to the Exec linked list of
+   labels in the clicktab. This is the only way to allocate a
+   node for this list. You cannot allocate nodes yourself because
+   the ClickTab class uses a private node structure.
+
+    INPUTS
+   tags - Attributes for the node, passed to SetClickTabNodeAttrsA().
+
+   A full list of attributes is listed in the SetClickTabNodeAttrs
+   documentation, attributes below are only applicable when the node
+   is first allocated.
+
+    TNA_CloseGadget
+     This specifies that the node for this tab should have a close gadget
+     attached. Space in the tab is reserved for it. See CLICKTAB_CloseImage,
+     CLICKTAB_Closed and CLICKTAB_NodeClosed for further information.
+
+    RESULT
+   node - Node that can be added into the list of labels or NULL on error.
+
+    SEE ALSO
+   FreeClickTabNode(), SetClickTabNodeAttrsA()
+clicktab.gadget/CLICKTAB_GetClass           clicktab.gadget/CLICKTAB_GetClass
+
+    NAME
+	CLICKTAB_GetClass -- Gets pointer to the clicktab class.
+
+    SYNOPSIS
+	Class * class = CLICKTAB_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "clicktab.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the clicktab class.
+
+clicktab.gadget/FreeClickTabList             clicktab.gadget/FreeClickTabList
+
+    NAME
+   FreeClickTabList -- Free a list of clicktab nodes (V53.11)
+
+    SYNOPSIS
+   VOID FreeClickTabList(struct List *list);
+
+    FUNCTION
+   Deallocate a list of nodes allocated with AllocClickTabNodeA().
+
+    INPUTS
+   list - The list of labels built of nodes allocated with
+          AllocClickTabNode(). Safe to call with NULL (V53.13).
+
+    SEE ALSO
+   FreeClickTabNode()
+
+clicktab.gadget/FreeClickTabNode             clicktab.gadget/FreeClickTabNode
+
+    NAME
+   FreeClickTabNode -- Free a ClickTab node.
+
+    SYNOPSIS
+   void FreeClickTabNode(struct Node *node);
+
+    FUNCTION
+   Frees a ClickTabNode allocated with AllocClickTabNodeA().
+
+    INPUTS
+   node - The node to free.
+          Safe to call with NULL (V53.11).
+
+    SEE ALSO
+   AllocClickTabNodeA()
+
+clicktab.gadget/GetClickTabNodeAttrsA   clicktab.gadget/GetClickTabNodeAttrsA
+
+    NAME
+   GetClickTabNodeAttrsA -- Get attributes about a ClickTab node.
+
+    SYNOPSIS
+   int32 success = GetClickTabNodeAttrsA(struct Node *node,
+                                         struct TagItem *tags);
+
+   int32 success = GetClickTabNodeAttrs(struct Node *node, Tag tag1, ...);
+
+    FUNCTION
+   The ClickTab uses a private node structure and all attributes
+   are hidden and must therefore be accessed with this function.
+
+    INPUTS
+   node - The ClickTab node to get the information on.
+   tags - A tag list of attributes to get. ti_Tag is the attribute
+          to get and ti_Data is a pointer to a location to copy
+          the result to.
+
+    RETURNS
+   success - the number of tag values successfully returned.
+
+    SEE ALSO
+   SetClickTabNodeAttrsA()
+
+clicktab.gadget/SetClickTabNodeAttrsA   clicktab.gadget/SetClickTabNodeAttrsA
+
+    NAME
+   SetClickTabNodeAttrsA -- Set attributes of a ClickTab node.
+
+    SYNOPSIS
+   int32 success = SetClickTabNodeAttrsA(struct Node *node,
+                                         struct TagItem *tags);
+
+   int32 success = SetClickTabNodeAttrs(struct Node *node, Tag tag1, ...);
+
+    FUNCTION
+   Changes attributes for a ClickTab node. Since the ClickTab class
+   uses a private node structure, this is the only way to change
+   node attributes.
+
+   You may not change node attributes when the node is in a list
+   attached to a ClickTab gadget. You must first detach the list
+   with CLICKTAB_Labels, ~0 before you can change attributes, and
+   then re-attach the list, and re-render the gadget to reflect
+   any changes. A domain and a layout of the gadget is automatically
+   performed when re-attaching the list to the gadget.
+
+   If used in a layout group, turn off domain caching for the
+   clicktab object if you intend to dynamically alter the tabs
+   and refresh the layout group with RethinkLayout().
+
+   Otherwise, use the CLICKTAB_AutoFit tag which can automatically
+   handle whatever domain the clicktab.gadget has available. Tabs
+   that will not fit within the current domain will be hidden and
+   a chooser gadget may be used to access them.
+
+   TAGS
+   TNA_Text (CONST_STRPTR)
+     Text string to appear as a line in the ClickTab menu node. This
+     string is buffered internally. Getting this attribute will return
+     the pointer to the internal buffer, do not modify this directly.
+     Setting this attribute is the only way to correctly change the
+     label text.
+
+   TNA_Number (uint16)
+     ID number assigned to a ClickTab menu node.
+     Each tab node must have a unique ID number.
+
+   TNA_TextPen (int16)
+     Specifies pen number to use for the label.
+     Defaults to pens[TEXTPEN].
+
+   TNA_Image (struct Image *)
+     Specifies the render image rather than text.
+
+   TNA_SelImage (struct Image *)
+     Specifies the select image rather than text.
+
+   TNA_Disabled (BOOL)
+     Specifies whether this tab is disabled.
+
+   TNA_UserData (APTR)
+     A general purpose field, You can put what you like here.
+     Use it to attach user defined data, or whatever suits.
+
+   TNA_Flagged (BOOL) (V52.6)
+     Make the specified node "flagged" by rendering a bitmap
+     image into the top let hand corner of the tabs domain.
+     The image is supplied with the CLICKTAB_FlagBitmap tag.
+     If the image is NULL, this tag is ignored.
+
+   TNA_HintInfo (CONST_STRPTR) (V53.10)
+     Specify a hintinfo string for this clicktab node. By default,
+     the help "bubbles" will display a help string which is passed
+     in by WINDOW_HintInfo, but with this attribute you can specify
+     a string which will be displayed when the mouse pointer is over
+     this node. Hovering the mouse pointer over a node that does not
+     specify its own string, or anywhere on a non-tab area will result
+     in the default hintinfo string being displayed. For this to work,
+     you MUST supply a default hintinfo string in the WINDOW_HintInfo
+     array for compatibilty reasons. Please ensure that this pointer
+     remains valid for the life of the gadget because the string is
+     not copied by the system. See the program in the examples section
+     of the SDK for further information.
+
+   TNA_SoftStyle (ULONG) (V53.38)
+     Specify a soft style to apply to the title of the target tab.
+     This will over-ride any system softstyle settings that may be in
+     place, so use with caution. 
+
+     Defaults to FS_NORMAL.
+
+    INPUTS
+   node - Node whose attributes you are changing.
+   tags - Tag list of attributes to change.
+
+    RETURNS
+   success - the number of tag values successfully set.
+
+    SEE ALSO
+   GetClickTabNodeAttrsA()
+

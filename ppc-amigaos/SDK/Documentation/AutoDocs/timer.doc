@@ -1,0 +1,495 @@
+TABLE OF CONTENTS
+
+timer.device/--background--
+timer.device/AbortIO
+timer.device/AddTime
+timer.device/CmpTime
+timer.device/GetSysTime
+timer.device/GetUpTime
+timer.device/MicroDelay
+timer.device/ReadEClock
+timer.device/SubTime
+timer.device/TD_READENTROPY
+timer.device/TR_ADDREQUEST
+timer.device/TR_GETSYSTIME
+timer.device/TR_SETSYSTIME
+timer.device/--background--                       timer.device/--background--
+
+   TIMER REQUEST
+	A TimeRequest is a non standard IO Request.  It has an IORequest
+	followed by a TimeVal structure or an EClockVal structure.
+
+   TIMEVAL
+	A TimeVal structure consists of two longwords.  The first is
+	the number of seconds, the latter is the fractional number
+	of microseconds.  The microseconds must always be "normalized"
+	e.g. the longword must be between 0 and one million.
+
+   ECLOCKVAL
+	A EClockVal structure consists of two longwords.  The first is
+	the high order 32 bits of a 64 bit number and the second is the
+	the low order 32 bits.  The 64 bit number is a count of "E" clock
+	ticks.  The "E" clock frequency is related to the master clock
+	frequency of the machine and can be determined by calling the
+	ReadEClock() library like call.
+
+   UNITS
+	The timer contains five units -- two designed to accuratly measure
+	short intervals, one that has little system overhead and is very
+	stable over time, and two that work like an alarm clock.
+
+   UNIT_MICROHZ
+	On a classic machine, this unit may or may not use the programmable
+	timers in the 8520s to keep track of its time.  When it uses the CIA,
+	it has a precision down to about 2 microseconds, but will drift as
+	system load increases.  When it doesnt use the CIA, the precision is
+	equal or better.  The accuracy of this unit is the same as that of
+	the master clock of the machine.  This unit uses a TimeVal in its
+	TimeRequest.
+
+   UNIT_VBLANK
+	This unit uses a strobe from the power supply to keep track of its
+	time or the "E" clock on machines without power supply strobes.
+	It is very stable over time, but only has a resolution of that of
+	the vertical blank interrupt.  This unit is very cheap to use, and
+	should be used by those who are waiting for long periods of time
+	(typically 1/2 second or more).  This unit uses a TimeVal in its
+	TimeRequest.
+
+   UNIT_ECLOCK
+	This unit is exacly the same as UNIT_MICROHZ except that it uses
+	an EClockVal instead of a TimeVal in its TimeRequest.
+
+   UNIT_WAITUNTIL
+	This unit waits until the systime is greater than or equal to the
+	time in the TimeVal in the TimeRequest.  This unit has the same
+	resolution and accuracy as that of UNIT_VBLANK.
+
+   UNIT_WAITECLOCK
+	This unit waits until the E-Clock value as returned by ReadEClock()
+	is greater than or equal to the EClockVal in the TimeRequest. This
+	unit has the same resolution and accuracy as that of UNIT_ECLOCK.
+
+   UNIT_ENTROPY
+	This unit does not support any timing operations. All it does is
+	supply data gathered by the entropy collector which can be read
+	via TR_READENTROPY. This unit was newly introduced with timer.device
+	51.10, and older timer.device releases do not support it.
+
+   LIBRARY
+	In addition to the normal device calls, the timer also supports
+	several direct, library like calls.
+
+   BUGS
+	In the V1.2/V1.3 release, the timer device has problems with
+	very short time requests.  When one of these is made, other
+	timer requests may be finished inaccurately.  A side effect
+	is that AmigaDOS requests such as "Delay(0);" or
+	"WaitForChar(x,0);" are unreliable.
+
+timer.device/AbortIO                                     timer.device/AbortIO
+
+   NAME
+	AbortIO -- Remove an existing timer request.
+
+   SYNOPSIS
+	error = AbortIO( TimeRequest )
+
+	LONG AbortIO( struct TimeRequest * );
+
+   FUNCTION
+	This is an exec.library call.
+
+	This routine removes a TimeRequest from the timer.  It runs in
+	the context of the caller.
+
+   INPUTS
+	TimeRequest - the timer request to be aborted
+
+   RETURNS
+	 0  If the request was aborted, io_Error will also be set to
+	    IOERR_ABORTED.
+	-1  Otherwise
+
+   NOTES
+	This function may be called from interrupts.
+
+   SEE ALSO
+	exec.library/AbortIO()
+
+timer.device/AddTime                                     timer.device/AddTime
+
+   NAME
+	AddTime -- Add one time request to another.
+
+   SYNOPSIS
+	AddTime( Dest, Source )
+
+	void AddTime( struct TimeVal *, struct TimeVal *);
+
+   FUNCTION
+	This routine adds one TimeVal structure to another.  The
+	results are stored in the destination (Dest + Source -> Dest).
+
+	The emulated A0 and A1 registers of 68k software will be left
+	unchanged for backwards compatibility.
+
+   INPUTS
+	Dest, Source -- pointers to TimeVal structures.
+
+   NOTES
+	This function may be called from interrupts.
+
+	Both TimeVal parameters must be normalized or the result will
+	incorrect.
+
+   SEE ALSO
+	timer.device/CmpTime(),
+	timer.device/SubTime()
+
+timer.device/CmpTime                                     timer.device/CmpTime
+
+   NAME
+	CmpTime -- Compare two TimeVal structures.
+
+   SYNOPSIS
+	result = CmpTime( Dest, Source )
+
+	LONG CmpTime( struct TimeVal *, struct TimeVal *);
+
+   FUNCTION
+	This routine compares TimeVal structures.
+
+	The emulated A0 and A1 registers of 68k software will be left
+	unchanged for backwards compatibility.
+
+   INPUTS
+	Dest, Source -- pointers to TimeVal structures.
+
+   RESULTS
+	Result will be   0 if Dest has same time as source (dest == source)
+	                -1 if Dest has more time than source (dest > source)
+	                +1 if Dest has less time than source (dest < source)
+
+   NOTES
+	This function may be called from interrupts.
+
+   SEE ALSO
+	timer.device/AddTime(),
+	timer.device/SubTime()
+
+   BUGS
+	Older version of this document had the sense of the return
+	codes wrong; the code hasn't changed but the document has.
+
+timer.device/GetSysTime                               timer.device/GetSysTime
+
+   NAME
+	GetSysTime -- Get the system time. (V36)
+
+   SYNOPSIS
+	GetSysTime( Dest )
+
+	void GetSysTime( struct TimeVal * );
+
+   FUNCTION
+	Ask the system what time it is.  The system time starts off at
+	zero at power on, but may be initialized via the TR_SETSYSTIME
+	timer.device command.
+
+	System time is monotonocally increasing and guarenteed to be
+	unique (except when the system time is set back).
+
+	The emulated A0 register of 68k software will be left
+	unchanged for backwards compatibility.
+
+	This function is less expensive to use than the TR_GETSYSTIME
+	IORequest.
+
+   INPUTS
+	Dest -- pointer to a TimeVal structure to hold the system time.
+
+   RESULTS
+	Dest -- the TimeVal structure will contain the system time.
+
+   NOTES
+	This function may be called from interrupts.
+
+   SEE ALSO
+	timer.device/TR_GETSYSTIME,
+	timer.device/TR_SETSYSTIME
+
+timer.device/GetUpTime                                 timer.device/GetUpTime
+
+   NAME
+	GetUpTime -- Find out how much time has passed since the
+	   system started up. (V50)
+
+   SYNOPSIS
+	GetUpTime( Dest )
+
+	void GetUpTime( struct TimeVal * );
+
+   FUNCTION
+	When the system starts up, a counter will be initialized to
+	zero which will keep increasing monotonously over time. It
+	holds the time that has passed since the system started up.
+	Unlike the system time, which may be changed with the
+	TR_SETSYSTIME command, or which may have been loaded from
+	the battery backed up clock, this uptime counter cannot
+	be modified once the system is running. It will always keep
+	increasing monotonously.
+
+	The emulated A0 register of 68k software will be left
+	unchanged for backwards compatibility.
+
+   INPUTS
+	Dest -- pointer to a TimeVal structure to hold the up time.
+
+   NOTES
+	This function may be called from interrupts.
+
+   SEE ALSO
+	timer.device/TR_GETSYSTIME,
+	timer.device/GetSysTime()
+
+timer.device/MicroDelay                               timer.device/MicroDelay
+
+   NAME
+	MicroDelay -- Wait for a very short time (V51)
+
+   SYNOPSIS
+	MicroDelay(microseconds)
+
+	VOID MicroDelay(ULONG microseconds);
+
+   FUNCTION
+	The timer.device functions are normally intended to be used while
+	multitasking is operational and the caller can wait until a
+	time request has returned. Certain software, notably hardware
+	drivers, may need to execute short delays while multitasking is
+	disabled, or while they are running inside interrupt code. The
+	MicroDelay() function is intended to be used for such applications.
+
+   INPUTS
+	microseconds -- Number of microseconds to wait.
+
+   NOTES
+	This function works by polling the system time until the
+	requested number of microseconds have passed. It should therefore
+	be used only if the regular time delay functions of timer.device
+	are not available, and it should be used only for small delays.
+
+	This function may be called from interrupts.
+
+	This function first appeared in timer.device 51.17.
+
+   SEE ALSO
+	timer.device/TR_ADDREQUEST
+
+timer.device/ReadEClock                               timer.device/ReadEClock
+
+   NAME
+	ReadEClock -- Get the current value of the E-Clock. (V36)
+
+   SYNOPSIS
+	E_Freq = ReadEClock( Dest )
+
+	ULONG ReadEClock ( struct EClockVal * );
+
+   FUNCTION
+	This routine calculates the current 64 bit value of the E-Clock
+	and stores it in the destination EClockVal structure. The count
+	rate of the E-Clock is also returned.
+
+	The emulated A0 register of 68k software will be left
+	unchanged for backwards compatibility.
+
+	This is a low overhead function designed so that very short
+	intervals may be timed.
+
+   INPUTS
+	Dest -- pointer to an EClockVal structure.
+
+   RETURNS
+	Dest -- the EClockVal structure will contain the E-Clock time
+	E_Freq -- The count rate of the E-Clock (tics/sec).
+
+   NOTES
+	This function may be called from interrupts.
+
+timer.device/SubTime                                     timer.device/SubTime
+
+   NAME
+	SubTime -- Subtract one time request from another.
+
+   SYNOPSIS
+	SubTime( Dest, Source )
+
+	void SubTime( struct TimeVal *, struct TimeVal *);
+
+   FUNCTION
+	This routine subtracts one TimeVal structure from another.  The
+	results are stored in the destination (Dest - Source -> Dest).
+
+	The emulated A0 and A1 registers of 68k software will be left
+	unchanged for backwards compatibility.
+
+   INPUTS
+	Dest, Source -- pointers to TimeVal structures.
+
+   NOTES
+	This function may be called from interrupts.
+
+	Both TimeVal parameters must be normalized or the result will
+	incorrect.
+
+   SEE ALSO
+	timer.device/AddTime(),
+	timer.device/CmpTime()
+
+timer.device/TD_READENTROPY                       timer.device/TD_READENTROPY
+
+   NAME
+	TD_READENTROPY -- obtain entropy data (V51)
+
+   FUNCTION
+	Read entropy data gathered by the system, as a by-product of
+	time keeping operations. The process works by measuring minute
+	changes in the interval lengths between subsequent calls of
+	the time keeping functions. Due to the timer.device's unique
+	architectural position in the Amiga operating system design,
+	anything from user interaction to task switching can have an
+	effect on how entropy data is produced.
+
+	The entropy data provided is suitable to seed pseudo-random
+	number generators or as an initialization vector for
+	cryptographic algorithms.
+
+   TIMER REQUEST
+	io_Message      mn_ReplyPort initialized
+	io_Device       Preset by timer in OpenDevice
+	io_Unit         Preset by timer in OpenDevice
+	io_Command      TR_READENTROPY
+	io_Data         Address of the buffer to fill with entropy data
+	io_Length       Size of the buffer to fill with entropy data,
+	                in bytes
+
+   RESULTS
+	io_Actual       Number of entropy data bytes copied to the
+	                buffer
+
+   NOTES
+	You need a 'struct IOStdReq' to read the entropy data. A
+	'struct TimeRequest' is unsuitable for this command.
+
+	Only UNIT_ENTROPY supports this command. All other timer.device
+	units will reject it.
+
+	The gathering of one single byte of entropy data can take several
+	milliseconds to complete, so it is recommended that you request
+	only a few bytes of data at a time.
+
+	You can abort a TR_READENTROPY request in progress. The io_Actual
+	field is guaranteed to indicate how many bytes of entropy data
+	were copied into the buffer pointed to by io_Data.
+
+	Do not overestimate the amount of randomness in the entropy data
+	returned by this command. If it is randomness that you need, you
+	should process the data gathered by TD_READENTROPY with a
+	cryptographic hash function and use its output instead.
+
+timer.device/TR_ADDREQUEST                         timer.device/TR_ADDREQUEST
+
+   NAME
+	TR_ADDREQUEST -- Submit a request to wait a period of time.
+
+   FUNCTION
+	Ask the timer to wait a specified amount of time before
+	replying the TimeRequest.
+
+	The message may be forced to finish early with an
+	AbortIO()/WaitIO() pair.
+
+   TIMER REQUEST
+	io_Message      mn_ReplyPort initialized
+	io_Device       preset by timer in OpenDevice
+	io_Unit         preset by timer in OpenDevice
+	io_Command      TR_ADDREQUEST
+	io_Flags        IOF_QUICK permitted (but ignored)
+	Time            a TimeVal structure specifying how long the 
+	                device will wait before replying
+
+   RESULTS
+	Time            will be zeroed
+
+   NOTES
+	This function may be called from interrupts.
+
+	Previous to 2.0, the tr_time field was documented as containing
+	junk when the TimeRequest was returned.
+
+   SEE ALSO
+	timer.device/AbortIO()
+
+timer.device/TR_GETSYSTIME                         timer.device/TR_GETSYSTIME
+
+   NAME
+	TR_GETSYSTIME -- get the system time.
+
+   FUNCTION
+	Ask the system what time it is.  The system time starts off at
+	zero at power on, but may be initialized via the TR_SETSYSTIME
+	call.
+
+	System time is monotonically increasing, and guaranteed to be
+	unique (except when the system time is set backwards).
+
+   TIMER REQUEST
+	io_Message      mn_ReplyPort initialized
+	io_Device       preset by timer in OpenDevice
+	io_Unit         preset by timer in OpenDevice
+	io_Command      TR_GETSYSTIME
+	io_Flags        IOF_QUICK permitted
+
+   RESULTS
+	Time            a TimeVal structure with the current system time
+
+   NOTES
+	This function may be called from interrupts.
+
+   SEE ALSO
+	timer.device/TR_SETSYSTIME,
+	timer.device/GetSysTime()
+
+timer.device/TR_SETSYSTIME                         timer.device/TR_SETSYSTIME
+
+   NAME
+	TR_SETSYSTIME -- Set the system time.
+
+   FUNCTION
+	Set the system idea of what time it is.  The system starts out
+	at time "zero" so it is safe to set it forward to the real
+	time.  However, care should be taken when setting the time
+	backwards.  System time is generally expected to monotonically
+	increasing.
+
+   TIMER REQUEST
+	io_Message      mn_ReplyPort initialized
+	io_Device       preset by timer in OpenDevice
+	io_Unit         preset by timer in OpenDevice
+	io_Command      TR_GETSYSTIME
+	io_Flags        IOF_QUICK permitted
+	Time            a TimeVal structure with the current system time
+
+   RESULTS
+	Time            will contain junk
+
+   NOTES
+	This function may be called from interrupts.
+
+   SEE ALSO
+	timer.device/TR_GETSYSTIME,
+	timer.device/GetSysTime()
+
+

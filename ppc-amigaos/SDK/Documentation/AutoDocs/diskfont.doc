@@ -1,0 +1,1406 @@
+TABLE OF CONTENTS
+
+diskfont.library/AvailFonts
+diskfont.library/CloseOutlineFont
+diskfont.library/DisposeFontContents
+diskfont.library/ECloseEngine
+diskfont.library/EObtainInfoA
+diskfont.library/EOpenEngine
+diskfont.library/EReleaseInfoA
+diskfont.library/ESetInfoA
+diskfont.library/FreeTTextAttr
+diskfont.library/GetDiskFontCtrl
+diskfont.library/NewFontContents
+diskfont.library/NewScaledDiskFont
+diskfont.library/ObtainCharsetInfo
+diskfont.library/ObtainTTextAttr
+diskfont.library/OpenDiskFont
+diskfont.library/OpenOutlineFont
+diskfont.library/SetDiskFontCtrlA
+diskfont.library/WriteDiskFontHeaderA
+diskfont.library/WriteFontContents
+
+
+diskfont.library/AvailFonts                                             diskfont.library/AvailFonts
+
+   NAME
+	AvailFonts -- Inquire available memory & disk fonts.
+
+   SYNOPSIS
+	int32 error = AvailFonts(STRPTR buffer, int32 bufBytes, uint32 flags);
+
+   FUNCTION
+	AvailFonts fills a user supplied buffer with the structure,
+	described below, that contains information about all the
+	fonts available in memory and/or on disk.  Those fonts
+	available on disk need to be loaded into memory and opened
+	via OpenDiskFont, those already in memory are accessed via
+	OpenFont.  The TextAttr structure required by the open calls
+	is part of the information AvailFonts supplies.
+
+	When AvailFonts fails, it returns the number of extra bytes
+	it needed to complete the command.  Add this number to your
+	current buffer size, allocate a new buffer, and try again.
+
+   INPUTS
+	buffer - memory to be filled with struct AvailFontsHeader
+		   followed by an array of AvailFonts elements, which
+		   contains entries for the available fonts and their
+		   names.
+
+	bufBytes - the number of bytes in the buffer
+
+	flags - AFF_MEMORY is set to search memory for fonts to fill
+		   the structure, AFF_DISK is set to search the disk for
+		   fonts to fill the structure.  AFF_SCALED is set to
+		   not filter out memory fonts that are not designed.
+		   AFF_BITMAP is set to filter out fonts that are not
+		   stored in Amiga font format, i.e. to filter out
+		   outline fonts.  Any combination may be specified.
+		   AFF_TAGGED is set to fill the buffer with TAvailFonts
+		   elements instead of AvailFonts elements.
+
+		   In V50 AFF_OTAG was introduced, it has the reverse
+		   effect of AFF_BITMAP and filters out all fonts that
+		   do not have an .otag file, i.e. that are not accesible
+		   via the bullet API.  When AFF_OTAG and AFF_SCALED are
+		   both set, or AFF_TYPE is set, each font that is accesible
+		   via the bullet API and that is freely scalable will be
+		   shown with an additional entry with a (t)ta_YSize of 0,
+		   if this entry is absent, the font is not scalable (i.e.
+		   a non-Amiga bitmap font format that can be converted
+		   but not scaled by the font engine).
+
+		   In V50 AFF_CHARSET was introduced, if set, fonts in
+		   all charsets are returned (dont forget to specify
+		   AFF_TAGGED also to be able to distinguish fonts that
+		   only differ in the charset), if not set, only fonts
+		   in the current default charset are returned.
+		   Fonts accesible via the bullet API will have the
+		   special charset 1000 ("ISO-10646-UCS-2"), which means
+		   something like "every charset you want" if AFF_CHARSET
+		   was specified, if not, they will have the current
+		   default charset.
+
+		   In V50 AFF_TYPE was introduced, if set, the [t]af_Type
+		   of disk fonts is not always AFF_DISK, but instead
+		   AFF_DISK|AFF_BITMAP for bitmap fonts,
+		   AFF_DISK|AFF_OTAG for .otag fonts,
+		   AFF_DISK|AFF_OTAG|AFF_SCALED for scalable .otag fonts
+		   (with a (t)ta_YSize of 0).
+
+   RESULTS
+	buffer - filled with struct AvailFontsHeader followed by the
+		 [T]AvailFonts elements, There will be duplicate entries
+		 for fonts found both in memory and on disk, differing
+		 only by type.  The existance of a disk font in the
+		 buffer indicates that it exists as an entry in a font
+		 contents file -- the underlying font file has not been
+		 checked for validity, thus an OpenDiskFont of it may
+		 fail.
+
+	error -  if non-zero, this indicates the number of bytes needed
+		 for AvailFonts in addition to those supplied.  Thus
+		 structure elements were not returned because of
+		 insufficient bufBytes.
+
+   EXAMPLE
+	int32 afShortage, afSize;
+	struct AvailFontsHeader *afh;
+
+	...
+
+	afSize = 400;
+	do
+	{
+	    afh = (struct AvailFontsHeader *)
+	          IExec->AllocVecTags(afSize, TAG_END);
+	    if (afh)
+	    {
+	        afShortage = IDiskfont->AvailFonts(afh, afSize,
+	                                           AFF_MEMORY | AFF_DISK);
+	        if (afShortage)
+	        {
+	            IExec->FreeVec(afh);
+	            afSize += afShortage;
+	        }
+	    }
+	    else
+	    {
+	        fail("AllocMem of AvailFonts buffer afh failed\n");
+	        break;
+	    }
+	} while (afShortage);
+
+	// if (afh) non-zero here, then:
+	// 1. it points to a valid AvailFontsHeader
+	// 2. it must have FreeMem(afh, afSize) called for it after use
+
+   BUGS
+	Prior to V50, this routine did not find the taglist stored
+	in tagged disk fonts when the AFF_TAGGED flag was specified,
+	except the font was already loaded to memory.  Fixed in V50.
+	Some V45 versions of this routine returned an invalid taglist
+	pointer for the Topaz/9 ROM font when AFF_TAGGED was specified.
+	Fixed in V45.7.  Prior to V50, versions with fontcache enabled
+	returned wrong results if AFF_BITMAP was set different at
+	cache creation and cache lookup time.
+diskfont.library/CloseOutlineFont                                 diskfont.library/CloseOutlineFont
+
+   NAME
+	CloseOutlineFont - Release a pointer to an outline font (V50)
+
+   SYNOPSIS
+	CloseOutlineFont(outlineFont, list)
+
+	VOID CloseOutlineFont(struct OutlineFont *, struct List *);
+
+   FUNCTION
+	This function indicates that the font specified is no longer
+	in use.  It is used to close a font opened by OpenOutlineFont,
+	so that fonts that are no longer in use do not consume system
+	resources.
+
+   INPUTS
+	font - a font pointer as returned by OpenOutlineFont().
+
+	list - The same pointer to a struct List (or NULL pointer) that
+	       was used for the matching OpenOutlineFont() call.
+	       If you want to share the list between tasks, you are
+	       responsible for using an appropriate locking mechanism,
+	       e.g. a Semaphore.
+
+   RESULTS
+
+   NOTES
+	This function does work with PPC and 68K font engines.
+	Since V51 it requires EEngine->ege_IBullet for PPC font engines
+	and wont call the 68K emulator for those (they may have no 68K
+	jump table).
+
+   SEE ALSO
+	OpenOutlineFont()
+
+diskfont.library/DisposeFontContents                           diskfont.library/DisposeFontContents
+
+   NAME
+	DisposeFontContents -- Free the result from NewFontContents. (V34)
+
+   SYNOPSIS
+	DisposeFontContents(fontContentsHeader)
+
+	VOID DisposeFontContents( struct FontContentsHeader * );
+
+   FUNCTION
+	This function frees the array of FontContents entries
+	returned by NewFontContents.
+
+   INPUTS
+	fontContentsHeader - a struct FontContentsHeader pointer
+	                     returned by NewFontContents.
+
+   EXCEPTIONS
+	This command was first made available as of version 34.
+
+	A fontContentsHeader other than one acquired by a call
+	of NewFontContents will crash.
+
+   SEE ALSO
+	NewFontContents()
+
+diskfont.library/ECloseEngine                                         diskfont.library/ECloseEngine
+
+    NAME
+	ECloseEngine -- Release an engine handle (V50)
+
+    SYNOPSIS
+	ECloseEngine(EEngine)
+
+	VOID ECloseEngine(struct EGlyphEngine *);
+
+    FUNCTION
+	This function is similar to bullet.library/CloseEngine() but does
+	not use a (hidden) "BulletBase" variable that may hold the library
+	base of the wrong font engine if not set properly. It uses
+	EEngine->ege_BulletBase as base of the font engine library to be
+	called, or the EEngine->ege_IBullet interface if available.
+
+	This function releases the engine handle acquired with
+	EOpenEngine.  It first releases any data acquired with
+	EObtainInfoA associated with the engineHandle that has not yet
+	been released.
+
+    INPUTS
+	EEngine -- the handle acquired via EOpenEngine.  If zero
+	           or EEngine->ege_GlyphEngine is zero,
+	           no operation is performed.
+
+    RESULT
+	EEngine->ege_GlyphEngine is set to NULL.  The only error that
+	can occur is when an invalid engineHandle is supplied: the
+	application is assumed not to do that.
+
+    NOTES
+	This function does work with PPC and 68K font engines.
+	Since V51 it requires EEngine->ege_IBullet for PPC font engines
+	and wont call the 68K emulator for those (they may have no 68K
+	jump table).
+
+    EXAMPLE
+	EndGame(code, arg1, arg2, arg3, arg3)
+	{
+	    ...
+	    if (EEngine->ege_GlyphEngine != NULL)
+		ECloseEngine(EEngine);
+	    if (EEngine->ege_IBullet != NULL)
+		DropInterface((struct Interface *)EEngine->ege_IBullet);
+	    if (EEngine->ege_BulletBase != NULL)
+		CloseLibrary(EEngine->ege_BulletBase);
+	    ...
+	}
+
+    SEE ALSO
+	bullet.library/CloseEngine() EOpenEngine() CloseOutlineFont()
+
+diskfont.library/EObtainInfoA                                         diskfont.library/EObtainInfoA
+
+    NAME
+	EObtainInfoA -- Inquire tagged font and/or glyph metrics (V50)
+	EObtainInfo -- varargs form of EObtainInfoA
+
+    SYNOPSIS
+	error = EObtainInfoA(EEngine, tagList)
+
+	ULONG EObtainInfoA(struct EGlyphEngine *, struct TagItem *);
+
+	error = EObtainInfo(EEngine, firstTag, ...)
+
+	ULONG EObtainInfo(struct EGlyphEngine *, Tag, ...);
+
+    FUNCTION
+	This function is similar to bullet.library/ObtainInfoA() but does
+	not use a (hidden) "BulletBase" variable that may hold the library
+	base of the wrong font engine if not set properly. It uses
+	EEngine->ege_BulletBase as base of the font engine library to be
+	called, or the EEngine->ege_IBullet interface if available.
+
+	This function accepts a tagList whose tag field elements are
+	valid for inquiry, and whose associated data fields are
+	pointers to the destination in which to place the requested
+	data.
+
+	Tag items that refer to data indirectly (OT_Indirect is set)
+	return pointers that may be allocated or cached by the
+	library.  This data must be treated as read-only data.  When
+	the application is done with the data acquired via EObtainInfoA,
+	it must perform a EReleaseInfoA to allow the library to release
+	the data.
+
+    INPUTS
+	EEngine -- the glyph engine acquired via EOpenEngine or
+	           OpenOutlineFont.
+	tagList -- a tagList containing OT_ tags valid for inquiry
+	           paired with the destination pointers for the
+	           inquiry results.  All destinations are longwords,
+	           whether they are pointers or values, and
+	           regardless of whether the value could fit in a
+	           smaller variable.
+
+    RESULT
+	This function returns a zero success indication, or a non-zero
+	error code.
+
+    WARNING
+	The function may return with a non-zero error code before it has
+	parsed the whole tagList.  The function may not set the pointers
+	you passed in to NULL when an error occured.  Be careful to ensure
+	that either the pointers you pass in are set to NULL or that
+	you only call EReleaseInfoA if EObtainInfoA returned no error code
+	and the EObtainInfoA tagList did contain only one pointer.
+
+    NOTES
+	This function does work with PPC and 68K font engines.
+	Since V51 it requires EEngine->ege_IBullet for PPC font engines
+	and wont call the 68K emulator for those (they may have no 68K
+	jump table).
+
+    EXAMPLE
+	    struct GlyphMap *glyph;
+	    ...
+	    if (!EObtainInfo(EEngine, OT_GlyphMap, &glyph, TAG_END))
+	    {
+		...
+		EReleaseInfo(EEngine, OT_GlyphMap, glyph, TAG_END);
+	    }
+
+    SEE ALSO
+	bullet.library/ObtainInfoA() EReleaseInfoA() diskfont/diskfonttag.h
+	diskfont/oterrors.h
+
+diskfont.library/EOpenEngine                                           diskfont.library/EOpenEngine
+
+    NAME
+	EOpenEngine -- Acquire engine handle (V50)
+
+    SYNOPSIS
+	success = EOpenEngine(EEngine)
+
+	LONG EOpenEngine(struct EGlyphEngine *)
+
+    FUNCTION
+	This function is similar to bullet.library/OpenEngine() but does
+	not use a (hidden) "BulletBase" variable that may hold the library
+	base of the wrong font engine if not set properly. It uses
+	EEngine->ege_BulletBase as base of the font engine library to be
+	called, or the EEngine->ege_IBullet interface if available.
+
+	This function establishes a context for access to the bullet
+	library or another font engine.  This context remains valid until
+	it is closed via ECloseEngine.  Each specific context isolates the
+	specification of the various font attributes from other contexts
+	concurrently accessing the same library.  A context can be shared
+	among different tasks if the caller uses a locking mechanism (e.g.
+	Semaphores) that ensures that the context is not accessed
+	concurrently and that e.g. a ESetInfo(), EObtainInfo() sequence
+	cant be interrupted by another task using the same context.
+
+    INPUTS
+	EEngine -- pointer to a struct EGlyphEngine that does contain
+	           either a pointer to the library base of the font
+	           engine acquired via OpenLibrary() in
+	           EEngine->ege_BulletBase or a pointer to the
+	           font engine library main interface in
+	           EEngine->ege_IBullet or both.
+
+    RESULT
+	If TRUE, EEngine->ege_GlyphEngine contains a pointer to a
+	struct GlyphEngine, if FALSE, EEngine->ege_GlyphEngine is NULL.
+
+    NOTES
+	This function does work with PPC and 68K font engines.
+	Since V51 it requires EEngine->ege_IBullet for PPC font engines
+	and wont call the 68K emulator for those (they may have no 68K
+	jump table).
+
+    EXAMPLE
+	    struct EGlyphEngine EEngine;
+
+	    EEngine.ege_BulletBase = OpenLibrary(EngineName, 0);
+	    if (!EEngine.ege_BulletBase)
+		EndGame(ERROR_LibOpen, EngineName, 0);
+	    EEngine.ege_IBullet = (struct BulletIFace *)
+	        GetInterface(EEngine.ege_BulletBase, "main", 1, NULL);
+	    if (!EOpenEngine(&EEngine))
+		EndGame(ERROR_InternalCall, "EOpenEngine");
+
+	    ESetInfo(&EEngine, OT_OTagPath, ...)
+	    ...
+
+	    ECloseEngine(&EEngine);
+	    if (EEngine.ege_IBullet)
+	        DropInterface(EEngine.ege_IBullet);
+	    CloseLibrary(EEngine->ege_BulletBase);
+
+    SEE ALSO
+	bullet.library/OpenEngine() ECloseEngine() OpenOutlineFont()
+
+diskfont.library/EReleaseInfoA                                       diskfont.library/EReleaseInfoA
+
+    NAME
+	EReleaseInfoA -- Release data obtained with EObtainInfoA (V50)
+	EReleaseInfo -- varargs form of EReleaseInfoA
+
+    SYNOPSIS
+	error = EReleaseInfoA(EEngine, tagList)
+
+	ULONG EReleaseInfoA(struct EGlyphEngine *, struct TagItem *);
+
+	error = EReleaseInfo(EEngine, firstTag, ...)
+
+	ULONG EReleaseInfo(struct EGlyphEngine *, Tag, ...);
+
+    FUNCTION
+	This function is similar to bullet.library/ReleaseInfoA() but does
+	not use a (hidden) "BulletBase" variable that may hold the library
+	base of the wrong font engine if not set properly. It uses
+	EEngine->ege_BulletBase as base of the font engine library to be
+	called, or the EEngine->ege_IBullet interface if available.
+
+	This function releases the data obtained with EObtainInfoA.
+	Data associated with tags that are not indirect, i.e. for which
+	OT_Indirect is not set, need not be released, but it is not an
+	error to do so.  Released data may be immediately freed or may
+	become a candidate to be expunged from memory when the system
+	reaches a low memory condition, depending on the library's
+	internal implementation.
+
+	Each EReleaseInfoA tag item must be associated with a prior
+	successfull EObtainInfoA call.
+
+    INPUTS
+	EEngine -- the glyph engine acquired via EOpenEngine or
+	           OpenOutlineFont.
+	tagList -- a tagList containing OT_ tags valid for inquiry
+	           paired with the data previously acquired for them
+	           with EObtainInfoA.  Null pointers are quietly
+	           accepted and ignored for indirect data.
+
+    RESULT
+	This function has no result.  The only error that can occur is
+	when the EObtainInfo and EReleaseInfo pairs are mismatched: the
+	application is assumed not to do that.
+
+    NOTES
+	This function does work with PPC and 68K font engines.
+	Since V51 it requires EEngine->ege_IBullet for PPC font engines
+	and wont call the 68K emulator for those (they may have no 68K
+	jump table).
+
+    EXAMPLE
+	    struct GlyphMap *glyph;
+	    ...
+	    if (!(error = EObtainInfo(EEngine,
+		    OT_GlyphMap, &glyph, TAG_END)))
+	    {
+		...
+		EReleaseInfo(EEngine, OT_GlyphMap, glyph, TAG_END);
+	    }
+
+    SEE ALSO
+	bullet.library/ReleaseInfoA() EObtainInfoA() diskfont/diskfonttag.h
+	diskfont/oterrors.h
+
+diskfont.library/ESetInfoA                                               diskfont.library/ESetInfoA
+
+    NAME
+	ESetInfoA -- Set font and/or glyph metrics (V50)
+	ESetInfo -- varargs form of ESetInfoA
+
+    SYNOPSIS
+	error = ESetInfoA(EEngine, tagList)
+
+	ULONG ESetInfoA(struct EGlyphEngine *, struct TagItem *);
+
+	error = ESetInfo(EEngine, firstTag, ...)
+
+	ULONG ESetInfo(struct EGlyphEngine *, Tag, ...);
+
+    FUNCTION
+	This function is similar to bullet.library/SetInfoA() but does
+	not use a (hidden) "BulletBase" variable that may hold the library
+	base of the wrong font engine if not set properly. It uses
+	EEngine->ege_BulletBase as base of the font engine library to be
+	called, or the EEngine->ege_IBullet interface if available.
+
+	This function accepts a tagList whose tag field elements are
+	valid for specification, and whose associated data fields are
+	used to supply the specified data.
+
+	Data that is supplied via an indirect pointer (OT_Indirect) to
+	an array or structure is copied from that array or structure
+	into the internal memory of the library.  Changes to the data
+	after this call do not affect the engine.
+
+    INPUTS
+	EEngine -- the glyph engine acquired via EOpenEngine or
+	           OpenOutlineFont.
+	tagList -- a tagList containing OT_ tags valid for
+	           specification paired with the specification data.
+
+    RESULT
+	This function returns a zero success indication, or a non-zero
+	error code.
+
+    NOTES
+	The function may return with a non-zero error code before it has
+	parsed the whole tagList.
+
+	This function does work with PPC and 68K font engines.
+	Since V51 it requires EEngine->ege_IBullet for PPC font engines
+	and wont call the 68K emulator for those (they may have no 68K
+	jump table).
+
+    EXAMPLE
+	    // Get Euro glyph with 16 points height
+	    if (!(error = ESetInfo(EEngine, OT_PointHeight, 0x00100000,
+		    OT_GlyphCode, 0x20AC, TAG_END)))
+	    {
+		if (!(error = EObtainInfo(EEngine,
+			 OT_GlyphMap, &glyph, TAG_END)))
+		{
+		    ...
+		    EReleaseInfo(EEngine, OT_GlyphMap, glyph, TAG_END);
+		}
+	    }
+
+    SEE ALSO
+	bullet.library/SetInfoA() diskfont/diskfonttag.h diskfont/oterrors.h
+
+diskfont.library/FreeTTextAttr                                       diskfont.library/FreeTTextAttr
+
+   NAME
+	FreeTTextAttr -- Release a TTextAttr from ObtainTTextAttr() (V50)
+
+   SYNOPSIS
+	FreeTTextAttr(tta);
+
+	VOID FreeTTextAttr( struct TTextAttr *tta );
+
+   FUNCTION
+	This function frees a TTextAttr structure obtained by
+	ObtainTTextAttr().
+
+   INPUTS
+	tta -  Pointer to a struct TTextAttr obtained by
+	       ObtainTTextAttr(), or NULL.
+
+   RESULTS
+
+   SEE ALSO
+	ObtainTTextAttr()
+
+diskfont.library/GetDiskFontCtrl                                   diskfont.library/GetDiskFontCtrl
+
+   NAME
+	GetDiskFontCtrl -- Inquire diskfont global settings. (V45)
+
+   SYNOPSIS
+	value = GetDiskFontCtrl( tagid );
+
+	LONG GetDiskFontCtrl( LONG tagitem );
+
+
+   FUNCTION
+	GetDiskFontCtrl reads global settings of the diskfont
+	library, as the setting of the base DPI X and Y values,
+	the cache enable flag and the AvailFonts sorting values.
+	The TagItem passed in identifies the type of data item
+	to read.
+
+   INPUTS
+	tagid - a tag ID as documented in diskfont/diskfonttag.h
+	        that identifies the kind of data item to inquiry.
+
+	        The following tag values are currently supported:
+	        (see diskfont/diskfonttag.h)
+
+	        Font generator DPI settings:
+
+	        DFCTRL_XDPI
+	        DFCTRL_YDPI     X and Y dpi device resolution
+
+	        DFCTRL_XDOTP
+	        DFCTRL_YDOTP    X and Y dpi dot sizes.
+
+	        DFCTRL_CHARSET  default character set (ULONG) (V50)
+
+	        DFCTRL_CACHE    AvailFonts cache enable (BOOL)
+
+	        DFCTRL_SORTMODE AvailFonts font sorting (LONG)
+
+	        currently defined sort orders are:
+
+	                DFCTRL_SORT_OFF don't sort
+	                DFCTRL_SORT_ASC localized ascending
+	                DFCTRL_SORT_DES localized descending
+
+	        DFCTRL_ANTIALIASING antialiasing enable (BOOL) (V50)
+
+	        generates AATextFonts instead of TextFonts from .otag
+	        fonts, patches graphics.library/Text() to output
+	        anti-aliased fonts on screens with a depth >= 16 bit
+	        if possible. Experimental.
+
+   RESULTS
+	value  - The current diskfont default setting for the
+	         selected tag item.
+	         The result code is undocumented if an unknown
+	         tag value is passed in.
+
+   EXAMPLE
+
+	BOOL cache;
+
+	cache = GetDiskFontCtrl(DFCTRL_CACHE);
+
+	// read the current cache enable flag.
+
+
+   NOTES
+	This call is not semaphore protected. This means that
+	several calls to this function and SetDiskFontCtrl()
+	might cause inconsistent results. The function will not
+	fail or crash, but the result might be near to useless
+	in a multitasking system.
+	This function should never be called by the average
+	user. Its sole purpose is to provide the font
+	preferences editor with data about the current diskfont
+	settings. It should not be called for other purposes.
+
+   BUGS
+
+   SEE ALSO
+	diskfont/diskfonttag.h
+
+diskfont.library/NewFontContents                                   diskfont.library/NewFontContents
+
+   NAME
+	NewFontContents -- Create a FontContents image for a font. (V34)
+
+   SYNOPSIS
+	fontContentsHeader = NewFontContents(fontsLock, fontName)
+
+	struct FontContentsHeader *NewFontContents( BPTR, STRPTR );
+
+   FUNCTION
+	This function creates a new array of FontContents entries
+	that describe all the fonts associated with the fontName,
+	specifically, all those in the font directory whose name
+	is that of the font sans the ".font" suffix.
+
+   INPUTS
+	fontsLock - a DOS lock on the FONTS: directory (or other
+	            directory where the font contents file and associated
+	            font directory resides).
+	fontName -  the font name, with the ".font" suffix, which
+	            is also the name of the font contents file.
+
+   RESULT
+	fontContentsHeader - a struct FontContentsHeader pointer
+	                     that can be used for WriteFontContents()
+	                     and must be freed with DisposeFontContents().
+
+   EXCEPTIONS
+	This command was first made available as of version 34.
+
+	D0 is zero if the fontName is does not have a ".font" suffix,
+	if the fontName is too long, if a DOS error occurred, or if
+	memory could not be allocated for the fontContentsHeader.
+
+  NOTES
+	Prior to V50, the ".font" suffix had to be lowercase.
+
+	Prior to V50, this routine always returned zero for font
+	names longer than 30 chars. Since V50, this routine
+	accepts longer font names if the underlying file system
+	supports them without truncation. Since currently no
+	official way to find out the maximum file name length of
+	a file system exists and quiet truncation cant be accepted
+	("longname.fon" would not be accepted by AvailFonts()) this
+	is tested by creating a temporary test file with the same
+	name length as fontName in the directory specified by fontsLock
+	and comparing the FilePart returned by NameFromFH() with the
+	test file name. Even when the filesystem supports long names,
+	the V50 routine will not create a (T)FontContents structure
+	if the fontName without ".font" suffix plus "/" plus the file
+	name of the DiskFontHeader file plus the taglist of the
+	DiskFontHeader file wont fit in fc_FileName or tfc_FileName of
+	the (T)FontContents structure.  The V50 routine no longer
+	returns	zero if the font name is too long but there are
+	no valid DiskFontHeader files in the font directory, it returns
+	a FontContentsHeader structure with zero entries instead.
+
+	Since V50 the FixFonts utility supports long font names.
+	Previous versions did not call this routine for directorys
+	with names longer than 25 chars.
+
+  BUGS
+	Prior to V50, this routine returned zero and lost memory if
+	there was a problem with any of the FontContents files.
+	Since V50 it returns a FontContentsHeader containing all
+	(T)FontContents structures that did not cause a problem.
+
+  SEE ALSO
+	WriteFontContents() DisposeFontContents()
+
+diskfont.library/NewScaledDiskFont                               diskfont.library/NewScaledDiskFont
+
+   NAME
+	NewScaledDiskFont -- Create a DiskFont scaled from another. (V36)
+
+   SYNOPSIS
+	header = NewScaledDiskFont(srcFont, destTextAttr)
+
+	struct DiskFontHeader *NewScaledDiskFont( struct TextFont *,
+		                                  struct TextAttr * );
+
+   INPUTS
+	srcFont -      the font from which the scaled font is to be
+	               constructed.
+	destTextAttr - the desired attributes for the new scaled
+	               font.  This may be a structure of type TextAttr or
+	               TTextAttr.
+
+   WARNING
+	Make sure that destTextAttr.tta_Style has the FSF_TAGGED bit cleared
+	if it is a TextAttr and not a TTextAttr structure or this function
+	may crash.
+
+   RESULT
+	header - a pointer to a DiskFontHeader structure.  This is not
+		 being managed by the diskfont.library, however.
+
+   NOTES
+	o   This function may use the blitter.
+	o   Fonts containing characters that render wholly outside
+	    the character advance cell are currently not scalable.
+	o   The font, and memory allocated for the scaled font can
+	    can be freed by calling StripFont() on the font,
+	    and then calling UnLoadSeg() on the segment created
+	    by this function.
+
+	    Both the TextFont structure, and segment pointer are contained
+	    within the DiskFontHeader struct.  The DiskFontHeader structure
+	    will also be freed as part of the UnLoadSeg() call.
+	    StripFont() is a new graphics.library call as of V36.
+
+	o   Prior to V46, this function stripped font names that did not
+	    fit in the dfh_Name field of the DiskFontHeader structure.
+	    Since V46, longer font names are stored in an extra segment
+	    that is added to the returned seglist and will be freed as
+	    part of the UnLoadSeg() call. In all versions, dfh_Name contains
+	    a stripped name, dfh_TF.tf_Message.mn_Node.ln_Name points to
+	    the stripped/unstripped name depending on the version,
+	    and dfh_DF.ln_Name should be ignored.
+
+diskfont.library/ObtainCharsetInfo                               diskfont.library/ObtainCharsetInfo
+
+    NAME
+	ObtainCharsetInfo -- Inquire charset information (V50)
+
+    SYNOPSIS
+	result = ObtainCharsetInfo(knownTag, knownValue, wantedTag)
+
+	ULONG ObtainCharsetInfo(ULONG, ULONG, ULONG);
+
+    FUNCTION
+	This function retrieves information about a charset. The information
+	is parsed at system startup from file L:CharSets/character-sets,
+	which is a copy of http://www.iana.org/assignments/character-sets.
+	The returned numbers or pointers are valid as long as
+	diskfont.library is opened. If the character-sets file is missing
+	or a parse error occurs, the only known charset is ISO-8859-1
+	(charset number 4). All names are NOT case-sensitive.
+
+    INPUTS
+	knownTag, knownValue -- tag/value pair describing the known charset
+	                        information. Currently supported are:
+		- DFCS_NUMBER,   ULONG number -- IANA MIBenum number
+		- DFCS_NAME,     STRPTR name  -- MIME/IANA charset name/alias
+		- DFCS_MIMENAME, STRPTR name  -- MIME/IANA charset name/alias
+
+	wantedTag -- a tag describing which charset information to return.
+	             Currently supported are:
+		- DFCS_NUMBER     -- return ULONG IANA MIBenum number
+		- DFCS_NEXTNUMBER -- return ULONG IANA MIBenum number of the
+				     next charset (for scanning the whole
+				     list sorted ascending by MIBenum value).
+				     You must supply a valid charset with
+				     knownTag/knownValue, 0 is not sufficient
+				     (lowest valid number to start from is 3,
+				     if 3 fails only 4 is available).
+		- DFCS_NAME       -- return STRPTR to IANA name
+		- DFCS_MIMENAME   -- return STRPTR to IANA name/alias
+				     marked with "(preferred MIME name)" in
+				     the character-sets file.
+				     If not available returns IANA name.
+		- DFCS_MAPTABLE   -- return (ULONG *) to a mapping table of
+				     256 ULONGs from the charset to Unicode.
+				     Can be used for e.g. the bullet API.
+				     The table is loaded from a file in
+				     L:CharSets/ with the IANA number as
+				     file name except for ISO-8859-1 which
+				     is predefined.
+
+    RESULT
+	Zero for failure, otherwise either ULONG number, STRPTR name or
+	(ULONG *)mapTable depending on wantedTag.
+
+    EXAMPLES
+	name = ObtainCharsetInfo(DFCS_NAME, "latin1", DFCS_NAME);
+	// -> "ISO_8859-1:1987"
+	name = ObtainCharsetInfo(DFCS_NAME, "IsO_8859-1", DFCS_MIMENAME);
+	// -> "ISO-8859-1"
+	number = ObtainCharsetInfo(DFCS_NAME, "IBM819", DFCS_NUMBER);
+	// -> 4
+	number = ObtainCharsetInfo(DFCS_NUMBER, 3, DFCS_NEXTNUMBER);
+	// -> 4
+	mapTable = ObtainCharsetInfo(DFCS_NAME, "ISO-8859-15",DFCS_MAPTABLE);
+	// -> a pointer to a mapping table to Unicode or NULL if
+	//    L:CharSets/111 cant be found.
+
+    SEE ALSO
+	diskfont/diskfonttag.h
+
+diskfont.library/ObtainTTextAttr                                   diskfont.library/ObtainTTextAttr
+
+   NAME
+	ObtainTTextAttr -- Obtain a TTextAttr from a given TextFont (V50)
+
+   SYNOPSIS
+	tta = ObtainTTextAttr(textFont);
+
+	struct TTextAttr *ObtainTTextAttr( struct TextFont *textFont );
+
+   FUNCTION
+	ObtainTTextAttr creates a TTextAttr structure that describes
+	a given TextFont. This call does something similar than
+	graphics.library/AskFont() but it creates a TTextAttr that
+	includes the fonts taglist with e.g. the DPI and charset
+	information, and it creates copies of the fonts name and taglist
+	which ensures the TTextAttr still describes the TextFont
+	even when the TextFont gets closed and flushed from memory.
+
+	You can e.g. use this function to create a (T)TextAttr from
+	an already opened font if you need to call a function that
+	does only accept a (T)TextAttr but not a TextFont. You are
+	allowed to change the tta_YSize, tta_Style and tta_Flags field
+	of the TTextAttr, but not the tta_Name and tta_Tags. You should
+	e.g. clear the FSF_TAGGED bit in tta_Style before using the
+	TTextAttr as a TextAttr structure.
+
+	This function does call graphics.library/ExtendFont() to get
+	the taglist of the TextFont.
+
+	If you no longer need the TTextAttr you should free it with
+	a call of FreeTTextAttr().
+
+   INPUTS
+	textFont -  Pointer to a struct TextFont.
+
+   RESULTS
+	tta -  Pointer to a struct TTextAttr, or NULL if e.g.
+	       ExtendFont() did fail or there was not enough memory
+	       available.
+
+   SEE ALSO
+	FreeTTextAttr(), graphics.library/AskFont(), graphics/text.h
+
+diskfont.library/OpenDiskFont                                         diskfont.library/OpenDiskFont
+
+   NAME
+	OpenDiskFont - load and get a pointer to a disk font.
+
+   SYNOPSIS
+	struct TextFont *font = OpenDiskFont(struct TextAttr *textAttr);
+
+   FUNCTION
+	This function finds the best matching font for the specified
+	textAttr on disk, loads it into memory, and returns a pointer
+	to the font that can be used in subsequent SetFont and CloseFont
+	calls. It is important to match this call with a corresponding
+	CloseFont call for effective management of font memory.
+
+	If the font is already in memory, the copy in memory is used.
+	The disk copy is not reloaded. When memory is running low the
+	font cache in memory is automatically purged via
+	diskfont.library's expunge vector.
+
+	The struct (T)TextAttr tta_Name/ta_Name field specifies the name
+	of the font. Note that the name of the font can either be the
+	font name alone (<font name>.font) or it can be prepended with a
+	full path. Without a path to the font, if the font is not
+	already cached, OpenDiskFont() will look in the FONTS: directory
+	for the font file. If there is a path, OpenDiskFont() will look
+	in that directory for the font files, allowing the user to put
+	fonts in any directory (although this is discouraged). OpenFont()
+	and OpenDiskFont() try to find a font that best matches your
+	(T)TextAttr description.
+
+   INPUTS
+	textAttr - TextAttr or TTextAttr structure that describes the
+	           text font attributes desired.
+
+   RESULTS
+	Returns NULL if no matching font could be found.
+
+   WARNING
+	Make sure that textAttr.ta_Style has the FSF_TAGGED bit set for
+	a TTextAttr structure and cleared for a TextAttr structure or
+	this function may crash.
+
+	It is NOT correct to assume that calling OpenDiskFont() or
+	OpenFont() again with the same (T)TextAttr will result in opening
+	the same font. The FONTS: assign may have changed, the system
+	default charset may have changed, the user may have installed
+	new fonts, FixFonts may just have repaired some inconsistency,
+	the font cache may have been purged, etc.
+
+   NOTES
+	As of V36, OpenDiskFont() will automatically attempt to
+	construct a font for you if:
+
+	  - You have requested a font size which does not exist
+	    as a designed font, and
+
+	  - You have not set the DESIGNED bit in the ta_Flags
+	    field of the (T)TextAttr struct.
+
+	Constructed fonts are created by scaling a designed font.
+	A designed font is one which typically resides on disk,
+	or in ROM (e.g., a font which has been designed by hand
+	using a drawing tool). Designed fonts generally look better
+	than fonts constructed by the font scaler, but designed
+	fonts also require disk space for each font size.
+
+	Always set the DESIGNED bit if you do not want constructed fonts,
+	or use AvailFonts() to find out which font sizes already exist.
+
+	Since OpenDiskFont() and OpenFont() always try to open the font
+	that best matches your request, it is possible that (with the
+	DESIGNED bit set) the YSize of the opened font is not the same
+	as the requested YSize. It's also possible that you requested a
+	plain font but get a bold font etc. Maybe a future
+	diskfont.library will open Helvetica if you requested Arial or
+	vice versa, so keep in mind that you get the best match but
+	maybe a perfect match did not exist.
+
+	If the user requested a bold|italic|underlined font and the
+	opened font is not bold|italic|underlined, the system will add
+	the missing styles algorithmically if you don't forget to call
+	graphics.library/SetSoftStyle() with something like this:
+	if (myfont = OpenDiskFont(&mytextattr))
+	{
+		SetFont(myrastport, myfont);
+		SetSoftStyle(myrastport,
+		             mytextattr.ta_Style ^ myfont->tf_Style,
+		             FSF_BOLD | FSF_UNDERLINED | FSF_ITALIC);
+		// Calling Text() here
+		CloseFont(myfont);
+	}
+
+	If you have to construct a (T)TextAttr structure from an
+	opened TextFont that ensures fast opening of (hopefully)
+	the same font when used with OpenDiskFont() or OpenFont()
+	again, use ObtainTTextAttr() which does not forget to copy the
+	bold|italic|underlined|extended|fixed|colorfont|etc bits
+	and also makes a copy of the fonts taglist.
+
+	Simply re-using a TextAttr without style, flags and tags
+	information (the "fontname/size" scheme) can in worst case
+	lead to the fact that diskfont.library may e.g. try to construct
+	a non-bold font from a bold font via bullet API which may fail
+	each time if the font engine does not support this.
+
+	As of V37 the diskfont.library supported built-in outline
+	fonts. Then in V38 the outline font engine was moved to
+	a new library, "bullet.library."
+
+	As of V50 diskfont.library supports different charsets.
+	If you specify the charset with the TA_CharSet tag in the taglist
+	of the TTextAttr structure it will look for a tagged bitmap
+	font with the wanted charset or create a font with the
+	wanted charset via the font engine if the font has an .otag file
+	and a charset mapping table exists in L:CharSets. If not
+	specified, the current default charset is assumed. Note that
+	a charset match is heavily preferred when searching for a font
+	match.
+
+	It is not necessary to call ExtendFont() for the returned
+	font, OpenDiskFont() only returns successfully extended fonts.
+
+	As of V50 fontname_MIME-NAME.font is interpreted as
+	fontname.font with TA_CharSet tag. This allows expert users
+	to use fonts in different charsets than system default charset
+	with old applications.
+
+	The feature only works in combination with graphics.library V47+
+	to make sure OpenFont() opens the same font as OpenDiskFont().
+
+	Since V50 its possible that an AATextFont instead of a
+	TextFont is returned.
+
+	Since V50 the special tag TA_Rebuild (for bullet API font
+	installers only) is supported, see <graphics/text.h>.
+
+	Since V50.48 the special font charset X-Custom is supported
+	which can be used to mark fonts with symbols, musical notes
+	etc. to match any requested charset and to not be remapped to
+	current system default charset during load.
+
+	Prior to V51.6, this routine did not check if it was called
+	from a process, which should not happen (The RKRM says only
+	a process may call it) and could result in crashes or error
+	messages from dos.library. Since V51.7 this routine may be
+	safely called from a task.
+
+   BUGS
+	Prior to V50, this routine will not work well with font names
+	whose file name components are longer than the maximum allowed
+	(30 characters). Since V50, this routine accepts font names of
+	any length without crashing. The maximum possible font name
+	length now is limited by MAXFONTPATH (256) which is the maximum
+	for the name including path components.
+
+  SEE ALSO
+	graphics.library/OpenFont(), graphics.library/CloseFont(),
+	graphics.library/SetSoftStyle(), OpenOutlineFont(),
+	graphics/text.h
+
+diskfont.library/OpenOutlineFont                                   diskfont.library/OpenOutlineFont
+
+   NAME
+	OpenOutlineFont - search, load, validate and relocate an .otag file,
+			  if requested open the font engine library, its
+	                  main interface and a glyph engine (V50)
+
+   SYNOPSIS
+	outlinefont = OpenOutlineFont(fileName, list, flags)
+
+	struct OutlineFont *OpenOutlineFont(STRPTR fileName,
+					    struct List *list, ULONG flags);
+
+   FUNCTION
+	This function finds the .otag file for the specified outline font
+	on disk, loads it into memory, validates that OT_FileIdent exists
+	and matches the file size, validates that OT_Engine exists and
+	relocates all OT_Indirect tags.  If requested, it opens the font
+	engine library, its main interface (if available) and a glyph
+	engine and calls ESetInfo() with the appropriate OT_OTagPath and
+	OT_OTagList tags.  It returns a pointer to a struct OutlineFont.
+	It is important to match this call with a corresponding
+	CloseOutlineFont call for effective management of memory.
+
+   INPUTS
+	fileName - file or font name to open.  If fileName contains a ':',
+		   the .otag file will be searched in the path specified
+		   with fileName, otherwise it will be searched in FONTS:.
+		   The fileName may have either the ".font" or the ".otag"
+		   suffix or no suffix (just the font name, e.g.
+		   "Nimbus Sans L Regular Condensed Italic"). It is not
+		   limited in length.
+
+	list -     Ignored when OFF_OPEN not set. A pointer to a struct
+	           List that has to be initialized with NewList() before
+	           the first call of OpenOutlineFont() and has to be used
+	           for every subsequent call of OpenOutlineFont() and
+		   CloseOutlineFont(), or NULL.  If not NULL, the function
+		   uses this list to avoid re-opening font engine libraries
+		   for your task that were already opened by a previous
+		   call of OpenOutlineFont(). You either must pass the same
+		   list for all calls of OpenOutlineFont() and
+		   CloseOutlineFont() or always use NULL. If you want to
+		   share the list between tasks, you are responsible
+		   for using an appropriate locking mechanism, e.g. a
+		   Semaphore.
+
+	flags -    Currently only OFF_OPEN is specified, when not set,
+		   the .otag file is only searched, loaded, validated and
+		   relocated and you can e.g. examine the OTagList and
+		   decide whether you want to use this font or not.
+	           See below how to open the font later.
+
+   RESULTS
+	D0 is zero if the desired .otag file cannot be found, loaded or
+	validated, the font engine library or glyph engine could not
+	be opened or the ESetInfo() call specifying OT_OTagPath and
+	OT_OTagList failed.  Otherwise D0 points to a struct OutlineFont.
+
+   NOTES
+	This function does work with PPC and 68K font engines. The
+	olf_EEngine.ege_IBullet pointer will be NULL for 68K font engines.
+	Since V51 it no longer uses PPC font engines without an interface.
+
+	If you did not set OFF_OPEN and want to open the font later:
+	Open the font engine library and store it in
+	olf_EEngine.ege_BulletBase, if successfull store the result
+	of GetInterface() in olf_EEngine.ege_IBullet (NULL is ok),
+	then call EOpenEngine() for olf_EEngine, if successfull call
+	ESetInfo() with olf_OTagPath and olf_OTagList, if successfull
+	you can use the font. But: You must cleanup yourself when
+	done (ECloseEngine(), DropInterface(), CloseLibrary()) and
+	you _must_ set all olf_EEngine members back to NULL before
+	calling CloseOutlineFont(). Or just use your own EGlyphEngine
+	structure instead.
+
+   EXAMPLE
+	struct OutlineFont *outlineFont;
+
+	if (outlineFont = OpenOutlineFont("Helvetica", NULL, OFF_OPEN))
+	{
+	    if (ESetInfo(&outlineFont->olf_EEngine,
+			 OT_DeviceDPI, (XDPI << 16) | YDPI,
+			 OT_PointHeight, PointHeight,
+			 TAG_END) == OTERR_Success)
+	    {
+		// Now all is set up to use the font with
+		// ESetInfo(), EObtainInfo() and EReleaseInfo()
+	    }
+	    CloseOutlineFont(outlineFont, NULL);
+	}
+
+   SEE ALSO
+	bullet.library/--background-- ESetInfoA() EObtainInfoA()
+	EReleaseInfoA() diskfont/diskfont.h diskfont/diskfonttag.h
+	diskfont/oterrors.h
+
+diskfont.library/SetDiskFontCtrlA                                 diskfont.library/SetDiskFontCtrlA
+
+   NAME
+	SetDiskFontCtrl -- Adjust disk font global settings (V45)
+
+   SYNOPSIS
+	SetDiskFontCtrlA( tags );
+
+	VOID SetDiskFontCtrlA( struct TagItem * );
+
+	VOID SetDiskFontCtrl( Tag, ... );
+
+
+   FUNCTION
+	SetDiskFontCtrl adjusts the global settings passed in
+	in the form of a tag list and installs them into the
+	the diskfont internal database. This includes the
+	base DPI X and Y values, the cache enable flag and the
+	AvailFonts font sorting order.
+
+   INPUTS
+	tags -  a tag list defining the global settings that are
+	        to be adjusted.
+
+	        The following tag values are currently supported:
+	        (see diskfont/diskfonttag.h)
+
+	        Font generator DPI settings:
+
+	        DFCTRL_XDPI
+	        DFCTRL_YDPI     X and Y dpi device resolution
+
+	        DFCTRL_XDOTP
+	        DFCTRL_YDOTP    X and Y dpi dot sizes.
+
+	        DFCTRL_CHARSET  default character set (ULONG) (V50)
+
+	        DFCTRL_CACHE    AvailFonts cache enable (BOOL)
+
+	        DFCTRL_SORTMODE AvailFonts font sorting (LONG)
+
+	        currently defined sort orders are:
+
+	                DFCTRL_SORT_OFF don't sort
+	                DFCTRL_SORT_ASC localized ascending
+	                DFCTRL_SORT_DES localized descending
+
+	        DFCTRL_CACHEFLUSH Flush the cache?      (BOOL)
+	                If TRUE, a cache flush is initiated, the
+	                font cache files are deleted.  Used by
+	                V50 FixFonts utility.
+
+	        DFCTRL_ANTIALIASING antialiasing enable (BOOL) (V50)
+
+	        generates AATextFonts instead of TextFonts from .otag
+	        fonts, patches graphics.library/Text() to output
+	        anti-aliased fonts on screens with a depth >= 16 bit
+	        if possible. Experimental.
+
+   RESULTS
+
+
+   EXAMPLE
+
+	SetDiskFontCtrl(DFCTRL_CACHE,TRUE,TAG_DONE);
+
+	// enable the AvailFonts cache.
+
+
+   NOTES
+	The SetDiskFontCtrlA() function is the assembly language
+	interface which takes the tag list pointer in A0.
+	SetDiskFontCtrl() is the stack based wrapper for
+	convenient C language calls.
+
+	This call is not semaphore protected. This means that
+	several calls to this function and GetDiskFontCtrl()
+	might cause inconsistent results. The function will not
+	fail or crash, but the result might be near to useless
+	in a multitasking system.
+	This function should never be called by the average
+	user. Its sole purpose is to allow the font
+	preferences editor to adjust the diskfont internal
+	data in a user friendly way. It should not be called
+	for other purposes, especially, applications *MUST NOT*
+	call this to enable or disable the cache setting. This
+	should be left to the user by selecting the preferences.
+
+   WARNING
+	Prior to V50, setting DFCTRL_XDOTP and/or DFCTRL_YDOTP to
+	something else than the default (100) may result in the fact
+	that diskfont.library is no longer able to create bitmap fonts
+	from outline fonts since some font engines dont support
+	an OT_DotSize different from the default and return an error.
+	Since V50, the font generator now retries with OT_DotSize
+	of 100% if the first try failed.
+
+	Setting DFCTRL_CHARSET will only work if a topaz/8 and topaz/9
+	in the new charset exist on disk (these are loaded to replace
+	the ROM fonts) and a charset mapping table can be found in
+	L:CharSets, otherwise a recoverable timed Alert will be
+	displayed and the default charset is set back to Latin1.
+	Changing the charset while the system is up may cause problems
+	with programs that try to open a font in memory with OpenFont()
+	since this will fail except for topaz/8 and topaz/9, at least
+	one OpenDiskFont() call will be necessary. The DFCTRL_CHARSET
+	option should only be used during system boot.
+
+   BUGS
+
+   SEE ALSO
+	diskfont/diskfonttag.h, utility/tagitem.h
+
+diskfont.library/WriteDiskFontHeaderA                         diskfont.library/WriteDiskFontHeaderA
+
+   NAME
+	WriteDiskFontHeaderA -- Write a DiskFontHeader image to disk. (V50)
+	WriteDiskFontHeader  -- varargs form of WriteDiskFontHeaderA
+
+   SYNOPSIS
+	success = WriteDiskFontHeaderA(font, fileName, tagList)
+
+	LONG WriteDiskFontHeaderA(struct TextFont *,STRPTR,struct TagItem *);
+
+	success = WriteDiskFontHeader(font, fileName, firstTag, ...)
+
+	LONG WriteDiskFontHeader(struct TextFont *, STRPTR, Tag, ...);
+
+   FUNCTION
+	This function writes a TextFont or ColorTextFont or AATextFont
+	structure as DiskFontHeader file to disk.
+
+   INPUTS
+	font     - A pointer to an (AA|Color)TextFont structure.
+	fileName - Name of the file to write, e.g. "Disk:Fonts/Helvetica/16".
+	tagList  - A pointer to a taglist to be stored in the file, or NULL.
+
+   RESULT
+	success - a boolean stating whether writing the file was successfull.
+
+   NOTES
+	This function does not call ExtendFont() and StripFont(), the
+	decision whether to call these or not is left to the calling process.
+	Since there is no documented way to find out if a tf_Extension is
+	valid or not (only by calling ExtendFont() but then the function
+	would not know if it should call StripFont() or not which depends
+	whether the TextFont is obtained via system functions or just a
+	standalone structure in memory created by e.g. a font editor), it
+	does not use the taglist that may be present in a TextFontExtension
+	structure.
+
+	If the (AA|Color)TextFont was obtained via system functions
+	(OpenFont/OpenDiskFont/NewScaledDiskFont etc) you should call
+	ExtendFont() and pass the taglist of the tf_Extension if successfull,
+	otherwise NULL. Dont call StripFont(). Dont pass a NULL taglist
+	without calling ExtendFont(), the tags can hold important information
+	(aspect ratio, dot size, charset etc).
+
+	If the (AA|Color)TextFont was created from scratch by your
+	application, you can either call ExtendFont() with or without
+	a taglist, then WriteDiskFontHeader with the tf_Extension taglist,
+	then StripFont(), or simply call WriteDiskFontHeader with or without
+	taglist. If you dont have a taglist, it is not necessary to pass
+	a default taglist added by ExtendFont() as parameter since this
+	default taglist will be added if the saved font is loaded via
+	OpenDiskFont() which will call ExtendFont().
+
+	You should call WriteFontContents() when you are done with creating
+	DiskFontHeader files in a font directory to update the .font file.
+
+   EXAMPLE
+	struct TTextAttr tta;
+	struct TagItem tags[2];
+	STRPTR fontname;
+	STRPTR dirname;
+	STRPTR filename;
+	struct FontContentsHeader *fch;
+	BPTR lock;
+
+	fontname        = "Helvetica.font";
+	dirname         = "FONTS:Helvetica";
+	tta.tta_Name    = fontname;
+	tta.tta_YSize   = 16;
+	tta.tta_Style   = FSF_TAGGED;
+	tta.tta_Flags   = 0;
+	tta.tt_Tags     = tags;
+	tags[0].ti_Tag  = TA_DeviceDPI;
+	tags[0].ti_Data = (XDPI << 16) | YDPI;
+	tags[1].ti_Tag  = TAG_END;
+
+	if (font = OpenDiskFont(&tta))
+	{
+	    if (!ExtendFont(font, NULL))
+	    {
+		// out of memory
+	    }
+	    else
+	    {
+		// get lock on dirname here, call NameFromLock()
+		// to get the full path, build filename from
+		// full path, dirname, "/" and "16".
+		// the name can also be something like
+		// "16_aspect3to2" if XDPI was 75 and YDPI 50.
+		//
+		if (!WriteDiskFontHeaderA(font, filename,
+			((struct TextFontExtension *)(font->tf_Extension))->
+			 tfe_Tags))
+		    printf("Cant create or write %s\n", filename);
+		// call NewFontContents(), WriteFontContents() and
+		// DisposeFontContents() for lock and fontname here
+	    }
+	    CloseFont(font);
+	}
+
+   SEE ALSO
+	WriteFontContents() OpenDiskFont() graphics.library/ExtendFont()
+	graphics.library/StripFont()
+
+diskfont.library/WriteFontContents                               diskfont.library/WriteFontContents
+
+   NAME
+	WriteFontContents -- Write a FontContents image to disk. (V50)
+
+   SYNOPSIS
+	success = WriteFontContents(fontsLock, fontName, fontContentsHeader)
+
+	LONG WriteFontContents( BPTR, STRPTR, struct FontContentsHeader * );
+
+   FUNCTION
+	This function either writes the array of FontContents entries
+	returned by NewFontContents to disk or deletes an existing file
+	if it is no longer necessary.
+
+   INPUTS
+	fontsLock - The same lock that was passed to NewFontContents.
+	fontName  - The same font name that was passed to NewFontContents.
+	fontContentsHeader - The return value of NewFontContents.
+
+   RESULT
+	success - a boolean. If fontContentsHeader is NULL or fch_NumEntries
+	of a bitmap font is 0, success states whether deleting an existing
+	.font file succeeded. Otherwise it states whether writing the .font
+	file was successfull.
+
+   NOTES
+	This routine can handle font names longer than 30 chars. Since
+	the check whether the underlying file system supports long
+	names without truncation is done in NewFontContents(), it is
+	not allowed to use other input than that passed to and
+	returned from NewFontContents().
+
+   EXAMPLE
+	struct FontContentsHeader *fch;
+
+	fch = NewFontContents(lock, name);
+	if (!WriteFontContents(lock, name, fch))
+	{
+	    if (fch &&
+	        ((fch->fch_NumEntries > 0) || (fch->fch_FileID == OFCH_ID)))
+		printf("Cant create or write %s\n", name);
+	    else
+		printf("Could not delete existing %s\n", name);
+	}
+	if (fch)
+	    DisposeFontContents(fch);
+
+   SEE ALSO
+	NewFontContents() DisposeFontContents() WriteDiskFontHeaderA()
+
+

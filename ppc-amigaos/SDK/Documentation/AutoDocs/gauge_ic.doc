@@ -1,0 +1,185 @@
+TABLE OF CONTENTS
+
+gaugeiclass/--datasheet--
+
+
+gaugeiclass/--datasheet--                               gaugeiclass/--datasheet--
+
+    NAME
+	gaugeiclass -- fill gauge image class
+
+    SUPERCLASS
+	imageclass
+
+    REQUIRES
+	frameiclass
+
+    DESCRIPTION
+	The gaugeiclass image class is used to display stage of completion
+	of some operation such as formatting a disk or free drive space.
+
+    METHODS
+	OM_NEW -- Create the gaugeiclass object. Passed to superclass first.
+
+	OM_DISPOSE -- Destroy the object and then pass to superclass.
+
+	OM_GET -- Get value of an attribute. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	IM_DRAW -- Draw gaugeiclass image with state.
+
+	IM_DRAWFRAME -- Draw gaugeiclass image within limits.
+
+	IM_EXTENT -- Inquire about rendering extent.
+
+	IM_EXTENTFRAME -- Inquire about rendering extent with dimensions.
+
+	IM_FRAMEBOX -- Get recommended frame around some box.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	IA_Orientation (uint32)
+	    Defines the orientation of the gaugeiclass image. The value
+	    can be either 0 (horizontal) or 1 (vertical).
+
+	    Defaults to 0 (horizontal).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_FGPen (uint16)
+	    The foreground pen to use for rendering the full portions
+	    of the gauge image.
+
+	    Defaults to FILLPEN.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_BGPen (uint16)
+	    The background pen to use for rendering the empty portions
+	    of the gauge image.
+
+	    Defaults to BACKGROUNDPEN.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Label (CONST_STRPTR)
+	    Defines the text label used to display the gauge's value.
+	    The label is rendered within the gauge image. Set the
+	    label to NULL to disable.
+
+	    Defaults to ~0 (signed percentage).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_LabelPen (uint16)
+	    Defines the pen to use for rendering the gauge text.
+
+	    Defaults to TEXTPEN.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Justification (uint8)
+	    Justification of the gauge's text label. Supports either
+	    IJ_LEFT or IJ_CENTER.
+
+	    Defaults to IJ_LEFT.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_EraseBackground (BOOL)
+ 	    This attribute tells the gauge to erase the background
+	    before rendering the image.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	IA_InBorder (BOOL)
+	    Flag to indicate if this gauge to be drawn inside a
+	    Window's border or not.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	IA_Screen (struct Screen *)
+	    Pointer to the Screen which this gauge image is being
+	    rendered into.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GAUGEIA_Min (uint32)
+	    Minimum level of the gauge value.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GAUGEIA_Max (uint32)
+	    Maximum level of the gauge value.
+
+	    Defaults to 100.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GAUGEIA_Level (uint32)
+	    Maximum level of the gauge value.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GAUGEIA_Ticks (uint16)
+	    Number of tick marks to be drawn for a gaugeiclass image.
+
+	    Defaults to 0 (no tick marks).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GAUGEIA_TickSize (uint16)
+	    Length of tick marks for a gaugeiclass image if they
+	    are present.
+
+	    Defaults to 4.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GAUGEIA_ShortTicks (BOOL)
+	    Should half-length tick marks be drawn in-between the
+	    normal tick marks of a gaugeiclass image?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GAUGEIA_InnerTicks (BOOL)
+	    Should tick marks be drawn inside the gauge rather than
+	    alongside it?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GAUGEIA_ScaleHook (struct Hook *)
+	    Custom hook for calculating the size of the filled part of
+	    the gauge relative to the container's size.
+
+	    result = ScaleFunc( hook, gauge, number )
+
+	    int32 ScaleFunc(struct Hook *hook, APTR gauge, uint32 *number);
+
+	    The gauge paramter is the gaugeiclass object pointer. The
+	    number parameter is an array of 3 uint32 values. The scale
+	    function must calculate (number[0] * number[1]) / number[2]
+	    and return the result or zero if it cannot perform the
+	    calculation.
+
+	    Defaults to NULL (internal scaling routine).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+

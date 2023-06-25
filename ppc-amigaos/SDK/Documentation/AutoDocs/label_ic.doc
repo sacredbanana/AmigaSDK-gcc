@@ -1,0 +1,234 @@
+TABLE OF CONTENTS
+
+label.image/--datasheet--
+label.image/LABEL_GetClass
+label.image/--datasheet--                           label.image/--datasheet--
+
+    NAME
+	label.image -- Image class for creating identification labels.
+
+    SUPERCLASS
+	imageclass
+
+    REQUIRES
+	None.
+
+    DESCRIPTION
+	Label is an image class suitable for creating identification labels
+	such as those that might appear next to or inside a gadget or as
+	some kind of title in a window. A label consists of text and graphics
+	mixed in a variety of ways.
+
+    METHODS
+	OM_NEW -- Create the object. Passed to superclass then OM_SET.
+
+	OM_DISPOSE -- Destroys the object.
+
+	OM_GET -- Get object attributes. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Set object notification attributes.
+	             Passed to superclass first.
+
+	IM_DRAW -- Renders the label.
+
+	IM_DRAWFRAME -- Renders the label at the frame size.
+
+	IM_DOMAINFRAME -- Query label for domain frame.
+
+	IM_EXTENT -- Inquire about rendering extent.
+
+	IM_EXTENTFRAME -- Inquire about rendering extent with dimensions.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	IA_Width (int16)
+	    Set the width of the image causing any word wrapped text
+	    labels to rewrap the text.
+
+	    Defaults to the width of the widest label element.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	IA_Font (struct TextAttr *)
+	    Font to use for any label text. Only affects text passed after
+	    this tag is given. If you did not use the LABEL_DrawInfo tag
+	    then you must use this tag to specify what font to use.
+
+	    Applicability is (OM_NEW)
+
+	IA_FGPen (uint16)
+	    Foreground pen for any label text. Only affects text passed after
+	    this tag is given.
+
+	    Defaults to TEXTPEN or FILLTEXTPEN (IDS_SELECTED).
+
+	    Applicability is (OM_NEW)
+
+	IA_BGPen (uint16)
+	    Background pen for any label text. Only affects text passed after
+	    this tag is given.
+
+	    Defaults to BACKGROUNDPEN or FILLPEN (IDS_SELECTED).
+
+	    Applicability is (OM_NEW)
+
+	IA_Mode (uint8)
+	    Draw mode for rendering text. Only affects text passed after
+	    this tag is given.
+
+	    Defaults to JAM1.
+
+	    Applicability is (OM_NEW)
+
+	IA_ActivateKey (STRPTR)
+	LABEL_Key (STRPTR)
+	    For getting the key that was underscored in text passed with
+	    IA_Data/LABEL_Text.
+
+	    Applicability is (OM_GET)
+
+	IA_BackFill (struct Hook *)
+	    Pointer to the backfill hook to use for rendering in
+	    the IDS_NORMAL state. For more on the backfill hook,
+	    see layers.library/InstallLayerInfoHook(). (V51)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	IA_Underscore (uint8)
+	LABEL_Underscore (uint8)
+	    Indicate underscore keyboard shortcut for the image label.
+
+	    Defaults to '_'.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	IA_Data (CONST_STRPTR)
+	LABEL_Text (CONST_STRPTR)
+	    A text string to render. A '\n' in the string will cause the
+	    text position to move to a new line. The first underscore ('_')
+	    in the string will be used to underline the following character
+	    in the string. Any number of text strings and images can be
+	    provided in a label mixed at will.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_WordWrap (uint16) (V53.6)
+	    This tag will reformat the label text to wrap at the width
+	    specified in characters. This will effectively insert a
+	    line-break at the last word before the width is reached.
+
+	    This tag must be specified before the LABEL_Text tag and will
+	    apply to all texts given after it. Setting this value to 0
+	    will disable any word wrap reformatting.
+
+	    This setting affects the initial size of the label object so
+	    be prepared that the size may be smaller than expected
+	    depending on the value given.
+
+	    Defaults to 0 (disabled).
+
+	    Applicability is (OM_NEW)
+
+	LABEL_SoftStyle (uint8)
+	    Soft style for any label text. Only affects text passed after
+	    this tag is given.
+
+	    Defaults to FS_NORMAL.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_Image (struct Image *)
+	    An image to render. Any number of text strings and images can
+	    be provided in a label mixed at will.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_DisposeImage (BOOL)
+	    Indicates that you want the next image passed via LABEL_Image
+	    to be disposed automatically when the label instance is
+	    disposed. This implies that the next image passed must be a
+	    BOOPSI image. This will only affect the next image passed.
+	    Therefore, you must specify this tag for every image you wish
+	    to have disposed of automatically.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_VerticalAlignment (uint16) (V51)
+	    Vertical alignment for subsequent text/images. Only affects
+	    text and images passed after this tag is given. You can
+	    align text and images at the bottom or at the text baseline.
+
+	    Defaults to LVALIGN_BOTTOM.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_VerticalSpacing (uint16)
+	    Vertical spacing between text lines or image nodes. Only
+	    affects text and images passed after this tag is given.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_DrawInfo (struct DrawInfo *)
+	    Contains important pen information. This is also used to get
+	    default font information. If you do not use IA_Font to specify
+	    fonts then you must pass the screen DrawInfo before you give
+	    the IA_Data/LABEL_Text tag.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW)
+
+	LABEL_Mapping (uint16 *)
+	    Pen mapping array affects the next image passed via LABEL_Image
+	    only. You should pass a mapping for non-BOOPSI images only.
+	    It is expected that BOOPSI images would be correctly pen-mapped.
+
+	    The mapping array must have at least as many elements as the
+	    image has bit planes (i.e. 1 << Image.Depth).  For element
+	    i in the array you put in the new pen that you want pen i in
+	    your image to be mapped to. For a typical 4-colour image, you
+	    might use the following mapping:
+
+	    uint16 mapping[4];
+	    struct DrawInfo *drinfo;  // Obtained beforehand.
+
+	    mapping[0] = drinfo->dri_Pens[BACKGROUNDPEN];
+	    mapping[1] = drinfo->dri_Pens[SHADOWPEN];
+	    mapping[2] = drinfo->dri_Pens[SHINEPEN];
+	    mapping[3] = drinfo->dri_Pens[FILLPEN];
+
+	    Applicability is (OM_NEW)
+
+	LABEL_Justification (uint16)
+	    Justification for the entire label. This can be either
+	    LJ_LEFT, LJ_CENTER or LJ_RIGHT.
+
+	    Defaults to LJ_LEFT.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+label.image/LABEL_GetClass                         label.image/LABEL_GetClass
+
+    NAME
+	LABEL_GetClass -- Gets pointer to the label class.
+
+    SYNOPSIS
+	Class * class = LABEL_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V53.
+	Use the "label.image" public class ID instead.
+
+    RESULT
+	class - Pointer to the label class.
+
+

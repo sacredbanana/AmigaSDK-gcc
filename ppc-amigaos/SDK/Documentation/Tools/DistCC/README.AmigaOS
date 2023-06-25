@@ -1,0 +1,157 @@
+SUMMARY
+-------
+This is a self-contained port of the popular distcc distributed
+compilation package for AmigaOS.
+
+For more information and documentation on distcc please visit
+the web site at http://www.distcc.org/
+
+Most of the distcc tools are available including:
+ distcc          - client for dispatching compiles
+ distccd         - server for servicing compile requests
+ distccmon-text  - text based monitor tool
+ distccmon-amiga - GUI based monitor tool
+
+
+FEATURES
+--------
+The following features are currently disabled in this port:
+ - pump mode
+ - inetd mode
+ - syslog support
+ - ssh support
+ - daemon detaching
+ - masquerading
+ - job lifetime limit (sockets timeout instead)
+
+All remaining features including the multi-threaded pre-forking
+daemon, lzo compression and GUI monitor are available.
+
+When combined with GNU make's parallel build feature and a pool of
+servers, the distcc package can save a lot of time compiling larger
+projects.
+
+
+INSTALLATION
+------------
+Copy distcc/SDK SDK: ALL CLONE
+
+Next either setup a home directory and the HOME environment variable
+or use the DISTCC_DIR to point to where distcc files will be stored.
+The distcc client maintains a set of files in the .distcc directory.
+
+Finally, setup the DISTCC_HOSTS environment variable or use the
+HOME:.dists/hosts file to describe your network and you are
+ready to do distributed compiles.
+
+Prefixing your project compile lines with "distcc" will now
+distribute the compile to the hosts you have just configured.
+The distccd daemon must be running on each host.
+
+Please see the distcc documentation and use the --help option
+on the distcc client and distccd server for more details.
+
+
+SECURITY
+--------
+The distccd daemon uses simple IP filtering for some security
+specified with the --allow option. Don't forget you can also
+specify a network of nodes such as a LAN.
+
+For example,
+ distccd --allow 10.10.10.0/24
+
+Will allow all the nodes in your 10.10.10.0 LAN.
+
+
+DISTCCD STATS
+-------------
+The distccd daemon keeps track of some statistics which can be
+retrieved via the built-in HTTP server activated with the --stats
+option. See the distccd documentation for more details.
+
+Note the dcc_free_space metric will always return zero if you use
+RAM: to store your temporary files.
+
+
+HISTORY
+-------
+53.1     - Ported distcc 3.1 package
+         - Added reset button to the GUI monitor
+         - GUI now displays synchronized timelines
+         - Fixed bug in distccmon-amiga which was not removing
+           expired timer messages
+         - Added child process ID column to GUI monitor
+         - Reduced use of signals to start sub-processes
+         - Compiled with SDK 53.13
+         - Reworked archive into standard SDK layout
+         - Converted to new versioning scheme
+         - Requires AmigaOS 4.1 or higher
+
+2.18.3-8 - another fix for the distccd command searching
+         - changed monitor update rate from .75 s to .5 s
+
+2.18.3-7 - fixed distccd command searching
+         - disabled DOS requesters in distcc and distccd
+         - compiled with clib2 1.200
+
+2.18.3-6 - compiled with SDK 51.22
+         - added process birth handshake to distcc and distccd
+         - fixed distcc error handling when server is unavailable
+         - fixed distccd waitpid which could leave acceptors hanging
+         - fixed distccd premature exit
+         - increased accuracy of cpp state reporting
+         - remote compiles now have a slightly higher task priority
+         - changed size and layout of GUI monitor
+
+2.18.3-5 - compiled with beta SDK 51.21
+         - acceptors exit with EINTR with ctrl-c now
+         - reduced acceptor lifetime to 25 jobs
+         - fixed makefile to link with correct clib2-ts flavour
+         - reworked main daemon processing loop so that child processes
+           are always collected correctly
+         - no longer crashes if daemon is interrupted while starting up
+
+2.18.3-4 - compiled with beta SDK 51.20
+         - should no longer report elapsed time as a very large number
+         - removed all Forbid() calls and changed ctrl-c breaking to use
+           ProcessScan()
+         - removed Amiga-specific limits on number of processes
+         - now returns the actual errno from an interrupt
+         - added breaking of child processes launched by acceptors
+         - added precondition checking to wait routines
+         - now uses death messages to synchronize with child processes
+
+2.18.3-3 - compiled with beta SDK 51.17
+         - fixed some new compile warnings from the updated GCC
+         - applied argv fixes from Michael Donohue
+         - fixed for IDOS->GetProcSegList() API change
+         - updated the docs
+         - removed recursion safeguard tracing debug messages
+
+2.18.3-2 - fixed distcc ctrl-c breaking to be more responsive
+         - distccd now won't shut down until the parent process
+           receives a break signal
+         - distccd acceptor name changed
+         - errno and h_errno are now threadsafe
+           (requires bsdsocket.library 4.275 or higher)
+         - updated to use clib2 from CVS dated 2005-10-26
+         - fixed bug which ignored CTRL-C if the distccd daemon
+           was run from AmigaShell
+         - fixed loggers to be thread-safe
+         - implemented recursion safeguard
+         - changed distcc to redirect stderr to stdout by
+           default instead of /dev/null
+
+2.18.3-1 - ported distcc 2.18.3 package
+         - various threading fixes required
+         - modified to use blocking sockets with timeouts
+         - added GUI monitor for AmigaOS
+         - compiled with clib2 1.196
+
+
+CREDITS
+-------
+- Colin Wenzel for dos.library help and expert advice
+- Olaf Barthel for clib2 fixes and threading advice
+- Alex Carmona for the icon

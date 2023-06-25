@@ -1,0 +1,295 @@
+TABLE OF CONTENTS
+
+radiobutton.gadget/--datasheet--
+radiobutton.gadget/AllocRadioButtonNodeA
+radiobutton.gadget/FreeRadioButtonNode
+radiobutton.gadget/GetRadioButtonNodeAttrsA
+radiobutton.gadget/RADIOBUTTON_GetClass
+radiobutton.gadget/SetRadioButtonNodeAttrsA
+radiobutton.gadget/--datasheet--             radiobutton.gadget/--datasheet--
+
+    NAME
+	radiobutton.gadget -- Create radiobutton BOOPSI objects
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	glyph.image
+
+    DESCRIPTION
+	The radiobutton gadget class is used to create a mutually exclusive
+	(MX) selection button group. Selection of an associated option is
+	denoted by the depressed/filled button. Unlike GadTools, GA_Width and
+	GA_Height do not specify the size of a single radio button. Instead
+	it marks the entire domain of the gadget which allows for easier
+	group layout.
+
+    METHODS
+	OM_NEW -- Passed to superclass, defaults set then OM_SET.
+
+	OM_DISPOSE -- Passed to superclass.
+
+	OM_SET -- Passed to superclass then custom tags set & render.
+
+	OM_GET -- Returns requested setting or passed to superclass.
+
+	OM_UPDATE -- Passed to superclass then custom tags set & render.
+
+	OM_NOTIFY -- Tag set then passed to superclass.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_GOACTIVE -- Passed to superclass then radio activated.
+
+	GM_GOINACTIVE -- Passed to superclass then radio deactivated.
+
+	GM_HANDLEINPUT -- Overrides superclass.
+
+	GM_RENDER -- Renders radio button(s).
+
+	GM_HITTEST -- Overrides superclass, returns GMR_HITTEST.
+
+	GM_HELPTEST -- Determine if gadget help was hit.
+
+	GM_KEYTEST -- Determine if key was hit.
+
+	GM_LAYOUT -- Does nothing and returns 0.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	GA_Text (CONST_STRPTR) (V45.1)
+	    NULL terminated array of strings to use as labels.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_Underscore (uint8)
+	    Underscore/escape character for keyboard shortcuts.
+
+	    Defaults to the '_' character.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_TextAttr (struct TextAttr *)
+	    Used to set the text font to render the labels.
+
+	    Defaults to RPort->Font, which is often the screen or
+	    window font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_ActivateKey (CONST_STRPTR)
+	    Defines the gadget's shortcut/activation key(s).
+
+	    Setting this attribute enables button selection via
+	    the keys defined in the gadget label. If you don't
+	    set this the default is to use the keys defined
+	    in the radio button labels.
+
+	    Defaults to NULL (use radio button label keys).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	RADIOBUTTON_Labels (struct List *)
+	    Used to set the text labels for the radiobutton group.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	RADIOBUTTON_Spacing (int16)
+	    Spacing between the radio buttons.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	RADIOBUTTON_Selected (int16)
+	    Currently selected radio button number.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	RADIOBUTTON_LabelPlace (int16)
+	    Not currently implemented.
+
+	RADIOBUTTON_LabelArray (STRPTR *)
+	    Not currently implemented. Use GA_Text instead.
+
+radiobutton.gadget/AllocRadioButtonNodeAiobutton.gadget/AllocRadioButtonNodeA
+
+    NAME
+	AllocRadioButtonNodeA -- Allocate a RadioButton node. (V40)
+
+    SYNOPSIS
+	struct Node * AllocRadioButtonNodeA(uint32 pri, struct TagItem *tags);
+
+	struct Node * AllocRadioButtonNode(uint32 pri, Tag tag, ...);
+
+    FUNCTION
+	Allocates a node that can be added to the Exec linked list of
+	labels in the radiobutton. This is the only way to allocate a
+	node for this list, you cannot allocate nodes yourself because
+	the RadioButton class uses a private node structure.
+
+    TAGS
+	All of the tags listed in SetRadioButtonNodeAttrsA() are supported.
+
+    INPUTS
+	pri - Priority of the node (copied to Node.ln_Pri).
+	      This priority is not used by radiobutton.gadget.
+
+	tags - Attributes for the node, passed onto
+	       SetRadioButtonNodeAttrsA().
+
+    RESULT
+	A node that can be added into the Exec list of labels for
+	a RadioButton gadget or NULL on error.
+
+    SEE ALSO
+	FreeRadioButtonNode(), SetRadioButtonNodeAttrsA()
+
+radiobutton.gadget/FreeRadioButtonNode radiobutton.gadget/FreeRadioButtonNode
+
+    NAME
+	FreeRadioButtonNode -- Free a RadioButton node. (V40)
+
+    SYNOPSIS
+	VOID FreeRadioButtonNode(struct Node *node);
+
+    FUNCTION
+	Frees a RadioButtonNode allocated with AllocRadioButtonNodeA().
+
+    INPUTS
+	node - The node to free.
+
+    SEE ALSO
+	AllocRadioButtonNodeA()
+
+radiobutton.gadget/GetRadioButtonNodeAttrsAon.gadget/GetRadioButtonNodeAttrsA
+
+    NAME
+	GetRadioButtonNodeAttrsA -- Get RadioButton node attributes. (V40)
+
+    SYNOPSIS
+	void GetRadioButtonNodeAttrsA(struct Node *node, struct TagItem *tags);
+
+	void GetRadioButtonNodeAttrs(struct Node *node, Tag tag, ...);
+
+    FUNCTION
+	The RadioButton uses a private node structure and all attributes
+	are hidden, and must therefore be accessed with this function.
+
+    TAGS
+	All of the tags listed in SetRadioButtonNodeAttrsA() are supported.
+
+    INPUTS
+	node - Node to get the information on.
+
+	tags - A tag list of attributes to get. Each ti_Tag is the
+	       attribute to get and ti_Data is a pointer to a location
+	       to copy the result into.
+	       Safe to call with a NULL pointer.
+
+    NOTES
+	Do not forget that the ti_Data pointer must point to a uint32
+	sized storage location no matter what type you are getting.
+
+    SEE ALSO
+	SetRadioButtonNodeAttrsA()
+
+radiobutton.gadget/RADIOBUTTON_GetClassadiobutton.gadget/RADIOBUTTON_GetClass
+
+    NAME
+	RADIOBUTTON_GetClass -- Gets pointer to the radiobutton class.
+
+    SYNOPSIS
+	Class * class = RADIOBUTTON_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "radiobutton.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the radiobutton class.
+
+radiobutton.gadget/SetRadioButtonNodeAttrsAon.gadget/SetRadioButtonNodeAttrsA
+
+    NAME
+	SetRadioButtonNodeAttrsA -- Set RadioButton node attributes. (V40)
+
+    SYNOPSIS
+	void SetRadioButtonNodeAttrsA(struct Node *node, struct TagItem *tags);
+
+	void SetRadioButtonNodeAttrs(struct Node *node, Tag tag, ...);
+
+    FUNCTION
+	Changes attributes for a RadioButton node. Since the RadioButton
+	class uses a private node structure, this is the only way to change
+	node attributes.
+
+	You may not change node attributes when the node is in a list
+	attached to a RadioButton gadget. You must first detach the list
+	with RADIOBUTTON_Labels, ~0 before you can change attributes and
+	then re-attach the list.
+
+    TAGS
+	RBNA_Label (CONST_STRPTR)
+	    Radio button text label.
+
+	RBNA_UserData (APTR)
+	    Arbitrary user data for this node.
+
+	RBNA_HintInfo (CONST_STRPTR)
+	    A hintinfo string for this button node.
+	    This pointer must be valid for the life of
+	    the gadget that requires it.
+
+   RBNA_Disabled (BOOL) (V53.6)
+       Disables input for this node and renders it in disabled state.
+
+    INPUTS
+	node - Node whose attributes you are changing.
+
+	tags - Tag list of attributes to change.
+	       Safe to call with a NULL pointer.
+
+    SEE ALSO
+	GetRadioButtonNodeAttrsA()
+
+

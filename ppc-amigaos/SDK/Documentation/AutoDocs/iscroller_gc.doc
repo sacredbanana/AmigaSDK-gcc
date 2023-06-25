@@ -1,0 +1,102 @@
+TABLE OF CONTENTS
+
+scrollergclass/--datasheet--
+
+
+scrollergclass/--datasheet--                         scrollergclass/--datasheet--
+
+    NAME
+	scrollergclass -- scroller gadget class
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	propgclass, buttongclass, sysiclass
+
+    DESCRIPTION
+	The scrollergclass class enhances the propgclass class object but
+	does not derive from it. Scrollergclass objects support both
+	absolute and relative coordinates. Additionally, arrow buttons
+	are supported which will change the position of the knob by a
+	configurable delta value.
+
+    METHODS
+	OM_NEW -- Create the scrollergclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroy the gadget and then pass to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass.
+
+	GM_RENDER -- Render the gadget with state. Passed to image class.
+
+	GM_GOACTIVE -- Activate the gadget.
+
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+	GM_HANDLEINPUT -- Handle input while active.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_EXTENT -- Inquire about rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	PGA_Freedom (uint16)
+	    This attribute tells a scrollergclass object on which axis
+	    the gadget's knob is free to move (horizontal or vertical).
+	    It is either FREEHORIZ or FREEVERT.
+
+	    Defaults to FREEVERT.
+
+	    Applicability is (OM_NEW)
+
+	PGA_Top (uint32)
+	PGA_Total (uint32)
+	PGA_Visible (uint32)
+	    These attributes are based on the use of proportional
+	    gadgets to control scrolling text. When scrolling 100 lines
+	    of text in a 25 line visible window, you would set
+	    PGA_Total to 100, PGA_Visible to 25, and watch PGA_Top run
+	    from 0 to 75 (top line of the last page).
+
+	    If the user clicks in the scroller gadget but not on the
+	    knob, the entire knob jumps one "page" (the size of the
+	    visible area minus one, PGA_Visible-1). The page jump will
+	    leave an overlap of one line unless the value PGA_Visible
+	    is 1 in which case the gadget acts as an integer numeric
+	    slider sliding from 0 to PGA_Total - 1.
+
+	    When PGA_Top changes the gadget sends itself an OM_NOTIFY
+	    message about this attribute change with the GA_ID and the
+	    PGA_Top in the message attributes.
+
+	    Defaults to PGA_Top 0, PGA_Total 1 and PGA_Visible 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+	    PGA_Top is also (OM_NOTIFY)
+
+	PGA_ArrowDelta (int32)
+	    This attribute determines how much of a change the arrow
+	    buttons will make when pressed. The delta value must be
+	    greater than or equal to 1.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PGA_ArrowDown (BOOL)
+	    This boolean attribute will be present in the OM_NOTIFY
+	    messages sent by the scrollergclass object to itself while
+	    the scroller is active. The receiver of any OM_UPDATE
+	    messages can then determine if the event is the result
+	    of an arrow button being pressed or not.
+
+	    Applicability is (OM_NOTIFY)
+
+

@@ -1,0 +1,140 @@
+TABLE OF CONTENTS
+
+filler.image/--datasheet--
+filler.image/FILLER_GetClass
+filler.image/--datasheet--                         filler.image/--datasheet--
+
+    NAME
+	filler.image -- Create filler BOOPSI objects
+
+    SUPERCLASS
+	imageclass
+
+    DESCRIPTION
+	The filler image class is primarily used to create visual entities
+	used to 'fill' areas of a user interface, usually in combination
+	with logos/banners/splashes, etc.
+
+    METHODS
+	OM_NEW -- Passed to superclass, defaults set, then OM_SET.
+
+	OM_DISPOSE -- Children disposed of then passed to superclass.
+
+	OM_SET -- Passed to superclass, custom tags set.
+
+	OM_GET -- Custom tags returned or passed to superclass.
+
+	IM_DRAW -- Renders the image. Overrides the superclass.
+
+	IM_DRAWFRAME -- Renders the image in a frame.
+
+	IM_DOMAINFRAME -- Query the image frame.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	FILLER_Screen (struct Screen *)
+	    Screen for allocation of needed pens for the display.
+	    This MUST be provided and MUST remain open until after
+	    the gadget has been disposed.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_BackgroundColour (uint32)
+	    Background fill colour. The image area will be filled with
+	    this colour value. The full 32-bit ARGB value must be provided,
+	    including the alpha-channel transparency information for blending
+	    with the background. Translucent fills currently only work on
+	    direct mapped screens. On CLUT screens the alpha information is
+	    ignored.
+
+	    Default for this attribute is 0 (clear/transparent).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_TopLeftColour     (uint32)
+	FILLER_TopRightColour    (uint32)
+	FILLER_BottomLeftColour  (uint32)
+	FILLER_BottomRightColour (uint32)
+	    Overriding the background colour fill if defined, these four
+	    attributes describe a four-way blended colour gradient fill.
+	    Similar to the background fill colour, these attributes require
+	    ARGB values.
+
+	    Default for these attributes is 0 (clear/transparent).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_ImageFilename (CONST_STRPTR)
+	    This attribute specifies the external image file to be loaded
+	    (via Datatypes) as a picture to be displayed within the filler.image.
+
+	    Default is NULL (no image).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_ImageBuffer (struct SizedBuffer *)
+	    This attribute specifies a buffer (pointer + size) that contains the
+	    Datatype image to be displayed within the filler.image. Note that the
+	    format is a real image file format supported by datatypes (like PNG,
+	    IFF, etc.) and not a pure Bitmap of some sort.
+
+	    Default is NULL (no image).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_ImageAddress (APTR)
+	FILLER_ImageSize (uint32)
+	    Similar to FILLER_ImageBuffer, these attributes combined provide an
+	    alternative way to load the image file from a memory source. These
+	    attributes must BOTH be set (everytime) before the image will be
+	    loaded. The address is a pointer to the real image file format data,
+	    the size attribute is the byte length of this data.
+
+	    Default is NULL (no image).
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	FILLER_ImageMode (uint32)
+	    If FILLER_ImageFilename is given, these attributes define how the
+	    image is displayed. See <images/filler.h> for possible values.
+
+	    Default is FILLER_MODE_NORMAL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_ImagePlacement (uint32)
+	    This attribute compliments the FILLER_ImageMode attribute, providing
+	    extra information about where the image should be displayed relative
+	    to the filler image area. See <images/filler.h> for possible values,
+	    more than one of which may be OR'd together.
+
+	    Default is for the image to be centred in the middle (both
+	    horizontally and vertically) of the filler image area.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	FILLER_ScaleMode (uint32)
+	    This attribute sets the scaling algorithm when FILLER_ImageMode is
+	    set to a scaled mode.
+
+	    Default is FILLER_SCALE_SIMPLE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+filler.image/FILLER_GetClass                     filler.image/FILLER_GetClass
+
+    NAME
+	FILLER_GetClass -- Gets pointer to the filler class.
+
+    SYNOPSIS
+	Class * class = FILLER_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "filler.image" public class ID instead.
+
+    RESULT
+	class - Pointer to the filler class.
+
+

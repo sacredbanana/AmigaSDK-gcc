@@ -1,0 +1,26 @@
+This drawer contains examples for language drivers, such as found in
+"LOCALE:languages".
+
+Note that there exist three different types
+of drivers that include different versions of the basic driver framework:
+
+- languagecharsetdriver.c is included by drivers that always override the
+  charset driver and define all functions themselves.
+
+- languagestrncmpdriver.c is included by drivers that dont have
+  the IsAlNum(), IsAlpha() etc functions, no ConvToLower(),
+  ConvToUpper() and StrConvert() because the functions in the
+  common charset driver are ok for this language. They implement
+  StrnCmp(), GetLocaleStr() and GetCodeSet().
+
+- languagedriver.c is like above but without StrnCmp(), when there
+  exist no language-specific sorting rules the charset driver provides it.
+
+You basically just need to copy an existing
+languagename_MIME-NAME.c source code to
+mylanguage_MIME-NAME-OF-MY-CHARSET.c, modify the character property and
+conversion tables and the text strings, use BumpRev to create
+mylanguage_MIME-NAME-OF-MY-CHARSET_rev.h, add your driver to the makefile
+and call "make". You may need the OS4 SDK. You may also need to change the
+include paths in the makefiles, e.g. V:include -> ../include plus
+SDK:include.

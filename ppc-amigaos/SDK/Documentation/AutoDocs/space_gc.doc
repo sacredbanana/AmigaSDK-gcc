@@ -1,0 +1,201 @@
+TABLE OF CONTENTS
+
+space.gadget/--datasheet--
+space.gadget/SPACE_GetClass
+space.gadget/--datasheet--                         space.gadget/--datasheet--
+
+    NAME
+	space.gadget -- Create space BOOPSI objects
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	bevel.image
+
+    DESCRIPTION
+	This class does more than just take up space.
+
+	Each space.gadget object allows you to create a GREL or layout
+	resizable input areabox. You might render custom graphics in the
+	area, for example, a icon editor graphic area might be based on
+	space.gadget. This lets space.gadget handle its domain in a way
+	compatible with not only the present layout, but any future custom
+	layout domain methods. The application can handle rendering
+	and clipping in this area on the application task.
+
+	It presently sends notification of Mouse X/Y and the inner
+	custom application rendering area of the space accounting for
+	any outer bevel (including preference bevel sizes changes).
+
+    METHODS
+	OM_NEW -- Create the gadget. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_DISPOSE -- Disposes object and then passed to superclass.
+
+	OM_UPDATE -- Update object attributes and pass to superclass.
+
+	OM_NOTIFY -- Notifies of attribute changes and pass to superclass.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	GM_RENDER -- Renders the gadget imagery and calls the
+	             SPACE_RenderHook if defined.
+
+	GM_HITTEST -- Returns GMR_GADGETHIT as long as the GA_ReadOnly
+	              attribute is not set.
+
+	GM_GOACTIVE -- Passed to superclass then sends mouse event
+	               notifications.
+
+	GM_HANDLEINPUT -- Handles input events once active. As long
+	                  as the user keeps the mouse button pressed,
+	                  the gadget sends notification events to its
+	                  ICA_TARGET.
+
+	GM_GOINACTIVE -- Passed to superclass and final notification sent.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	GA_ReadOnly (BOOL)
+	    Set to TRUE to make the gadget non-selectable but without
+	    a ghost pattern. Most notifications will not be sent if the
+	    space gadget is read only.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_Selected (BOOL)
+	    Indicate whether the gadget is selected or not.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+       As a general rule, gadget hints are displayed to the user to
+       briefly describe what the gadget is used for. Displaying hints
+       for an apparently wmpty space could be confusing for the user,
+       so use it wisely.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	SPACE_MinWidth (uint16)
+	    Minimum width of the space.gadget object.
+
+	    Defaults to 6.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	SPACE_MinHeight (uint16)
+	    Minimum height of the space.gadget object.
+
+	    Defaults to 4.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	SPACE_MouseX (int16)
+	    X Position of the mouse within the space gadget.
+
+	    Applicability is (OM_NOTIFY)
+
+	SPACE_MouseY (int16)
+	    Y Position of the mouse within the space gadget.
+
+	    Applicability is (OM_NOTIFY)
+
+	SPACE_Transparent (BOOL)
+	    If TRUE, the gadget background won't be cleared before
+	    redraw.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	SPACE_AreaBox (struct IBox **)
+	    Inner area IBox application rendering bounds.
+	    Returns a pointer to an internal struct IBox.
+
+	    This tag is deprecated because it is unsafe to use in a
+	    multi-tasking environment. Use SPACE_RenderBox instead.
+
+	    Applicability is (OM_GET, OM_NOTIFY)
+
+	SPACE_RenderBox (struct IBox *) (V53.6)
+	    Inner area IBox application rendering bounds. The pointer
+	    must point to a struct IBox to store the bounds.
+
+	    Applicability is (OM_GET, OM_NOTIFY)
+
+	SPACE_RenderHook (struct Hook *)
+	    Hook to call when the gadget refreshes via the GM_RENDER
+	    method.
+
+	      uint32 Render(struct Hook *hook, APTR space,
+	                    struct gpRender *msg);
+
+	    The space parameter is a pointer to the space.gadget object.
+	    The msg is the standard gpRender message as described in
+	    the gadget_gc.doc autodoc and defined in
+	    <intuition/gadgetclass.h>. The return value is undefined.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	SPACE_BevelStyle (int16)
+	    Specifies the bevel box style (see images/bevel.h).
+
+	    NOTE: Before v45.2 the gadget didn't change the size of the
+	          bevel box, it was always 6 x 4 pixels.
+
+	    Defaults to BVS_NONE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	SPACE_DomainBevel (BOOL) (V50)
+	    Take the size of the bevel into account when calculating
+	    the gadget domain sizes for GM_DOMAIN.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+space.gadget/SPACE_GetClass                       space.gadget/SPACE_GetClass
+
+    NAME
+	SPACE_GetClass -- Gets pointer to the space class.
+
+    SYNOPSIS
+	Class * class = SPACE_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "space.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the space class.
+
+

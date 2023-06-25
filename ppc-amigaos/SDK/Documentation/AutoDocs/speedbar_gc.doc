@@ -1,0 +1,628 @@
+TABLE OF CONTENTS
+
+speedbar.gadget/--datasheet--
+speedbar.gadget/AllocSpeedButtonNodeA
+speedbar.gadget/FreeSpeedButtonNode
+speedbar.gadget/GetSpeedButtonNodeAttrsA
+speedbar.gadget/SBM_SETNODEATTRS
+speedbar.gadget/SetSpeedButtonNodeAttrsA
+speedbar.gadget/SPEEDBAR_GetClass
+
+
+speedbar.gadget/--datasheet--                   speedbar.gadget/--datasheet--
+
+   NAME
+    speedbar.gadget -- Create speedbar BOOPSI objects.
+
+   SUPERCLASS
+    gadgetclass
+
+   REQUIRES
+    bevel.image
+
+   DESCRIPTION
+    This class provides a simple way to create and manage
+    "speed bars" also commonly called button bars, tool docks, etc.
+
+    A speed bar is a horizontal row or vertical column of button
+    gadgets, usually with an image face denoting some program function.
+
+    The speedbar gadget could be placed in the main program's window
+    or perhaps in its own window to form a floating speedbar/tooldock.
+
+    Features speedbar.gadget provides include:
+
+    - Help strings for each button can be provided, and displayed
+      in a window title bar while a button is depressed.
+
+    - Supports Right Mouse Button abort.
+
+    - Supports hiding and exposing speed buttons in the bar.
+
+    - Supports scrolling additional speed buttons into view
+      via mouse wheel, or by holding down the SHIFT key while
+      clicking and dragging the mouse left/right or up/down
+      depending on the SPEEDBAR_Orientation setting.
+
+    - Supports OM_NOTIFY and may be attached to either
+      button.gadget, scroller.gadget and/or propgclass to scroll
+      the speed buttons if more buttons exist than are visible
+      within its bounds.
+
+   METHODS
+    OM_NEW -- Passed to superclass, defaults set then OM_SET.
+
+    OM_DISPOSE -- Passed to superclass.
+
+    OM_SET -- Passed to superclass, options tags set then rendered.
+
+    OM_GET -- Custom tag returned or passed to superclass.
+
+    OM_UPDATE -- Passed to superclass, options set then rendered.
+
+    OM_NOTIFY -- Passed to superclass, options set then rendered.
+
+    GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+                 GDOMAIN_MAXIMUM dimensions.
+
+    GM_HITTEST -- Returns GMR_HITTEST.
+
+    GM_GOACTIVE -- Passed to superclass, speedbar activated.
+
+    GM_HANDLEINPUT -- All input processed.
+
+    GM_GOINACTIVE -- Passed to superclass, speedbar deactivated.
+
+    GM_HANDLESCROLL -- Processes a mouse wheel input event.
+
+    GM_RENDER -- Passed to superclass, then speedbar is rendered.
+
+    GM_HELPTEST -- Determines if gadget help was hit.
+
+    GM_LAYOUT -- Calculates relative gadget coordinates.
+
+    GM_EXTENT -- Reports gadget rendering extent.
+
+    GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+    GM_KEYTEST -- Determine if key was hit. (V53.3)
+
+    GM_KEYGOACTIVE -- Handle keyboard activation. (V53.3)
+
+    GM_KEYGOINACTIVE -- Handle keyboard deactivation. (V53.3)
+
+    SBM_SETNODEATTRS -- Changes attributes without detaching.
+
+    All other methods are passed to the superclass.
+
+   ATTRIBUTES
+    GA_ID (uint16)
+       Unique ID number for the gadget.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+    GA_TextAttr (struct TextAttr *)
+       Used to set the text font for labels.
+
+       Defaults to the destination RastPort's font, which is often the
+       screen or window font.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+    GA_BackFill (struct Hook *)
+       A layer backfill hook to provide a more complex background
+       pattern. See InstallLayerHook() for more details about the
+       backfill hook.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+    GA_HintInfo (CONST_STRPTR)
+       Specify the text to use as the hint info for this gadget.
+       You can change this attribute at any time, and it will over-
+       ride any text specified in the windows HintInfo array. 
+       The string specified here will be over-ridden by strings
+       supplied by the speedbar tab, if any. This is used as a 
+       fall-back in case the pointer is over the gadget, but not
+       over a tab, or over a tab without a specific hint assigned
+       to it.
+       See  window.class autodoc for more information.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET).
+
+    SPEEDBAR_Buttons (struct List *)
+       An Exec list. Nodes in this list must be allocated with
+       AllocSpeedButtonNodeA().
+
+       Passing a NULL list will remove all buttons from the speedbar
+       and detach the buttons. Passing ~0 will detach all buttons
+       but not erase the display which is useful when working on
+       the list data or while changing button lists.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+    SPEEDBAR_Orientation (uint16)
+       Define orientation of the speedbar's button strip.
+
+       Since this attribute may affect the sizing requirements of
+       the gadget, some care must be taken when changing it: if the
+       gadget has already been added to a window, it is recommended
+       you use SetAttrs() rather than SetGadgetAttrs() (to skip the
+       immediate redraw) and then perform a WM_RETHINK to have the
+       window recalculate the domain and relayout its contents.
+
+       Accepted values as defined in <gadgets/speedbar.h>:
+
+         SBORIENT_HORIZ - horizontal bar
+         SBORIENT_VERT  - vertical bar
+
+       Defaults to SBORIENT_HORIZ.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+    SPEEDBAR_ButtonType (uint16) (V53)
+       Define whether the speed buttons should display only text,
+       only images, or both.
+
+       Of course a button must have the specified type of contents
+       in the first place to be able to display it; for instance,
+       if you don't assign it a label with SBNA_Text, it won't
+       display any text regardless of the value of this attribute.
+       Therefore you should always build buttons having both image
+       and text, and then let this attribute act as a filter.
+
+       Since this attribute may affect the sizing requirements of
+       the gadget, some care must be taken when changing it: if the
+       gadget has already been added to a window, it is recommended
+       you use SetAttrs() rather than SetGadgetAttrs() (to skip the
+       immediate redraw) and then perform a WM_RETHINK to have the
+       window recalculate the domain and relayout its contents.
+
+       Accepted values as defined in <gadgets/speedbar.h>:
+
+         SBTYPE_BOTH  - Display both image and text
+         SBTYPE_TEXT  - Display only the text
+         SBTYPE_IMAGE - Display only the image
+
+       Defaults to SBTYPE_BOTH.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   SPEEDBAR_HorizPadding (uint16)
+   SPEEDBAR_VertPadding (uint16)
+       Horizontal/vertical padding in pixels between the speedbar
+       frame and the buttons. Maximum is 32, setting it to ~0 will
+       reset the attribute to an automatically calculated value.
+
+       Since this attribute may affect the sizing requirements of
+       the gadget, some care must be taken when changing it: if the
+       gadget has already been added to a window, it is recommended
+       you use SetAttrs() rather than SetGadgetAttrs() (to skip the
+       immediate redraw) and then perform a WM_RETHINK to have the
+       window recalculate the domain and relayout its contents.
+
+       Defaults to ~0 (automatic).
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+    SPEEDBAR_Background (int16)
+       Background pen color to appear behind the speed buttons.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+    SPEEDBAR_Window (struct Window *) DEPRECATED
+       This window's titlebar will change to the selected button's
+       help text while the button remains selected.
+
+       While this attribute is available, it should be regarded
+       as "for compatibility" only. The HelpHints provided by the
+       GA_HintInfo array, or each nodes HelpHint texts, should be 
+       used instead to provide a more consistent user interface.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+    SPEEDBAR_StrumBar (BOOL)
+       SPEEDBAR_StrumBar has been disabled to support other features
+       available now and in the future. Don't use in new code!
+
+    SPEEDBAR_OffButton (uint16)
+       Disconnect a specified button ID from the speedbar display
+       without removing or deallocating the button from the list.
+
+       Applicability is (OM_SET, OM_UPDATE)
+
+    SPEEDBAR_OnButton (uint16)
+       Reconnect the specified button ID to the speedbar.
+
+       Applicability is (OM_SET, OM_UPDATE)
+
+    SPEEDBAR_ScrollLeft (BOOL)
+       Scroll the speed buttons to the left or upwards depending on
+       the gadget orientation.
+
+       Applicability is (OM_SET, OM_UPDATE)
+
+    SPEEDBAR_ScrollRight (BOOL)
+       Scroll the speed buttons to the right or downwards depending
+       on the gadget orientation.
+
+       Applicability is (OM_SET, OM_UPDATE)
+
+    SPEEDBAR_TopNode (struct Node *) (V53)
+       Set or retrieve the node pointer of the top (first visible)
+       speed button in the button list. When setting the top
+       button, it may be adjusted according to the current values
+       of SPEEDBAR_Visible and SPEEDBAR_Total in order to always
+       display as many buttons as possible.
+       Note that it can be NULL, for instance when the button list
+       is empty or the gadget is too small to display any buttons.
+
+       Applicability is (OM_SET, OM_UPDATE, OM_GET)
+
+    SPEEDBAR_Top (int16)
+       Set or retrieve the index of the top (first visible)
+       speed button in the button list. When setting the
+       top button, it may be adjusted according to the current
+       values of SPEEDBAR_Visible and SPEEDBAR_Total in order
+       to always display as many buttons as possible.
+
+       NOTE: we used to describe this attribute as being the
+       unique ID number of the speed button, but actually it
+       has always been just its index among the (not hidden)
+       buttons in the list. The documentation has now been
+       updated to reflect the real implementation. If you need
+       to know the ID number of the top button, read it from
+       the node you can retrieve with SPEEDBAR_TopNode.
+
+       Applicability is (OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+    SPEEDBAR_Visible (int16)
+       Retrieve the number of speed buttons visible within
+       the gadget's container bounds.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+    SPEEDBAR_Total (int16)
+       Retrieve the total number of speed buttons in the button list.
+       This only takes into consideration buttons that have not been
+       temporarily disconnected via SPEEDBAR_OffButton.
+       SPEEDBAR_Total, SPEEDBAR_Visible and SPEEDBAR_Top could be
+       mapped to a scroller's matching PGA tags to scroll the button
+       list if so desired.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+    SPEEDBAR_BevelStyle (uint16)
+       Set bevel box style around the speed bar. In some cases
+       complex speedbars might be built via a series of speedbars
+       in a layout object group and it would be desirable to
+       select other bevel styles such as BVS_NONE, which under any
+       bevel style preferences in use will not render a bevel.
+
+       Since this attribute may affect the sizing requirements of
+       the gadget, some care must be taken when changing it: if the
+       gadget has already been added to a window, it is recommended
+       you use SetAttrs() rather than SetGadgetAttrs() (to skip the
+       immediate redraw) and then perform a WM_RETHINK to have the
+       window recalculate the domain and relayout its contents.
+
+       Defaults to BVS_DISPLAY.
+
+       Applicability is (ON_NEW, OM_SET, OM_GET)
+
+    SPEEDBAR_Selected (uint16)
+       Last selected speed button node ID.
+
+       Applicability is (OM_NOTIFY)
+
+    SPEEDBAR_SelectedNode (struct Node *)
+       Last selected speed button node pointer.
+
+       Applicability is (OM_NOTIFY)
+
+    SPEEDBAR_EvenSize (BOOL)
+       Size all buttons in bar evenly according to the largest contents.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+    SPEEDBAR_Font (struct TextFont *) (V50)
+       Font to use for all SBNA_Text labels.
+
+       Defaults to the GA_TextAttr font.
+
+       Applicability is (OM_NEW, OM_SET)
+
+speedbar.gadget/AllocSpeedButtonNodeA   speedbar.gadget/AllocSpeedButtonNodeA
+
+   NAME
+    AllocSpeedButtonNodeA -- Allocate a SpeedBar node. (V40)
+
+   SYNOPSIS
+    struct Node *AllocSpeedButtonNodeA(uint16 num, struct TagItem *tags);
+
+    struct Node *AllocSpeedButtonNode(uint16 num, Tag tag, ...);
+
+   FUNCTION
+    Allocates a node that can be added to the Exec linked list of
+    buttons in the speedbar. This is the only way to allocate a
+    node for this list, you cannot allocate nodes yourself because
+    the SpeedBar class uses a private node structure.
+
+   TAGS
+    See SetSpeedButtonNodeAttrsA() for the list of supported tags.
+
+   INPUTS
+    num - Places value in Node.ln_Pri and is the numeric ID of the
+          button within the bar. Note the current limitation, ln_Pri
+          is an int8.
+
+    tags - Attributes for the node passed to SetSpeedButtonNodeAttrsA().
+
+   RESULT
+    A node that can be added to the list of buttons or NULL on error.
+
+   NOTES
+    As of V53.13 ln_Pri is only used to store the least significant byte
+    of the button ID. To get and set the whole ID the new SBNA_ButtonID
+    tag should be used instead of accessing ln_Pri.
+
+   SEE ALSO
+    FreeSpeedButtonNode(), SetSpeedButtonNodeAttrsA()
+
+speedbar.gadget/FreeSpeedButtonNode       speedbar.gadget/FreeSpeedButtonNode
+
+   NAME
+    FreeSpeedButtonNode -- Free a SpeedBar node. (V40)
+
+   SYNOPSIS
+    void FreeSpeedButtonNode(struct Node *node);
+
+   FUNCTION
+    Frees a node allocated with AllocSpeedButtonNodeA().
+
+   INPUTS
+    node - The node to free.
+           Safe to call with a NULL pointer. (V53.7)
+
+   NOTES
+    ALWAYS ensure that you Remove() the node before calling this function 
+    to save a potential corruption of the list.
+
+   SEE ALSO
+    AllocSpeedButtonNodeA()
+
+speedbar.gadget/GetSpeedButtonNodeAttrsAedbar.gadget/GetSpeedButtonNodeAttrsA
+
+   NAME
+    GetSpeedButtonNodeAttrsA -- Get attributes about a SpeedBar node. (V40)
+
+   SYNOPSIS
+    void GetSpeedButtonNodeAttrsA(struct Node *node, struct TagItem *tags);
+
+    void GetSpeedButtonNodeAttrs(struct Node *node, Tag tag, ...);
+
+   FUNCTION
+    The SpeedBar uses a private node structure and all attributes
+    are hidden, and must therefore be accessed with this function.
+
+   TAGS
+    See SetSpeedButtonNodeAttrsA() for the list of supported tags.
+
+   INPUTS
+    node - The SpeedBar node to get the information on.
+
+    tags - A tag list of attributes to get. ti_Tag is the attribute
+           to get and ti_Data is a pointer to a location to copy
+           the result into.
+
+   SEE ALSO
+    SetSpeedButtonNodeAttrsA()
+
+speedbar.gadget/SBM_SETNODEATTRS             speedbar.gadget/SBM_SETNODEATTRS
+
+   NAME
+    SBM_SETNODEATTRS -- Changes attributes without detaching. (V50)
+
+   SYNOPSIS
+    uint32 result = IDoMethodA(APTR obj, struct sbSetNodeAttrs * msg);
+
+   FUNCTION
+    Changes attributes of a SpeedBar node. Since the SpeedBar
+    class uses a private node structure, this is the only way to
+    change node attributes.
+
+    Unlike the SetSpeedButtonNodeAttrsA() function, this method
+    does not require you to detach the list.
+
+    Use DoGadgetMethodA() to provide rendering information when
+    invoking this method.
+
+    This method takes the following message structure:
+
+    struct sbSetNodeAttrs
+    {
+        uint32             MethodID;    // SBM_SETNODEATTRS
+        struct GadgetInfo *sb_GInfo;    // Rendering information
+        struct Node       *sb_Node;     // Node whose attributes
+                                        // you are changing.
+        struct TagItem    *sb_AttrList; // SetSpeedButtonNodeAttrsA() tags
+    };
+
+   INPUTS
+    obj - SpeedBar object pointer
+    msg - pointer to fully initialized struct sbSetNodeAttrs
+          (see <gadgets/speedbar.h>)
+
+   RESULT
+    Returns 1 if successful or 0 on error.
+
+   SEE ALSO
+    SetSpeedButtonNodeAttrsA(), intuition.library/DoGadgetMethodA()
+
+speedbar.gadget/SetSpeedButtonNodeAttrsAedbar.gadget/SetSpeedButtonNodeAttrsA
+
+   NAME
+    SetSpeedButtonNodeAttrsA -- Set attributes of a SpeedBar node. (V40)
+
+   SYNOPSIS
+    void SetSpeedButtonNodeAttrsA(struct Node *node, struct TagItem *tags);
+
+    void SetSpeedButtonNodeAttrs(struct Node *node, Tag tag, ...);
+
+   FUNCTION
+    Changes attributes of a SpeedBar node. Since the SpeedBar
+    class uses a private node structure, this is the only way to
+    change node attributes.
+
+    You may not change node attributes when the node is in a list
+    attached to a SpeedBar gadget. You must first detach the list
+    with SPEEDBAR_Buttons, ~0 before you can change attributes, and
+    then re-attach the list.
+
+    See the SBM_SETNODEATTRS method for another way to set the
+    node attributes, introduced in V50.
+
+   TAGS
+    SBNA_Left (int16)
+       Left spacing offset of button. Set automatically, don't
+       use this in new code. Only for backward compatibility.
+
+    SBNA_Top (int16)
+       Top spacing offset of button. Set automatically, don't
+       use this in new code. Only for backward compatibility.
+
+    SBNA_Width (int16)
+       Width of button contents. Set automatically, don't use
+       this unless you need to specify a minimum width.
+
+    SBNA_Height (int16)
+       Height of button contents. Set automatically, don't use
+       this unless you need to specify a minimum height.
+
+    SBNA_Image (struct Image *)
+       Standard image or BOOPSI image to be displayed in this button.
+
+    SBNA_SelImage (struct Image *)
+       Standard image or BOOPSI image to be displayed in this button
+       when selected. If not provided, the normal image passed with
+       SBNA_Image will be used instead.
+
+    SBNA_Spacing (int16)
+       Spacing between this button and the previous one.
+
+       Defaults to 4.
+
+    SBNA_Highlight (int16)
+       Button selection highlight mode, any one of the following
+       is supported:
+
+         SBH_NONE     - Do not highlight.
+         SBH_BACKFILL - Fill the background with FILLPEN.
+         SBH_RECESS   - Shift image right and down when selected.
+         SBH_IMAGE    - Display alternate image (SBNA_SelImage).
+
+       Defaults to SBH_RECESS.
+
+    SBNA_Enabled (BOOL)
+       Enabled (hidden/shown) state of a speed button.
+
+    SBNA_Help (CONST_STRPTR)
+       String pointer to optional help text placed in the window
+       titlebar when this speed button is active/selected.
+
+    SBNA_UserData (APTR)
+       User data, use as desired.
+
+    SBNA_Disabled (BOOL) (V41)
+       Mark this button as disabled. It will be rendered with a
+       disabled appearance and will not be selectable.
+
+    SBNA_Toggle (BOOL) (V41)
+       Designates the button as a boolean toggle button.
+
+       Defaults to FALSE.
+
+    SBNA_Selected (BOOL) (V41)
+       The current selection state of a toggle/MX button.
+
+       Defaults to FALSE.
+
+    SBNA_MXGroup (BOOL) (V41)
+       Set the mutual exclude group a button belongs to. This setting
+       implies the SBNA_Toggle attribute is TRUE also. Note, a single
+       speedbar can contain several MX groups and mixtures of toggles
+       and normal selections.
+
+       The default is ~0, meaning not in any MX group.
+
+    SBNA_Text (CONST_STRPTR) (V50)
+       Label to display under the image. It can contain an underscore
+       which indicates the keyboard shortcut for this button.
+
+    SBNA_Spacer (BOOL) (V53)
+       If TRUE, this is nothing else than a small gap which visually
+       separates two buttons. It cannot be selected, it cannot become
+       the top node, and it isn't taken into account when computing
+       the number of buttons (total or visible). In fact, none of the
+       normal node attributes applies to it, except for SBNA_Enabled
+       and SBNA_UserData.
+       With a dynamically changing or user-definable speedbar, using
+       a separate node as a spacer may be simpler and more convenient
+       than tying the spacing to some specific button.
+       It also has the advantage of standardizing the spacing size.
+
+       Defaults to FALSE.
+
+    SBNA_Separator (BOOL) (V53)
+       Similar to SBNA_Spacer (see above), but produces a larger gap
+       and draws a separator line in the middle. Useful to separate
+       whole groups of buttons having related functionality.
+
+       Defaults to FALSE.
+
+    SBNA_HintInfo (STRPTR) (V53)
+       When HintInfo help "bubbles" are enabled for this gadget (by an entry
+       in the array passed with WINDOW_HintInfo) each button can specify its
+       own string to be shown instead of the default. See the example program
+       in the examples section of the SDK for further information.
+
+       Defaults to the WINDOW_HintInfo entry, if any.
+
+    SBNA_ButtonID (UWORD) (V53.13)
+       Numeric ID of button. Use this instead of accessing ln_Pri directly.
+
+   INPUTS
+    node - Node whose attributes you are changing.
+
+    tags - Tag list of attributes to change.
+
+   SEE ALSO
+    SBM_SETNODEATTRS, GetSpeedButtonNodeAttrsA()
+
+speedbar.gadget/SPEEDBAR_GetClass           speedbar.gadget/SPEEDBAR_GetClass
+
+    NAME
+	SPEEDBAR_GetClass -- Gets pointer to the speedbar class.
+
+    SYNOPSIS
+	Class * class = SPEEDBAR_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "speedbar.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the speedbar class.
+
+

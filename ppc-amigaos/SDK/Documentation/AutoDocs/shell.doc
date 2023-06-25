@@ -1,0 +1,2118 @@
+TABLE OF CONTENTS
+
+commands/ALIAS
+commands/ASK
+commands/CD
+commands/ECHO
+commands/ELSE
+commands/ENDCLI
+commands/ENDIF
+commands/ENDSHELL
+commands/ENDSKIP
+commands/EXECUTE
+commands/FAILAT
+commands/FAULT
+commands/GET
+commands/GETENV
+commands/HISTORY
+commands/IF
+commands/LAB
+commands/NEWCLI
+commands/NEWSHELL
+commands/PATH
+commands/PIPE
+commands/POPCD
+commands/PROMPT
+commands/PUSHCD
+commands/QUIT
+commands/RECORDER
+commands/RESIDENT
+commands/RUN
+commands/SET
+commands/SETENV
+commands/SKIP
+commands/STACK
+commands/SWAPCD
+commands/TEE
+commands/UNALIAS
+commands/UNSET
+commands/UNSETENV
+commands/WHY
+shell/--environment-variables--
+commands/ALIAS                                                 commands/ALIAS
+
+   NAME
+	ALIAS - Set or display command aliases.
+
+   FORMAT
+	ALIAS [<name>] [<string>]
+
+   TEMPLATE
+	NAME,STRING/F
+
+   PATH
+	Internal
+
+   FUNCTION
+	ALIAS permits you to create aliases, or alternative names, for
+	AmigaDOS commands. Using an alias is like replacing a sentence with a
+	single word. With ALIAS, you can abbreviate frequently used commands
+	or replace a standard command name with a different name.
+
+	When AmigaDOS encounters <name>, it replaces it with the defined
+	<string>, integrates the result with the rest of the command line,
+	and attempts to interpret and execute the resulting line as an
+	AmigaDOS command. So <name> is the alias and <string> is the command
+	to be substituted for the alias.
+
+	ALIAS <name> displays the <string> that will be substituted for the
+	alias. ALIAS alone lists all current aliases.
+
+	Aliases are local to the Shell in which they are defined. If you
+	create another Shell with the NEWSHELL command, it will share the
+	same aliases as its parent Shell. However, if you create another
+	Shell with the Execute Command menu item, it will not recognize
+	aliases created in your original Shell. To create a global alias that
+	will be recognized by all Shells, insert the alias in the
+	S:shell-startup file.
+
+	An alias must be at the beginning of the command line, and you can
+	specify arguments on the command line after the alias. However, you
+	cannot use an alias for a series of command arguments. For instance,
+	you cannot create a script using the LFORMAT option of the LIST
+	command by creating an alias to represent the LFORMAT argument.
+
+	You can substitute a filename or other instruction within an alias by
+	placing square brackets ([ ]) in the <string>. Any argument typed
+	after the alias will be inserted at the brackets.
+
+	To remove an ALIAS, use the UNALIAS command.
+
+   EXAMPLES
+	    1> ALIAS d1 DIR DF1:
+
+	Typing d1 results in a directory of the contents of the disk in DF1:,
+	just as if you had typed DIR DF1:.
+
+	    1> ALIAS hex TYPE [] HEX NUMBER
+
+	creates an alias called hex that displays the contents of a specified
+	file in hexadecimal format. The brackets indicate where the filename
+	will be inserted. If you then typed:
+
+	    1> hex Myfile
+
+	the contents of MyFile would be displayed in hexadecimal format with
+	line numbers.
+commands/ASK                                                     commands/ASK
+
+   NAME
+	ASK - Obtain user input when executing a script file.
+
+   FORMAT
+	ASK <prompt>
+
+   TEMPLATE
+	PROMPT/A,TO/K,NUMERIC/S,STRING/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	ASK is used in scripts to write the <prompt> to the current window,
+	then wait for keyboard input. Valid responses are Y (yes), N (no),
+	and Return (no). If Y is pressed, ASK sets the condition flag to 5
+	(WARN). If N is pressed, the condition flag is set to 0. To check the
+	response, an IF statement can be used.
+
+	If the <prompt> contains spaces, it must be enclosed in quotation
+	marks.
+
+	The TO argument will save the input from the user to the named
+	variable. If Y (yes) is pressed, the variable will contain 1.
+	If N or Return (no) is pressed, the variable will contain 0.
+
+	Additional input may be entered by the NUMERIC and STRING switches.
+	The NUMERIC switch will only accept integer input while the STRING
+	switch accepts both numeric and non-numeric input. The values
+	entered may be retrieved using the TO argument.
+
+   EXAMPLES
+	Assume a script contained the following commands:
+
+	    ASK Continue?
+	    IF WARN
+	        ECHO Yes
+	    ELSE
+	        ECHO No
+	    ENDIF
+
+	When the ASK command is reached, Continue? will appear on the screen.
+	If Y is pressed, Yes will be displayed on the screen. If N is
+	pressed, No will be displayed.
+
+   SEE ALSO
+	IF, ELSE, ENDIF, WARN
+commands/CD                                                       commands/CD
+
+   NAME
+	CD - Set, change, or display the current directory.
+
+   FORMAT
+	CD [<dir|pattern>]
+
+   TEMPLATE
+	DIR
+
+   PATH
+	Internal
+
+   FUNCTION
+	CD with no arguments displays the name of the current directory. When
+	a valid directory name is given, CD makes the named directory the
+	current directory.
+
+	CD does not search through the disk for the specified directory. It
+	expects it to be in the current directory. If it is not, you must
+	give a complete path to the directory. If CD cannot find the
+	specified directory in the current directory or in the given path, a
+	Can't find <directory> error message is displayed.
+
+	If you want to move up a level in the filing hierarchy to the parent
+	directory of the current directory, type CD followed by a space and a
+	single slash (/). Moving to another directory in the parent can be
+	done at the same time by including its name after the slash. If the
+	current directory is a root directory, CD / will have no effect.
+	Multiple slashes are allowed; each slash refers to an additional
+	higher level. When using multiple slashes, leave no spaces between
+	them.
+
+	To move directly to the root directory of the current device, use CD
+	followed by a space and a colon.
+
+	CD also supports pattern matching. If more than one directory matches
+	the given pattern, an error message is displayed.
+
+   EXAMPLES
+	    1> CD DF1:Work
+
+	sets the current directory to the Work directory on the disk in drive
+	DF1:.
+
+	    1> CD SYS:Com/Basic
+
+	makes the subdirectory Basic in the Com directory the current
+	directory.
+
+	    1> CD //
+
+	moves up two levels in the directory structure and makes SYS: the
+	current directory.
+
+	    1> CD SYS:Li#?
+
+	uses the #? pattern to match with the Libs directory.
+commands/ECHO                                                   commands/ECHO
+
+   NAME
+	ECHO - Display a string.
+
+   FORMAT
+	ECHO [<string>] [NOLINE] [FIRST <n>] [LEN <n>]
+
+   TEMPLATE
+	,NOLINE/S,FIRST/K/N,LEN/K/N
+
+   PATH
+	Internal
+
+   FUNCTION
+	ECHO writes the specified string to the current output window or
+	device. By default this is the screen, but it could be to any device
+	or file. When the string contains spaces, the whole string must be
+	enclosed in double quotes. (ECHO is commonly used in scripts.)
+
+	When the NOLINE option is specified, ECHO does not automatically move
+	the cursor to the next line after printing the string.
+
+	The FIRST and LEN options allow the echoing of a substring. FIRST <n>
+	indicates the character position to begin the echo; LEN <n> indicates
+	the number of characters of the substring to echo, beginning with the
+	first character. If the FIRST option is omitted and only the LEN
+	keyword is given, the substring printed will consist of the rightmost
+	<n> characters of the main string. For instance, if your string is 20
+	characters long and you specify LEN 4, the 17th, 18th, 19th, and 20th
+	characters of the string will be echoed.
+
+   EXAMPLES
+	    1> ECHO "hello out there!"
+	    hello out there!
+
+	    1> ECHO "hello out there!" NOLINE FIRST 0 LEN 5
+	    hello1>
+commands/ELSE                                                   commands/ELSE
+
+   NAME
+	ELSE - Specify an alternative for an IF statement in a script
+	    file.
+
+   FORMAT
+	ELSE
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	ELSE is used in an IF block of a script to specify an alternative
+	action in case the IF condition is not true. If the IF condition is
+	not true, execution of the script will jump from the IF line to the
+	line after ELSE; all intervening commands will be skipped. If the IF
+	condition is true, the commands immediately following the IF
+	statement are executed up to the ELSE. Then, execution skips to the
+	ENDIF statement that concludes the IF block.
+
+   EXAMPLES
+	Assume a script, call Display, contained the following block:
+
+	    IF exists <name>
+	        TYPE <name> OPT n
+	    ELSE
+	        ECHO "<name> is not in this directory"
+	    ENDIF
+
+	To execute this script, you could type:
+
+	    1> EXECUTE Display work/prg2
+
+	If the work/prg2 file can be found in the current directory, the TYPE
+	<name> OPT n command will be executed. The work/prg2 file will be
+	displayed on the screen with line numbers.
+
+	If the work/prg2 file cannot be found in the current directory, the
+	script will skip ahead to the ECHO "<name> is not in this directory"
+	command. The message work/prg2 is not in this directory will be
+	displayed in the Shell window.
+
+   NOTES
+	ELSE can only be used in script files.
+
+   SEE ALSO
+	IF, ENDIF, EXECUTE
+commands/ENDCLI                                               commands/ENDCLI
+
+   NAME
+	ENDCLI - End a Shell process.
+
+   FORMAT
+	ENDCLI
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	ENDCLI ends a Shell process.
+
+   SEE ALSO
+	ENDSHELL
+commands/ENDIF                                                 commands/ENDIF
+
+   NAME
+	ENDIF - Terminate an IF block in a script file.
+
+   FORMAT
+	ENDIF
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	ENDIF is used in scripts at the end of an IF block. If the IF
+	condition is not true, or if the true condition commands were
+	executed and an ELSE has been encountered, the execution of the
+	script will skip to the next ENDIF command. Every IF statement must
+	be terminated by an ENDIF.
+
+	The ENDIF applies to the most recent IF or ELSE command.
+
+   NOTES
+	ENDIF can only be used in script files.
+
+   SEE ALSO
+	IF, ELSE
+commands/ENDSHELL                                           commands/ENDSHELL
+
+   NAME
+	ENDSHELL - End a Shell process.
+
+   FORMAT
+	ENDSHELL
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	ENDSHELL ends a Shell process.
+
+	ENDSHELL should only be used when the Workbench is loaded or another
+	Shell is running. If you have quit the Workbench and you close your
+	only Shell, you will be unable to communicate with the Amiga. Your
+	only recourse will be to reboot.
+
+	The Shell window may not close if any processes that were launched
+	from the Shell are still running. Even though the window stays opens,
+	the Shell will not accept new input. You must terminate those
+	processes before the window will close. For instance, if you opened
+	an editor from the Shell, the Shell window will not close until you
+	exit the editor.
+commands/ENDSKIP                                             commands/ENDSKIP
+
+   NAME
+	ENDSKIP - Terminate a SKIP search block in a script file.
+
+   FORMAT
+	ENDSKIP
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	ENDSKIP is used in scripts to define the end of a SKIP search block.
+	(The SKIP command allows you to jump over intervening commands if
+	a certain condition is met.) When an ENDSKIP is encountered,
+	execution of the script resumes at the line following the ENDSKIP.
+	The return code is set to 5 (WARN).
+
+   NOTES
+	ENDSKIP can only be used in script files.
+
+   SEE ALSO
+	SKIP
+commands/EXECUTE                                             commands/EXECUTE
+
+   NAME
+	EXECUTE - Execute a script with optional argument substitution.
+
+   FORMAT
+	EXECUTE <script> [{<arguments>}]
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	EXECUTE is used to run scripts of AmigaDOS commands. The lines in the
+	script are executed just as if they had been typed at a Shell prompt.
+	If the s protection bit of a file is set and the file is in the search
+	path, you only need to type the filename--the EXECUTE command is not
+	needed.
+
+	You can use parameter substitution in scripts by including special
+	keywords in the script. When these keywords are used, you can pass
+	variables to the script by including the variable in the EXECUTE
+	command line. Before the script is executed, AmigaDOS checks the
+	parameter names in the script against any arguments given on the
+	command line. If any match, AmigaDOS substitutes the values you
+	specified on the command line for the parameter name in the script.
+	You can also specify default values for AmigaDOS to use if no
+	variables are given. If you have not specified a variable, and there
+	is no default specified in the script, then the value of the parameter
+	is empty (no substitution is made). EXECUTE is generally made resident
+	during the startup-sequence.
+
+	The permissible keywords for parameter substitution are explained
+	below. Each keyword must be prefaced with a dot character (.).
+
+	The .KEY (or .K) keyword specifies both keyword names and positions in
+	a script. It tells EXECUTE how many parameters to expect and how to
+	interpret them. In other words, .KEY serves as a template for the
+	parameter values you specify. Only one .KEY statement is allowed per
+	script. If present, it should be the first line in the file.
+
+	The arguments on the .KEY line can be given with the /A and /K
+	directives, which work the same as in an AmigaDOS template. Arguments
+	followed by /A are required; arguments followed by /K require the name
+	of that argument as a keyword. For example, if a script starts with
+	.KEY filename/A it indicates that a filename must be given on the
+	EXECUTE command line after the name of the script. This filename will
+	be substituted in subsequent lines of the script. For instance, if the
+	first line of a script is:
+
+	    .KEY filename/A, TOname/K
+
+	You must specify a filename variable. The TOname variable is optional,
+	but if specified the TOname keyword must be used. For instance:
+
+	    1> EXECUTE Script Textfile TOname NewFile
+
+	Before execution, AmigaDOS scans the script for any items enclosed by
+	BRA and KET characters (< and >). Such items may consist of a keyword
+	or a keyword and a default value. Wherever EXECUTE finds a keyword
+	enclosed in angle brackets, it tries to substitute a parameter.
+	However, if you want to use a string in your script file that contains
+	angle brackets, you will have to define substitute "bracket"
+	characters with the .BRA and .KET commands. .BRA <ch> changes the
+	opening bracket character to <ch>, while .KEY changes the closing
+	bracket character to <ch>. For example:
+
+	    .KEY filename
+	    ECHO "This line does NOT print <angle> brackets."
+	    .BRA {
+	    .KET }
+	    ECHO "This line DOES print <angle> brackets."
+	    ECHO "The specified filename is {filename}."
+
+	would result in the following output:
+
+	    1> EXECUTE script TestFile
+	    This line does NOT print brackets.
+	    This line DOES print <angle> brackets.
+	    The specified filename is TestFile.
+
+	AmigaDOS provides a number of commands that are useful in scripts,
+	such as IF, ELSE, SKIP, LAB, and QUIT. These commands, as well as the
+	EXECUTE command, can be nested in a script. That is, a script can
+	contain EXECUTE commands.
+
+	To stop the execution of a script, press Ctrl-D. If you have nested
+	script files, you can stop the set of EXECUTE commands by pressing
+	Ctrl-C. Ctrl-D only stops the current script from executing.
+
+	The current Shell number can be referenced by the characters <$$>.
+	This is useful in creating unique temporary files, logical
+	assignments, and PIPE names.
+
+   DIRECTIVES
+	The following directives can appear at the very top of a script
+	file. Note that they actually must appear at the very top of the
+	script file in order to be recognized.
+
+	    .KEY
+	    .K
+	        Specifies the command template this script file should
+	        be invoked with. Parameters given for the template will
+	        be made available in the script through keyword
+	        substitution. The number of parameters supported is
+	        limited (currently to 100).
+
+	    .DEF
+	    .DEFAULT
+	        The default parameters to be given to the script, if the
+	        user does not supply any. The number of default parameters
+	        is limited.
+
+	    .BRA
+	        Replaces the opening angle bracket character (<), as used
+	        to indicate keywords in the script file which should be
+	        replaced.
+
+	    .KET
+	        Replaces the closing angle bracket character (>), as used
+	        to indicate keywords in the script file which should be
+	        replaced.
+
+	    .DOLLAR
+	        Replaces the dollar character ($), as used in script files
+	        to obtain the number of the current CLI.
+
+	    .DOT
+	        Replaces the dot character (.) which introduces a shell
+	        script directive, such as .DOT itself.
+
+	    .ESC
+	        Selects an escape character which can be used to protect
+	        protect script files lines from preprocessing by the
+	        EXECUTE command. This can be useful, for example, if the
+	        .BRA and .KET characters are the same as the curly
+	        braces which surround shell variable names.
+
+   KEYWORD SUBSTITUTION
+	The EXECUTE command will substitute keywords in a shell script which
+	match the .KEY parameters given. How this substitution takes place
+	depends upon the type of parameter, as follows:
+
+	    SWITCH/S
+	        If the switch parameter was not given, then the substituted
+	        string will be empty, otherwise it will be the keyword
+	        itself.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY SWITCH/S
+	                Echo Switch is "<SWITCH>"
+
+	            Entering "execute script_file SWITCH" will
+	            print this:
+
+	                Switch is SWITCH
+
+	            Entering "execute script_file" will
+	            print this:
+
+	                Switch is
+
+	    TOGGLE/T
+	        If the toggle parameter was set to FALSE, NO, 0, etc.
+	        then the substituted string will be empty, otherwise it
+	        will be the keyword itself.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY TOGGLE/T
+	                Echo Toggle is "<TOGGLE>"
+
+	            Entering "execute script_file TOGGLE=YES" will
+	            print this:
+
+	                Toggle is TOGGLE
+
+	            Entering "execute script_file TOGGLE=NO" will
+	            print this:
+
+	                Toggle is
+
+	    NUMBER/N
+	        If the number parameter was given, then the substituted
+	        string will be the number, otherwise it will be empty.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY NUMBER/N
+	                Echo Number is "<NUMBER>"
+
+	            Entering "execute script_file NUMBER=123" will
+	            print this:
+
+	                Number is 123
+
+	            Entering "execute script_file" will
+	            print this:
+
+	                Number is
+
+	    MULTIPLE/M
+	        If any parameters were given, then the substituted string
+	        will be the list of parameters, seperated by blank spaces,
+	        otherwise it will be empty. If any of the parameters contain
+	        blank spaces then they will be enclosed in double quotes.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY MULTIPLE/M
+	                Echo Multiple is "<MULTIPLE>"
+
+	            Entering "execute script_file MULTIPLE abc def ghi" will
+	            print this:
+
+	                Multiple is abc def ghi
+
+	            Entering "execute script_file" will
+	            print this:
+
+	                Multiple is
+
+	    TEXT
+	        If the text parameter was given, then the substituted
+	        string will be the text, otherwise it will be empty.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY TEXT
+	                Echo Text is "<TEXT>"
+
+	            Entering "execute script_file TEXT=abc123" will
+	            print this:
+
+	                Text is abc123
+
+	            Entering "execute script_file" will
+	            print this:
+
+	                Text is
+
+   BUILT-IN SUBSTITUTIONS
+	Some special keywords in the script are expanded by the EXECUTE
+	command itself. Note that for keyword substitution, even if the
+	script does not require a command line parameter, you have to use
+	the .KEY or .K directive near the top of the script file. If you
+	fail to do that then even the built-in keyword substitutions will
+	not work.
+
+	    $$
+	        This becomes the current shell number.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY ignore_me
+	                Echo Shell number is <$$>
+
+	            Entering "execute script_file" may produce
+	            the following:
+
+	                Shell number is 10
+
+	        Note that it is much more convenient to use the
+	        $Process environment variable instead.
+
+	    _ExecuteVersion
+	        This is replaced by the version number of the EXECUTE
+	        command processing the shell file.
+
+	        Example:
+
+	            Script file contains:
+
+	                .KEY ignore_me
+	                Echo Execute version is <_ExecuteVersion>
+
+	            Entering "execute script_file" may produce
+	            the following:
+
+	                Execute version is 51.49
+
+   EXAMPLES
+	Assume the script List contains the following:
+
+	    .K filename
+	    RUN COPY <filename> TO PRT: +
+	    ECHO "Printing of <filename> done"
+
+	The following command:
+
+	    1> EXECUTE List Test/Prg
+
+	acts as though you had typed the following commands at the keyboard:
+
+	    1> RUN COPY Test/Prg TO PRT: +
+	    1> ECHO "Printing of Test/Prg done"
+
+	Another example, Display, uses more of the features described above:
+
+	    .Key name/A
+	    IF EXISTS <name>
+	    TYPE <name> NUMBER ;if the file is in the given directory,
+	                       ;type it with line numbers
+	    ELSE
+	    ECHO "<name> is not in this directory"
+	    ENDIF
+
+	The command:
+
+	    1> RUN EXECUTE Display Work/Prg2
+
+	should display the Work/Prg2 file, with line numbers on the screen, if
+	it exists on the current directory. If the file is not there, the
+	screen displays an error message. Because of the /A, if a filename is
+	not given on the command line after display, an error will occur.
+
+   SEE ALSO
+	IF, SKIP, FAILAT, LAB, ECHO, RUN, QUIT
+commands/FAILAT                                               commands/FAILAT
+
+   NAME
+	FAILAT - Instruct a command sequence to fail if a program gives a
+	    return code greater than or equal to the given value.
+
+   FORMAT
+	FAILAT [<n>]
+
+   TEMPLATE
+	RCLIM/N
+
+   PATH
+	Internal
+
+   FUNCTION
+	Commands indicate that they have failed in some way by setting a
+	return code. A nonzero return code indicates that the command has
+	encountered an error of some sort. The return code, normally 5, 10,
+	or 20, indicates how serious the error was. A return code greater
+	than or equal to a certain limit, the fail limit, terminates a
+	sequence of non-interactive commands (commands you specify after RUN
+	or in a script).
+
+	You may use the FAILAT command to alter the fail limit RCLIM (Return
+	Code Limit) from its initial value of 10. If you increase the limit,
+	you indicate that certain classes of error should not be regarded as
+	fatal and that execution of subsequent commands may proceed after an
+	error. The argument must be a positive number. The fail limit is
+	reset to the initial value of 10 on exit from the command sequence.
+
+	If the argument is omitted, the current fail limit is displayed.
+
+
+   EXAMPLES
+	Assume a script contains the following lines:
+
+	    COPY DF0:MyFile to RAM:
+	    ECHO "MyFile being copied."
+
+	If MyFile cannot be found, the script will be aborted and the
+	following message will appear in the Shell window:
+
+	    COPY: object not found
+	    COPY failed returncode 20:
+
+	However, if you changed the return code limit to higher than 20, the
+	script would continue even if the COPY command fails. For instance,
+	if you changed the script to read:
+
+	    FAILAT 21
+	    COPY DF0:MyFile to RAM:
+	    ECHO "MyFile being copied."
+
+	even if MyFile cannot be found, the script will continue. The
+	following message will appear in the Shell window:
+
+	    COPY: object not found
+	    MyFile being copied.
+
+   SEE ALSO
+	ECHO, EXECUTE
+commands/FAULT                                                 commands/FAULT
+
+   NAME
+	FAULT - Print the messages(s) for the specified error code(s).
+	    return code greater than or equal to the given value.
+
+   FORMAT
+	FAULT <error number(s)>
+
+   TEMPLATE
+	/N/M
+
+   PATH
+	Internal
+
+   FUNCTION
+	FAULT prints the message(s) corresponding to the error number(s)
+	supplied. Up to ten error numbers can be specified at once. If
+	several error numbers are given with FAULT, they may be separated by
+	commas or spaces.
+
+   EXAMPLES
+	If you received the error message Error when opening DF1:TestFile 205
+	and needed more information, you would type:
+
+	    1> FAULT 205
+	    FAULT 205: object not found
+
+	This tells you that the error occurred because TestFile could  not be
+	found on DF1:.
+commands/GET                                                     commands/GET
+
+   NAME
+	GET - Get the value of a local variable.
+
+   FORMAT
+	GET <name> [NOLINE]
+
+   TEMPLATE
+	NAME/A,NOLINE/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	GET is used to retrieve and display the value of a local environment
+	variable. The value is displayed in the current window. Local
+	environment variables are only recognized by the Shell in which they
+	are created, or by any Shells created from a NEWSHELL command
+	executed in the original Shell. If you open an additional Shell by
+	opening the Shell icon or by using the Execute Command menu item,
+	previously created local environment variables will not be available.
+
+	By default, a line feed character will be added to variable value
+	unless one is already present. If you do not want this to happen,
+	use the NOLINE option.
+
+   EXAMPLES
+	    1> GET editor
+	    Extras2.0:Tools/MEmacs
+   SEE ALSO
+	SET
+commands/GETENV                                               commands/GETENV
+
+   NAME
+	GETENV - Get the value of a global variable.
+
+   FORMAT
+	GETENV <name> [NOLINE]
+
+   TEMPLATE
+	NAME/A,NOLINE/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	GETENV is used to retrieve and display the value of a global
+	environment variable. The value is displayed in the current window.
+	Global variables are stored in ENV: and are recognized by all Shells.
+
+	By default, a line feed character will be added to variable value
+	unless one is already present. If you do not want this to happen,
+	use the NOLINE option.
+
+   EXAMPLES
+	    1> GETENV editor
+	    Extras2.0:Tools/MEmacs
+   SEE ALSO
+	SETENV
+commands/HISTORY                                             commands/HISTORY
+
+   NAME
+	HISTORY - Display, recall or store the command line history.
+
+   FORMAT
+	HISTORY [[LINES] <number>] [START <number>] [LOAD <file name>]
+	        [SAVE <file name>] [SIZE <number>] [CLEAR] [SHOW]
+	        [NONUM]
+
+   TEMPLATE
+	LINES/N,START/K/N,LOAD/K,SAVE/K,SIZE/K/N,CLEAR/S,SHOW/S,NONUM/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	HISTORY can be used to show the past command line history, to
+	save it to a file or load it from a file. If no other options are
+	specified, it will show the command line history, each line prefixed
+	by a number.
+
+	To restrict the number of history lines shown, use the LINES
+	parameter; the default is to list all history lines, starting with
+	the first one. To start the listing with a different line, use the
+	START parameter. Each line will be prefixed by a number; to ignore
+	the number, use the NONUM parameter.
+
+	The command history can be stored in or loaded from a file. To do
+	either, specify the name of the file to be used with the LOAD or
+	SAVE commands. These commands can be combined: the history command
+	will always perform the SAVE command first before it performs the
+	LOAD command. Note that the command line history will be added to
+	the current list if loaded with the LOAD parameter unless you use
+	the CLEAR parameter, too. Used all by itself, the CLEAR parameter
+	will drop the current command line history.
+
+	The SIZE parameter controls the size of the command line history
+	buffer which by default has room for about four complete command
+	lines of maximum length. Changing the size tries to retain the
+	contents of the current command line history buffer.
+
+   EXAMPLES
+	    1> HISTORY
+
+	Lists the current command line history, starting with the first
+	line, printing all lines in the buffer.
+
+	    1> HISTORY LINES 5 START 3
+
+	Prints five lines of command line history, starting with the
+	third line. If fewer lines are stored in the buffer, fewer will
+	be printed.
+
+	    1> HISTORY SAVE old-history LOAD new-history CLEAR
+
+	Saves the current command line history in the file 'old-history',
+	then clears the history buffer and eventually loads the command
+	line history from the file 'new-history'. Note that if either the
+	save or the load command fails no changes will be made to the
+	contents of the current history buffer.
+
+	    1> HISTORY SIZE 16
+
+	Sets the maximum size of the history buffer to about 8,000
+	characters.
+
+	   1> HISTORY START -2 LINES 1 NONUM
+
+	Displays the last command line entered (preceding the 'HISTORY START -2
+	LINES 1 NONUM' command).
+commands/IF                                                       commands/IF
+
+   NAME
+	IF - Evaluate conditional operations in script files.
+
+   FORMAT
+	IF [NOT] [WARN] [ERROR] [FAIL]
+	   [<string> EQ|GT|GE|LT|LE|MATCHES|CONTAINS <string>] [CASE] [VAL]
+	   [EXISTS <filename>] [SET <variable name>] [NOREQ]
+
+   TEMPLATE
+	NOT/S,WARN/S,ERROR/S,FAIL/S,,EQ/K,GT/K,GE/K,LT/K,LE/K,MATCHES/K,
+	CONTAINS/K,CASE/S,VAL/S,EXISTS/K,SET/K,NOREQ/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	In a script file, IF, when its conditional is true, carries out all
+	the subsequent commands until an ENDIF or ELSE command is found. When
+	the conditional is not true, execution skips directly to the ENDIF or
+	to an ELSE. The conditions and commands in IF and ELSE blocks can
+	span more than one line before their corresponding ENDIFs.
+
+	Following are some of the ways you can use the IF, ELSE, and ENDIF
+	commands:
+
+	    IF <condition>    IF <condition>    IF <condition>
+	    <command(s)>      <command(s)>      <command(s)>
+	    ENDIF             ELSE              IF <condition>
+	                      <command(s)>      <command(s)>
+	                      ENDIF             ENDIF
+	                                        ENDIF
+
+	ELSE is optional, and nested IFs jump to the nearest ENDIF.
+
+	The additional keywords are as follows:
+
+	    NOT              Reverses the interpretation of the result.
+
+	    WARN             True if previous return code is greater than or
+	                     equal to 5.
+
+	    ERROR            True if previous return code is greater than or
+	                     equal to 10; only available if you set FAILAT to
+	                     greater than 10.
+
+	    FAIL             True if previous return code is greater than or
+	                     equal to 20; only available if you set FAILAT to
+	                     greater than 20.
+
+	    <a> EQ <b>       True if the text of a and b is identical
+	                     (disregarding case).
+
+	    EXISTS <file>    True if the file exists.
+
+	    NOREQ            Do not show a requester window prompting the
+	                     user to insert a disk if the 'EXISTS' test
+	                     refers to a file on a volume which is not
+	                     available at the moment.
+
+	    SET <variable>   True if the environment variable is set (i.e.
+	                     if it exists).
+
+
+	If more than one of the three condition-flag keywords (WARN, ERROR,
+	FAIL) are given, the one with the lowest value is used.
+
+	IF supports the GT (greater than) and GE (greater than or equal to)
+	comparisons. Normally, the comparisons are performed as string
+	comparisons. However, if the VAL option is specified, the comparison
+	is a numeric comparison.
+
+	A comparison can also be performed by using AmigaDOS wildcard
+	patterns, e.g. "IF $drive_name MATCHES (dh0:|dh1:|dh2:)".
+	Substring searches are supported through the "CONTAINS" keyword,
+	e.g. "IF $volume_name CONTAINS :". The comparison in both cases
+	is not case-sensitive. To enforce a case-sensitive comparison,
+	use the "CASE" keyword.
+
+	You can use local or global variables with IF by prefacing the
+	variable name with a $ character.
+
+   EXAMPLES
+	    IF EXISTS Work/Prog
+	        TYPE Work/Prog
+	    ELSE
+	        ECHO "It's not here"
+	    ENDIF
+
+	If the file Work/Prog exists in the current directory, then AmigaDOS
+	displays it. Otherwise, AmigaDOS displays the message It's not here
+	and continues after the ENDIF.
+
+	    IF ERROR
+	        SKIP errlab
+	    ENDIF
+	    ECHO "No error"
+	    LAB errlab
+
+	If the previous command produced a return code greater than or equal
+	to 10 then AmigaDOS skips over the ECHO command to the errlab label.
+
+   NOTES
+	You can use NOT GE for LT (less than) and NOT GT for LE (less than
+	or equal to). The built-in LT and LE key words were introduced with
+	shell 53.8 and are unavailable in older shell versions.
+
+	IF can only be used in script files.
+
+   SEE ALSO
+	EXECUTE, FAILAT, LAB, QUIT, SKIP
+commands/LAB                                                     commands/LAB
+
+   NAME
+	LAB - Specify a label in a script file.
+
+   FORMAT
+	LAB
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	LAB is used in scripts to define a label that is looked for by the
+	SKIP command. The label <string> may be of any length but must be
+	alphanumeric characters. No symbols are allowed. If the <string>
+	contains spaces, it must be enclosed in quotes.
+
+   NOTES
+	LAB can only be used in script files.
+
+   SEE ALSO
+	SKIP, IF, EXECUTE
+commands/NEWCLI                                               commands/NEWCLI
+
+   NAME
+	NEWCLI - Start a new Shell process.
+
+   FORMAT
+	NEWCLI
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	NEWCLI starts a new Shell process. It is the same as using the
+	NEWSHELL command.
+
+   SEE ALSO
+	NEWSHELL
+commands/NEWSHELL                                           commands/NEWSHELL
+
+   NAME
+	NEWSHELL - Open a new interactive Shell window.
+
+   FORMAT
+	NEWSHELL [<window specification>] [FROM <filename>]
+
+   TEMPLATE
+	WINDOW,FROM
+
+   PATH
+	Internal
+
+   FUNCTION
+	NEWSHELL invokes a new, interactive Shell. The new  window becomes the
+	currently-selected window and process.  The new window has the same
+	current directory, prompt  string, and stack size as the one from which it
+	was invoked.  However, each Shell window is independent, allowing separate
+	input, output, and program execution.
+
+	The window can be sized, dragged, zoomed, and depth-adjusted  just like
+	most other Amiga windows. To create a custom window, you can include the
+	WINDOW argument. You may specify the initial dimensions, location, and
+	title of the window with this <window specification> syntax:
+
+	    CON:x/y/width/height/title/options
+
+	where:
+
+	    x         Is the number of pixels from the left edge of the
+	              screen to the left border of the Shell window.
+
+	    y         Is the number of pixels from the top of the screen
+	              to the top of the Shell window.
+
+	    width     Is the width of the Shell window, in pixels.
+
+	    height    Is the height of the Shell window, in pixels.
+
+	    title     Is the text that appears in the Shell window title bar.
+
+	NEWSHELL uses the default startup file S:Shell-startup, unless a FROM
+	filename is specified. You might have several different Shell-startup
+	files, each having different command aliases, for example. You can
+	call such customized Shell environments with FROM.
+
+	The WINDOW argument is optional. If omitted, NEWSHELL will look for
+	an environment variable by the name of "_ShellWindow". If that
+	variable exists, its contents will be used for the window specification.
+	If it does not exist, a default of "CON:///130/AmigaShell/CLOSE/SHELL"
+	will be used instead.
+
+   EXAMPLES
+	    1> NEWSHELL
+
+	A new Shell window will open.
+
+	    1> NEWSHELL CON:0/0/640/200/MyShell/CLOSE
+
+	A window starting in the upper left corner of the screen and
+	measuring 640 pixels wide and 200 pixels high will open. The window
+	will be titled MyShell, and it will have a close gadget. If you add
+	the command to your User-startup file, a Shell window will open
+	automatically when your Amiga is booted.
+
+	    1> NEWSHELL FROM S:Programming.startup
+
+	opens a new Shell, but instead of executing the Shell-startup file,
+	the Programming.startup file is executed. You could have aliases and
+	prompt commands in the Programming-startup file that you only use
+	when you are programming.
+commands/PATH                                                   commands/PATH
+
+   NAME
+	PATH - Control the directory list that the Shell searches to
+	    find commands.
+
+   FORMAT
+	PATH [{<dir>}] [FROM <filename>] [TO <filename>] [ADD] [REMOVE]
+	     [RESET] [SHOW] [HEAD] [QUIET]
+
+   TEMPLATE
+	PATH/M,FROM/K,TO/K,ADD/S,REMOVE/S,RESET/S,SHOW/S,HEAD/S,QUIET/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	PATH lets you see, add to, or change the search path that AmigaDOS
+	follows when looking for a command or program to execute. When a
+	directory is in the search path, you no longer need to specify the
+	complete path to any files or subdirectories within that directory.
+	You can just enter the filename, and AmigaDOS will look through the
+	directories in the search path until it finds the file.
+
+	Enter the PATH command alone, or with the SHOW option, and the
+	directory names in the current search path will be displayed.
+	Normally, when PATH is displaying the directory names, a requester
+	will appear if a volume that is part of the search path cannot be
+	found. For instance, if you added a floppy disk to the search path,
+	then removed that disk from the disk drive, a requester would ask you
+	to insert the disk.
+
+	If you specify the QUIET option, PATH will not display requesters for
+	volumes that are not currently mounted. If PATH encounters an
+	unmounted volume, it will simply display the volume name. The names
+	of any directories on that volume included in the PATH will not be
+	displayed.
+
+	The ADD option specifies directory names to be added to the current
+	path. When you issue the PATH command, AmigaDOS searches for each of
+	the ADDed directories. Normally, new directories are added to the end
+	of the path. To add them to the beginning, use the HEAD option.
+
+	To replace the existing search path with a completely new one, use
+	PATH RESET followed by the names of the directories. The existing
+	search path, except for the current directory and SYS:C, is erased
+	and the new one is substituted.
+
+	The REMOVE option eliminates the named directory from the search
+	path.
+
+	If you omit all of the ADD, RESET and REMOVE options and provide
+	a list of directories, the PATH command will assume that you will
+	want to add these to the path list.
+
+	Instead of stating which directories should be added to the path
+	right on the command line, you can also store the names of the
+	directories in a file and let the PATH command read them. Use
+	the FROM option to specify the file name. That file must contain
+	one directory name per line. Lines beginning with the ";" character
+	will be ignored, they can be used to store comments. The TO option
+	can be used to store the current search path in a file, suitable
+	to be read later using the FROM option.
+
+   EXAMPLES
+	    1> PATH EXTRAS2.0:Tools ADD
+
+	adds the Tools directory on the Extras2.0 disk to the search path of
+	the Shell. If the Extras2.0 disk is not in a disk drive, a requester
+	will ask you to insert it in any drive.
+
+	If you remove Extras2.0 from the drive, and type:
+
+	    1> PATH
+
+	a list of directories in the search path will be displayed. A
+	requester will ask you to insert Extras2.0. However, if you had
+	typed:
+
+	    1> PATH QUIET
+
+	The list of directories in the search path will be displayed; however
+	when the path comes to Extras2.0:Tools, only the volume name,
+	Extras2.0:, will appear in the list.
+
+   SEE ALSO
+	ASSIGN
+commands/PIPE                                                   commands/PIPE
+
+   NAME
+	PIPE - Connect input and output streams of shell commands
+
+   FORMAT
+	PIPE <command>
+
+   TEMPLATE
+	COMMAND/A/F
+
+   PATH
+	Internal
+
+   FUNCTION
+	The PIPE command is used by the shell to connect the input and
+	output streams of shell commands. It is not useful beyond that
+	point and should not be used by user shell scripts.
+
+   WARNING
+	The PIPE command may be removed in a future shell version.
+
+commands/POPCD                                                 commands/POPCD
+
+   NAME
+	POPCD - Return the directory last recently saved with the
+	   PUSHCD command.
+
+   FORMAT
+	POPCD
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	POPCD is the counterpart to the PUSHCD command. It will recall
+	the directory most recently saved by PUSHCD and return to it. If no
+	directory can be popped from the stack, POPCD will return to the
+	SYS: directory instead.
+
+   SEE ALSO
+	CD, PUSHCD
+commands/PROMPT                                               commands/PROMPT
+
+   NAME
+	PROMPT - Change the prompt string of the current Shell.
+
+   FORMAT
+	PROMPT [<prompt>] [RESET]
+
+   TEMPLATE
+	PROMPT,RESET/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	PROMPT allows you to customize the prompt string, the text printed by
+	the Shell at the beginning of a command line. The prompt string may
+	contain any characters, including escape sequences. In the examples
+	in this manual, the prompt string is shown as 1>.
+
+	The default prompt string is:
+
+	    "%N.%S> "
+
+	which displays the Shell number, a period, the current directory, a
+	right angle-bracket and a space.
+
+	The substitutions available for the <prompt> string are:
+
+	    %E    Displays the execution time of the last program run; this
+	          is given as the number of seconds, followed by the decimal
+	          point, and the fraction of a second. This corresponds to
+	          the value of the $_RunTime environment variable
+	    %N    Displays the Shell number. This is also available in the
+	          form of the $Process environment variable.
+	    %R    Displays the return code for the last operation. This is
+	          also available as the $RC environment variable.
+	    %S    Displays the current directory.
+	    %W    Displays the error code set by the last operation; this
+	          is what the WHY command will print the corresponding
+	          error message for. This is also available as the $Result2
+	          environment variable.
+
+	A space is not automatically added to the end of the string. If you
+	want a space between the prompt and typed-in text, place it in the
+	string, and enclose the string in double quotes.
+
+	You can embed commands in the prompt string by enclosing the command
+	in backward quotes (`).
+
+	PROMPT alone, without a string argument, resets the prompt to the
+	default. You can achieve the same effect by using the RESET option.
+
+
+   EXAMPLES
+	    1> PROMPT %N
+	    1
+
+	Only the Shell number is shown. The > is removed from the prompt.
+
+	    1> PROMPT "%N.%S.%R> "
+	    1.SYS:.0>
+
+	The Shell number, current directory, and return code of the previous
+	command are shown. A space is included after the >.
+
+	    1> PROMPT " `date`>"
+	    Tuesday 11-Sep-90 14:36:39>
+
+	The DATE command is executed and used as the prompt. The prompt is
+	not updated as the time changes. You would have to execute the PROMPT
+	command again to update the Shell prompt.
+commands/PUSHCD                                               commands/PUSHCD
+
+   NAME
+	PUSHCD - Save the current directory on a stack and optionally
+	    change it.
+
+   FORMAT
+	PUSHCD [<dir|pattern>]
+
+   TEMPLATE
+	DIR
+
+   PATH
+	Internal
+
+   FUNCTION
+	PUSHCD saves the current directory on a stack; if an optional
+	directory name or pattern is provided, the current directory
+	will be saved first and then changed. The PUSHCD command can
+	be undone with the POPCD command.
+
+	Up to 100 directories can be pushed onto the stack.
+
+   SEE ALSO
+	CD, POPCD
+commands/QUIT                                                   commands/QUIT
+
+   NAME
+	QUIT - Exit from a script file with a specified return code.
+
+   FORMAT
+	QUIT [<return code>]
+
+   TEMPLATE
+	RC/N
+
+   PATH
+	Internal
+
+   FUNCTION
+	QUIT is used to stop the execution of the script upon the specified
+	return code. The default return code is zero. It is recommended that
+	you use the standard return code values of 5, 10 and 20.
+
+   EXAMPLES
+	    ASK "Do you want to stop now?"
+	    IF WARN
+	        QUIT 5
+	    ENDIF
+	    ECHO "OK, the script is continuing."
+
+	If you press Y at the prompt, the script will be aborted, as WARN is
+	equal to a return code of 5. If you press N or press Return:
+
+	    OK, the script is continuing.
+
+	will be displayed in the Shell window.
+
+   NOTES
+	QUIT can only be used in script files and will do nothing if
+	invoked from the shell command line.
+commands/RECORDER                                           commands/RECORDER
+
+   NAME
+	RECORDER - Capture console output and store it in a file.
+
+   FORMAT
+	RECORDER [[TO] <file>] [APPEND] [OFF] [LINE] [SIZE <number>] [FLUSH]
+
+   TEMPLATE
+	TO,APPEND/S,OFF/S,LINE/S,SIZE/N/K,FLUSH/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	RECORDER can be used to capture all data sent to a console window
+	to be displayed. This includes both regular program output and shell
+	commands entered on the command line.
+
+	Unless a name is given with the TO parameter, RECORDER will send
+	the output to a file named after the current shell process number.
+	For example, if you were to start RECORDER in shell number 4 then
+	it would choose to store the data in a file by the name of
+	"Recorder_4.output". Data can be stored in a newly created file
+	or appended to an existing file; use the APPEND parameter for the
+	latter. If the file to append data to does not exist yet it will
+	be created. By default recording will store the incoming data as
+	is, which can be problematic if many small writes are being made.
+	To avoid performance problems, you can use the LINE option to
+	tell the capturing process to buffer incoming data until an entire
+	line of text has been compiled. Alternatively, you can set a buffer
+	size which controls how many characters have to arrive before they
+	are written to the capture file with the SIZE option. Note that
+	if either the LINE or SIZE options are in effect, you may have to
+	wait for the buffered data to be stored in the capture file.
+	To have the buffered data sent to the capture file immediately,
+	use the FLUSH option. Note that if the FLUSH option is in effect,
+	all other options will be ignored.
+
+	To turn off recording, start the RECORDER command with the OFF
+	parameter. Note that the OFF parameter is processed before
+	a new capture file is created, which allows you to stop and restart
+	recording with a single command.
+
+	Recording will stop automatically when the console window associated
+	with the shell is closed or when an error occurs while captured data
+	is written to the recording file.
+
+	You can stop the recording by sending the recorder process a break
+	signal.
+
+   EXAMPLES
+	Start recording, sending the data to the file "capture"; create the
+	file if it does not exist yet, append the new data to it:
+
+	    1> RECORDER capture APPEND
+
+	Stop the recording associated with a certain shell process:
+
+	    1> STATUS
+	    Process  2: Loaded as command: Workbench
+	    Process  3: Loaded as command: status
+	    Process  4: Loaded as command: Recorder [3]
+
+	    1> BREAK 4
+commands/RESIDENT                                           commands/RESIDENT
+
+   NAME
+	RESIDENT - Display and modify the list of resident commands.
+
+   FORMAT
+	RESIDENT [<resident name>] [<filename>] [REMOVE] [ADD]
+	         [REPLACE] [PURE|FORCE] [SYSTEM] [QUIET]
+
+   TEMPLATE
+	NAME/K,FILE/M,REMOVE/S,ADD/S,REPLACE/S,PURE=FORCE/S,SYSTEM/S,QUIET/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	RESIDENT is used to load commands and add them to the resident list
+	maintained by the Shell. This allows the command to be executed
+	without it having to be reloaded from disk each time. This eliminates
+	the time it takes to load the command and reduces memory use when
+	multitasking.
+
+	To be made resident, a command should be both reentrant and
+	re-executable. A reentrant command can properly support independent
+	use by two or more programs at the same time. A re-executable command
+	does not have to be reloaded to be executed again. Commands that have
+	these characteristics are called pure and have the p (pure)
+	protection bit set.
+
+	Many of the commands in the C: directory, as well as the More command
+	in Utilities, are pure commands and can be made resident. If a
+	command does not have its pure bit set, it probably cannot be made
+	resident safely. (Just setting the pure bit does not make a command
+	or program pure).
+
+	The REPLACE option is the default option and does not need to be
+	explicitly stated. If RESIDENT is invoked with no options, it lists
+	the programs on the resident list. If no <resident name> is specified
+	(i.e., just a filename is specified), RESIDENT will use the filename
+	portion as the name on the resident list.
+
+	NOTE: The full path to the file must be used.
+
+	If a <resident name> is specified and RESIDENT finds a program with
+	that name already on the list, it will attempt to replace the
+	command. That <resident name> must then be used to reference the
+	resident version of the command. The replacement will succeed only if
+	the already-resident command is not in use.
+
+	To override REPLACEment and make several versions of a command
+	resident simultaneously, use the ADD option, giving a different
+	<resident name> for each version loaded.
+
+	If the SYSTEM option is specified, the command will be added to the
+	system portion of the resident list. Any commands added to the
+	resident list with the SYSTEM option cannot be removed. To list
+	SYSTEM files on the RESIDENT list, you must specify the SYSTEM
+	option.
+
+	The PURE option forces RESIDENT to load commands which are not marked
+	as pure (i.e., they do not have their pure bit set), and can be used
+	experimentally to test the pureness of other commands and programs.
+
+	Warning: Use the PURE option with caution. Remember that in order for
+	a command to be made RESIDENT, it must be both reentrant and
+	re-executable. Although it is unlikely, some of your programs may be
+	pure enough to be fully reentrant and usable by more than one process
+	at the same time. Other programs may not be fully reentrant but may
+	be pure enough to be re-executable. Such commands can be made
+	RESIDENT, but you must be extremely careful to use the command in
+	only one process at a time.
+
+	The QUIET option turns off any progress messages; if in effect,
+	only error messages will be printed. Setting the local shell
+	variable _Verbosity to a negative value has the same effect.
+
+	The availability of Internal commands can also be controlled with
+	RESIDENT. To deactivate an Internal command (for instance if an
+	application has its own command of the same name), use RESIDENT
+	<Command> REMOVE. AmigaDOS will no longer recognize the Internal
+	command. The AmigaDOS command can be reactivated with the REPLACE
+	option.
+
+   EXAMPLES
+	    1> RESIDENT C:COPY
+
+	makes the COPY command resident (replaces any previous version).
+
+	    1> RESIDENT Copy2 DF1:C/COPY ADD
+
+	adds another version of COPY to the resident list, under the name
+	Copy2.
+
+	    1> RESIDENT Xdir DF1:C/Xdir PURE
+
+	makes an experimental, non-pure version of the DIR command resident.
+
+	    1> RESIDENT CD REMOVE
+
+	makes the Internal CD command unavailable.
+
+	    1> RESIDENT CD REPLACE
+
+	restores the CD command to the system.
+
+   SEE ALSO
+	PROTECT
+commands/RUN                                                     commands/RUN
+
+   NAME
+	RUN - Execute commands as background processes.
+
+   FORMAT
+	RUN <command> [+ {<command>}]
+
+   TEMPLATE
+	COMMAND/F
+
+   PATH
+	Internal
+
+   FUNCTION
+	RUN is used to launch background processes. A background process does
+	not open its own window for input or output and does not take over
+	the parent Shell.
+
+	RUN attempts to execute the <command> and any arguments entered on
+	the command line. You can RUN multiple commands by separating them
+	with plus signs (+). If you press Return after a plus sign, RUN will
+	interpret the next line as a continuation of the same command line.
+
+	To allow the closing of the Shell window in which the process was
+	started, you need to redirect both the standard output and standard error
+	streams of RUN with RUN >NIL: *>NIL: <command>.
+
+	A new background Shell has the same search path and command stack
+	size as the Shell from which RUN was given.
+
+	You can RUN commands stored on the resident list. For speed, resident
+	commands are checked before commands in the command path. A Shell
+	started with RUN NEWSHELL still uses the default startup file,
+	S:Shell-startup.
+
+   EXAMPLES
+	    1> RUN COPY Text PRT:+
+	    DELETE Text +
+	    ECHO "Printing finished"
+
+	prints the Text file by copying it to the printer device, deletes it,
+	then displays the given message. Plus signs are used to concatenate
+	the command lines.
+
+	    1> RUN EXECUTE Comseq
+
+	executes, in the background, all the commands in the file Comseq.
+commands/SET                                                     commands/SET
+
+   NAME
+	SET - Set a local variable.
+
+   FORMAT
+	SET [<name>] [<string>]
+
+   TEMPLATE
+	NAME,STRING/F
+
+   PATH
+	Internal
+
+   FUNCTION
+	SET with <name> and <string> arguments creates a new environment
+	variable. The first word after SET is taken as the <name>. Everything
+	else on the command line is taken as the <string> argument. Quotation
+	marks are not required.
+
+	SET with no arguments list the current local variables.
+
+	An environment variable created with SET is local to the Shell in
+	which it was created. If you create a new Shell with the NEWSHELL
+	command, that Shell will also recognize any variables created in its
+	parent Shell. However, if you create a new Shell with the Execute
+	Command menu item or by opening the Shell icon, variables created
+	with SET will not be recognized.
+
+	You can call environment variables in a script or on a command line
+	by placing a dollar sign ($) in front of the variable name.
+
+	To remove a local variable definition, use the UNSET command.
+
+   EXAMPLES
+	    1> SET origin This process launched from icon
+
+	creates the local variable origin which stores a reminder that a
+	Shell was invoked from an icon rather than a NEWSHELL.
+
+	    1> ECHO $origin
+	    This process launched from icon
+
+   SEE ALSO
+	GET, UNSET
+commands/SETENV                                               commands/SETENV
+
+   NAME
+	SETENV - Set a global variable.
+
+   FORMAT
+	SETENV [<name>] [SAVE] [<string>]
+
+   TEMPLATE
+	NAME,SAVE/S,STRING/F
+
+   PATH
+	Internal
+
+   FUNCTION
+	SETENV with <name> and <string> arguments creates a new global
+	environment variable. The first word after SETENV is taken as the
+	<name>. Everything else on the command line is taken as the <string>
+	argument. Quotation marks are not required.
+
+	SETENV with no arguments list the current global variables.
+
+	Global variables are stored in ENV: and are used by all processes.
+	However, if a local variable (defined by SET) and a global variable
+	share the same name, the local variable will be used. The values of
+	the variables stored in ENV: will persist only until you restart the
+	system. The values will persist across system restarts if you use the
+	'SAVE' parameter.
+
+	Environment variables are called by scripts or other commands by
+	including a dollar sign ($) in front of the variable name.
+
+	To remove a global variable definition, use the UNSETENV command.
+
+   EXAMPLES
+	    1> SETENV Editor Extras2.0:Tools/MEmacs
+
+	creates the environment variable Editor which can be used with the
+	More utility. This specifies the editor as being MEmacs, located in
+	the Tools drawer of the Extras2.0 disk. The variable Editor will be
+	available in any Shell.
+
+	    1> SETENV Editor C:ED
+
+	same as above, only the editor specified is the editor ED.
+
+   SEE ALSO
+	GETENV, UNSETENV
+commands/SKIP                                                   commands/SKIP
+
+   NAME
+	SKIP - Skip to a label when executing script files.
+
+   FORMAT
+	SKIP [<label>] [BACK]
+
+   TEMPLATE
+	LABEL,BACK/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	SKIP is used in scripts to allow you to skip ahead in the script to a
+	<label> defined by a LAB statement. If no <label> is specified, SKIP
+	jumps to the next LAB statement.
+
+	SKIP always searches forward from the current line of the file.
+	However, when the BACK option is used, SKIP starts searching for the
+	label from the beginning of the file. This allows SKIPs to points
+	prior to the SKIP command.
+
+	You can only SKIP back as far as the last EXECUTE statement. If there
+	are no EXECUTE statements in a script, you will SKIP back to the
+	beginning of the file.
+
+	If SKIP does not find the label you specified but finds an
+	ENDSKIP statement, SKIP jumps to the line following the ENDSKIP
+	statement and sets the return code to 5 (WARN).
+
+	If SKIP finds neither the label nor an ENDSKIP statement, the
+	command sequence terminates, the error message "Object not
+	found" is displayed and the return code is set to 10 (ERROR).
+
+   EXAMPLES
+	Assume you have the following script, called CheckFile:
+
+	    .KEY name
+	    IF exists <name>
+	        SKIP message
+	    ELSE
+	        ECHO "<name> is not in this directory."
+	    ENDIF
+	    LAB message
+	    ECHO "The <name> file does exist."
+
+	You can run the script by typing:
+
+	    1> EXECUTE CheckFile Document
+
+	If the Document file exists in the current directory, the execution
+	of the script will skip ahead to the LAB command. The message The
+	Document file does exist will be displayed in the Shell window.
+
+	If the Document file is not in the current directory, the execution
+	of the script will jump to the line after the ELSE statement, and the
+	message Document is not in this directory will be displayed.
+
+   NOTES
+	SKIP can only be used in script files.
+
+   SEE ALSO
+	EXECUTE, LAB
+commands/STACK                                                 commands/STACK
+
+   NAME
+	STACK - Display or set the stack size within the current Shell.
+
+   FORMAT
+	STACK [<n>]
+
+   TEMPLATE
+	SIZE/N
+
+   PATH
+	Internal
+
+   FUNCTION
+	When you run a program, it uses a certain amount of stack, a special
+	area in memory allocated for the program. The stack required for a
+	program should be given in the program's documentation. However, if a
+	program causes system failure, you may wish to experiment with
+	various stack sizes.
+
+	Commands that perform operations that consist of multiple levels may
+	require additional stack space.
+
+	Stack sizes generally range from 4000 to 25000 bytes in OS3 and
+	from 32768 bytes upwards in OS4. If the stack size is too small,
+	a system failure may occur. Too large of a stack size may take
+	too much memory away from other system functions.
+
+	Warning: If you run out of stack space, you may receive a Software
+	Failure message. If you have altered the stack for the program that
+	caused the Software Failure message, try increasing the stack size.
+
+commands/SWAPCD                                               commands/SWAPCD
+
+   NAME
+	SWAPCD - Interchange the current directory and a stacked directory
+
+   FORMAT
+	SWAPCD [<dir|pattern>] [LEVEL <number>]
+
+   TEMPLATE
+	DIR,LEVEL/N
+
+   PATH
+	Internal
+
+   FUNCTION
+	SWAPCD interchanges the current directory with one of the
+	directories saved by the PUSHCD command. If an optional
+	directory name is given, it will be exchanged with the most
+	recently saved directory instead.
+
+	By default, the most recently saved directory will be exchanged
+	with the current directory. To pick any other directory from
+	the stack, use the LEVEL parameter; LEVEL=1 will choose the
+	most recently used stack element, LEVEL=2 the one which precedes
+	the most recently used stack element and so forth.
+
+	If there is no directory on the stack, SWAPCD will pop the
+	directory SYS: instead.
+
+   SEE ALSO
+	CD, POPCD, PUSHCD
+commands/TEE                                                     commands/TEE
+
+   NAME
+	TEE - Send data from the standard input to the standard output and
+	    also print it to the console.
+
+   FORMAT
+	[SIZE <number>] [LINE]
+
+   TEMPLATE
+	SIZE/N/K,LINE/S
+
+   PATH
+	Internal
+
+   FUNCTION
+	The TEE command will read data from its standard input and send it
+	to its standard output, but additionally it will also send a copy
+	of the data to the console. This allows for pipe commands to be
+	monitored.
+
+	By default the TEE command reads data in chunks of 512 bytes each,
+	which can be changed with the SIZE parameter; it controls how many
+	bytes will be read apiece. Alternatively, you can tell the TEE
+	command to read the input line by line. The LINE parameter activates
+	this mode of operation.
+
+   SEE ALSO
+	PIPE
+commands/UNALIAS                                             commands/UNALIAS
+
+   NAME
+	UNALIAS - Remove an alias.
+
+   FORMAT
+	UNALIAS [<name>]
+
+   TEMPLATE
+	NAME/A/M
+
+   PATH
+	Internal
+
+   FUNCTION
+	UNALIAS removes the named aliases from the alias list.
+
+   SEE ALSO
+	ALIAS
+commands/UNSET                                                 commands/UNSET
+
+   NAME
+	UNSET - Remove local variables.
+
+   FORMAT
+	UNSET [<name>]
+
+   TEMPLATE
+	NAME/A/M
+
+   PATH
+	Internal
+
+   FUNCTION
+	UNSET removes the named local variables from the variable list for the
+	current process.
+
+   SEE ALSO
+	SET
+commands/UNSETENV                                           commands/UNSETENV
+
+   NAME
+	UNSETENV - Remove a global variable.
+
+   FORMAT
+	UNSETENV [DELETE] [<name>]
+
+   TEMPLATE
+	DELETE/S,NAME/A/M
+
+   PATH
+	Internal
+
+   FUNCTION
+	UNSETENV removes the named global variables from the current variable
+	list. The current global variable list will persist only until the
+	system is restarted, so removing one variable will not affect the
+	default value it is initialized with at system startup. To also remove
+	this default value, use the 'DELETE' parameter.
+
+   SEE ALSO
+	SETENV
+commands/WHY                                                     commands/WHY
+
+   NAME
+	WHY - Print an error message that explains why the previous
+	    command failed.
+
+   FORMAT
+	WHY
+
+   TEMPLATE
+	(none)
+
+   PATH
+	Internal
+
+   FUNCTION
+	Usually when a command fails the screen displays a brief message.
+	This message typically includes the name of the file (if that was the
+	problem) but does not go into detail.
+
+	For example, the message Can't open <filename> may appear. This could
+	happen for a number of reasons--AmigaDOS may not be able to locate
+	the file, the file is of the wrong type, or there was insufficient
+	disk space or RAM for the operation requested.
+
+	If the reason is not immediately obvious, enter WHY to get a more
+	complete explanation.
+
+   EXAMPLES
+	    1> COPY DF0:
+	    Bad arguments
+
+	    1> WHY
+	    Last command failed because required argument missing
+
+	The WHY message points to the error: a destination for the COPY was
+	not given.
+shell/--environment-variables--               shell/--environment-variables--
+
+	The shell both consults and changes certain environment variables
+	while it processes commands. Here is a complete list:
+
+	    Echo
+	        If this is set to ON, TRUE or 1, each command line will be
+	        printed before it is executed.
+
+	    Interactive
+	        If this is set to ON, TRUE or 1, you will have to confirm.
+	        every command before it is executed.
+
+	    KeepDoubleQuotes
+	        When the command line is passed to a helper command, such as
+	        RX (for launching ARexx scripts), it may be enclosed in double
+	        quotes, if necessary. If the KeepDoubleQuotes variable is set
+	        to ON, TRUE or 1 any double quotes on the command line will
+	        remain unchanged, otherwise they will be removed.
+
+	    OldRedirect
+	        If this is set to ON, TRUE or 1, redirection for the commands
+	        Run, Pipe and Alias will be disabled and redirection of the
+	        standard error output stream will be disallowed.
+
+	    Process
+	        This is set to the CLI process number of this shell (which
+	        you can check with the STATUS command).
+
+	    RC
+	        This is set to the failure code of the last command invoked,
+	        e.g. 0 for success and 10, 20, etc. for failure.
+
+	    Result2
+	        This is set to the error code set by the last command invoked.
+	        The WHY command will consult this and print the error message
+	        corresponding to the code.
+
+	    Viewer
+	        The name of the command to invoke for a picture, sound,
+	        animation, text or data file, if the DataTypes system feels
+	        responsible for a file. For example, if you set "Viewer" to
+	        "MultiView" and then enter the name of a picture file on
+	        the command line, then the shell will automatically invoke
+	        the "MultiView" command on it.
+
+	    _LastCommand
+	        The name of the last command invoked.
+
+	    _LastCommandArgs
+	        Any arguments passed to the last command invoked; this can
+	        be empty.
+
+	    _mchar
+	        The character(s) which ties together several programs whose
+	        output should be merged with the output of the next program
+	        in the command line.
+
+	    _pchar
+	        The character(s) which ties together several programs whose
+	        input should be fed into the output of the next program in
+	        the command line.
+
+	    _RunTime
+	        This is set to the amount of time it took to execute the
+	        last command. Only actual execution time is counted and
+	        not how long it took to load the command. That number is
+	        given as the number of seconds, followed by an optional
+	        decimal point and the fraction of a second, e.g. "12.34".
+
+	    _ScriptFile
+	        The name of the script file currently being processed,
+	        as started by using the EXECUTE command.
+
+	    _ScriptLine
+	        The current line number of the script file being processed,
+	        as started by using the EXECUTE command.
+
+	    _ShellVersion
+	        Version and revision number of the shell executing your
+	        command or script file, e.g. "51.49".
+
+	    _Title
+	        The shell window title to be used; it supports the same
+	        formatting commands as the shell prompt.
+
+	    _WarpUP_Kludge
+	        If this is set to ON, TRUE or 1, the shell will not try to
+	        release any signals which the previous command allocated
+	        but neglected to release when it returned. This must be done
+	        for WarpUP programs which will otherwise cause the shell
+	        to hang.
+
+

@@ -1,0 +1,176 @@
+#
+# Makefile for native charset drivers
+# for gcc 3.4.3 PPC->PPC on OS4
+#
+
+CC		= gcc
+
+AS		= as
+
+LD		= ld
+
+STRIP		= strip
+
+CWFLAGS		= -Wall -W -Wundef -Wshadow -Wpointer-arith \
+		  -Wbad-function-cast -Wconversion -Waggregate-return \
+		  -Werror
+
+CFLAGS		= $(CWFLAGS) -O3 -IV:include -fno-builtin -mcrt=clib2 -c
+
+LIBS		= -lc
+
+LDFLAGS		= -nostartfiles -nostdlib -mcrt=clib2
+
+OBJS		= Amiga-1251.ppc.o                                       \
+		  ISO-8859-2.ppc.o  ISO-8859-3.ppc.o  ISO-8859-4.ppc.o   \
+		  ISO-8859-5.ppc.o  ISO-8859-6.ppc.o  ISO-8859-7.ppc.o   \
+		  ISO-8859-8.ppc.o  ISO-8859-9.ppc.o  ISO-8859-10.ppc.o  \
+		  ISO-8859-13.ppc.o ISO-8859-14.ppc.o ISO-8859-15.ppc.o  \
+		  ISO-8859-16.ppc.o                                      \
+		  X-ATO-E2.ppc.o    X-ATO-PL.ppc.o    X-ATO-srpski.ppc.o \
+		  startup.ppc.o
+# Add this if you think we need a 68k jump table,
+# also add -DVECTABLE_68K to CFLAGS
+# and charset_68k.ppc.o to the .elf rules and object files below
+#                 charset_68k.ppc.o
+
+EXE		= Amiga-1251.charset.elf                           \
+		  ISO-8859-2.charset.elf   ISO-8859-3.charset.elf  \
+		  ISO-8859-4.charset.elf   ISO-8859-5.charset.elf  \
+		  ISO-8859-6.charset.elf   ISO-8859-7.charset.elf  \
+		  ISO-8859-8.charset.elf   ISO-8859-9.charset.elf  \
+		  ISO-8859-10.charset.elf  ISO-8859-13.charset.elf \
+		  ISO-8859-14.charset.elf  ISO-8859-15.charset.elf \
+		  ISO-8859-16.charset.elf                          \
+		  X-ATO-E2.charset.elf     X-ATO-PL.charset.elf    \
+		  X-ATO-srpski.charset.elf
+
+all:		$(EXE)
+
+startup.ppc.o:	startup.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+#charset_68k.ppc.o: charset_68k.c
+#		$(CC) $(CFLAGS) -Wno-bad-function-cast -Wno-unused -o $@ $<
+
+Amiga-1251.ppc.o: Amiga-1251.c Amiga-1251.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-2.ppc.o: ISO-8859-2.c ISO-8859-2.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-3.ppc.o: ISO-8859-3.c ISO-8859-3.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-4.ppc.o: ISO-8859-4.c ISO-8859-4.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-5.ppc.o: ISO-8859-5.c ISO-8859-5.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-6.ppc.o: ISO-8859-6.c ISO-8859-6.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-7.ppc.o: ISO-8859-7.c ISO-8859-7.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-8.ppc.o: ISO-8859-8.c ISO-8859-8.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-9.ppc.o: ISO-8859-9.c ISO-8859-9.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-10.ppc.o: ISO-8859-10.c ISO-8859-10.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-13.ppc.o: ISO-8859-13.c ISO-8859-13.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-14.ppc.o: ISO-8859-14.c ISO-8859-14.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-15.ppc.o: ISO-8859-15.c ISO-8859-15.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+ISO-8859-16.ppc.o: ISO-8859-16.c ISO-8859-16.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+X-ATO-E2.ppc.o:	X-ATO-E2.c X-ATO-E2.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+X-ATO-PL.ppc.o:	X-ATO-PL.c X-ATO-PL.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+X-ATO-srpski.ppc.o: X-ATO-srpski.c X-ATO-srpski.charset_rev.h charsetdriver.c
+		$(CC) $(CFLAGS) -o $@ $<
+
+Amiga-1251.charset.elf:	  startup.ppc.o Amiga-1251.ppc.o
+	$(CC) $(LDFLAGS)  startup.ppc.o Amiga-1251.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-2.charset.elf:	 startup.ppc.o ISO-8859-2.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-3.charset.elf:	 startup.ppc.o ISO-8859-3.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-3.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-4.charset.elf:	 startup.ppc.o ISO-8859-4.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-4.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-5.charset.elf:	 startup.ppc.o ISO-8859-5.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-6.charset.elf:	 startup.ppc.o ISO-8859-6.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-6.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-7.charset.elf:	 startup.ppc.o ISO-8859-7.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-7.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-8.charset.elf:	 startup.ppc.o ISO-8859-8.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-8.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-9.charset.elf:	 startup.ppc.o ISO-8859-9.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-9.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-10.charset.elf: startup.ppc.o ISO-8859-10.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-10.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-13.charset.elf: startup.ppc.o ISO-8859-13.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-13.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-14.charset.elf: startup.ppc.o ISO-8859-14.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-14.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-15.charset.elf: startup.ppc.o ISO-8859-15.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ISO-8859-16.charset.elf: startup.ppc.o ISO-8859-16.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+X-ATO-E2.charset.elf:	 startup.ppc.o X-ATO-E2.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o X-ATO-E2.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+X-ATO-PL.charset.elf:	 startup.ppc.o X-ATO-PL.ppc.o
+	$(CC) $(LDFLAGS) startup.ppc.o X-ATO-PL.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+X-ATO-srpski.charset.elf: startup.ppc.o X-ATO-srpski.ppc.o
+	$(CC) $(LDFLAGS)  startup.ppc.o X-ATO-srpski.ppc.o $(LIBS) -o $@.debug
+	$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+clean:
+		-Delete $(OBJS) $(EXE)

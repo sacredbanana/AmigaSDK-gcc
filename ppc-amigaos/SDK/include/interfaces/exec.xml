@@ -1,0 +1,1408 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="exec" basename="SysBase" basetype="ExecBase" openname="exec.library" m68kbias="30">
+
+  <copyright>Copyright (C) 2003-2022 Trevor Dickinson</copyright>
+
+  <include>utility/utility.h</include>
+
+  <inline4include>interfaces/exec.h</inline4include>
+
+  <m68kinclude>exec/types.h</m68kinclude>
+  <m68kinclude>exec/tasks.h</m68kinclude>
+  <m68kinclude>exec/memory.h</m68kinclude>
+  <m68kinclude>exec/ports.h</m68kinclude>
+  <m68kinclude>exec/devices.h</m68kinclude>
+  <m68kinclude>exec/io.h</m68kinclude>
+  <m68kinclude>exec/semaphores.h</m68kinclude>
+  <m68kinclude>exec/avl.h</m68kinclude>
+
+  <interface name="main" version="1.0" flags="protected" struct="ExecIFace" prefix="_impl_" asmprefix="IExec" global="IExec">
+    <method name="Obtain" result="ULONG"/>
+
+    <method name="Release" result="ULONG"/>
+
+    <method name="Expunge" result="void" status="unimplemented"/>
+
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="AddHead" result="void" m68kslot="35">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+      <arg name="node" type="struct Node *" m68kreg="a1"/>
+    </method>
+
+    <method name="AddMemHandler" result="VOID" m68kslot="124">
+      <arg name="memHandler" type="struct Interrupt *" m68kreg="a1"/>
+    </method>
+
+    <method name="AddMemList" result="void" lifecycle="deprecated" m68kslot="98">
+      <arg name="size" type="ULONG" m68kreg="d0"/>
+      <arg name="attributes" type="ULONG" m68kreg="d1"/>
+      <arg name="pri" type="LONG" m68kreg="d2"/>
+      <arg name="base" type="APTR" m68kreg="a0"/>
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="AddTail" result="void" m68kslot="36">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+      <arg name="node" type="struct Node *" m68kreg="a1"/>
+    </method>
+    
+    <method name="AllocAbs" result="APTR" lifecycle="deprecated" m68kslot="29">
+      <arg name="byteSize" type="ULONG" m68kreg="d0"/>
+      <arg name="location" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="Allocate" result="APTR" lifecycle="deprecated" m68kslot="26">
+      <arg name="memHeader" type="struct MemHeader *" m68kreg="a0"/>
+      <arg name="byteSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="AllocEntry" result="struct MemList *" lifecycle="deprecated" m68kslot="32">
+      <arg name="memList" type="struct MemList *" m68kreg="a0"/>
+    </method>
+
+    <method name="AllocMem" result="APTR" lifecycle="deprecated" m68kslot="28">
+      <arg name="byteSize" type="ULONG" m68kreg="d0"/>
+      <arg name="attributes" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="AllocPooled" result="APTR" m68kslot="113">
+      <arg name="poolHeader" type="APTR" m68kreg="a0"/>
+      <arg name="memSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="AllocVec" result="APTR" lifecycle="deprecated" m68kslot="109">
+      <arg name="byteSize" type="ULONG" m68kreg="d0"/>
+      <arg name="attributes" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="AllocVecPooled" result="APTR">
+      <arg name="poolHeader" type="APTR"/>
+      <arg name="size" type="ULONG"/>
+    </method>
+
+    <method name="AvailMem" result="ULONG" m68kslot="31">
+      <arg name="attributes" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="CopyMem" result="void" m68kslot="99">
+      <arg name="source" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="dest" type="APTR" m68kreg="a1"/>
+      <arg name="size" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="CopyMemQuick" result="void" m68kslot="100">
+      <arg name="source" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="dest" type="APTR" m68kreg="a1"/>
+      <arg name="size" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="CreatePool" result="APTR" lifecycle="deprecated" m68kslot="111">
+      <arg name="memFlags" type="ULONG" m68kreg="d0"/>
+      <arg name="puddleSize" type="ULONG" m68kreg="d1"/>
+      <arg name="threshSize" type="ULONG" m68kreg="d2"/>
+    </method>
+
+    <method name="Deallocate" result="void" lifecycle="deprecated" m68kslot="27">
+      <arg name="memHeader" type="struct MemHeader *" m68kreg="a0"/>
+      <arg name="memoryBlock" type="APTR" m68kreg="a1"/>
+      <arg name="byteSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="DeletePool" result="void" lifecycle="deprecated" m68kslot="112">
+      <arg name="poolHeader" type="APTR" m68kreg="a0"/>
+    </method>
+
+    <method name="Enqueue" result="void" m68kslot="40">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+      <arg name="node" type="struct Node *" m68kreg="a1"/>
+    </method>
+
+    <method name="FindName" result="struct Node *" m68kslot="41">
+      <arg name="start" type="struct List *" m68kreg="a0"/>
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="FindIName" result="struct Node *">
+      <arg name="start" type="struct List *"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="Forbid" result="void" m68kslot="17">
+    </method>
+
+    <method name="FreeEntry" result="void" m68kslot="33">
+      <arg name="memList" type="struct MemList *" m68kreg="a0"/>
+    </method>
+
+    <method name="FreeMem" result="void" lifecycle="deprecated" m68kslot="30">
+      <arg name="memoryBlock" type="APTR" m68kreg="a1"/>
+      <arg name="byteSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="FreePooled" result="void" m68kslot="114">
+      <arg name="poolHeader" type="APTR" m68kreg="a0"/>
+      <arg name="memory" type="APTR" m68kreg="a1"/>
+      <arg name="memSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="FreeVec" result="void" m68kslot="110">
+      <arg name="memoryBlock" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="FreeVecPooled" result="void">
+      <arg name="poolHeader" type="APTR"/>
+      <arg name="memory" type="APTR"/>
+    </method>
+
+    <method name="InitData" result="void" lifecycle="deprecated">
+      <arg name="initTab" type="CONST_APTR"/>
+      <arg name="memory" type="APTR"/>
+      <arg name="size" type="ULONG"/>
+    </method>
+
+    <method name="InitStruct" result="void" lifecycle="deprecated" m68kslot="8">
+      <arg name="initTable" type="CONST_APTR" m68kreg="a1"/>
+      <arg name="memory" type="APTR" m68kreg="a2"/>
+      <arg name="size" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="Insert" result="void" m68kslot="34">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+      <arg name="node" type="struct Node *" m68kreg="a1"/>
+      <arg name="listNode" type="struct Node *" m68kreg="a2"/>
+    </method>
+
+    <method name="MakeInterface" result="struct Interface *">
+      <arg name="library" type="struct Library *"/>
+      <arg name="taglist" type="const struct TagItem *"/>
+    </method>
+
+    <method name="MakeInterfaceTags" result="struct Interface *">
+      <arg name="library" type="struct Library *"/>
+      <vararg name="tag" type="Tag"/>
+    </method>
+
+    <method name="Permit" result="void" m68kslot="18">
+    </method>
+
+    <method name="RawDoFmt" result="APTR" m68kslot="82">
+      <arg name="formatString" type="CONST_STRPTR" m68kreg="a0"/>
+      <arg name="dataStream" type="CONST_APTR" m68kreg="a1"/>
+      <arg name="PutChProc" type="void (*)()" m68kreg="a2"/>
+      <arg name="PutChData" type="APTR" m68kreg="a3"/>
+    </method>
+
+    <method name="RemHead" result="struct Node *" m68kslot="38">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+    </method>
+
+    <method name="RemMemHandler" result="VOID" m68kslot="125">
+      <arg name="memHandler" type="struct Interrupt *" m68kreg="a1"/>
+    </method>
+
+    <method name="Remove" result="void" m68kslot="37">
+      <arg name="node" type="struct Node *" m68kreg="a1"/>
+    </method>
+
+    <method name="RemTail" result="struct Node *" m68kslot="39">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+    </method>
+
+    <method name="TypeOfMem" result="ULONG" m68kslot="84">
+      <arg name="address" type="CONST_APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="InitResident" result="APTR" m68kslot="12">
+      <arg name="resident" type="const struct Resident *" m68kreg="a1"/>
+      <arg name="segList" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="InitCode" result="void" m68kslot="7">
+      <arg name="startClass" type="ULONG" m68kreg="d0"/>
+      <arg name="version" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="SumKickData" result="ULONG" m68kslot="97">
+    </method>
+
+    <method name="AddTask" result="APTR" m68kslot="42">
+      <arg name="task" type="struct Task *" m68kreg="a1"/>
+      <arg name="initialPC" type="CONST_APTR" m68kreg="a2"/>
+      <arg name="finalPC" type="CONST_APTR" m68kreg="a3"/>
+      <arg name="tagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="AddTaskTags" result="APTR">
+      <arg name="task" type="struct Task *"/>
+      <arg name="initialPC" type="CONST_APTR"/>
+      <arg name="finalPC" type="CONST_APTR"/>
+      <vararg name="tag" type="Tag"/>
+    </method>
+
+    <method name="Disable" result="void" m68kslot="15">
+    </method>
+
+    <method name="Enable" result="void" m68kslot="16">
+    </method>
+
+    <method name="Reschedule" result="void">
+    </method>
+
+    <method name="FindTask" result="struct Task *" m68kslot="44">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="RemTask" result="void" m68kslot="43">
+      <arg name="task" type="struct Task *" m68kreg="a1"/>
+    </method>
+
+    <method name="SetTaskPri" result="BYTE" m68kslot="45">
+      <arg name="task" type="struct Task *" m68kreg="a1"/>
+      <arg name="priority" type="BYTE" m68kreg="d0"/>
+    </method>
+
+    <method name="StackSwap" result="void" lifecycle="deprecated" m68kslot="117">
+      <arg name="newstack" type="struct StackSwapStruct *" m68kreg="a0"/>
+    </method>
+
+    <method name="AllocSignal" result="BYTE" m68kslot="50">
+      <arg name="signalNum" type="BYTE" m68kreg="d0"/>
+    </method>
+
+    <method name="FreeSignal" result="void" m68kslot="51">
+      <arg name="signalNum" type="BYTE" m68kreg="d0"/>
+    </method>
+
+    <method name="SetExcept" result="ULONG" m68kslot="47">
+      <arg name="newSignals" type="ULONG" m68kreg="d0"/>
+      <arg name="signalMask" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="SetSignal" result="ULONG" m68kslot="46">
+      <arg name="newSignals" type="ULONG" m68kreg="d0"/>
+      <arg name="signalMask" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="Signal" result="void" m68kslot="49">
+      <arg name="task" type="struct Task *" m68kreg="a1"/>
+      <arg name="signals" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="Wait" result="ULONG" m68kslot="48">
+      <arg name="signalSet" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="AddPort" result="void" m68kslot="54">
+      <arg name="port" type="struct MsgPort *" m68kreg="a1"/>
+    </method>
+
+    <method name="CreatePort" result="struct MsgPort *" lifecycle="deprecated" >
+      <arg name="name" type="CONST_STRPTR"/>
+      <arg name="pri" type="BYTE"/>
+    </method>
+
+    <method name="CreateMsgPort" result="struct MsgPort *" lifecycle="deprecated" m68kslot="106">
+    </method>
+
+    <method name="DeletePort" result="void" lifecycle="deprecated">
+      <arg name="port" type="struct MsgPort *"/>
+    </method>
+
+    <method name="DeleteMsgPort" result="void" lifecycle="deprecated" m68kslot="107">
+      <arg name="port" type="struct MsgPort *" m68kreg="a0"/>
+    </method>
+
+    <method name="FindPort" result="struct MsgPort *" m68kslot="60">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+ 
+    <method name="GetMsg" result="struct Message *" m68kslot="57">
+      <arg name="port" type="struct MsgPort *" m68kreg="a0"/>
+    </method>
+
+    <method name="PutMsg" result="void" m68kslot="56">
+      <arg name="port" type="struct MsgPort *" m68kreg="a0"/>
+      <arg name="message" type="struct Message *" m68kreg="a1"/>
+    </method>
+
+    <method name="RemPort" result="void" m68kslot="55">
+      <arg name="port" type="struct MsgPort *" m68kreg="a1"/>
+    </method>
+
+    <method name="ReplyMsg" result="void" m68kslot="58">
+      <arg name="message" type="struct Message *" m68kreg="a1"/>
+    </method>
+
+    <method name="WaitPort" result="struct Message *" m68kslot="59">
+      <arg name="port" type="struct MsgPort *" m68kreg="a0"/>
+    </method>
+
+    <method name="Cause" result="void" m68kslot="25">
+      <arg name="interrupt" type="struct Interrupt *" m68kreg="a1"/>
+    </method>
+
+    <method name="AddSemaphore" result="void" m68kslot="95">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a1"/>
+    </method>
+
+    <method name="AttemptSemaphore" result="LONG" m68kslot="91">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+    </method>
+
+    <method name="AttemptSemaphoreShared" result="LONG" m68kslot="115">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+    </method>
+
+    <method name="FindSemaphore" result="struct SignalSemaphore *" m68kslot="94">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="InitSemaphore" result="void" m68kslot="88">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+    </method>
+
+    <method name="ObtainSemaphore" result="void" m68kslot="89">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+    </method>
+
+    <method name="ObtainSemaphoreList" result="void" m68kslot="92">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+    </method>
+
+    <method name="ObtainSemaphoreShared" result="void" m68kslot="108">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+    </method>
+
+    <method name="Procure" result="void" m68kslot="85">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+      <arg name="bidMessage" type="struct SemaphoreMessage *" m68kreg="a1"/>
+    </method>
+
+    <method name="ReleaseSemaphore" result="void" m68kslot="90">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+    </method>
+
+    <method name="ReleaseSemaphoreList" result="void" m68kslot="93">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+    </method>
+
+    <method name="RemSemaphore" result="void" m68kslot="96">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a1"/>
+    </method>
+
+    <method name="Vacate" result="void" m68kslot="86">
+      <arg name="semaphore" type="struct SignalSemaphore *" m68kreg="a0"/>
+      <arg name="bidMessage" type="struct SemaphoreMessage *" m68kreg="a1"/>
+    </method>
+
+    <method name="CreateTask" result="struct Task *">
+      <arg name="name" type="CONST_STRPTR"/>
+      <arg name="pri" type="LONG"/>
+      <arg name="initPC" type="CONST_APTR"/>
+      <arg name="stackSize" type="ULONG"/>
+      <arg name="tagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="CreateTaskTags" result="struct Task *">
+      <arg name="name" type="CONST_STRPTR"/>
+      <arg name="pri" type="LONG"/>
+      <arg name="initPC" type="CONST_APTR"/>
+      <arg name="stackSize" type="ULONG"/>
+      <vararg name="tag" type="Tag"/>
+    </method>
+
+    <method name="DeleteTask" result="void">
+      <arg name="task" type="struct Task *"/>
+    </method>
+
+    <method name="SumLibrary" result="void" m68kslot="66">
+      <arg name="library" type="struct Library *" m68kreg="a1"/>
+    </method>
+
+    <method name="CreateLibrary" result="struct Library *">
+      <arg name="taglist" type="const struct TagItem *"/>
+    </method>
+
+    <method name="CreateLibraryTags" result="struct Library *">
+      <vararg name="tag" type="Tag"/>
+    </method>
+
+    <method name="OpenLibrary" result="struct Library *" m68kslot="87">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+      <arg name="version" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="CloseLibrary" result="APTR" m68kresult="VOID" m68kslot="64">
+      <arg name="library" type="struct Library *" m68kreg="a1"/>
+    </method>
+
+    <method name="AddLibrary" result="void" m68kslot="61">
+      <arg name="library" type="struct Library *" m68kreg="a1"/>
+    </method>
+
+    <method name="RemLibrary" result="ULONG" m68kresult="VOID" m68kslot="62">
+      <arg name="library" type="struct Library *" m68kreg="a1"/>
+    </method>
+
+    <method name="AddDevice" result="void" m68kslot="67">
+      <arg name="device" type="struct Device *" m68kreg="a1"/>
+    </method>
+
+    <method name="RemDevice" result="ULONG" m68kresult="VOID" m68kslot="68">
+      <arg name="device" type="struct Device *" m68kreg="a1"/>
+    </method>
+
+    <method name="GetInterface" result="struct Interface *">
+      <arg name="library" type="struct Library *"/>
+      <arg name="name" type="CONST_STRPTR"/>
+      <arg name="version" type="ULONG"/>
+      <arg name="taglist" type="const struct TagItem *"/>
+    </method>
+
+    <method name="GetInterfaceTags" result="struct Interface *">
+      <arg name="library" type="struct Library *"/>
+      <arg name="name" type="CONST_STRPTR"/>
+      <arg name="version" type="ULONG"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="DropInterface" result="void">
+      <arg name="interface" type="struct Interface *"/>
+    </method>
+
+    <method name="AddInterface" result="void">
+      <arg name="library" type="struct Library *"/>
+      <arg name="interface" type="struct Interface *"/>
+    </method>
+
+    <method name="RemInterface" result="void">
+      <arg name="interface" type="struct Interface *"/>
+    </method>
+
+    <method name="SumInterface" result="void">
+      <arg name="interface" type="struct Interface *"/>
+    </method>
+
+    <method name="FindResident" result="struct Resident *" m68kslot="11">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="SetMethod" result="APTR">
+      <arg name="interface" type="struct Interface *"/>
+      <arg name="funcOffset" type="LONG"/>
+      <arg name="newFunc" type="CONST_APTR"/>
+    </method>
+
+    <method name="DeleteInterface" result="void">
+      <arg name="interface" type="struct Interface *"/>
+    </method>
+
+    <method name="DeleteLibrary" result="void">
+      <arg name="library" type="struct Library *"/>
+    </method>
+
+    <method name="SetFunction" result="APTR" m68kslot="65">
+      <arg name="library" type="struct Library *" m68kreg="a1"/>
+      <arg name="funcOffset" type="LONG" m68kreg="a0"/>
+      <arg name="newFunc" type="CONST_APTR" m68kreg="d0"/>
+    </method>
+
+    <method name="CacheClearE" result="void" m68kslot="102">
+      <arg name="address" type="APTR" m68kreg="a0"/>
+      <arg name="length" type="ULONG" m68kreg="d0"/>
+      <arg name="caches" type="ULONG" m68kreg="d1"/> 
+    </method>
+
+    <method name="CacheClearU" result="void" lifecycle="deprecated" m68kslot="101">
+    </method> 
+
+    <method name="MakeFunctions" result="ULONG" m68kresult="VOID" m68kslot="10">
+      <arg name="target" type="APTR" m68kreg="a0"/>
+      <arg name="functionArray" type="CONST_APTR" m68kreg="a1"/>
+      <arg name="funcDispBase" type="CONST_APTR" m68kreg="a2"/>
+    </method>
+
+    <method name="OpenDevice" result="LONG" m68kslot="69">
+      <arg name="devName" type="CONST_STRPTR" m68kreg="a0"/>
+      <arg name="unitNumber" type="ULONG" m68kreg="d0"/>
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+      <arg name="flags" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="CloseDevice" result="APTR" m68kresult="VOID" m68kslot="70">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+    </method>
+
+    <method name="CreateIORequest" result="struct IORequest *" lifecycle="deprecated" m68kslot="104">
+      <arg name="ioReplyPort" type="const struct MsgPort *" m68kreg="a0"/>
+      <arg name="size" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="DeleteIORequest" result="void" lifecycle="deprecated" m68kslot="105">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a0"/>
+    </method>
+
+    <method name="AbortIO" result="void" m68kslot="75">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+    </method>
+
+    <method name="CheckIO" result="struct IORequest *" m68kslot="73">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+    </method>
+
+    <method name="DoIO" result="BYTE" m68kslot="71">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+    </method>
+
+    <method name="SendIO" result="void" m68kslot="72">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+    </method>
+
+    <method name="BeginIO" result="void">
+      <arg name="ioRequest" type="struct IORequest *"/>
+    </method>
+
+    <method name="WaitIO" result="BYTE" m68kslot="74">
+      <arg name="ioRequest" type="struct IORequest *" m68kreg="a1"/>
+    </method>
+
+    <method name="AddResource" result="void" m68kslot="76">
+      <arg name="resource" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="RemResource" result="void" m68kslot="77">
+      <arg name="resource" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="OpenResource" result="APTR" m68kslot="78">
+      <arg name="resName" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="AddIntServer" result="BOOL" m68kresult="VOID" m68kslot="23">
+      <arg name="intNum" type="ULONG" m68kreg="d0"/>
+      <arg name="interrupt" type="struct Interrupt *" m68kreg="a1"/>
+    </method>
+
+    <method name="RemIntServer" result="void" m68kslot="24">
+      <arg name="intNum" type="ULONG" m68kreg="d0"/>
+      <arg name="interrupt" type="struct Interrupt *" m68kreg="a1"/>
+    </method>
+
+    <method name="SetIntVector" result="struct Interrupt *" m68kslot="22">
+      <arg name="intNum" type="ULONG" m68kreg="d0"/>
+      <arg name="interrupt" type="const struct Interrupt *" m68kreg="a1"/>
+    </method>
+
+    <method name="ObtainQuickVector" result="ULONG" lifecycle="deprecated" m68kslot="126">
+      <arg name="interruptCode" type="APTR" m68kreg="a0"/>
+    </method>
+
+    <method name="Alert" result="void" m68kslot="13">
+      <arg name="alertNum" type="ULONG" m68kreg="d7"/>
+    </method>
+
+    <method name="SuperState" result="APTR" m68kslot="20">
+    </method>
+
+    <method name="UserState" result="void" m68kslot="21">
+      <arg name="sysStack" type="APTR" m68kreg="d0"/>
+    </method>
+
+    <method name="Supervisor" result="ULONG" m68kslot="0">
+      <arg name="userFunc" type="APTR" m68kreg="a5"/>
+    </method>
+
+    <method name="SetTaskTrap" result="BOOL">
+      <arg name="trapNum" type="ULONG"/>
+      <arg name="trapCode" type="CONST_APTR"/>
+      <arg name="trapData" type="CONST_APTR"/>
+    </method>
+
+    <method name="AllocTrap" result="LONG" lifecycle="deprecated" m68kslot="52">
+      <arg name="trapNum" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="FreeTrap" result="void" lifecycle="deprecated" m68kslot="53">
+      <arg name="trapNum" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="GetCC" result="UWORD" lifecycle="deprecated" m68kslot="83">
+    </method>
+
+    <method name="SetSR" result="ULONG" lifecycle="deprecated" m68kslot="19">
+      <arg name="newSR" type="ULONG" m68kreg="d0"/>
+      <arg name="mask" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="AVL_AddNode" result="struct AVLNode *" m68kslot="137">
+      <arg name="root" type="struct AVLNode **" m68kreg="a0"/>
+      <arg name="node" type="struct AVLNode *" m68kreg="a1"/>
+      <arg name="func" type="AVLNODECOMP" m68kreg="a2"/>
+    </method>
+
+    <method name="AVL_FindFirstNode" result="struct AVLNode *" m68kslot="145">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+    </method>
+
+    <method name="AVL_FindLastNode" result="struct AVLNode *" m68kslot="146">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+    </method>
+
+    <method name="AVL_FindNextNodeByAddress" result="struct AVLNode *" m68kslot="143">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+    </method>
+
+    <method name="AVL_FindNextNodeByKey" result="struct AVLNode *" m68kslot="144">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+      <arg name="key" type="AVLKey" m68kreg="a1"/>
+      <arg name="func" type="AVLKEYCOMP" m68kreg="a2"/>
+    </method>
+
+    <method name="AVL_FindNode" result="struct AVLNode *" m68kslot="140">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+      <arg name="key" type="AVLKey" m68kreg="a1"/>
+      <arg name="func" type="AVLKEYCOMP" m68kreg="a2"/>
+    </method>
+
+    <method name="AVL_FindPrevNodeByAddress" result="struct AVLNode *" m68kslot="141">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+    </method>
+
+    <method name="AVL_FindPrevNodeByKey" result="struct AVLNode *" m68kslot="142">
+      <arg name="root" type="const struct AVLNode *" m68kreg="a0"/>
+      <arg name="key" type="AVLKey" m68kreg="a1"/>
+      <arg name="func" type="AVLKEYCOMP" m68kreg="a2"/>
+    </method>
+
+    <method name="AVL_RemNodeByAddress" result="struct AVLNode *" m68kslot="138">
+      <arg name="root" type="struct AVLNode **" m68kreg="a0"/>
+      <arg name="node" type="struct AVLNode *" m68kreg="a1"/>
+    </method>
+
+    <method name="AVL_RemNodeByKey" result="struct AVLNode *" m68kslot="139">
+      <arg name="root" type="struct AVLNode **" m68kreg="a0"/>
+      <arg name="key" type="AVLKey" m68kreg="a1"/>
+      <arg name="func" type="AVLKEYCOMP" m68kreg="a2"/>
+    </method>
+
+    <method name="CacheControl" result="ULONG" m68kslot="103">
+      <arg name="cacheBits" type="ULONG" m68kreg="d0"/>
+      <arg name="cacheMask" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="LockMem" result="BOOL">
+      <arg name="baseAddress" type="APTR"/>
+      <arg name="size" type="ULONG"/>
+    </method>
+
+    <method name="UnlockMem" result="void">
+      <arg name="baseAddress" type="APTR"/>
+      <arg name="size" type="ULONG"/>
+    </method>
+
+    <method name="ReallocVec" result="void" status="unimplemented">
+      <arg name="memBlock" type="APTR"/>
+      <arg name="newSize" type="ULONG"/>
+      <arg name="flags" type="ULONG"/>
+    </method>
+
+    <method name="CachePreDMA" result="APTR" m68kslot="122">
+      <arg name="vaddr" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="length" type="ULONG *" m68kreg="a1"/>
+      <arg name="flags" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="CachePostDMA" result="void" m68kslot="123">
+      <arg name="vaddr" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="length" type="ULONG *" m68kreg="a1"/>
+      <arg name="flags" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="StartDMA" result="ULONG">
+      <arg name="startAddr" type="CONST_APTR"/>
+      <arg name="blockSize" type="ULONG"/>
+      <arg name="flags" type="ULONG"/>
+    </method>
+
+    <method name="EndDMA" result="void">
+      <arg name="startAddr" type="CONST_APTR"/>
+      <arg name="blockSize" type="ULONG"/>
+      <arg name="flags" type="ULONG"/>
+    </method>
+
+    <method name="GetDMAList" result="void">
+      <arg name="startAddr" type="CONST_APTR"/>
+      <arg name="blockSize" type="ULONG"/>
+      <arg name="flags" type="ULONG"/>
+      <arg name="dmaList" type="struct DMAEntry *"/>
+    </method>
+
+    <method name="AddTrackable" result="struct Trackable *">
+      <arg name="usingTask" type="struct Task *"/>
+      <arg name="object" type="APTR"/>
+      <arg name="destFunc" type="struct Hook *"/>
+    </method>
+
+    <method name="FindTrackable" result="struct Trackable *">
+      <arg name="usingTask" type="struct Task *"/>
+      <arg name="object" type="APTR"/>
+    </method>
+
+    <method name="RemTrackable" result="struct Trackable *">
+      <arg name="usingTask" type="struct Task *"/>
+      <arg name="trackable" type="struct Trackable *"/>
+    </method>
+
+    <method name="DeleteTrackable" result="void">
+      <arg name="trackable" type="struct Trackable *"/>
+    </method>
+
+    <method name="AllocSysObject" result="APTR">
+      <arg name="type" type="ULONG"/>
+      <arg name="tags" type="const struct TagItem *"/>
+    </method>
+
+    <method name="AllocSysObjectTags" result="APTR">
+      <arg name="type" type="ULONG"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="FreeSysObject" result="void">
+      <arg name="type" type="ULONG"/>
+      <arg name="object" type="APTR"/>
+    </method>
+
+    <method name="SuspendTask" result="void">
+      <arg name="whichTask" type="struct Task *"/>
+      <arg name="flags" type="ULONG"/>
+    </method>
+
+    <method name="RestartTask" result="void">
+      <arg name="whichTask" type="struct Task *"/>
+      <arg name="flags" type="ULONG"/>
+    </method>
+
+    <method name="MoveList" result="void">
+      <arg name="destinationList" type="struct List *"/>
+      <arg name="sourceList" type="struct List *"/>
+    </method>
+
+    <method name="NewList" result="void">
+      <arg name="list" type="struct List *"/>
+    </method>
+
+    <method name="NewMinList" result="void" m68kslot="133">
+      <arg name="list" type="struct MinList *" m68kreg="a0"/>
+    </method>
+
+    <method name="ColdReboot" result="void" m68kslot="116">
+    </method>
+
+    <method name="MakeLibrary" result="struct Library *" m68kslot="9">
+      <arg name="vectors" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="structure" type="CONST_APTR" m68kreg="a1"/>
+      <arg name="init" type="CONST_APTR" m68kreg="a2"/>
+      <arg name="dataSize" type="ULONG" m68kreg="d0"/>
+      <arg name="segList" type="APTR" m68kreg="d1"/>
+    </method>
+
+    <method name="Emulate" result="ULONG">
+      <arg name="InitPC" type="CONST_APTR"/>
+      <arg name="tagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="EmulateTags" result="ULONG">
+      <arg name="InitPC" type="CONST_APTR"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="DebugPrintF" result="void">
+      <arg name="format" type="CONST_STRPTR"/>
+      <vararg name="arg" type="APTR"/>
+    </method>
+
+    <method name="IsNative" result="BOOL">
+      <arg name="code" type="CONST_APTR"/>
+    </method>
+
+    <method name="RawMayGetChar" result="LONG" status="private" lifecycle="deprecated">
+    </method>
+
+    <method name="RawPutChar" result="void" status="private" lifecycle="deprecated">
+      <arg name="c" type="UBYTE" m68kreg="d0"/>
+    </method>
+
+    <method name="GetCPUInfo" result="void">
+      <arg name="TagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="GetCPUInfoTags" result="void">
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="OwnerOfMem" result="struct Task *">
+      <arg name="Address" type="CONST_APTR"/>
+    </method>	
+
+    <method name="AddResetCallback" result="BOOL">
+      <arg name="resetCallback" type="struct Interrupt *"/>
+    </method>
+
+    <method name="RemResetCallback" result="void">
+      <arg name="resetCallback" type="struct Interrupt *"/>
+    </method>
+
+    <method name="ItemPoolAlloc" result="APTR">
+      <arg name="itemPool" type="APTR"/>
+    </method>
+
+    <method name="ItemPoolFree" result="void">
+      <arg name="itemPool" type="APTR"/>
+      <arg name="item" type="APTR"/>
+    </method>
+
+    <method name="ItemPoolGC" result="void">
+      <arg name="itemPool" type="APTR"/>
+    </method>
+
+    <method name="ItemPoolControl" result="uint32">
+      <arg name="itemPool" type="APTR"/>
+      <arg name="tagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="ItemPoolControlTags" result="uint32">
+      <arg name="itemPool" type="APTR"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="ItemPoolFlush" result="void">
+      <arg name="itemPool" type="APTR"/>
+    </method>
+
+    <method name="GetHead" result="struct Node *">
+      <arg name="list" type="struct List *"/>
+    </method>
+
+    <method name="GetTail" result="struct Node *">
+      <arg name="list" type="struct List *"/>
+    </method>
+
+    <method name="GetSucc" result="struct Node *">
+      <arg name="node" type="struct Node *"/>
+    </method>
+
+    <method name="GetPred" result="struct Node *">
+      <arg name="node" type="struct Node *"/>
+    </method>
+
+    <method name="IceColdReboot" result="void">
+    </method>
+
+    <method name="KMemCacheCreate" result="APTR" status="private">
+      <arg name="VMA" type="APTR"/>
+      <arg name="Name" type="CONST_STRPTR"/>
+      <arg name="Size" type="uint32"/>
+      <arg name="Align" type="uint32"/>
+      <arg name="Constructor" type="CONST_APTR"/>
+      <arg name="Destructor" type="CONST_APTR"/>
+      <arg name="Flag" type="uint32"/>
+      <arg name="UserData" type="APTR"/>
+    </method>
+
+    <method name="KMemCacheDestroy" result="void" status="private">
+      <arg name="Cache" type="APTR"/>
+    </method>
+
+    <method name="KMemCacheAlloc" result="APTR" status="private">
+      <arg name="Cache" type="APTR"/>
+      <arg name="Flags" type="uint32"/>
+    </method>
+
+    <method name="KMemCacheFree" result="void" status="private">
+      <arg name="Cache" type="APTR"/>
+      <arg name="object" type="APTR"/>
+    </method>
+
+    <method name="KMemCacheGrow" result="void" status="private">
+      <arg name="Cache" type="APTR"/>
+      <arg name="Flags" type="uint32"/>
+    </method>
+
+    <method name="KMemCacheReap" result="uint32" status="private">
+      <arg name="Cache" type="APTR"/>
+      <arg name="NumPages" type="uint32"/>
+      <arg name="Flags" type="uint32"/>
+    </method>
+
+    <method name="KMemCacheFind" result="APTR" status="private">
+      <arg name="Name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="PageGet" result="APTR" status="private">
+      <arg name="VMA" type="APTR"/>
+      <arg name="numPages" type="uint32"/>
+      <arg name="alignment" type="uint32"/>
+    </method>
+
+    <method name="PageMap" result="BOOL" status="private">
+      <arg name="pageList" type="APTR"/>
+      <arg name="numPages" type="uint32"/>
+      <arg name="attrs" type="uint32"/>
+      <arg name="Flags" type="uint32"/>
+    </method>
+
+    <method name="PageUnmap" result="void" status="private">
+      <arg name="pageList" type="APTR"/>
+      <arg name="numPages" type="uint32"/>
+    </method>
+
+    <method name="PageDrop" result="void" status="private">
+      <arg name="pageList" type="APTR"/>
+      <arg name="numPages" type="uint32"/>
+    </method>
+
+    <method name="PageFindByVA" result="APTR" status="private">
+      <arg name="addressSpace" type="APTR"/>
+      <arg name="virtualAddress" type="APTR"/>
+    </method>
+
+    <method name="PageHash" result="void" status="private">
+      <arg name="page" type="APTR"/>
+    </method>
+
+    <method name="PageUnhash" result="void" status="private">
+      <arg name="page" type="APTR"/>
+    </method>
+
+    <method name="PageBackendAlloc" result="APTR" status="private">
+      <arg name="order" type="uint32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="PageBackendFree" result="void" status="private">
+      <arg name="addr" type="APTR"/>
+      <arg name="order" type="uint32"/>
+    </method>
+
+    <method name="PageBackendLock" result="void" status="private">
+    </method>
+
+    <method name="PageBackendUnlock" result="void" status="private">
+    </method>
+
+    <method name="Obsolete1" result="void" status="unimplemented">
+    </method>
+
+    <method name="Obsolete2" result="void" status="unimplemented">
+    </method>
+
+    <method name="Obsolete3" result="void" status="unimplemented">
+    </method>
+
+    <method name="RMapAlloc" result="APTR">
+      <arg name="Map" type="APTR"/>
+      <arg name="size" type="uint32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="RMapFree" result="void">
+      <arg name="Map" type="APTR"/>
+      <arg name="addr" type="APTR"/>
+      <arg name="size" type="uint32"/>
+    </method>
+
+    <method name="VMAreaInit" result="BOOL" status="private">
+      <arg name="addrspace" type="APTR"/>
+      <arg name="shared" type="BOOL"/>
+      <arg name="area" type="APTR"/>
+      <arg name="TagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="VMAreaInitTags" result="BOOL" status="private">
+      <arg name="addrspace" type="APTR"/>
+      <arg name="shared" type="BOOL"/>	
+      <arg name="area" type="APTR"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="VMAreaTerm" result="void" status="private">
+      <arg name="area" type="APTR"/>
+    </method>
+
+    <method name="AllocVecTagList" result="APTR">
+      <arg name="size" type="uint32"/>
+      <arg name="tags" type="const struct TagItem *"/>
+    </method>
+
+    <method name="AllocVecTags" result="APTR">
+      <arg name="size" type="uint32"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="PageMapAligned" result="BOOL" status="private">
+      <arg name="pageList" type="void *"/>
+      <arg name="numPages" type="uint32"/>
+      <arg name="alignment" type="uint32"/>
+      <arg name="attrs" type="uint32"/>
+      <arg name="Flags" type="uint32"/>
+    </method>
+
+    <method name="RMapExtAlloc" result="APTR">
+      <arg name="Map" type="APTR"/>
+      <arg name="size" type="uint32"/>
+      <arg name="alignment" type="uint32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="RMapExtFree" result="void">
+      <arg name="Map" type="APTR"/>
+      <arg name="addr" type="APTR"/>
+      <arg name="size" type="uint32"/>
+    </method>
+
+    <method name="PageBackendAllocAligned" result="APTR" status="private">
+      <arg name="order" type="uint32"/>
+      <arg name="alignment" type="uint32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="AllocNamedMemory" result="APTR">
+      <arg name="byteSize" type="uint32"/>
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+      <arg name="tagList" type="struct TagItem *"/>
+    </method>
+
+    <method name="AllocNamedMemoryTags" result="APTR">
+      <arg name="byteSize" type="uint32"/>
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+      <vararg name="tag" type="Tag"/>
+    </method>
+
+    <method name="FreeNamedMemory" result="BOOL">
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="FindNamedMemory" result="void *">
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="UpdateNamedMemory" result="void">
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="LockNamedMemory" result="void *">
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="AttemptNamedMemory" result="void *">
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="UnlockNamedMemory" result="void">
+      <arg name="space" type="CONST_STRPTR"/>
+      <arg name="name" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="ScanNamedMemory" result="uint32">
+      <arg name="scHook" type="struct Hook *"/>
+      <arg name="flags" type="uint32"/>
+      <arg name="user" type="APTR"/>
+    </method>
+
+    <method name="AllocTaskMemEntry" result="struct MemList *">
+      <arg name="memList" type="struct MemList *"/>
+    </method>
+
+    <method name="PagerFindPageOut" result="APTR" status="private">
+      <arg name="nFlags" type="uint32"/>
+    </method>
+
+    <method name="PagerPageIn" result="BOOL" status="private">
+      <arg name="pPage" type="APTR"/>
+      <arg name="nFlags" type="uint32"/>
+    </method>
+
+    <method name="PagerPageOut" result="BOOL" status="private">
+      <arg name="pPage" type="APTR"/>
+      <arg name="nFlags" type="uint32"/>
+      <arg name="pReceiver" type="APTR" />
+    </method>
+
+    <method name="PagerAssignPager" result="BOOL" status="private">
+      <arg name="pPage" type="APTR"/>
+      <arg name="nFlags" type="uint32"/>
+    </method>
+
+    <method name="MutexObtain" result="VOID">
+      <arg name="Mutex" type="APTR"/>
+    </method>
+
+    <method name="MutexAttempt" result="BOOL">
+      <arg name="Mutex" type="APTR"/>
+    </method>
+
+    <method name="MutexRelease" result="VOID">
+      <arg name="Mutex" type="APTR"/>
+    </method>
+
+    <method name="MutexAttemptWithSignal" result="uint32">
+      <arg name="Mutex" type="APTR"/>
+      <arg name="SigSet" type="uint32"/>
+    </method>
+
+    <method name="NewStackRun" result="int32">
+      <arg name="initPC" type="APTR"/>
+      <arg name="TagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="NewStackRunTags" result="int32">
+      <arg name="initPC" type="APTR"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="AttemptSemaphoreWithSignal" result="uint32">
+      <arg name="semaphore" type="struct SignalSemaphore *"/>
+      <arg name="sigmask" type="uint32"/>
+    </method>
+
+    <method name="AttemptSemaphoreSharedWithSignal" result="uint32">
+      <arg name="semaphore" type="struct SignalSemaphore *"/>
+      <arg name="sigmask" type="uint32"/>
+    </method>
+
+    <method name="GetTaskAttrs" result="int32">
+      <arg name="task" type="struct Task *"/>
+      <arg name="taglist" type="const struct TagItem *"/>
+    </method>
+
+    <method name="GetTaskAttrsTags" result="int32">
+      <arg name="task" type="struct Task *"/>
+      <vararg name="tag" type="Tag"/>
+    </method>
+    
+    <method name="OBSOLETEMutexObtainDisable" result="void" lifecycle="deprecated">
+    	<arg name="mutex" type="APTR"/>
+    </method>
+    
+    <method name="OBSOLETEMutexReleaseEnable" result="void" lifecycle="deprecated">
+    	<arg name="mutex" type="APTR"/>
+    </method>
+	
+    <method name="FindResidentTagList" result="struct Resident *">
+    	<arg name="tagList" type="const struct TagItem *"/>
+    </method>
+	  
+    <method name="FindResidentTags" result="struct Resident *">
+    	<vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="RWLockObtainRead" result="VOID" status="private">
+      <arg name="RWLock" type="APTR"/>
+    </method>
+
+    <method name="RWLockReleaseRead" result="VOID" status="private">
+      <arg name="RWLock" type="APTR"/>
+    </method>
+
+    <method name="RWLockAttemptRead" result="BOOL" status="private">
+      <arg name="RWLock" type="APTR"/>
+    </method>
+    
+    <method name="RWLockAttemptReadWithSignal" result="uint32" status="private">
+      <arg name="RWLock" type="APTR"/>
+      <arg name="SigSet" type="uint32"/>
+    </method>
+
+    <method name="RWLockObtainWrite" result="VOID" status="private">
+      <arg name="RWLock" type="APTR"/>
+    </method>
+
+    <method name="RWLockReleaseWrite" result="VOID" status="private">
+      <arg name="RWLock" type="APTR"/>
+    </method>
+
+    <method name="RWLockAttemptWrite" result="BOOL" status="private">
+      <arg name="RWLock" type="APTR"/>
+    </method>
+    
+    <method name="RWLockAttemptWriteWithSignal" result="uint32" status="private">
+      <arg name="RWLock" type="APTR"/>
+      <arg name="SigSet" type="uint32"/>
+    </method>
+
+    <method name="GetSystemInfo" result="void">
+      <arg name="TagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="GetSystemInfoTags" result="void">
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="ForbidLocal" result="void" status="private">
+      <vararg name="flags" type="uint32"/>
+    </method>
+
+    <method name="PermitLocal" result="void" status="private">
+      <vararg name="flags" type="uint32"/>
+    </method>
+
+    <method name="DisableLocal" result="void" status="private">
+      <vararg name="flags" type="uint32"/>
+    </method>
+	
+    <method name="EnableLocal" result="void" status="private">
+      <vararg name="flags" type="uint32"/>
+    </method>
+	
+    <method name="SetTaskAffinity" result="void">
+      <arg name="task" type="struct Task *"/>
+      <arg name="TagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="SetTaskAffinityTags" result="void">
+      <arg name="task" type="struct Task *"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+  </interface>
+   
+  <interface name="MMU" version="1.0" flags="protected" struct="MMUIFace" prefix="_mmu_" asmprefix="IMMU" global="IMMU">
+    <method name="Obtain" result="ULONG">
+    </method>
+
+    <method name="Release" result="ULONG">
+    </method>
+
+    <method name="Expunge" result="void" status="unimplemented">
+    </method>
+
+    <method name="Clone" result="struct Interface *" status="unimplemented">
+    </method>
+
+    <method name="MapMemory" result="BOOL">
+      <arg name="virtualAddress" type="APTR"/>
+      <arg name="phyiscal" type="APTR"/>
+      <arg name="length" type="ULONG"/>
+      <arg name="attrib" type="ULONG"/>
+    </method>
+
+    <method name="UnmapMemory" result="void">
+      <arg name="virtualAddress" type="APTR"/>
+      <arg name="length" type="ULONG"/>
+    </method>
+
+    <method name="RemapMemory" result="void">
+      <arg name="virtualAddress" type="APTR"/>
+      <arg name="phyiscal" type="APTR"/>
+      <arg name="length" type="ULONG"/>
+      <arg name="attrib" type="ULONG"/>
+    </method>
+
+    <method name="SetMemoryAttrs" result="void">
+      <arg name="virtualAddress" type="APTR"/>
+      <arg name="length" type="ULONG"/>
+      <arg name="attrib" type="ULONG"/>
+    </method>
+
+    <method name="GetMemoryAttrs" result="ULONG">
+      <arg name="virtualAddress" type="APTR"/>
+      <arg name="flags" type="ULONG"/>
+    </method>
+
+    <method name="GetPhysicalAddress" result="APTR">
+      <arg name="virtualAddress" type="APTR"/>
+    </method>
+
+  </interface>
+
+  <interface name="debug" version="1.0" flags="protected" struct="DebugIFace" prefix="_debug_" asmprefix="IDebug" global="IDebug">
+	<method name="Obtain" result="ULONG">
+    </method>
+
+    <method name="Release" result="ULONG">
+    </method>
+
+    <method name="Expunge" result="void" status="unimplemented">
+    </method>
+
+    <method name="Clone" result="struct Interface *" status="unimplemented">
+    </method>
+  
+    <method name="AddDebugHook" result="BOOL">
+      <arg name="task" type="struct Task *"/>
+      <arg name="debugHook" type="struct Hook *"/>
+    </method>
+    
+    <method name="DisassembleNative" result="APTR">
+      <arg name="targetAddress" type="APTR"/>
+      <arg name="opcodeName" type="STRPTR"/>
+      <arg name="operands" type="STRPTR"/>
+    </method>
+    
+    <method name="Disassemble68k" result="APTR">
+      <arg name="targetAddress" type="APTR"/>
+      <arg name="opcodeName" type="STRPTR"/>
+      <arg name="operands" type="STRPTR"/>
+    </method>
+    
+    <method name="GetDebugLevel" result="uint32">
+    </method>
+    
+    <method name="ReadTaskContext" result="uint32">
+      <arg name="targetTask" type="struct Task *"/>
+      <arg name="contextStore" type="struct ExceptionContext *"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+    
+    <method name="WriteTaskContext" result="uint32">
+      <arg name="targetTask" type="struct Task *"/>
+      <arg name="contextStore" type="struct ExceptionContext *"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+    
+    <method name="StackTrace" result="int32">
+      <arg name="task" type="struct Task *"/>
+      <arg name="hook" type="struct Hook *"/>
+    </method>
+    
+    <method name="ObtainDebugSymbol" result="struct DebugSymbol *">
+      <arg name="address" type="CONST_APTR"/>
+      <arg name="tagList" type="struct TagItem *"/>
+    </method>
+    
+    <method name="ObtainDebugSymbolTags" result="struct DebugSymbol *">
+      <arg name="address" type="CONST_APTR"/>
+      <vararg name="tag1" type="Tag"/>
+    </method>
+    
+    <method name="ReleaseDebugSymbol" result="void">
+      <arg name="sym" type="struct DebugSymbol *"/>
+    </method>
+
+    <method name="IsIn68kEmulator" result="BOOL">
+      <arg name="task" type="const struct Task *"/>
+    </method>
+
+    <method name="StartDebugOutputNotify" result="struct DebugOutputNotify *">
+      <arg name="tagList" type="struct TagItem *" />
+    </method>
+
+    <method name="StartDebugOutputNotifyTags" result="struct DebugOutputNotify *">
+      <vararg name="tag1" type="Tag"/>
+    </method>
+
+    <method name="EndDebugOutputNotify" result="void">
+      <arg name="notify" type="struct DebugOutputNotify *" />
+    </method>
+  </interface>
+
+</library>

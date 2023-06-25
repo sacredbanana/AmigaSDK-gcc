@@ -1,0 +1,321 @@
+TABLE OF CONTENTS
+
+bootsd.resource/AllocResource
+bootsd.resource/FreeResource
+bootsd.resource/GetGeometry
+bootsd.resource/Obtain
+bootsd.resource/ReadSDCard
+bootsd.resource/Release
+bootsd.resource/WriteSDCard
+
+
+bootsd.resource/AllocResource                   bootsd.resource/AllocResource
+
+   NAME
+      AllocResource -- Obtain exclusive access to BootSD resources
+
+   SYNOPSIS
+      APTR AllocResource(int32 *error)
+
+   FUNCTION
+      This command returns a pointer to an internal Unit structure if the
+      resource is currently available. The given pointer must be quoted
+      in future operations such as GetGeometry(),  ReadSDCard() and
+      WriteSDCard().
+      An error code will be returned to the location pointed to by "error"
+      on failure.
+
+   INPUTS
+
+   RESULT
+      Returns a pointer to an internal Unit structure. If the returned value
+      is NULL, the resource is not currently available (this does not mean
+      that the card socket is empty).
+
+   EXAMPLE
+      int32 error = 0;
+      APTR unit = NULL;
+
+      unit = IBootSD->AllocResource (&error);
+
+      if (unit == NULL)
+      {
+          printf ("No resource available, err = %d\n", error);
+          ---
+      }
+
+   NOTES
+      This function allocates and initialises some system structures which
+      will be used by subsequent calls to GetGeometry(), ReadSDCard() and
+      WriteSDCard().
+      The function allocates a TimerRequest and a task Signal for use with
+      internal delays during data processing. These structures must be freed
+      by a call to FreeResource() when the caller has finished using the
+      SD card. Since the structures are unique to the calling Task, they can
+      only be freed by the same Task.
+
+   BUGS
+
+   SEE ALSO
+       FreeResource()
+
+bootsd.resource/FreeResource                     bootsd.resource/FreeResource
+
+   NAME
+      FreeResource -- Returns a resource to the system.
+
+   SYNOPSIS
+      BOOL FreeResource(APTR unit);
+
+   FUNCTION
+      Releases internal structures allocated by AllocResource.
+
+   INPUTS
+      Unit: The internal structure returned by the AllocResource() call.
+
+   RESULT
+      TRUE if the resource was successfully freed; else FALSE.
+
+   EXAMPLE
+      APTR Unit;         // holds value assigned earlier)
+
+      if (!IBootSD->FreeResource (unit))
+      {
+          printf ("Failed to free resource\n");
+          ---
+      }
+
+   NOTES
+      During the initial call to AllocResource(), the resource allocates
+      a TimerRequest and a task Signal for use with later data processing.
+      If the Unit in the FreeResource() call is not the same as returned by
+      the AllocResource() call or the Task calling the resource is not the
+      task to which control was granted, this function will return FALSE.
+
+   BUGS
+
+   SEE ALSO
+       AllocResource()
+
+bootsd.resource/GetGeometry                       bootsd.resource/GetGeometry
+
+   NAME
+      GetGeometry -- get "disk geometry" of the current SD card.
+
+   SYNOPSIS
+      BOOL GetGeometry (APTR unit, int32 *error, struct DosEnvec *geom)
+
+   FUNCTION
+      Function returns the geometry of the SD card in the socket.
+
+      If an SD card is present, the given struct DosEnvec is filled with
+      suitable values to give the right capacity. The "geom" structure
+      is assumed to be large enough to hold a partial "struct DosEnvec".
+
+      If no SD card is present, the empty status is indicated by all zero
+      fields. The error status "ERROR_NO_DISK" is returned in the
+      int32 pointed to by "error"
+
+   INPUTS
+      "unit" must be the Unit supplied in response to the AllocResource()
+         call.
+      "error" must point to a 32-bit int where error codes can be written.
+      "geom" must point to a space of at least (DE_UPPERCYL + 1) longwords.
+      The first longword (DE_TABLESIZE) should contain the number of
+      longwords following itself. This function will clear to zero that
+      number of following longwords.
+
+   RESULT
+      TRUE if geometry copied successfully, else FALSE.
+      If the "geom" table is missing (NULL) or too small (the first
+      longword is < DE_UPPERCYL), then the error code
+      ERROR_REQUIRED_ARG_MISSING will be returned at "error".
+
+   EXAMPLE
+      struct DosEnvec *geometry;
+             uint64   totalBlocks;
+             uint64   totalBytes;
+             APTR     unit;          // returned by AllocResource()
+             int32    error;
+
+      if ((IBootSD->GetGeometry (unit, &error, geometry)) &&
+          (error == 0))
+      {
+          totalBlocks = geometry->de_Surfaces *
+                        geometry->de_SectorPerTrack *
+                        (geometry->de_HighCyl - geometry->de_LowCyl + 1);
+          totalBytes = totalBlocks * 
+                                (geometry->de_SectorSize * sizeof (uint32));
+          ---
+      }
+
+   NOTES
+      This function does not cause or invoke any references to the SD card.
+      It relies solely on current internal information.
+
+   BUGS
+
+   SEE ALSO
+       AllocResource()
+
+bootsd.resource/Obtain                                 bootsd.resource/Obtain
+
+   NAME
+      Obtain -- Description
+
+   SYNOPSIS
+      uint32 Obtain(void);
+
+   FUNCTION
+      This command marks the resource as being "used" one more time. 
+      It returns the previous value (before being incremented) of
+      the "use count".
+
+   INPUTS
+
+   RESULT
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+bootsd.resource/ReadSDCard                         bootsd.resource/ReadSDCard
+
+   NAME
+      ReadSDCard -- read data from the current SD card to a buffer.
+
+   SYNOPSIS
+      uint32 ReadSDCard (struct SDUnit *unit, int32 *error, APTR buffer,
+                                     uint32 startBlock, uint32 numBlocks)
+
+   FUNCTION
+      Function reads the given number of blocks from the device, into the
+      given buffer. The data is transferred in PIO mode.
+
+   INPUTS
+      "unit" must be the Unit supplied in response to the AllocResource()
+         call.
+      "error" must point to a 32-bit int where error codes can be written.
+      "buffer" must point to a space of at least "numBlocks" blocks, where
+        a block has the size given by the GetGeometry() command.
+      "startBlock" should be the number of a block on the SD card, ranging
+      from zero to (total number of blocks - 1) as reported by the
+      GetGeometry() command.
+      "numBlocks" is the number of consecutive blocks to be read.
+
+   RESULT
+      Number of blocks read if successful, else zero. An error during the
+      Read process may cause a partial result to be returned.
+      If an error occurs during processing, an error value will be written
+      to the location pointed to by "error".
+
+   EXAMPLE
+      APTR     unit;          // returned by AllocResource()
+      int32    error;
+      APTR     buffer;
+      uint32   startBlock;
+      uint32   numBlocks,
+               result;
+
+      result = IBootSD->ReadSDCard (unit, &error, buffer, startBlock,
+                                                           numBlocks);
+      if ((error == 0) &&
+          (result == numBlocks))
+      {
+          ---
+      }
+
+   NOTES
+      The sum of (startBlock + numBlocks) must not exceed the total number
+      of blocks on the medium, as reported by GetGeometry().
+
+   BUGS
+
+   SEE ALSO
+       AllocResource(), GetGeometry()
+
+bootsd.resource/Release                               bootsd.resource/Release
+
+   NAME
+      Release -- Description
+
+   SYNOPSIS
+      uint32 Release(void);
+
+   FUNCTION
+      This command marks the resource as being "used" one less time.
+      It returns the previous value (before being decremented) of
+      the "use count".
+
+   INPUTS
+
+   RESULT
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+bootsd.resource/WriteSDCard                       bootsd.resource/WriteSDCard
+
+   NAME
+      ReadSDCard -- write data from a buffer to the current SD card.
+
+   SYNOPSIS
+      uint32 WriteSDCard (struct SDUnit *unit, int32 *error, APTR buffer,
+                                     uint32 startBlock, uint32 numBlocks)
+
+   FUNCTION
+      Function writes the given number of blocks from the buffer to the
+      SD card. The data is transferred in PIO mode.
+
+   INPUTS
+      "unit" must be the Unit supplied in response to the AllocResource()
+        call.
+      "error" must point to a 32-bit int where error codes can be written.
+      "buffer" must point to a space of at least "numBlocks" blocks, where
+        a block has the size given by the GetGeometry() command.
+      "startBlock" should be the number of a block on the SD card, ranging
+      from zero to (total number of blocks - 1) as reported by the
+      GetGeometry() command.
+      "numBlocks" is the number of consecutive blocks to be written.
+
+   RESULT
+      Number of blocks written if successful, else zero. An error during the
+      Write process may cause a partial result to be returned.
+      If an error occurs during processing, an error value will be written
+      to the location pointed to by "error".
+
+   EXAMPLE
+      APTR     unit;          // returned by AllocResource()
+      int32    error;
+      APTR     buffer;
+      uint32   startBlock;
+      uint32   numBlocks,
+               result;
+
+      result = IBootSD->WriteSDCard (unit, &error, buffer, startBlock,
+                                                           numBlocks);
+      if ((error == 0) &&
+          (result == numBlocks))
+      {
+          ---
+      }
+
+   NOTES
+      The sum of (startBlock + numBlocks) must not exceed the total number
+      of blocks on the medium, as reported by GetGeometry().
+
+   BUGS
+
+   SEE ALSO
+       AllocResource(), GetGeometry()
+
+

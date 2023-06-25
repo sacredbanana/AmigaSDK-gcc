@@ -1,0 +1,2425 @@
+TABLE OF CONTENTS
+
+expansion.library/-copyright-
+expansion.library/AddBootNode
+expansion.library/AddConfigDev
+expansion.library/AddDosNode
+expansion.library/AllocBoardMem
+expansion.library/AllocConfigDev
+expansion.library/AllocExpansionMem
+expansion.library/ConfigBoard
+expansion.library/ConfigChain
+expansion.library/FindConfigDev
+expansion.library/FreeBoardMem
+expansion.library/FreeConfigDev
+expansion.library/FreeExpansionMem
+expansion.library/GetCurrentBinding
+expansion.library/GetMachineInfo
+expansion.library/MakeDosNode
+expansion.library/ObtainConfigBinding
+expansion.library/pci/-background-
+expansion.library/pci/AllocResource
+expansion.library/pci/FindDevice
+expansion.library/pci/FreeDevice
+expansion.library/pci/FreeResource
+expansion.library/pci_device/FreeResourceRange
+expansion.library/pci_device/GetAddress
+expansion.library/pci_device/GetCapabilities
+expansion.library/pci_device/GetResourceRange
+expansion.library/pci_device/GetUserData
+expansion.library/pci_device/InByte
+expansion.library/pci_device/InByteBlock
+expansion.library/pci_device/InLong
+expansion.library/pci_device/InLongBlock
+expansion.library/pci_device/InWord
+expansion.library/pci_device/InWordBlock
+expansion.library/pci_device/Lock
+expansion.library/pci_device/MapInterrupt
+expansion.library/pci_device/Obtain
+expansion.library/pci_device/OutByte
+expansion.library/pci_device/OutByteBlock
+expansion.library/pci_device/OutLong
+expansion.library/pci_device/OutLongBlock
+expansion.library/pci_device/OutWord
+expansion.library/pci_device/OutWordBlock
+expansion.library/pci_device/ReadConfigByte
+expansion.library/pci_device/ReadConfigLong
+expansion.library/pci_device/ReadConfigWord
+expansion.library/pci_device/Release
+expansion.library/pci_device/SetCapabilities
+expansion.library/pci_device/SetEndian
+expansion.library/pci_device/SetUserData
+expansion.library/pci_device/Unlock
+expansion.library/pci_device/WriteConfigByte
+expansion.library/pci_device/WriteConfigLong
+expansion.library/pci_device/WriteConfigWord
+expansion.library/ReadExpansionByte
+expansion.library/ReadExpansionRom
+expansion.library/ReleaseConfigBinding
+expansion.library/RemConfigDev
+expansion.library/SetCurrentBinding
+expansion.library/WriteExpansionByte
+expansion.library/WriteExpansionWord
+
+
+expansion.library/-copyright-
+
+ Copyright 1985-2001 Amiga, Inc.
+
+ Copyright 2002-2019 Trevor Dickinson.
+
+expansion.library/AddBootNode
+
+   NAME
+		AddBootNode -- Add a BOOTNODE to the system (V36)
+
+   SYNOPSIS
+		ok = AddBootNode( bootPri, flags, deviceNode, configDev )
+
+		BOOL AddBootNode( BYTE,ULONG,struct DeviceNode *,struct ConfigDev * );
+
+   FUNCTION
+		This function will do one of two things:
+
+			1> If dos is running, add a new disk type device immediatly.
+			2> If dos is not yet running, save information for later
+			   use by the system.
+
+   FUNCTION
+		This routine makes sure that your disk device (or a device
+		that wants to be treated as if it was a disk...) will be
+		entered into the system.  If the dos is already up and
+		running, then it will be entered immediately.  If the dos
+		has not yet been run then the data will be recorded, and the
+		dos will get it later.
+
+		We try and boot off of each device in turn, based on priority.
+		Floppies have a hard-coded priority.
+
+		There is only one additional piece of magic done by AddBootNode.
+		If there is no executable code specified in the deviceNode
+		structure (e.g. dn_SegList, dn_Handler, and dn_Port are all
+		null) then the standard dos file handler is used for your
+		device.
+
+		Autoboot from an expansion card before DOS is running requires
+		the card's ConfigDev structure.
+
+		Pass a NULL ConfigDev pointer to create a non-bootable node.
+
+   INPUTS
+		bootPri -- a BYTE quantity with the boot priority for this disk.
+		    This priority is only for which disks should be looked at:
+		    the actual disk booted from will be the first disk with
+		    a valid boot block.  If no disk is found then the "bootme"
+		    hand will come up and the bootstrap code will wait for
+		    a floppy to be inserted.  Recommend priority assignments are:
+
+			+5   -- unit zero for the floppy disk.	The floppy should
+					always be highest priority to allow the user to
+					abort out of a hard disk boot.
+			 0   -- the run of the mill hard disk
+			-5   -- a "network" disk (local disks should take priority).
+			-128 -- don't even bother to boot from this device.
+
+		flags -- additional flag bits for the call:
+		    ADNF_STARTPROC (bit 0) -- start a handler process immediately.
+			Normally the process is started only when the device node
+			is first referenced.  This bit is meaningless if you
+			have already specified a handler process (non-null dn_Port).
+
+		deviceNode -- a legal DOS device node, properly initialized.
+			Typically this will be the result of a MakeDosNode().
+			Special cases may require a custom-built device node.
+
+		configDev -- a valid board's ConfigDev structure.  This is required
+			for autoboot before DOS is running and if left NULL will
+			result in an non-bootable node.
+
+   RESULTS
+		ok - non-zero everything went ok, zero if we ran out of memory
+		    or some other weirdness happened.
+
+   NOTE
+		This function eliminates the need to manually Enqueue a BOOTNODE
+		onto an expansion.library list.  Be sure V36 expansion.library is
+		available before calling this function!
+
+   SEE ALSO
+		AddDosNode
+
+expansion.library/AddConfigDev
+
+   NAME
+       AddConfigDev - add a new ConfigDev structure to the system
+
+   SYNOPSIS
+       AddConfigDev( configDev )
+
+		void AddConfigDev(struct ConfigDev *);
+
+   FUNCTION
+       (Not typically called by user code)
+
+       This routine adds the specified ConfigDev structure to the
+       list of Configuration Devices in the system.
+
+   INPUTS
+       configDev - a valid ConfigDev structure.
+
+   SEE ALSO
+       RemConfigDev
+
+expansion.library/AddDosNode
+
+   NAME
+		AddDosNode -- mount a disk to the system
+
+   SYNOPSIS
+		ok = AddDosNode( bootPri, flags, deviceNode )
+
+		BOOL AddDosNode( BYTE,ULONG,struct DeviceNode *);
+
+   FUNCTION
+		This is the old (pre V36) function that works just like
+		AddBootNode().  It should only be used if you *MUST* work
+		in a 1.3 system and you don't need to autoboot.
+
+   RESULTS
+		ok - non-zero everything went ok, zero if we ran out of memory
+		    or some other weirdness happened.
+
+   EXAMPLE
+		/* enter a bootable disk into the system.  Start a file handler
+		** process immediately.
+		*/
+		if(  AddDosNode( 0, ADNF_STARTPROC, MakeDosNode( paramPacket ) )  )
+			...AddDosNode ok...
+
+   BUGS
+		Before V36 Kickstart, no function existed to add BOOTNODES.
+		If an older expansion.library is in use, driver code will need
+		to manually construct a BootNode and Enqueue() it to eb_Mountlist.
+		If you have a V36 or better expansion.library, your code should
+		use AddBootNode().
+
+   SEE ALSO
+		MakeDosNode, AddBootNode
+
+expansion.library/AllocBoardMem
+
+   NAME
+		AllocBoardMem - allocate memory for a Zorro II card
+
+   SYNOPSIS
+		startSlot = AllocBoardMem( slotSpec );
+
+		ULONG AllocBoardMem(ULONG);
+
+   FUNCTION
+		(Not typically called by user code)
+
+		This function allocates numslots of expansion space (each slot
+		is E_SLOTSIZE bytes).  It returns the slot number of the
+		start of the expansion memory.  The EC_MEMADDR macro may be
+		used to convert this to a memory address.
+
+		AllocBoardMem() knows about the intricacies of expansion
+		board hardware and will allocate the proper expansion
+		memory for each board type.
+
+   INPUTS
+		slotSpec - the entire er_Type byte of the Zorro II board needing
+			space (passing just the memory size field is also ok).
+
+   RESULTS
+		startSlot - the slot number that was allocated, or -1 for error.
+
+   EXAMPLES
+			struct ExpansionRom *er;
+			slot = AllocBoardMem( er->er_Type )
+
+   SEE ALSO
+		AllocExpansionMem, FreeExpansionMem, FreeBoardMem
+
+expansion.library/AllocConfigDev
+
+   NAME
+       AllocConfigDev - allocate a ConfigDev structure
+
+   SYNOPSIS
+       configDev = AllocConfigDev()
+
+   FUNCTION
+       This routine returns the address of a ConfigDev structure.
+       It is provided so new fields can be added to the structure
+       without breaking old, existing code.  The structure is cleared
+       when it is returned to the user.
+
+   INPUTS
+
+   RESULTS
+       configDev - either a valid ConfigDev structure or NULL.
+
+   EXCEPTIONS
+
+   SEE ALSO
+       FreeConfigDev
+
+   BUGS
+
+expansion.library/AllocExpansionMem
+
+   NAME
+		AllocExpansionMem - allocate expansion memory
+
+   SYNOPSIS
+		startSlot = AllocExpansionMem( numSlots, slotOffset )
+
+		APTR AllocExpansionMem(ULONG, ULONG);
+
+   FUNCTION
+		(Not typically called by user code)
+
+		This function allocates numslots of expansion space (each slot
+		is E_SLOTSIZE bytes).  It returns the slot number of the
+		start of the expansion memory.  The EC_MEMADDR macro may be
+		used to convert this to a memory address.
+
+		Boards that fit the expansion architecture have alignment
+		rules.  Normally a board must be on a binary boundary of its
+		size.  Four and Eight megabyte boards have special rules.
+		User defined boards might have other special rules.
+
+		If AllocExpansionMem() succeeds, the startSlot will satisfy
+		the following equation:
+
+			(startSlot - slotOffset) MOD slotAlign = 0
+
+   INPUTS
+		numSlots - the number of slots required.
+		slotOffset - an offset from that boundary for startSlot.
+
+   RESULTS
+		startSlot - the slot number that was allocated, or -1 for error.
+
+   EXAMPLES
+
+			AllocExpansionMem( 2, 0 )
+
+		Tries to allocate 2 slots on a two slot boundary.
+
+			AllocExpansionMem( 64, 32 )
+
+		This is the allocation rule for 4 meg boards.  It allocates
+		4 megabytes (64 slots) on an odd 2 meg boundary.
+
+   SEE ALSO
+		FreeExpansionMem
+
+expansion.library/ConfigBoard
+
+   NAME
+		ConfigBoard - configure a board
+
+   SYNOPSIS
+		error = ConfigBoard( board, configDev );
+
+		ULONG ConfigBoard(ATPR, struct ConfigDev *);
+
+   FUNCTION
+		This routine configures an expansion board.  The board
+		will generally live at E_EXPANSIONBASE, but the base is
+		passed as a parameter to allow future compatibility.
+		The configDev parameter must be a valid configDev that
+		has already had ReadExpansionRom() called on it.
+
+		ConfigBoard will allocate expansion memory and place
+		the board at its new address.  It will update configDev
+		accordingly.  If there is not enough expansion memory
+		for this board then an error will be returned.
+
+   INPUTS
+		board - the current address that the expansion board is
+			responding.
+		configDev - an initialized ConfigDev structure, returned
+			by AllocConfigDev.
+
+   RESULTS
+		error - non-zero if there was a problem configuring this board
+			(Can return EE_OK or EE_NOEXPANSION)
+
+   SEE ALSO
+		FreeConfigDev
+
+expansion.library/ConfigChain
+
+   NAME
+		ConfigChain - configure the whole damn system
+
+   SYNOPSIS
+		error = ConfigChain( baseAddr )
+
+		ULONG ConfigChain(APTR)
+
+   FUNCTION
+		This is the big one!  This routine will take a base address
+		(generally E_EXPANSIONBASE) and configure all the devices that
+		live there.  This routine will call all the other routines
+		that might need to be called.  All boards that are found will
+		be linked into the configuration list.
+
+   INPUTS
+		baseAddr - the base address to start looking for boards.
+			Zorro II is a subset of Zorro III; if a Zorro III
+			address is passed in, this code searches for both.
+
+   RESULTS
+		error - non-zero if something went wrong.
+
+   SEE ALSO
+		FreeConfigDev
+
+expansion.library/FindConfigDev
+
+   NAME
+       FindConfigDev - find a matching ConfigDev entry
+
+   SYNOPSIS
+       configDev = FindConfigDev( oldConfigDev, manufacturer, product )
+
+   FUNCTION
+       This routine searches the list of existing ConfigDev
+       structures in the system and looks for one that has
+       the specified manufacturer and product codes.
+
+       If the oldConfigDev is NULL the the search is from the
+       start of the list of configuration devices.  If it is
+       not null then it searches from the first configuration
+       device entry AFTER oldConfigDev.
+
+       A code of -1 is treated as a wildcard -- e.g. it matches
+       any manufacturer (or product)
+
+   INPUTS
+       oldConfigDev - a valid ConfigDev structure, or NULL to start
+               from the start of the list.
+       manufacturer - the manufacturer code being searched for, or
+               -1 to ignore manufacturer numbers.
+       product - the product code being searched for, or -1 to
+               ignore product numbers.
+
+   RESULTS
+       configDev - the next ConfigDev entry that matches the
+               manufacturer and product codes, or NULL if there
+               are no more matches.
+
+   EXAMPLES
+       /* to find all configdevs of the proper type */
+       struct ConfigDev *cd = NULL;
+
+       while( cd = FindConfigDev( cd, MANUFACTURER, PRODUCT ) ) {
+               /* do something with the returned ConfigDev */
+       }
+
+   SEE ALSO
+
+   BUGS
+
+expansion.library/FreeBoardMem
+
+   NAME
+		FreeBoardMem - free standard Zorro II expansion memory
+
+   SYNOPSIS
+		FreeBoardMem( startSlot, slotSpec )
+
+		void FreeBoardMem(ULONG, ULONG);
+
+   FUNCTION
+		(Not typically called by user code)
+
+		This function frees numslots of expansion space (each slot
+		is E_SLOTSIZE bytes).  It is the inverse function of
+		AllocBoardMem().
+
+   INPUTS
+		startSlot - a slot number in expansion space.
+		slotSpec - the entire er_Type byte of the Zorro II board
+			(passing just the memory size field is also ok).
+
+   EXAMPLES
+
+		struct ExpansionRom *er;
+		int startSlot;
+		int slotSpec;
+
+		slotSpec = er->er_Type & ERT_MEMMASK;
+		startSlot = AllocBoardMem( er->er_Type & ERT_MEMMAK );
+
+		if( startSlot != -1 ) {
+		    FreeBoardMem( startSlot, slotSpec );
+		}
+
+   EXCEPTIONS
+		If the caller tries to free a slot that is already in the
+		free list, FreeBoardMem will Alert() (e.g. crash the
+		system).
+
+   SEE ALSO
+		AllocExpansionMem, FreeExpansionMem, AllocBoardMem
+
+expansion.library/FreeConfigDev
+
+   NAME
+       FreeConfigDev - free a ConfigDev structure
+
+   SYNOPSIS
+       FreeConfigDev( configDev )
+
+   FUNCTION
+       This routine frees a ConfigDev structure as returned by
+       AllocConfigDev.
+
+   INPUTS
+       configDev - a valid ConfigDev structure.
+
+   RESULTS
+
+   EXCEPTIONS
+
+   SEE ALSO
+       AllocConfigDev
+
+   BUGS
+
+expansion.library/FreeExpansionMem
+
+   NAME
+       FreeExpansionMem - allocate standard device expansion memory
+
+   SYNOPSIS
+       FreeExpansionMem( startSlot, numSlots )
+
+   FUNCTION
+       (Not typically called by user code)
+
+       This function allocates numslots of expansion space (each slot
+       is E_SLOTSIZE bytes).  It is the inverse function of
+       AllocExpansionMem().
+
+   INPUTS
+       startSlot - the slot number that was allocated, or -1 for error.
+       numSlots - the number of slots to be freed.
+
+   RESULTS
+
+   EXAMPLES
+
+   EXCEPTIONS
+       If the caller tries to free a slot that is already in the
+       free list, FreeExpansionMem will Alert() (e.g. crash the
+       system).
+
+   SEE ALSO
+       AllocExpansionMem
+
+   BUGS
+
+expansion.library/GetCurrentBinding
+
+   NAME
+		GetCurrentBinding - sets static board configuration area
+
+   SYNOPSIS
+		actual = GetCurrentBinding( currentBinding, size )
+
+		ULONG GetCurrentBinding(struct CurrentBinding *, ULONG);
+
+   FUNCTION
+		This function writes the contents of the "currentBinding"
+		structure out of a private place.  It may be set via
+		SetCurrentBinding().  This is really a kludge, but it is
+		the only way to pass extra arguments to a newly configured
+		device.
+
+		A CurrentBinding structure has the name of the currently
+		loaded file, the product string that was associated with
+		this driver, and a pointer to the head of a singly linked
+		list of ConfigDev structures (linked through the cd_NextCD
+		field).
+
+		Many devices may not need this information; they have hard
+		coded into themselves their manufacture number.  It is
+		recommended that you at least check that you can deal with
+		the product code in the linked ConfigDev structures.
+
+   INPUTS
+		currentBinding - a pointer to a CurrentBinding structure
+
+		size - The size of the user's binddriver structure.
+	    	   Do not pass in less than sizeof(struct CurrentBinding).
+
+   RESULTS
+		actual - the true size of a CurrentBinding structure is returned.
+
+   SEE ALSO
+		GetCurrentBinding
+
+expansion.library/GetMachineInfo
+
+   NAME
+	GetMachineInfo -- Get information about the current hardware (V50)
+
+   SYNOPSIS
+	uint32 GetMachineInfo(struct TagItem *taglist);
+
+	uint32 GetMachineInfoTags(ULONG tag1, ...);
+
+   FUNCTION
+	This function is used to determine the current hardware configuration,
+	with a focus on determining the machine you're running on.
+
+   INPUTS
+	Input to this function is a tag item list with the individual items
+	detailing the information you want to obtain.
+
+   TAGS
+	GMIT_Machine (uint32 *) -- Machine model as a symbolic constant.
+	    See the file expansion/expansion.h for a list
+
+	GMIT_MachineString (STRPTR *) -- Machine model as a human-readable
+	    string.
+
+	GMIT_MemorySize (uint32 *) -- Deprecated alias for GMIT_MemoryAvailable.
+
+	GMIT_MemoryAvailable (uint32 *) -- Memory size in bytes. This value only
+	    gives the amount of memory installed in the system. It does not
+	    reflect any current availability of memory. Use
+	    exec.library/main/AvailMem for this.
+
+	GMIT_TotalPhysicalMemory (uint64 *) -- Total amount of physical memory
+	    recognized by the operating system in bytes. This value will always
+	    be the same or greater than the GMIT_MemoryAvailable value. It is
+	    possible this value does not reflect the actual amount of physical
+	    memory installed on some systems. (V54.50)
+
+	GMIT_Extensions (STRPTR *) -- Machine feature string. This string
+	    holds a list of special features, separated by blank spaces, found
+	    on this machine. For example, on a "classic" system (A1200, A3000 or
+	    A4000 with PowerPC accelerator hardware) this string could look as
+	    follows: "bus.zorro classic.aga classic.ecs classic.ocs
+	    classic.customchips". This string can be used to determine backward
+	    compatibility: If you require AGA, search the string for
+	    "classic.aga", if you just generally require Amiga custom chips to
+	    be present, search for "classic.customchips". Note: Do not assume
+	    that there are no custom chips because you run on an AmigaOne.
+	    There might be a special hardware extension that implements Amiga
+	    custom chips, or they might be emulated.
+
+   RESULT
+	The number of successfully processed tag items.
+
+   NOTES
+	All strings returned by this function are read-only!
+
+   EXAMPLE
+	// Obtain the machine string and print it.
+	STRPTR machine;
+
+	IExpansion->GetMachineInfoTags(
+	    GMIT_MachineString, &machine,
+	TAG_END);
+
+	IDOS->Printf("machine model = '%s'\n", machine);
+
+expansion.library/MakeDosNode
+
+   NAME
+		MakeDosNode -- construct dos data structures that a disk needs
+
+   SYNOPSIS
+		struct DeviceNode *deviceNode = MakeDosNode(void *parameterPkt);
+
+   FUNCTION
+		This routine manufactures the data structures needed to enter
+		a dos disk device into the system.  This consists of a DeviceNode,
+		a FileSysStartupMsg, a disk environment vector, and up to two
+		bcpl strings.  See the libraries/dosextens.h and
+		libraries/filehandler.h include files for more information.
+
+		MakeDosNode will allocate all the memory it needs, and then
+		link the various structure together.  It will make sure all
+		the structures are long-word aligned (as required by the DOS).
+		It then returns the information to the user so he can
+		change anything else that needs changing.  Typically he will
+		then call AddDosNode() to enter the new device into the dos
+		tables.
+
+   INPUTS
+		parameterPkt - a longword array containing all the information
+	    	needed to initialize the data structures.  Normally I
+	    	would have provided a structure for this, but the variable
+	    	length of the packet caused problems.  The two strings are
+	    	null terminated strings, like all other exec strings.
+
+		    longword	description
+		    --------	-----------
+	    	0			string with dos handler name
+	    	1			string with exec device name
+	    	2			unit number (for OpenDevice)
+	    	3			flags (for OpenDevice)
+	    	4			# of longwords in rest of environment
+	    	5-n 		file handler environment (see libraries/filehandler.h)
+
+   RESULTS
+		deviceNode - pointer to initialize device node structure, or
+		    null if there was not enough memory.  You may need to change
+	    	certain fields before passing the DeviceNode to AddDosNode().
+
+   EXAMPLES
+		/* set up a 3.5" Amiga format floppy drive for unit 1 */
+
+		char execName[] = "trackdisk.device";
+		char dosName[] = "df1";
+
+		uint32 parmPkt[] = {
+		    (uint32) dosName,
+		    (uint32) execName,
+		    1,			/* unit number */
+		    0,			/* OpenDevice flags */
+
+		    /* here is the environment block */
+		    16, 		/* table upper bound */
+		    512>>2,		/* # longwords in a block */
+		    0,			/* sector origin -- unused */
+		    2,			/* number of surfaces */
+		    1,			/* secs per logical block -- leave as 1 */
+		    11, 		/* blocks per track */
+		    2,			/* reserved blocks -- 2 boot blocks */
+		    0,			/* ?? -- unused */
+		    0,			/* interleave */
+		    0,			/* lower cylinder */
+		    79, 		/* upper cylinder */
+		    5,			/* number of buffers */
+		    MEMF_CHIP,		/* type of memory for buffers */
+		    (~0 >> 1),          /* largest transfer size (largest signed #) */
+		    ~1, 		/* addmask */
+		    0,			/* boot priority */
+		    0x444f5300, 	/* dostype: 'DOS\0' */
+		};
+
+		struct Device Node *node, *MakeDosNode();
+
+		node = MakeDosNode( parmPkt );
+
+
+   SEE ALSO
+		AddDosNode, libraries/dosextens.h, libraries/filehandler.h
+
+expansion.library/ObtainConfigBinding
+
+   NAME
+		ObtainConfigBinding - try to get permission to bind drivers
+
+   SYNOPSIS
+		ObtainConfigBinding();
+
+		void ObtainConfigBinding();
+
+
+   FUNCTION
+		ObtainConfigBinding gives permission to bind drivers to
+		ConfigDev structures.  It exists so two drivers at once
+		do not try and own the same ConfigDev structure.  This
+		call will block until it is safe proceed.
+
+		It is crucially important that people lock out others
+		before loading new drivers.  Much of the data that is used
+		to configure things is statically kept, and others need
+		to be kept from using it.
+
+		This call is built directly on Exec SignalSemaphore code
+		(e.g. ObtainSemaphore).
+
+   SEE ALSO
+		ReleaseConfigBinding()
+
+expansion.library/pci/-background-
+
+   PCI ON AMIGAOS 4
+
+       PCI on AmigaOS 4 is handled by expansion library. Expansion offers
+       an interface "pci" which exports a set of methods to find a specific
+       device or allocate resource ranges for a device that hasn't been
+       configured yet.
+
+       Unlike other systems, device addressing is done entirely through an
+       abstract interface. There is no bus/device/function number. Instead
+       a device is represented by means of a library-exported interface of
+       type "pci_device", represented by an interface structure PCIDevice.
+
+   FINDING A DEVICE
+
+       Devices can be found using the pci/FindDevice method. For a set of
+       constraints this function will find the first (or second, third, etc)
+       device that matches the constraints. For example, one could search
+       for a specific vendor and leave the device ID as a wildcard. Also,
+       one could search for a specific class of device (say, a VGA card).
+
+       An Index may also be given, meaning to skip this amount of devices
+       that would match. Thus, an index of 0 returns the first match, an
+       index of 1 the second and so on.
+
+       On success FindDevice returns a pointer to a PCIDevice interface
+       that can be used to access the device.
+
+   DEVICE ACCESS
+
+       Once FindDevice has returned an interface, the following sequence
+       of required actions may vary. Sometimes a program is not interested
+       in actually driving the device but might just want to list a few
+       of the device's characteristics. For example, a PCI scanner program
+       could want to display VendorID and DeviceID in a listview gadget.
+       These applications can directly access the device, but should not
+       write any values to config space, and should be prepared that a
+       driver may be changing the values as it reads.
+
+       Device driver must lock the device. The device methods Lock and Unlock
+       are used for this purpose. When a device driver wishes to use a device
+       it should Lock it for the duration of its existance.
+
+       Some devices might have more than one functionality that is not
+       entirely covered by a single driver. For example, the VIA 686B South
+       Bridge has more than one functionality in its function 0, namely
+       things like floppy, keyboard, mouse, serial and parallel ports.
+       Therefore the AmigaOne trackdisk.device needs to obtain a shared lock
+       on the southbridge.
+
+   BASE ADDRESS REGISTER ACCESS
+
+       Each PCI device has a set of up to 6 base address registers (or BAR's
+       for short). These can be accessed either by reading from config space,
+       which would involve additional calculation required on the user's side,
+       or by using the GetResourceRange method of the pci_device. This returns
+       a read-only pointer to a read-only structure containing information
+       about a specific BAR, including its classification into memory or I/O
+       space, prefetchability etc. Such a pointer must be freed with
+       FreeResourceRange, since the function might or might not make a copy of
+       the relevant data.
+
+   CONFIG AND I/O SPACE ACCESS
+
+       Config space access is performed through six methods of the pci_device
+       interface, namely ReadConfigByte, ReadConfigWord and ReadConfigLong
+       for reading and WriteConfigByte, WriteConfigWord and WriteConfigLong
+       for writing. As an example, to read the vendor and device ID from a
+       device, the following source code could be used:
+
+           UWORD VendorID, DeviceID;
+           struct PCIInterface *pci_device = IPCI->FindDevice(...);
+
+           VendorID = pci_device->ReadConfigWord(PCI_VENDOR_ID);
+           DeviceID = pci_device->ReadConfigWord(PCI_DEVICE_ID);
+
+       No special device addressing is needed, no bus/dev/fn numbers
+       need to be given.
+
+       Likewise the access to I/O space is performed through six methods
+       called InByte, InWord and InLong for reading and OutByte, OutWord
+       and OutLong for writing.
+
+    MEMORY SPACE ACCESS
+
+       Memory space access is performed by reading/writing directly to/from
+       system memory addresses. However, the physical address range needs
+       to be taken into account. This can be obtained with GetResourceRange
+       and examining the Physical field in the PCIResourceRange structure.
+
+    INTERRUPTS
+
+       Interrupts for PCI devices are handled like all AmigaOS system
+       interrupts - you need to install an appropriate interrupt handler
+       onto the appropriate ExecSG interrupt server queue. The interrupt
+       number that needs to be specified can be obtained by calling the
+       method MapInterrupt. Since the first 16 interrupt vectors are
+       used by the classic legacy interrupts, the mapping is (usually!)
+       16 + PCI_INTERRUPT_LINE, but this mapping isn't fixed.
+
+expansion.library/pci/AllocResource
+
+   NAME
+       AllocResource -- Allocate resources for an IO or Memory range
+
+   SYNOPSIS
+       resource = AllocResource(restype, numbytes);
+       struct PCIResourceRange *AllocResource(UBYTE, ULONG, ULONG);
+
+   FUNCTION
+       This function tries to allocate a number of bytes from the resource pool
+       of the controller where this device is connected. It tries to allocate
+       numbytes from the largest block.
+
+   INPUTS
+       restype   - the type of resource to allocate. restype can be either
+                   PCI_RANGE_IO, which means to allocate resources for an I/O
+                   BAR, or PCI_RANGE_MEMORY, which means to allocate resources
+                   for a memory BAR. All other values or combinations of bits
+                   will result in an error.
+
+       numbytes  - The size of the BAR to allocate.
+
+   RESULT
+       resource  - A pointer to a PCIResourceRange
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci/FreeResource
+
+expansion.library/pci/FindDevice
+
+   NAME
+       FindDevice -- Find a PCI device by a specified set of rules
+       FindDeviceTags -- Vararg stub
+
+   SYNOPSIS
+       pci_device = FindDevice(tagList);
+
+       struct PCIDevice *FindDevice(struct TagItem *);
+
+       pci_device = FindDeviceTags(tag, ...);
+
+       struct PCIDevice *FindDeviceTags(ULONG, ...);
+
+   FUNCTION
+       This function tries to find a PCI device by a specified set of rules.
+       The ruleset is specified with a number of tag items. The returned interface
+       is a representation of the PCI device, and ready to use. It must be disposed
+       with a call to FreeDevice.
+
+   INPUTS
+       tagList - Pointer to a tag list that contains the ruleset for finding
+                 a PCI device. The following tag items are currently defined:
+
+                 FDT_VendorID:
+                   An UWORD that specifies the VendorID of the device to be
+                   found, as per PCI specifications. VendorID's are 16 bits,
+                   if this tag's value is specified as a 32 bit value then the upper
+                   16 bits MUST be cleared. If unspecified, the PCI_ANY_ID
+                   is assumed as a the VendorID, meaning that the request
+                   matches any VendorID.
+
+                   Default: PCI_ANY_ID
+
+                 FDT_DeviceID:
+                   An UWORD that specifies the DeviceID of the device to be
+                   found, as per PCI specifications. DeviceID's are 16 bits,
+                   if this tag's value is specified as a 32 bit value then the
+                   upper 16 bits must be cleared. If unspecified, the PCI_ANY_ID
+                   is assumed as the DeviceID, meaning that the request matches
+                   any DeviceID.
+
+                   Default: PCI_ANY_ID
+
+                 FDT_Index:
+                   This tag specifies the index of the match to return. If there is
+                   more than one device matching the request, specifying this tag may
+                   be used to skip any number of matches. If PCI_INDEX is 0, the first
+                   matching result is returned. Otherwise, this many successful matches
+                   are skipped.
+
+                   Default: 0
+
+                 FDT_Class:
+                   This tag specifies the class of the device to be found.
+                   This tag can be used in conjunction with FDT_ClassMask
+                   to search for a specific part of the class code only. Typically
+                   the class code is three bytes long, with the upper byte (bits 23:16)
+                   specifying the broad classification of the device and the other
+                   bytes defining class-specific sub classes. The class code is
+                   specified as an ULONG with the format 0x00BCSCIN, with BC
+                   being the base class, SC being the subclass and
+                   IN being the interface.
+
+                   Default: None
+
+                 FDT_ClassMask:
+                   This tag specifies a bit mask which is applied to the
+                   device class before comparing with the class value specified
+                   in FDT_Class. If this tag is specified the FDT_Class
+                   tag must also be specified, or the call will fail.
+
+                   Default: 0x00FF0000 (base class only)
+
+                 FDT_CandidateList:
+                   This tag specifies a pointer to an array of VendorID/ProductID
+                   pairs to search for. The array needs to be terminated by two
+                   PCI_ANY_ID entries. This tag can only be used in conjunction
+                   with FDT_Index; no other tag items is allowed. It serves as a
+                   shortcut for drivers that can service a lot of clones,
+                   like an NE2k network driver.
+
+                   Default: None.
+
+				  FDT_BusNr
+				  FDT_DeviceNr
+                 FDT_FunctionNr
+					These tags specify the Bus, Device and Function number,
+				  	respectively. These tags work differently than the others
+					since they cannot be mixed. If FDT_BusNr is specified, the
+					other two tags are mandatory as well, and specify a specific
+					device address. The function returns NULL if there is no
+					device at that address, or the correct device located at
+					that address.
+
+					Default: None
+
+   RESULT
+       pci_device - A fully usable interface of the type "PCIDevice". The
+                    interface is ready for use (no Obtain required), and
+                    must be released with FreeDevice after use.
+
+   EXAMPLE
+       /* This example searches for an XGA graphics card adaptor */
+
+       struct Interface *pci_device;
+       pci_device = IPCI->FindDeviceTags(
+           FDT_Class,          0x00030100,
+           FDT_ClassMask,     0x00FFFF00,
+           TAG_DONE);
+
+       /* Search for a NE2K compatible network card */
+       UWORD candidates[] = {
+         0x4a14, 0x5000,
+         0x8e2e, 0x3000,
+         0x1050, 0x5a5a,
+         0x12c3, 0x5598,
+         PCI_ANY_ID, PCI_ANY_ID
+       };
+
+       pci_device = IPCI->FindDeviceTags(
+           FDT_CandidateList, candidates,
+           TAG_DONE);
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci/FreeDevice
+
+expansion.library/pci/FreeDevice
+
+   NAME
+       FreeDevice -- Release a PCI device previously allocated
+
+   SYNOPSIS
+       FreeDevice(device);
+       void FreeDevice(struct PCIDevice *device);
+
+   FUNCTION
+       This function frees the device previously allocated/obtained by
+       a call to FindDevice or FindDeviceTags. Essentially it de-references
+       the interface (by calling Release()).
+
+   INPUTS
+       device - a pointer to an interface previously obtained by FindDevice.
+
+   RESULT
+       None
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci/FindDevice
+
+expansion.library/pci/FreeResource
+
+   NAME
+       FreeResource -- Free a previously allocated resource range
+
+   SYNOPSIS
+       FreeResource(range);
+       void FreeResource(range);
+
+   FUNCTION
+       This function frees a PCIResourceRange previously allocated with a
+       call to AllocResource.
+
+   INPUTS
+       range - a previously allocated resource range
+
+   RESULT
+       None
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci/AllocResource
+
+expansion.library/pci_device/FreeResourceRange
+
+   NAME
+       FreeResourceRange -- return the pointer to a previously queried range
+
+   SYNOPSIS
+       FreeResourceRange(range)
+       void FreeResourceRange(struct PCIResourceRange *);
+
+   FUNCTION
+       This function releases memory associated with the PCIResourceRange pointer
+       that must have previously been obtained using GetResourceRange.
+
+   INPUTS
+       range - a pointer to the range to release.
+
+   RESULT
+       None
+
+   NOTE
+       This function should not be confused with AllocResource/FreeResource! This
+       function has no influence on the available PCI resources. It simply frees
+       whatever GetResourceRange may have allocated in terms of memory. To configure
+       a PCI device, and hence allocate space in the PCI I/O and memory area, you
+       must use expansion.library/pci_device_device/AllocResource and
+       expansion.library/pci_device_device/FreeResource!
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/GetResourceRange.
+
+expansion.library/pci_device/GetAddress
+
+   NAME
+       GetAddress -- Get the Bus/device/function number for this device
+
+   SYNOPSIS
+       GetAddress(bus,dev,fn);
+       void GetAddress(UBYTE *, UBYTE *, UBYTE *);
+
+   FUNCTION
+       This function retrieves the bus number, device and function number
+       for this device. The numbers are for reference only; one example
+       of usage would be an error message, or PCI scanning utility that
+       wants to output these numbers. Due to the object-oriented nature
+       of expansion.library these values are mostly meaningless for drivers.
+
+   INPUTS
+       bus - an UBYTE pointer specifing the bus number. May be NULL.
+       dev - an UBYTE pointer specifing the device number. May be NULL.
+       fn  - an UBYTE pointer specifing the function number
+             in a multi-function device. May be NULL.
+
+   RESULT
+       bus - if non-NULL, the address pointed to is filled with this
+             device's bus number.
+       dev - if non-NULL, the address pointed to is filled with this
+             device's device number.
+       fn  - if non-NULL, the address pointed to is filled with this
+             device's function number.
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/GetCapabilities
+
+   NAME
+       GetCapabilities -- read a device's capabilities flags
+
+   SYNOPSIS
+       capflags = GetCapabilities()
+       ULONG GetCapabilities(void);
+
+   FUNCTION
+       This function returns the state of the current capabilities flag word.
+       The capabilities flag word is maintained internally by expansion.library,
+       but a driver might need the information contained within to determine mode
+       of operation. For example, the PCI_CAP_BUSMASTER means that the device (or rather
+       the host controller that this device resides on) supports busmaster transfers
+       from/to the system memory.
+
+       This function is intended for driver writers to check if their driver can operate
+       on a given device. If the driver for example assumes busmastering, but the device
+       cannot do that in its current slot, the driver should fail initiaization and
+       deliver an appropriate error to the user.
+
+   INPUTS
+       None
+
+   RESULT
+       capflags - a set of flags. See expansion.library/pci_device/SetCapbilities for
+                  more info on these flags.
+
+   NOTE
+       This function has nothing to do with PCI capability lists.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/SetCapabilities
+
+expansion.library/pci_device/GetResourceRange
+
+   NAME
+       GetResourceRange -- get one resource range from a device
+
+   SYNOPSIS
+       range = GetResourceRange(basenum)
+       struct PCIResourceRange *GetResourceRange(UBYTE);
+
+   FUNCTION
+       This function returns the resource range occupied by the given Base Address
+       register in PCI Config space, if available. The resource range is represented
+       by a PCIResourceRange structure, giving specific information about the nature
+       of the range (I/O vs. Memory) and possible additional flags (Prefetchability).
+
+   INPUTS
+       basenum - the number of the BAR (Base Address Register) in config space
+
+   RESULT
+       range - a pointer to a PCIResourceRange structure. The pointer is strictly
+               read-only, and MUST be freed with FreeResourceRange.
+
+   NOTE
+       This function should not be confused with AllocResource/FreeResource!
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/FreeResourceRange.
+
+expansion.library/pci_device/GetUserData
+
+   NAME
+       GetUserData -- Get a user data item from a device
+
+   SYNOPSIS
+       udata = GetUserData(item);
+       APTR GetUserData(UBYTE);
+
+   FUNCTION
+       This function returns a user data item previously set by
+       SetUserData. The argument specifies which item to retrieve, and
+       must be in the range 0 to PCI_NUM_USER_DATA.
+
+       This function is intended for driver writers who want their
+       driver to be able to work concurrently with more than one device
+       and need to associate data with each device. Up to PCI_NUM_USER_DATA
+       items can be stored (currently this is defined to 5).
+
+       Data items are undefined by default. If you didn't store anything,
+       this function might return garbage.
+
+   INPUTS
+       item - the number of the item to retrieve
+
+   RESULT
+       udata - the user data previously stored. If item is out of
+               range, or no user data was previously stored, the
+               result is undefined.
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/SetUserData
+
+expansion.library/pci_device/InByte
+
+   NAME
+       InByte -- read from I/O Space
+
+   SYNOPSIS
+       value = InByte(port)
+       UBYTE InByte(ULONG);
+
+   FUNCTION
+       This function tries to read a value from the device's I/O space. I/O space
+       is implementation specific; different machines or PCI busboards do have different
+       ways to access I/O Space. This function abstracts the way I/O space is accessed.
+
+		Since legacy I/O might be required, and a device may have more than one I/O address
+		range, the I/O port address must be absolute, i.e. you need to add the I/O base of
+		the address range you want to access. For example, if you have a device with an I/O
+		base located at 0x8000, the port address of a register number 5 within that range
+		would be 0x8005, not 0x05, since the pci interface would not know if you are doing
+		legacy I/O to port 0x05, or which I/O address range you want to access.
+
+   INPUTS
+       port - the I/O port to read from
+
+   RESULT
+       value - the value read from the specified I/O port.
+
+   NOTE
+		Since I/O Space is typically little endian, and the pci interface will
+		(by default) perform appropriate endian swapping. This behaviour may be
+		changed with the pci_device/SetEndian function.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/OutByte
+
+expansion.library/pci_device/InByteBlock
+
+   NAME
+      InByteBlock -- Input a block of bytes from one or more I/O ports
+
+   SYNOPSIS
+      void InByteBlock(uint32 Port, uint8 * Block, uint32 PortInc,
+			uint32 BlockInc, uint32 NumUnits);
+
+   FUNCTION
+		This function works like the repeated application of its "Block"-less
+		counterpart. However, instead of inputting a single unit from a single
+		I/O port, it can input a number of units from a number of ports, into
+		a number of memory locations.
+
+		The ports are read in a loop. First, a unit is read from the Port address
+		specified and stored into the given Block address. Then the PortInc
+		value is added to the Port value and the BlockInc is added to the Block
+		value. Both the PortInc and BlockInc can be zero. The process is repeated
+		NumUnits times.
+
+   INPUTS
+       Port - The first port number to input from
+       Block - The first byte of memory where the result is stored
+       PortInc - The number of units to add to the port
+       BlockInc - The number of units to add to the block address
+       NumUnits - The number of total units to read.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+		The PortInc and BlockInc parameter are counted as UNITS (!), which
+		may be different from a single byte. In word and longword cases,
+		setting a PortInc or BlockInc of n will actually refer to
+		n*sizeof(uint16) or n*sizeof(uint32) depending on the operation.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/InLong
+
+   NAME
+       InLong -- read from I/O Space
+
+   SYNOPSIS
+       value = InLong(port)
+       ULONG InLong(ULONG);
+
+   FUNCTION
+       This function tries to read a value from the device's I/O space. I/O space
+       is implementation specific; different machines or PCI busboards do have different
+       ways to access I/O Space. This function abstracts the way I/O space is accessed.
+
+		Since legacy I/O might be required, and a device may have more than one I/O address
+		range, the I/O port address must be absolute, i.e. you need to add the I/O base of
+		the address range you want to access. For example, if you have a device with an I/O
+		base located at 0x8000, the port address of a register number 5 within that range
+		would be 0x8005, not 0x05, since the pci interface would not know if you are doing
+		legacy I/O to port 0x05, or which I/O address range you want to access.
+
+   INPUTS
+       port - the I/O port to read from
+
+   RESULT
+       value - the value read from the specified I/O port.
+
+   NOTE
+		Since I/O Space is typically little endian, and the pci interface will
+		(by default) perform appropriate endian swapping. This behaviour may be
+		changed with the pci_device/SetEndian function.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/OutLong
+
+expansion.library/pci_device/InLongBlock
+
+   NAME
+      InLongBlock -- Input a block of longwords from one or more I/O ports
+
+   SYNOPSIS
+      void InLongBlock(uint32 Port, uint32 * Block, uint32 PortInc,
+			uint32 BlockInc, uint32 NumUnits);
+
+   FUNCTION
+		This function works like the repeated application of its "Block"-less
+		counterpart. However, instead of inputting a single unit from a single
+		I/O port, it can input a number of units from a number of ports, into
+		a number of memory locations.
+
+		The ports are read in a loop. First, a unit is read from the Port address
+		specified and stored into the given Block address. Then the PortInc
+		value is added to the Port value and the BlockInc is added to the Block
+		value. Both the PortInc and BlockInc can be zero. The process is repeated
+		NumUnits times.
+
+   INPUTS
+       Port - The first port number to input from
+       Block - The first longword of memory where the result is stored
+       PortInc - The number of units to add to the port
+       BlockInc - The number of units to add to the block address
+       NumUnits - The number of total units to read.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+		The PortInc and BlockInc parameter are counted as UNITS (!), which
+		may be different from a single byte. In word and longword cases,
+		setting a PortInc or BlockInc of n will actually refer to
+		n*sizeof(uint16) or n*sizeof(uint32) depending on the operation.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/InWord
+
+   NAME
+       InWord -- read from I/O Space
+
+   SYNOPSIS
+       value = InWord(port)
+       UWORD InWord(ULONG);
+
+   FUNCTION
+       This function tries to read a value from the device's I/O space. I/O space
+       is implementation specific; different machines or PCI busboards do have different
+       ways to access I/O Space. This function abstracts the way I/O space is accessed.
+
+		Since legacy I/O might be required, and a device may have more than one I/O address
+		range, the I/O port address must be absolute, i.e. you need to add the I/O base of
+		the address range you want to access. For example, if you have a device with an I/O
+		base located at 0x8000, the port address of a register number 5 within that range
+		would be 0x8005, not 0x05, since the pci interface would not know if you are doing
+		legacy I/O to port 0x05, or which I/O address range you want to access.
+
+   INPUTS
+       port - the I/O port to read from
+
+   RESULT
+       value - the value read from the specified I/O port.
+
+   NOTE
+		Since I/O Space is typically little endian, and the pci interface will
+		(by default) perform appropriate endian swapping. This behaviour may be
+		changed with the pci_device/SetEndian function.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/OutWord
+
+expansion.library/pci_device/InWordBlock
+
+   NAME
+      InWordBlock -- Input a block of words from one or more I/O ports
+
+   SYNOPSIS
+      void InWordBlock(uint32 Port, uint16 * Block, uint32 PortInc,
+			uint32 BlockInc, uint32 NumUnits);
+
+   FUNCTION
+		This function works like the repeated application of its "Block"-less
+		counterpart. However, instead of inputting a single unit from a single
+		I/O port, it can input a number of units from a number of ports, into
+		a number of memory locations.
+
+		The ports are read in a loop. First, a unit is read from the Port address
+		specified and stored into the given Block address. Then the PortInc
+		value is added to the Port value and the BlockInc is added to the Block
+		value. Both the PortInc and BlockInc can be zero. The process is repeated
+		NumUnits times.
+
+   INPUTS
+       Port - The first port number to input from
+       Block - The first word of memory where the result is stored
+       PortInc - The number of units to add to the port
+       BlockInc - The number of units to add to the block address
+       NumUnits - The number of total units to read.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+		The PortInc and BlockInc parameter are counted as UNITS (!), which
+		may be different from a single byte. In word and longword cases,
+		setting a PortInc or BlockInc of n will actually refer to
+		n*sizeof(uint16) or n*sizeof(uint32) depending on the operation.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/Lock
+
+   NAME
+       Lock -- Lock a device for shared or exclusive use
+
+   SYNOPSIS
+       success = Lock(mode);
+       BOOL Lock(UBYTE);
+
+   FUNCTION
+       This function attempts to lock a device for exclusive or
+       shared use by a driver. Any driver must do this before
+       using a device. Reading from a device may be performed without
+       locking it if this reading is for informational purposes only;
+       for example, a PCI scanner program might read vendor/product id
+       from a device without locking, but a driver wishing to service
+       a device must lock the device.
+
+       If a shared lock is attempted, any exclusive lock on the device
+       will prevent this lock to succeed. Likewise, a shared lock already
+       obtained will prevent an exclusive lock to be granted. The locking
+       follows the same rules as a SignalSemaphore.
+
+       An exclusive lock should be attempted for all devices that only
+       export a single functionality; for example, a network card driver
+       should try to gain exclusive lock. On the other hand, some devices
+       are shared by nature, for example the VIA686B Southbridge function
+       0 in the AmigaOne G3SE will need to be shared-locked because it
+       contains (among other things) the Floppy controller, serial and
+       parallel ports, keyboard controller etc.
+
+       If the lock succeeds, this function returns TRUE. If it fails, the
+       value returned is FALSE and the driver should fail initialization.
+
+       When the user is finished, this lock must be reversed by exactly
+       one call to the Unlock function.
+
+   INPUTS
+       mode - the locking mode. This must be one of two values:
+              PCI_LOCK_SHARED    - try to lock with a shared lock
+              PCI_LOCK_EXCLUSIVE - attempt an exclusive lock
+
+   RESULT
+       success - if TRUE, then locking succeeded an the device is
+                 ready to use. If FALSE, locking failed because another
+                 task already had a lock on the device.
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/Unlock
+
+expansion.library/pci_device/MapInterrupt
+
+   NAME
+       MapInterrupt -- Map a PCI IRQ to an interrupt chain
+
+   SYNOPSIS
+       interrupt = MapInterrupt();
+       ULONG MapInterrupt(void);
+
+   FUNCTION
+       This function reads the PCI_INTERRUPT_LINE byte from the
+       device's config space and maps it to an interrupt vector
+       number for exec.library/main/AddIntServer.
+
+   INPUTS
+       None.
+
+   RESULT
+       interrupt - the interrupt number for AddIntServer
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/Obtain
+
+   NAME
+       Obtain -- Obtain a PCIDevice Interface
+
+   SYNOPSIS
+       refcnt = Obtain()
+       ULONG Obtain(void);
+
+   FUNCTION
+       This call obtains a PCIDevice Interface.
+
+   INPUTS
+       None
+
+   RESULT
+       refcnt - the current standings of the reference count.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/Release
+
+expansion.library/pci_device/OutByte
+
+   NAME
+       OutByte -- write to I/O Space
+
+   SYNOPSIS
+       OutByte(port, value)
+       void OutByte(ULONG, UBYTE);
+
+   FUNCTION
+       This function tries to write a value to the device's I/O space. I/O space
+       is implementation specific; different machines or PCI busboards do have different
+       ways to access I/O Space. This function abstracts the way I/O space is accessed.
+
+		Since legacy I/O might be required, and a device may have more than one I/O address
+		range, the I/O port address must be absolute, i.e. you need to add the I/O base of
+		the address range you want to access. For example, if you have a device with an I/O
+		base located at 0x8000, the port address of a register number 5 within that range
+		would be 0x8005, not 0x05, since the pci interface would not know if you are doing
+		legacy I/O to port 0x05, or which I/O address range you want to access.
+
+   INPUTS
+       port - the I/O port to write to
+       value - the value to write
+
+   RESULT
+       None
+
+   NOTE
+		Since I/O Space is typically little endian, and the pci interface will
+		(by default) perform appropriate endian swapping. This behaviour may be
+		changed with the pci_device/SetEndian function.
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/InByte
+
+expansion.library/pci_device/OutByteBlock
+
+   NAME
+      OutByteBlock -- Output a block of bytes to one or more I/O ports
+
+   SYNOPSIS
+      void OutByteBlock(uint32 Port, uint8 * Block, uint32 PortInc,
+			uint32 BlockInc, uint32 NumUnits);
+
+   FUNCTION
+		This function works like the repeated application of its "Block"-less
+		counterpart. However, instead of outputting a single unit to a single
+		I/O port, it can output a number of units to a number of ports, from
+		a number of memory locations.
+
+		The ports are written in a loop. First a unit is written to the Port
+		address specified, taken from the give Block address. Then the PortInc
+		value is added to the Port value and the BlockInc is added to the Block
+		value. Both the PortInc and BlockInc can be zero. The process is repeated
+		NumUnits times.
+
+   INPUTS
+       Port - The first port number to output to
+       Block - The first byte of memory from where the data is fetched
+       PortInc - The number of units to add to the port
+       BlockInc - The number of units to add to the block address
+       NumUnits - The number of total units to read.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+		The PortInc and BlockInc parameter are counted as UNITS (!), which
+		may be different from a single byte. In word and longword cases,
+		setting a PortInc or BlockInc of n will actually refer to
+		n*sizeof(uint16) or n*sizeof(uint32) depending on the operation.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/OutLong
+
+   NAME
+       OutLong -- write to I/O Space
+
+   SYNOPSIS
+       OutLong(port, value)
+       void OutLong(ULONG, ULONG);
+
+   FUNCTION
+       This function tries to write a value to the device's I/O space. I/O space
+       is implementation specific; different machines or PCI busboards do have different
+       ways to access I/O Space. This function abstracts the way I/O space is accessed.
+
+		Since legacy I/O might be required, and a device may have more than one I/O address
+		range, the I/O port address must be absolute, i.e. you need to add the I/O base of
+		the address range you want to access. For example, if you have a device with an I/O
+		base located at 0x8000, the port address of a register number 5 within that range
+		would be 0x8005, not 0x05, since the pci interface would not know if you are doing
+		legacy I/O to port 0x05, or which I/O address range you want to access.
+
+   INPUTS
+       port - the I/O port to write to
+       value - the value to write
+
+   RESULT
+       None
+
+   NOTE
+		Since I/O Space is typically little endian, and the pci interface will
+		(by default) perform appropriate endian swapping. This behaviour may be
+		changed with the pci_device/SetEndian function.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/InLong
+
+expansion.library/pci_device/OutLongBlock
+
+   NAME
+      OutLongBlock -- Output a block of longwords to one or more I/O ports
+
+   SYNOPSIS
+      void OutLongBlock(uint32 Port, uint32 * Block, uint32 PortInc,
+			uint32 BlockInc, uint32 NumUnits);
+
+   FUNCTION
+		This function works like the repeated application of its "Block"-less
+		counterpart. However, instead of outputting a single unit to a single
+		I/O port, it can output a number of units to a number of ports, from
+		a number of memory locations.
+
+		The ports are written in a loop. First a unit is written to the Port
+		address specified, taken from the give Block address. Then the PortInc
+		value is added to the Port value and the BlockInc is added to the Block
+		value. Both the PortInc and BlockInc can be zero. The process is repeated
+		NumUnits times.
+
+   INPUTS
+       Port - The first port number to output to
+       Block - The first longword of memory from where the data is fetched
+       PortInc - The number of units to add to the port
+       BlockInc - The number of units to add to the block address
+       NumUnits - The number of total units to read.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+		The PortInc and BlockInc parameter are counted as UNITS (!), which
+		may be different from a single byte. In word and longword cases,
+		setting a PortInc or BlockInc of n will actually refer to
+		n*sizeof(uint16) or n*sizeof(uint32) depending on the operation.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/OutWord
+
+   NAME
+       OutWord -- write to I/O Space
+
+   SYNOPSIS
+       OutWord(port, value)
+       void OutWord(ULONG, UWORD);
+
+   FUNCTION
+       This function tries to write a value to the device's I/O space. I/O space
+       is implementation specific; different machines or PCI busboards do have different
+       ways to access I/O Space. This function abstracts the way I/O space is accessed.
+
+		Since legacy I/O might be required, and a device may have more than one I/O address
+		range, the I/O port address must be absolute, i.e. you need to add the I/O base of
+		the address range you want to access. For example, if you have a device with an I/O
+		base located at 0x8000, the port address of a register number 5 within that range
+		would be 0x8005, not 0x05, since the pci interface would not know if you are doing
+		legacy I/O to port 0x05, or which I/O address range you want to access.
+
+   INPUTS
+       port - the I/O port to write to
+       value - the value to write
+
+   RESULT
+       None
+
+   NOTE
+		Since I/O Space is typically little endian, and the pci interface will
+		(by default) perform appropriate endian swapping. This behaviour may be
+		changed with the pci_device/SetEndian function.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/InWord
+
+expansion.library/pci_device/OutWordBlock
+
+   NAME
+      OutWordBlock -- Output a block of words to one or more I/O ports
+
+   SYNOPSIS
+      void OutWordBlock(uint32 Port, uint16 * Block, uint32 PortInc,
+			uint32 BlockInc, uint32 NumUnits);
+
+   FUNCTION
+		This function works like the repeated application of its "Block"-less
+		counterpart. However, instead of outputting a single unit to a single
+		I/O port, it can output a number of units to a number of ports, from
+		a number of memory locations.
+
+		The ports are written in a loop. First a unit is written to the Port
+		address specified, taken from the give Block address. Then the PortInc
+		value is added to the Port value and the BlockInc is added to the Block
+		value. Both the PortInc and BlockInc can be zero. The process is repeated
+		NumUnits times.
+
+   INPUTS
+       Port - The first port number to output to
+       Block - The first word of memory from where the data is fetched
+       PortInc - The number of units to add to the port
+       BlockInc - The number of units to add to the block address
+       NumUnits - The number of total units to read.
+
+   RESULT
+       This function does not return a result
+
+   NOTES
+		The PortInc and BlockInc parameter are counted as UNITS (!), which
+		may be different from a single byte. In word and longword cases,
+		setting a PortInc or BlockInc of n will actually refer to
+		n*sizeof(uint16) or n*sizeof(uint32) depending on the operation.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/ReadConfigByte
+
+   NAME
+       ReadConfigByte - Read byte values from config space
+
+   SYNOPSIS
+       value = ReadConfigByte(Offset)
+       UBYTE ReadConfigByte(ULONG);
+
+   FUNCTION
+       This function attempts to read a byte from config space of the specified
+       device. For more details on config space, see the PCI Specifications v.2.1.
+
+   INPUTS
+       Offset - the 32 bit offset into config space
+
+   RESULT
+       value - the value found at the specified offset in config space
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/WriteConfigByte
+
+expansion.library/pci_device/ReadConfigLong
+
+   NAME
+       ReadConfigLong - Read long word values from config space
+
+   SYNOPSIS
+       value = ReadConfigLong(Offset)
+       ULONG ReadConfigLong(ULONG);
+
+   FUNCTION
+       This function attempts to read a longword from config space of the specified
+       device. For more details on config space, see the PCI Specifications v.2.1.
+
+   INPUTS
+       Offset - the 32 bit offset into config space
+
+   RESULT
+       value - the value found at the specified offset in config space
+
+   NOTE
+       Since config space typically is little endian, this function performs
+       appropriate byte swapping. This means that the result returned by this
+       function is guaranteed to be in the native CPU order
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/WriteConfigWord
+
+expansion.library/pci_device/ReadConfigWord
+
+   NAME
+       ReadConfigWord - Read word values from config space
+
+   SYNOPSIS
+       value = ReadConfigWord(Offset)
+       UWORD ReadConfigWord(ULONG);
+
+   FUNCTION
+       This function attempts to read a word from config space of the specified
+       device. For more details on config space, see the PCI Specifications v.2.1.
+
+   INPUTS
+       Offset - the 32 bit offset into config space
+
+   RESULT
+       value - the value found at the specified offset in config space
+
+   NOTE
+       Since config space typically is little endian, this function performs
+       appropriate byte swapping. This means that the result returned by this
+       function is guaranteed to be in the native CPU order
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/WriteConfigWord
+
+expansion.library/pci_device/Release
+
+   NAME
+       Release -- Release a PCIDevice Interface
+
+   SYNOPSIS
+       refcnt = Release()
+       ULONG Release(void);
+
+   FUNCTION
+       This call releases a PCIDevice Interface.
+
+   INPUTS
+       None
+
+   RESULT
+       refcnt - the current standing of the Reference count after Release
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/Release
+
+expansion.library/pci_device/SetCapabilities
+
+   NAME
+       SetCapabilities -- set a device's capabilities flags
+
+   SYNOPSIS
+       old_cap =  SetCapabilities(mask)
+       ULONG SetCapabilities(ULONG);
+
+   FUNCTION
+       This function sets the state of the expansion-internal capabilities flags.
+
+   INPUTS
+       mask - an or-combination of one of the following flags:
+
+              PCI_CAP_SETCLR     - if this bit is set, the '1' bits in the mask will be
+                                   set in the capabilities flag word. If this bit is
+                                   not set, then the '1' bits in the mask will be reset
+                                   to zero.
+
+              PCI_CAP_BUSMASTER  - This bit indicates that the device is fully capable of
+                                   doing system memory / PCI Bus DMA busmaster accesses.
+                                   This flag does not say anything about the capabilities
+                                   of the device itself, i.e. the device attached may or
+                                   may not have busmastering capabilities; this flag only
+                                   specifies if the slot this card is in does support
+                                   it. Most likely this flag is set on modern hardware
+                                   (post-classic).
+                                   With some probability it is unset on classic hardware.
+
+                                   Only expansion.library may set or reset this flag.
+
+              PCI_CAP_INTERCARD  - This bit indicates that the device can do inter-
+                                   pci-card bus master transfers. For example, a TV-Card
+                                   sitting in a non-busmaster slot with this bit set
+                                   could still do a direct DMA transfer into a graphics
+                                   card's YUV overlay.
+                                   If the PCI_CAP_BUSMASTER flag is set, it is highly
+                                   likely that this flag is set, too.
+
+                                   Only expansion.library may set or reset this flag.
+
+              PCI_CAP_CONFIGME   - This bit is internally used by expansion.library to
+                                   indicate devices that where not yet configured during
+                                   boot. The flag will go away as soon as PCI Autoconfig
+                                   has been run. However, for hotpluggable devices
+                                   this flag might still be active when a driver is
+                                   loaded, so you need to check this and conditionally
+                                   call expansion.library/pci/Autoconfig for this device.
+                                   Autoconfig will clear the flag; if it does not then
+                                   an error has happened and your driver should fail.
+
+
+   RESULT
+       old_cap - the previous state of the flags.
+
+   NOTE
+       This function has nothing to do with PCI capability lists.
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/GetCapabilities
+
+expansion.library/pci_device/SetEndian
+
+   NAME
+       SetEndian -- Set the access mode for I/O operations
+
+   SYNOPSIS
+       void SetEndian(uint32 Mode);
+
+   FUNCTION
+		This function allows the programmer to switch the endian mode of
+		I/O operations between little and big endian.
+
+		Typically, PCI Devices are little endian and respond to I/O operation
+		with little-endian data. For that reason, the default behaviour of
+		the pci devices under AmigaOS is to return byte-swapped (i.e. big endian)
+		values. For some applications, this might now be desirable; in this case,
+		endian reversing can be disabled using this function.
+
+   INPUTS
+       Mode - the desired mode for I/O access. Possible values are:
+
+			PCI_MODE_NATIVE_ENDIAN - switch to the native endian of the host
+				cpu. On a PowerPC this is equivalent to switching to big endian
+				mode. I/O operation will be byte-swapped if necessariy. This
+				is the default behaviour.
+
+			PCI_MODE_REVERSE_ENDIAN - switch to the reverse of the natvie endianess.
+				On the PowerPC this means that no byte swapping is performed anymore
+				and the devices operates in little-endian mode.
+
+			PCI_MODE_BIG_ENDIAN - switch to big endian regardless of the host cpu's
+				endian. To keep drivers endian-clean you should avoid using this. On
+				a PowerPC CPU, this defaults to PCI_MODE_NATIVE_ENDIAN.
+
+			PCI_MODE_LITTLE_ENDIAN - switch to little endian regardless of host cpu's
+				endian. Again, it is advisable to use the NATIVE_ENDIAN and
+				REVERSE_ENDIAN modes to stay compatible.
+
+   RESULT
+		None.
+
+   NOTE
+		The function only switches the access mode of the PCI interface, and
+		only for this specific instance of an interface. If you are using
+		multiple interfaces, you need to perform this switch for every
+		interface.
+
+		Furthermore, the switch only affects the way that I/O is handled.
+		The hardware is always assumed to respond to I/O request with little
+		endian replies, meaning that data flowing from or to the host needs
+		to be byte swapped to yield sensible results. Switching the interface
+		to little or big endian only affects the way that data is written or
+		read. Some devices may support big endian access, but this is unaffected
+		from these functions.
+
+		Also note that config space access is always little endian. This
+		function only affects the way that InByte, InWord, InLong and OutByte,
+		OutWord and OutLong work. It does not affect config space access. The
+		pci interface always makes sure that access to config space is done in
+		in the correct endian.
+
+   BUGS
+
+   SEE ALSO
+
+expansion.library/pci_device/SetUserData
+
+   NAME
+       SetUserData -- Set a user data item in a device
+
+   SYNOPSIS
+       SetUserData(item, udata);
+       void SetUserData(UBYTE, APTR);
+
+   FUNCTION
+       This function sets a user data item as indicated by the item parameter
+       to the given value, overwriting whatever was in this slot before.
+
+       This function is intended for driver writers wanting to store context
+       information or state with a device. For more information, see the
+       description of GetUserData.
+
+   INPUTS
+       item  - the number of the item to set
+       udata - the user data to be set.
+
+   RESULT
+       None.
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/GetUserData
+
+expansion.library/pci_device/Unlock
+
+   NAME
+       Unlock -- Unlock a device
+
+   SYNOPSIS
+       Unlock();
+       void Unlock(void);
+
+   FUNCTION
+       This function performs the reverse operation of Lock, i.e.
+       it unlocks the device for other tasks to use. Each call to
+       Unlock must be preceeded by a successful call to Lock, other-
+       wise the result may be desastrous.
+
+   INPUTS
+       None.
+
+   RESULT
+       None.
+
+   NOTE
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/Lock
+
+expansion.library/pci_device/WriteConfigByte
+
+   NAME
+       WriteConfigByte -- Write a value to config space
+
+   SYNOPSIS
+       WriteConfigByte(Offset, Value)
+       void WriteConfigByte(ULONG, UBYTE);
+
+   FUNCTION
+       This function writes a value into config space at the specified offset.
+       For more information on config space, see the PCI Specifications V2.
+
+   INPUTS
+       Offset - the 32 bit offset into config space
+       Value  - the value to write
+
+   RESULT
+       None
+
+   NOTE
+       Since config space typically is little endian, this function performs
+       appropriate byte swapping. This means that the result returned by this
+       function is guaranteed to be in the native CPU order
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/ReadConfigByte
+
+expansion.library/pci_device/WriteConfigLong
+
+   NAME
+       WriteConfigLong -- Write a value to config space
+
+   SYNOPSIS
+       WriteConfigLong(Offset, Value)
+       void WriteConfigByte(ULONG, ULONG);
+
+   FUNCTION
+       This function writes a value into config space at the specified offset.
+       For more information on config space, see the PCI Specifications V2.
+
+   INPUTS
+       Offset - the 32 bit offset into config space
+       Value  - the value to write
+
+   RESULT
+       None
+
+   NOTE
+       Since config space typically is little endian, this function performs
+       appropriate byte swapping. This means that the result returned by this
+       function is guaranteed to be in the native CPU order
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/ReadConfigByte
+
+expansion.library/pci_device/WriteConfigWord
+
+   NAME
+       WriteConfigWord -- Write a value to config space
+
+   SYNOPSIS
+       WriteConfigWord(Offset, Value)
+       void WriteConfigByte(ULONG, UWORD);
+
+   FUNCTION
+       This function writes a value into config space at the specified offset.
+       For more information on config space, see the PCI Specifications V2.
+
+   INPUTS
+       Offset - the 32 bit offset into config space
+       Value  - the value to write
+
+   RESULT
+       None
+
+   NOTE
+       Since config space typically is little endian, this function performs
+       appropriate byte swapping. This means that the result returned by this
+       function is guaranteed to be in the native CPU order
+
+   BUGS
+
+   SEE ALSO
+       expansion.library/pci_device/ReadConfigByte
+
+expansion.library/ReadExpansionByte
+
+   NAME
+		ReadExpansionByte - read a byte nybble by nybble.
+
+   SYNOPSIS
+		byte = ReadExpansionByte(board, offset);
+
+		UBYTE ReadExpansionByte(APTR, ULONG);
+
+   FUNCTION
+		(Not typically called by user code)
+
+	 	ReadExpansionByte reads a byte from a new-style expansion
+		board.  These boards have their readable data organized
+		as a series of nybbles in memory.  This routine reads
+		two nybbles and returns the byte value.
+
+		In general, this routine will only be called by ReadExpansionRom.
+
+		The offset is a byte offset, as if into a ExpansionRom structure.
+		The actual memory address read will be four times larger.
+		The macros EROFFSET and ECOFFSET are provided to help get
+		these offsets from C.
+
+   INPUTS
+		board - a pointer to the base of a new style expansion board.
+		offset - a logical offset from the board base
+
+   RESULTS
+		byte - a byte of data from the expansion board.
+
+   EXAMPLES
+		byte = ReadExpansionByte( cd->BoardAddr, EROFFSET( er_Type ) );
+		ints = ReadExpansionByte( cd->BoardAddr, ECOFFSET( ec_Interrupt ) );
+
+   SEE ALSO
+		WriteExpansionByte, ReadExpansionRom
+
+expansion.library/ReadExpansionRom
+
+   NAME
+		ReadExpansionRom - read a boards configuration ROM space
+
+   SYNOPSIS
+		error = ReadExpansionRom( board, configDev ):
+
+		ULONG ReadExpansionRom(APTR, struct ConfigDev *);
+
+   FUNCTION
+		(Not typically called by user code)
+
+		ReadExpansionRom reads a the ROM portion of an expansion
+		device in to cd_Rom portion of a ConfigDev structure.
+		This routine knows how to detect whether or not there is
+		actually a board there,
+
+		In addition, the ROM portion of a new style expansion board
+		is encoded in ones-complement format (except for the first
+		two nybbles -- the er_Type field).  ReadExpansionRom knows
+		about this and un-complements the appropriate fields.
+
+   INPUTS
+		board - a pointer to the base of a new style expansion board.
+		configDev - the ConfigDev structure that will be read in.
+		offset - a logical offset from the configdev base
+
+   RESULTS
+		error - If the board address does not contain a valid new style
+			expansion board, then error will be non-zero.
+
+   EXAMPLES
+
+		configDev = AllocConfigDev();
+		if( ! configDev ) panic();
+
+		error = ReadExpansionBoard( board, configDev );
+		if( ! error ) {
+			configDev->cd_BoardAddr = board;
+			ConfigBoard( configDev );
+		}
+
+   SEE ALSO
+		ReadExpansionByte, WriteExpansionByte
+
+expansion.library/ReleaseConfigBinding
+
+   NAME
+		ReleaseConfigBinding - allow others to bind to drivers
+
+   SYNOPSIS
+		ReleaseConfigBinding();
+
+		void ReleaseConfigBinding(void);
+
+
+   FUNCTION
+		This call should be used when you are done binding drivers
+		to ConfigDev entries.  It releases the SignalSemaphore; this
+		allows others to bind their drivers to ConfigDev structures.
+
+   SEE ALSO
+		ObtainConfigBinding()
+
+expansion.library/RemConfigDev
+
+   NAME
+       RemConfigDev - remove a ConfigDev structure from the system
+
+   SYNOPSIS
+       RemConfigDev( configDev );
+
+       void RemConfigdev(struct ConfigDev *);
+
+   FUNCTION
+       (Not typically called by user code)
+
+       This routine removes the specified ConfigDev structure from the
+       list of Configuration Devices in the system.
+
+   INPUTS
+       configDev - a valid ConfigDev structure.
+
+   SEE ALSO
+       AddConfigDev
+
+expansion.library/SetCurrentBinding
+
+   NAME
+		SetCurrentBinding - sets static board configuration area
+
+   SYNOPSIS
+		SetCurrentBinding( currentBinding, size )
+
+		void SetCurrentBinding(struct CurrentBinding *, ULONG);
+
+   FUNCTION
+		This function records the contents of the "currentBinding"
+		structure in a private place.  It may be read via
+		GetCurrentBinding().  This is really a kludge, but it is
+		the only way to pass extra arguments to a newly configured
+		device.
+
+		A CurrentBinding structure has the name of the currently
+		loaded file, the product string that was associated with
+		this driver, and a pointer to the head of a singly linked
+		list of ConfigDev structures (linked through the cd_NextCD
+		field).
+
+		Many devices may not need this information; they have hard
+		coded into themselves their manufacture number.  It is
+		recommended that you at least check that you can deal with
+		the product code in the linked ConfigDev structures.
+
+   INPUTS
+		currentBinding - a pointer to a CurrentBinding structure
+
+	size - The size of the user's binddriver structure.  No
+		   more than this much data will be copied.  If size is
+		   less than the library's idea a CurrentBinding size,
+	       then the library's structure will be null padded.
+
+   SEE ALSO
+		GetCurrentBinding
+
+expansion.library/WriteExpansionByte
+
+   NAME
+		WriteExpansionByte - write a byte nybble by nybble.
+
+   SYNOPSIS
+		WriteExpansionByte( board, offset, byte );
+
+		void WriteExpansionByte(APTR, ULONG, UBYTE);
+
+   FUNCTION
+		(Not typically called by user code)
+
+		WriteExpansionByte writes a byte to a new-style expansion
+		board.  These boards have their writeable data organized
+		as a series of nybbles in memory.  This routine writes
+		two nybbles in a very careful manner to work with all
+		types of new expansion boards.
+
+		To make certain types of board less expensive, an expansion
+		board's write registers may be organized as either a
+		byte-wide or nybble-wide register.  If it is nybble-wide
+		then it must latch the less significant nybble until the
+		more significant nybble is written.  This allows the
+		following algorithm to work with either type of board:
+
+			write the low order nybble to bits D15-D12 of
+				byte (offset*4)+2
+
+			write the entire byte to bits D15-D8 of
+				byte (offset*4)
+
+		The offset is a byte offset into a ExpansionRom structure.
+		The actual memory address read will be four times larger.
+		The macros EROFFSET and ECOFFSET are provided to help get
+		these offsets from C.
+
+   INPUTS
+		board - a pointer to the base of a new style expansion board.
+		offset - a logical offset from the configdev base
+		byte - the byte of data to be written to the expansion board.
+
+   EXAMPLES
+		WriteExpansionByte( cd->BoardAddr, ECOFFSET( ec_Shutup ),  0 );
+		WriteExpansionByte( cd->BoardAddr, ECOFFSET( ec_Interrupt ), 1 );
+
+   SEE ALSO
+		ReadExpansionByte, ReadExpansionRom
+
+expansion.library/WriteExpansionWord
+
+   NAME
+		WriteExpansionWord - write a word in special ways  (V37)
+
+   SYNOPSIS
+		WriteExpansionWord( board, offset, word )
+
+   FUNCTION
+		(Not typically called by user code)
+
+		WriteExpansionWord writes a word to a Zorro III expansion
+		board.
+
+   INPUTS
+		board - a pointer to the base of a Zorro III expansion board.
+		offset - a logical offset from the configdev base
+		word - the word of data to be written to the expansion board.
+
+   SEE ALSO
+		WriteExpansionByte, ReadExpansionByte, ReadExpansionRom
+
+

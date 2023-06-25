@@ -1,0 +1,638 @@
+#
+# Makefile for PPC native language drivers
+# for gcc 4.0.0 PPC->PPC on OS4
+#
+
+CC		= gcc
+
+STRIP		= strip
+
+CWFLAGS		= -Wall -W -Wundef -Wshadow -Wpointer-arith \
+		  -Wbad-function-cast -Wconversion -Waggregate-return \
+		  -Werror
+
+CFLAGS		= $(CWFLAGS) -O3 -IV:include -fno-builtin -mcrt=clib2 -c
+
+LIBS		= -lc
+
+LDFLAGS		= -nostartfiles -nostdlib -mcrt=clib2
+
+OBJS		= startup.ppc.o                                               \
+		  albanian.ppc.o                                              \
+                                          belarusian_ISO-8859-5.ppc.o         \
+		                          bosnian_ISO-8859-2.ppc.o            \
+		                          bosnian_ISO-8859-16.ppc.o           \
+		                          bulgarian_ISO-8859-5.ppc.o          \
+		  catalan.ppc.o           catalan_ISO-8859-15.ppc.o           \
+		                          croatian_ISO-8859-2.ppc.o           \
+		                          croatian_ISO-8859-16.ppc.o          \
+		                          czech_ISO-8859-2.ppc.o              \
+		                          czech_X-ATO-E2.ppc.o                \
+		  danish.ppc.o            danish_ISO-8859-15.ppc.o            \
+		  dutch.ppc.o             dutch_ISO-8859-15.ppc.o             \
+		                          english_ISO-8859-15.ppc.o           \
+	                                  esperanto_ISO-8859-3.ppc.o          \
+		                          estonian_ISO-8859-15.ppc.o          \
+	          faroese.ppc.o           faroese_ISO-8859-15.ppc.o           \
+		  finnish.ppc.o           finnish_ISO-8859-15.ppc.o           \
+		  french.ppc.o            french_ISO-8859-15.ppc.o            \
+	          galician.ppc.o          galician_ISO-8859-15.ppc.o          \
+		  german.ppc.o            german_ISO-8859-15.ppc.o            \
+		                          greek_ISO-8859-7.ppc.o              \
+		                          hebrew_ISO-8859-8.ppc.o             \
+		                          hungarian_ISO-8859-2.ppc.o          \
+		                          hungarian_ISO-8859-16.ppc.o         \
+		  icelandic.ppc.o                                             \
+		                          irish_ISO-8859-15.ppc.o             \
+		  italian.ppc.o           italian_ISO-8859-15.ppc.o           \
+		                          latvian_ISO-8859-13.ppc.o           \
+		                          lithuanian_ISO-8859-13.ppc.o        \
+                                          macedonian_ISO-8859-5.ppc.o         \
+                  malay-indonesian.ppc.o  malay-malaysian.ppc.o               \
+                                          maltese_ISO-8859-3.ppc.o            \
+		  norwegian.ppc.o         norwegian_ISO-8859-15.ppc.o         \
+		  norwegian-nynorsk.ppc.o norwegian-nynorsk_ISO-8859-15.ppc.o \
+		                          polish_ISO-8859-2.ppc.o             \
+		                          polish_ISO-8859-16.ppc.o            \
+		                          polish_X-ATO-PL.ppc.o               \
+		  portuguese.ppc.o        portuguese_ISO-8859-15.ppc.o        \
+		  portuguese-brazil.ppc.o                                     \
+		                          romanian_ISO-8859-16.ppc.o          \
+		                          russian_Amiga-1251.ppc.o            \
+		                          russian_ISO-8859-5.ppc.o            \
+		                          serbian_ISO-8859-2.ppc.o            \
+		                          serbian_ISO-8859-5.ppc.o            \
+		                          serbian_ISO-8859-16.ppc.o           \
+		                          serbian_X-ATO-srpski.ppc.o          \
+		                          slovak_ISO-8859-2.ppc.o             \
+		                          slovak_X-ATO-E2.ppc.o               \
+		                          slovenian_ISO-8859-2.ppc.o          \
+		                          slovenian_ISO-8859-16.ppc.o         \
+	          spanish.ppc.o           spanish_ISO-8859-15.ppc.o           \
+		  swedish.ppc.o           swedish_ISO-8859-15.ppc.o           \
+		                          turkish_ISO-8859-9.ppc.o            \
+		                          turkish_int_ISO-8859-9.ppc.o        \
+		                          ukrainian_ISO-8859-5.ppc.o
+# Add this if you think we need a 68k jump table,
+# also add -DVECTABLE_68K to CFLAGS
+# and language_68k.ppc.o to the .elf rules and object files below
+#		  language_68k.ppc.o
+
+EXE		= albanian.language.elf                                                     \
+		                                 belarusian_ISO-8859-5.language.elf         \
+		                                 bosnian_ISO-8859-2.language.elf            \
+		                                 bosnian_ISO-8859-16.language.elf           \
+		                                 bulgarian_ISO-8859-5.language.elf          \
+		  catalan.language.elf           catalan_ISO-8859-15.language.elf           \
+		                                 croatian_ISO-8859-2.language.elf           \
+		                                 croatian_ISO-8859-16.language.elf          \
+		                                 czech_ISO-8859-2.language.elf              \
+		                                 czech_X-ATO-E2.language.elf                \
+		  danish.language.elf            danish_ISO-8859-15.language.elf            \
+		  dutch.language.elf             dutch_ISO-8859-15.language.elf             \
+		                                 english_ISO-8859-15.language.elf           \
+		                                 esperanto_ISO-8859-3.language.elf          \
+		                                 estonian_ISO-8859-15.language.elf          \
+		  faroese.language.elf           faroese_ISO-8859-15.language.elf           \
+		  finnish.language.elf           finnish_ISO-8859-15.language.elf           \
+		  french.language.elf            french_ISO-8859-15.language.elf            \
+		  galician.language.elf          galician_ISO-8859-15.language.elf          \
+		  german.language.elf            german_ISO-8859-15.language.elf            \
+		                                 greek_ISO-8859-7.language.elf              \
+		                                 hebrew_ISO-8859-8.language.elf             \
+		                                 hungarian_ISO-8859-2.language.elf          \
+		                                 hungarian_ISO-8859-16.language.elf         \
+		  icelandic.language.elf                                                    \
+		                                 irish_ISO-8859-15.language.elf             \
+		  italian.language.elf           italian_ISO-8859-15.language.elf           \
+		                                 latvian_ISO-8859-13.language.elf           \
+		                                 lithuanian_ISO-8859-13.language.elf        \
+		                                 macedonian_ISO-8859-5.language.elf         \
+                  malay-indonesian.language.elf  malay-malaysian.language.elf               \
+		                                 maltese_ISO-8859-3.language.elf            \
+		  norwegian.language.elf         norwegian_ISO-8859-15.language.elf         \
+		  norwegian-nynorsk.language.elf norwegian-nynorsk_ISO-8859-15.language.elf \
+		                                 polish_ISO-8859-2.language.elf             \
+		                                 polish_ISO-8859-16.language.elf            \
+		                                 polish_X-ATO-PL.language.elf               \
+		  portuguese.language.elf        portuguese_ISO-8859-15.language.elf        \
+		  portuguese-brazil.language.elf                                            \
+		                                 romanian_ISO-8859-16.language.elf          \
+		                                 russian_Amiga-1251.language.elf            \
+		                                 russian_ISO-8859-5.language.elf            \
+		                                 serbian_ISO-8859-2.language.elf            \
+		                                 serbian_ISO-8859-5.language.elf            \
+		                                 serbian_ISO-8859-16.language.elf           \
+		                                 serbian_X-ATO-srpski.language.elf          \
+		                                 slovak_ISO-8859-2.language.elf             \
+		                                 slovak_X-ATO-E2.language.elf               \
+		                                 slovenian_ISO-8859-2.language.elf          \
+		                                 slovenian_ISO-8859-16.language.elf         \
+		  spanish.language.elf           spanish_ISO-8859-15.language.elf           \
+		  swedish.language.elf           swedish_ISO-8859-15.language.elf           \
+		                                 turkish_ISO-8859-9.language.elf            \
+		                                 turkish_int_ISO-8859-9.language.elf        \
+		                                 ukrainian_ISO-8859-5.language.elf
+
+all:				$(EXE)
+
+startup.ppc.o:			startup.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+#language_68k.ppc.o:		language_68k.c
+#				$(CC) $(CFLAGS) -Wno-bad-function-cast -Wno-unused -o $@ $<
+
+albanian.ppc.o:			albanian.c albanian.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+belarusian_ISO-8859-5.ppc.o:	belarusian_ISO-8859-5.c belarusian_ISO-8859-5.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+bosnian_ISO-8859-2.ppc.o:	bosnian_ISO-8859-2.c bosnian_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+bosnian_ISO-8859-16.ppc.o:	bosnian_ISO-8859-16.c bosnian_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+bulgarian_ISO-8859-5.ppc.o:	bulgarian_ISO-8859-5.c bulgarian_ISO-8859-5.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+catalan.ppc.o:			catalan.c catalan.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+catalan_ISO-8859-15.ppc.o:	catalan_ISO-8859-15.c catalan_ISO-8859-15.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+croatian_ISO-8859-2.ppc.o:	croatian_ISO-8859-2.c croatian_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+croatian_ISO-8859-16.ppc.o:	croatian_ISO-8859-16.c croatian_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+czech_ISO-8859-2.ppc.o:		czech_ISO-8859-2.c czech_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+czech_X-ATO-E2.ppc.o:		czech_X-ATO-E2.c czech_X-ATO-E2.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+danish.ppc.o:			danish.c danish.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+danish_ISO-8859-15.ppc.o:	danish_ISO-8859-15.c danish_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+dutch.ppc.o:			dutch.c dutch.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+dutch_ISO-8859-15.ppc.o:	dutch_ISO-8859-15.c dutch_ISO-8859-15.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+english_ISO-8859-15.ppc.o:	english_ISO-8859-15.c english_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+esperanto_ISO-8859-3.ppc.o:	esperanto_ISO-8859-3.c esperanto_ISO-8859-3.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+estonian_ISO-8859-15.ppc.o:	estonian_ISO-8859-15.c estonian_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+faroese.ppc.o:			faroese.c faroese.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+faroese_ISO-8859-15.ppc.o:	faroese_ISO-8859-15.c faroese_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+finnish.ppc.o:			finnish.c finnish.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+finnish_ISO-8859-15.ppc.o:	finnish_ISO-8859-15.c finnish_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+french.ppc.o:			french.c french.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+french_ISO-8859-15.ppc.o:	french_ISO-8859-15.c french_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+galician.ppc.o:			galician.c galician.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+galician_ISO-8859-15.ppc.o:	galician_ISO-8859-15.c galician_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+german.ppc.o:			german.c german.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+german_ISO-8859-15.ppc.o:	german_ISO-8859-15.c german_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+greek_ISO-8859-7.ppc.o:		greek_ISO-8859-7.c greek_ISO-8859-7.language_rev.h languagecharsetdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+hebrew_ISO-8859-8.ppc.o:	hebrew_ISO-8859-8.c hebrew_ISO-8859-8.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+hungarian_ISO-8859-2.ppc.o:	hungarian_ISO-8859-2.c hungarian_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+hungarian_ISO-8859-16.ppc.o:	hungarian_ISO-8859-16.c hungarian_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+icelandic.ppc.o:		icelandic.c italian.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+irish_ISO-8859-15.ppc.o:	irish_ISO-8859-15.c irish_ISO-8859-15.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+italian.ppc.o:			italian.c italian.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+italian_ISO-8859-15.ppc.o:	italian_ISO-8859-15.c italian_ISO-8859-15.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+latvian_ISO-8859-13.ppc.o:	latvian_ISO-8859-13.c latvian_ISO-8859-13.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+lithuanian_ISO-8859-13.ppc.o:	lithuanian_ISO-8859-13.c lithuanian_ISO-8859-13.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+macedonian_ISO-8859-5.ppc.o:	macedonian_ISO-8859-5.c macedonian_ISO-8859-5.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+malay-indonesian.ppc.o:		malay-indonesian.c malay-indonesian.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+malay-malaysian.ppc.o:		malay-malaysian.c malay-malaysian.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+maltese_ISO-8859-3.ppc.o:	maltese_ISO-8859-3.c maltese_ISO-8859-3.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+norwegian.ppc.o:		norwegian.c norwegian.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+norwegian_ISO-8859-15.ppc.o:	norwegian_ISO-8859-15.c norwegian_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+norwegian-nynorsk.ppc.o:	norwegian-nynorsk.c norwegian-nynorsk.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+norwegian-nynorsk_ISO-8859-15.ppc.o: norwegian-nynorsk_ISO-8859-15.c norwegian-nynorsk_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+polish_ISO-8859-2.ppc.o:	polish_ISO-8859-2.c polish_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+polish_ISO-8859-16.ppc.o:	polish_ISO-8859-16.c polish_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+polish_X-ATO-PL.ppc.o:		polish_X-ATO-PL.c polish_X-ATO-PL.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+portuguese.ppc.o:		portuguese.c portuguese.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+portuguese_ISO-8859-15.ppc.o:	portuguese_ISO-8859-15.c portuguese_ISO-8859-15.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+portuguese-brazil.ppc.o:	portuguese-brazil.c portuguese-brazil.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+romanian_ISO-8859-16.ppc.o:	romanian_ISO-8859-16.c romanian_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+russian_Amiga-1251.ppc.o:	russian_Amiga-1251.c russian_Amiga-1251.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+russian_ISO-8859-5.ppc.o:	russian_ISO-8859-5.c russian_ISO-8859-5.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+serbian_ISO-8859-2.ppc.o:	serbian_ISO-8859-2.c serbian_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+serbian_ISO-8859-5.ppc.o:	serbian_ISO-8859-5.c serbian_ISO-8859-5.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+serbian_ISO-8859-16.ppc.o:	serbian_ISO-8859-16.c serbian_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+serbian_X-ATO-srpski.ppc.o:	serbian_X-ATO-srpski.c serbian_X-ATO-srpski.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+slovak_ISO-8859-2.ppc.o:	slovak_ISO-8859-2.c slovak_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+slovak_X-ATO-E2.ppc.o:		slovak_X-ATO-E2.c slovak_X-ATO-E2.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+slovenian_ISO-8859-2.ppc.o:	slovenian_ISO-8859-2.c slovenian_ISO-8859-2.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+slovenian_ISO-8859-16.ppc.o:	slovenian_ISO-8859-16.c slovenian_ISO-8859-16.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+spanish.ppc.o:			spanish.c spanish.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+spanish_ISO-8859-15.ppc.o:	spanish_ISO-8859-15.c spanish_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+swedish.ppc.o:			swedish.c swedish.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+swedish_ISO-8859-15.ppc.o:	swedish_ISO-8859-15.c swedish_ISO-8859-15.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+turkish_ISO-8859-9.ppc.o:	turkish_ISO-8859-9.c turkish_ISO-8859-9.language_rev.h languagecharsetdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+turkish_int_ISO-8859-9.ppc.o:	turkish_int_ISO-8859-9.c turkish_int_ISO-8859-9.language_rev.h languagedriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+ukrainian_ISO-8859-5.ppc.o:	ukrainian_ISO-8859-5.c ukrainian_ISO-8859-5.language_rev.h languagestrncmpdriver.c
+				$(CC) $(CFLAGS) -o $@ $<
+
+
+albanian.language.elf:			 startup.ppc.o albanian.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o albanian.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+belarusian_ISO-8859-5.language.elf:	 startup.ppc.o belarusian_ISO-8859-5.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o belarusian_ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+bosnian_ISO-8859-2.language.elf:	 startup.ppc.o bosnian_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o bosnian_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+bosnian_ISO-8859-16.language.elf:	 startup.ppc.o bosnian_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o bosnian_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+bulgarian_ISO-8859-5.language.elf:	 startup.ppc.o bulgarian_ISO-8859-5.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o bulgarian_ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+catalan.language.elf:			 startup.ppc.o catalan.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o catalan.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+catalan_ISO-8859-15.language.elf:	 startup.ppc.o catalan_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o catalan_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+croatian_ISO-8859-2.language.elf:	 startup.ppc.o croatian_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o croatian_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+croatian_ISO-8859-16.language.elf:	 startup.ppc.o croatian_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o croatian_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+czech_ISO-8859-2.language.elf:		 startup.ppc.o czech_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o czech_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+czech_X-ATO-E2.language.elf:		 startup.ppc.o czech_X-ATO-E2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o czech_X-ATO-E2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+danish.language.elf:			 startup.ppc.o danish.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o danish.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+danish_ISO-8859-15.language.elf:	 startup.ppc.o danish_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o danish_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+dutch.language.elf:			 startup.ppc.o dutch.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o dutch.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+dutch_ISO-8859-15.language.elf:		 startup.ppc.o dutch_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o dutch_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+english_ISO-8859-15.language.elf:	 startup.ppc.o english_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o english_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+esperanto_ISO-8859-3.language.elf:	 startup.ppc.o esperanto_ISO-8859-3.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o esperanto_ISO-8859-3.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+estonian_ISO-8859-15.language.elf:	 startup.ppc.o estonian_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o estonian_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+faroese.language.elf:			 startup.ppc.o faroese.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o faroese.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+faroese_ISO-8859-15.language.elf:	 startup.ppc.o faroese_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o faroese_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+finnish.language.elf:			 startup.ppc.o finnish.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o finnish.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+finnish_ISO-8859-15.language.elf:	 startup.ppc.o finnish_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o finnish_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+french.language.elf:			 startup.ppc.o french.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o french.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+french_ISO-8859-15.language.elf:	 startup.ppc.o french_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o french_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+galician.language.elf:			 startup.ppc.o galician.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o galician.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+galician_ISO-8859-15.language.elf:	 startup.ppc.o galician_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o galician_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+german.language.elf:			 startup.ppc.o german.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o german.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+german_ISO-8859-15.language.elf:	 startup.ppc.o german_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o german_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+greek_ISO-8859-7.language.elf:		 startup.ppc.o greek_ISO-8859-7.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o greek_ISO-8859-7.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+hebrew_ISO-8859-8.language.elf:	 startup.ppc.o hebrew_ISO-8859-8.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o hebrew_ISO-8859-8.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+hungarian_ISO-8859-2.language.elf:	 startup.ppc.o hungarian_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o hungarian_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+hungarian_ISO-8859-16.language.elf:	 startup.ppc.o hungarian_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o hungarian_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+icelandic.language.elf:			 startup.ppc.o icelandic.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o icelandic.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+irish_ISO-8859-15.language.elf:		 startup.ppc.o irish_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o irish_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+italian.language.elf:			 startup.ppc.o italian.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o italian.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+italian_ISO-8859-15.language.elf:	 startup.ppc.o italian_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o italian_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+latvian_ISO-8859-13.language.elf:	 startup.ppc.o latvian_ISO-8859-13.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o latvian_ISO-8859-13.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+lithuanian_ISO-8859-13.language.elf:	 startup.ppc.o lithuanian_ISO-8859-13.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o lithuanian_ISO-8859-13.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+macedonian_ISO-8859-5.language.elf:	 startup.ppc.o macedonian_ISO-8859-5.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o macedonian_ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+malay-indonesian.language.elf:		 startup.ppc.o malay-indonesian.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o malay-indonesian.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+malay-malaysian.language.elf:		 startup.ppc.o malay-malaysian.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o malay-malaysian.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+maltese_ISO-8859-3.language.elf:	 startup.ppc.o maltese_ISO-8859-3.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o maltese_ISO-8859-3.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+norwegian.language.elf:			 startup.ppc.o norwegian.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o norwegian.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+norwegian_ISO-8859-15.language.elf:	 startup.ppc.o norwegian_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o norwegian_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+norwegian-nynorsk.language.elf:		 startup.ppc.o norwegian-nynorsk.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o norwegian-nynorsk.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+norwegian-nynorsk_ISO-8859-15.language.elf: startup.ppc.o norwegian-nynorsk_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS)    startup.ppc.o norwegian-nynorsk_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+polish_ISO-8859-2.language.elf:		 startup.ppc.o polish_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o polish_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+polish_ISO-8859-16.language.elf:	 startup.ppc.o polish_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o polish_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+polish_X-ATO-PL.language.elf:		 startup.ppc.o polish_X-ATO-PL.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o polish_X-ATO-PL.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+portuguese.language.elf:		 startup.ppc.o portuguese.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o portuguese.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+portuguese_ISO-8859-15.language.elf:	 startup.ppc.o portuguese_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o portuguese_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+portuguese-brazil.language.elf:		 startup.ppc.o portuguese-brazil.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o portuguese-brazil.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+romanian_ISO-8859-16.language.elf:	 startup.ppc.o romanian_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o romanian_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+russian_Amiga-1251.language.elf:	 startup.ppc.o russian_Amiga-1251.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o russian_Amiga-1251.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+russian_ISO-8859-5.language.elf:	 startup.ppc.o russian_ISO-8859-5.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o russian_ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+serbian_ISO-8859-2.language.elf:	 startup.ppc.o serbian_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o serbian_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+serbian_ISO-8859-5.language.elf:	 startup.ppc.o serbian_ISO-8859-5.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o serbian_ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+serbian_ISO-8859-16.language.elf:	 startup.ppc.o serbian_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o serbian_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+serbian_X-ATO-srpski.language.elf:	 startup.ppc.o serbian_X-ATO-srpski.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o serbian_X-ATO-srpski.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+slovak_ISO-8859-2.language.elf:		 startup.ppc.o slovak_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o slovak_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+slovak_X-ATO-E2.language.elf:		 startup.ppc.o slovak_X-ATO-E2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o slovak_X-ATO-E2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+slovenian_ISO-8859-2.language.elf:	 startup.ppc.o slovenian_ISO-8859-2.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o slovenian_ISO-8859-2.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+slovenian_ISO-8859-16.language.elf:	 startup.ppc.o slovenian_ISO-8859-16.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o slovenian_ISO-8859-16.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+spanish.language.elf:			 startup.ppc.o spanish.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o spanish.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+spanish_ISO-8859-15.language.elf:	 startup.ppc.o spanish_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o spanish_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+swedish.language.elf:			 startup.ppc.o swedish.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o swedish.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+swedish_ISO-8859-15.language.elf:	 startup.ppc.o swedish_ISO-8859-15.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o swedish_ISO-8859-15.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+turkish_ISO-8859-9.language.elf:	 startup.ppc.o turkish_ISO-8859-9.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o turkish_ISO-8859-9.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+turkish_int_ISO-8859-9.language.elf:	 startup.ppc.o turkish_int_ISO-8859-9.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o turkish_int_ISO-8859-9.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+ukrainian_ISO-8859-5.language.elf:	 startup.ppc.o ukrainian_ISO-8859-5.ppc.o
+			$(CC) $(LDFLAGS) startup.ppc.o ukrainian_ISO-8859-5.ppc.o $(LIBS) -o $@.debug
+			$(STRIP) -R.comment -R.dstart -R.dend -R.data -R.sdata -R.sdata2 -R.bss -R.sbss $@.debug -o $@
+
+
+clean:
+			-Delete $(OBJS) $(EXE)

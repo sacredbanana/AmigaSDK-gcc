@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="diskio" basename="DiskIOBase" basetype="Library" openname="diskio.library">
+	<include>exec/types.h</include>
+	<include>utility/tagitem.h</include>
+	<include>libraries/diskio.h</include>
+	<interface name="main" version="1.0" struct="DiskIOIFace" prefix="_DiskIO_" asmprefix="IDiskIO" global="IDiskIO">
+		<method name="Obtain" result="uint32"/>
+		<method name="Release" result="uint32"/>
+		<method name="Expunge" result="void" status="unimplemented"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+		<method name="Setup" result="struct DiskIO *">
+			<arg name="name" type="CONST_STRPTR"/>
+			<arg name="tags" type="const struct TagItem *"/>
+		</method>
+		<method name="SetupTags" result="struct DiskIO *">
+			<arg name="name" type="CONST_STRPTR"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="Cleanup" result="void">
+			<arg name="dio" type="struct DiskIO *"/>
+		</method>
+		<method name="Update" result="void">
+			<arg name="dio" type="struct DiskIO *"/>
+		</method>
+		<method name="IsDiskPresent" result="BOOL">
+			<arg name="dio" type="struct DiskIO *"/>
+		</method>
+		<method name="IsWriteProtected" result="BOOL">
+			<arg name="dio" type="struct DiskIO *"/>
+		</method>
+		<method name="Query" result="void">
+			<arg name="dio" type="struct DiskIO *"/>
+			<arg name="tags" type="const struct TagItem *"/>
+		</method>
+		<method name="QueryTags" result="void">
+			<arg name="dio" type="struct DiskIO *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="FlushIOCache" result="int32">
+			<arg name="dio" type="struct DiskIO *"/>
+		</method>
+		<method name="FlushBlocks" result="int32">
+			<arg name="dio" type="struct DiskIO *"/>
+			<arg name="block" type="uint64"/>
+			<arg name="blocks" type="uint32"/>
+		</method>
+		<method name="ReadBlocks" result="int32">
+			<arg name="dio" type="struct DiskIO *"/>
+			<arg name="block" type="uint64"/>
+			<arg name="buffer" type="APTR"/>
+			<arg name="blocks" type="uint32"/>
+		</method>
+		<method name="WriteBlocks" result="int32">
+			<arg name="dio" type="struct DiskIO *"/>
+			<arg name="block" type="uint64"/>
+			<arg name="buffer" type="CONST_APTR"/>
+			<arg name="blocks" type="uint32"/>
+		</method>
+		<method name="ReadBytes" result="int32">
+			<arg name="dio" type="struct DiskIO *"/>
+			<arg name="offset" type="uint64"/>
+			<arg name="buffer" type="APTR"/>
+			<arg name="bytes" type="uint32"/>
+		</method>
+		<method name="WriteBytes" result="int32">
+			<arg name="dio" type="struct DiskIO *"/>
+			<arg name="offset" type="uint64"/>
+			<arg name="buffer" type="CONST_APTR"/>
+			<arg name="bytes" type="uint32"/>
+		</method>
+		<method name="AddDiskChangeHandler" result="struct DiskChangeHandler *">
+			<arg name="name" type="CONST_STRPTR"/>
+			<arg name="func" type="DiskChangeHandlerFunc"/>
+			<arg name="udata" type="APTR"/>
+			<arg name="tags" type="const struct TagItem *"/>
+		</method>
+		<method name="AddDiskChangeHandlerTags" result="struct DiskChangeHandler *">
+			<arg name="name" type="CONST_STRPTR"/>
+			<arg name="func" type="DiskChangeHandlerFunc"/>
+			<arg name="udata" type="APTR"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="RemDiskChangeHandler" result="void">
+			<arg name="dch" type="struct DiskChangeHandler *"/>
+		</method>
+	</interface>
+</library>
+

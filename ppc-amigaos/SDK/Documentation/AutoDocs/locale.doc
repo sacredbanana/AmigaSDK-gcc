@@ -1,0 +1,1476 @@
+TABLE OF CONTENTS
+
+locale.library/--environment_vars--
+locale.library/--rexxhost--
+locale.library/--structures--
+locale.library/CloseCatalog
+locale.library/CloseLocale
+locale.library/ConvToLower
+locale.library/ConvToUpper
+locale.library/FormatDate
+locale.library/FormatString
+locale.library/GetCatalogStr
+locale.library/GetLocaleStr
+locale.library/IsXXXX
+locale.library/OpenCatalog
+locale.library/OpenLocale
+locale.library/ParseDate
+locale.library/StrConvert
+locale.library/StrnCmp
+locale.library/--environment_vars--       locale.library/--environment_vars--
+
+	Starting with V40, locale.library maintains a global environment
+	variable called "Language" which contains the name of the current
+	default language as used in the system. This is the name of the
+	language associated with the Locale structure returned by
+	OpenLocale(NULL).
+
+	Starting with V50, locale.library maintains a global environment
+	variable called "LanguageName" which contains the name of the
+	current default language as used in the system. This is the english
+	name of the language associated with the Locale structure returned
+	by OpenLocale(NULL). For compatibility, "Language" may be non-english
+	or even non-ASCII.
+
+	Starting with V50, locale.library maintains a global environment
+	variable called "Charset" which contains the MIME name of the
+	current default charset as used in the system. This is the name
+	of the charset associated with the Locale structure returned by
+	OpenLocale(NULL).
+
+   EXAMPLE
+	From a shell:
+
+	    Echo "The system language currently is: $Language"
+
+	will print the name of the current system language ("english",
+	"français", etc)
+
+	    Echo "The system language currently is: $LanguageName"
+
+	will print the name of the current system language ("english",
+	"french", etc)
+
+locale.library/--rexxhost--                       locale.library/--rexxhost--
+
+   HOST INTERFACE
+	locale.library provides an ARexx function host interface that enables
+	ARexx programs to take advantage of system localization. The
+	functions provided by the interface are directly related to the
+	functions described herein, with the differences mostly being
+	in the way they are called.
+
+	The function host library vector is located at offset -30 from the
+	library. This is the value you provide to ARexx in the AddLib()
+	function call.
+
+   FUNCTIONS
+	CloseCatalog (CATALOG/N/A)
+	ConvToLower (CHARACTER/A)
+	ConvToUpper (CHARACTER/A)
+	GetCatalogStr (CATALOG/A, STRING/N/A, DEFAULT/A)
+	IsAlNum (CHARACTER/A)
+	IsAlpha (CHARACTER/A)
+	IsCntrl (CHARACTER/A)
+	IsDigit (CHARACTER/A)
+	IsGraph (CHARACTER/A)
+	IsLower (CHARACTER/A)
+	IsPrint (CHARACTER/A)
+	IsPunct (CHARACTER/A)
+	IsSpace (CHARACTER/A)
+	IsUpper (CHARACTER/A)
+	IsXDigit (CHARACTER/A)
+	OpenCatalog (NAME/A, BUILTINLANGUAGE/A, VERSION/N/A)
+	Strncmp (STRING1/A, STRING2/A, TYPE/N/A)
+
+   FUNCTIONS ADDED IN V50
+	OpenCatalogCS (NAME/A, BUILTINLANGUAGE/A, BUILTINCODESET/N/A,
+	               VERSION/N/A)
+
+   FUNCTIONS ADDED IN V51
+	IsBlank (CHARACTER/A)
+
+   EXAMPLE
+	/* localetest.rexx */
+
+	/* Make sure locale is loaded as a function host */
+	IF ~SHOW(L, 'locale.library') THEN DO
+	  CALL ADDLIB('locale.library', 0, -30)
+	END;
+
+	say ConvToLower("A");
+	say ConvToUpper("b");
+	say IsAlpha("1");
+
+	catalog = OpenCatalog("sys/workbench.catalog", "english", 0);
+	say GetCatalogStr(catalog, 34, "default");
+	say CloseCatalog(catalog);
+	say StrnCmp("test", "test", 2);
+
+locale.library/--structures--                   locale.library/--structures--
+
+	The Locale structure is the main public structure provided by
+	locale.library. The structure is defined in <libraries/locale.h>
+	and consists of the following fields:
+
+	STRPTR loc_LocaleName
+	    Locale's name.
+
+	STRPTR loc_LanguageName
+	    The language of the driver bound to this locale.
+
+	STRPTR loc_PrefLanguages[10]
+	    The ordered list of preferred languages for this locale.
+
+	uint32 loc_Flags
+	    Locale flags. Currently always 0.
+
+	uint32 loc_CodeSet
+	    Specifies the code set required by this locale. Before V50, this
+	    value was always 0. Since V50, this is the IANA charset number
+	    (see L:CharSets/character-sets). For compatibility, 0 should be
+	    handled as equal to 4, both meaning ISO-8859-1 Latin1.
+
+	uint32 loc_CountryCode
+	    The international country code. This is in fact an uint8[4].
+	    New .country files should use ISO-3166 Alpha 3 names. Old
+	    .country files did use a mixture of car license plate codes
+	    and Alpha-3 names.
+
+	uint32 loc_TelephoneCode
+	    The international telephone code for the country.
+
+	int32 loc_GMTOffset
+	    The offset in minutes of the current location from GMT.
+	    Positive indicates a Westerly direction from GMT,
+	    negative Easterly.
+
+	uint8 loc_MeasuringSystem
+	    The measuring system being used.
+
+	STRPTR loc_DateTimeFormat
+	    The date and time format string, ready to pass to FormatDate()
+
+	STRPTR loc_DateFormat
+	    The date format string.
+
+	STRPTR loc_TimeFormat
+	    The time format string.
+
+	STRPTR loc_ShortDateTimeFormat
+	    The short date and time format string, ready to pass to
+	    FormatDate()
+
+	STRPTR loc_ShortDateFormat
+	    The short date format string.
+
+	STRPTR loc_ShortTimeFormat
+	    The short time format string.
+
+	STRPTR loc_DecimalPoint
+	    The decimal point character used to format non-monetary
+	    quantities.
+
+	STRPTR loc_GroupSeparator
+	    The characters used to separate groups of digits before the
+	    decimal-point character in formatted non-monetary quantities.
+
+	STRPTR loc_FracGroupSeparator
+	    The characters used to separate groups of digits after the
+	    decimal-point character in formatted non-monetary quantities.
+
+	STRPTR loc_Grouping
+	    A string whose elements indicate the size of each group of digits
+	    before the decimal-point character in formatted non-monetary
+	    quantities.
+
+	STRPTR loc_FracGrouping
+	    A string whose elements indicate the size of each group of digits
+	    after the decimal-point character in formatted non-monetary
+	    quantities.
+
+	STRPTR loc_MonDecimalPoint
+	    The decimal-point used to format monetary quantities.
+
+	STRPTR loc_MonGroupSeparator
+	    The separator for groups of digits before the decimal-point in
+	    monetary quantities.
+
+	STRPTR loc_MonFracGroupSeparator
+	    The separator for groups of digits after the decimal-point in
+	    monetary quantities.
+
+	STRPTR loc_MonGrouping
+	    A string whose elements indicate the size of each group of digits
+	    before the decimal-point character in monetary quantities.
+
+	STRPTR loc_MonFracGrouping
+	    A string whose elements indicate the size of each group of digits
+	    after the decimal-point character in monetary quantities.
+
+	uint8 loc_MonFracDigits
+	    The number of fractional digits (those after the decimal-point)
+	    to be displayed in a formatted monetary quantity.
+
+	uint8 loc_MonIntFracDigits
+	    The number of fractional digits (those after the decimal-point)
+	    to be displayed in an internationally formatted monetary
+	    quantity.
+
+	STRPTR loc_MonCS
+	    The local currency symbol applicable to the current locale.
+
+	STRPTR loc_MonSmallCS
+	    The currency symbol for small amounts.
+
+	STRPTR loc_MonIntCS
+	    The international currency symbol applicable to the current
+	    locale. The first three characters contain the alphabetic
+	    international currency symbol in accordance with those specified
+	    in ISO 4217 Codes for the Representation of Currency and Funds.
+	    The fourth character (immediately preceding the NUL) is the
+	    character used to separate the international currency symbol from
+	    the monetary quantity.
+
+	STRPTR loc_MonPositiveSign
+	    The string used to indicate a non-negative monetary quantity.
+
+	uint8 loc_MonPositiveSpaceSep
+	    Specifies the number of spaces separating the currency symbol
+	    from the non-negative monetary quantity.
+
+	uint8 loc_MonPositiveSignPos
+	    Set to a value indicating the positioning of loc_MonPositiveSign
+	    for a non-negative monetary quantity.
+
+	uint8 loc_MonPositiveCSPos
+	    Set to 1 or 0 if loc_MonCS respectively precedes or succeeds
+	    the value for a non-negative monetary quantity.
+
+	STRPTR loc_MonNegativeSign
+	    The string used to indicate a negative monetary quantity.
+
+	uint8 loc_MonNegativeSpaceSep
+	    Specifies the number of spaces separating the currency symbol
+	    from the negative monetary quantity.
+
+	uint8 loc_MonNegativeSignPos
+	    Set to a value indicating the positioning of loc_MonNegativeSign
+	    for a negative monetary quantity.
+
+	uint8 loc_MonNegativeCSPos
+	    Set to 1 or 0 if loc_MonCS respectively precedes or succeeds
+	    the value for a negative monetary quantity.
+
+
+	The grouping tables pointed to by loc_Grouping, loc_FracGrounping,
+	loc_MonGrouping, and loc_MonFracGrouping contain a stream of bytes
+	with the following values:
+
+	    255    No further grouping is to be performed.
+
+	    0      The previous element is to be repeatedly used for the
+	           remainder of the digits.
+
+	    1..254 The integer value is the number of digits that comprise
+	           the current group. The next element is examined to
+	           determine the size of the next group of digits before
+	           the current group.
+
+	The values of loc_MonPositiveSignPos and loc_MonNegativeSignPos are
+	interpreted according to the following:
+
+	    0 - Parentheses surround the quantity and currency symbol
+
+	    1 - The sign string precedes the quantity and currency symbol
+
+	    2 - The sign string succeeds the quantity and currency symbol
+
+	    3 - The sign string immediately precedes the currency symbol
+
+	    4 - The sign string immediately succeeds the currency symbol.
+
+locale.library/CloseCatalog                       locale.library/CloseCatalog
+
+   NAME
+	CloseCatalog -- close a message catalog. (V38)
+
+   SYNOPSIS
+	CloseCatalog(catalog);
+
+	VOID CloseCatalog(struct Catalog *);
+
+   FUNCTION
+	Concludes access to a message catalog. The usage count of the
+	catalog is decremented. When this count reaches 0, the catalog
+	can be expunged from system memory whenever a memory panic occurs.
+
+   INPUTS
+	catalog - the message catalog to close. A NULL catalog is a valid
+	          parameter and is simply ignored.
+
+   SEE ALSO
+	OpenCatalog(), GetCatalogStr()
+
+locale.library/CloseLocale                         locale.library/CloseLocale
+
+   NAME
+	CloseLocale -- close a locale. (V38)
+
+   SYNOPSIS
+	CloseLocale(locale);
+
+	VOID CloseLocale(struct Locale *);
+
+   FUNCTION
+	Concludes access to a locale.
+
+   INPUTS
+	locale - an opened locale. A NULL locale is a valid
+	         parameter and is simply ignored.
+
+   SEE ALSO
+	OpenLocale(), <libraries/locale.h>
+
+locale.library/ConvToLower                         locale.library/ConvToLower
+
+   NAME
+	ConvToLower -- convert a character to lower case. (V38)
+
+   SYNOPSIS
+	lowerchar = ConvToLower(locale, character);
+
+	uint32 ConvToLower(struct Locale *, uint32);
+
+   FUNCTION
+	This function tests if the character specified is upper case.
+	If it is then the lower case version of that character is returned,
+	and if it isn't then the original character is returned.
+
+   INPUTS
+	locale - the locale to use for the conversion.
+	         Starting with V51.17, passing NULL indicates you
+	         wish to use the current system default locale.
+	character - the character to convert.
+
+   RESULT
+	lowerchar - a (possibly) converted character.
+
+   NOTE
+	This function requires a full 32-bit character be passed-in in order
+	to support multi-byte character sets.
+
+   BUGS
+	Prior to V50, the built-in default routine (it can be replaced by
+	the default language driver or, since V50, by the default charset
+	driver) did read from unallocated memory and returned random results
+	for characters > 0xFF. Since V50, it always returns the unchanged
+	character in this case.
+	Prior to V50, the built-in default routine converted the
+	multiplication sign into the division sign.
+
+locale.library/ConvToUpper                         locale.library/ConvToUpper
+
+   NAME
+	ConvToUpper -- convert a character to upper case. (V38)
+
+   SYNOPSIS
+	upperchar = ConvToUpper(locale, character);
+
+	uint32 ConvToUpper(struct Locale *, uint32);
+
+   FUNCTION
+	This function tests if the character specified is lower case.
+	If it is then the upper case version of that character is returned,
+	and if it isn't then the original character is returned.
+
+   INPUTS
+	locale - the locale to use for the conversion.
+	         Starting with V51.17, passing NULL indicates you
+	         wish to use the current system default locale.
+	character - the character to convert.
+
+   RESULT
+	upperchar - a (possibly) converted character.
+
+   NOTE
+	This function requires a full 32-bit character be passed-in in order
+	to support multi-byte character sets.
+
+   BUGS
+	Prior to V50, the built-in default routine (it can be replaced by
+	the default language driver or, since V50, by the default charset
+	driver) did read from unallocated memory and returned random results
+	for characters > 0xFF. Since V50, it always returns the unchanged
+	character in this case.
+	Prior to V50, the built-in default routine converted a divison sign
+	into a multiplication sign.
+
+locale.library/FormatDate                           locale.library/FormatDate
+
+   NAME
+	FormatDate -- generate a date string based on a date formatting
+	              template. (V38)
+
+   SYNOPSIS
+	FormatDate(locale, fmtTemplate, date, putCharFunc);
+
+	VOID FormatDate(struct Locale *, CONST_STRPTR, struct DateStamp *,
+	                struct Hook *);
+
+   FUNCTION
+	This function processes a formatting template and generates
+	a stream of bytes that's sent one character at a time to the
+	putCharFunc callback hook function.
+
+   INPUTS
+	locale      - the locale to use for the formatting.
+	              Starting with V51.17, passing NULL indicates you
+	              wish to use the current system default locale.
+	fmtTemplate - the NUL-terminated template describing the desired
+	              format for the date. This is constructed just like
+	              C-language printf() statements, except that different
+	              formatting codes are used. Just like in C, formatting
+	              codes start with a % followed by the formatting
+	              command. An optional E or O modifier between the
+	              % character and the command character is allowed
+	              since V51.11.
+	              The following commands are accepted by this function:
+
+	              %a  - abbreviated weekday name
+	              %-a - abbreviated weekday name, first letter lowercase
+	              %+a - abbreviated weekday name, first letter uppercase
+	              %^a - abbreviated weekday name, all letters uppercase
+	              %A  - weekday name
+	              %-A - weekday name, first letter lowercase
+	              %+A - weekday name, first letter uppercase
+	              %^A - weekday name, all letters uppercase
+	              %<A - alternate weekday name, first letter lowercase
+	              %>A - alternate weekday name, first letter uppercase
+	              %b  - abbreviated month name
+	              %-b - abbreviated month name, first letter lowercase
+	              %+b - abbreviated month name, first letter uppercase
+	              %^b - abbreviated month name, all letters uppercase
+	              %B  - month name
+	              %-B - month name, first letter lowercase
+	              %+B - month name, first letter uppercase
+	              %^B - month name, all letters uppercase
+	              %<B - alternate month name, first letter lowercase
+	              %>B - alternate month name, first letter uppercase
+	              %c  - same as "%a %b %d %H:%M:%S %Y"
+	              %C  - century (year / 100) with leading zeros (00-99)
+	              %-C - century (year / 100) without leading zeros (0-99)
+	              %d  - day number with leading zeros (01-31)
+	              %-d - day number without leading zeros (1-31)
+	              %D  - same as "%m/%d/%y"
+	              %e  - day number with leading spaces ( 1-31)
+	              %F  - same as "%Y-%m-%d", ISO 8601 date format
+	              %g  - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using two digits with leading zeros (00-99)
+	              %-g - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using two digits without leading zeros (0-99)
+	              %G  - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using four digits with leading zeros
+	              %-G - week based year as specified in ISO 8601,
+	                    taking Monday as first day of the week,
+	                    using four digits without leading zeros
+	              %h  - abbreviated month name
+	              %-h - abbreviated month name, first letter lowercase
+	              %+h - abbreviated month name, first letter uppercase
+	              %^h - abbreviated month name, all letters uppercase
+	              %H  - hour using 24-hour style with leading zeros
+	                    (00-23)
+	              %I  - hour using 12-hour style with leading zeros
+	                    (01-12)
+	              %j  - julian date with leading zeros (001-366)
+	              %-j - julian date without leading zeros (1-366)
+	              %J  - remaining days of the year with leading zeros
+	              %-J - remaining days of the year without leading zeros
+	              %m  - month number with leading zeros (01-12)
+	              %-m - month number without leading zeros (1-12)
+	              %M  - the number of minutes with leading zeros (00-59)
+	              %-M - the number of minutes without leading zeros
+	                    (0-59)
+	              %n  - insert a linefeed
+	              %p  - AM or PM strings
+	              %-p - AM or PM strings, first letter lowercase
+	              %+p - AM or PM strings, first letter uppercase
+	              %^p - AM or PM strings, all letters uppercase
+	              %q  - hour using 24-hour style without leading zeros
+	                    (0-23)
+	              %Q  - hour using 12-hour style without leading zeros
+	                    (1-12)
+	              %r  - same as "%I:%M:%S %p"
+	              %R  - same as "%H:%M"
+	              %S  - number of seconds with leadings zeros (00-60)
+	              %-S - number of seconds without leadings zeros (0-60)
+	              %t  - insert a tab character
+	              %T  - same as "%H:%M:%S"
+	              %u  - week day number (1-7), taking Monday as first day
+                           of the week as specified in ISO 8601
+	              %U  - week number, taking the first Sunday of the year
+	                    as first day of week 1, with leading zeros
+	                    (00-53)
+	              %-U - like %U but without leading zeros (0-53)
+	              %V  - week number (01-53), taking Monday as first day
+                           of the week as specified in ISO 8601
+	              %-V - like %V but without leading zeros (1-53)
+	              %w  - weekday number
+	              %W  - week number, taking the first Monday of the year
+	                    as first day of week 1, with leading zeros
+	                    (00-53)
+	              %-W - like %W but without leading zeros (0-53)
+	              %x  - same as "%m/%d/%y"
+	              %X  - same as "%H:%M:%S"
+	              %y  - year using two digits with leading zeros (00-99)
+	              %-y - year using two digits without leading zeros
+	                    (0-99)
+	              %Y  - year using four digits with leading zeros
+	              %-Y - year using four digits without leading zeros
+	              %z  - time zone offset to UTC as specified in
+	                    ISO 8601, using a '-' sign for time zone offsets
+	                    behind UTC (west of Greenwhich), a '+' sign
+	                    otherwise, then two digits for the hours
+	                    and two digits for the minutes
+	              %Z  - time zone name or abbreviation. "UTC" for now,
+	                    may be localized in future
+	              %%  - a single '%' character
+
+	              The variants starting with %-, %+, %^, %< and %>
+	              were added in V50.
+
+	              The %< and %> alternate weekday and month names were
+	              added in V50 for better support of languages where
+	              the name used alone differs from the name used in a
+	              date string, e.g. czech, finnish, slovak. If the
+	              language driver does not provide alternate weekday
+	              or month names for usage inside of date strings, the
+	              normal versions for standalone usage are used.
+
+	              Before V51.11 "%C" was defined to be equal to
+	              "%a %b %e %T %Z %Y" but that did never work
+	              because "%Z" was not defined. Now it's the century
+	              for compatibility to ISO C99 strftime().
+
+	              In V51.11, "%g", "%-g", "%F", "%G", "%-G", "%u",
+	              "%V", "z" and "%Z" were added, "%U" and "%W" were
+	              slightly changed for compatibility to ISO C99
+	              strftime().
+
+	              If the template parameter is NULL, a single NUL byte
+	              is sent to putCharFunc.
+	date        - the date to format into a string.
+	putCharFunc - a callback hook invoked for every character generated,
+	              including for the terminating NUL character. The hook
+	              function is called with:
+
+	              (struct Hook *, struct Locale *, TEXT)
+
+	              if it's a PPC native hook function and with
+
+	              A0 - address of Hook structure
+	              A2 - locale pointer
+	              A1 - character for hook to process (not a pointer!)
+
+	              if it's a 68K hook function.
+
+
+   SEE ALSO
+	ParseDate(), <libraries/locale.h>, <dos/dos.h>
+
+locale.library/FormatString                       locale.library/FormatString
+
+   NAME
+	FormatString   -- format data into a character stream,
+	                  assume 16bit-aligned data. (V38)
+
+	FormatString32 -- format data into a character stream,
+	                  assume 32bit-aligned data. (V51.12)
+
+   SYNOPSIS
+	next = FormatString(locale, fmtTemplate, dataStream, putCharFunc);
+
+	next = FormatString32(locale, fmtTemplate, dataStream, putCharFunc);
+
+	APTR FormatString(struct Locale *, CONST_STRPTR, APTR,
+	                  struct Hook *);
+
+	APTR FormatString32(struct Locale *, CONST_STRPTR, APTR,
+	                    struct Hook *);
+
+   FUNCTION
+	This function performs C-language-like formatting of a data stream,
+	outputting the result a character at a time. Where % formatting
+	commands are found in the formatting template, they are replaced with
+	the corresponding elements in 'dataStream'. %% must be used in the
+	string if a % is desired in the output.
+
+	An extension to the standard C-language printf() conventions used
+	by FormatString() is argument position specification. Specifying the
+	argument position lets the order of the % commands change while the
+	arguments provided remain the same. Using the C printf() call as an
+	example:
+	    printf("%d eyes, %d feet and %d ears",eyes,feet,ears);
+	    printf("%3$d ears, %1$d eyes and %2$d feet",eyes,feet,ears);
+	These two statements would produce the following output:
+	    "2 eyes, 3 feet and 4 ears" for the first
+	    "4 ears, 2 eyes and 3 feet" for the second
+
+	The argument positioning feature lets you change the format string
+	being processed while keeping the data stream the same. This is
+	an invaluable tool when translating strings to different languages.
+
+	In V50 an extension to the argument position specification was
+	introduced: If the position specifier is terminated with "U$"
+	instead of "$", the first character is forced to uppercase,
+	"L$" forces the first character to lowercase. This is necessary
+	for some languages where e.g. a month name is written with first
+	uppercase letter at the beginning of a sentence but with first
+	lowercase letter in the middle of a sentence.
+
+   INPUTS
+	locale - the locale to use for the formatting.
+	         Starting with V51.17, passing NULL indicates you
+	         wish to use the current system default locale.
+	fmtTemplate - a C-language-like NUL-terminated format string,
+	              with the following supported % options:
+
+	  %[arg_pos[case]$][flags][width][.limit][length]type
+
+	  arg_pos - ordinal position of the argument for this command within
+	            the array of arguments pointed to by 'dataStream'.
+	  case    - U forces an uppercase first character, L a lowercase
+	            first character. Introduced in V50.
+	    $     - must follow the arg_pos value, if specified.
+	  flags   - only one allowed. '-' specifies left justification.
+	  width   - field width. If the first character is a '0', the
+	            field is padded with leading 0s.
+	    .     - must precede the field limit value, if specified.
+	  limit   - maximum number of characters to output from a string
+	            (only valid for %s or %b).
+	  length  - size of input data. FormatString() defaults to word
+	            (16-bit) for types c, d, D, u, U, x and X.
+	            FormatString32() defaults to longs (32-bit) for
+	            types c, d, D, u, U, x and X.
+	            'h' (added in V50) means short (16-bit) (the default,
+	            included for compatibility).
+	            'l' changes this to long (32-bit).
+	            'll' (added in V51.10) changes this to long long
+	            (64-bit).
+	  type    - supported types are:
+	            b - BSTR, data is 32-bit BPTR to byte count followed
+	                by a byte string. A ZERO BPTR is treated as an
+	                empty string.
+	            c - character
+	            d - signed decimal
+	            D - signed decimal using the locale's formatting
+	                conventions
+	            p - 32-bit pointer (only available in V50+).
+	            s - string, a 32-bit pointer to a NUL-terminated
+	                byte string. A NULL pointer is treated
+	                as an empty string.
+	            u - unsigned decimal
+	            U - unsigned decimal using the locale's formatting
+	                conventions
+	            x - hexadecimal with hex digits in uppercase
+	            X - hexadecimal with hex digits in lowercase
+
+	              If the formatting template parameter is NULL, the
+	              function returns without outputting anything. Note the
+	              meaning of %x and %X are swapped with respect to
+	              standard C conventions. This is for compatibility with
+	              exec.library/RawDoFmt().
+
+	dataStream  - a stream of data that is interpreted according to
+	              the format string. Often this is a pointer into
+	              the task's stack when the calling function has
+	              a variable argument list, is declared with the
+	              VARARGS68K attribute and the dataStream pointer
+	              results from a call of va_start() (68k) or
+	              va_getlinearva() (PPC), see also the OS4 migration
+	              guide in the OS4 SDK.
+	putCharFunc - a callback hook invoked for every character generated,
+	              including for the terminating NUL character. The hook
+	              function is called with:
+
+	              (struct Hook *, struct Locale *, TEXT)
+
+	              if it's a PPC native hook function and with
+
+	              A0 - address of Hook structure
+	              A2 - locale pointer
+	              A1 - character for hook to process (not a pointer!)
+
+	              if it's a 68K hook function.
+
+   RESULT
+	next - A pointer to beyond the last data element used in 'dataStream'
+	       (the next argument that would have been processed).
+	       This allows multiple formatting passes to be made using the
+	       same data.
+
+   WARNING
+	FormatString() formats word (16bit) values in the data stream.
+	If your compiler defaults to longs (32bit), you must add an "l"
+	to your specifications which can get strange for characters,
+	which might look like "%lc", or use FormatString32() instead.
+	Pointers ("%b", "%s", "%p") are always assumed to be 32bit values.
+
+   BUGS
+	Prior to V51.3 this function (and exec.library/RawDoFmt()) could
+	return wrong results when fmtTemplate did contain 'D' or 'U' type
+	specifiers.
+
+   SEE ALSO
+	exec.library/RawDoFmt()
+
+locale.library/GetCatalogStr                     locale.library/GetCatalogStr
+
+   NAME
+	GetCatalogStr -- get a string from a message catalog. (V38)
+
+   SYNOPSIS
+	string = GetCatalogStr(catalog, stringNum, defaultString);
+
+	CONST_STRPTR GetCatalogStr(struct Catalog *, int32, CONST_STRPTR);
+
+   FUNCTION
+	This function returns a specific string within a message catalog.
+	If the catalog parameter is NULL, or the requested message does not
+	exist, then defaultString is returned.
+
+   INPUTS
+	catalog - a message catalog as obtained from OpenCatalog(), or NULL.
+	stringNum - a message number within the catalog.
+	defaultString - string to return in case "catalog" is NULL or
+	                "stringNum" can't be found. Starting with V52.2,
+	                the default string should be non-NULL and
+	                NUL-terminated to allow locale.library to do
+	                charset conversion of built-in strings.
+
+   RESULT
+	string - a pointer to a NUL-terminated string. The returned string
+	         is READ-ONLY, do NOT modify! This string pointer is valid
+	         only as long as the catalog remains open. Starting with
+	         V52.2, the returned string may be a modified copy of the
+	         passed in defaultString.
+
+   SEE ALSO
+	OpenCatalog(), CloseCatalog()
+
+locale.library/GetLocaleStr                       locale.library/GetLocaleStr
+
+   NAME
+	GetLocaleStr -- get a standard string from a locale. (V38)
+
+   SYNOPSIS
+	string = GetLocaleStr(locale, stringNum);
+
+	CONST_STRPTR GetLocaleStr(struct Locale *, uint32);
+
+   FUNCTION
+	This function returns a specific string associated with the given
+	locale.
+
+   INPUTS
+	locale    - a valid locale.
+	stringNum - the number of the string to get a pointer to. See the
+	            constants defined in <libraries/locale.h> for the
+	            possible values.
+
+   RESULT
+	string - a pointer to a NUL-terminated string, or NULL if the
+	         requested string number was out of bounds. The returned
+	         string is READ-ONLY, do NOT modify! This string pointer
+	         is valid only as long as the locale remains open.
+
+	         The ALTDAY_# and ALTMON_# strings added in V50 do
+	         automatically fall back to DAY_# and MON_# strings
+	         if not available.
+
+   SEE ALSO
+	OpenLocale(), CloseLocale(), <libraries/locale.h>
+
+locale.library/IsXXXX                                   locale.library/IsXXXX
+
+   NAME
+	IsXXXX -- determine whether a character is of a certain type. (V38)
+
+   SYNOPSIS
+	state = IsXXXX(locale, character);
+
+	int32 IsXXXX(struct Locale *, uint32);
+
+   FUNCTION
+	These functions determine whether the character specified is of a
+	certain type, according to the supplied locale.
+
+	IsAlNum() - test if alphanumeric character
+	IsAlpha() - test if alphabetical character
+	IsBlank() - test if word separating white space character (V51.12)
+	IsCntrl() - test if control character
+	IsDigit() - test if decimal digit character
+	IsGraph() - test if visible character
+	IsLower() - test if lower case character
+	IsPrint() - test if printable character or space
+	IsPunct() - test if punctuation character
+	IsSpace() - test if white space character
+	IsUpper() - test if upper case character
+	IsXDigit() - test if hexadecimal digit
+
+   INPUTS
+	locale    - the locale to use for the test.
+	            Starting with V51.17, passing NULL indicates you
+	            wish to use the current system default locale.
+	character - the character to test.
+
+   RESULT
+	state - TRUE if the character is of the required type,
+	        FALSE otherwise
+
+   NOTES
+	These functions require full 32-bit characters be passed-in in order
+	to support multi-byte character sets.
+
+	In V50 the returned type was changed from BOOL (16bit) to
+	int32 (32bit) for safety.
+
+	The IsXDigit() function is in fact a IsASCIIXDigit() function
+	(which will e.g. not return TRUE for Unicode fullwidth forms).
+
+	Most existing IsSpace() functions return FALSE for 0x85 NEXT LINE
+	(NEL) but the Unicode character database declares this control
+	character has the White_Space attribute.
+
+	Older versions of the autodoc described "IsPrint() - test if blank"
+	which was misleading.
+
+   BUGS
+	Prior to V50, the built-in default routines (they can be replaced by
+	the default language driver or, since V50, by the default charset
+	driver) did read from unallocated memory and returned random results
+	for characters > 0xFF. Since V50, they always return FALSE in this
+	case.
+
+	Prior to V50, the built-in default IsUpper() routine did return TRUE
+	for the latin small letter sharp s. Fixed in V50.
+
+	Prior to V50, the built-in default IsUpper() routine did return TRUE
+	for the multiplication sign, IsPunct() did return FALSE.
+
+	Prior to V51.12, the built-in default IsPrint() routine did not
+	return FALSE for the control characters 0x09 to 0x0D (TAB, LF, VT,
+	FF and CR).
+
+	Prior to V51.12, the built-in default IsSpace(), IsGraph() and
+	IsPunct() routines handled 0xA0 NON-BREAKING SPACE as a space
+	character. Now it's handled as punctuation.
+
+	Prior to V51.12, the built-in default IsAlpha(), IsAlNum() and
+	IsPunct() routines handled 0xAA FEMININE ORDINAL INDICATOR and
+	0xBA MASCULINE ORDINAL INDICATOR as punctuation. Now they are
+	handled as letters like superscript a and superscript o.
+
+	Prior to V51.12, the built-in default IsAlpha(), IsAlNum(), IsLower()
+	and IsPunct() routines handled 0xB5 MICRO SIGN as punctuation.
+	Now it's handled as a lowercase letter like the greek small letter mu.
+
+locale.library/OpenCatalog                         locale.library/OpenCatalog
+
+   NAME
+	OpenCatalogA -- open a message catalog. (V38)
+	OpenCatalog -- varargs stub for OpenCatalogA(). (V38)
+
+   SYNOPSIS
+	catalog = OpenCatalogA(locale, name, tagList);
+
+	struct Catalog *OpenCatalogA(struct Locale *,
+	                             CONST_STRPTR, struct TagItem *);
+
+	catalog = OpenCatalog(locale, name, firstTag, ...);
+
+	struct Catalog *OpenCatalog(struct Locale *, CONST_STRPTR, Tag, ...);
+
+   FUNCTION
+	This function opens a message catalog. Catalogs contain all the
+	text strings that an application uses. These strings can easily
+	be replaced by strings in a different language, which causes the
+	application to magically start operating in that new language.
+
+	Catalogs originally come from disk files. This function searches for
+	them in the following places:
+
+	    PROGDIR:Catalogs/languageName/name
+	    LOCALE:Catalogs/languageName/name
+
+	where languageName is the name of the language associated with the
+	locale parameter. So assuming an application called WizPaint:
+
+	    catalog = ILocale->OpenCatalog(NULL,
+	                                   "WizPaint.catalog",
+	                                   OC_BuiltInLanguage, "english",
+	                                   TAG_END);
+
+	Passing NULL as first parameter to OpenCatalog() indicates you
+	wish to use the system's default locale. Assuming the default locale
+	specifies "deutsch" as language, OpenCatalog() tries to open the
+	catalog as:
+
+	    PROGDIR:Catalogs/deutsch/WizPaint.catalog
+
+	and if that file is not found, then OpenCatalog() tries to open it
+	as:
+
+	    LOCALE:Catalogs/deutsch/WizPaint.catalog
+
+	PROGDIR: is not always checked before LOCALE: is. If the volume which
+	PROGDIR: is assigned to is NOT currently mounted, and if the one
+	which LOCALE: is assigned to IS mounted, then LOCALE: is checked
+	first, followed by PROGDIR: if needed. This is done in order to
+	minimize the number of disk swaps on floppy systems.
+
+	Since V50, the function searches for catalogs in this directories:
+
+	    PROGDIR:Catalogs/languageName/name
+	    LOCALE:Catalogs/languageName/name
+	    PROGDIR:Catalogs/languageName_UTF-8/name
+	    LOCALE:Catalogs/languageName_UTF-8/name
+	    PROGDIR:Catalogs/languageName_US-ASCII/name
+	    LOCALE:Catalogs/languageName_US-ASCII/name
+
+	Since V50, if the old language name and the new english language
+	name differ, the new name is used for catalog searching and
+	additional attempts are made to read from
+
+	    PROGDIR:Catalogs/oldLanguageName/name
+	    LOCALE:Catalogs/oldLanguageName/name
+
+	The OC_BuiltInLanguage tag specifies the language of the strings
+	that are built into the application. If the language of the
+	built-in strings matches that of the locale, then no catalog
+	need be loaded from disk and the built-in strings can be used
+	directly.
+
+	The OC_BuiltInCodeSet tag specifies the charset of the strings
+	that are built into the application. If the charset of the
+	built-in strings matches the current system default charset
+	and the languages (see OC_BuiltinLanguage) do also match,
+	then no catalog need be loaded from disk and the built-in strings
+	can be used directly.
+
+	locale.library caches text catalogs in order to minimize disk
+	access. As such, OpenCatalog() may or may not cause disk access.
+	This fact should be taken into consideration. Unused catalogs are
+	automatically flushed from the system when there is not enough
+	memory. When there is disk access, it is possible a DOS requester
+	may be opened asking for a volume to be inserted. You can avoid this
+	requester opening by calling IDOS->SetProcWindow((APTR)-1).
+
+   INPUTS
+	locale  - the locale for which the catalog should be opened, or NULL.
+	          When NULL, then the system's default locale is used. This
+	          should generally be NULL.
+	name    - the NUL-terminated name of the catalog to open, typically
+	          the application name with a ".catalog" extension.
+	tagList - pointer to an array of tags providing optional extra
+	          parameters, or NULL.
+
+   TAGS
+	OC_BuiltInLanguage (STRPTR) - language of built-in strings of the
+	                              application. That is, this tag
+	                              identifies the language used for the
+	                              "defaultString" parameter used in the
+	                              GetCatalogStr() function. Default is
+	                              "english". Providing this tag and
+	                              setting its value to NULL indicates
+	                              that there are no built-in strings.
+
+	OC_BuiltInCodeSet (uint32) - code set of built-in strings. Default is
+	                             0. Starting with V50, this tag specifies
+	                             the IANA charset number of the built-in
+	                             strings of the application.
+
+	                             Applications that are unable to control
+	                             the charset of the font used to display
+	                             the built-in or catalog strings should
+	                             not specify the tag at all, or specify
+	                             a value of 0 (default) or 3 (US-ASCII).
+	                             In these cases only catalogs with the
+	                             wanted charset or with US-ASCII charset
+	                             (which is part of all supported
+	                             charsets) are returned.
+
+	                             Applications that will use the
+	                             cat_CodeSet value of the returned catalog
+	                             (or the charset of the built-in strings
+	                             if no catalog is returned) to specify the
+	                             TA_CharSet tag used for opening the font
+	                             to display the built-in or catalog
+	                             strings should specify this tag with a
+	                             value different from 0 and 3 (even if the
+	                             built-in strings are really US-ASCII;
+	                             specify e.g. 4 (ISO-8859-1) in this case).
+
+	OC_PreferExternal (BOOL) - if TRUE, tell locale.library to try loading
+	                           a catalog from disk even if the built-in
+	                           language and charset already match the
+	                           wanted language and charset. This is useful
+	                           if you want to allow users to correct typos
+	                           in your built-in strings, or to add special
+	                           characters to them which lie outside of the
+	                           7-bit US-ASCII range, such as the copyright
+	                           sign.
+	                           If you don't pass this tag, or set it to
+	                           FALSE, no disk access will happen in case
+	                           the built-in strings are exactly in the
+	                           wanted language and charset.
+	                           This tag is ignored if OC_BuiltInCodeSet
+	                           isn't also specified with a value different
+	                           from 0 and 3, i.e. if your application does
+	                           not declare itself charset-aware (V53.4).
+
+	OC_BuiltInVersion (uint32) - catalog version of the built-in strings.
+	                             Default is the value which was specified
+	                             with OC_Version; when this was not
+	                             specified, the default is 1 when
+	                             locale.library thinks it's necessary
+	                             to remap the charset of your built-in
+	                             strings and 0 otherwise (V52.2).
+
+	OC_WantedCodeSet (uint32) - wanted charset. Default is system default
+	                            charset (loc_CodeSet of the provided
+	                            locale is ignored). Applications that are
+	                            unable to control the charset of the font
+	                            used to display the built-in or catalog
+	                            strings, but that are able to find out
+	                            the charset of the already opened font,
+	                            can specify the font charset with this
+	                            tag, especially when it differs from the
+	                            system default. All other applications
+	                            do not need to specify this tag
+	                            (introduced in V50).
+
+	OC_Language (STRPTR) - language explicitly requested for the catalog.
+	                       A catalog of this language will be returned if
+	                       possible, otherwise a catalog in one of the
+	                       user's preferred languages. This tag should
+	                       normally not be provided as it overrides the
+	                       user's preferences.
+
+	OC_Version (uint16) - catalog version number required. Default is 0
+	                      which means to accept any version of the
+	                      catalog that is found. Note that if a version
+	                      is specified, the catalog's version must match
+	                      it exactly. This is different from version
+	                      numbers used by OpenLibrary().
+	                      Note: Do not call OpenCatalog() without
+	                      specifying OC_Version when you prefer
+	                      (but not require) a specific version.
+	                      In such cases call it with OC_Version and
+	                      fall back to a second call without OC_Version
+	                      when the first call returned NULL.
+
+   RESULT
+	catalog - a message catalog to use with GetCatalogStr() or NULL.
+	          A NULL result does not necessarily indicate an error.
+	          If OpenCatalog() determines that the built-in strings of
+	          the application can be used instead of an external catalog
+	          from disk, then NULL is returned. To determine whether
+	          a NULL result actually indicates an error, look at the
+	          return value of dos.library/IoErr(). 0 means no error.
+
+	          GetCatalogStr() interprets a NULL catalog as meaning to use
+	          the built-in strings.
+
+	          Starting with V52.2, OpenCatalog() may return a non-NULL
+	          message catalog even when it wants to use your built-in
+	          strings, it will do that when it e.g. wants to do charset
+	          conversion of your built-in strings. Starting with V52.3
+	          the version number of such catalogs can be specified
+	          with the OC_BuiltInVersion tag.
+
+   NOTES
+	In most cases, failing to open a catalog should not be considered a
+	fatal error, and the application should continue operating and
+	simply use the built-in set of strings instead of the disk-based
+	catalog. Note that GetCatalogStr() accepts a NULL catalog pointer for
+	this very reason.
+
+	Also note that displaying an error message when a catalog fails to
+	open can be a meaningless endeavor as the message is likely in a
+	language the user does not understand.
+
+	Starting with V50, OpenCatalog() converts 8-bit charsets during load
+	for applications that did not specify an OC_BuiltInCodeSet
+	value different from 0 or 3. Non-matching character codes are
+	converted to '?'. Please note that there exist charsets without
+	often used non-ASCII chars like copyright sign, registered
+	sign and double angle quotation marks, if possible and the used
+	language does not need many non-ASCII chars (like english), using
+	replacements like "(c)", "(TM)", ">>" and "<<" ensures it's readable
+	in all charsets.
+
+	Starting with V50, OpenCatalog() converts catalogs in UTF-8 charset
+	to an 8-bit charset during load. For applications that did specify
+	an OC_BuiltInCodeSet value different from 0 or 3, the charset in
+	which most of the character codes of the catalog are contained
+	is used (wanted charset tried first), for other applications the
+	wanted charset. Exception: if wanted charset is also UTF-8, no
+	conversion is done.
+
+	Starting with V52.2, OpenCatalog() supports conversion of catalogs
+	and built-in strings to UTF-8.
+
+   SEE ALSO
+	CloseCatalog(), GetCatalogStr()
+
+locale.library/OpenLocale                           locale.library/OpenLocale
+
+   NAME
+	OpenLocale -- open a locale. (V38)
+
+   SYNOPSIS
+	locale = OpenLocale(name);
+
+	struct Locale *OpenLocale(CONST_STRPTR);
+
+   FUNCTION
+	This function opens a named locale. Locales contain many parameters
+	that an application needs to consider when being integrated into
+	different languages, territories and customs. Using the information
+	stored in a locale instead of hard-coding it into an application,
+	lets the application dynamically adapt to the user's environment.
+
+	Locales originally come from disk files which are created by the
+	user using the Locale preferences editor. Passing a NULL instead of
+	a name causes this function to return the current default locale.
+	This is what most applications will do.
+
+	Every locale specifies a language, and special language drivers
+	must be loaded from disk depending on which language is being used.
+	These files include for example:
+
+	    LOCALE:Languages/french.language
+	    LOCALE:Languages/danish.language
+	    LOCALE:Languages/italian.language
+
+   INPUTS
+	name - the NUL-terminated name of the locale to open,
+	       or NULL to open the current default locale.
+	       This should generally be NULL. The name you supply must be a
+	       pathname leading to a locale preferences file. This is an IFF
+	       PREF file as saved by Locale prefs, that can contain both
+	       LCLE and CTRY chunks.
+	       See <prefs/locale.h> for definitions.
+
+   RESULT
+	locale - a pointer to an initialized Locale structure, or NULL if the
+	         locale could not be loaded. In the case of a NULL return,
+	         the DOS IoErr() function can be called to obtain more
+	         information on the failure.
+
+	         When passing a NULL name parameter to this function, you are
+	         guaranteed a valid return.
+
+   NOTE
+	Since V50 this function strips all extensions that begin with
+	an underscore from the list of preferred languages and replaces
+	double entries with NULL pointers after loading the locale.
+	This is done to allow multiple .language files with e.g. different
+	charset specification but the same language name where the user
+	can choose from. For example, a list like
+
+	    "german_ISO-8859-15"
+	    "german"
+	    "slovenian_ISO-8859-2"
+	    "slovenian_ISO-8859-16"
+
+	will result in loading the "german_ISO-8859-15.language" driver
+	(if not found the next and so on) and a list of preferred languages
+	that looks like this:
+
+	    "german"
+	    NULL
+	    "slovenian"
+
+	(OpenCatalog() skips NULL entries).
+
+   SEE ALSO
+	CloseLocale(), <libraries/locale.h>, <prefs/locale.h>
+
+locale.library/ParseDate                             locale.library/ParseDate
+
+   NAME
+	ParseDate -- interpret a string according to the date formatting
+	             template and convert it into a DateStamp. (V38)
+
+   SYNOPSIS
+	state = ParseDate(locale, date, fmtTemplate, getCharFunc);
+
+	int32 ParseDate(struct Locale *, struct DateStamp *, CONST_STRPTR,
+	               struct Hook *);
+
+   FUNCTION
+	This function converts a stream of characters into an AmigaDOS
+	DateStamp structure. The characters are obtained from the
+	getCharFunc callback hook function and the formatting template is
+	used to direct the parse.
+
+   INPUTS
+	locale      - the locale to use for the formatting.
+	              Starting with V51.17, passing NULL indicates you
+	              wish to use the current system default locale.
+	date        - place to put the converted date, this may be NULL
+	              in which case this routine can be used to simply
+	              validate a date.
+	fmtTemplate - the date template describing the expected format of the
+	              data. See FormatDate() documentation for a description
+	              of date templates. The following formatting controls
+	              from FormatDate() can be used in ParseDate():
+	                %a %A %b %B %d %e %h %H %I %m %M %p %S %y %Y
+	getCharFunc - a callback hook invoked whenever a character is
+	              required. The hook function should return the next
+	              character to process, with a NUL character to indicate
+	              the end of the string. The hook function is called
+	              with:
+
+	                (struct Hook *, struct Locale *, NULL)
+
+	              when it's a PPC native hook function and with
+
+	                A0 - address of Hook structure
+	                A2 - locale pointer
+	                A1 - NULL
+
+	              when it's a 68K hook function.
+
+	              The hook function returns the character to process.
+	              Note that a complete 32-bit result is expected, not
+	              just 8 bits.
+
+   NOTES
+	In V50 the returned type was changed from BOOL (16bit) to
+	int32 (32bit) for safety.
+
+	Prior to V50 the autodoc stated the callback hook function would be
+	called with the locale pointer in 68k register A1 and NULL in 68k
+	register A2 which was wrong.
+
+   RESULT
+	state - TRUE if the parsing went OK, or FALSE if the input did not
+	        match the template
+
+   SEE ALSO
+	FormatDate(), <dos/dos.h>
+
+locale.library/StrConvert                           locale.library/StrConvert
+
+   NAME
+	StrConvert -- transform a string according to collation information.
+	              (V38)
+
+   SYNOPSIS
+	length = StrConvert(locale, string, buffer, bufferSize, type);
+
+	uint32 StrConvert(struct Locale *, CONST_STRPTR, APTR,
+	                  uint32, uint32);
+
+   FUNCTION
+	This function transforms the passed string and places the resulting
+	into the supplied buffer. No more than bufferSize bytes are copied
+	into the buffer.
+
+	The transformation is such that if the C strcmp() function is applied
+	to two transformed strings, it returns a value corresponding to
+	the result returned by the StrnCmp() function applied to the two
+	original strings.
+
+	Please note that with the new sorting behaviour of V50 StrnCmp() it
+	can no longer be guaranteed that the StrnCmp() result of comparing
+	the original strings is really the same than the strcmp() result
+	of comparing the transformed strings.
+
+   INPUTS
+	locale     - the locale to use for the transformation.
+	             Starting with V51.17, passing NULL indicates you
+	             wish to use the current system default locale.
+
+	string     - NUL-terminated string to transform.
+
+	buffer     - buffer where to put the transformed string.
+
+	bufferSize - maximum number of bytes to deposit in the buffer
+	             StrConvert() may require more storage than
+	             the unconverted string does.
+
+	type       - describes how the transformation is to be performed.
+	             See the documentation on StrnCmp() for more information
+	             on the comparison types available.
+
+	             SC_ASCII converts the string to uppercase. It may
+	             or may not replace special characters, e.g. german
+	             small sharp s -> SS, decompose ligatures etc.
+
+	             SC_COLLATE1 converts the string to uppercase without
+	             accents if possible (In some languages the alphabet
+	             contains accented characters that are NOT considered
+	             equal to the unaccented base character).
+
+	             SC_COLLATE2 does append all characters from the
+	             original string which differ from the transformed
+	             character to the transformed string, e.g.
+	             teSt -> TESTtet which is probably not what you want.
+
+   RESULT
+	length - length of the transformed string which is the number of
+	         bytes deposited in the buffer minus 1 (since strings are
+	         NUL-terminated)
+
+   BUGS
+	Prior to V50, the built-in default routine (it can be replaced by
+	the default language driver or, since V50, by the default charset
+	driver) had bugs in the Collate table used for SC_COLLATE1 and
+	SC_COLLATE2 transformations (See the StrnCmp description for
+	details). And it did not restore the stack pointer if an unknown type
+	was specified. Fixed in V50.
+
+   SEE ALSO
+	StrnCmp(), <libraries/locale.h>
+
+locale.library/StrnCmp                                 locale.library/StrnCmp
+
+   NAME
+	StrnCmp -- localized string comparison. (V38)
+
+   SYNOPSIS
+	result = StrnCmp(locale, string1, string2, length, type);
+
+	int32 StrnCmp(struct Locale *, CONST_STRPTR, CONST_STRPTR,
+	             int32, uint32);
+
+   FUNCTION
+	Compares string1 to string2 according to the collation information
+	provided by the locale and returns an integer greater than,
+	equal to, or less than zero, accordingly as the string pointed to
+	by string1 is greater than, equal to, or less than the string
+	pointed to by string2.
+
+	The length parameter specifies how many characters to compare, or if
+	the length is specified as -1 then the strings are compared until
+	a NUL is encountered.
+
+	The type parameter dictates how the comparison is to be performed.
+
+   INPUTS
+	locale  - the locale to use for this comparison.
+	          Starting with V51.17, passing NULL indicates you
+	          wish to use the current system default locale.
+	string1 - NUL-terminated string.
+	string2 - NUL-terminated string.
+	length  - the maximum number of characters to be compared, or -1 to
+	          compare all characters until a NUL is encountered.
+	type    - describes how the comparison is to be performed. The
+	          following values can be passed:
+	          SC_ASCII causes an ASCII-based case-insensitive comparison
+	          to be performed. SC_ASCII is the fastest of the comparison
+	          types, but it uses ASCII ordering and considers accented
+	          characters different than their non-accented counterparts.
+
+	          SC_COLLATE1 causes the characters to be compared using
+	          their primary sorting order. This effectively produces a
+	          comparison that ignores letter case and diacritical marks.
+	          That is, letters such as 'e' and 'e with acute accent' are
+	          treated as if they were both "e".
+
+	          SC_COLLATE2 causes the characters to be compared using both
+	          their primary and secondary sorting order. SC_COLLATE2 is
+	          slower than SC_COLLATE1. This is the type of comparison to
+	          use when sorting data to be presented to the user. It
+	          operates in two passes. First it performs a comparison
+	          equivalent to SC_COLLATE1. If both strings compare the
+	          same, then a second pass is made using the secondary
+	          sorting order, which gives finer resolution to the
+	          comparison. For example, SC_COLLATE1  would return the
+	          following strings as identical:
+	              "père" and "pere" (the second character of the
+	                                 first string is an e with grave).
+	          since SC_COLLATE1 ignores diacritical marks. SC_COLLATE2
+	          would make a second pass over the string comparing
+	          diacritical marks instead of actual characters.
+	          Since V50, a third pass that compares character case
+	          exists.
+
+   RESULT
+	result - relationship between string1 and string2
+	         <0 means string1 < string2
+	         =0 means string1 = string2
+	         >0 means string1 > string2
+
+   NOTES
+	For compatibility reasons, SC_ASCII which is used by
+	utility.library/Str(n)icmp() sorts ASCII chars in ASCII order
+	(e.g. '_' after letters). SC_COLLATEx sorts ASCII chars different,
+	digits and letters are sorted last since V50.
+
+   BUGS
+	Prior to V50, the built-in default routine (it can be replaced by
+	the default language driver or, since V50, by the default charset
+	driver) had the following bugs in the Collate table used for
+	SC_COLLATE1 and SC_COLLATE2 comparisons:
+	'{'                            -> 'a'
+	'|'                            -> 'b'
+	'}'                            -> 'c'
+	'~'                            -> 'd'
+	DEL                            -> 'e'
+	0x80-0x9F                      -> 0xE0-0xFF
+	currency sign                  -> 'g'
+	yen sign                       -> 'h'
+	broken bar                     -> 'i'
+	section sign                   -> 'S'
+	diaeresis                      -> 'j'
+	copyright sign                 -> 'k'
+	feminine ordinal indicator     -> 'l'
+	not sign                       -> 'm'
+	soft hyphen                    -> 'n'
+	registered sign                -> 'o'
+	macron                         -> 'p'
+	degree sign                    -> 'q'
+	plus-minus sign                -> 'r'
+	superscript two                -> 's'
+	superscript three              -> 't'
+	acute accent                   -> 'u'
+	micro sign                     -> 'v'
+	pilcrow sign                   -> 'w'
+	middle dot                     -> 'x'
+	cedilla                        -> 'y'
+	superscript one                -> 'z'
+	masculine ordinal indicator    -> '{'
+	vulgar fraction one quarter    -> '|'
+	vulgar fraction one half       -> '}'
+	vulgar fraction three quarters -> '~'
+	capital icelandic thorn        -> 'P'
+	small german sharp s           -> 'Y'
+	small icelandic thorn          -> 'P'
+
+	Fixed in V50, now these characters are not transformed except:
+	0xA4 -> '$'   currency/Euro -> dollar
+	0xA5 -> '$'   yen           -> dollar
+	0xA6 -> '|'   broken bar    -> vertical bar
+	0xAD -> '-'   soft hyphen   -> hyphen-minus
+	0xB2 -> '2'   superscript 2 -> 2
+	0xB3 -> '3'   superscript 3 -> 3
+	0xB4 -> '\''  acute accent  -> apostrophe
+	0xB9 -> '1'   superscript 1 -> 1
+	0xFE -> 0xDE  small thorn   -> capital thorn
+
+	Prior to V50, the second pass of SC_COLLATE2 did not only compare
+	diacritical marks as documented but also character case. Since V50
+	the character case is compared in a third pass.
+
+   SEE ALSO
+	OpenLocale(), CloseLocale(), StrConvert()
+
+

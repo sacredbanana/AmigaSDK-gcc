@@ -1,0 +1,509 @@
+TABLE OF CONTENTS
+
+amigainput.library/AIN_CreateContext
+amigainput.library/AIN_DeleteContext
+amigainput.library/AIN_EnumDevices
+amigainput.library/AIN_FreeEvent
+amigainput.library/AIN_GetError
+amigainput.library/AIN_GetErrorString
+amigainput.library/AIN_GetEvent
+amigainput.library/AIN_ObtainDevice
+amigainput.library/AIN_Query
+amigainput.library/AIN_ReadDevice
+amigainput.library/AIN_ReleaseDevice
+amigainput.library/AIN_Set
+amigainput.library/AIN_SetDeviceParameter
+amigainput.library/AIN_CreateContext     amigainput.library/AIN_CreateContext
+
+   NAME
+	AIN_CreateContext -- Create an AmigaInput Context
+	AIN_CreateContextTags -- varargs stub for AIN_CreateContext
+
+   SYNOPSIS
+	CTX = AIN_CreateContext(api_version,tags);
+
+	VOID *AIN_CreateContext(ULONG,struct TagItem *);
+
+	CTX = AIN_CreateContextTags(api_version,firstTag, ...);
+
+	VOID *AIN_CreateContextTags(ULONG,Tag,...);
+
+   FUNCTION
+	Before you use any AmigaInput functions you have to create
+	an AmigaInput Context, which will be given to other AmigaInput
+	functions, usually as first parameter. This function initializes
+	AmigaInput in a certain context, and can be used to access the
+	devices attached to this context then. The Tags provided to
+	AIN_CreateContext as parameter specify the details about the 
+	Context you seek to acquire.
+
+	There can be several AmigaInput Contexts active at the same time,
+	assuming they use different Devices or at least different units
+	of said devices.
+
+   INPUTS
+	api_version 	- Version of the AmigaInput API to be used for this context
+	tags		- tags to configure the Context for AmigaInput
+
+   TAGS
+	Tags which could used with the AmigaInput Context Creation Function:
+
+	AINCC_Port   (struct MsgPort *)	- Port needed for eventmode    
+	AINCC_Window (struct Window *)	- Window to use to activate the Context
+					  If this Window is deactivated, the
+					  Context is deactivated as well
+   RESULT
+	CTX				- An initialized AmigaInput Context or
+					  NULL if the operation failed
+
+   SEE ALSO
+	AIN_DeleteContext,AIN_Set
+
+amigainput.library/AIN_DeleteContext     amigainput.library/AIN_DeleteContext
+
+   NAME
+	AIN_DeleteContext -- Delete an AmigaInput Context again
+
+   SYNOPSIS
+	AIN_DeleteContext(CTX);
+
+	VOID AIN_DeleteContext(void *CTX);
+
+   FUNCTION
+	Before the application ends you should delete your context again.
+	You can achieve this using AIN_DeleteContext, giving the Context
+	created with AIN_CreateContext as a parameter.
+
+   INPUTS
+	CTX 	- The AmigaInput Context to be deleted
+
+   SEE ALSO
+	AIN_CreateContext
+
+amigainput.library/AIN_EnumDevices         amigainput.library/AIN_EnumDevices
+
+   NAME
+	AIN_EnumDevices -- Enumerate the Devices for a certain AmigaInput
+			   Context, using a specific Enumeration Function
+
+   SYNOPSIS
+	result = AIN_EnumDevices(CTX,enumfunc,UserData);
+
+	BOOL AIN_EnumDevices(void *CTX,void *enumfunc,void *UserData);
+
+   FUNCTION
+
+	After you created a context you can use AIN_EnumDevices to list
+	all devices available under this context. This function calls the
+	Enumeration Function enumfunc for all these devices, and enumfunc
+	gets UserData as parameter everytime it is called. Inside enumfunc
+	the program will decide which device is best suited for the
+	application and should actually be opened. One possibility is for
+	example to provide a structure like this to UserData:
+
+	struct udata
+	{
+		ULONG count;
+		AIN_DeviceID ids[20];
+	};
+
+	After AIN_EnumDevices() returns you could then examine the array and
+	obtain one of those devices. If no fitting device was found at all
+	AIN_EnumDevices() will return FALSE.
+
+	These Enumeration functions look like this:
+
+	BOOL enumfunc(AIN_Device *device, void *UserData);
+
+	If a device was selected, you should return TRUE, else you should
+	return FALSE. Using the AIN_Device * Parameter you can access the
+	name, Type and SubType of the device as well as the number of Buttons,
+	Axis and hats, as well as the DeviceID of the Device.
+
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	enumfunc	- The enumeration function to be used
+	UserData	- The UserData to be used or NULL
+
+   RESULT
+	result		- TRUE, if at least one fitting device was found, 
+			  else FALSE
+
+   SEE ALSO
+	AIN_CreateContext, AIN_DeleteContext, AIN_ObtainDevice,
+	AIN_ReleaseDevice
+
+amigainput.library/AIN_FreeEvent             amigainput.library/AIN_FreeEvent
+
+   NAME
+	AIN_FreeEvent -- frees an AmigaInput Event
+
+   SYNOPSIS
+	AIN_FreeEvent(CTX);
+
+	VOID AIN_FreeEvent(void *CTX,AIN_InputEvent *event);
+
+   FUNCTION
+	An AmigaInput Event which has been acquired with AIN_GetEvent
+	should always be freed with AIN_FreeEvent, after it is no longer
+       needed. After the event has been freed, it's data members should
+       no longer be accessed.
+
+   INPUTS
+	CTX 	-	The AmigaInput Context to be used
+	event   -	The AmigaInput Event which should be freed
+					  
+   SEE ALSO
+	AIN_GetEvent
+
+amigainput.library/AIN_GetError               amigainput.library/AIN_GetError
+
+   NAME
+	AIN_GetError -- Get the error code, in case an error happened
+
+   SYNOPSIS
+	result = AIN_GetError(CTX);
+
+	ULONG AIN_GetError(void *CTX);
+
+   FUNCTION
+	An AmigaInput function can return an error. Most AmigaInput functions
+	return a BOOL to indicate if the operation was successful or not. In
+	case that the operation was not successful, AIN_GetError() can be used,
+	to get the error-code for the error. AIN_GetErrorString() can be used
+	to bring those Errorcodes into a human-readable form.
+
+	AmigaInput currently knows the following errors:
+
+	AINERR_NOERROR               - Actually there was no error
+	AINERR_INACTIVE              - device is for this context inactive
+	AINERR_NOTSUPPORTED_API      - This version of the API is not supported
+	AINERR_UNKNOWN_DEVICEID      - This Device ID is unknown
+	AINERR_UNKNOWN_PARAMETER     - This Device Parameter is unknown
+	AINERR_UNKNOWN_ARG           - This Argument is unknown
+	AINERR_UNKNOWN_TAG           - This Tag is unknown
+	AINERR_NOMEMORY              - Out of Memory
+	AINERR_ZEROPOINTER           - Null pointer given as parameter
+	AINERR_EMPTYCONTEXTLIST      - Context List is empty
+	AINERR_SMALLBUFFER           - Buffer too small
+	AINERR_DOUBLEOBTAIN          - One Device was attempted to obtain 2x
+	AINERR_NOHANDLE              - No Handle was given
+	AINERR_NO_EVENTMODE          - Device is not in event mode
+	AINERR_NO_PORT               - no port given
+	AINERR_DRIVERINIT_FAIL       - Driver Initialization failed
+	AINERR_READERROR             - Read Error
+	AINERR_OUTOFRANGE            - Value out of Range
+	AINERR_UNSUPPORTED_PARAMETER - Parameter is not supported
+	AINERR_WINDOWINCACTIVE       - Window is inactive
+	AINERR_INVALID_ID            - ID is invalid
+
+   INPUTS
+	CTX 	- The AmigaInput Context to use
+
+   RESULT
+	result 	- The Error Code of the last AmigaInput Error which happened
+
+   SEE ALSO
+	AIN_GetErrorString 
+
+amigainput.library/AIN_GetErrorString   amigainput.library/AIN_GetErrorString
+
+   NAME
+	AIN_GetErrorString -- Translates an AmigaInput Error Code into a String
+
+   SYNOPSIS
+	error = AIN_GetErrorString(ErrorCode);
+
+	STRPTR AIN_GetErrorString(ULONG ErrorCode);
+
+   FUNCTION
+	If an AmigaInput function fails it usually returns FALSE (most
+	AmigaInput functions have BOOL as return value). Using AIN_GetError
+	you can get the exact error code. You can give this error code to
+	AIN_GetErrorString to get a string error message.        
+
+   INPUTS
+	ErrorCode	- The ErrorCode of the Error
+
+   RESULT
+	error		- The String representation of the Error
+
+   SEE ALSO
+	AIN_GetError 
+
+amigainput.library/AIN_GetEvent               amigainput.library/AIN_GetEvent
+
+   NAME
+	AIN_GetEvent -- gets the next event in the Event queue (if any)
+
+   SYNOPSIS
+	event = AIN_GetEvent(CTX);
+
+	AIN_InputEvent *AIN_GetEvent(void *CTX);
+
+   FUNCTION
+	If currently at least one event is waiting in the AmigaInput Event
+	Queue, this function returns the next event from said queue.
+	The program can then access TimeStamp, Type, DeviceID of the#
+	causing device, Index and Value for the event by examining
+	the AIN_InputEvent * structure. After using an Event it should
+       get freed again using AIN_FreeEvent.
+
+   INPUTS
+	CTX 	-	The AmigaInput Context to be used
+					  
+   RESULT
+	event 	-	The next Event or NULL, if no Event was av ailable
+
+   SEE ALSO
+	AIN_FreeEvent
+
+amigainput.library/AIN_ObtainDevice       amigainput.library/AIN_ObtainDevice
+
+   NAME
+	AIN_ObtainDevice -- Obtains a specific Device for usage of AmigaInput
+
+   SYNOPSIS
+	handle = AIN_ObtainDevice(CTX,DeviceID);
+
+	AIN_DeviceHandle *AIN_ObtainDevice(void *CTX, AIN_DeviceID DeviceID);
+
+   FUNCTION
+	Once you decided (using AIN_EnumDevices()) which device you need
+	you will obtain the device using AIN_ObtainDevice(). After that you
+	can use it (for example using AIN_ReadDevice() ).
+
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	DeviceID	- The DeviceID for the Device to be obtained
+
+   RESULT
+	handle		- The handle of the obtained device or NULL for
+			  failure
+   SEE ALSO
+	AIN_ReleaseDevice, AIN_ReadDevice
+
+amigainput.library/AIN_Query                     amigainput.library/AIN_Query
+
+   NAME
+	AIN_Query --	queries information about a specific AmigaInput
+			Device
+
+   SYNOPSIS
+	res = AIN_Query(CTX,DeviceID,qParameter,qArg,Result,ResultLength);
+
+	BOOL AIN_Query(void *CTX,AIN_DeviceID DeviceID,ULONG qParameter,
+                      ULONG qArg,void *Result,ULONG ResultLength);
+
+   FUNCTION
+
+	Often after the program obtained a device, it needs some more data 
+	about the obtained device, for example the Button Offsets for 
+	AIN_ReadDevice(). Usually you even need some data about the device
+	during running AIN_EnumDevices already. With AIN_Query you can acquire
+	such data.
+
+	The following Parameters can be queried (some of them, like 
+	AINQ_AXISNAME, need an additional parameter, which is passed into
+	qArg):
+
+	AINQ_NUMAXES        - How many axis has this device ?
+	AINQ_NUMBUTTONS     - How many buttons has this device ?
+	AINQ_NUMHATS        - How many hats has this device ?
+	AINQ_AXISNAME       - What is the name of a specific Axis ?
+	AINQ_BUTTONNAME     - What is the name of a specific Button ?
+	AINQ_HATNAME        - What is the name of a specific Hat ?
+	AINQ_POLLED         - Need this device polling ?
+	AINQ_AXIS_SYMMETRIC - Is this axis symmetric ?
+	AINQ_SUBCLASS       - To which Subclass does this Device belong ?
+	AINQ_DRIVERVERSION  - What is the Version number of the Driver of this
+			      Device ?
+	AINQ_AXIS_CLASS     - What is the Class of the Axis of a specific 
+			      Axis ?
+	AINQ_AXIS_OFFSET    - What is the Axis Offset (see AIN_ReadData() ) for
+			      this specific Axis ?
+	AINQ_BUTTON_OFFSET  - What is the Button Offset (see AIN_ReadData() )
+			      for this specific Button ?
+	AINQ_HAT_OFFSET     - What is the Hat Offset (see AIN_ReadData() ) for
+			      this specific Hat ?
+	AINQ_LAYOUT_CLASS   - What is the Layout Class of this Device ?
+	AINQ_DEVNAME        - What is the Name of this Device ?
+	AINQ_DESCRIPTION    - What is the Description of this Device ? 
+	AINQ_CONNECTED      - Is this Device connected ?
+	AINQ_UNITS          - How many Units has this device ?
+
+	List of Layout Classes for AmigaInput:
+
+	AINLC_UNKNOWN       - Unknown Layout Class
+	AINLC_MOUSE         - Some sort of Mouse
+	AINLC_KEYBOARD      - Some sort of Keyboard
+	AINLC_JOYSTICK      - Some sort of Joystick
+	AINLC_FLIGHTSTICK   - Some sort of Flightstick
+	AINLC_COMPLEXSTICK  - Some sort of GamePad with lots of buttons
+
+	List of Subclasses for AmigaInput:
+
+	AINSUB_UNKNOWN       - Unknown Subclass
+	AINSUB_NOSUBCLASS    - Device does not have a Subclass
+	AINSUB_JOYPAD        - A Joypad
+	AINSUB_DIGITAL_STICK - A Digital Joystick
+	AINSUB_FLIGHTSTICK   - A Flightstick
+	AINSUB_WHEEL         - A Wheel Controller
+	AINSUB_LIGHTGUN      - A Lightgun
+
+	List of Axis Classes for AmigaInput:
+
+	AINAS_XAXIS         - X Axis
+	AINAS_YAXIS         - Y Axis
+	AINAS_ZAXIS         - Z Axis
+	AINAS_THRUST        - Thrust Axis
+	AINAS_WHEEL         - Wheel Axis
+	AINAS_ACCEL         - Accelerator
+	AINAS_BRAKE         - Brake
+
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	DeviceID	- The Device to be examined
+	qParameter	- The parameter to be queried
+	qArg		- The Argument for the query (if any)
+       Result		- Contains the result of the query (after the
+			  function call)
+	ResultLength    - The Length in Bytes of the results (for 
+			  example 4 in case of an int)
+
+   RESULT
+	result		- TRUE, if the query was possible, else FALSE
+
+   SEE ALSO
+	AIN_SetDeviceParameter
+
+amigainput.library/AIN_ReadDevice           amigainput.library/AIN_ReadDevice
+
+   NAME
+	AIN_ReadDevice -- Reads out the Data on your AmigaInput Devices
+
+   SYNOPSIS
+	result = AIN_ReadDevice(CTX,Handle,Data);
+
+	BOOL AIN_ReadDevice(void *CTX,AIN_DeviceHandle *Handle, void **Data); 
+
+   FUNCTION
+       AIN_ReadDevice actually reads out the data available for a Device
+       (though usually the work is done inside an interrupt, and you can
+       assume that AIN_ReadDevice is an extremely fast function). The 
+       Layout of the Data structure depends on the device. To find out,
+       where inside this structure you find your axes, buttons and hats,
+       you have to use AIN_Query and query for AINQ_AXIS_OFFSET, 
+       AINQ_BUTTON_OFFSET and AINQ_HAT_OFFSET. If you read Data as an
+       array of integers, the values AIN_Query returns to you will point
+       you to the value of the Button, Axis or Hat you are interested in.
+
+       Axis and hats use values between -32768 and 32767. Digital Buttons use
+       values between 0 and 1 (1 is "pressed"), while analog buttons use
+       values between 0 and 32767. Many devices support parameters like
+       deadzones which you can set in the AmigaInput GUI. The values 
+       AIN_ReadDevice returns are already the final values, with deadzone
+       and everything already calculated in. 
+
+       The Data array should be considered strictly read-only.
+	
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	Handle		- The Device where a parameter should be set
+	Data            - A pointer to a variable of type void *
+
+   RESULT
+       result          - TRUE, if the device could be read out, else FALSE.
+
+   SEE ALSO
+	AIN_ObtainDevice, AIN_ReleaseDevice, AIN_Query
+
+amigainput.library/AIN_ReleaseDevice     amigainput.library/AIN_ReleaseDevice
+
+   NAME
+	AIN_ReleaseDevice - release a Device used by AmigaInput
+
+   SYNOPSIS
+	AIN_ReleaseDevice(CTX,handle);
+
+	VOID AIN_ReleaseDevice(void *CTX, AIN_DeviceHandle *handle);
+
+   FUNCTION
+	Before the program quits, it should release the context again.
+	This is achieved using AIN_ReleaseDevice, using the Context
+	as acquired with AIN_CreateContext as a parameter.
+
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	handle		- The DeviceHandle * for the Device to be released
+
+   SEE ALSO
+	AIN_ObtainDevice, AIN_ReadDevice
+
+amigainput.library/AIN_Set                         amigainput.library/AIN_Set
+
+   NAME
+	AIN_Set -- configures a AmigaInput Context
+
+   SYNOPSIS
+	result = AIN_Set(CTX,Tags);
+
+	BOOL AIN_SetDevice(void *CTX, struct TagItem *Tags); 
+
+   FUNCTION
+       AIN_Set can be used to configure an already existing AmigaInput
+       Context in the same way like you can configure an AmigaInput Context
+       on Creation using it's Tag Items.
+
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	Tags		- The Tags to configure the AmigaInput Context
+
+   TAGS
+	Tags for use with the AmigaInput Set Function:
+
+	AINCC_Port	 (struct MsgPort *)	- Port needed for eventmode    
+	AINCC_Window (struct Window *)	- Window to use to activate the Context
+					  If this Window is deactivated, the
+					  Context is deactivated as we
+   RESULT
+       result          - TRUE, if the operation was successful, else FALSE.
+
+   SEE ALSO
+	AIN_CreateContext
+
+amigainput.library/AIN_SetDeviceParameterinput.library/AIN_SetDeviceParameter
+
+   NAME
+	AIN_DeleteContext -- Sets a specific parameter for an AmigaInput Device
+
+   SYNOPSIS
+	res = AIN_SetDeviceParameter(CTX,Handle,dParameter,dArg);
+
+	BOOL AIN_SetDeviceParameter(void *CTX,AIN_DeviceHandle *Handle,
+				    ULONG dParameter,ULONG dArg);
+
+   FUNCTION
+	As it is possible to query specific information from an AmigaInput
+	Device it is possible to set certain parameters for an AmigaInput
+       Device (different ones from the ones which are queried, though).
+	With AIN_SetDeviceParameter the program can set a certain
+	Parameter to a value specified by a certain Argument for a
+       device, which is given by it's AIN_DeviceHandle *.
+
+	Parameters which can be set:
+
+	AINDP_ACTIVE - Flip Activation Status of the device for this Context
+	AINDP_EVENT  - Flip between Eventmode and Polling-Mode the device for this C
+ontext
+	
+   INPUTS
+	CTX 		- The AmigaInput Context to be used
+	Handle		- The Device where a parameter should be set
+	dParameter	- The parameter to be set
+	dArg		- The value to which the parameter should be set
+
+   SEE ALSO
+	AIN_Query
+
+

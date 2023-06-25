@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="expansion" basename="ExpansionBase" basetype="ExpansionBase" openname="expansion.library" m68kbias="30">
+
+  <copyright>Copyright (C) 2003-2021 Trevor Dickinson</copyright>
+
+  <include>expansion/pci.h</include>
+  <include>expansion/expansion.h</include>
+  <include>expansion/configvars.h</include>
+  <include>dos/dos.h</include>
+  <include>dos/dosextens.h</include>
+  <include>dos/filehandler.h</include>
+
+  <inline4include>interfaces/expansion.h</inline4include>
+
+  <m68kinclude>exec/types.h</m68kinclude>
+  <m68kinclude>libraries/configvars.h</m68kinclude>
+  <m68kinclude>dos/filehandler.h</m68kinclude>
+  <m68kinclude>utility/tagitem.h</m68kinclude>
+
+  <interface name="main" version="1.0" flags="protected" struct="ExpansionIFace" prefix="_exp_" asmprefix="IExpansion" global="IExpansion">
+    <method name="Obtain" result="ULONG"/>
+    <method name="Release" result="ULONG"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="AddConfigDev" result="void" m68kslot="0"> 
+      <arg name="configDev" type="struct ConfigDev *" m68kreg="a0"/>
+    </method>
+
+    <method name="AddBootNode" result="BOOL" m68kslot="1">
+      <arg name="bootPri" type="LONG" m68kreg="d0"/>
+      <arg name="flags" type="ULONG" m68kreg="d1"/>
+      <arg name="deviceNode" type="APTR" m68kreg="a0"/>
+      <arg name="configDev" type="struct ConfigDev *" m68kreg="a1"/>
+    </method>
+
+    <method name="AllocBoardMem" result="ULONG" m68kslot="2">
+      <arg name="slotSpec" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="AllocConfigDev" result="struct ConfigDev *" m68kslot="3">
+    </method>
+
+    <method name="AllocExpansionMem" result="APTR" m68kslot="4">
+      <arg name="numSlots" type="ULONG" m68kreg="d0"/>
+      <arg name="slotAlign" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="ConfigBoard" result="ULONG" m68kslot="5">
+      <arg name="board" type="APTR" m68kreg="a0"/>
+      <arg name="configDev" type="struct ConfigDev *" m68kreg="a1"/>
+    </method>
+
+    <method name="ConfigChain" result="ULONG" m68kslot="6">
+      <arg name="baseAddr" type="APTR" m68kreg="a0"/>
+    </method>
+
+    <method name="FindConfigDev" result="struct ConfigDev *" m68kslot="7">
+      <arg name="oldConfigDev" type="const struct ConfigDev *" m68kreg="a0"/>
+      <arg name="manufacturer" type="LONG" m68kreg="d0"/>
+      <arg name="product" type="LONG" m68kreg="d1"/>
+    </method>
+
+    <method name="FreeBoardMem" result="void" m68kslot="8">
+      <arg name="startSlot" type="ULONG" m68kreg="d0"/>
+      <arg name="slotSpec" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="FreeConfigDev" result="void" m68kslot="9">
+      <arg name="configDev" type="struct ConfigDev *" m68kreg="a0"/>
+    </method>
+
+    <method name="FreeExpansionMem" result="void" m68kslot="10">
+      <arg name="startSlot" type="ULONG" m68kreg="d0"/>
+      <arg name="numSlots" type="ULONG" m68kreg="d1"/>
+    </method>
+
+    <method name="ReadExpansionByte" result="UBYTE" m68kslot="11">
+      <arg name="board" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="offset" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="ReadExpansionRom" result="ULONG" m68kslot="12">
+      <arg name="board" type="CONST_APTR" m68kreg="a0"/>
+      <arg name="configDev" type="struct ConfigDev *" m68kreg="a1"/>
+    </method>
+
+    <method name="RemConfigDev" result="void" m68kslot="13">
+      <arg name="configDev" type="struct ConfigDev *" m68kreg="a0"/>
+    </method>
+
+    <method name="WriteExpansionByte" result="void" m68kslot="14">
+      <arg name="board" type="APTR" m68kreg="a0"/>
+      <arg name="offset" type="ULONG" m68kreg="d0"/>
+      <arg name="byte" type="UBYTE" m68kreg="d1"/>
+    </method>
+
+    <method name="ObtainConfigBinding" result="void" m68kslot="15">
+    </method>
+
+    <method name="ReleaseConfigBinding" result="void" m68kslot="16">
+    </method>
+
+    <method name="SetCurrentBinding" result="void" m68kslot="17">
+      <arg name="currentBinding" type="struct CurrentBinding *" m68kreg="a0"/>
+      <arg name="bindingSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="GetCurrentBinding" result="ULONG" m68kslot="18">
+      <arg name="currentBinding" type="const struct CurrentBinding *" m68kreg="a0"/>
+      <arg name="bindingSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="MakeDosNode" result="struct DeviceNode *" m68kslot="19">
+      <arg name="parmPacket" type="CONST_APTR" m68kreg="a0"/>
+    </method>
+
+    <method name="AddDosNode" result="BOOL" m68kslot="20">
+      <arg name="bootPri" type="LONG" m68kreg="d0"/>
+      <arg name="flags" type="ULONG" m68kreg="d1"/>
+      <arg name="deviceNode" type="struct DeviceNode *" m68kreg="a0"/>
+    </method>
+
+    <method name="WriteExpansionWord" result="void" m68kslot="22">
+      <arg name="board" type="APTR" m68kreg="a0"/>
+      <arg name="offset" type="ULONG" m68kreg="d0"/>
+      <arg name="word" type="UWORD" m68kreg="d1"/>
+    </method>
+
+    <method name="GetMachineInfo" result="ULONG" m68kslot="23">
+      <arg name="tagList" type="const struct TagItem *" m68kreg="a0"/>
+    </method>
+
+    <method name="GetMachineInfoTags" result="ULONG" m68kslot="23">
+      <vararg name="tag1" type="Tag" m68kreg="a0"/>
+    </method>
+  </interface>  
+  
+  <interface name="pci" version="1.0" flags="protected" struct="PCIIFace" prefix="_pci_" global="IPCI" inline4="no">
+    <method name="Obtain" result="ULONG"/>
+    <method name="Release" result="ULONG"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="FindDevice" result="struct PCIDevice *">
+      <arg name="tagList" type="const struct TagItem *"/>
+    </method>
+
+    <method name="FindDeviceTags" result="struct PCIDevice *">
+      <vararg name="tag" type="ULONG"/>
+    </method>
+
+    <method name="FreeDevice" result="void">
+      <arg name="device" type="struct PCIDevice *"/>
+    </method>
+
+    <method name="AllocResource" result="struct PCIResourceRange *">
+      <arg name="ResType" type="ULONG"/>
+      <arg name="NumBytes" type="ULONG"/>
+    </method>
+
+    <method name="FreeResource" result="void">
+      <arg name="Resource" type="struct PCIResourceRange *"/>
+    </method>
+  </interface>
+
+  <interface prefix="_pcidev_" struct="PCIDevice" flags="none" version="1.0" name="pci_device" global="IPCIDev" inline4="no">
+    <method name="Obtain" result="ULONG"/>
+    <method name="Release" result="ULONG"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *"/>
+
+    <method name="ReadConfigByte" result="UBYTE">
+      <arg name="Offset" type="ULONG"/>
+    </method>
+
+    <method name="ReadConfigWord" result="UWORD">
+      <arg name="Offset" type="ULONG"/>
+    </method>
+
+    <method name="ReadConfigLong" result="ULONG">
+      <arg name="Offset" type="ULONG"/>
+    </method>
+
+    <method name="WriteConfigByte" result="void">
+      <arg name="Offset" type="ULONG"/>
+      <arg name="Value" type="UBYTE"/>
+    </method>
+
+    <method name="WriteConfigWord" result="void">
+      <arg name="Offset" type="ULONG"/>
+      <arg name="Value" type="UWORD"/>
+    </method>
+
+    <method name="WriteConfigLong" result="void">
+      <arg name="Offset" type="ULONG"/>
+      <arg name="Value" type="ULONG"/>
+    </method>
+
+    <method name="InByte" result="UBYTE">
+      <arg name="Port" type="ULONG"/>
+    </method>
+
+    <method name="InWord" result="UWORD">
+      <arg name="Port" type="ULONG"/>
+    </method>
+
+    <method name="InLong" result="ULONG">
+      <arg name="Port" type="ULONG"/>
+    </method>
+
+    <method name="OutByte" result="void">
+      <arg name="Port" type="ULONG"/>
+      <arg name="Value" type="UBYTE"/>
+    </method>
+
+    <method name="OutWord" result="void">
+      <arg name="Port" type="ULONG"/>
+      <arg name="Value" type="UWORD"/>
+    </method>
+
+    <method name="OutLong" result="void">
+      <arg name="Port" type="ULONG"/>
+      <arg name="Value" type="ULONG"/>
+    </method>
+
+    <method name="GetResourceRange" result="struct PCIResourceRange *">
+      <arg name="BaseNum" type="UBYTE"/>
+    </method>
+
+    <method name="FreeResourceRange" result="void">
+      <arg name="ResourceRange" type="struct PCIResourceRange *"/>
+    </method>
+
+    <method name="GetCapabilities" result="ULONG">
+    </method>
+
+    <method name="SetCapabilities" result="ULONG">
+      <arg name="Flags" type="ULONG"/>
+    </method>
+
+    <method name="SetHALData" result="void">
+      <arg name="HALData" type="APTR"/>
+    </method>
+
+    <method name="GetHALData" result="APTR">
+    </method>
+
+    <method name="SetResourceRange" result="void">
+      <arg name="BaseNum" type="UBYTE"/>
+      <arg name="Range" type="struct PCIResourceRange *"/>
+    </method>
+
+    <method name="GetNode" result="struct Node *">
+    </method>
+
+    <method name="SetAddress" result="void">
+      <arg name="Bus" type="UBYTE"/>
+      <arg name="Dev" type="UBYTE"/>
+      <arg name="Fn" type="UBYTE"/>
+    </method>
+
+    <method name="GetAddress" result="void">
+      <arg name="Bus" type="UBYTE *"/>
+      <arg name="Dev" type="UBYTE *"/>
+      <arg name="Fn" type="UBYTE *"/>
+    </method>
+
+    <method name="Autoconfig" result="BOOL" status="unimplemented">
+    </method>
+
+    <method name="GetUserData" result="APTR">
+      <arg name="ItemNum" type="UBYTE"/>
+    </method>
+
+    <method name="SetUserData" result="void">
+      <arg name="ItemNum" type="UBYTE"/>
+      <arg name="UserData" type="APTR"/>
+    </method>
+
+    <method name="Lock" result="BOOL">
+      <arg name="Mode" type="UBYTE"/>
+    </method>
+
+    <method name="Unlock" result="void">
+    </method>
+
+    <method name="MapInterrupt" result="ULONG">
+    </method>
+
+    <method name="SetEndian" result="void">
+      <arg name="Mode" type="uint32"/>
+    </method>
+
+    <method name="InByteBlock" result="void">
+      <arg name="Port" type="uint32"/>
+      <arg name="Block" type="uint8 *"/>
+      <arg name="PortInc" type="uint32"/>
+      <arg name="BlockInc" type="uint32"/>
+      <arg name="NumUnits" type="uint32"/>
+    </method>
+
+    <method name="InWordBlock" result="void">
+      <arg name="Port" type="uint32"/>
+      <arg name="Block" type="uint16 *"/>
+      <arg name="PortInc" type="uint32"/>
+      <arg name="BlockInc" type="uint32"/>
+      <arg name="NumUnits" type="uint32"/>
+    </method>
+
+    <method name="InLongBlock" result="void">
+      <arg name="Port" type="uint32"/>
+      <arg name="Block" type="uint32 *"/>
+      <arg name="PortInc" type="uint32"/>
+      <arg name="BlockInc" type="uint32"/>
+      <arg name="NumUnits" type="uint32"/>
+    </method>
+
+    <method name="OutByteBlock" result="void">
+      <arg name="Port" type="uint32"/>
+      <arg name="Block" type="uint8 *"/>
+      <arg name="PortInc" type="uint32"/>
+      <arg name="BlockInc" type="uint32"/>
+      <arg name="NumUnits" type="uint32"/>
+    </method>
+
+    <method name="OutWordBlock" result="void">
+      <arg name="Port" type="uint32"/>
+      <arg name="Block" type="uint16 *"/>
+      <arg name="PortInc" type="uint32"/>
+      <arg name="BlockInc" type="uint32"/>
+      <arg name="NumUnits" type="uint32"/>
+    </method>
+
+    <method name="OutLongBlock" result="void">
+      <arg name="Port" type="uint32"/>
+      <arg name="Block" type="uint32 *"/>
+      <arg name="PortInc" type="uint32"/>
+      <arg name="BlockInc" type="uint32"/>
+      <arg name="NumUnits" type="uint32"/>
+    </method>
+
+    <method name="GetFirstCapability" result="struct PCICapability *">
+    </method>
+
+    <method name="GetNextCapability" result="struct PCICapability *">
+      <arg name="current" type="struct PCICapability *"/>
+    </method>
+
+    <method name="FindCapability" result="struct PCICapability *">
+      <arg name="id" type="uint32"/>
+    </method>
+  </interface>
+</library>

@@ -1,0 +1,169 @@
+TABLE OF CONTENTS
+
+modelclass/--datasheet--
+modelclass/OM_ADDMEMBER
+modelclass/OM_DISPOSE
+modelclass/OM_NOTIFY
+modelclass/OM_REMMEMBER
+modelclass/OM_UPDATE
+
+
+modelclass/--datasheet--                                 modelclass/--datasheet--
+
+    NAME
+	modelclass -- base model class
+
+    SUPERCLASS
+	icclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	A class of OM_UPDATE forwarding objects that have multiple targets.
+	In addition to the features the modelclass object inherits from
+	icclass, when a modelclass object gets an OM_UPDATE message, it
+	forwards that OM_UPDATE message to all of the objects in its
+	broadcast list.
+
+    METHODS
+	OM_NEW -- Create the modelclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroys object and all member objects and then
+	              passed to superclass.
+
+	OM_UPDATE -- Updates all members of attribute change.
+
+	OM_NOTIFY -- Notifies all members of attribute change.
+
+	OM_ADDMEMBER -- Add object to broadcast list.
+
+	OM_REMMEMBER -- Remove object from broadcast list.
+
+	All other methods are passed to the superclass.
+
+modelclass/OM_ADDMEMBER                                   modelclass/OM_ADDMEMBER
+
+    NAME
+	OM_ADDMEMBER -- Add an object to member list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember * msg);
+
+    FUNCTION
+	This method tells a model to add an object to its broadcast list.
+	When the object disposes of itself it will also dispose of any
+	objects remaining on its broadcast list.
+
+    INPUTS
+	obj - modelclass object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_REMMEMBER, rootclass/OM_REMMEMBER
+
+modelclass/OM_DISPOSE                                       modelclass/OM_DISPOSE
+
+    NAME
+	OM_DISPOSE -- Destroy the object and all members.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+	This method tells a model to dispose of itself plus the
+	objects remaining on its broadcast list.
+
+    INPUTS
+	obj - modelclass object pointer
+	msg - Msg with MethodID = OM_DISPOSE
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	intuition.library/DisposeObject()
+
+modelclass/OM_NOTIFY                                         modelclass/OM_NOTIFY
+
+    NAME
+	OM_NOTIFY -- Broadcast update to all modelclass members.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method tells a modelclass object to forward the message in
+	the form of an OM_UPDATE message to all the objects in its broadcast
+	list. The modelclass does not map the attributes in these OM_UPDATE
+	messages. Because modelclass inherits behavior from icclass, if the
+	model has an ICA_TARGET and ICA_MAP, it will also send a mapped
+	OM_UPDATE message to its ICA_TARGET.
+
+    INPUTS
+	obj - modelclass object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_UPDATE, rootclass/OM_NOTIFY, icclass/OM_NOTIFY
+
+modelclass/OM_REMMEMBER                                   modelclass/OM_REMMEMBER
+
+    NAME
+	OM_REMMEMBER -- Remove an object from member list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember * msg);
+
+    FUNCTION
+	This method tells a model to remove an object from its
+	broadcast list.
+
+    INPUTS
+	obj - modelclass object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_ADDMEMBER, rootclass/OM_REMMEMBER
+
+modelclass/OM_UPDATE                                         modelclass/OM_UPDATE
+
+    NAME
+	OM_UPDATE -- Update all modelclass members.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method forwards the OM_UPDATE message to all the objects in
+	the modeclass object's broadcast list. The modelclass does not
+	map the attributes in these OM_UPDATE messages. Because modelclass
+	inherits behavior from icclass, if the model has an ICA_TARGET and
+	ICA_MAP, it will also send a mapped OM_UPDATE message to its
+	ICA_TARGET.
+
+    INPUTS
+	obj - modelclass object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_NOTIFY, rootclass/OM_UPDATE, icclass/OM_UPDATE
+
+

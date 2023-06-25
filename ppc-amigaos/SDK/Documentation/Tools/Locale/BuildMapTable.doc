@@ -1,0 +1,70 @@
+commands/BUILDMAPTABLE                                 commands/BUILDMAPTABLE
+
+   NAME
+	BUILDMAPTABLE - Create a binary mapping table to Unicode for
+	                diskfont.library from an ASCII mapping table.
+
+   FORMAT
+	BUILDMAPTABLE <ASCII mapping table> [CHARSET]
+
+   TEMPLATE
+	UNICODEMAPTABLE/A,CHARSET/K
+
+   PATH
+	C:BUILDMAPTABLE
+
+   FUNCTION
+	BUILDMAPTABLE converts Charset-To-Unicode mapping tables in text form
+	(e.g. available at http://www.unicode.org/Public/MAPPINGS/) to
+	mapping tables in binary form usable by diskfont.library.
+
+	You must specify a charset mapping table file name when using
+	the BUILDMAPTABLE command.
+
+	BUILDMAPTABLE can either display a text form of the parsed table
+	or create a binary mapping table in the L:Charsets/ directory.
+	Currently only 8bit charset mapping tables are supported.
+
+	If L:Charsets/character-sets or L:Charsets/custom-character-sets
+	contains a MIME name for an 8bit charset where no mapping table
+	in L:Charsets/ does exist, and you have a mapping table in text form,
+	use BUILDMAPTABLE to create the binary mapping table and reboot
+	(diskfont.library searches tables only once) to be able to use
+	the new charset (e.g. in fonts or catalog files).
+
+	The expected format of text mapping tables is as follows:
+	- Anything from a '#' character to the end of a line is
+	  considered a comment.
+	- A valid line does contain the index on the left and the
+	  Unicode code point at the right side, in either hexadecimal
+	  (starting with 0x or 0X) or octal (starting with 0) or
+	  decimal form, separated by empty space. Example:
+	  0xA4	0x20AC	#	EURO SIGN
+
+   OPTIONS
+	The other options are:
+
+	CHARSET
+
+	    Specify a MIME charset name or alias. The MIME charset name
+	    obtained from diskfont.library will be used as file name of
+	    the binary charset mapping table which will be stored in
+	    L:Charsets/. If the CHARSET parameter is omitted, no file will
+	    be written, instead the resulting mapping table is displayed
+	    in text form.
+
+   EXAMPLES
+	1> BUILDMAPTABLE CP1258.TXT
+
+	Will parse the text file CP1258.TXT and display a list of
+	entries with the index on the left and the Unicode codepoint at
+	the right side. Note: unmapped entries (with Unicode codepoint 0)
+	are not displayed.
+
+	2> BUILDMAPTABLE 8859-1.TXT CHARSET LATIN1
+
+	Will parse the text file 8859-1.TXT and create the file
+	L:Charsets/ISO-8859-1 (latin1 is an alias for ISO-8859-1)
+	which is useless (the ISO-8859-1 mapping table is a builtin
+	part of diskfont.library and will not be loaded from disk).
+

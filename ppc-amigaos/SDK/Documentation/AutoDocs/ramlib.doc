@@ -1,0 +1,50 @@
+RamLib.kmod                                                       RamLib.kmod
+
+   NAME
+	RamLib -- Loads disk based libraries and devices for exec.library.
+
+   FUNCTION
+	RamLib is started as the first RTF_AFTERDOS module by dos.library upon
+	booting of the initial CLI process.
+
+	RamLib patches the IExec->OpenLibrary() and IExec->OpenDevice() 
+	functions to allow for disk based loading of libraries or devices.
+	Before RamLib patches these functions, only resident-in-memory 
+	libraries and devices can be opened by these exec.library functions.
+
+	The IExec->OpenLibrary() and IExec->OpenDevice() functions will have
+	the ability to search in various locations after patched by RamLib,
+	or, if the location of the required object is known, an absolute path
+	can be specified to override the path searching feature.
+
+	The determining factor as to what method is used is by the presence of
+	a colon ":" character within the function parameter string.
+	If a colon ":" is present in the string, then it is deemed to be an 
+	absolute dos.library path string to where the load object resides.
+	If the object is not found there, the function aborts with failure.
+
+	If there is no colon ":" present within the parameter string, then the
+	following paths are prepended to the supplied parameter string, in the
+	following order, until the object is found. 
+
+	LIBRARIES                 DEVICES
+	========================================
+	"LIBS:"                   "DEVS:"
+	"CLASSES:"                "CURRDIR:" 
+	"CURRDIR:"                "CURRDIR:Devs"
+	"CURRDIR:Libs"            "PROGDIR:"
+	"CURRDIR:Classes"         "PROGDIR:Devs"
+	"PROGDIR:"
+	"PROGDIR:Libs"
+	"PROGDIR:Classes"
+	
+
+   NOTES
+	RamLib currently uses IDOS->AddPart() to add the parameter string to the
+	above mentioned paths, the semantics of IDOS->AddPart() apply.
+
+	Since version 53, RamLib creates a file notification for every disk
+	loaded object, if the disk object is changed, automatic flushing of the
+	resident copy will occur if the open count is zero.
+
+

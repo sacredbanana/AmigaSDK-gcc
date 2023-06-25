@@ -1,0 +1,439 @@
+TABLE OF CONTENTS
+
+picture.datatype/picture.datatype
+
+
+picture.datatype/picture.datatype                                 picture.datatype/picture.datatype
+
+   NAME
+	picture.datatype -- the root data type for pictures.
+
+   FUNCTION
+	The picture.datatype is the super-class for any picture related
+	classes.
+
+   METHODS
+	OM_NEW -- Create a new picture object.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	OM_SET -- Set the values of multiple attributes.
+
+	OM_UPDATE -- Update the values of multiple attributes.
+
+	OM_DISPOSE -- Dispose of a picture object.
+
+	GM_LAYOUT -- Layout the object and notify the application of the
+	    title and size.
+
+	GM_HITTEST -- Determine if the object has been hit with the
+	    mouse.
+
+	GM_GOACTIVE -- Tell the object to go active.
+
+	GM_HANDLEINPUT -- Handle input.
+
+	GM_RENDER -- Cause the graphic to render.
+
+	DTM_PROCLAYOUT -- Layout (remap) the picture on the application's
+	    process.
+
+	DTM_FRAMEBOX -- Obtain the display environment that the picture
+	    requires.
+
+	DTM_SELECT -- Select an area in the picture.
+
+	DTM_CLEARSELECTED -- Deselect the selected area of the picture.
+
+	DTM_COPY -- Copy the selected area of the picture to the clipboard
+	    as an ILBM.  If no area is selected, then the entire picture
+	    is copied.
+
+	DTM_PRINT -- Print the selected area of the picture.  If no area
+	    is selected, then the entire picture is printed.
+
+	DTM_WRITE -- Write the selected area of the picture to a file as an
+	    ILBM.  If no area is selected, then the entire picture is
+	    saved.
+
+	PDTM_WRITEPIXELARRAY -- Transfer pixel data to the picture
+	    object. Requires that PDTA_SourceMode==PMODE_V43, as
+	    described below. (V43)
+
+	PDTM_READPIXELARRAY -- Transfer pixel data from the picture
+	    object. Requires that PDTA_DestMode==PMODE_V43, as
+	    described below. (V43)
+
+	PDTM_SCALE -- Scale the pixel data to a new size. Scaling is only
+	    possible before the first GM_LAYOUT has been performed. (V45)
+
+	PDTM_OBTAINPIXELARRAY -- Obtain a description of the internal
+	    pixel data buffer, allowing direct access. Can be used as a
+	    potentially faster alternative to PDTM_READPIXELARRAY and
+	    PDTM_WRITEPIXELARRAY. Requires that PDTA_DestMode==PMODE_V43
+	    or PDTA_SourceMode==PMODE_V43, as described below. Returns
+	    TRUE on success, filling the struct pdtBlitPixelArray to
+	    describe the format of the internal pixel buffer, with
+	    pbpa_PixelData also being non-NULL. Be sure to use
+	    pbpa_PixelArrayMod to step through the rows. If
+	    pbpa_PixelData is NULL, or pbpa_PixelFormat does not match
+	    what you expect or need, you should revert to using
+	    PDTM_READPIXELARRAY or PDTM_WRITEPIXELARRAY.
+
+	    In OM_NEW of a subclass, should not be used until after the
+	    SetDTAttrs() call where setting DTA_NominalHoriz,
+	    DTA_NominalVert and PDTA_SourceMode to PMODE_V43. (V54)
+
+   TAGS
+	OBP_Precision (uint32)
+	    Precision to use when obtaining colors.
+	    See the PRECISION_[..] defines in <graphics/view.h>.
+
+	    Defaults to PRECISION_IMAGE.
+
+	    Applicability is (OM_NEW)
+
+	PDTA_ModeID (uint32)
+	    Set and get the graphic mode ID of the picture
+	    (see <graphics/modeid.h>).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_BitMapHeader (struct BitMapHeader *)
+	    Get the base information for the picture.
+	    BitMapHeader is defined in <datatypes/pictureclass.h>
+
+	    Applicability is (OM_GET)
+
+	PDTA_BitMap (struct BitMap *)
+	    Pointer to a class-allocated bitmap that will end up being
+	    freed by the picture class in the OM_DISPOSE method.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_ColorRegisters (struct ColorRegister *)
+	    Color table; its contents should match the colours in the
+	    PDTA_CRegs table.
+
+	    Applicability is (OM_GET)
+
+	PDTA_CRegs (uint32 *)
+	    Color table to use with SetRGB32CM().
+
+	    Applicability is (OM_GET)
+
+	PDTA_GRegs (uint32 *)
+	    Color table; this table is initialized during the layout
+	    process and will contain the colours the picture will use
+	    after remapping. If no remapping takes place, these colours
+	    will match those in the PDTA_CRegs table.
+
+	    Applicability is (OM_GET)
+
+	PDTA_ColorTable (uint8 *)
+	    Shared pen table; this table is initialized during the
+	    layout process while the picture is being remapped.
+
+	    Applicability is (OM_GET)
+
+	PDTA_ColorTable2 (uint8 *)
+	    Shared pen table; in most places this table will be identical
+	    to the PDTA_ColorTable table. Some of the colours in this
+	    table might match the original colour palette a little better
+	    than the colours picked for the other table. The
+	    picture.datatype uses the two tables during remapping,
+	    alternating for each pixel.
+
+	    Applicability is (OM_GET)
+
+	PDTA_Allocated (uint32)
+	    OBSOLETE; DO NOT USE
+
+	PDTA_NumColors (uint16)
+	    Number of colors used by the picture.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_NumAlloc (uint16)
+	    Number of colors allocated by the picture.
+
+	    In this context `allocated' refers to colours allocated via
+	    graphics.library/ObtainBestPenA().
+
+	    Applicability is (OM_GET)
+
+	PDTA_Remap (BOOL)
+	    Indicate whether the picture should be remapped or not.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW)
+
+	PDTA_Screen (struct Screen *)
+	    Pointer to the screen to remap the picture to.
+
+	    Only used if the object is not going to be added to a window.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PDTA_FreeSourceBitMap (BOOL)
+	    Indicate whether the source bitmap should be freed
+	    immediately by the picture.datatype after the GM_LAYOUT
+	    method is called.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PDTA_Grab (Point *)
+	    Pointer to a Point structure that defines the grab point
+	    of the picture.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_DestBitMap (struct BitMap *)
+	    Pointer to the remapped bitmap.
+
+	    Applicability is (OM_GET)
+
+	PDTA_ClassBitMap (struct BitMap *)
+	    Pointer to the BitMap allocated by the subclass
+	    (e.g. ilbm.datatype) which read the picture.
+
+	    picture.datatype will never free this bitmap and
+	    the subclass is responsible for doing this.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_NumSparse (uint16)
+	    Number of entries in the sparse color table.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW)
+
+	PDTA_SparseTable (uint8 *)
+	    Pointer to a table of pen numbers indicating which colors
+	    should be used when remapping the picture. This array must
+	    contain as many entries as indicated by the PDTA_NumSparse
+	    tag.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW)
+
+	PDTA_SourceMode (int32) (V43)
+	    Used by subclass implementors only; this tag determines
+	    whether the picture.datatype expects a bitmap as the input
+	    parameter (PMODE_V42), or accepts PDTM_WRITEPIXELARRAY
+	    messages or PDTM_OBTAINPIXELARRAY access instead (PMODE_V43).
+
+	    Defaults to PMODE_V42.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_DestMode (int32) (V43)
+	    Used by application software writers only; this tag
+	    determines whether the picture.datatype will return
+	    only standard format BitMaps (PMODE_V42) or whether it will
+	    return BitMaps about whose memory layout the caller should
+	    not speculate (PMODE_V43).
+
+	    If set to PMODE_V43, you must not examine the contents
+	    of the BitMap you receive from picture.datatype.
+
+	    Defaults to PMODE_V42.
+
+	    NOTE: earlier versions of this document used to describe
+	    PDTA_DestMode as defaulting to PMODE_V43, but actually it
+	    has always defaulted to PMODE_V42 in Release 4.
+	    The description does now reflect the real implementation.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_UseFriendBitMap (BOOL) (V43)
+	    If set to TRUE, all BitMap allocations done by
+	    picture.datatype will be done with a friend BitMap as a
+	    reference (see graphics.library/AllocBitMap()).
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_AlphaChannel (BOOL) (V52.3)
+	    If TRUE, the loaded picture has an alpha channel.
+
+	    This attribute is more or less the same as querying the
+	    bmh_Masking field in the BitMapHeader for being equivalent
+	    to mskHasAlpha. It indicates whether the loaded data has
+	    an alpha channel or not. It however requires that the sub
+	    datatype (e.g. png.datatype) sets the bmh_Masking field
+	    correctly.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_GET)
+
+	PDTA_MaskPlane (PLANEPTR) (V43)
+	    Pointer to a bit plane suitable for use with
+	    graphics.library/BltMaskBitMapRastPort() or NULL if the
+	    picture has no transparent colours.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_GET)
+
+	PDTA_PromoteMask (BOOL) (V53.5)
+	    If a CLUT (8-bit) picture with a transparent color needs to be
+	    "promoted" to truecolor format for layout or scaling purposes,
+	    setting this to TRUE allows the picture's transparency mask to
+	    be converted as well and carried over to the truecolor data as
+	    valid alpha information.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_WhichPicture (uint32) (V44)
+	    Index number of the picture to load.
+
+	    For several pictures that are stored in the same file, index
+	    number 0 would refer to the first picture, index number 1 would
+	    refer to the second picture, etc. This tag works together with
+	    the PDTA_GetNumPictures tag. To load a specific picture from
+	    a file, first check how many pictures there are. This is done
+	    by asking the picture.datatype subclass to load the first
+	    picture and also to count the number of pictures, like this:
+
+	        \* Note: you must always initialize this value
+	         *       prior to querying the number of pictures
+	         *       stored in a file.
+	         *\
+	        uint32 numPictures = PDTANUMPICTURES_Unknown;
+	        Object *picture = NewDTObject(...,
+	                      PDTA_WhichPicture,0,
+	                      PDTA_GetNumPictures,&numPictures,
+	                      ...
+	                  TAG_DONE);
+
+	        \* Now check if there is more than a single picture
+	         * in this file.
+	         *\
+	        if(numPictures != PDTANUMPICTURES_Unknown &&
+	           numPictures > 1)
+	        {
+	            Object *secondPicture = NewDTObject(...,
+	                          PDTA_WhichPicture,1,
+	                          ...
+	                      TAG_DONE);
+
+	            ...
+	        }
+
+	    Older picture.datatype subclasses may not support the
+	    PDTA_WhichPicture and PDTA_GetNumPictures tags. The only way
+	    to find out is by using the query tag PDTA_GetNumPictures.
+	    If the subclass supports both the PDTA_GetNumPictures and
+	    PDTA_WhichPicture tags, it will modify the value stored in
+	    the variable passed with PDTA_GetNumPictures.
+
+	    If the requested picture is unavailable (e.g. you might ask
+	    for picture #10, whereas there are only three pictures in a
+	    file) the subclass will return NULL and set the error
+	    code DTERROR_NOT_AVAILABLE. This does not signify that the file
+	    in question was not found, it just tells you that the picture
+	    with the requested index number is not available.
+
+	    Note that for older picture.datatype subclasses, the
+	    PDTA_WhichPicture tag will be ignored. No matter which value
+	    you supply, you will always receive the first picture stored
+	    in the file.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW)
+
+	PDTA_GetNumPictures (uint32 *) (V44)
+	    Query the number of pictures stored in a file. For an
+	    example of its use, see the description for the
+	    PDTA_WhichPicture tag.
+
+	    Note that older picture.datatype subclasses will ignore this
+	    tag. Consequently, the variable you pass in may not be modified.
+	    Therefore you should initialize it to the constant value
+	    PDTANUMPICTURES_Unknown before you pass it to NewDTObject().
+
+	    This tag is unusual in that it does not operate on an already
+	    existing object in the GetDTAttrs() context. This was done for
+	    practical reasons, i.e. while the picture.datatype subclass is
+	    still processing the image data it may be much more convenient
+	    to count the number of pictures in a file than it would be later
+	    when the file has already been read.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW)
+
+	PDTA_MaxDitherPens (uint32) (V44)
+	    Maximum number of pens to use during colour quantization.
+
+	    Defaults to 125.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_DitherQuality (uint32) (V44)
+	    Quality of the dithering algorithm to be used during colour
+	    quantization. A value of 0 yields no or only little picture
+	    quality improvement while a value of 2 will yield noticeably
+	    better picture quality. Generally, the higher the quality
+	    you demand, the better the output will look like.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_AllocatedPens (uint8 *) (V44)
+	    Get the pointer to the table of allocated pens. Each entry
+	    stands for the pen assigned to the colour of the
+	    corresponding palette entry. Please note that you may
+	    receive NULL as a return value instead of a pointer
+	    and that the table may not hold any valid information unless
+	    the value returned with the PDTA_NumAlloc tag is greater
+	    than zero.
+
+	    Applicability is (OM_GET)
+
+	PDTA_ScaleQuality (uint32) (V45)
+	    Quality of the scaling algorithm to be used with PDTM_SCALE.
+	    A value of 0 means fast'n'ugly, while 1 means slow'n'nice.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	PDTA_ObtainPixelBuffer (struct pdtBlitPixelArray *) (V54)
+	    OS 3.2 compatibility - equivalent to PDTM_OBTAINPIXELARRAY.
+
+	    Applicability is (OM_SET)
+
+   NOTES
+	The PDTA_Allocated tag should not be used since it was never
+	implemented in any way the documentation suggested.
+
+	picture.datatype V44 no longer suffers from the layout restrictions
+	present in older picture.datatype revisions. This means, for example,
+	that for an extra-halfbrite picture you need no longer open a
+	custom screen to display it. Any screen will do. The same holds
+	true for hold-and-modify pictures.
+
+	Writing greyscale data to a picture (via the PBPAFMT_GREY8 pixel
+	format and the PDTM_WRITEPIXELARRAY method) automatically
+	configures the picture colour palette when the first line is
+	written. The palette is reset to 256 shades of grey with 0 = black
+	and 255 = white. If you do not want this to happen, do not use the
+	PBPAFMT_GREY8 pixel format: use PBPAFMT_LUT8 instead. This will
+	give you complete control over the picture's colour palette.
+
+

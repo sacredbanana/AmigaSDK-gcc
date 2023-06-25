@@ -1,0 +1,391 @@
+TABLE OF CONTENTS
+
+getfont.gadget/--datasheet--
+getfont.gadget/GETFONT_GetClass
+getfont.gadget/GFONT_REQUEST
+getfont.gadget/--datasheet--                     getfont.gadget/--datasheet--
+
+    NAME
+	getfont_gc -- Create getfont BOOPSI objects
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	button.gadget
+
+    DESCRIPTION
+	The getfont gadget class is used to get fonts and font attributes
+	from a font requester in an easy and consistent way. It consists
+	of two button gadgets, one read-only and one popfont button,
+	that are used to select the font and show the result.
+
+    METHODS
+	OM_NEW -- Passed to superclass, defaults set, then OM_SET.
+
+	OM_SET -- Passed to superclass, custom tags set.
+
+	OM_GET -- Custom tag returned or passed to superclass.
+
+	OM_UPDATE -- Passed to superclass, options set then rendered.
+
+	OM_DISPOSE -- Children disposed of, then passed to superclass.
+
+	GM_RENDER -- Passed to superclass then rendered.
+
+	GM_HITTEST -- Overrides superclass, returns GMR_GADGETHIT if within
+	              the popfont button.
+
+	GM_HELPTEST -- Overrides superclass, returns GMR_HELPHIT if within
+	               the domain of the gadget.
+
+	GM_GOACTIVE -- Passed to superclass, passed to popfont button.
+
+	GM_HANDLEINPUT -- Overrides superclass, all input processed.
+
+	GM_GOINACTIVE -- Passed to superclass, popfont button deactivated.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	GM_KEYGOACTIVE -- Handle keyboard activation. (V53.2)
+
+	GM_KEYGOINACTIVE -- Handle keyboard deactivation. (V53.2)
+
+	GFONT_REQUEST -- Invokes the font requester.
+
+    ATTRIBUTES
+	Many of these tags operate the same as the ASLFO_#? tags in ASL
+	library. See <libraries/asl.h> for detailed descriptions.
+
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GA_Disabled (BOOL)
+	    Set to TRUE to disable gadget, FALSE otherwise.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GA_TextAttr (struct TextAttr *)
+	    Font to use for the gadget text.
+
+	    Defaults to the screen's font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	GETFONT_SampleText (CONST_STRPTR) (V51)
+	    Text to display in font sample area. The text is not
+	    copied. Passed as ASLFO_SampleText to asl.library.
+
+	    Defaults to NULL (localized asl.library default).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_TitleText (CONST_STRPTR)
+	    Requester title text. The text is not copied.
+	    Passed as ASLFO_TitleText to asl.library.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_TextAttr (struct TextAttr *)
+	    Font to show in the gadget. The textattr.ta_Style,
+	    textattr.ta_Name, textattr.ta_YSize and textattr.ta_Flags
+	    (since V51) fields are used by the font requester as default
+	    values in OM_NEW and contain the information about the font in
+	    the other methods.
+
+	    The elements are copied including the textattr.ta_Name text.
+	    Passed as ASLFO_InitialName, ASLFO_InitialSize,
+	    ASLFO_InitialStyle (only when GETFONT_DoStyle is TRUE) and
+	    ASLFO_InitialFlags to asl.library.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFONT_DoFrontPen (BOOL)
+	    Do front pen. Passed as ASLFO_DoFrontPen to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_DoBackPen (BOOL)
+	    Do back pen. Passed as ASLFO_DoBackPen to asl.library.
+
+	    Default to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_DoStyle (BOOL)
+	    Do style. Passed as ASLFO_DoStyle to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_DoDrawMode (BOOL)
+	    Do draw mode. Passed as ASLFO_DoDrawMode to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_DoSpecialMode (BOOL) (V50)
+	    Do special draw mode. Passed as ASLFO_DoSpecialMode to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_DoCharSet (BOOL) (V50)
+	    Allow the user to select the font charset. The selected charset
+	    can be queried with GETFONT_CharSet and must be specified in
+	    the TTextAttr passed to OpenFont()/OpenDiskFont().
+	    Passed as ASLFO_DoCharSet to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_CharSet (uint32) (V50)
+	    The IANA charset number of the font.
+
+	    Passed as ASLFO_InitialCharSet to asl.library.
+	    Defaults to 0 (pass current system default charset to asl).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFONT_MinHeight (uint16)
+	    Minimum font height. Passed as ASLFO_MinHeight to asl.library.
+
+	    Defaults to 6.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_MaxHeight (uint16)
+	    Maximum font height. Passed as ASLFO_MaxHeight to asl.library.
+
+	    Defaults to 20.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_FixedWidthOnly (BOOL)
+	    Only show fixed width fonts. Passed as ASLFO_FixedWidthOnly
+	    to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_OTagOnly (BOOL) (V50)
+	    Only show fonts that are handled via bullet API.
+	    Passed as ASLFO_OTagOnly to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_ScalableOnly (BOOL) (V50)
+	    Only show scalable fonts that are handled via bullet API.
+	    Passed as ASLFO_ScalableOnly to asl.library.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_Height (int16)
+	    Height of the font requester.
+	    Passed as ASLFO_InitialHeight to asl.library.
+
+	    Defaults to 200.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFONT_Width (int16)
+	    Width of the font requester.
+	    Passed as ASLFO_InitialWidth to asl.library.
+
+	    Defaults to 300.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFONT_LeftEdge (int16)
+	    Left edge of the font requester.
+	    Passed as ASLFO_InitialLeftEdge to asl.library.
+
+	    Defaults to 30.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFONT_TopEdge (int16)
+	    Top edge of the font requester.
+	    Passed as ASLFO_InitialTopEdge to asl.library.
+
+	    Defaults to 20.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFONT_FrontPen (uint8)
+	    Front pen. Passed as ASLFO_InitialFrontPen to asl.library.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFONT_BackPen (uint8)
+	    Back pen. Passed as ASLFO_InitialBackPen to asl.library.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFONT_DrawMode (uint8)
+	    Draw mode. Passed as ASLFO_InitialDrawMode to asl.library.
+
+	    Defaults to JAM1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFONT_SpecialMode (uint8) (V50)
+	    Special draw mode. Passed as ASLFO_InitialSpecMode to asl.library.
+
+	    Defaults to FO_SPECIALMODE_NONE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFONT_MaxFrontPen (uint8)
+	    Max number of colors in front palette.
+	    Passed as ASLFO_MaxFrontPen to asl.library.
+
+	    Defaults to 255.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_MaxBackPen (uint8)
+	    Max number of colors in back palette.
+	    Passed as ASLFO_MaxBackPen to asl.library.
+
+	    Defaults to 255.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_ModeList (STRPTR *)
+	    Substitute list for drawmodes. The strings are not
+	    copied. Passed as ASLFO_ModeList to asl.library.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_FrontPens (uint8 *)
+	    Color table for front pen palette. The table is not
+	    copied. Passed as ASLFO_FrontPens to asl.library.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_BackPens (uint8 *)
+	    Color table for back pen palette. The table is not
+	    copied. Passed as ASLFO_BackPens to asl.library.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_SoftStyle (uint8)
+	    SoftStyle, provided only for making mapping to button.gadget
+	    easier. Textattr.ta_Style in the GETFONT_TextAttr attribute
+	    will provide the style in other cases.
+
+	    Applicability is (OM_GET, OM_NOTIFY)
+
+	GETFONT_FilterFunc (struct Hook *) (V51.3)
+	    Callback hook for a function which decides which fonts
+	    to display in the font requester.
+	    Passed as ASLFO_FilterFunc to asl.library when not NULL.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFONT_CSFilterFunc (struct Hook *) (V51.3)
+	    Callback hook for a function which decides which charsets
+	    to display in the font requester charset delector.
+	    Passed as ASLFO_CSFilterFunc to asl.library when not NULL.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+getfont.gadget/GETFONT_GetClass               getfont.gadget/GETFONT_GetClass
+
+    NAME
+	GETFONT_GetClass -- Gets pointer to the getfont class.
+
+    SYNOPSIS
+	Class * class = GETFONT_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "getfont.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the getfont class.
+
+getfont.gadget/GFONT_REQUEST                     getfont.gadget/GFONT_REQUEST
+
+    NAME
+	GFONT_REQUEST -- Invokes the font requester.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gfRequest* msg);
+
+    FUNCTION
+	Opens the font requester and blocks the given window. When the
+	user has finished making adjustments the selection details are
+	sent via the OM_NOTIFY mechanism. All the attributes marked with
+	OM_NOTIFY are sent to the receiver.
+
+    INPUTS
+	obj - getfont object pointer
+	msg - pointer to fully initialized struct gfRequest
+	      (see <gadgets/getfont.h>)
+
+    RESULT
+	Returns non-zero if successful or 0 on error.
+
+

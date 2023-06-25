@@ -1,0 +1,367 @@
+TABLE OF CONTENTS
+
+getfile.gadget/--datasheet--
+getfile.gadget/GETFILE_GetClass
+getfile.gadget/GFILE_FREELIST
+getfile.gadget/GFILE_REQUEST
+getfile.gadget/--datasheet--                     getfile.gadget/--datasheet--
+
+    NAME
+	getfile.gadget -- Create getfile BOOPSI objects
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	frameiclass, button.gadget, string.gadget
+
+    DESCRIPTION
+	The getfile gadget class is used to get files and drawers from a file
+	requester in an easy and consistent way. It consists of two button
+	gadgets, one read-only and one popfile/popdrawer button, that are
+	used to select the file(s)/drawer and show the result.
+
+    METHODS
+	OM_NEW -- Passed to superclass, defaults set, then OM_SET.
+
+	OM_SET -- Passed to superclass, custom tags set.
+
+	OM_GET -- Custom tag returned or passed to superclass.
+
+	OM_UPDATE -- Passed to superclass, options set then rendered.
+
+	OM_DISPOSE -- Private data disposed of then passed to superclass.
+
+	GM_RENDER -- Passed to superclass then rendered.
+
+	GM_HITTEST -- Overrides superclass, returns GMR_GADGETHIT if within
+	              the popfile/drawer button.
+
+	GM_HELPTEST -- Overrides superclass, returns GMR_HELPHIT if within
+	               the domain of the gadget.
+
+	GM_GOACTIVE -- Passed to superclass, passed to popfile/drawer button.
+
+	GM_HANDLEINPUT -- Overrides superclass, all input processed.
+
+	GM_GOINACTIVE -- Passed to superclass, popfile/drawer button deactivated.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	GM_KEYGOACTIVE -- Handle keyboard activation. (V53.4)
+
+	GM_KEYGOINACTIVE -- Handle keyboard deactivation. (V53.4)
+
+	GFILE_REQUEST -- Invokes the file requester.
+
+	GFILE_FREELIST -- Frees allocated list of files.
+
+    ATTRIBUTES
+	Many of these tags operate the same as the ASLFR_#? tags in
+	ASL library. See <libraries/asl.h> for detailed descriptions.
+
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GA_Disabled (BOOL)
+	    Set to TRUE to disable gadget, FALSE otherwise.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GA_TextAttr (struct TextAttr *)
+	    Font to use for the gadget text.
+
+	    Defaults to the screen's font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	GETFILE_TitleText (CONST_STRPTR)
+	    Requester title text.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_LeftEdge (int16)
+	GETFILE_TopEdge (int16)
+	    Requester placement coordinates.
+
+	    Default to ~0, meaning use default ASL placement.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFILE_Width (int16)
+	GETFILE_Height (int16)
+	    Requester dimensions.
+
+	    Default to ~0, meaning use default ASL size.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFILE_File (CONST_STRPTR)
+	    Contents of file gadget.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFILE_Drawer (CONST_STRPTR)
+	    Contents of drawer gadget.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFILE_FullFile (CONST_STRPTR)
+	    Complete qualified file name. Replaces GETFILE_Drawer
+	    and GETFILE_File.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GETFILE_FullFileExpand (BOOL)
+	    GETFILE_FullFile will give complete file name(s) expanded
+	    with NameFromLock() to remove relative paths.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_Pattern (CONST_STRPTR)
+	    Contents of pattern gadget.
+
+	    Defaults to "#?".
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	GETFILE_DoSaveMode (BOOL)
+	    Being used for saving?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_DoMultiSelect (BOOL)
+	    Do multi-select of files?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_DoPatterns (BOOL)
+	    Display a Pattern gadget?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_DrawersOnly (BOOL)
+	    Don't display files?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_InitialShowVolumes (BOOL)
+	    Show the list of volumes when the requester opens.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_FilterFunc (struct Hook *)
+	    This tag is deprecated. Use GETFILE_FilterHook instead.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_FilterHook (struct Hook *)
+	    A function to call for each file and directory encountered.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_RejectIcons (BOOL)
+	    Display .info files?
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_RejectPattern (CONST_STRPTR)
+	    Don't display files matching pattern.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_AcceptPattern (CONST_STRPTR)
+	    Accept only files matching pattern.
+
+	    Defaults to none.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_FilterDrawers (BOOL)
+	    Also filter drawers with pattern.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_Filelist (struct List *)
+	    If the GETFILE_DoMultiSelect tags was used, you can get a
+	    pointer to the list of selected files/drawers using this tag.
+	    The ln_Name part of each node will contain the
+	    filename/drawername for each selected file with a fully
+	    qualified path, even if you didn't use the
+	    GETFILE_FullFileExpand tag.
+
+	    In single-selected mode, the list will contain the single
+	    selected file for notification purposes. Don't forget to free
+	    the list using the GFILE_FREELIST method.
+
+	    This list is not suitable to be shown directly in a
+	    listbrowser gadget without conversion as default, use
+	    GETFILE_LBNodeStruct for that.
+
+	    Applicability is (OM_GET)
+
+	GETFILE_LBNodeStruct (BOOL)
+	    GETFILE_Filelist will give a list with ListBrowserNodes
+	    instead of normal struct Node node structures.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	GETFILE_ReadOnly (BOOL)
+	    If TRUE, a read-only recessed button gadget is used to present
+	    the file/drawer information. If FALSE, an editable string
+	    gadget is used.
+
+	    The gadget will send the supported attributes in a OM_NOTIFY
+	    when a this tag is FALSE and the user is finished editing the
+	    content of the string gadget. The application can be aware of
+	    all changes to the string gadget by setting ICA_TARGET to
+	    TARGET_IDCMP for this getfile gadget instance and watching
+	    IDCMP_IDCMPUPDATE messages. The IDCMP Code will be set equal
+	    to the GadgetID if the popup button was clicked and zero if
+	    the string was active.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	GETFILE_FilePartOnly (BOOL)
+	    Return the file part only when in read only mode.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	GETFILE_AllowEmptyFileSelection (BOOL) (V50)
+	    Allows the file selection to be empty. Normally, an empty
+	    file selection is an error condition.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+getfile.gadget/GETFILE_GetClass               getfile.gadget/GETFILE_GetClass
+
+    NAME
+	GETFILE_GetClass -- Gets pointer to the getfile class.
+
+    SYNOPSIS
+	Class * class = GETFILE_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "getfile.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the getfile class.
+
+getfile.gadget/GFILE_FREELIST                   getfile.gadget/GFILE_FREELIST
+
+    NAME
+	GFILE_FREELIST -- Frees allocated list of files.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gfileFreelist* msg);
+
+    FUNCTION
+	This method frees the allocated file list which is created each
+	time GETFILE_Filelist is retrieved. Failure to free the list will
+	result in resource leaks.
+
+    INPUTS
+	obj - getfile object pointer
+	msg - pointer to fully initialized struct gfileFreelist
+	      (see <gadgets/getfile.h>)
+
+    RESULT
+	The return value is not defined.
+
+getfile.gadget/GFILE_REQUEST                     getfile.gadget/GFILE_REQUEST
+
+    NAME
+	GFILE_REQUEST -- Invokes the file requester.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gfileRequest* msg);
+
+    FUNCTION
+	Opens the file requester and blocks the given window. When the
+	user has finished making adjustments the selection details are
+	sent via the OM_NOTIFY mechanism. All the attributes marked with
+	OM_NOTIFY are sent to the receiver.
+
+    INPUTS
+	obj - getfile object pointer
+	msg - pointer to fully initialized struct gfileRequest
+	      (see <gadgets/getfile.h>)
+
+    RESULT
+	The GFILE_REQUEST method will return 0 if no file is selected and
+	the GETFILE_DrawersOnly tag is not used even if the user selected
+	the positive response in the requester. If a file is selected
+	it will return 1. Returns 0 on error as well.
+
+

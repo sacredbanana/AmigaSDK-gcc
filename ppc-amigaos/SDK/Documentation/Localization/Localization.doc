@@ -1,0 +1,413 @@
+$VER: Localization.doc 53.1 (8.7.2015)
+
+How to localize AmigaOS
+-----------------------
+For complete support of your language in AmigaOS, you need:
+
+1) An 8 bit charset with all characters needed to write your language.
+
+2) A MIME name and ID for your charset.
+
+3) A mapping table to Unicode for your charset.
+
+4) The topaz font in sizes 8 and 9 in your charset.
+
+5) A charset driver in your charset.
+
+6) A language driver in your charset.
+
+7) A country file in your charset.
+
+8) A keymap for your keyboard and charset.
+
+9) Catalog files in your language.
+
+AmigaOS may already be shipped with some of the needed components, e.g. if we
+already created a charset driver you dont need components 1) to 5), and
+maybe only some catalog files are missing. But for the worst case we'll
+describe the complete procedure below.
+
+
+Before you begin
+----------------
+Please look at http://ato.bitbrook.de/ to find out if (some of) the needed
+components are already available or if someone else already works on them
+so you can eventually combine your efforts.
+
+If you can't find the needed information there, you can ask us.
+
+
+1) An 8 bit charset with all characters needed to write your language.
+---------------------------------------------------------------------
+If you have only a vague idea what the term "charset" could mean,
+first have a look at Charsets.doc distributed with AmigaOS.
+
+AmigaOS requires an 8 bit charset where the range 0 - 160 is identical to
+ISO-8859-1 as system default charset. If the remaining range 161 - 255 is
+not large enough for all non-ASCII characters needed to write your
+language, you have to wait until AmigaOS supports multibyte charsets.
+This excludes e.g. Chinese, Japanese and Taiwanese.
+
+AmigaOS currently only supports the left-to-right writing direction. If your
+language is written in another direction you have to wait until AmigaOS
+supports e.g. the Unicode bi-directional writing algorithm.
+This excludes e.g. Arabic and Hebrew.
+
+AmigaOS does currently not support character combining. There exist scripts
+where the visual appearance of a character (its glyph) may be modified
+by neighbour characters or marks, e.g. Arabic, Hangul, Syriac. Supporting
+those would require a font layout engine and an API for it which doesn't
+exist yet for AmigaOS.
+
+
+2) A MIME name and ID for your charset.
+---------------------------------------
+An electronic document that gets transferred from one machine to another,
+e. g. web pages, news articles or emails, does normally have to be marked
+with a special tag that identifies its charset. This is necessary for
+the receiving machine to be able to do any necessary charset conversion
+or font selection before displaying the document, you e.g. can't display
+a greek text with a cyrillic font. The standard tag used for this purpose
+is the MIME name.
+
+AmigaOS uses a copy of the IANA charset name registry which can be found at
+http://www.iana.org/assignments/character-sets in
+L:Charsets/character-sets. This file contains the MIME character set names
+that are allowed to use in electronic documents that conform to the MIME
+standard.
+
+AmigaOS does also allow to use non-standard charsets. Those can be found in
+L:charsets/custom-character-sets.
+
+In most cases you should be able to use an existing MIME character set.
+If you know about a MIME charset that is not listed in
+L:Charsets/character-sets, update the file with the latest copy from the
+IANA registry. Do NOT edit the file yourself. If you found the MIME name
+of your charset, do remember it, and do also remember the "MIBenum"
+numeric charset ID.
+
+If you really think it's necessary to define your own custom charset, edit
+L:Charsets/custom-character-sets. Give it a name that starts with "X-"
+(thats a convention of the MIME standard), keep the name shorter than
+40 characters and use US-ASCII, no spaces, for the name. Give it also
+a MIBenum numeric charset ID. Don't forget that your custom charset can
+only be used on machines that have the charset listed in
+L:Charsets/custom-character-sets. It's possible to register new character
+sets at IANA, this did e.g. happen with the "Amiga-1251" charset that
+was first used for the russian translation of AmigaOS 3.x, the procedure
+should be described at the IANA website.
+
+
+3) A mapping table to Unicode for your charset.
+-----------------------------------------------
+AmigaOS needs to know the name and ID of your charset, see above, and it
+needs to know which characters it does actually contain. It does search
+this information in a binary file in L:Charsets/MIME-NAME-OF-YOUR-CHARSET
+that describes which character index in your charset matches which
+character index in Unicode.
+
+If you don't have such a mapping table yet, first have a look if its placed
+in L:Charsets/Storage/, did place some mapping tables there because I
+thought most users would not need them. If its there, move it to
+L:Charsets/. Otherwise you can create a mapping table with the
+BuildMapTable command, see Tools/BuildMapTable_cmd.doc that also describes
+where to search for existing table source files and the format of those
+files.
+
+
+4) The topaz font in sizes 8 and 9 in your charset.
+---------------------------------------------------
+With a MIME charset name and ID and an Unicode mapping table (see above)
+you can already use the CharsetConvert tool to convert texts from/to
+your charset, you can use TypeManager to create bitmap fonts in your
+charset, and you can use NotePad to write texts in your charset.
+
+However, you can't use your charset as system default charset yet, for this
+purpose you need a charset driver and a language driver (see below), and
+you need topaz/8 and topaz/9 in your charset. diskfont.library has to
+guarantee that those two fonts are always available in the system default
+charset for compatibility reasons, and it will ask you with an Alert at
+boot time if you really want to use your charset if the fonts could not be
+found on disk.
+
+If your favorite bitmap font editor is not charset aware yet, do the
+following:
+
+- Choose which already existing topaz variant would require the least
+  modifications to convert it in your charset. By looking which files
+  are in FONTS:topaz/ you can see what exists already. If the files
+  8_MINE-NAME-OF-YOUR-CHARSET and 9_MIME-NAME-OF-YOUR-CHARSET do exist
+  already, you dont need to create them :) Font files without _MIME_NAME
+  extension are normally in ISO-8859-1.
+
+- Load topaz_MIME-NAME-OF-SIMILAR-CHARSET in size 8 (E.g. topaz_ISO-8859-2
+  if you want to create a czech charset with Euro sign). This
+  fontname_MIME-NAME trick can be used to tell diskfont.library which
+  charset you want when the application is not charset aware.
+
+- Modify the font for your charset and save it as "mytopaz" size 8.
+  Then load topaz_MIME-NAME-OF-SIMILAR-CHARSET in size 9, modify it
+  and save it as mytopaz size 9.
+
+- Call "SetFontCharset FONTS:mytopaz/8 MIME-NAME-OF-MY-CHARSET"
+  and  "SetFontCharset FONTS:mytopaz/9 MIME-NAME-OF-MY-CHARSET".
+  (See also the documentation of the SetFontCharset command).
+
+- Call "Rename FONTS:mytopaz/8_MIME-NAME-OF-MY-CHARSET FONTS:topaz/"
+  and  "Rename FONTS:mytopaz/9_MIME-NAME-OF-MY-CHARSET FONTS:topaz/".
+
+- Call "Delete FONTS:mytopaz#? ALL"
+
+- Call "FixFonts" and you are done.
+
+
+5) A charset driver in your charset.
+------------------------------------
+If LOCALE:Charsets/MIME-NAME-OF-YOUR-CHARSET.charset does not exist yet,
+you need to create it. Its a system library that implements basic
+charset-related functions, e.g. ConvToUpper() or IsAlpha(). If you dont
+know how to build an OS4 system library, ask a programmer for help.
+
+Sample sources and makefiles can be found in Examples/Locale/Charsets/.
+You basically just need to copy e.g. ISO-8859-15.c to
+MIME-NAME-OF-MY-CHARSET.c, modify the character property and conversion
+tables, use BumpRev to create MIME-NAME-OF-MY-CHARSET_rev.h, add your
+driver to the makefiles and call "make". You may need the OS4 SDK.
+You may also need to change the include paths in the makefiles, e.g.
+V:include -> ../include plus SDK:include.
+
+
+6) A language driver in your charset.
+-------------------------------------
+You can look at LOCALE:Languages/ to see which language drivers do
+already exist. Normally, the file names are in english and a _MIME-NAME
+extension is added for non-ISO-8859-1 drivers. If in doubt, calling
+Prefs/Locale and deleting the list of preferred languages shows you a
+list which language drivers for which charset are available (you can quit
+without saving the modified settings).
+
+Note that AmigaOS 4 comes with compatibility language drivers for the
+custom used in the AmigaOS 3.x localization, these can be found in
+Storage/Languages/ (czech, polish, serbian and slovak). If you want to
+use one of those, move it to LOCALE:Languages/ and select it as first
+preferred language in Prefs/Locale. Normally you should use the new
+drivers that use official MIME charsets.
+
+If LOCALE:Languages/mylanguage_MIME-NAME-OF-MY-CHARSET.language does
+not exist yet, you need to create it. Its a system library that can
+implement basic charset-related functions, e.g. ConvToUpper() or
+IsAlpha(), but in most cases it wont implement them and AmigaOS uses the
+charset driver as fallback. It may implement special language specific
+sorting rules in StrnCmp() if the charset specific rules of the charset
+driver are different. And it always contains some text strings for
+GetLocaleStr().
+
+If you already have a language driver for your language and charset
+but it contains errors or typos in the builtin strings for GetLocaleStr(),
+you can fix that without the need to use a C compiler, CatComp is enough.
+See Documentation/Tools/BuildLanguageCT how to create a catalog file that
+overrides the builtin strings of the language driver.
+
+If you don't know how to build an AmigaOS system library, ask a programmer
+for help. Sample sources and makefiles can be found in
+Examples/Locale/Languages/. Note that there exist three different types
+of drivers that include different versions of the basic driver framework:
+
+- languagecharsetdriver.c is included by drivers that always override the
+  charset driver and define all functions themselves.
+
+- languagestrncmpdriver.c is included by drivers that dont have
+  the IsAlNum(), IsAlpha() etc functions, no ConvToLower(),
+  ConvToUpper() and StrConvert() because the functions in the
+  common charset driver are ok for this language. They implement
+  StrnCmp(), GetLocaleStr() and GetCodeSet().
+
+- languagedriver.c is like above but without StrnCmp(), when there
+  exist no language-specific sorting rules the charset driver provides it.
+
+You basically just need to copy an existing
+languagename_MIME-NAME.c source code to
+mylanguage_MIME-NAME-OF-MY-CHARSET.c, modify the character property and
+conversion tables and the text strings, use BumpRev to create
+mylanguage_MIME-NAME-OF-MY-CHARSET_rev.h, add your driver to the makefiles
+and call "make". You may need the AmigaOS SDK. You may also need to change
+the include paths in the makefiles, e.g. V:include -> ../include plus
+SDK:include.
+
+
+To activate your new language driver, copy it to LOCALE:Languages/,
+start Prefs/Locale, clean the list of preferred languages and rebuild it
+by selecting your new driver first, select eventually more languages and
+save. Only the first driver in the list specifies the system default
+language, system default charset and system default sorting rules.
+The additional entries in the list do only specify additional directories
+to search for catalog files.
+
+
+7) A country file in your charset.
+----------------------------------
+If LOCALE:Countries/ does not contain a country file for your country
+(those files specify date and time formats, currency etc) you need one.
+If it contains a country file you can use it in most cases, except it
+contains text (often curreny strings) in a charset that is not compatible
+to your charset. There exists a program on Aminet called CountryEdit
+that is able to tell you which settings and strings are stored in a
+country file.
+
+If you want to create a new country file, have a look at
+Examples/Locale/Countries/ which contains the source code of a program
+that can create them. You just have to add a new country definition,
+compile and run the program. If you are no programmer and can't ask one
+for help, you can try to build a country file with CountryEdit. However,
+this program is not aware of the new "builtin native name in native
+charset" feature used by AmigaOS Prefs/Locale so the native country name
+may get lost.
+
+The naming rules for country files are: English, US-ASCII filename,
+native name in native charset is stored in the file, variants are named
+CountryName_Variant.country. Example:
+
+Switzerland_french.country  ("Suisse")
+Switzerland_german.country  ("Schweiz")
+Switzerland_italian.country ("Svizzera")
+
+Copying a country file to LOCALE:Countries/ does not "activate" it,
+you have to start Prefs/Locale, select it and save the settings for this.
+
+You can also create a flag image for your new country file if none does
+exist in LOCALE:Flags/Countries/. Prefs/Locale searches for "CountryName"
+when "CountryName_Variant" cant be found.
+
+
+8) A keymap for your keyboard and charset.
+------------------------------------------
+(See also the Keymaps.doc file released with AmigaOS.)
+If you can find a keymap in KEYMAPS: that describes your keyboard and
+is written in the same charset than yours or a "compatible" charset
+that contains the same or more characters, you can use it. Prefs/Input
+shows which keymaps are available. After selecting one, Tools/KeyShow
+shows you which keys do produce which characters in combination with
+which Qualifier keys (Shift, Alt, Ctrl).
+
+KeyShow doesn't show which characters are produced by deadkey combinations
+but that doesn't matter because keymap.library does automatically adjust
+the deadkey combinations of a keymap to the current system default
+charset when the keymap is in the new text file format. This means you will
+always get a Z with acute accent after typing the deadkey for acute accent
+followed by a capital Z when your charset contains this character.
+
+If your keyboard is not described by a file in KEYMAPS:, start with a copy
+of a similar keymap file and edit it, see Keymaps.doc for details. You
+can use the CharsetConvert command to change the charset of the copied
+keymap file, dont forget to change the CHARSET and LOCALEINFOCHARSET lines
+after doing this.
+
+You can also create a flag image for your new keymap file if none does
+exist in LOCALE:Flags/Keymaps/. Prefs/Input searches for "name" when
+"name_variant" cant be found.
+
+
+9) Catalog files in your language.
+----------------------------------
+You can use CatComp (see Documentation/Tools/CatComp.doc) to create a
+missing catalog file in your language for your favorite application or
+OS component. Note that locale.library is able to convert the charset of a
+catalog file during load so you can e.g. use any existing slovak catalog
+regardless if it is in X-ATO-E2 (which was used for the AmigaOS 3.x slovak
+catalogs) or in ISO-8859-2.
+
+The CharSetConvert command can be used to convert existing catalog
+translation (.ct) files if you want to switch the charset. Dont forget
+to change the ##codeset entry to the MIME charset ID of the new charset
+afterwards.
+
+In AmigaOS 3.x some language names did contain non-ASCII characters which
+could result in charset problems with the directory names used to store
+catalog files. For example francais (with a c with cedilla, this text is
+in ASCII) is displayed with a greek character in the middle when the user
+uses a greek charset. The AmigaOS 4 locale.library prefers english,
+US-ASCII file and directory names ("french" in this example) but does
+fallback to search in the old directories for backwards compatibility.
+However, you are encouraged to switch to the new names, which are specified
+with the ##language entry in a .ct file.
+
+It follows a list of compatibility assumptions built into the AmigaOS 4
+locale.library, you may need it when you want to convert existing .ct
+files to a different charset. The charset assumption is only made when
+the old name was used and codeset 0 was specified. For the new names
+codeset 0 is assumed to mean 4 (ISO-8859-1). The old language names are
+in ISO-8859-1:
+
+Old language name | New language name | Assumed charset
+------------------+-------------------+----------------
+bosanski           bosnian             ISO-8859-1
+català             catalan             ISO-8859-1
+czech              czech               X-ATO-E2
+dansk              danish              ISO-8859-1
+deutsch            german              ISO-8859-1
+español            spanish             ISO-8859-1
+farsi              persian             *1
+français           french              ISO-8859-1
+greek              greek               ISO-8859-7
+hangul             korean              *2
+hrvatski           croatian            ISO-8859-2
+italiano           italian             ISO-8859-1
+magyar             hungarian           ISO-8859-2
+nederlands         dutch               ISO-8859-1
+nihongo            japanese            *3
+norsk              norwegian           ISO-8859-1
+polski             polish              X-ATO-PL
+português          portuguese          ISO-8859-1
+português-brasil   portuguese-brazil   ISO-8859-1
+russian            russian             Amiga-1251
+slovak             slovak              X-ATO-E2
+slovensko          slovenian           ISO-8859-2
+srpski             serbian             X-ATO-srpski
+suomi              finnish             ISO-8859-1
+svenska            swedish             ISO-8859-1
+türkçe             turkish             ISO-8859-9
+
+*1 - The persian "IPJ" charset used by Paymaan Jafari for localizing parts
+     of AmigaOS 3.x is not supported in AmigaOS 4. We would need at least
+     a mapping table of the charset to Unicode.
+
+*2 - Existing korean catalogs for AmigaOS 3.x are in EUC-KR, a multibyte
+     character set that is not yet supported by AmigaOS 4.
+
+*3 - Existing japanese catalogs for AmigaOS 3.x are in EUC-JP, a multibyte
+     character set that is not yet supported by AmigaOS 4.
+
+Its also possible in AmigaOS 4 to create more than one catalog for a language,
+e.g. an extra full featured version in UTF-8 for future compatibility and
+an extra US-ASCII only version that can be displayed in all charsets.
+See the autodoc for OpenCatalog() for details.
+
+A note to the developers: If the builtin strings of your application
+are in english but contain non-ASCII characters (copyright sign,
+registered sign, middle dot etc), don't forget that this may cause
+charset problems (on e.g. a greek system without a greek catalog).
+To avoid that, make the distinction between an english string and
+a default string.
+
+The default builtin strings of your application should be ASCII only
+and you should pass 'OC_BuiltInLanguage, "ASCIIenglish"' to OpenCatalog.
+Then you create an english .ct file in e.g. ISO-8859-1 which includes
+the non-ASCII characters and create an english .catalog file from it
+with CatComp. This catalog file does only contain the strings with
+non-ASCII characters and is only loaded when the user did select "english"
+as one of the preferred languages.
+
+Another note to the developers: Please make all strings in your
+applications localizable, including the format strings for FormatDate(),
+FormatString(), RawDoFmt() etc. Some languages may require localized
+versions of those for good readability.
+
+A note to the translators: The AmigaOS 4 version of FormatString()
+(which also replaces RawDoFmt() after IPrefs was started) has a new
+feature, you can force the first character of a word to uppercase or
+lowercase. The AmigaOS 4 version of FormatDate() has support for
+alternate weekday and month names, forced case of many names, and
+suppression of leading zeros. See the autodocs for details.
+
+Have fun,
+AmigaOS Development Team

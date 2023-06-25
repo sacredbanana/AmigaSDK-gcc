@@ -1,0 +1,388 @@
+TABLE OF CONTENTS
+
+colorwheel.gadget/--datasheet--
+colorwheel.gadget/ConvertHSBToRGB
+colorwheel.gadget/ConvertRGBToHSB
+colorwheel.gadget/--datasheet--               colorwheel.gadget/--datasheet--
+
+    NAME
+	colorwheel.gadget -- Create color wheel BOOPSI objects
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	frameiclass
+
+    DESCRIPTION
+	The color wheel class provides the ability to create gadgets
+	enabling the user to control the hue and saturation components
+	of an HSB (Hue-Saturation-Brightness) color space. The companion
+	gradient slider class enables control of the brightness component of
+	the color space.
+
+	The color wheel can operate on screens of any depth and adapts
+	its rendering to the number of colors available. The system's pen
+	sharing mechanism is used in order to maximize the number of colors
+	used by the wheel. A color wheel gadget is (normally) responsible
+	for choosing its own color pens to draw in (using ObtainBestPen()).
+	However, the creator of the gadget can "donate" some pens to the
+	gadget using the WHEEL_Donation tag.
+
+	The reason that the color wheel picks its own colors is because
+	it has the ability to display several different layouts depending
+	on the number and variety of colors available. For example, when
+	opening on a screen of low depth or when opening on a screen where
+	all the pens have already been allocated exclusively, the gadget will
+	display a "monochrome" version of the color wheel, where instead of
+	colored segments, the letters "R" (for red), "G" (for green), "B"
+	(for blue), "Y" (for yellow), "C" (for cyan) and "M" (for magenta)
+	will be used as labels.
+
+	You can talk to the color wheel using HSB or RGB, even though the
+	color wheel only really deals with HSB in its user-interface. All
+	communications with applications are performed with full 32-bit
+	color component values.
+
+    WARNING
+	Once a color wheel has been created on a given screen, the wheel
+	object must be deleted using DisposeObject() prior to closing the
+	screen. This is because the wheel object allocates pens on the
+	screen.
+
+    METHODS
+	OM_NEW -- Passed to superclass, defaults set then OM_SET.
+
+	OM_DISPOSE -- Memory freed then passed to superclass.
+
+	OM_GET -- Custom tag returned or passed to superclass.
+
+	OM_SET -- Passed to superclass, custom tags set.
+
+	OM_UPDATE -- Passed to superclass, options set then rendered.
+
+	GM_RENDER -- Renders the color wheel.
+
+	GM_HITTEST -- Returns GMR_GADGETHIT if hit.
+
+	GM_GOACTIVE -- Activates the wheel.
+
+	GM_HANDLEINPUT -- Handles all wheel input.
+
+	GM_GOINACTIVE -- Deactivates the wheel.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+	GA_UserInput (BOOL)
+	    Notification tag indicates this notification is from the
+	    active gadget receiving user input.
+
+	    Applicability is (OM_NOTIFY)
+
+	GA_Disabled (BOOL)
+	    Set to TRUE to disable the gadget or FALSE otherwise.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	WHEEL_Hue (uint32)
+	    Set and get the hue component of a color wheel.
+	    This is effectively the angle around the wheel where the
+	    desired color lies. If the wheel is currently displayed,
+	    the position of the selection knob will be moved to reflect
+	    the new hue.
+
+	    A hue value of 0 is all red and nothing but red. Increasing
+	    the value moves the color towards all green at 0x55555555,
+	    full blue at 0xAAAAAAAA and back to red at 0xFFFFFFFF.
+
+	    If you are setting or getting more than one color component
+	    at a time it is more efficient to use the WHEEL_HSB tag.
+
+	    Default is 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	WHEEL_Saturation (uint32)
+	    Set and get the saturation component of a color wheel.
+	    This is effectively the distance from the center of the
+	    wheel where the desired color lies. If the wheel is currently
+	    displayed, the position of the selection knob will be moved
+	    to reflect the new saturation.
+
+	    A saturation value of 0 puts the knob at the center of the
+	    wheel and always yields white. Increasing the value
+	    progressively moves the knob farther away from the center.
+	    until the value 0xFFFFFFFF is reached in which case the knob
+	    is as far as it can go.
+
+	    If you are setting or getting more than one color component at
+	    a time it is more efficient to use the WHEEL_HSB tag.
+
+	    Default is 0xFFFFFFFF.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	WHEEL_Brightness (uint32)
+	    Set and get the brightness component of a color wheel.
+	    The color wheel does not itself have any means of displaying
+	    or editing brightness but it does maintain this value
+	    internally. Used with WHEEL_GradientSlider, this tag lets
+	    you control the value of a gradient slider object by passing
+	    WHEEL_Brightness to a color wheel.
+
+	    A brightness value of 0 means all black. Increasing the value
+	    progressively brightens the current color, until the value
+	    0xFFFFFFFF is reached in which case the color is as bright as
+	    it gets.
+
+	    If you are setting or getting more than one color component at
+	    a time it is more efficient to use the WHEEL_HSB tag.
+
+	    Default is 0xFFFFFFFF.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	WHEEL_HSB (struct ColorWheelHSB *)
+	    Set and get the hue, saturation and brightness components of
+	    a color wheel. This is a buik version of the separate WHEEL_Hue,
+	    WHEEL_Saturation and WHEEL_Brightness tags.
+
+	    When setting this tag, initialize a ColorWheelHSB structure
+	    and provide a pointer to it. When getting this tag, pass a
+	    pointer to a ColorWheelHSB structure and the color wheel
+	    object will fill it in with the current values.
+
+	    Defaults are a hue of 0, a saturation of 0xFFFFFFFF
+	    and a brightness of 0xFFFFFFFF.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	WHEEL_Red (uint32)
+	    Set and get the red component of a color wheel. If the
+	    wheel is currently displayed, the position of the selection
+	    knob will be moved to reflect the new amount of red.
+
+	    If you are setting or getting more than one color component
+	    at a time it is more efficient to use the WHEEL_RGB tag.
+
+	    Default for this tag is 0xFFFFFFFF.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	WHEEL_Green (uint32)
+	    Set and get the green component of a color wheel. If the
+	    wheel is currently displayed, the position of the selection
+	    knob will be moved to reflect the new amount of green.
+
+	    If you are setting or getting more than one color component
+	    at a time it is more efficient to use the WHEEL_RGB tag.
+
+	    Default for this tag is 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	WHEEL_Blue (uint32)
+	    Set and get the blue component of a color wheel. If the
+	    wheel is currently displayed, the position of the selection
+	    knob will be moved to reflect the new amount of blue.
+
+	    If you are setting or getting more than one color component
+	    at a time it is more efficient to use the WHEEL_RGB tag.
+
+	    Default for this tag is 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	WHEEL_RGB (struct ColorWheelRGB *)
+	    Set and get the red, green and blue components of a color
+	    wheel. This is a buik version of the separate WHEEL_Red,
+	    WHEEL_Green and WHEEL_Blue tags.
+
+	    When setting this tag, initialize a ColorWheelRGB structure
+	    and provide a pointer to it. When getting this tag, pass a
+	    pointer to a ColorWheelRGB structure, and the color wheel
+	    object will fill it in with the current values.
+
+	    Defaults are a red of 0xFFFFFFFF, a green of 0 and
+	    a blue of 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	WHEEL_Screen (struct Screen *)
+	    Indicate the screen the color wheel is to open on. This is
+	    a required tag and must be provided when the wheel is
+	    created via NewObject().
+
+	    Applicability is (OM_NEW)
+
+	WHEEL_Abbrv (CONST_STRPTR)
+	    When the color wheel is rendered on a display which doesn't
+	    have enough colors to allow it to draw itself in color, it
+	    automatically renders itself in monochrome instead. In such
+	    a case, the various color segments are identified by six
+	    letters G=Green, C=Cyan, B=Blue, M=Magenta, R=Red and Y=Yellow.
+	    You can provide a replacement set of six letters. This is
+	    meant for localization of the wheel.
+
+	    Default is "GCBMRY".
+
+	    Applicability is (OM_NEW)
+
+	WHEEL_Donation (uint16 *)
+	    Specifies an array of pens donated by the application for use
+	    by the color wheel. The array can contain any number of pens
+	    and is terminated with a pen value of ~0. The wheel will change
+	    the RGB values of these pens to suit its needs so be prepared
+	    for this. This means the pens should likely be allocated using
+	    the PENF_EXCLUSIVE option of the ObtainPen() function.
+
+	    Default is NULL.
+
+	    Applicability is (OM_NEW)
+
+	WHEEL_BevelBox (BOOL)
+	    Set to TRUE if you want a raised bevelled box to be drawn
+	    around the wheel.
+
+	    Default is FALSE.
+
+	    Applicability is (OM_NEW)
+
+	WHEEL_MaxPens (uint32)
+	    Indicate the maximum number of shared color pens the wheel
+	    should attempt to allocate. This tag is useful if you wish
+	    to minimize the impact the wheel can have on your screen's pens.
+
+	    Default is 256.
+
+	    Applicability is (OM_NEW)
+
+	WHEEL_GradientSlider (struct Gadget *)
+	    This tag lets you do simple linking of a gradient slider
+	    object to a color wheel object. You give this tag a pointer
+	    to a gradient slider object obtained previously via NewObject().
+	    Once this is done, anytime the various tags that can affect
+	    the brightness component of the current color is sent to the
+	    color wheel, the color wheel automatically changes the value of
+	    the attached gradient slider to match that new brightness value.
+	    Reading the brightness value from the color wheel returns the
+	    current value indicated by the gradient slider.
+
+	    Using this tag effectively allows you to treat the color wheel
+	    and gradient slider as a single gadget. Once things are set up,
+	    all communications occur through the wheel object and the
+	    gradient slider can pretty much be ignored by the application.
+
+	    Default is NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	WHEEL_KeepAspect (BOOL) (V51)
+	    Specify if the gadget should always display a perfectly
+	    circular color wheel (1:1 aspect) or it's allowed to stretch
+	    the color wheel to an oval shape in order to fill as much
+	    as possible of the available space.
+
+	    Default is FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+    BUGS
+	Even though all communication with the color wheel is done using full
+	32-bit color components, color calculations are currently done using
+	16-bit math, which can cause certain rounding errors to appear.
+
+	Prior to V40, the WHEEL_Red, WHEEL_Green, and WHEEL_Blue tags
+	did not return the correct values when a gradient slider is linked
+	with the color wheel using the WHEEL_GradientSlider tag. The
+	workaround is to always use the WHEEL_RGB tag, and just extract the
+	values from there.
+
+colorwheel.gadget/ConvertHSBToRGB           colorwheel.gadget/ConvertHSBToRGB
+
+    NAME
+	ConvertHSBToRGB -- Convert from an HSB color space to an
+	                   RGB color space. (V39)
+
+    SYNOPSIS
+	void ConvertHSBToRGB(struct ColorWheelHSB *hsb,
+	                     struct ColorWheelRGB *rgb);
+
+    FUNCTION
+	Converts a color from an HSB representation to an RGB
+	representation.
+
+    INPUTS
+	hsb - filled-in ColorWheelHSB structure containing the values to
+	      be converted
+	rgb - structure to receive the converted values
+
+    BUGS
+	Even though all communication with the color wheel is done using full
+	32-bit color components, color calculations are currently done using
+	16-bit math which can cause certain rounding errors to appear.
+
+    SEE ALSO
+	ConvertRGBtoHSB()
+
+colorwheel.gadget/ConvertRGBToHSB           colorwheel.gadget/ConvertRGBToHSB
+
+    NAME
+	ConvertRGBToHSB -- Convert from an RGB color space to an
+	                   HSB color space. (V39)
+
+    SYNOPSIS
+	void ConvertRGBToHSB(struct ColorWheelHSB *rgb,
+	                     struct ColorWheelRGB *hsb);
+
+    FUNCTION
+	Converts a color from an RGB representation to an HSB
+	representation.
+
+    INPUTS
+	rgb - filled-in ColorWheelHSB structure containing the values to
+	      be converted
+	hsb - structure to receive the converted values
+
+    BUGS
+	Even though all communication with the color wheel is done using full
+	32-bit color components, color calculations are currently done using
+	16-bit math which can cause certain rounding errors to appear.
+
+    SEE ALSO
+	ConvertHSBtoRGB()
+
+

@@ -1,0 +1,451 @@
+				   
+
+
+
+
+			       LOCALIZE
+
+
+
+	Format:	    LOCALIZE {<name|pattern>
+		    LOCALIZE PATCH [DIR|DIRECTORY <name>]
+			     [MC|MERGECATALOG <file>] [SORT]
+			     [MIN|MINIMUM <number>] [NEST]
+			     [EXF|EXCEPTFUNCS <file>]
+			     [EXS|EXCEPTSTRINGS <file>]
+			     [FUNC|FUNCTION <name>] [TEMP|TEMPLATE <text>]
+			     [PS|PREPENDSTRING <text>] [PF|PREPENDFILE <file>]
+			     [AS|APPENDSTRING <text>] [AF|APPENDFILE <file>]
+			     [SH|SILENT] {FILES}  
+
+	Template:   PATCH/S,DIR=DIRECTORY/K,MC=MERGECATALOG/K,SORT/S,
+		    MIN=MINIMUM/K/N,NEST/S,
+		    EXF=EXCEPTFUNCS/K,EXS=EXCEPTSTRINGS/K
+		    FUNC=FUNCTION/K,TEMP=TEMPLATE/K,
+		    PS=PREPENDSTRING/K,PF=PREPENDFILE/K,
+		    AS=APPENDSTRING/K,AF=APPENDFILE/K,
+		    SH=SILENT/S,FILES/A/M
+
+	Purpose:    To localize C source files.
+
+	Specification:
+
+	(Changed lines are denoted by a vertical bar in the left margin.)
+
+	LOCALIZE has two distinct operation modes:  parsing and
+	patching.  You select the mode by supplying or omitting the
+	PATCH keyword.
+
+	If the PATCH keyword is not given, LOCALIZE reads each file
+	specified (or matched by a wildcard) and writes a record to
+	the output for each string found.  Typically, you will
+	redirect the output to a file for editing.
+
+	The format of the output records is as follows:
+
+	  file|type|line|start column|end column|message tag|string
+
+	<file> is the name of the file where a string was found.
+
+|	<type> is a single character that may be 'S' for a localizable
+|	string, 'E' for a non-localizable string, or 'D' for a
+|	non-localizable string that occurs in a '#define'.  (A string
+|	is considered non-localizable when it located outside of a C
+|	function.)
+
+	<line> is the number of the line in <file> where the string
+	was found.
+
+	<start column> is column where the opening double quote (")
+	appears.  (The line begins with column 1.)
+
+	<end column> is column where the closing double quote (")
+	appears.
+
+
+
+	<message tag> is the name that will be used to refer to the
+	string.
+
+	<string> is the text that was found.
+
+	If LOCALIZE encounters strings that are defined outside of a
+|	function it will set <type> to 'E', or 'D' if that string
+|	appears as part of a '#define'.  Strings defined outside
+	a function  require special handling because there is no
+	program context in which to execute a function call.  Strings
+|	described by 'D' or 'E' records are not patched in the source,
+|	but are added to the catalog description (.cd) file as
+|	comments.  A string occurring in a '#define' receives special
+|	treatment because it may or may not be localizable.
+
+|	A type 'D' string may be localized if, and only if, the macro
+|	is used exclusively within functions.  Compiler errors will
+|	result if the macro is localized and used outside a function. 
+
+	Sometimes localization is undesirable; system assigns (SYS:,
+	FONTS:, etc.) or debugging statements (ex: D(bug("oops!")))
+	for example.  By using exception files LOCALIZE can be made to
+	bypass strings that would otherwise be localized.
+
+	This may be done in two ways; by the contents of a string or
+	by that name of a calling function.
+
+
+	Edit the string record file, deleting entries that should not
+	be localized ("S:" for example), and changing the message tags
+	if desired.  In particular, if there is a string that appears
+	in 10 places there should be 1 message tag that appears in 10
+	entries in this file, not 10 message tags each referring to
+	the same string.
+
+	WARNING:  Do not alter the ordering of the lines in the string
+		  record file.  The lines are sorted first by line
+		  number, then by starting column number.  If the
+		  string records are not sorted the results are
+		  undefined. 
+
+	Run LOCALIZE with the PATCH switch and the edited file string
+	record file to create a localized C source file and a Catalog
+	Description file (.cd file).  These files will be placed in
+	the subdirectory "Localized-Source".
+
+	The directory name may be changed by supplying the DIRECTORY
+	keyword and a name.  If <name> contains a colon (':') all
+	localized source files and catalog descriptions will be saved
+	there.  If <name> does not contain a colon, <name> will be
+	concatenated with the directory where a file is found to
+	produce an output directory for that file.
+
+	The default behavior of LOCALIZE is to write a .cd file for
+	every source file that is patched.  If a common .cd file is
+	desired, the MERGECATALOG keyword should be given with the
+	desired name for the catalog description file.
+
+
+
+	LOCALIZE will write entries to the .cd file in the order
+	encountered; the previous version sorted the entries by the
+	message ID.  The old behavor may be obtained by supplying the
+	SORT switch, which causes localize to sort the .cd file by
+	message IDs.
+
+	FUNCTION specifies the name of the function to be called to
+	localize a string.  If not supplied, FUNCTION defaults to
+	'GetCatalogStr'.
+
+	The TEMPLATE keyword is followed by a string the specifies the
+	calling conventions for FUNCTION.  The substitutions available
+	for the TEMPLATE string are:
+
+	  %F		 The function name given by FUNCTION
+	  %I		 The message tag for the string
+	  %S		 The string tag for the string (produced by
+			 concatenating _STR to the message tag).
+	  %D		 The default string.
+
+	If TEMPLATE is not supplied, the following will be used as the
+	default:
+
+	  "(catalog ? %F(catalog, %I, %S) : %S)"
+
+	Assuming the default for FUNCTION, the following string
+	record:
+
+	  demo.c|S|3|11|26|MSG_HELLO|hello world\n
+
+	will produce this function call:
+
+	  (catalog ? GetCatalogStr(catalog, MSG_HI, MSG_HI_STR)
+	  : MSG_HI_STR)
+
+	(The call generated is shown on two lines for clarity.  In
+	actuality, the function call is all on one line.)
+
+	The SILENT keyword suppresses the progress indicators when
+	LOCALIZE is running in patch mode.
+
+|	The NEST keyword enables support of nested comments.
+
+	PREPENDFILE (APPENDFILE) specifies a file to be prepended
+	(appended) the the generated C source file.  PREPENDSTRING
+	(APPENDSTRING) provides similar functionality, but the argment
+	is taken as a string rather than a file.
+
+	NOTE:  If the PATCH switch is omitted, all other switches and
+	       keywords are silently ignored.
+
+
+
+
+	Examples:
+
+	These examples will be operating on this source file (line numbers
+	added for clarity):
+
+
+	  1:main()
+	  2:{
+	  3:    printf("hello world\n");
+	  4:}
+
+
+	LOCALIZE operating in parse mode generates one line of output
+
+
+	  1>LOCALIZE hello.c
+	  hello.c|S|3|11|26|MSG_0000|hello world\n
+
+
+	Usually, you will redirect this output to a file like this:
+
+
+	  1>LOCALIZE >RAM:strings hello.c
+
+
+	LOCALIZE operating in patch mode:
+
+
+	  1>LOCALIZE PATCH RAM:strings
+	  Processing RAM:strings...
+	    hello.c -> hello.c.new & hello.c.cd
+	    patching line 3
+	    hello.c done.
+	  RAM:strings done.
+
+
+	This is the C source file produced by LOCALIZE:
+
+
+	  1: /*
+|	  2: **	This file generated by localize 2.9 (AmigaDOS 2.1) from hello.c
+	  3: */
+	  4: main()
+	  5: {
+	  6:     printf((catalog?GetCatalogStr(catalog,MSG_0000,MSG_0000_STR)
+		    :"hello world\n"));
+	  7: }
+
+
+	And this is the Catalog Description file:
+
+
+	  1: ;
+|	  2: ;	Description generated by localize 2.9 (AmigaDOS 2.1) from hello.c
+	  3: ;
+	  4: ; line 3
+	  5: ;
+	  6: MSG_0000 (//)
+	  7: hello world\n
+
+
+
+	If you find that the C source becomes too unreadable, you may wish
+	to try the following, to use a macro to hide some of the work:
+
+
+	  1>LOCALIZE PATCH TEMPLATE "_S(%I,%S,%D)"
+		PS "#define _S(x,y,z)) catalog?GetCatalogStr(catalog,x,y) ? z)"
+		RAM:strings
+
+	  Processing RAM:strings...
+	    hello.c -> hello.c.new & hello.c.cd
+	    Prepending "#define _S(x) catalog?GetCatalogStr(catalog,x,y) ? z)"
+	    patching line 3
+	    hello.c done.
+	  RAM:strings done.
+
+
+	This is the C source file produced:
+
+
+	  1: /*
+|	  2: **	This file generated by localize 2.9 (AmigaDOS 2.1) from hello.c
+	  3: */
+	  4:#define _S(x) catalog?GetCatalogStr(catalog,x,y) ? z)
+	  5: main()
+	  6: {
+	  7:     printf(_S(MSG_0000,MSG_0000_STR,"hello world\n"));
+	  8: }
+
+
+	One thing that LOCALIZE does not attempt to support is strings
+	that have a global scope.  That is, any string that is not
+	part of a function.  For example:
+
+	
+	   1:char	*help[] =
+	   2:{
+	   3:	"Usage: hello <name>",
+	   4:	"\tPrint a message saying hello to <name>",
+	   5:	"\tIf <name> is omitted, it defaults to \"world\".",
+	   6:	0
+	   7:};
+	   8:
+	   9:main ( int argc, char * argv [] )
+	  10:{
+	  11:    int    i;
+	  12:
+	  13:	if (argc > 2)
+	  14:	    for (i = 0; help[i]; i++)
+	  15:           printf(help[i]);
+	  16:   else
+	  17:       if (argc == 2)
+	  18:	        printf("Hello %s!\n", argv[1]);
+	  19:	    else
+	  20:	        printf("Hello world\n");
+	  21:}
+
+
+	LOCALIZE will issue 'E' records for the strings on lines 3
+	through 5 because they occur outside of a function.  There are
+	two approachs to resolving these excluded lines.  Both
+	approachs are valid and the choice is a function of the
+	organization of the data structures and individual preference.
+
+
+
+	In this example, the strings are initialized at run time by a
+	call to the function initialize:
+
+
+	   1:char	*help[4];
+	   2:
+	   3:main ( int argc, char * argv [] )
+	   4:{
+	   5:    int    i;
+	   6:
+	   7:	initialize_strings();
+	   8:
+	   9:	if (argc > 2)
+	  10:	    for (i = 0; help[i]; i++)
+	  11:           printf(help[i]);
+	  12:   else
+	  13:       if (argc == 2)
+	  14:	        printf("Hello %s!\n", argv[1]);
+	  15:	    else
+	  16:	        printf("Hello world\n");
+	  17:}
+	  18:
+	  19:void initialize_strings ( void )
+	  20:{
+	  21:    help[0] = "Usage: hello <name>";
+	  22:	 help[1] = "\tPrint a message saying hello to <name>";
+	  23:	 help[2] = "\tIf <name> is omitted, it defaults to \"world\".";
+	  24:	 help[3] = 0;
+	  25:}
+
+
+	With the string initialization in a function, LOCALIZE can
+	generate code that will correctly retrieve the localized
+	strings at runtime. 
+
+	The other scheme is a little more involved, but is well suited
+	for repetitive structures and large arrays.  
+
+	After patching the source file shown above, the resulting
+	initialize_strings() function:
+
+
+	  22:void initialize_strings ( void )
+	  23:{
+	  24:    help[0] = catalog
+			   ? GetCatalogStr(catalog, MSG_0000, MSG_0000_STR)
+			   : MSG_0000_STR;
+	  25:    help[1] = catalog
+			   ? GetCatalogStr(catalog, MSG_0001, MSG_0001_STR)
+			   : MSG_0001_STR;
+	  26:    help[2] = catalog
+			   ? GetCatalogStr(catalog, MSG_0002, MSG_0002_STR)
+			   : MSG_0002_STR;
+	  27:	 help[3] = 0;
+	  28:}
+
+
+
+	is changed to the following.  The GetString function is
+	adapted from the one presented in the 1991 DevCon notes.
+
+
+	  22:void initialize_strings ( void )
+	  23:{
+	  24:    int    i;
+	  25:
+	  26:    for (i = MSG_0000; i <= MSG_0002; i++)
+	  27:        help[i] = GetString(catalog, i);
+	  28:	 help[i] = 0;
+	  29:}
+	  30:
+	  31:STRPTR NotFoundString = "localized string not found";
+	  32:                                   
+          33:STRPTR GetString ( struct Catalog * catalog, ULONG id)
+          34:{
+          35:    STRPTR local = NotFoundString;
+          36:    UWORD  i, last;
+          37:
+          38:    last = sizeof(AppStrings) / sizeof(AppStrings[0]);
+          39:
+          40:    for (i = 0; i < last; i++)
+          41:    {
+          42:        if(AppStrings[i].as_ID == id)
+          43:        {
+          44:            local = AppStrings[i].as_Str;
+          45:            break;
+          46:        }
+          47:    }
+          48:
+          49:    if (LocaleBase && catalog && *local)
+          50:        local = GetCatalogStr(catalog, id, local);
+	  51:
+          52:    return(local);
+          53:}
+
+
+	These methods may also be applied to structure initializations:
+
+
+	     struct TextAttr TOPAZ80 =
+	     {
+		     "topaz.font", TOPAZ_EIGHTY, 0, 0
+	     };
+
+
+	     struct IntuiText Hello =
+	     {
+		     0, 1, JAM2, 10, 10,
+		     &TextAttr, "Hello World!", NULL
+	     };
+
+
+	Could become the following, allowing LOCALIZE to generate
+	function calls to initialize the appropriate structure members
+	at run time rather than at compile time.
+
+
+
+	NOTE: The string, "topaz.font" is not changed.  The font name
+	      is not localized and the string record for it must be
+	      deleted from the string record file.
+
+
+	     struct TextAttr TOPAZ80 =
+	     {
+		     "topaz.font",
+		     TOPAZ_EIGHTY,
+		     0, 0
+	     };
+
+	     struct IntuiText Hello =
+	     {
+		     0, 1,
+		     JAM2,
+		     10, 10,
+		     &TextAttr,
+		     NULL,
+		     NULL
+	     };
+
+	     initialize_strings()
+	     {
+		     Hello.IText = "Hello World!";
+	     }

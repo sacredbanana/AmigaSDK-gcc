@@ -1,0 +1,346 @@
+TABLE OF CONTENTS
+
+usbfd.fd/--overview--
+usbfd.fd/--descriptor--
+usbfd.fd/USBFDGetAttrs
+usbfd.fd/USBFDRunFunction
+usbfd.fd/USBFDRunInterface
+
+usbfd.fd/--overview--                                     usbfd.fd/--overview--
+
+   A Function Driver, in the context of an AutoStarting Function Driver,
+   is nothing more than an Exec style library with a specific set of
+   functions, as defined by this AutoDoc.
+
+   The responsabilities of a Function Driver is to be able to handle a
+   specific class/subclass or vendor specific class of USB Functions.
+   The USB System Software will, when a USB device is inserted, see if
+   an AutoStarting Function Driver is installed. If a driver is found
+   its library will be opened, and the driver entry point called.
+
+   A driver is allowed to handle more than one type of USB Functions.
+   When calling the driver entry point a descriptor for the USB Function
+   is passed. Using this descriptor the Function Driver can determine if
+   it can actually handle the USB Function. If not, the USB System
+   Software will keep looking for another driver.
+
+   For doing a rough determination if the Function Driver is able to
+   handle a USB Function a set of Function Driver Descriptor files must
+   exist. Each of these files tell the USB System Software of a specific
+   class or subclass of devices, and the Function Driver library capable
+   of handling them. Each Function Driver Descriptor has a priority set,
+   allowing more drivers for the same class or subclass. If the highest
+   priority driver fails to cope with the USB Function (as mentioned
+   above), the USB System Software will try drivers with a lower priority.
+   It is perfectly legal to have multiple Function Driver Descriptors
+   for each Function Driver library. This allows a Function Driver to
+   be able to support non-related USB Functions within the same library.
+
+   Function Drivers wanting to be available during OS boot cannot rely on
+   a Function Driver Descriptor file for registering with the USB stack.
+   During OS boot when the USB stack is started there is no DOS, and thus
+   no way to read the Function Driver Descriptor files. Therefore, if a
+   Function Driver wants to be available during OS boot, it should register
+   itself using usbresource.library during coldboot. See the
+   usbresource.doc for information on how to do that.
+   It is perfectly legal for a Function Driver to both have a Function
+   Driver Descriptor file AND to register itself with usbresource.library.
+
+usbfd.fd/--descriptor--                                 usbfd.fd/--descriptor--
+
+   Function Driver descriptors
+
+      Each AutoStarting Function Driver should have a descriptor file,
+      informing the USB System that the driver exist, and which USB devices
+      the driver can handle (Function Drivers which are launched by other
+      means than by the USB stack can instead register with the USB stack
+      using usbresource.library).
+      A Function Driver descriptor file is a text file holding keyword-
+      and-value pairs describing the capabilities of the Function Driver.
+      Function Driver descriptor files are placed in "DEVS:USB/fdclasses/".
+      The defined keywords are outlined below.
+
+      FUNCTIONDRIVER
+         A Function Driver descriptor file must start with this keyword on
+         the first line of the file. If this keyword is not present the USB
+         System will not interpret the file as a Function Driver descriptor.
+
+      NAME
+         The value of this keyword is a name for the Function Driver
+         described.
+
+      VENDOR
+         The value of this keyword is a USB VendorID value for the device
+         vendor that the Function Driver is supporting.
+         This keyword is only needed for vendor specific Function Drivers
+         and should generally not be inserted in a Descriptor. Leaving out
+         the VENDOR keyword indicates that all USB Vendors are accepted by
+         the Function Driver.
+
+      PRODUCT
+         The value of this keyword is a USB ProductID value for a specific
+         product that the Function Driver is supporting. As ProductIDs are
+         vendor specific you should only use this keyword if you also define
+         a specific vendor using the VENDOR keyword.
+
+      CLASS
+         The value of this keyword is a hex value specifying the USB class
+         code supported by the Function Driver. If this is not specified
+         the USB System interprets the Function Drivers as capable of
+         handling all USB classes.
+
+      SUBCLASS
+         The value of this keyword is a hex value specifying the USB
+         subclass code supported by the Function Driver. If this is not
+         specified the USB System interprets the Function Drivers as capable
+         of handling all USB subclasses for the USB class specified by the
+         CLASS keyword.
+
+      TYPE
+         The value(s) of this keyword determines the type of Function
+         Driver the Descriptor is describing. One, or both, of the
+         following keyword-values can be supplied after the TYPE keyword:
+
+         FUNCTION (shortnamed FKT)
+            If this keyword-value exist the Function Driver is capable of
+            driving entire USB Functions. That is, the USBFDRunFunction()
+            library call of the Function Driver actually holds a functional
+            driver.
+
+         INTERFACE (shortnamed IFC)
+            If this keyword-value exist the Function Driver is capable of
+            driving USB Interfaces. This is the normal mode of operation
+            for Function Drivers. This mean is that USBFDRunInterface()
+            of the Function Driver library holds a functional driver.
+
+         Normally Function Drivers only holds Interface support, as this
+         is the only thing needed for as-good-as-all occurences. Generally
+         the TYPE keyword/value pair of a Descriptor is therefore
+
+            TYPE INTERFACE
+
+      PRI
+         The value of this keyword specifies the driver priority. If more
+         drivers are able to handle a USB class the driver with the
+         highest priority will win.
+         The priority is an unsigned byte value.
+
+      DRIVER
+         The value of this keyword is the filename of the Function Driver
+         library the descriptor file describes. Generally this should be
+         supplied without path, making the USB System look in the
+         "DEVS:USB/fd" drawer for the driver. If a path is specified in the
+         filename the Function Driver library will be opened from that place.
+         The full filename must be given for the Function Driver. That is,
+         including the standard ".usbfd" file extension.
+
+      STACK
+         The value of this keyword is the amount of stack space needed by
+         the driver program, specified in bytes.
+         If not specified, stack space will be the OS default value (4K).
+
+usbfd.fd/USBFDGetAttrs                                   usbfd.fd/USBFDGetAttrs
+
+   NAME
+      USBFDGetAttrs -- Query a Function Driver for its attributes.
+
+   SYNOPSIS
+      USBFDGetAttrsA( taglist )
+                        A0
+
+      void USBFDGetAttrsA( struct TagItem * );
+
+      USBFDGetAttrs( Tag1, ... )
+
+      void USBFDGetAttrsA( ULONG, ... );
+
+
+   FUNCTION
+      The USS will call this function to obtain various information
+      about the Function Driver.
+      The FD should only respond to tags it recognizes, and leave
+      all other tag values at their preset value.
+
+   TAGS
+      USBA_FD_SignalsRunning (LONG *)
+         The USB stack will use this tag when querying if the FD will call
+         USBFktDriverRunning()/USBIfcDriverRunning() on the Functions or
+         Interfaces the FD is given.
+
+         Setting the LONG pointed to by ti_Data to TRUE will make the FD
+         responsible for calling USBxxxDriverRunning().
+
+         Setting the LONG pointed to by ti_Data to FALSE, or ignoring this
+         tag altogether, will make the USB stack know that you will not be
+         calling USBxxxDriverRunning().
+
+         See usbsys.device/USBIfcDriverRunning() and
+         usbsys.device/USBFktDriverRunning() for a more in-depth explanation
+         on DriverRunning signalling.
+
+
+   INPUTS
+      taglist  -  Pointer to the first TagItem of a taglist. The FD
+                  must respond to any supported tags in the list.
+
+
+   SEE ALSO
+
+usbfd.fd/USBFDRunFunction                             usbfd.fd/USBFDRunFunction
+
+   NAME
+      USBFDRunFunction -- Function based Function Driver entry point.
+
+   SYNOPSIS
+      result = USBFDRunFunction( startmsg )
+       D0                            A0
+
+       LONG USBFDRunFunction( struct USBFDStartupMsg * );
+
+
+   FUNCTION
+      First of all, you should not base your Function Driver on USB
+      Functions, rather on USB Interfaces. So leave this function as a
+      stub returning USBERR_UNSUPPORTED, and code the Function Driver in
+      USBFDRunInterface() instead.
+      That said, if you have a really good reason to do so, you can
+      place your Function Driver code in USBFDRunFunction(). A good
+      reason could be some obscure vendor specific device from which you
+      need more than one Interface, and you cannot get these Interfaces
+      in a safe/guaranteed way by launching separate Interface drivers.
+      In fact, this is propably ths *only* good reason!
+
+
+      This function is called by the USB System when it needs to start
+      the Function based Function Driver held in the Function Driver
+      library.
+      Upon calling, the USB System has already started a new Process
+      for the Function Driver. This function needs therefore not
+      spawn a new process to run in - it is free to take as much time
+      as is needed. As such this function need not return until either
+      the USB Function has been detached, or some other event makes
+      it relevant for the Function Driver to stop.
+
+      A startup message is passed to the Function Driver. This message
+      includes some pre-initialised data. Most importantly:
+         · A MsgPort for use by the Function Driver.
+         · An IORequest holding the opened usbsys.device. Setup for
+           using the above MsgPort.
+         · A reference to the USB Function which must be handled by
+           the Function Driver.
+         · The USB device descriptor for the USB Function to be
+           handled.
+
+      Be aware that the USB Function reference may be NULL. If this
+      occurs the USBFDRunFunction() function must abort and return
+      the value USBERR_UNSUPPORTED. This behavior has been included
+      to allow USBFDRunFunction() to be failsafe, but also to reserve
+      the NULL pointer for future magic tricks.
+
+      The Function Driver entry point must return a status upon exit.
+      Based on the status the USB System will either continue looking
+      for a Function Driver for the USB Function, or assume that the
+      USB Function was handled by the Function Driver.
+
+   NOTE
+      The USB System may choose to close the Function Driver library
+      immediately after this function returns. So don't count on doing
+      some clever multitasking stunts, starting subtasks, and exit the
+      function, as the library may be expunged a moment later (unless
+      you do your own locking).
+
+   INPUTS
+      startupmsg  -  Pointer to a USBFDStartupMsg structure holding
+                     various arguments for the Function Driver.
+                     This includes a pre-opened usbsys.device, giving
+                     the Function Driver easy access to the USB API.
+
+   RESULTS
+      This function call must return a value indicating how the Function
+      Driver handled the USB Function passed to it.
+      This is done by returning either USBERR_NOERROR indicating
+      that driver successfully handled the USB Function, or
+      USBERR_UNSUPPORTED indicating that the USB Function was not
+      supported by the FD.
+      If the FD does support the given USB Function but fails to
+      initialise itself, it should inform the user and return
+      USBERR_NOERROR. Otherwise the USB System will keep on looking
+      for a FD for the USB Function.
+
+
+   SEE ALSO
+      usb/system.h
+
+usbfd.fd/USBFDRunInterface                           usbfd.fd/USBFDRunInterface
+
+   NAME
+      USBFDRunInterface -- Interface based Function Driver entry point.
+
+   SYNOPSIS
+      result = USBFDRunInterface( startmsg )
+       D0                            A0
+
+       LONG USBFDRunInterface( struct USBFDStartupMsg * );
+
+
+   FUNCTION
+      This function is called by the USB System when it needs to start
+      the Interface based Function Driver held in the Function Driver
+      library.
+      Upon calling, the USB System has already started a new Process
+      for the Function Driver. This function needs therefore not
+      spawn a new process to run in - it is free to take as much time
+      as is needed. As such this function need not return until either
+      the USB Interface has been detached, or some other event makes
+      it relevant for the Function Driver to stop.
+
+      A startup message is passed to the Function Driver. This message
+      includes some pre-initialised data. Most importantly:
+         · A MsgPort for use by the Function Driver.
+         · An IORequest holding the opened usbsys.device. Setup for
+           using the above MsgPort.
+         · A reference to the USB Interface which must be handled by
+           the Function Driver.
+         · The USB interface descriptor for the USB Interface to be
+           handled.
+
+      Be aware that the USB Interface reference may be NULL. If this
+      occurs the USBFDRunInterface() function must abort and return
+      the value USBERR_UNSUPPORTED. This behavior has been included
+      to allow USBFDRunInterface() to be failsafe, but also to reserve
+      the NULL pointer for future magic tricks.
+
+      The Function Driver entry point must return a status upon exit.
+      Based on the status the USB System will either continue looking
+      for a Function Driver for the USB Interface, or assume that the
+      USB Interface was handled by the Function Driver.
+
+   NOTE
+      The USB System may choose to close the Function Driver library
+      immediately after this function returns. So don't count on doing
+      some clever multitasking stunts, starting subtasks, and exit the
+      function, as the library may be expunged a moment later (unless
+      you do your own locking).
+
+   INPUTS
+      startupmsg  -  Pointer to a USBFDStartupMsg structure holding
+                     various arguments for the Function Driver.
+                     This includes a pre-opened usbsys.device, giving
+                     the Function Driver easy access to the USB API.
+
+   RESULTS
+      This function must return a value indicating how the Function
+      Driver handled the USB Interface passed to it.
+      This is done by returning either USBERR_NOERROR indicating
+      that driver successfully handled the USB Interface, or
+      USBERR_UNSUPPORTED indicating that the USB Interface was not
+      supported by the FD.
+      If the FD does support the given USB Interface but fails to
+      initialise itself, it should inform the user and return
+      USBERR_NOERROR. Otherwise the USB System will keep on looking
+      for a FD for the USB Interface.
+
+
+   SEE ALSO
+      usb/system.h
+

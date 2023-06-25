@@ -1,0 +1,552 @@
+TABLE OF CONTENTS
+
+partition.gadget/--datasheet--
+partition.gadget/AllocPartitionNodeA
+partition.gadget/FreePartitionNode
+partition.gadget/GetPartitionNodeAttrsA
+partition.gadget/PARTITION_GetClass
+partition.gadget/PM_ADDNODE
+partition.gadget/PM_EDITNODE
+partition.gadget/PM_GETZONEBOUNDS
+partition.gadget/PM_GETZONEINFO
+partition.gadget/PM_MAKENODE
+partition.gadget/PM_REMNODE
+partition.gadget/SetPartitionNodeAttrsA
+partition.gadget/--datasheet--                                       partition.gadget/--datasheet--
+
+    NAME
+	partitiongclass -- partition gadget class
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	bevel.gadget
+
+    DESCRIPTION
+	This class is primarily used to create partition gadget objects
+	as used by the Media Toolbox utility. The gadget has a rectangular
+	space in which partitions may be added, removed, moved and resized
+	by the user. Partitions can never overlap each other.
+
+	Rendering hooks are also available to customize the look of the
+	partition box and partitions.
+
+    METHODS
+	OM_NEW -- Create the partitionglcass object. Passed to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	GM_HITTEST -- Determine if gadget was hit.
+
+	GM_RENDER -- Render the gadget with state.
+
+	GM_GOACTIVE -- Activate the gadget.
+
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+	GM_HANDLEINPUT -- Handle input while gadget is active.
+
+	GM_EXTENT -- Inquire about gadget rendering extent.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_DOMAIN -- Obtain gadget sizing requirements.
+
+	PM_GETZONEINFO -- Get zone information (space or partition).
+
+	PM_GETZONEBOUNDS -- Get zone drawing bounds and cylinder bounds.
+
+	PM_ADDNODE -- Create and add a new partition.
+
+	PM_REMNODE -- Remove and dispose of a partition.
+
+	PM_EDITNODE -- Change a partition's attributes.
+
+	PM_MAKENODE -- Convert a space into a partition.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	IA_Left (int16)
+	    This attribute is reported in OM_UPDATE messages during
+	    notifications to inform the receiver of the left-most
+	    position of the partition image.
+
+	    Applicability is (OM_NOTIFY)
+
+	IA_Width (int16)
+	    This attribute is reported in OM_UPDATE messages during
+	    notifications to inform the receiver of the width
+	    of the partition image.
+
+	    Applicability is (OM_NOTIFY)
+
+	PARTITION_First (uint32)
+	    First usable cylinder number.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_Last (uint32)
+	    Last usable cylinder number.
+
+	    Defaults to 99.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_PartitionList (struct List *)
+	    List of partition nodes allocated with AllocPartitionNodeA().
+	    The list should be allocated with AllocSysObjectA().
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_Active (uint32)
+		The index number of the currently active zone. A zone may
+	    be either a partition or a space.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	PARTITION_ActiveNode (struct Node *)
+	    The currently active node if this is a partition or NULL
+	    if the zone is a space.
+
+	    Applicability is (OM_NOTIFY)
+
+	PARTITION_Color (uint16)
+	    Default color palette pen to use for partitions.
+
+	    Defaults to BACKGROUNDPEN.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_Pattern (uint16 *)
+	    Default area fill pattern to use for partitions.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_PatternSize (uint16)
+	    Size of the default partitions area fill pattern.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_RenderHook (struct Hook *)
+	    Default render hook to use for partitions. For full details
+	    on how the render hook is utilized see the description of
+	    the PARTNA_RenderHook tag in SetPartitionNodeAttrs().
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_SpaceColor (uint16)
+	    Palette color index to use for empty spaces.
+
+	    Defaults to SHADOWPEN.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_SpacePattern (uint16 *)
+	    Area fill pattern to use for empty spaces.
+
+	    Defaults to a diagonal fill pattern.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_SpacePatternSize (uint16)
+	    Size of the spaces area fill pattern.
+
+	    Defaults to 2.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_BackFill (struct Hook *)
+	    A layer backfill hook to use for empty spaces.
+	    See layers.library/InstallLayerHook() for more details
+	    about the hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PARTITION_Partition (uint32)
+	    Index number of the currently active partition or ~0
+	    if none. This is the ordinal position of the partition
+	    in the list.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+partition.gadget/AllocPartitionNodeA                           partition.gadget/AllocPartitionNodeA
+
+    NAME
+	AllocPartitionNodeA -- Allocate a partition node.
+
+    SYNOPSIS
+	struct Node * node = AllocPartitionNodeA(struct TagItem * tags);
+
+	struct Node * node = AllocPartitionNode(Tag tag, ...);
+
+    FUNCTION
+	Allocates a node that can be added to the List of partitions in
+	the gadget. This is the only way to allocate a node for use with
+	partition gadget.
+
+    INPUTS
+	tags - Attributes for the node which are also passed on to
+	       SetPartitionNodeAttrsA().
+
+    TAGS
+	See SetPartitionNodeAttrsA() for the list of supported tags. In
+	addition, AllocParitionNodeA() supports the following additional
+	tags:
+
+	PARTNA_NodeSize (uint32)
+	    The public size (in bytes) of the node structure that should be
+	    allocated. Usually the default will suffice unless you wish to
+	    append custom data along with the embedded Node.
+
+	    Defaults to sizeof(struct Node).
+
+    RESULT
+	node - A node that can be added into the List of partitions.
+
+    SEE ALSO
+	FreePartitionNode(), SetPartitionNodeAttrsA()
+
+partition.gadget/FreePartitionNode                               partition.gadget/FreePartitionNode
+
+    NAME
+	FreePartitionNode -- Free a partition node.
+
+    SYNOPSIS
+	VOID FreePartitionNode(struct Node * node);
+
+    FUNCTION
+	Frees a partition node allocated with AllocPartitionNodeA().
+
+    INPUTS
+	node - The node to free. This can be NULL in which case this
+	       function will do nothing.
+
+    SEE ALSO
+	AllocPartitionNodeA()
+
+partition.gadget/GetPartitionNodeAttrsA                     partition.gadget/GetPartitionNodeAttrsA
+
+    NAME
+	GetPartitionNodeAttrsA -- Get attributes of a partition node.
+
+    SYNOPSIS
+	VOID GetPartitionNodeAttrsA(struct Node * node, struct TagItem * tags);
+
+	VOID GetPartitionNodeAttrs(struct Node * node, Tag tag, ...);
+
+    FUNCTION
+	Since the partition gadget uses a private node structure this is
+	the only way to get node attributes.
+
+    INPUTS
+	node - Node whose attributes you are getting. This can be NULL in
+	       which case this function will do nothing.
+	tags - Tag list of attributes to get. Note that each ti_Tag field
+	       must point to a uint32 storage space irregardless of the type
+	       of field being queried.
+
+    TAGS
+	See SetPartitionNodeAttrsA() for the list of supported tags.
+
+    SEE ALSO
+	SetPartitionNodeAttrsA()
+
+partition.gadget/PARTITION_GetClass                             partition.gadget/PARTITION_GetClass
+
+	PARTITION_GetClass -- Gets pointer to the partition class.
+
+    SYNOPSIS
+	Class * class = PARTITION_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "partitiongclass" public class ID instead.
+
+    RESULT
+	class - Pointer to the partition class.
+
+partition.gadget/PM_ADDNODE                                             partition.gadget/PM_ADDNODE
+
+    NAME
+	PM_ADDNODE -- Create and add a new partition.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pgpAddNode *msg);
+
+    FUNCTION
+	This method is used to dynamically add a new partition node.
+	If the new node is within the currently active zone the
+	OM_NOTIFY method will be invoked on the gadget.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct pgpAddNode
+	      (see <gadgets/partition.h>)
+
+    RESULT
+	Returns a pointer to the newly added Node or NULL on failure.
+
+    SEE ALSO
+	PM_REMNODE, PM_EDITNODE, PM_MAKENODE,
+	intuition.library/DoGadgetMethodA()
+
+partition.gadget/PM_EDITNODE                                           partition.gadget/PM_EDITNODE
+
+    NAME
+	PM_EDITNODE -- Change a partition's attributes.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pgpEditNode *msg);
+
+    FUNCTION
+	This method is used to change the attributes of an existing
+	partition node.
+
+	If the edited node was the currently active zone, OM_NOTIFY
+	will be invoked on the gadget.
+
+	This method is save to call with a NULL pgpen_Node field.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct pgpEditNode
+	      (see <gadgets/partition.h>)
+
+    RESULT
+	Returns TRUE if successful or FALSE on error.
+
+    SEE ALSO
+	PM_ADDNODE, PM_REMNODE, PM_MAKENODE,
+	intuition.library/DoGadgetMethodA()
+
+partition.gadget/PM_GETZONEBOUNDS                                 partition.gadget/PM_GETZONEBOUNDS
+
+    NAME
+	PM_GETZONEBOUNDS -- Get zone drawing bounds and cylinder bounds.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pgpGetZoneBounds *msg);
+
+    FUNCTION
+	This method is used to obtain the zone's rendering bounds and
+	cylinder bounds (if the zone is a partition).
+
+	If any of the field pointers are NULL they will be ignored.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct pgpGetZoneBounds
+	      (see <gadgets/partition.h>)
+
+    RESULT
+	Returns TRUE if successful or FALSE on error.
+
+    SEE ALSO
+	PM_GETZONEINFO, intuition.library/DoGadgetMethodA()
+
+partition.gadget/PM_GETZONEINFO                                     partition.gadget/PM_GETZONEINFO
+
+    NAME
+	PM_GETZONEINFO -- Get zone information (space or partition).
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pgpGetZoneInfo *msg);
+
+    FUNCTION
+	This method is used to obtain information about a zone. A zone
+	is either a space or a partition and is identified by an integer
+	index number. The zone index usually comes from the currently
+	active zone (PARTITION_Active) which is sent via the OM_NOTIFY
+	method.
+
+	The pgpgzi_Type will be set to either PGZONE_SPACE or
+	PGZONE_PARTITION.
+
+	If any of the field pointers are NULL they will be ignored.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct pgpGetZoneInfo
+	      (see <gadgets/partition.h>)
+
+    RESULT
+	Returns TRUE if successful or FALSE on error.
+
+    SEE ALSO
+	PM_GETZONEBOUNDS, intuition.library/DoGadgetMethodA()
+
+partition.gadget/PM_MAKENODE                                           partition.gadget/PM_MAKENODE
+
+    NAME
+	PM_MAKENODE -- Convert a space into a partition.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pgpMakeNode *msg);
+
+    FUNCTION
+	This method is used to make a new partition node out of an
+	existing space zone.
+
+	If the new node was created from the currently active zone an
+	OM_NOTIFY message will be invoked on the gadget.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct pgpMakeNode
+	      (see <gadgets/partition.h>)
+
+    RESULT
+	Returns a pointer to the newly created partition Node
+	if successful or NULL on error.
+
+    SEE ALSO
+	PM_ADDNODE, PM_REMNODE, PM_EDITNODE,
+	intuition.library/DoGadgetMethodA()
+
+partition.gadget/PM_REMNODE                                             partition.gadget/PM_REMNODE
+
+    NAME
+	PM_REMNODE -- Remove and dispose of a partition.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct pgpRemNode *msg);
+
+    FUNCTION
+	This method is used to remove a partition node and will call
+	FreePartitionNode() on the node that is removed.
+
+	If the removed node was within the currently active zone the
+	OM_NOTIFY method will be invoked on the gadget.
+
+	This method is safe to call with a NULL pgprn_Node field.
+
+    INPUTS
+	obj - gadget object pointer
+	msg - pointer to fully initialized struct pgpRemNode
+	      (see <gadgets/partition.h>)
+
+    RESULT
+	Returns TRUE if successful or FALSE on error.
+
+    SEE ALSO
+	PM_ADDNODE, PM_EDITNODE, PM_MAKENODE,
+	intuition.library/DoGadgetMethodA()
+
+partition.gadget/SetPartitionNodeAttrsA                     partition.gadget/SetPartitionNodeAttrsA
+
+    NAME
+	SetPartitionNodeAttrsA -- Set attributes of a partition node.
+
+    SYNOPSIS
+	VOID SetPartitionNodeAttrsA(struct Node * node, struct TagItem * tags);
+
+	VOID SetPartitionNodeAttrs(struct Node * node, Tag tag, ...);
+
+    FUNCTION
+	Changes attributes for a partition node. Since the partition
+	gadget uses a private node structure this is the only way to
+	change node attributes.
+
+	After successfully changing the attributes of the node the
+	partition gadget's imagery will be refreshed if necessary.
+
+    INPUTS
+	node - Node whose attributes you are changing. This can be NULL in
+	       which case this function will do nothing.
+	tags - Tag list of attributes to change.
+
+    TAGS
+	PARTNA_Start (uint32)
+	    The first cylinder number of the partition. The size of
+	    partition is determined by the start and end.
+
+	    Note this tag is also included with OM_UPDATE messages.
+
+	PARTNA_End (uint32)
+	    The last cylinder number of the partition. The size of
+	    partition is determined by the start and end.
+
+	    Note this tag is also included with OM_UPDATE messages.
+
+	PARTNA_UserData (APTR)
+	    Arbitrary user data for this node.
+
+	PARTNA_Color (uint16)
+	    The palette color index of the partition.
+
+	    Defaults to BACKGROUNDPEN.
+
+	PARTNA_Pattern (uint16 *)
+	    Area fill pattern of the partition.
+
+	    Defaults to NULL.
+
+	PARTNA_PatternSize (uint16)
+	    Size of the area fill pattern.
+
+	    Defaults to 0.
+
+	PARTNA_RenderHook (struct Hook *)
+	    Render hook is used for both querying and drawing the partition
+	    box image. When rendering, the partition gadget will first query
+	    the rendering operation attributes and then it will call the
+	    hook again to do the actual drawing.
+
+	    When querying, the hook function is called as follows:
+
+	    int32 RenderFunc(struct Hook *hook, struct Node *node,
+	                     struct PNQueryMsg *msg);
+
+	    The pnqm_MethodID field will be set to PN_QUERY when the
+	    gadget needs to know the rendering attributes. The hook
+	    function is responsible for setting the pnqm_AttrFlags field
+	    accordingly. Set the pnqm_AttrFlags to PNRA_FULLRENDER if the
+	    subsequent drawing operation will render every pixel within
+	    the provided drawing bounds. Note the pnqm_AttrFlags field is
+	    actually a pointer to an uint32 value.
+
+	    When drawing, the hook function is called as follows:
+
+	    int32 RenderFunc(struct Hook *hook, struct Node *node,
+	                     struct PNDrawMsg *msg);
+
+	    The pndm_MethodID field will be set to PN_DRAW when the
+	    gadget wants to render the partition box. The PNDrawMsg
+	    structure contains all the rendering context information
+	    required (see <gadgets/partition.h>).
+
+	    In both cases, RenderFunc() should return PNR_OK or PNR_UNKNOWN
+	    if the function does not understand the message.
+
+    SEE ALSO
+	GetPartitionNodeAttrsA()
+
+

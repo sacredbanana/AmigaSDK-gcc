@@ -1,0 +1,101 @@
+
+; Modefile definition for hdaudio.audio
+
+; name MUST match drivername, and will also be 
+;	capitalized for output filename.
+
+STARTDRIVER hdaudio
+
+; each mode begins with the full text name for prefs.
+
+	STARTMODE "hdaudio:HiFi 32 bit 7.1 channel++"
+
+; From ahisub.guide: Audio ID upper word is the
+;	hardware ID, and may only be assigned by Martin
+;	Blom <lcs@lysator.org>
+;	The lower word is free, but in order to allow
+;	enhancements, please use only bits 0 to 4 for
+;	modes. If your driver supports multiple cards,
+;	use bits 12 to 15 to select card (first is 0).
+;	If your card supports multiple AD/DA converters,
+;	you can use bits 8-11 to select them. The first
+;	should be 0.
+;	Set the remaining bits to 0.
+
+		AHIDB_AudioID 			0x003E000E
+		AHIDB_Volume			TRUE	; TRUE if AHI handles volume for you
+		AHIDB_Panning			TRUE
+		AHIDB_Stereo			TRUE	; See tag definitions in devices/ahi.h
+		AHIDB_HiFi				TRUE
+		AHIDB_MultTable		false
+		AHIDB_Bits				32
+		AHIDB_Record			TRUE
+		AHIDB_FullDuplex		TRUE
+		AHIDB_RealTime			TRUE
+		AHIDB_MultiChannel	TRUE
+
+	STARTMODE "hdaudio:HiFi 32 bit Stereo++"
+		AHIDB_AudioID 			0x003E000F
+		AHIDB_Volume			TRUE
+		AHIDB_Panning			TRUE
+		AHIDB_Stereo			TRUE
+		AHIDB_HiFi				TRUE
+		AHIDB_MultTable		false
+		AHIDB_Bits				32
+		AHIDB_Record			TRUE
+		AHIDB_FullDuplex		TRUE
+		AHIDB_RealTime			TRUE
+		AHIDB_MultiChannel	FALSE
+
+	StartMode "hdaudio:HiFi 16 bit Stereo++"
+		AudioID 			0x003E0007
+		AHIDB_Volume			TRUE
+		Panning					TRUE
+		Stereo					TRUE
+		AHIDB_HiFi				TRUE
+		AHIDB_MultTable		false
+		AHIDB_Bits				16
+		AHIDB_Record			TRUE
+		AHIDB_FullDuplex		TRUE
+		AHIDB_RealTime			TRUE
+		AHIDB_MultiChannel	FALSE
+
+#	startmode "hdaudio:32 bit Stereo++"
+#		AHIDB_AudioID 			0x003E000D
+#		AHIDB_Volume			TRUE
+#		AHIDB_Panning			TRUE
+#		AHIDB_Stereo			TRUE
+#		AHIDB_HiFi				FALSE
+#		AHIDB_MultTable		false
+#		AHIDB_Bits				32
+#		AHIDB_Record			TRUE
+#		AHIDB_FullDuplex		TRUE
+#		AHIDB_RealTime			TRUE
+#		AHIDB_MultiChannel	FALSE
+
+#	STARTMODE "hdaudio:16 bit Stereo++"
+#		AHIDB_AudioID 			0x003E0005
+#		AHIDB_Volume			TRUE
+#		AHIDB_Panning			TRUE
+#		AHIDB_Stereo			TRUE
+#		AHIDB_HiFi				FALSE
+#		AHIDB_MultTable		false
+#		AHIDB_Bits				16
+#		AHIDB_Record			TRUE
+#		AHIDB_FullDuplex		TRUE
+#		AHIDB_RealTime			TRUE
+#		AHIDB_MultiChannel	FALSE
+
+
+; Additional notes on .modespec files:
+; All tag names and constants are case insensitive.
+; In this first release, the AHIDB_ prefix is optional,
+;	this MAY change in future revisions.
+; TRUE = YES = 1, all interchangeable.
+; FALSE = no = 0
+; numeric are assumed decimal, unless an X or x is present.
+; Modes are NOT checked for sanity. Only parsing errors will be reported.
+; ; and # are comment markers, the remainder of the line is ignored.
+; whitespace is used as separators only, commas are NOT valid separators.
+; spacing and indentation is free-form.
+

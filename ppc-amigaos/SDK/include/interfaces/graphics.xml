@@ -1,0 +1,1036 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="graphics" basename="GfxBase" basetype="GfxBase" openname="graphics.library">
+	<include>graphics/blitattr.h</include>
+	<include>graphics/board.h</include>
+	<include>graphics/clip.h</include>
+	<include>graphics/coerce.h</include>
+	<include>graphics/collide.h</include>
+	<include>graphics/composite.h</include>
+	<include>graphics/copper.h</include>
+	<include>graphics/display.h</include>
+	<include>graphics/displayinfo.h</include>
+	<include>graphics/gels.h</include>
+	<include>graphics/gfx.h</include>
+	<include>graphics/gfxbase.h</include>
+	<include>graphics/gfxmacros.h</include>
+	<include>graphics/gfxnodes.h</include>
+	<include>graphics/graphint.h</include>
+	<include>graphics/layers.h</include>
+	<include>graphics/minterm.h</include>
+	<include>graphics/modeid.h</include>
+	<include>graphics/monitor.h</include>
+	<include>graphics/rastport.h</include>
+	<include>graphics/regions.h</include>
+	<include>graphics/rpattr.h</include>
+	<include>graphics/scale.h</include>
+	<include>graphics/sprite.h</include>
+	<include>graphics/sprite.h</include>
+	<include>graphics/text.h</include>
+	<include>graphics/videocontrol.h</include>
+	<include>graphics/view.h</include>
+	<interface name="main" version="1.0" struct="GraphicsIFace" prefix="_Gfx_" asmprefix="IGraphics" global="IGraphics">
+		<method name="Obtain" result="ULONG"/>
+		<method name="Release" result="ULONG"/>
+		<method name="Expunge" result="void" status="unimplemented"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+		<method name="BltBitMap" result="ULONG">
+			<arg name="srcBitMap" type="CONST struct BitMap *"/>
+			<arg name="xSrc" type="WORD"/>
+			<arg name="ySrc" type="WORD"/>
+			<arg name="destBitMap" type="struct BitMap *"/>
+			<arg name="xDest" type="WORD"/>
+			<arg name="yDest" type="WORD"/>
+			<arg name="xSize" type="WORD"/>
+			<arg name="ySize" type="WORD"/>
+			<arg name="minterm" type="UBYTE"/>
+			<arg name="mask" type="UBYTE"/>
+			<arg name="tempA" type="PLANEPTR"/>
+		</method>
+		<method name="BltTemplate" result="VOID">
+			<arg name="source" type="CONST PLANEPTR"/>
+			<arg name="xSrc" type="WORD"/>
+			<arg name="srcMod" type="WORD"/>
+			<arg name="destRP" type="struct RastPort *"/>
+			<arg name="xDest" type="WORD"/>
+			<arg name="yDest" type="WORD"/>
+			<arg name="xSize" type="WORD"/>
+			<arg name="ySize" type="WORD"/>
+		</method>
+		<method name="ClearEOL" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="ClearScreen" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="TextLength" result="WORD">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="string" type="CONST_STRPTR"/>
+			<arg name="count" type="UWORD"/>
+		</method>
+		<method name="Text" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="string" type="CONST_STRPTR"/>
+			<arg name="count" type="UWORD"/>
+		</method>
+		<method name="SetFont" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="textFont" type="struct TextFont *"/>
+		</method>
+		<method name="OpenFont" result="struct TextFont *">
+			<arg name="textAttr" type="CONST struct TextAttr *"/>
+		</method>
+		<method name="CloseFont" result="VOID">
+			<arg name="textFont" type="struct TextFont *"/>
+		</method>
+		<method name="AskSoftStyle" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="SetSoftStyle" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="style" type="ULONG"/>
+			<arg name="enable" type="ULONG"/>
+		</method>
+		<method name="AddBob" result="VOID">
+			<arg name="bob" type="struct Bob *"/>
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="AddVSprite" result="VOID">
+			<arg name="vSprite" type="struct VSprite *"/>
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="DoCollision" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="DrawGList" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="InitGels" result="VOID">
+			<arg name="head" type="struct VSprite *"/>
+			<arg name="tail" type="struct VSprite *"/>
+			<arg name="gelsInfo" type="struct GelsInfo *"/>
+		</method>
+		<method name="InitMasks" result="VOID">
+			<arg name="vSprite" type="struct VSprite *"/>
+		</method>
+		<method name="RemIBob" result="VOID">
+			<arg name="bob" type="struct Bob *"/>
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="RemVSprite" result="VOID">
+			<arg name="vSprite" type="struct VSprite *"/>
+		</method>
+		<method name="SetCollision" result="VOID">
+			<arg name="num" type="ULONG"/>
+			<arg name="routine" type="VOID (*)(struct VSprite *gelA, struct VSprite *gelB)"/>
+			<arg name="gelsInfo" type="struct GelsInfo *"/>
+		</method>
+		<method name="SortGList" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="AddAnimOb" result="VOID">
+			<arg name="anOb" type="struct AnimOb *"/>
+			<arg name="anKey" type="struct AnimOb **"/>
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="Animate" result="VOID">
+			<arg name="anKey" type="struct AnimOb **"/>
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="GetGBuffers" result="BOOL">
+			<arg name="anOb" type="struct AnimOb *"/>
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="flag" type="BOOL"/>
+		</method>
+		<method name="InitGMasks" result="VOID">
+			<arg name="anOb" type="struct AnimOb *"/>
+		</method>
+		<method name="DrawEllipse" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xCenter" type="WORD"/>
+			<arg name="yCenter" type="WORD"/>
+			<arg name="a" type="WORD"/>
+			<arg name="b" type="WORD"/>
+		</method>
+		<method name="AreaEllipse" result="LONG">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xCenter" type="WORD"/>
+			<arg name="yCenter" type="WORD"/>
+			<arg name="a" type="WORD"/>
+			<arg name="b" type="WORD"/>
+		</method>
+		<method name="LoadRGB4" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="colors" type="CONST UWORD *"/>
+			<arg name="count" type="UWORD"/>
+		</method>
+		<method name="InitRastPort" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="InitVPort" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="MrgCop" result="ULONG">
+			<arg name="view" type="struct View *"/>
+		</method>
+		<method name="MakeVPort" result="ULONG">
+			<arg name="view" type="struct View *"/>
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="LoadView" result="VOID">
+			<arg name="view" type="struct View *"/>
+		</method>
+		<method name="WaitBlit" result="VOID">
+		</method>
+		<method name="SetRast" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="pen" type="UBYTE"/>
+		</method>
+		<method name="Move" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="WORD"/>
+			<arg name="y" type="WORD"/>
+		</method>
+		<method name="Draw" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="WORD"/>
+			<arg name="y" type="WORD"/>
+		</method>
+		<method name="AreaMove" result="LONG">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="WORD"/>
+			<arg name="y" type="WORD"/>
+		</method>
+		<method name="AreaDraw" result="LONG">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="WORD"/>
+			<arg name="y" type="WORD"/>
+		</method>
+		<method name="AreaEnd" result="LONG">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="WaitTOF" result="VOID">
+		</method>
+		<method name="QBlit" result="VOID">
+			<arg name="blit" type="struct bltnode *"/>
+		</method>
+		<method name="InitArea" result="VOID">
+			<arg name="areaInfo" type="struct AreaInfo *"/>
+			<arg name="vectorBuffer" type="APTR"/>
+			<arg name="maxVectors" type="WORD"/>
+		</method>
+		<method name="SetRGB4" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="colindex" type="UWORD"/>
+			<arg name="red" type="UBYTE"/>
+			<arg name="green" type="UBYTE"/>
+			<arg name="blue" type="UBYTE"/>
+		</method>
+		<method name="QBSBlit" result="VOID">
+			<arg name="blit" type="struct bltnode *"/>
+		</method>
+		<method name="BltClear" result="VOID">
+			<arg name="memBlock" type="PLANEPTR"/>
+			<arg name="byteCount" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="RectFill" result="void">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xMin" type="int16"/>
+			<arg name="yMin" type="int16"/>
+			<arg name="xMax" type="int16"/>
+			<arg name="yMax" type="int16"/>
+		</method>
+		<method name="BltPattern" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="mask" type="CONST PLANEPTR"/>
+			<arg name="xMin" type="WORD"/>
+			<arg name="yMin" type="WORD"/>
+			<arg name="xMax" type="WORD"/>
+			<arg name="yMax" type="WORD"/>
+			<arg name="maskBPR" type="UWORD"/>
+		</method>
+		<method name="ReadPixel" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="int16"/>
+			<arg name="y" type="int16"/>
+		</method>
+		<method name="WritePixel" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="int16"/>
+			<arg name="y" type="int16"/>
+		</method>
+		<method name="Flood" result="BOOL">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="x" type="WORD"/>
+			<arg name="y" type="WORD"/>
+		</method>
+		<method name="PolyDraw" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="count" type="WORD"/>
+			<arg name="polyTable" type="CONST WORD *"/>
+		</method>
+		<method name="SetAPen" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="pen" type="UBYTE"/>
+		</method>
+		<method name="SetBPen" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="pen" type="UBYTE"/>
+		</method>
+		<method name="SetDrMd" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="drawMode" type="UBYTE"/>
+		</method>
+		<method name="InitView" result="VOID">
+			<arg name="view" type="struct View *"/>
+		</method>
+		<method name="CBump" result="VOID">
+			<arg name="copList" type="struct UCopList *"/>
+		</method>
+		<method name="CMove" result="VOID">
+			<arg name="copList" type="struct UCopList *"/>
+			<arg name="destoffset" type="WORD"/>
+			<arg name="data" type="WORD"/>
+		</method>
+		<method name="CWait" result="VOID">
+			<arg name="copList" type="struct UCopList *"/>
+			<arg name="v" type="WORD"/>
+			<arg name="h" type="WORD"/>
+		</method>
+		<method name="VBeamPos" result="LONG">
+		</method>
+		<method name="InitBitMap" result="VOID">
+			<arg name="bitMap" type="struct BitMap *"/>
+			<arg name="depth" type="BYTE"/>
+			<arg name="width" type="UWORD"/>
+			<arg name="height" type="UWORD"/>
+		</method>
+		<method name="ScrollRaster" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="dx" type="WORD"/>
+			<arg name="dy" type="WORD"/>
+			<arg name="xMin" type="WORD"/>
+			<arg name="yMin" type="WORD"/>
+			<arg name="xMax" type="WORD"/>
+			<arg name="yMax" type="WORD"/>
+		</method>
+		<method name="WaitBOVP" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="GetSprite" result="WORD">
+			<arg name="sprite" type="struct SimpleSprite *"/>
+			<arg name="num" type="WORD"/>
+		</method>
+		<method name="FreeSprite" result="VOID">
+			<arg name="num" type="WORD"/>
+		</method>
+		<method name="ChangeSprite" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="sprite" type="struct SimpleSprite *"/>
+			<arg name="newData" type="APTR"/>
+		</method>
+		<method name="MoveSprite" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="sprite" type="struct SimpleSprite *"/>
+			<arg name="x" type="WORD"/>
+			<arg name="y" type="WORD"/>
+		</method>
+		<method name="LockLayerRom" result="VOID">
+			<arg name="layer" type="struct Layer *"/>
+		</method>
+		<method name="UnlockLayerRom" result="VOID">
+			<arg name="layer" type="struct Layer *"/>
+		</method>
+		<method name="SyncSBitMap" result="VOID">
+			<arg name="layer" type="struct Layer *"/>
+		</method>
+		<method name="CopySBitMap" result="VOID">
+			<arg name="layer" type="struct Layer *"/>
+		</method>
+		<method name="OwnBlitter" result="VOID">
+		</method>
+		<method name="DisownBlitter" result="VOID">
+		</method>
+		<method name="InitTmpRas" result="struct TmpRas *">
+			<arg name="tmpRas" type="struct TmpRas *"/>
+			<arg name="buffer" type="PLANEPTR"/>
+			<arg name="size" type="int32"/>
+		</method>
+		<method name="AskFont" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="textAttr" type="struct TextAttr *"/>
+		</method>
+		<method name="AddFont" result="VOID">
+			<arg name="textFont" type="struct TextFont *"/>
+		</method>
+		<method name="RemFont" result="VOID">
+			<arg name="textFont" type="struct TextFont *"/>
+		</method>
+		<method name="AllocRaster" result="PLANEPTR">
+			<arg name="width" type="UWORD"/>
+			<arg name="height" type="UWORD"/>
+		</method>
+		<method name="FreeRaster" result="VOID">
+			<arg name="p" type="PLANEPTR"/>
+			<arg name="width" type="UWORD"/>
+			<arg name="height" type="UWORD"/>
+		</method>
+		<method name="AndRectRegion" result="VOID">
+			<arg name="region" type="struct Region *"/>
+			<arg name="rectangle" type="CONST struct Rectangle *"/>
+		</method>
+		<method name="OrRectRegion" result="BOOL">
+			<arg name="region" type="struct Region *"/>
+			<arg name="rectangle" type="CONST struct Rectangle *"/>
+		</method>
+		<method name="NewRegion" result="struct Region *">
+		</method>
+		<method name="ClearRectRegion" result="BOOL">
+			<arg name="region" type="struct Region *"/>
+			<arg name="rectangle" type="CONST struct Rectangle *"/>
+		</method>
+		<method name="ClearRegion" result="VOID">
+			<arg name="region" type="struct Region *"/>
+		</method>
+		<method name="DisposeRegion" result="VOID">
+			<arg name="region" type="struct Region *"/>
+		</method>
+		<method name="FreeVPortCopLists" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="FreeCopList" result="VOID">
+			<arg name="copList" type="struct CopList *"/>
+		</method>
+		<method name="ClipBlit" result="VOID">
+			<arg name="srcRP" type="struct RastPort *"/>
+			<arg name="xSrc" type="WORD"/>
+			<arg name="ySrc" type="WORD"/>
+			<arg name="destRP" type="struct RastPort *"/>
+			<arg name="xDest" type="WORD"/>
+			<arg name="yDest" type="WORD"/>
+			<arg name="xSize" type="WORD"/>
+			<arg name="ySize" type="WORD"/>
+			<arg name="minterm" type="UBYTE"/>
+		</method>
+		<method name="XorRectRegion" result="BOOL">
+			<arg name="region" type="struct Region *"/>
+			<arg name="rectangle" type="CONST struct Rectangle *"/>
+		</method>
+		<method name="FreeCprList" result="VOID">
+			<arg name="cprList" type="struct cprlist *"/>
+		</method>
+		<method name="GetColorMap" result="struct ColorMap *">
+			<arg name="entries" type="UWORD"/>
+		</method>
+		<method name="FreeColorMap" result="VOID">
+			<arg name="colorMap" type="struct ColorMap *"/>
+		</method>
+		<method name="GetRGB4" result="LONG">
+			<arg name="colorMap" type="struct ColorMap *"/>
+			<arg name="entry" type="UWORD"/>
+		</method>
+		<method name="ScrollVPort" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="UCopperListInit" result="struct CopList *">
+			<arg name="uCopList" type="struct UCopList *"/>
+			<arg name="n" type="WORD"/>
+		</method>
+		<method name="FreeGBuffers" result="VOID">
+			<arg name="anOb" type="struct AnimOb *"/>
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="flag" type="BOOL"/>
+		</method>
+		<method name="BltBitMapRastPort" result="BOOL">
+			<arg name="srcBitMap" type="CONST struct BitMap *"/>
+			<arg name="xSrc" type="WORD"/>
+			<arg name="ySrc" type="WORD"/>
+			<arg name="destRP" type="struct RastPort *"/>
+			<arg name="xDest" type="WORD"/>
+			<arg name="yDest" type="WORD"/>
+			<arg name="xSize" type="WORD"/>
+			<arg name="ySize" type="WORD"/>
+			<arg name="minterm" type="UBYTE"/>
+		</method>
+		<method name="OrRegionRegion" result="BOOL">
+			<arg name="srcRegion" type="CONST struct Region *"/>
+			<arg name="destRegion" type="struct Region *"/>
+		</method>
+		<method name="XorRegionRegion" result="BOOL">
+			<arg name="srcRegion" type="CONST struct Region *"/>
+			<arg name="destRegion" type="struct Region *"/>
+		</method>
+		<method name="AndRegionRegion" result="BOOL">
+			<arg name="srcRegion" type="CONST struct Region *"/>
+			<arg name="destRegion" type="struct Region *"/>
+		</method>
+		<method name="SetRGB4CM" result="VOID">
+			<arg name="colorMap" type="struct ColorMap *"/>
+			<arg name="colindex" type="UWORD"/>
+			<arg name="red" type="UBYTE"/>
+			<arg name="green" type="UBYTE"/>
+			<arg name="blue" type="UBYTE"/>
+		</method>
+		<method name="BltMaskBitMapRastPort" result="VOID">
+			<arg name="srcBitMap" type="struct BitMap *"/>
+			<arg name="xSrc" type="WORD"/>
+			<arg name="ySrc" type="WORD"/>
+			<arg name="destRP" type="struct RastPort *"/>
+			<arg name="xDest" type="WORD"/>
+			<arg name="yDest" type="WORD"/>
+			<arg name="xSize" type="WORD"/>
+			<arg name="ySize" type="WORD"/>
+			<arg name="minterm" type="UBYTE"/>
+			<arg name="bltMask" type="PLANEPTR"/>
+		</method>
+		<method name="GfxInternal1" result="VOID" status="private">
+		</method>
+		<method name="GfxInternal2" result="VOID" status="private">
+		</method>
+		<method name="AttemptLockLayerRom" result="BOOL">
+			<arg name="layer" type="struct Layer *"/>
+		</method>
+		<method name="GfxNew" result="APTR">
+			<arg name="gfxNodeType" type="ULONG"/>
+		</method>
+		<method name="GfxFree" result="VOID">
+			<arg name="gfxNodePtr" type="struct ExtendedNode *"/>
+		</method>
+		<method name="GfxAssociate" result="VOID">
+			<arg name="associateNode" type="CONST APTR"/>
+			<arg name="gfxNodePtr" type="struct ExtendedNode *"/>
+		</method>
+		<method name="BitMapScale" result="VOID">
+			<arg name="bitScaleArgs" type="struct BitScaleArgs *"/>
+		</method>
+		<method name="ScalerDiv" result="UWORD">
+			<arg name="factor" type="UWORD"/>
+			<arg name="numerator" type="UWORD"/>
+			<arg name="denominator" type="UWORD"/>
+		</method>
+		<method name="TextExtent" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="string" type="CONST_STRPTR"/>
+			<arg name="count" type="UWORD"/>
+			<arg name="textExtent" type="struct TextExtent *"/>
+		</method>
+		<method name="TextFit" result="UWORD">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="string" type="CONST_STRPTR"/>
+			<arg name="strLen" type="UWORD"/>
+			<arg name="textExtent" type="struct TextExtent *"/>
+			<arg name="constrainingExtent" type="CONST struct TextExtent *"/>
+			<arg name="strDirection" type="WORD"/>
+			<arg name="constrainingBitWidth" type="UWORD"/>
+			<arg name="constrainingBitHeight" type="UWORD"/>
+		</method>
+		<method name="GfxLookUp" result="APTR">
+			<arg name="associateNode" type="CONST APTR"/>
+		</method>
+		<method name="VideoControl" result="uint32">
+			<arg name="colorMap" type="struct ColorMap *"/>
+			<arg name="tagarray" type="struct TagItem *"/>
+		</method>
+		<method name="VideoControlTags" result="uint32">
+			<arg name="colorMap" type="struct ColorMap *"/>
+			<vararg name="tag1Type" type="Tag"/>
+		</method>
+		<method name="OpenMonitor" result="struct MonitorSpec *">
+			<arg name="monitorName" type="CONST_STRPTR"/>
+			<arg name="displayID" type="ULONG"/>
+		</method>
+		<method name="CloseMonitor" result="LONG">
+			<arg name="monitorSpec" type="struct MonitorSpec *"/>
+		</method>
+		<method name="FindDisplayInfo" result="DisplayInfoHandle">
+			<arg name="displayID" type="uint32"/>
+		</method>
+		<method name="NextDisplayInfo" result="uint32">
+			<arg name="displayID" type="uint32"/>
+		</method>
+		<method name="AddDisplayInfo" result="VOID" status="private">
+			<arg name="displayInfoRecord" type="APTR"/>
+		</method>
+		<method name="AddDisplayInfoData" result="VOID" status="private">
+			<arg name="handle" type="DisplayInfoHandle"/>
+			<arg name="buf" type="UBYTE *"/>
+			<arg name="size" type="ULONG"/>
+			<arg name="tagID" type="ULONG"/>
+			<arg name="displayID" type="ULONG"/>
+		</method>
+		<method name="SetDisplayInfoData" result="DisplayInfoHandle" status="private">
+			<arg name="handle" type="DisplayInfoHandle"/>
+			<arg name="buf" type="APTR"/>
+			<arg name="size" type="uint32"/>
+			<arg name="tagID" type="Tag"/>
+			<arg name="displayID" type="uint32"/>
+		</method>
+		<method name="GetDisplayInfoData" result="uint32">
+			<arg name="handle" type="CONST DisplayInfoHandle"/>
+			<arg name="buf" type="APTR"/>
+			<arg name="size" type="uint32"/>
+			<arg name="tagID" type="Tag"/>
+			<arg name="displayID" type="uint32"/>
+		</method>
+		<method name="FontExtent" result="VOID">
+			<arg name="font" type="CONST struct TextFont *"/>
+			<arg name="fontExtent" type="struct TextExtent *"/>
+		</method>
+		<method name="ReadPixelLine8" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xstart" type="uint16"/>
+			<arg name="ystart" type="uint16"/>
+			<arg name="width" type="uint16"/>
+			<arg name="array" type="uint8 *"/>
+			<arg name="tempRP" type="struct RastPort *"/>
+		</method>
+		<method name="WritePixelLine8" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xstart" type="uint16"/>
+			<arg name="ystart" type="uint16"/>
+			<arg name="width" type="uint16"/>
+			<arg name="array" type="uint8 *"/>
+			<arg name="tempRP" type="struct RastPort *"/>
+		</method>
+		<method name="ReadPixelArray8" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xstart" type="uint16"/>
+			<arg name="ystart" type="uint16"/>
+			<arg name="xstop" type="uint16"/>
+			<arg name="ystop" type="uint16"/>
+			<arg name="array" type="uint8 *"/>
+			<arg name="temprp" type="struct RastPort *"/>
+		</method>
+		<method name="WritePixelArray8" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xstart" type="uint16"/>
+			<arg name="ystart" type="uint16"/>
+			<arg name="xstop" type="uint16"/>
+			<arg name="ystop" type="uint16"/>
+			<arg name="array" type="uint8 *"/>
+			<arg name="temprp" type="struct RastPort *"/>
+		</method>
+		<method name="GetVPModeID" result="ULONG">
+			<arg name="vp" type="CONST struct ViewPort *"/>
+		</method>
+		<method name="ModeNotAvailable" result="uint32">
+			<arg name="modeID" type="uint32"/>
+		</method>
+		<method name="WeighTAMatch" result="WORD" status="private">
+			<arg name="reqTextAttr" type="struct TextAttr *"/>
+			<arg name="targetTextAttr" type="struct TextAttr *"/>
+			<arg name="targetTags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="WeighTAMatchTags" result="WORD" status="private">
+			<arg name="reqTextAttr" type="struct TextAttr *"/>
+			<arg name="targetTextAttr" type="struct TextAttr *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="EraseRect" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xMin" type="WORD"/>
+			<arg name="yMin" type="WORD"/>
+			<arg name="xMax" type="WORD"/>
+			<arg name="yMax" type="WORD"/>
+		</method>
+		<method name="ExtendFont" result="ULONG">
+			<arg name="font" type="struct TextFont *"/>
+			<arg name="fontTags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="ExtendFontTags" result="ULONG">
+			<arg name="font" type="struct TextFont *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="StripFont" result="VOID">
+			<arg name="font" type="struct TextFont *"/>
+		</method>
+		<method name="CalcIVG" result="UWORD">
+			<arg name="v" type="struct View *"/>
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="AttachPalExtra" result="LONG">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="ObtainBestPenA" result="LONG">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="r" type="ULONG"/>
+			<arg name="g" type="ULONG"/>
+			<arg name="b" type="ULONG"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="ObtainBestPen" result="LONG">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="r" type="ULONG"/>
+			<arg name="g" type="ULONG"/>
+			<arg name="b" type="ULONG"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="GfxInternal3" result="VOID" status="private">
+		</method>
+		<method name="SetRGB32" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="n" type="ULONG"/>
+			<arg name="r" type="ULONG"/>
+			<arg name="g" type="ULONG"/>
+			<arg name="b" type="ULONG"/>
+		</method>
+		<method name="GetAPen" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="GetBPen" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="GetDrMd" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="GetOutlinePen" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+		</method>
+		<method name="LoadRGB32" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="table" type="CONST ULONG *"/>
+		</method>
+		<method name="SetChipRev" result="ULONG">
+			<arg name="want" type="ULONG"/>
+		</method>
+		<method name="SetABPenDrMd" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="apen" type="ULONG"/>
+			<arg name="bpen" type="ULONG"/>
+			<arg name="drawmode" type="ULONG"/>
+		</method>
+		<method name="GetRGB32" result="VOID">
+			<arg name="cm" type="CONST struct ColorMap *"/>
+			<arg name="firstcolor" type="UWORD"/>
+			<arg name="ncolors" type="UWORD"/>
+			<arg name="table" type="ULONG *"/>
+		</method>
+		<method name="BltBitMapTagList" result="LONG">
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="SetDefaultMonitor" result="BOOL" status="private">
+			<arg name="mon" type="UWORD"/>
+		</method>
+		<method name="AllocBitMap" result="struct BitMap *">
+			<arg name="sizex" type="uint32"/>
+			<arg name="sizey" type="uint32"/>
+			<arg name="depth" type="uint32"/>
+			<arg name="flags" type="uint32"/>
+			<arg name="friendBitmap" type="CONST struct BitMap *"/>
+		</method>
+		<method name="FreeBitMap" result="VOID">
+			<arg name="bm" type="struct BitMap *"/>
+		</method>
+		<method name="GetExtSpriteA" result="LONG">
+			<arg name="ss" type="struct ExtSprite *"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="GetExtSprite" result="LONG">
+			<arg name="ss" type="struct ExtSprite *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="CoerceMode" result="ULONG">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="monitorid" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="ChangeVPBitMap" result="VOID">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="bm" type="struct BitMap *"/>
+			<arg name="db" type="struct DBufInfo *"/>
+		</method>
+		<method name="ReleasePen" result="VOID">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="n" type="LONG"/>
+		</method>
+		<method name="ObtainPen" result="LONG">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="n" type="LONG"/>
+			<arg name="r" type="ULONG"/>
+			<arg name="g" type="ULONG"/>
+			<arg name="b" type="ULONG"/>
+			<arg name="f" type="LONG"/>
+		</method>
+		<method name="GetBitMapAttr" result="uint32">
+			<arg name="bm" type="CONST struct BitMap *"/>
+			<arg name="attrnum" type="uint32"/>
+		</method>
+		<method name="AllocDBufInfo" result="struct DBufInfo *">
+			<arg name="vp" type="struct ViewPort *"/>
+		</method>
+		<method name="FreeDBufInfo" result="VOID">
+			<arg name="dbi" type="struct DBufInfo *"/>
+		</method>
+		<method name="SetOutlinePen" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="pen" type="ULONG"/>
+		</method>
+		<method name="SetWriteMask" result="ULONG">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="msk" type="ULONG"/>
+		</method>
+		<method name="SetMaxPen" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="maxpen" type="ULONG"/>
+		</method>
+		<method name="SetRGB32CM" result="VOID">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="n" type="UWORD"/>
+			<arg name="r" type="ULONG"/>
+			<arg name="g" type="ULONG"/>
+			<arg name="b" type="ULONG"/>
+		</method>
+		<method name="ScrollRasterBF" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="dx" type="WORD"/>
+			<arg name="dy" type="WORD"/>
+			<arg name="xMin" type="WORD"/>
+			<arg name="yMin" type="WORD"/>
+			<arg name="xMax" type="WORD"/>
+			<arg name="yMax" type="WORD"/>
+		</method>
+		<method name="FindColor" result="UWORD">
+			<arg name="cm" type="struct ColorMap *"/>
+			<arg name="r" type="ULONG"/>
+			<arg name="g" type="ULONG"/>
+			<arg name="b" type="ULONG"/>
+			<arg name="maxcolor" type="LONG"/>
+		</method>
+		<method name="BltBitMapTags" result="LONG">
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="AllocSpriteDataA" result="struct ExtSprite *">
+			<arg name="bm" type="CONST struct BitMap *"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="AllocSpriteData" result="struct ExtSprite *">
+			<arg name="bm" type="CONST struct BitMap *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="ChangeExtSpriteA" result="LONG">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="oldsprite" type="struct ExtSprite *"/>
+			<arg name="newsprite" type="struct ExtSprite *"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="ChangeExtSprite" result="LONG">
+			<arg name="vp" type="struct ViewPort *"/>
+			<arg name="oldsprite" type="struct ExtSprite *"/>
+			<arg name="newsprite" type="struct ExtSprite *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="FreeSpriteData" result="VOID">
+			<arg name="sp" type="struct ExtSprite *"/>
+		</method>
+		<method name="SetRPAttrsA" result="uint32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="SetRPAttrs" result="uint32">
+			<arg name="rp" type="struct RastPort *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="GetRPAttrsA" result="uint32">
+			<arg name="rp" type="CONST struct RastPort *"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="GetRPAttrs" result="uint32">
+			<arg name="rp" type="CONST struct RastPort *"/>
+			<vararg name="tag1Type" type="ULONG"/>
+		</method>
+		<method name="BestModeIDA" result="uint32">
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="BestModeID" result="uint32">
+			<vararg name="tag1Type" type="Tag"/>
+		</method>
+		<method name="WriteChunkyPixels" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xstart" type="UWORD"/>
+			<arg name="ystart" type="UWORD"/>
+			<arg name="xstop" type="UWORD"/>
+			<arg name="ystop" type="UWORD"/>
+			<arg name="array" type="CONST UBYTE *"/>
+			<arg name="bytesperrow" type="LONG"/>
+		</method>
+		<method name="CompositeTagList" result="uint32">
+			<arg name="Operator" type="CONST uint32"/>
+			<arg name="Source" type="CONST struct BitMap *"/>
+			<arg name="Destination" type="CONST struct BitMap *"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="CompositeTags" result="uint32">
+			<arg name="Operator" type="CONST uint32"/>
+			<arg name="Source" type="CONST struct BitMap *"/>
+			<arg name="Destination" type="CONST struct BitMap *"/>
+			<vararg name="tag1Type" type="uint32"/>
+		</method>
+		<method name="AllocBitMapTagList" result="struct BitMap *">
+			<arg name="sizex" type="uint32"/>
+			<arg name="sizey" type="uint32"/>
+			<arg name="depth" type="uint32"/>
+			<arg name="tags" type="CONST struct TagItem *"/>
+		</method>
+		<method name="AllocBitMapTags" result="struct BitMap *">
+			<arg name="sizex" type="uint32"/>
+			<arg name="sizey" type="uint32"/>
+			<arg name="depth" type="uint32"/>
+			<vararg name="tag1Type" type="uint32"/>
+		</method>
+		<method name="GetMonitorDataTagList" result="int32">
+			<arg name="boardNum" type="uint32"/>
+			<arg name="monitorNum" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="GetMonitorDataTags" result="int32">
+			<arg name="boardNum" type="uint32"/>
+			<arg name="monitorNum" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="GetBoardDataTagList" result="int32">
+			<arg name="boardNum" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="GetBoardDataTags" result="int32">
+			<arg name="boardNum" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="LockBitMapTagList" result="APTR">
+			<arg name="bitMap" type="struct BitMap *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="LockBitMapTags" result="APTR">
+			<arg name="bitMap" type="struct BitMap *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="UnlockBitMap" result="void">
+			<arg name="lock" type="APTR"/>
+		</method>
+		<method name="RectFillColor" result="void">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="xMin" type="uint32"/>
+			<arg name="yMin" type="uint32"/>
+			<arg name="xMax" type="uint32"/>
+			<arg name="yMax" type="uint32"/>
+			<arg name="color" type="uint32"/>
+		</method>
+		<method name="WritePixelColor" result="int32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="uint32"/>
+			<arg name="y" type="uint32"/>
+			<arg name="color" type="uint32"/>
+		</method>
+		<method name="ReadPixelColor" result="uint32">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="x" type="uint32"/>
+			<arg name="y" type="uint32"/>
+		</method>
+		<method name="ReadPixelArray" result="void">
+			<arg name="src" type="struct RastPort *"/>
+			<arg name="srcX" type="uint32"/>
+			<arg name="srcY" type="uint32"/>
+			<arg name="dst" type="uint8 *"/>
+			<arg name="dstX" type="uint32"/>
+			<arg name="dstY" type="uint32"/>
+			<arg name="dstBytesPerRow" type="uint32"/>
+			<arg name="dstPixelFormat" type="PIX_FMT"/>
+			<arg name="sizeX" type="uint32"/>
+			<arg name="sizeY" type="uint32"/>
+		</method>
+		<method name="WritePixelArray" result="void">
+			<arg name="src" type="uint8 *"/>
+			<arg name="srcX" type="uint32"/>
+			<arg name="srcY" type="uint32"/>
+			<arg name="srcBytesPerRow" type="uint32"/>
+			<arg name="srcPixelFormat" type="PIX_FMT"/>
+			<arg name="dst" type="struct RastPort *"/>
+			<arg name="dstX" type="uint32"/>
+			<arg name="dstY" type="uint32"/>
+			<arg name="sizeX" type="uint32"/>
+			<arg name="sizeY" type="uint32"/>
+		</method>
+		<method name="GraphicsControlTagList" result="uint32">
+			<arg name="tags" type="const struct TagItem *"/>
+		</method>
+		<method name="GraphicsControlTags" result="uint32">
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="LockBitMapToBoardTagList" result="APTR">
+			<arg name="bitMap" type="struct BitMap *"/>
+			<arg name="boardNum" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="LockBitMapToBoardTags" result="APTR">
+			<arg name="bitMap" type="struct BitMap *"/>
+			<arg name="boardNum" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="UnlockBitMapFromBoard" result="void">
+			<arg name="lock" type="APTR"/>
+			<arg name="modified" type="BOOL"/>
+		</method>
+		<method name="GetBoardBytesPerRow" result="uint32">
+			<arg name="boardNum" type="uint32"/>
+			<arg name="pixelFormat" type="PIX_FMT"/>
+			<arg name="width" type="uint32"/>
+		</method>
+		<method name="InitBoardTagList" result="APTR" status="private">
+			<arg name="boardName" type="CONST_STRPTR"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="InitBoardTags" result="APTR" status="private">
+			<arg name="boardName" type="CONST_STRPTR"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		<method name="CreateDisplayInfoData" result="BOOL" status="private">
+			<arg name="boardInfo" type="APTR"/>
+		</method>
+
+		<!-- PIP -->
+
+		<method name="PIP_OpenTagList"				result="struct Window *" status="private">
+			<arg name="Tags"						type="struct TagItem *"/>
+		</method>
+
+		<method name="PIP_OpenTags"					result="struct Window *" status="private">
+			<vararg name="tag1"						type="Tag"/>
+		</method>
+		
+		<method name="PIP_Close"					result="BOOL" status="private">
+			<arg name="window"						type="struct Window *"/>
+		</method>
+		
+		<method name="PIP_SetTagList"				result="uint32" status="private">
+			<arg name="window"						type="struct Window *"/>
+			<arg name="Tags"						type="struct TagItem *"/>
+		</method>
+		
+		<method name="PIP_SetTags"					result="uint32" status="private">
+			<arg name="window"						type="struct Window *"/>
+			<vararg name="tag1"						type="Tag"/>
+		</method>
+		
+		<method name="PIP_GetTagList"				result="uint32" status="private">
+			<arg name="window"						type="struct Window *"/>
+			<arg name="Tags"						type="struct TagItem *"/>
+		</method>
+		
+		<method name="PIP_GetTags"					result="uint32" status="private">
+			<arg name="window"						type="struct Window *"/>
+			<vararg name="tag1"						type="Tag"/>
+		</method>
+
+		<!-- PIP -->
+
+		<method name="SetRastColor" result="VOID">
+			<arg name="rp" type="struct RastPort *"/>
+			<arg name="color" type="uint32"/>
+		</method>
+	
+	</interface>
+</library>

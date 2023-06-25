@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="fsldma" basename="fslDMABase" openname="fsldma.resource">
+
+  <copyright>Copyright (C) 2019,2021 Trevor Dickinson</copyright>
+
+  <include>interfaces/fsldma.h</include>
+  <include>resources/fsldma.h</include>
+
+  <interface name="main" version="1.0" struct="fslDMAIFace" prefix="_fsldma_" asmprefix="IfslDMA" global="IfslDMA">
+    <method name="Obtain" result="uint32"/>
+    <method name="Release" result="uint32"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="CopyMemDMA" result="BOOL">
+      <arg name="pSourceBuffer" type="CONST_APTR"/>
+      <arg name="pDestBuffer" type="APTR"/>
+      <arg name="lBufferSize" type="uint32"/>
+    </method>
+
+    <method name="CopyMemDMATagList" result="BOOL">
+      <arg name="pSourceBuffer" type="CONST_APTR"/>
+      <arg name="pDestBuffer" type="APTR"/>
+      <arg name="lBufferSize" type="uint32"/>
+      <arg name="Tags" type="const struct TagItem *"/>
+    </method>
+
+    <method name="CopyMemDMATags" result="BOOL">
+      <arg name="pSourceBuffer" type="CONST_APTR"/>
+      <arg name="pDestBuffer" type="APTR"/>
+      <arg name="lBufferSize" type="uint32"/>
+      <vararg name="Tag1" type="uint32"/>
+    </method>
+
+    <method name="StartDMAChain" result="BOOL">
+      <arg name="pDMALinkArray" type="struct dma_link_descriptor *"/>
+    </method>
+
+    <method name="StartDMAChainTagList" result="BOOL">
+      <arg name="pDMALinkArray" type="struct dma_link_descriptor *"/>
+      <arg name="Tags" type="const struct TagItem *"/>
+    </method>
+
+    <method name="StartDMAChainTags" result="BOOL">
+      <arg name="pDMALinkArray" type="struct dma_link_descriptor *"/>
+      <vararg name="Tag1" type="uint32"/>
+    </method>
+
+  </interface>
+</library>

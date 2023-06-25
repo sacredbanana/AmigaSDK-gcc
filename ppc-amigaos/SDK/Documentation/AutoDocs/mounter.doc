@@ -1,0 +1,195 @@
+TABLE OF CONTENTS
+
+mounter/main/AnnounceDevice
+mounter/main/DenounceDevice
+mounter/private/FullBooted
+mounter/private/Obtain
+mounter/private/Release
+
+
+mounter/main/AnnounceDevice                                             mounter/main/AnnounceDevice
+
+   NAME
+      AnnounceDevice -- Announce the availability of an exec device unit to
+          the mounter
+      AnnounceDeviceTags -- Vararg stub for AnnounceDevice().
+
+   SYNOPSIS
+      BOOL AnnounceDevice(CONST_STRPTR execDeviceName, uint32 unit,
+          struct TagItem * tags);
+      BOOL AnnounceDeviceTags(CONST_STRPTR execDeviceName, uint32 unit, ...);
+
+   FUNCTION
+      Announces the availability of a new exec device unit to the mounter. If
+      the call succeeds, the mounter is in control of the unit. It will then
+      try to identify the layout of the media and mount the identified
+      partitions. If mounter identifies a media that has been seen before,
+      mounter may send an IORequest to the device to make the media or parts
+      of the media available using a different unit number.
+
+      This call will not block, but a hook function can be registered to
+      retrieve certain events about the device.
+
+      This call works when dos.library is available but also works when it
+      is not available. In the latter case, the dos devices will be added as
+      boot nodes via expansion.library.
+
+   TAGS
+      MNTA_AnnounceCompletedHook (struct Hook *)
+          Specifies a hook that is invoked when the initial device processing
+          has been completed. In the ideal case, all partitions on the media
+          have been mounted then. The hook will have the following parameters
+          initialised:
+
+            MountingCompleted(struct Hook *hook, APTR object, APTR message);
+
+          The object and message parameters are currently set to NULL.
+
+          This tag is useful in a situation in that one want to halt a certain
+          process until a first attempt to mount the partition has been
+          undertaken. E.g., devices that are initialized in a pre dos
+          environment may hold the boot process until the partitions have been
+          enqueued to ensure that it is possible to boot from them. Note that
+          a time-out must be implemented by the respective devices on their
+          own. Also note that once the hook has been called, it will be never
+          called again for this instance.
+
+      MNTA_DosNamePrefixHint
+          Specifies a hint how the prefix of the dos name of mounted partitions
+           could look like. For instance, USB devices could specifies "USB" in
+           which case "USB0:" would be the dos name for unit 0.
+
+   INPUTS
+       execDeviceName - the name of the exec device, e.g.,
+           "usbmassstorage.device". Note that the memory to which the
+           parameter will be point to must not be freed before DenounceDevice()
+           is called again.
+       unit - the unit number, e.g., 0.
+       tags - the tags as specified in the TAGS section.
+
+   RESULT
+       Whether the announcement has been sent or not.
+
+   EXAMPLE
+
+   NOTES
+       If the call succeeds, the unit is in control of the mounter. This means
+       that the same unit must not be used again, until DenounceDevice() is
+       called and the unit is closed by the mounter. The exception is that
+       mounter requests to reassign a specific unit.
+
+   BUGS
+
+   SEE ALSO
+       DenounceDevice().
+
+mounter/main/DenounceDevice                                             mounter/main/DenounceDevice
+
+   NAME
+      DenounceDevice -- Unregisters the given exec device unit from the
+          mounter.
+
+   SYNOPSIS
+      VOID DenounceDevice(CONST_STRPTR execDeviceName, uint32 unit);
+
+   FUNCTION
+      Signals the mounter that the media with the given unit is no longer
+      available. It is up to the mounter what do to then. The mounter
+      can dismount all the partitions associated to the unit but doesn't
+      need to do so.
+
+      The device driver must ensure that the same unit number will not be
+      used again at least as long as there are still clients that keep the
+      device open. Even if the same media is inserted again, a free unit
+      number must be used.
+
+   INPUTS
+       execDeviceName - the name of the exec device that shound be
+           denounced
+       unit - the unit number, e.g., 0.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       AnnounceDevice().
+
+mounter/private/FullBooted                                               mounter/private/FullBooted
+
+   NAME
+      FullBooted -- Description
+
+   SYNOPSIS
+      void FullBooted(void);
+
+   FUNCTION
+      Signals the mounter.library that the system is now in the full boot
+      state. As a consequence, disk-based modules and configuration can be
+      obtained now by mounter.library.
+
+   INPUTS
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+mounter/private/Obtain                                                       mounter/private/Obtain
+
+   NAME
+      Obtain -- Description
+
+   SYNOPSIS
+      ULONG Obtain(void);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       The result ...
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+mounter/private/Release                                                     mounter/private/Release
+
+   NAME
+      Release -- Description
+
+   SYNOPSIS
+      ULONG Release(void);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       The result ...
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

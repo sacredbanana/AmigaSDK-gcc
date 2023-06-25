@@ -1,0 +1,136 @@
+TABLE OF CONTENTS
+
+textclip.library/--Background--
+textclip.library/DisposeClipVector
+textclip.library/ReadClipVector
+textclip.library/WriteClipVector
+
+
+textclip.library/--Background--               textclip.library/--Background--
+
+    PURPOSE
+       The purpose of the textclip.library and the TEXTCLIP: handler is to
+       provide a simplified interface for text clipping for applications.
+       Using the clipboard.device directly or indirectly by the
+       iffparse.library is overshooting if all you need to do is to copy
+       or paste a simple string vector into the clipboard. This library,
+       and this handler provide means to simplify clipboard handling as
+       much as possible.
+
+       The textclip.library offers functions for writing ("copying") and
+       reading ("pasting", as seen from the application) string vectors
+       in the and out of the clipboard. These strings are encoded as
+       IFF FTXT streams automatically. Since the full string is read and
+       written at once, it is recommended not to use these functions for
+       huge data sets; the TEXTCLIP: handler is better suited for this
+       purpose.
+
+       See also: The data sheet of the textclip-handler.
+
+textclip.library/DisposeClipVector         textclip.library/DisposeClipVector
+
+    NAME
+       DisposeClipVector -- release a vector obtained by ReadClipVector
+
+    SYNOPSIS
+       DisposeClipVector( vec )
+
+       void DisposeClipVector( STRPTR );
+
+    FUNCTION
+       Returns a string vector obtained by ReadClipVector() back to
+       the library.
+
+    INPUTS
+       vec     - pointer to a string vector obtained by ReadClipVector().
+                 Passing NULL here is safe and does nothing.
+
+    RESULT
+
+    NOTES
+       It is very important that every ReadClipVector() is paired by
+       one and only one DisposeClipVector() as otherwise memory leaks
+       will occur.
+
+       This function is callable from within tasks safely.
+
+
+    BUGS
+
+    SEE ALSO
+       ReadClipVector
+
+textclip.library/ReadClipVector               textclip.library/ReadClipVector
+
+    NAME
+       ReadClipVector -- read a string vector from the clipboard device
+
+    SYNOPSIS
+       ReadClipVector( vecptr, sizeptr )
+
+       LONG ReadClipVector( STRPTR *, ULONG *);
+
+    FUNCTION
+       Allocates a string vector of suitable size and fills this
+       vector with text data from the clipboard provided it contains
+       IFF FTXT chunks. Places the pointer to the string and its size
+       in suitable variables.
+       The vector obtained as such has to be returned to the library
+       as soon as you're done processing it by means of
+       DisposeClipVector.
+
+    INPUTS
+       vecptr  - pointer to a string pointer. Will be filled in case
+                 of success with a pointer to the string read.
+       sizeptr - pointer to a ULONG that will get filled with the size
+                 of the string in bytes.
+
+    RESULT
+       A boolean success/failure indicator. In case of failure, the
+       size and the pointer will be nulled out for you.
+
+    NOTES
+       For your convenience, the string will be allocated one byte larger
+       and will get NUL terminated automatically by this call. Note how-
+       ever that NUL itself, even though unusual, might be a valid character
+       within the string itself. Be prepared to handle ESC and CSI sequences
+       in this string as this call does not try to filter them in any way.
+
+       This function is callable from within tasks safely.
+
+
+    BUGS
+
+    SEE ALSO
+       WriteClipVector, DisposeClipVector
+
+textclip.library/WriteClipVector             textclip.library/WriteClipVector
+
+    NAME
+       WriteClipVector -- Place string vector in the clipboard
+
+    SYNOPSIS
+       ok = WriteClipVector( vec, size )
+
+       LONG WriteClipVector( STRPTR, ULONG );
+
+    FUNCTION
+       Places a string of a given size into the clipboard unit #0,
+       encoded as IFF FTXT.
+
+    INPUTS
+       vec  - pointer to a string of ISO-LATIN-1 characters
+       size - size of the string in bytes
+
+    RESULT
+       boolean success/failure indicator
+
+    NOTES
+       This function is callable from within tasks safely.
+
+    BUGS
+
+    SEE ALSO
+       ReadClipVector, DisposeClipVector
+
+

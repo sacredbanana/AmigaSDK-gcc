@@ -1,0 +1,78 @@
+commands/EXPUNGE                                             commands/EXPUNGE
+
+   NAME
+	EXPUNGE - Expunge shared libraries and devices
+
+   TEMPLATE
+	NAME/M,PAT=PATTERN/K,ALL/S
+
+   PATH
+	SDK:C/EXPUNGE
+
+   FUNCTION
+	EXPUNGE is meant as a software developer tool to force shared
+	libraries and devices to expunge themselves. The ramlib process
+	is responsible for expunging libraries when the corresponding disk
+	file has changed so there should be little need for this command in
+	practice. The caching of system libraries and devices is normal and
+	users should not be using this command.
+
+	EXPUNGE with no arguments displays the list of devices and libraries
+	along with their open count and flags. This is useful to find out
+	the names of the objects to expunge.
+
+	EXPUNGE will attempt to expunge the named shared libraries and/or
+	devices. Since it is not possible to determine whether an expunge
+	succeeds or fails EXPUNGE will always state an object was expunged
+	if it was found.
+
+	If PATTERN is specified only libraries and devices matching this
+	pattern will be attempted to be expunged. This pattern may be an
+	arbitrary DOS style pattern.
+
+	If the ALL switch is present EXPUNGE will attempt to expunge all
+	the shared libraries and devices with a usage count of zero. Any
+	names specified will be ignored in this case.
+
+   RESULTS
+	If EXPUNGE succeeded the return code will be set to 0.
+
+	If EXPUNGE cannot find one or more specified names it will continue
+	and the return code will be 5. If EXPUNGE fails completely the
+	return code will be 20. The secondary return code will be set
+	appropriately.
+
+   EXAMPLES
+	1> EXPUNGE
+
+	Displays the current device and library lists. For example:
+	    Devices:
+	    keyboard.device                1      SUMUSED
+	    input.device                   20     SUMUSED
+
+	    Libraries:
+	    utility.library                132    SUMUSED
+	    graphics.library               72     SUMUSED
+
+	1> EXPUNGE keyboard.device graphics.library
+
+	Expunges both of the named objects. Since the use count
+	of these objects is greater than 0 nothing will happen
+	but the command will still succeed. This is because there
+	is no return code on the Expunge vector.
+
+	1> EXPUNGE ALL
+
+	Expunges all the devices and libraries it can find.
+
+	1> EXPUNGE locale.library
+
+	Expunges all the unused catalogs and replaces the obsolete
+	Avail FLUSH technique.
+
+	1> EXPUNGE amiga#?
+
+	Expunges all libraries whose name is starting with "amiga"
+	(i.e. amigaguide.library or amigaguide.datatype)
+
+

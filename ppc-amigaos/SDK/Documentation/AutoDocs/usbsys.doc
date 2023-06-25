@@ -1,0 +1,2678 @@
+TABLE OF CONTENTS
+
+usbsys.device/--overview--
+usbsys.device/CloseDevice
+usbsys.device/CMD_READ
+usbsys.device/CMD_WRITE
+usbsys.device/OpenDevice
+usbsys.device/USBAddFunctionA
+usbsys.device/USBAllocObject
+usbsys.device/USBAllocRequestA
+usbsys.device/USBClaimFunction
+usbsys.device/USBClaimInterface
+usbsys.device/USBDeclaimFunction
+usbsys.device/USBDeclaimInterface
+usbsys.device/USBEPControlXferA
+usbsys.device/USBEPDestall
+usbsys.device/USBEPGetDescriptorA
+usbsys.device/USBFindFunctionA
+usbsys.device/USBFindInterfaceA
+usbsys.device/USBFktDriverRunning
+usbsys.device/USBFktGetCfgDescriptorsA
+usbsys.device/USBFktSetConfigurationA
+usbsys.device/USBFreeDescriptors
+usbsys.device/USBFreeObject
+usbsys.device/USBFreeRequest
+usbsys.device/USBGetEndPoint
+usbsys.device/USBGetInterface
+usbsys.device/USBGetRawFunctionAttrsA
+usbsys.device/USBGetRawInterfaceAttrsA
+usbsys.device/USBGetStackAttrsA
+usbsys.device/USBIfcDriverRunning
+usbsys.device/USBIntGetAltSettingA
+usbsys.device/USBIntGetConfigurationA
+usbsys.device/USBIntSetAltSettingA
+usbsys.device/USBLockFunction
+usbsys.device/USBLockInterface
+usbsys.device/USBLogPuts
+usbsys.device/USBLogVPrintf
+usbsys.device/USBNextDescriptor
+usbsys.device/USBObtainResourceA
+usbsys.device/USBParseDescriptors
+usbsys.device/USBPrevDescriptor
+usbsys.device/USBReleaseResource
+usbsys.device/USBRemFunction
+usbsys.device/USBSetFunctionAttrsA
+usbsys.device/USBSetInterfaceAttrsA
+usbsys.device/USBUnlockFunction
+usbsys.device/USBUnlockInterface
+usbsys.device/--overview--                         usbsys.device/--overview--
+
+   Developers *must* keep in mind that the USB is a LittleEndian bus!
+   The USB stack does *not* do Endianness conversion - it is not possible,
+   as data has no defined structure on the USB bus. Function Drivers are
+   themselves responsible for formatting the data they read or write.
+   All data relayed from the USB bus will always be in Little Endian
+   format, including, but not limited to, USB descriptors.
+   The include file "usb/usb.h" has a macro LE_WORD() for performing
+   Big<->Little endianness conversion of a 16 bit word.
+
+
+usbsys.device/CloseDevice                           usbsys.device/CloseDevice
+
+   NAME
+      CloseDevice -- Close the USB System Software device
+
+   SYNOPSIS
+      CloseDevice(ioRequest)
+                  A0
+
+      void CloseDevice(struct IORequest *);
+
+   FUNCTION
+      This is an exec call. Exec will use the ioRequest to close the
+      usbsys.device.
+
+      All IORequests MUST have been completed before closing the device.
+      You have been warned!
+
+   INPUTS
+      ioRequest   -  Pointer to the IORequest which was used for the
+                     OpenDevice() call opening the usbsys.device.
+
+   SEE ALSO
+      OpenDevice
+
+
+usbsys.device/CMD_READ                                 usbsys.device/CMD_READ
+
+   NAME
+      CMD_READ -- Request data retrieval from a USB EndPoint
+
+   FUNCTION
+      Using this request you can read data from a USB EndPoint.
+      The amount of data to read is specified in the USBIOReq carrying the
+      CMD_READ request.
+      If the data requested is larger than the maximum packet size of the
+      EndPoint, the transfer will be invisibly split over separate packets.
+      The request is not returned before either the requested amount of
+      data has been read, or an error occurs.
+
+      When reading from a Control EndPoint the USB Function will expect
+      each transaction to start with a Setup stage. To do this the
+      USBIOReq has two Setup specific fields, io_SetupData and
+      io_SetupLength. With these fields you give the USB System Software
+      the data to send in the Setup stage.
+
+      When reading from an Interrupt EndPoint you should generally only
+      request data up to MaxPacketSize of the EndPoint. Otherwise your
+      request may end up waiting for more Interrupts to occur before it
+      will be replied to you. This may be the behavior you want - in that
+      case go ahead.
+
+   NOTE
+      Take note that the USB bus is a LittleEndian bus. The USB System
+      Software will *not* perform endianness conversion on data, as it
+      cannot know the data format. The Function Drivers are themselves
+      responsible for delivering data in a suitable format.
+
+   IO REQUEST
+      io_Command     CMD_READ
+      io_Data        Pointer to buffer where read data is to be stored.
+      io_Length      Number of bytes to read from EndPoint.
+      io_SetupData   struct USBBusSetupData pointer, or NULL. Should only
+                     be specified when reading from a Control EndPoint.
+      io_SetupLength Size of USBBusSetupData, or zero if io_SetupData is
+                     NULL.
+      io_EndPoint    USB System Software private EndPoint reference for
+                     EndPoint to read from. As obtained from USBGetEndPoint()
+.
+
+   RESULT
+      io_Actual      Number of bytes actually read into buffer
+      io_Error       Error code for request. Zero on success.
+
+   SEE ALSO
+      usbsys.device/USBAllocRequest, usbsys.device/USBGetEndPoint,
+      usb/system.h, exec/errors.h
+
+
+usbsys.device/CMD_WRITE                               usbsys.device/CMD_WRITE
+
+    NAME
+       CMD_WRITE -- Request data transmission to a USB EndPoint
+
+    FUNCTION
+       Using this request you can write data to a USB EndPoint.
+       The amount of data to write is specified in the USBIOReq carrying the
+       CMD_WRITE request.
+       If the data to write is larger than the maximum packet size of the
+       EndPoint, the transfer will be invisibly split over separate packets.
+       The request is not returned before either the specified amount of
+       data has been written, or an error occurs.
+
+       When writing to a Control EndPoint the USB Function will expect
+       each transaction to start with a Setup stage. To do this the
+       USBIOReq has two Setup specific fields, io_SetupData and
+       io_SetupLength. With these fields you give the USB System Software
+       the data to send in the Setup stage.
+
+       When writing to an Interrupt EndPoint you should generally only write
+       data up to MaxPacketSize of the EndPoint. Otherwise the payload data
+       will be split over separate Interrupts on the EndPoint. If this is
+       the intended behavior, i.e. this is what the target EndPoint expects,
+       then go right ahead.
+
+       A Zero length data write is valid on the USB bus. A zero length
+       data packet will be generated if io_Data is non-NULL and io_Length
+       is zero. If io_Data is NULL no data packet will be generated
+       on the bus at all.
+
+   NOTE
+      Take note that the USB bus is a LittleEndian bus. The USB System
+      Software will *not* perform endianness conversion on data, as it
+      cannot know the data format. The Function Drivers are themselves
+      responsible for interpreting data in a suitable way.
+
+   IO REQUEST
+      io_Command     CMD_WRITE
+      io_Data        Pointer to data to be written to the EndPoint,
+                     or NULL.
+      io_Length      Number of bytes to write to EndPoint from data buffer,
+                     or zero if no data is to be transfered.
+      io_SetupData   struct USBBusSetupData pointer, or NULL. Should only
+                     be specified when writing to a Control EndPoint.
+      io_SetupLength Size of USBBusSetupData, or zero if io_SetupData is
+                     NULL.
+      io_EndPoint    USB System Software private EndPoint reference for
+                     EndPoint to write to. As obtained from USBGetEndPoint().
+
+   RESULT
+      io_Actual      Number of bytes actually written to EndPoint.
+      io_Error       Error code for request. Zero on success.
+
+   SEE ALSO
+      usbsys.device/USBAllocRequest, usbsys.device/USBGetEndPoint
+      usb/system.h, exec/errors.h
+usbsys.device/OpenDevice                             usbsys.device/OpenDevice
+
+   NAME
+      OpenDevice -- Open the USB System Software device
+
+   SYNOPSIS
+      error = OpenDevice("usbsys.device", unit, ioRequest, flags)
+      D0                  A0              D0    A1         D1
+
+      BYTE OpenDevice(STRPTR, ULONG, struct IORequest *, ULONG);
+
+   FUNCTION
+      This in an exec call. Exec will search for the usbsys.device, and
+      if found, will pass this call on to the device.
+
+      The usbsys.device currently only supports unit 0, and has no special
+      flags defined.
+
+      Although the USB System Software uses USBIOReq structures for requests
+      the OpenDevice() call should only be made with an IORequest structure.
+      The only valid way to allocate a USBIOReq structure is through the
+      USBAllocRequest() function call of the opened device.
+
+   INPUT
+      "usbsys.device"   -  Pointer to the string "usbsys.device".
+      unit        -  The unit to open in the device. Only unit zero is valid.
+      ioRequest   -  Pointer to an IORequest structure to be initialized
+                     by the usbsys.device.
+      flags       -  Modifier flags. Must be zero.
+
+   RESULT
+      D0    -  same as io_Error of the IORequest upon return. Zero on
+               success.
+
+   SEE ALSO
+      CloseDevice()
+
+usbsys.device/USBAddFunctionA                   usbsys.device/USBAddFunctionA
+
+   NAME
+      USBAddFunctionA -- Add a USB Function to the System Software.
+
+   SYNOPSIS
+      rawfkt = USBAddFunctionA( ushubifc, taglist )
+        D0                         A0       A1
+
+      struct UsbRawFunction *USBAddFunctionA( struct UsbInterface *,
+                                              struct TagItem * );
+
+
+      rawfkt = USBAddFunction( ushubifc, Tag1, ... )
+
+      struct UsbRawFunction *USBAddFunction( struct UsbInterface *,
+                                             ULONG, ... );
+
+   FUNCTION
+      This function is used for adding a new USB Function to the USB
+      System Software.
+      When a hub in the USB topology detects insertion of a USB
+      Function, the hub driver can append the inserted USB Function to
+      the USB System Software using this function. All information
+      about the new USB Function is supplied using a tag list. This
+      abstracts the USB Function from the hub driver, allowing easier
+      extensions to the USB Function descriptor in the future.
+
+      This function returns a USB System Software private reference to
+      the USB Function appended by this function call. The hub driver
+      should keep a record of this reference to allow removal of the
+      USB Function if it is unplugged from the hub at a later time.
+
+      To allow safe use of the returned USB Function reference, the
+      Function has been USBLockFunction()'ed to keep it from being
+      expunged.
+
+   NOTE
+      It is not allowed for the adder of a USB Function to actually
+      use it. The returned Function reference is only for use with
+      USBRemFunction(). You have been warned!
+
+   INPUTS
+      ushubifc -  USB System Software private reference for the USB
+                  Interface controlling the hub into which the new
+                  USB Function is inserted.
+      taglist  -  Taglist with information about the Function being
+                  added. NULL is a valid argument.
+
+                  USBA_DeviceSpeed (ULONG)
+                     This tag is used for specifying the speed of the
+                     attached USB Function. This defines how the
+                     hardware driver will actually be communicating
+                     with the Function.
+                     ti_Data is a ULONG holding a speed indicator:
+                     USB_SPEED_LOW  for a LowSpeed Function (1.5 Mb/s).
+                     USB_SPEED_FULL for a FullSpeed Function (12 Mb/s).
+                     USB_SPEED_HIGH for a HighSpeed Function (480 Mb/s).
+                     USB_SPEED_SUPER for a SuperSpeed Function (4800 Mb/s).
+
+                     If not specified the USS will default to
+                     USB_SPEED_LOW for the added Function.
+
+                  USBA_HubPort (LONG)
+                     With this tag you specify the hub port number at
+                     which the USB Function has been attached.
+                     Port numbers are zero based. Negative port numbers
+                     are reserved for system use.
+
+                     The hub port number may be used by the underlying HCD
+                     for better handling of the attached Function:
+                     - In a USB1.1 environment it is optional to supply
+                       this tag, but highly recommended. Some HCDs may
+                       perform poorly without this information.
+                     - In a USB2 environment this tag is *required*. USB2
+                       HCDs cannot operate without this information and may
+                       fail attachments if USBA_HubPort is not specified.
+
+                  USBA_ErrorCode (LONG)
+                     With this tag you supply a pointer to a LONG where
+                     the USB stack will store a USBERR_xxx error code
+                     indicating the success/failure of the operation.
+
+                     If not specified the USB stack will not return any
+                     USBERR_xxx code, and you can only determine success
+                     or failure - not get any idea of why it may have
+                     failed.
+
+
+   RESULT
+      rawfkt -  USB System Software private reference to the added USB
+                Function, or NULL on failure.
+
+   SEE ALSO
+      USBRemFunction()
+
+usbsys.device/USBAllocObject                     usbsys.device/USBAllocObject
+
+   NAME
+	   USBAllocObject -- Allocate a USB Object
+
+	   USBAllocObjectTags -- Allocate a USB Object
+
+   SYNOPSIS
+	   obj = USBAllocObjectTags( type, ... );
+
+	   APTR = USBAllocObjectTags( uint32, ... );
+
+
+	   obj = USBAllocObject( type, taglist );
+
+	   APTR = USBAllocObject( uint32, struct TagItem * );
+
+
+   FUNCTION
+	   Use this function for allocating different 'Object'.
+	   At present time it can only be used to allocate USBIOReq structures.
+
+   INPUTS
+	   type -  This is one of the types that is defined in usb/usbtags.h
+
+	   taglist - Each Object type have different tags, look in usb/usbtags.h
+				 for available tags.
+
+   RESULT
+	   obj -  An object or NULL in case of an error.
+
+   SEE ALSO
+	   USBFreeObject()
+
+usbsys.device/USBAllocRequestA                 usbsys.device/USBAllocRequestA
+
+   NAME
+      USBAllocRequestA -- Allocate a USBIOReq structure
+
+   SYNOPSIS
+      ioreq = USBAllocRequestA( openreq, taglist )
+       D0                        A0       A1
+
+      struct USBIOReq *USBAllocRequestA( struct IORequest *,
+                                         struct TagItem * );
+
+
+      ioreq = USBAllocRequest( openreq, Tag1, ... )
+
+      struct USBIOReq *USBAllocRequestA( struct IORequest *, ULONG, ... );
+
+   FUNCTION
+      Use this function for allocating USBIOReq structures, as used for all
+      IO operations with the USB System Software.
+      This function is the only supported way to create a USBIOReq structure.
+
+   INPUTS
+      openreq  -  Pointer to the IORequest used for opening the
+                  usbsys.device. Various setup is taken from this,
+                  including the reply port for the new request.
+      taglist  -  Pointer to a taglist with extended information for
+                  the allocation.
+
+                  USBA_TraceIO
+                     ti_Data is a ULONG boolean.
+                     Set to TRUE to enable trace logging for the allocated
+                     IO request. Trace logging will only have effect if the
+                     USB stack itself has IO trace logging enabled.
+                     Only the values TRUE or FALSE are allowed.
+                     Defaults to FALSE.
+
+   RESULT
+      ioreq    -  An initialized USBIOReq structure ready for use.
+                  In case of allocation failure this function returns NULL.
+
+   NOTE
+	    From version v53.5 and up, this function will simply call
+	    USBAllocObject().
+
+   SEE ALSO
+      USBFreeRequest()
+
+usbsys.device/USBClaimFunction                 usbsys.device/USBClaimFunction
+
+   NAME
+      USBClaimFunction -- Claim USB Function for communication ownership.
+
+   SYNOPSIS
+      usfkt = USBClaimFunction( rawfkt, fdfkt, port )
+       D0                         A0     A1     A2
+
+
+      struct UsbFunction *USBClaimFunction( struct UsbRawFunction *,
+                                            APTR, struct MsgPort * );
+
+   FUNCTION
+      With this function a USB Function driver claims ownership of an
+      unclaimed USB Function. Only one function driver may own a USB
+      Function at any time.
+
+      Claiming a USB Function links a standard Exec MsgPort with the
+      USB Function. This MsgPort will be used for information passing
+      from the USB System software to the device driver. This includes
+      information such as detachment notification etc.
+      It is possible to claim a Function without supplying a MsgPort.
+      In such a case notification sending is disabled.
+
+      This function will return a pointer to the claimed USB Function,
+      or NULL if the USB Function could not be claimed - e.g. it is
+      already claimed by someone. The returned pointer must be used for
+      all subsequent operations on the claimed Function.
+
+      A USBClaimFunction() call must be matched with a call to
+      USBDeclaimFunction() at a later time, releasing the Function for
+      use by others (or allowing the USB System Software to perform
+      cleanup if the Function has been detached from the bus).
+      Inside a USBClaimFunctoin()/USBDeclaimFunction() pair the USB
+      Function is guarded against expunge from the USB System Software.
+      It is thus not needed (nor possible) to use USBLockFunction()/
+      USBUnlockFunction() on a claimed Function reference.
+
+   INPUTS
+      rawfkt -  USB System Software private reference for USB Function
+                to be claimed. This is a reference as returned by e.g.
+                USBFindFunction().
+      fdfkt  -  Claimers private reference for USB Function to be
+                claimed. This will be used in notification messages
+                sent to the claimers MsgPort. This argument can take
+                on any value but NULL. NULL is a reserved value, and
+                will make claiming of any Function fail.
+      port   -  Message port to which notification messages will be sent.
+                Claiming a Function using a NULL port argument will
+                disable notification messages.
+
+   RESULT
+      usfkt  -  USB System Software private reference to the claimed
+                USB Function, or NULL if unable to claim the USB
+                Function. This reference must be used for all
+                subsequent interaction with the USB Function.
+
+   SEE ALSO
+      USBDeclaimFunction()
+
+usbsys.device/USBClaimInterface               usbsys.device/USBClaimInterface
+
+   NAME
+      USBClaimInterface -- Claim USB Interface for communication
+                           ownership.
+
+   SYNOPSIS
+      usifc = USBClaimInterface( rawifc, fdifc, msgport )
+       D0                          A0      A1     A2
+
+
+      struct UsbInterface *USBClaimInterface( struct UsbRawInterface *,
+                                              APTR, struct MsgPort * );
+
+   FUNCTION
+      With this function a USB Interface driver claims ownership of an
+      unclaimed USB Interface. Only one Interface driver may own a USB
+      Interface at any time.
+
+      Claiming a USB Interface links a standard Exec MsgPort with the
+      USB INterface. This MsgPort will be used for information passing
+      from the USB System software to the device driver. This includes
+      information such as detachment notification etc.
+      It is possible to claim an INterface without supplying a MsgPort.
+      In such a case notification sending is disabled.
+
+      This function will return a pointer to the claimed USB Interface,
+      or NULL if the USB INterface could not be claimed - e.g. it is
+      already claimed by someone. The returned pointer must be used for
+      all subsequent operations on the claimed Interface.
+
+      A USBClaimInterface() call must be matched with a call to
+      USBDeclaimInterface() at a later time, releasing the Interface for
+      use by others (or allowing the USB System Software to perform
+      cleanup if the Interface has been detached from the bus).
+      Inside a USBClaimInterface()/USBDeclaimInterface() pair the USB
+      Interface is guarded against expunge from the USB System Software.
+      It is thus not needed (nor possible) to use USBLockInterface()/
+      USBUnlockInterface() on a claimed Interface reference.
+
+   INPUTS
+      rawifc  -  USB System Software private reference for USB Interface
+                 to be claimed. This is a reference as returned by e.g.
+                 USBFindInterface().
+      fdifc   -  Claimers private reference for USB Interface to be
+                 claimed. This will be used in notification messages
+                 sent to the claimers MsgPort. This argument can take
+                 on any value but NULL. NULL is a reserved value.
+      msgport -  Message port to which notification messages will be sent.
+                 Claiming an INterface using a NULL port argument will
+                 disable notification messages.
+
+   RESULT
+      usfkt   -  USB System Software private reference to the claimed
+                 USB Interface, or NULL if unable to claim the USB
+                 Interface. This reference must be used for all
+                 subsequent interaction with the USB Interface.
+
+   SEE ALSO
+      USBDeclaimInterface()
+
+usbsys.device/USBDeclaimFunction             usbsys.device/USBDeclaimFunction
+
+   NAME
+      USBDeclaimFunction -- Give up ownership of a USB Function
+
+   SYNOPSIS
+      USBDeclaimFunction( usfkt )
+                           A0
+
+      void USBDeclaimFunction( struct UsbFunction * );
+
+   FUNCTION
+      This function is used for declaiming a USB Function after use.
+      When this function  returns the given Function is no longer bound
+      to any MsgPort, and no driver owns the USB Function.
+
+      Usually this function is used in conjunction with the referred USB
+      Function being physically unplugged from the USB topology. When
+      that happens the Function Driver (the one having claimed the USB
+      Function) is informed thru a notification message.
+      Once the driver has cleaned up after itself (it no longer being
+      required when the USB Function has been removed) the driver
+      declaims the USB Function. This, in turn, allows the USB System
+      Software to free any resources consumed for the removed USB
+      Function.
+
+   INPUTS
+      usfkt -  USB System Software private reference for USB Function
+               to declaim as returned by USBClaimFunction().
+
+   SEE ALSO
+      USBClaimFunction
+
+usbsys.device/USBDeclaimInterface           usbsys.device/USBDeclaimInterface
+
+   NAME
+      USBDeclaimInterface -- Give up ownership of a USB Interface
+
+   SYNOPSIS
+      USBDeclaimInterface( usifc )
+                            A0
+
+      void USBDeclaimInterface( struct UsbInterface * );
+
+   FUNCTION
+      This function is used for declaiming a USB Interface after use.
+      When this function returns the given Interface is no longer bound
+      to any MsgPort, and no driver owns the USB Interface.
+
+      Usually this function is used in conjunction with the USB Function
+      of the referred USB Interface being physically unplugged from the
+      USB topology. When that happens the Interface Driver (the one
+      having claimed the USB Interface) is informed thru a notification
+      message.
+      Once the driver has cleaned up after itself (it no longer being
+      required when the USB Interface has been removed) the driver
+      declaims the USB Interface. This, in turn, allows the USB System
+      Software to free any resources consumed for the removed USB
+      Interface.
+
+   INPUTS
+      usifc -  USB System Software private reference for USB Interface
+               to declaim as returned by USBClaimInterface() or
+               USBGetInterface().
+
+   SEE ALSO
+      USBClaimInterface, USBGetInterface()
+
+usbsys.device/USBEPControlXferA               usbsys.device/USBEPControlXferA
+
+   NAME
+      USBEPControlXferA -- Perform a single Control Transfer operation
+                           on a USB EndPoint.
+
+   SYNOPSIS
+      errc = USBEPControlXferA( openreq, usep, rcmd, rtype, rval, ridx,
+       D0                          A0     A1    D0     D1    D2    D3
+                                buf, buflen, taglist )
+                                 A2    D4       A3
+
+      LONG USBEPControlXferA( struct IORequest *, struct UsbEndPoint *,
+                              ULONG, ULONG, ULONG, ULONG , APTR buf,
+                              ULONG buflen, struct TagItem * )
+
+
+      errc = USBEPControlXfer( openreq, usep, rcmd, rtype, rval, ridx,
+                               buf, buflen, Tag1, ... )
+
+      LONG USBEPControlXfer( struct IORequest *, struct UsbEndPoint *,
+                             ULONG, ULONG, ULONG, ULONG , APTR buf,
+                             ULONG buflen, ULONG, ... )
+
+
+   FUNCTION
+      Using this function call you can perform a Control Transfer operation
+      to a Control EndPoint on the USB bus.
+      All aspects of the Control Transfers is handled by this function,
+      which will allocate, fill in and send an IO request for the transfer
+      and await its completion on the USB bus.
+
+      See this function as an alternative to manually creating a USBIOReq
+      structure, settings up a USBBusSetupData structure and sending and
+      waiting for IO completion.
+
+      The arguments passed to this function are matched with corresponding
+      fields in either the sent USBIOReq or USBBusSetupData structures:
+         usep   -> USBIOReq.io_EndPoint
+         rcmd   -> USBBusSetupData.sd_Request
+         rtype  -> USBBusSetupData.sd_RequestType
+         rval   -> USBBusSetupData.sd_Value
+         ridx   -> USBBusSetupData.sd_Index
+         buf    -> USBIOReq.io_Data
+         buflen -> USBIOReq.io_Length
+                   USBBusSetupData.sd_Length
+      This function will itself handle endianness conversion of data placed
+      into the USBBusSetupData structure.
+
+      Depending on the requirements of the request (rcmd) the <buf> and
+      <buflen> arguments may assume NULL/zero. For some requests this may
+      even be required. See the argument specification for the request you
+      intend to make for further information (either in the USB spec. or
+      the USB class specification for the device you're communicating
+      with).
+
+   NOTE
+      If the target EndPoint stalls as a result of the Control Transfer
+      this function will transparently destall the EndPoint by issuing
+      a Clear Feature/EndPoint Halt on the target EndPoint. The return
+      value will be USBERR_STALL indicating the stall, but the EndPoint
+      has already been destalled.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usep     -  System Software reference for EndPoint to communicate
+                  with.
+      rcmd     -  Request command code (A USBREQC_xxx constant)
+      rtype    -  Request type flags (A bitmask made from USBSDT_xxx_xxx
+                  constants)
+      rval     -  Request sd_Value value - command dependant
+      ridx     -  Request sd_Index value - command dependant
+      buffer   -  Buffer holding data buffer (or NULL)
+      size     -  Buffer byte size (or zero)
+      taglist  -  TagList with extended info (no tags defined)
+
+                   USBA_DataLength (int32 *)  (new in v52.8)
+                      Pointer to an int32 where the amount of data actually
+                      received or sent by the ControlXfer will be stored.
+                      This value will always reflect what was reported by
+                      the underlying driver regardless of the xfer being
+                      successful or failed.
+
+   RESULT
+      Returns a USBERR_xxx error code, or Zero on success.
+
+   SEE ALSO
+      usb/system.h, usb/usb.h
+
+usbsys.device/USBEPDestall                         usbsys.device/USBEPDestall
+
+   NAME
+      USBEPDestall -- Destall a USB EndPoint (v2.0)
+
+   SYNOPSIS
+
+      res = USBEPDestall( openreq, usep )
+
+      LONG USBEPDestall( struct IORequest *, struct UsbEndPoint * );
+
+   FUNCTION
+      Using this function a FD can destall a stalled EndPoint.
+
+      Detalling an EndPoint involves performing USB transactions to the
+      Default Control Pipe of the USB Function hosting the EndPoint. This
+      function will not return until the USB transactions have completed.
+
+      You should generally call this function whenever you get a USBERR_STALL
+      error as response to a USB IO operation. Otherwise the involved
+      EndPoint will stay in a stalled state, stalling any subsequent requests
+      made to it.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usep     -  System Software USB EndPoint to destall.
+
+   RESULT
+      Returns a USBERR_xxx error code - USBERR_NOERROR on success.
+
+   SEE ALSO
+
+usbsys.device/USBEPGetDescriptorA           usbsys.device/USBEPGetDescriptorA
+
+   NAME
+      USBEPGetDescriptorA -- Get a descriptor from a USB EndPoint.
+
+   SYNOPSIS
+
+      dscr = USBEPGetDescriptorA( openreq, usep, rtype, dtype, didx, taglist 
+)
+       D0                            A0     A1     D0     D1    D2      A2
+
+      struct USBBusDscHead *USBEPGetDescriptorA( struct IORequest *,
+                             struct UsbEndPoint *, ULONG, LONG, LONG,
+                             struct TagItem * );
+
+
+      dscr = USBEPGetDescriptor( openreq, usep, rtype, dtype, didx,
+                                 Tag1, ... )
+
+      struct USBBusDscHead *USBEPGetDescriptor( struct IORequest *,
+                             struct UsbEndPoint *, ULONG, LONG, LONG,
+                             ULONG, ... );
+
+
+   FUNCTION
+      This function is used for obtaining a full descriptor from a
+      USB EndPoint.
+
+      This function internally performs buffer allocation and also
+      handles descriptor parsing equal to that performed by
+      USBParseDescriptors(). As a result the returned descriptor
+      *must* be freed using USBFreeDescriptors() after use.
+
+      Normally reading is done using EndPoint 0 (the Default Control
+      Pipe) which is used for reading Device descriptor, etc.
+      However, to have a widely applicable API the user must himself
+      supply an EndPoint to be used for the GetDescriptor operation.
+      An EndPoint is found using USBGetEndPoint().
+
+   NOTE
+      As this function only returns full descriptors it cannot be used
+      for reading all descriptors of a configuration. A configuration
+      descriptor set consists of multiple separate descriptors which
+      must be read in one single read operation.
+      To read all descriptors of a configuration you should use the
+      USBFktGetCfgDescriptorsA() function call instead.
+      Note that USB descriptors are in Little Endian format. All fields
+      larger than byte-size must be endianness converted.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usep     -  System Software USB EndPoint to read descriptor from
+      rtype    -  Request type flags (USBSDT_DIR_DEVTOHOST is enforced by
+                  this function).
+                  For standard Default Control Pipe descriptor reads this
+                  should be USBSDT_TYP_STANDARD | USBSDT_REC_DEVICE.
+                  For other types of descriptors specify the required
+                  request type flags (implementation dependant).
+      dtype    -  Descriptor type to get (a USBDESC_xxx constant)
+      didx     -  Descriptor index (zero for non-indexed descriptors)
+      taglist  -  Taglist with extended arguments. NULL is valid.
+                  Usable tags are the same as those specified for
+                  USBControlXferA(). In addition the following tags can
+                  be used as well:
+
+                  USBA_USBSetupDataIndex  (New in 2)
+                     If specified the tag data is used as sd_Index value
+                     in the USBBusSetupData for the descriptor reading USB
+                     Control Transfer. Endianness conversion of the tag
+                     data is internally handled by USBEPGetDescriptorA().
+
+                  USBA_ErrorCode (53.11) (LONG*)
+                     A pointer to memory address, where the error code is
+                     stored, if this call fails. One of USBERR_.
+
+   RESULT
+      A pointer to the requested descriptor, or NULL on error. If a
+      descriptor is returned it *must* be freed by calling
+      USBFreeDescriptors() after use.
+
+   SEE ALSO
+      USBFktGetCfgDescriptors(), USBFreeDescriptors(), usb/usb.h
+
+usbsys.device/USBFindFunctionA                 usbsys.device/USBFindFunctionA
+
+   NAME
+      USBFindFunctionA -- Find a USB Function based on its properties.
+
+   SYNOPSIS
+      rawfkt = USBFindFunctionA( curfkt, taglist )
+        D0                        A0      A1
+
+      struct UsbRawFunction *USBFindFunctionA( struct UsbRawFunction *,
+                                               struct TagItem * );
+
+
+      rawfkt = USBFindFunction( curfkt, Tag1, ... )
+
+      struct UsbRawFunction *USBFindFunctionA( struct UsbRawFunction *,
+                                               ULONG, ... );
+
+
+   FUNCTION
+      Use this function to locate attached USB Functions with a specific
+      set of properties.
+
+      This function will either return a reference to the next USB
+      Function matching the properties given in the TagList, or NULL if no
+      matching Function was found.
+
+      The returned reference is USB System Software private, and must
+      only be used as argument to other USB System calls, not peeked into.
+
+      The returned USB Function reference has been USBLockFunction()'ed,
+      ensuring that the Function cannot be expunged from the system. As a
+      consequence, all USB  Function references returned by this function
+      MUST be USBUnlockFunction()'ed after use.
+
+      To be able to traverse through some, or all, USB Functions with
+      specific properties this function takes a <curfkt> argument. This
+      is a pointer to the current USB Function being looked into, and
+      searching will begin at the next USB Function in the system. For
+      first-time searches a NULL <curfkt> will initiate search from the
+      beginning of the USB Function list.
+
+   INPUTS
+      curfkt   -  The Function to start searching from.
+                  Use a Function reference returned by a previous call
+                  to USBFindFunction() for continued searching.
+                  Specify NULL to initialize a new search.
+
+      taglist  -  List of tags describing the properties of the USB
+                  Function to find. The following tags are valid:
+
+                  USBA_Class
+                     ti_Data is a USB class constant as described in
+                     the USB class specification in question.
+                     Default is to ignore this property when searching.
+
+                  USBA_Subclass
+                     ti_Data is a USB subclass constant as described in
+                     the USB class specification in question.
+                     Default is to ignore this property when searching.
+
+                  USBA_VendorID
+                     ti_Data is a USB VendorID indicating the company
+                     which has created a USB Function. Use this tag
+                     only for vendor-specific Function drivers.
+                     Default is to ignore this property when searching.
+
+                  USBA_ProductID
+                     ti_Data is a USB ProductID indicating which product
+                     the USB Function is. Note that ProductID codes are
+                     vendor speecific, so this tag should only be used
+                     together with USBA_VendorID.
+                     Use this tag only for vendor specific FDs.
+                     Default is to ignore this property when searching.
+
+                  USBA_SeeClaimed
+                     ti_Data is a boolean value indicating wether claimed
+                     Functions should be returned. By default claimed
+                     Functions are *not* returned, optimizing driver
+                     matching.
+                     Use this to always see all Functions matching the
+                     search criteria regardless of their claimed state.
+
+   RESULT
+      rawfkt -  USB System Software private reference for a USB Function
+                matching the given requirements. NULL is returned if no
+                USB Function match was found.
+
+   SEE ALSO
+      usbsys.device/USBUnlockFunction
+
+usbsys.device/USBFindInterfaceA               usbsys.device/USBFindInterfaceA
+
+   NAME
+      USBFindInterfaceA -- Find a USB Interface based on its properties.
+
+   SYNOPSIS
+      rawifc = USBFindInterfaceA( curifc, taglist )
+        D0                         A0      A1
+
+      struct UsbRawInterface *USBFindInterfaceA( struct UsbRawInterface *,
+                                                 struct TagItem * );
+
+
+      rawifc = USBFindInterface( curifc, Tag1, ... )
+
+      struct UsbRawInterface *USBFindInterface( struct UsbRawInterface *,
+                                                ULONG, ... );
+
+
+   FUNCTION
+      Use this function to locate attached USB Interfaces with a specific
+      set of properties.
+
+      This function will either return a reference to the next USB
+      Interface matching the specified properties, or NULL if
+      no matching Interface was found.
+
+      The returned reference is USB System Software private, and must
+      only be used as argument to other USB System calls, not peeked into.
+
+      The returned USB Interface reference has been USBLockInterface()'ed,
+      ensuring that the Interface cannot be expunged from the system. As a
+      consequence, all USB Interface references returned by this function
+      *must* be USBUnlockInterface()'ed after use.
+
+      To be able to traverse through some, or all, USB Interfaces with
+      specific properties this function takes a <curifc> argument. This
+      is a pointer to the current USB Interface being looked into, and
+      searching will begin at the next USB Interface in the system.
+      For first-time searches a NULL <curifc> will initiate search from
+      the beginning of the USB Interface list.
+
+   INPUTS
+      curifc   -  The Interface to start searching from.
+                  Use an Interface reference returned by a previous call
+                  to USBFindInterface() for continued searching.
+                  Specify NULL to initialize a new search.
+
+      taglist  -  List of tags describing the properties of the USB
+                  Interface to find. The following tags are valid:
+
+                  USBA_Class
+                     ti_Data is a USB class constant as described in
+                     the USB class specification in question.
+                     Default is to ignore this property when searching.
+
+                  USBA_Subclass
+                     ti_Data is a USB subclass constant as described in
+                     the USB class specification in question.
+                     Default is to ignore this property when searching.
+
+                  USBA_VendorID
+                     ti_Data is a USB VendorID indicating the company
+                     which has created a USB Function. Use this tag
+                     only for vendor-specific drivers.
+                     Default is to ignore this property when searching.
+
+                  USBA_SeeClaimed
+                     ti_Data is a boolean value indicating wether claimed
+                     Interfaces should be returned. By default claimed
+                     Interfaces are *not* returned, optimizing driver
+                     matching.
+                     Use this to always see all Interfaces matching the
+                     search criteria regardless of their claimed state.
+
+   RESULT
+      rawifc -  USB System Software private reference for a USB Interface
+                matching the class/subclass requirements. NULL if no
+                USB Interface was found.
+
+   SEE ALSO
+      usbsys.device/USBUnlockInterface
+
+usbsys.device/USBFktDriverRunning           usbsys.device/USBFktDriverRunning
+
+   NAME
+      USBFktDriverRunning -- Signal USB stack that Function Driver is running
+                             (v2.0)
+
+   SYNOPSIS
+      USBFktDriverRunning( fkt )
+
+      void USBFktDriverRunning( struct UsbFunction * );
+
+   FUNCTION
+      With this function a Function Driver informs the USB stack that is
+      has initialized itself and the USB Function it controls is now
+      operational.
+
+      This function must only be called by FDs which report TRUE as value
+      for USB_FD_SignalsRunning in USBFDGetAttrsA().
+
+      A bit of background info may be needed to get the bigger picture:
+      When the USB stack is starting during OS booting, it must be able to
+      hold off the boot process until the entire USB topology has been
+      attached. Otherwise it will not be possible to use a USB mouse to
+      enter the EarlyStartup menu, or navigate it using a USB keyboard.
+
+      Previously the USB stack would see a FD as running once it was
+      invoked by the USB stack. This, however, is not sufficient to know
+      when the mouse, keyboard or hub is truly operational. For this
+      reason the USBFktDriverRunning() call has been added, acting as a
+      handshake from the FD to the USB stack, informing that it is in fact
+      fully operational.
+
+      Since the only reason for using USBFktDriverRunning() is to be able
+      to hold back the finalization of the USB stack startup (and thus
+      possibly the OS boot process), only drivers required to be running
+      before the OS reached the EarlyStartup menu will need to use
+      USBFktDriverRunning().
+
+      All hub drivers must implement USBFktDriverRunning(), or its
+      Interface equivalent USBIfcDriverRunning(), as the hubs play a vital
+      role in the enumeration of the USB bus. This includes the internal
+      RootHub driver of all HCDs - see USBHCInitRootHub() in the usbhcd.doc
+      for more info on HCD requirements.
+      Hub drivers must not call USBFktDriverRunning() until all initially
+      attached USB Functions has been USBAddFunction()'ed to the USB stack.
+      Failing to do so will make the USB stack prematurely believe it has
+      the entire USB topology added, breaking the sole idea of using
+      USBFktDriverRunning() in the first place.
+
+      Remember to report TRUE as value for USB_FD_SignalsRunning in the
+      FDs USBFDGetAttrsA() if you intend to call USBFktDriverRunning().
+      Once you do, you are responsible for having called
+      USBFktDriverRunning() if your USBFDRunFunction() returns
+      USBERR_NOERROR.
+
+   INPUTS
+      fkt    -   The UsbFunction which is now fully operational by way of
+                 the calling Function Driver.
+
+   RESULT
+      none
+
+   SEE ALSO
+      usbsys.device/USBIfcDriverRunning(),
+      usb/system.h
+
+usbsys.device/USBFktGetCfgDescriptorsA usbsys.device/USBFktGetCfgDescriptorsA
+
+   NAME
+      USBFktGetCfgDescriptorsA -- Get a configuration descriptor set
+                                  from a USB Function.
+
+   SYNOPSIS
+      dscr = USBFktGetCfgDescriptorsA( openreq, usfkt, cfgid, taglist )
+       D0                                 A0      A1     D0     A2
+
+      struct USBBusCfgDsc *USBFktGetCfgDescriptorsA( struct IORequest *,
+                                            struct UsbFunction *, LONG,
+                                            struct TagItem * );
+
+
+      dscr = USBFktGetCfgDescriptors( openreq, usfkt, cfgid, Tag1, ... )
+
+      struct USBBusCfgDsc *USBFktGetCfgDescriptors( struct IORequest *,
+                                            struct UsbFunction *, LONG,
+                                            ULONG, ... );
+
+   FUNCTION
+      This function is used for obtaining a complete configuration
+      descriptor set from a USB Function. That is, all descriptors
+      from a USB Function which are related to a specific configuration
+      will be fetched, parsed and returned.
+
+      A list of all the descriptors of the configuration is returned
+      by this function. Use USBNextDescriptor()/USBPrevDescriptor()
+      calls to traverse the returned descriptor list.
+
+      This function internally performs buffer allocation and also
+      handles descriptor parsing equal to that performed by
+      USBParseDescriptors(). As a result the returned descriptor list
+      *must* be freed using USBFreeDescriptors() after use.
+
+   NOTE
+      Note that USB descriptors are in Little Endian format. All fields
+      larger than byte-size must be endianness converted.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usfkt    -  System Software USB Function to get descriptor from
+      cfgid    -  Index number of the configuration to obtain (zero based)
+      taglist  -  Taglist with extended arguments. NULL is valid.
+                  No tags are currently defined.
+
+   RESULT
+      A pointer to a list of all descriptors of the requested
+      configuration, or NULL on error. If a descriptor list is returned
+      it *must* be freed by calling USBFreeDescriptors() after use.
+      The returned descriptor list can be directly used for selecting
+      the USB Function configuration with USBFktSetConfigurationA().
+
+   SEE ALSO
+      USBFktSetConfigurationA(), USBParseDecriptors(), USBNextDescriptor(),
+      USBPrevDescriptor()
+
+usbsys.device/USBFktSetConfigurationA   usbsys.device/USBFktSetConfigurationA
+
+   NAME
+      USBFktSetConfigurationA -- Change the configuration of a USB Function.
+
+   SYNOPSIS
+
+      result = USBFktSetConfigurationA( openreq, usfkt, cfgdsc, taglist )
+        D0                                 A0      A1     A2      A3
+
+      LONG USBFktSetConfigurationA( struct IORequest *,
+                            struct UsbFunction *, struct USBBusCfgDsc *,
+                            struct TagItem * );
+
+      result = USBFktSetConfiguration( openreq, usfkt, cfgdsc, tags, ... )
+
+      LONG USBFktSetConfiguration( struct IORequest *,
+                            struct UsbFunction *, struct USBBusCfgDsc *,
+                            ULONG, ... );
+
+
+   FUNCTION
+      Using this function call you select the Configuration to be used by
+      the specified USB Function.
+      When changing Configuration you also change the way Interfaces and
+      EndPoints are used in the USB Function. The USB System Software
+      therefore clears all existing Interfaces and EndPoints upon selecting
+      a Configuration.
+      This behavior also mean that after calling this function *any*
+      Interface or EndPoint references obtained from the USB Function are
+      invalid and must *not* be used.
+
+      As EndPoints are disposed during this function all IO at the
+      Functions EndPoints must have been aborted and WaitIO()'ed
+      before changing configuration. It is the responsibility of
+      the caller to ensure this.
+      Changing Function Configuration while IO is pending at EndPoints
+      must be considered hazardous.
+
+      This function returns an error code indicating the result of trying
+      to change configuration.
+
+      The configuration to select is specified as a pointer to a USB
+      Configuration descriptor. The descriptor pointed to must be the first
+      of a list of descriptors as created using USBParseDescriptors().
+      The original configuration descriptor data is obtained from the
+      USB Function using USBFktGetCfgDescriptorsA(), or by manually
+      reading the configuration descriptor set using USBEPControlXferA()
+      and parsing the descriptor buffer using USBParseDescriptors().
+      Upon return you may free the descriptors - the USB System Software
+      will make copies of any descriptors it requires.
+
+   NOTE
+      To ensure system integrity this is the *only* supported way of
+      changing the Configuration of a USB Function. Manually sending a
+      SET_CONFIGURATION control transfer, or doing so thru
+      USBEPControlXfer(), will at best return an USBERR_BADARGS error
+      and at worst make the USS crash. You have been warned!
+
+      The USS reserves the right to test for outstanding IO and
+      either abort changing configuration or itself perform
+      IO abortion. None of this, however, is guaranteed to happen at
+      this time.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usfkt    -  System Software USB Function to change Configuration of
+      cfgdsc   -  USB Configuration descriptor list pointer. This is
+                  obtained using USBFktGetCfgDescriptorsA(), or by using
+                  USBEPControlXferA() to read descriptors and preparing
+                  them using USBParseDescriptors().
+                  Specify NULL to place Function in the unconfigured
+                  Addressed state.
+      taglist  -  Taglist with extended information. No tags defined.
+
+   RESULT
+      An error code indicating the result of changing the configuration
+      is returned. Defined returnvalues are
+
+      USBSETCONFIG_OK (1):
+         Configuration successfully changed.
+
+      USBSETCONFIG_FAIL (0):
+         Failed to change configuration. Previous configuration is
+         still active.
+
+      USBSETCONFIG_UNCONFIGURED (-1):
+         Failed to change configuration. USB Function has been placed
+         in Addressed state (no Configuration selected).
+
+      USBSETCONFIG_INCONSISTENT (-2):
+         Failed to change configuration. USB Function and USB System
+         Software are inconsistent. You may panic!
+         USB System has unsuccesfully tried to place Function in its
+         Addressed state to clear the inconsistency, so nothing more
+         can be done in software. This will only occur in low memory
+         situations or if a hardware error is present.
+
+   SEE ALSO
+        USBFktGetCfgDescriptorsA(), USBEPControlXferA(),
+        USBParseDescriptors(), usb/system.h
+
+usbsys.device/USBFreeDescriptors             usbsys.device/USBFreeDescriptors
+
+   NAME
+      USBFreeDescriptors -- Free a list of descriptors as returned by
+                            USBParseDescriptors().
+
+   SYNOPSIS
+      USBFreeDescriptors( dscr )
+                           A0
+
+      void USBFreeDescriptors( struct USBBusDscHead * );
+
+   FUNCTION
+      This function disposes of a list of USB descriptors parsed using
+      USBParseDescriptors().
+
+   INPUTS
+      dscr  -  The first descriptor of the list to free.
+
+   RESULT
+      none
+
+   SEE ALSO
+      usbsys.device/USBParseDescriptors(),
+      usb/system.h
+
+usbsys.device/USBFreeObject                       usbsys.device/USBFreeObject
+
+   NAME
+	   USBFreeObject -- Free a Object allocated with USBAllocObject()
+
+   SYNOPSIS
+	   USBFreeObject( type, object )
+
+	   void USBFreeObject( uint32, APTR );
+
+
+   FUNCTION
+	   Dispose of any object allocated with USBAllocObject().
+
+   INPUTS
+	   type -  Type of object.
+	   object - The object pointer returned from USBAllocObject().
+
+   SEE ALSO
+	   usbsys.device/USBAllocObject
+
+usbsys.device/USBFreeRequest                     usbsys.device/USBFreeRequest
+
+   NAME
+      USBFreeRequest -- Free a USBIOReq request allocated with
+                        USBAllocRequestA()
+
+   SYNOPSIS
+      USBFreeRequest( req )
+                      A0
+
+      void USBFreeRequest( struct USBIOReq * );
+
+   FUNCTION
+      Use this function to dispose of a previously allocated USBIOReq
+      structure.
+      Only USBIOReq structures allocated by USBAllocRequestA() can be
+      disposed of using this function!
+
+   INPUTS
+      req   -  The USBIOReq structure to dispose of.
+
+   NOTE
+	    From version v53.5 and up, this function will internaly call
+	    USBFreeObject().
+
+   SEE ALSO
+	   usbsys.device/USBAllocRequestA
+
+usbsys.device/USBGetEndPoint                     usbsys.device/USBGetEndPoint
+
+   NAME
+      USBGetEndPoint -- Obtain an EndPoint reference from a USB Function.
+
+   SYNOPSIS
+      usep = USBGetEndPoint( usfkt, usifc, epnum )
+       D0                     A0     A1      D0
+
+      struct UsbEndPoint *USBGetEndPoint( struct UsbFunction *,
+                                          struct UsbInterface *, LONG );
+
+   FUNCTION
+      This function returns the USB System Software reference for an
+      EndPoint in a USB Function or Interface. The EndPoint is located by
+      its EndPoint number, as dictated by the current configuration of
+      the USB Function (as set with USBFktSetConfigurationA()).
+
+      EndPoints are either obtained from a claimed Function or a claimed
+      Interface. In either case only EndPoints belonging to the given
+      source can be located:
+      ·  If a claimed Function is the source of USBGetEndPoint() only
+         EndPoints which do not belong to any Interface can be found.
+         This will typically only be the Default Control Pipe - EndPoint
+         zero.
+      ·  If a claimed Interface is the source of USBGetEndPoint() only
+         EndPoints belonging to that specific Interface can be found.
+         Note that the Default Control Pipe belongs to *all* Interfaces
+         as well as the Function, and can thus be found from any
+         Interface.
+
+      If no EndPoint exist with the given EndPoint number within the
+      source for USBGetEndPoint() this function will return NULL.
+
+      Be aware that USB generally sees IN and OUT EndPoints as separate
+      entities. If a USB Function hosts an IN and OUT EndPoint with the
+      same EndPoint number both must be USBGetEndPoint()'ed separately
+      to be able to use them.
+      Control EndPoints are notable exceptions to the above rule as
+      Control EndPoints are by definition bidirectional. They thus
+      contain in them both the IN and OUT EndPoints of an EndPoint
+      number.
+
+      If a Function EndPoint is located it only remains valid until
+      either the USB Function is declaimed, or a new configuration is
+      chosen for the USB Function.
+      If an Interface EndPoint is located it will remain valid until
+      either the Interface is declaimed, a new Alternate Setting is
+      selected for the Interface or a new configuration is chosen for
+      the Function the Interface is part of.
+
+      Only one of the sources must be given at a time. If a USB Function
+      is given, the USB Interface argument must be NULL, and vice versa.
+
+   INPUTS
+      usfkt -  USB System Software private reference for the USB Function
+               to get an EndPoint from.
+      usifc -  USB System Software private reference for the USB
+               Interface to get an EndPoint from.
+      epnum -  EndPoint number of the EndPoint for which to obtain a
+               reference. The EndPoint number you specify should be
+               taken from the ed_Address field in the EndPoint
+               Descriptor for the EndPoint you whish to access.
+               Accessing EndPoint zero (the Default Control Pipe) is
+               done by specifying the EndPoint number 0. This will give
+               you the bidirectional Default Control Pipe.
+
+   RESULT
+      usep  -  A USB System Software private EndPoint reference. Use
+               this for sending/receiving data from the EndPoint.
+               NULL is returned if the EndPoint was not found.
+
+   SEE ALSO
+      usbsys.device/USBClaimFunction, usbsys.device/USBDeclaimFunction,
+      usbsys.device/USBClaimInterface, usbsys.device/USBDeclaimInterface,
+      usb/usb.h
+
+usbsys.device/USBGetInterface                   usbsys.device/USBGetInterface
+
+   NAME
+      USBGetInterface -- Get an Interface from a claimed Function.
+
+   SYNOPSIS
+      usifc = USBGetInterface( usfkt, ifcnum )
+       D0                       A0      D0
+
+
+      struct UsbInterface *USBGetInterface( struct UsbFunction *, LONG );
+
+
+   FUNCTION
+      Using this function call you can get an Interface from a claimed
+      Function. Which Interfaces are available depends on the Function
+      and the configuration selected for the Function.
+      To find out which Interfaces are available the list of descriptors
+      of the selected Function configuration must be examined.
+
+      This function call is only of use for Function based Function
+      Drivers and will thus rarely be used. Function based FDs will,
+      however, need this call to be able to gain access to the EndPoints
+      belonging to the Interfaces of a claimed Function.
+
+      As this function call works with a claimed Function, the returned
+      Interface is in fact a claimed Interface. This saves the hassle of
+      manually claiming the Interface to be able to get EndPoints from it.
+      This also means that once done with the Interface and its EndPoints
+      the Interface must be declaimed using USBDeclaimInterface() in
+      order to release the Interface. Furthermore, you can't
+      USBGetInterface() the same Interface more than once, without
+      declaiming it between successive calls.
+
+   INPUTS
+      usfkt   -  USB System Software private reference for the USB
+                 Function holding the Interface to get.
+      ifcnum  -  The InterfaceID of the Interface to get.
+                 The InterfaceID value is obtained from the Interface
+                 Descriptor (struct USBBusIntDsc) of the Interface, found
+                 as part of the Configuration Descriptor list of the
+                 currently selected configuration for the Function.
+
+   RESULT
+      usifc   -  A claimed Interface reference to the requested
+                 Interface, or NULL on failure.
+
+   SEE ALSO
+      USBDeclaimInterface()
+
+usbsys.device/USBGetRawFunctionAttrsA   usbsys.device/USBGetRawFunctionAttrsA
+
+   NAME
+      USBGetRawFunctionAttrsA -- Get information about an unclaimed USB
+                                 Function. (new in v1.11)
+
+   SYNOPSIS
+      USBGetRawFunctionAttrsA( rawfkt, taglist )
+                                 A0      A1
+
+      USBGetRawFunctionAttrsA( struct UsbRawFunction *, struct TagItem * );
+
+
+      USBGetRawFunctionAttrs( rawfkt, Tag1, ... )
+
+      USBGetRawFunctionAttrs( struct UsbRawFunction *, ULONG, ... );
+
+   FUNCTION
+      Using this function you can query attributes of an unclaimed USB
+      Function. This will probably only be useful for USB utility
+      developers wanting to extract information about all attached USB
+      Functions. Function Drivers should generally not use this functionality
+      rather claim the Function and query the claimed Function.
+      As this function operates on an unclaimed Functions it cannot perform
+      any USB transfers. All information you gain access to here are read
+      from cached information stored in the USB stack internals.
+
+      Remember to manually free any descriptors or memory buffers this
+      function may allocate and return to you. See below for each tag if
+      there is something which needs to be freed after use.
+
+
+      The following attributes are currently defined:
+
+         USBA_DeviceDesc
+            Get a copy of the Device Descriptor of the USB Function.
+            ti_Data points to a memory location where a pointer to a copy of
+            the Device Descriptor will be placed.
+            When you're done using the Device Descriptor you *MUST* free it
+            manually using USBFreeDescriptors().
+            As always when querying, be prepared to handle a NULL pointer!
+            ti_data is struct USBBusDevDsc **
+
+
+         USBA_ConfigurationDesc
+            Get a copy of the current configuration of the USB Function.
+            ti_Data points to a memory location where a pointer to a copy of
+            the descriptor list comprising the current configuration will be
+            placed. This descriptor list is of the same type as you would get
+            if you called USBFktGetCfgDescriptorsA() on a claimed Function,
+            so it can be traversed using USBNextDescriptor() and
+            USBPrevDescriptor().
+
+            When you're done using the Configuration Descriptor list you
+            *MUST* free it manually using USBFreeDescriptors().
+            As always when querying, be prepared to handle a NULL pointer!
+            ti_data is struct USBBusDevDsc **
+
+
+         USBA_VendorName
+            Get a copy of the string descriptor holding the vendor or
+            manufacturer string.
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be advised that not all USB Functions has a vendor name, so be
+            prepared to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+
+         USBA_ProductName
+            Get a copy of the string descriptor holding the product name
+            string.
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be advised that not all USB Functions has a product name, so be
+            prepared to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+
+         USBA_SerialName
+            Get a copy of the string descriptor holding the serial number
+            string.
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be advised that not all USB Functions has a serial number string,
+            so be prepared to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+         USBA_DeviceSpeed (V53.9)
+            Get the speed by which the function operates. One of the
+            USB_SPEED_#? values.
+            ti_data is int32 *
+
+         USBA_Level (V53.9)
+            Get the topological level of the function. For the root hub
+            this would be 0.
+            ti_data is int32 *
+
+         USBA_OwnerStr (V53.9)
+            Get the name of the current owner of the function. Memory for
+            the string is allocated via AllocVec(), so the result needs
+            to be freed with FreeVec().
+            ti_data is STRPTR *
+
+         USBA_DevicePower (V53.9)
+            Get the number of mA the device draws from its upstream
+            port in its current configuration.
+            ti_data is uint32 *
+
+         USBA_SubtreePower (V53.9)
+            Get the number of mA that all devices draw from this device.
+            (i.e., without this device).
+            ti_data is uint32 *
+
+         USBA_HCD_Name (V53.9)
+            Get the name of the driver that manages the host controller
+            to which the function is attached. The result needs to be
+            freed with FreeVec().
+            ti_data is STRPTR *
+
+         USBA_HCD_Unit (V53.9)
+            Get the unit of the driver that manages the host controller
+            to which the function is attached.
+            ti_data is uint32 *.
+   INPUTS
+      rawfkt   -  The UsbRawFunction to get information on.
+      taglist  -  Taglist describing the attributes to read. See above for
+                  a definition of valid tags.
+
+   RESULT
+      none
+
+usbsys.device/USBGetRawInterfaceAttrsA usbsys.device/USBGetRawInterfaceAttrsA
+
+   NAME
+      USBGetRawInterfaceAttrsA -- Get information about an unclaimed USB
+                                  Interface. (new in v1.11)
+
+   SYNOPSIS
+      USBGetRawInterfaceAttrsA( rawifc, taglist )
+                                   A0     A1
+
+      USBGetRawInterfaceAttrsA( struct UsbRawInterface *, struct TagItem * );
+
+
+      USBGetRawInterfaceAttrs( rawifc, Tag1, ... )
+
+      USBGetRawInterfaceAttrs( struct UsbRawInterface *, ULONG, ... );
+
+   FUNCTION
+      Using this function you can query attributes of an unclaimed USB
+      Interface. This will probably only be useful for  USB utility
+      developers wanting to extract information about all attached USB
+      Interfaces. Function Drivers should generally not use this
+      functionality rather claim the Interface and query the claimed
+      Interface.
+      As this function operates on an unclaimed Interface it cannot perform
+      any USB transfers. All information you gain access to here are read
+      from cached information stored in the USB stack internals.
+
+      Remember to manually free any descriptors or memory buffers this
+      function may allocate and return to you. See below for each tag if
+      there is something which needs to be freed after use.
+
+
+      The following attributes are currently defined:
+
+         USBA_DeviceDesc
+            Get a copy of the Device Descriptor of the USB Function hosting
+            the UsbRawInterface. ti_Data points to a memory location where
+            a pointer to a copy of the Device Descriptor will be placed.
+            When you're done using the Device Descriptor you *MUST* free
+            it manually using USBFreeDescriptors().
+            As always when querying, be prepared to handle a NULL pointer!
+            ti_data is struct USBBusDevDsc **
+
+
+         USBA_ConfigurationDesc
+            Get a copy of the current configuration of the USB Function
+            hosting the Interface. ti_Data points to a memory location where
+            a pointer to a copy of the descriptor list comprising the current
+            configuration will be placed. This descriptor list is of the same
+            type as you would get if you called USBIntGetConfigurationA() on
+            a claimed Interface, so it can be traversed using
+            USBNextDescriptor() and USBPrevDescriptor().
+
+            When you're done using the Configuration Descriptor list you
+            *MUST* free it manually using USBFreeDescriptors().
+            As always when querying, be prepared to handle a NULL pointer!
+            ti_data is struct USBBusDevDsc **
+
+
+         USBA_InterfaceDesc
+            Get a copy of the Interface Descriptor of the USB Interface.
+            ti_Data points to a memory location where a pointer to a copy of
+            the Interface Descriptor will be placed.
+            When you're done using the Interface Descriptor you *MUST* free i
+t
+            manually using USBFreeDescriptors().
+            As always when querying, be prepared to handle a NULL pointer!
+            ti_Data is struct USBBusIntDsc **
+
+
+         USBA_VendorName
+            Get a copy of the string descriptor holding the vendor or
+            manufacturer string. The vendor name comes from the USB Function
+            hosting the Interface.
+
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be advised that not all USB Functions has a vendor name, so be
+            prepared to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+
+         USBA_ProductName
+            Get a copy of the string descriptor holding the product name
+            string. The product name comes from the USB Function hosting the
+            Interface.
+
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be advised that not all USB Functions has a product name, so be
+            prepared to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+
+         USBA_SerialName
+            Get a copy of the string descriptor holding the serial number
+            string. The serial number string comes from the USB Function
+            hosting the Interface.
+
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be adviced that not all USB Functions has a serial number string,
+            so be prepared to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+
+         USBA_InterfaceName
+            Get a copy of the string descriptor holding the Interface name
+            string.
+
+            When you're done using the string you *MUST* free it manually
+            using USBFreeDescriptors().
+
+            Be advised that not all USB Interfaces has a name, so be prepared
+            to handle a NULL pointer!
+            ti_Data is struct USBBusDscHead **
+
+         USBA_OwnerStr (V53.9)
+            Get the name of the current owner of the interface. Memory for
+            the string is allocated via AllocVec(), so the result needs
+            to be freed with FreeVec().
+            ti_data is STRPTR *
+
+
+   INPUTS
+      rawifc   -  The UsbRawInterface to get information on.
+      taglist  -  Taglist describing the attributes to read. See above for
+                  a definition of valid tags.
+
+   RESULT
+      none
+
+usbsys.device/USBGetStackAttrsA               usbsys.device/USBGetStackAttrsA
+
+   NAME
+      USBGetStackAttrsA -- Get information about the USB stack
+
+   SYNOPSIS
+      USBGetStackAttrsA( taglist )
+                               A1
+
+      USBGetStackAttrsA( struct TagItem * );
+
+
+      USBGetStackAttrs( Tag1, ... )
+
+      USBGetStackAttrs( ULONG, ... );
+
+   FUNCTION
+      Using this function you can query attributes of the USB stack.
+
+      The following attributes are currently defined:
+
+         USBA_Stack_Fullbooted
+            Get the fullboot state of the USB stack.
+            If FALSE the USB stack is prebooted, meaning that it runs on
+            preloaded drivers as if dos.library is not around.
+            If non-FALSE the USB stack is fullbooted, meaning that it has
+            opened dos.library and is running on both preloaded drivers
+            as well as drivers present on disk.
+            ti_Data is a ULONG *.
+
+         USBA_Stack_NumberofHCDs (V53.8)
+            Returns the number of available host controller drivers.
+
+   INPUTS
+      taglist  -  Taglist describing the attributes to read. See above for
+                  a definition of valid tags.
+
+   RESULT
+      none
+
+usbsys.device/USBIfcDriverRunning           usbsys.device/USBIfcDriverRunning
+
+   NAME
+      USBIfcDriverRunning -- Signal USB stack that Function Driver is running
+                             (v2.0)
+
+   SYNOPSIS
+      USBIfcDriverRunning( ifc )
+
+      void USBIfcDriverRunning( struct UsbInterface * );
+
+   FUNCTION
+      With this function a Function Driver informs the USB stack that is
+      has initialized itself and the USB Interface it controls is now
+      operational.
+
+      This function must only be called by FDs which report TRUE as value
+      for USB_FD_SignalsRunning in USBFDGetAttrsA().
+
+      A bit of background info may be needed to get the bigger picture:
+      When the USB stack is starting during OS booting, it must be able to
+      hold off the boot process until the entire USB topology has been
+      attached. Otherwise it will not be possible to use a USB mouse to
+      enter the EarlyStartup menu, or navigate it using a USB keyboard.
+
+      Previously the USB stack would see a FD as running once it was
+      invoked by the USB stack. This, however, is not sufficient to know
+      when the mouse, keyboard or hub is truly operational. For this
+      reason the USBIfcDriverRunning() call has been added, acting as a
+      handshake from the FD to the USB stack, informing that it is in fact
+      fully operational.
+
+      Since the only reason for using USBIfcDriverRunning() is to be able
+      to hold back the finalization of the USB stack startup (and thus
+      possibly the OS boot process), only drivers required to be running
+      before the OS reaches the EarlyStartup menu will need to use
+      USBIfcDriverRunning().
+
+      All hub drivers must implement USBIfcDriverRunning(), or its
+      Function equivalent USBFktDriverRunning(), as the hubs play a vital
+      role in the enumeration of the USB bus. This includes the internal
+      RootHub driver of all HCDs - see USBHCInitRootHub() in the usbhcd.doc
+      for more info on HCD requirements.
+      Hub drivers must not call USBIfcDriverRunning() until all initially
+      attached USB Functions has been USBAddFunction()'ed to the USB stack.
+      Failing to do so will make the USB stack prematurely believe it has
+      the entire USB topology added, breaking the sole idea of using
+      USBIfcDriverRunning() in the first place.
+
+      Remember to report TRUE as value for USB_FD_SignalsRunning in the
+      FDs USBFDGetAttrsA() if you intend to call USBIfcDriverRunning().
+      Once you do, you are responsible for having called
+      USBIfcDriverRunning() if your USBFDRunInterface() returns
+      USBERR_NOERROR.
+
+   INPUTS
+      ifc    -   The UsbInterface which is now fully operational by way of
+                 the calling Function Driver.
+
+   RESULT
+      none
+
+   SEE ALSO
+      usbsys.device/USBFktDriverRunning(),
+      usb/system.h
+
+usbsys.device/USBIntGetAltSettingA         usbsys.device/USBIntGetAltSettingA
+
+   NAME
+      USBIntGetAltSettingA -- Get a copy of the current Alternate Setting
+                              Interface descriptor list of an Interface
+
+   SYNOPSIS
+      ifcdsc = USBIntGetAltSettingA( openreq, usifc, taglist )
+        D0                            A0        A1      A2
+
+      struct USBBusDscHead *USBIntGetAltSettingA( struct IORequest *,
+                                                  struct UsbInterface *,
+                                                  struct TagItem * );
+
+
+      ifcdsc = USBIntGetAltSetting( openreq, usifc, Tag1, ... )
+
+      struct USBBusDscHead *USBIntGetAltSetting( struct IORequest *,
+                                                 struct UsbInterface *,
+                                                 ULONG, ... );
+
+   FUNCTION
+      With this function you can obtain a copy of the Interface
+      descriptor list of the Alternate Setting currently assigned to an
+      Interface.
+
+      This function will be most usefull to selfstarting Interface FDs
+      as they are not presented with an Interface's descriptor list
+      by the USS like autostarting FDs are. Using this function they get
+      access to that information.
+
+      As this function returns a copy of the Interface descriptor list,
+      the list must be freed after use. This is done by calling
+      USBFreeDescriptors().
+
+   NOTE
+      Note that USB descriptors are in Little Endian format. All fields
+      larger than byte-size must be endianness converted.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usifc    -  The claimed Interface to get current Interface
+                  descriptor list from.
+      taglist  -  Pointer to a taglist with extended information.
+                  Currently no tags are defined.
+                  NULL is a valid argument.
+
+   RESULT
+      ifcdsc   -  A copy of the Interface's descriptor list. Free it
+                  after use by calling USBFreeDescriptors().
+
+   SEE ALSO
+      USBFreeDescriptors()
+
+usbsys.device/USBIntGetConfigurationA   usbsys.device/USBIntGetConfigurationA
+
+   NAME
+      USBIntGetConfigurationA -- Get a copy of the configuration
+                                 descriptor list of an Interface's parent
+                                 Function.
+
+   SYNOPSIS
+
+      cfgdsc = USBIntGetConfigurationA( openreq, usifc, taglist )
+        D0                                A0       A1      A2
+
+      struct USBBusDscHead *USBIntGetConfigurationA( struct IORequest *,
+                                                     struct UsbInterface *,
+                                                     struct TagItem * );
+
+
+      cfgdsc = USBIntGetConfiguration( openreq, usifc, Tag1, ... )
+
+      struct USBBusDscHead *USBIntGetConfiguration( struct IORequest *,
+                                                    struct UsbInterface *,
+                                                    ULONG, ... );
+
+   FUNCTION
+      With this function you can obtain a copy of the configuration
+      descriptor list holding the configuration used by an Interfaces'
+      parent Function.
+      As Function based Function Drivers are responsible for configuring
+      Functions themselves, they are aware of the configuration they are
+      working in, and has access to all descriptors. Interface based
+      Function Drivers do not know the configuration they operate in,
+      and therefore has no direct means of finding out if there are any
+      Alternate Settings available for their Interface. This function
+      gives Interface based FDs access to that information.
+
+      By inspecting the configuration descriptor list an Interface based
+      Function Driver can search for Alternate Setting descriptors for
+      its Interface.
+      The only descriptors guaranteed to be present in the list is the
+      configuration descriptor, Interface descriptors for the Interface
+      the query is made with, and any descriptors belonging to the
+      Interface (or its Alternate Settings) of the Interface making the
+      query.
+      Other Interface's descriptors may or may not be present at the
+      discretion of the USS.
+
+      As this function returns a copy of the configuration descriptor
+      list, the list must be freed after use. This is done by calling
+      USBFreeDescriptors().
+
+   NOTE
+      Note that USB descriptors are in Little Endian format. All fields
+      larger than byte-size must be endianness converted.
+
+   INPUTS
+      usifc    -  The claimed Interface whose parent Function's
+                  configuration descriptors should be returned.
+      taglist  -  Pointer to a taglist with extended information.
+                  Currently no tags are defined.
+                  NULL is a valid argument.
+
+   RESULT
+      cfgdsc   -  A copy of the parent Function's configuration
+                  descriptor list. Free it after use by calling
+                  USBFreeDescriptors().
+
+   SEE ALSO
+      USBFreeDescriptors()
+
+usbsys.device/USBIntSetAltSettingA         usbsys.device/USBIntSetAltSettingA
+
+   NAME
+      USBIntSetAltSettingA -- Change the current Alternate Setting
+                              of an Interface
+
+   SYNOPSIS
+      success = USBIntSetAltSettingA( openreq, usifc, altnum, taglist )
+        D0                             A0        A1     D0      A2
+
+      LONG USBIntSetAltSettingA( struct IORequest *, struct UsbInterface *,
+                                 ULONG, struct TagItem * );
+
+
+      success = USBIntSetAltSetting( openreq, usifc, altnum, Tag1, ... )
+
+      LONG USBIntSetAltSetting( struct IORequest *, struct UsbInterface *,
+                                ULONG, ULONG, ... );
+
+   FUNCTION
+      Using this function you change the active Alternate Setting
+      of a claimed Interface.
+
+      The Alternate Setting is chosen by giving the Alternate Setting
+      number for the Interface. This number is found in the
+      id_AltSetting field of the Interface descriptor for the Alternate
+      Setting you wish to use.
+
+      Changing Alternate Setting involves changing the use of EndPoints
+      in the Interface. All EndPoint references previously part of the
+      Interface is expunged by this operation. Any EndPoint references
+      previously obtained are therefore invalidated by calling this
+      function!
+      As EndPoints are disposed during this function all IO at the
+      Interface's EndPoints must have been aborted and WaitIO()'ed
+      before changing Alternate Setting. It is the responsibility of
+      the caller to ensure this.
+      Changing Alternate Setting while IO is pending at Interface
+      EndPoints must be considered hazardous.
+
+   NOTE
+      To ensure system integrity this is the *only* supported way of
+      changing the Alternate Setting of a USB Interface. Manually sending
+      a SET_INTERFACE control transfer, or doing so thru
+      USBEPControlXfer(), will at best return an USBERR_BADARGS error
+      and at worst make the USS crash. You have been warned!
+
+      The USS reserves the right to test for outstanding IO and
+      either abort changing Alternate Setting or itself perform
+      IO abortion. None of this, however, is guaranteed to happen at
+      this time.
+
+   INPUTS
+      openreq  -  IORequest used for opening usbsys.device
+      usifc    -  The claimed Interface to change Alternate Setting of.
+      altnum   -  Alternate Setting number. The number of the Alternate
+                  Setting to choose for the Interface. This is the
+                  id_AltSetting of the Interface Descriptor you wish to
+                  use.
+      taglist  -  Pointer to a taglist with extended information.
+                  Currently no tags are defined.
+                  NULL is a valid argument.
+
+   RESULT
+      success  -  A boolean indicating the success of changing to the
+                  Interface Alternate Setting. Zero indicates failure,
+                  non-zero indicates success.
+                  If this function call fails the Interface may or may
+                  not be usable from the old AlternateSetting
+                  configuration. You will find out if you are unable to
+                  USBGetEndPoint() the EndPoints you expect in the old
+                  configuration.
+
+
+   SEE ALSO
+
+usbsys.device/USBLockFunction                   usbsys.device/USBLockFunction
+
+   NAME
+      USBLockFunction -- Lock an unclaimed USB Function from being
+                         expunged
+
+   SYNOPSIS
+      USBLockFunction( rawfkt )
+                         A0
+
+      void USBLockFunction( struct UsbRawFunction * );
+
+   FUNCTION
+      With this function you lock a USB Function into the USB System.
+      Once locked, a USB Funtion cannot be expunged from the USB System
+      Software, even though the physical USB Function is detached from the
+      USB bus.
+      This ensures that the internal USB System Software structures
+      related to the USB Function are not freed before all locks on the
+      USB Function are retired.
+
+      As USB Functions can be physically detached from the USB bus at any
+      time locking is needed to ensure that all users of a USB Function
+      are done using a Function before the System Software flushes internal
+      structures from memory.
+      This said, USBLockFunction only fixes the USB Function in memory -
+      it does *not* grant access to communicate with the USB Function.
+      Communication access is obtained through USBClaimFunction().
+
+      This function is normally only used by the USB System Software itself.
+      Every API function which returns a USB Function reference enforces
+      a USBLockFunction() call before returning the reference.
+
+      It is possible to nest calls to USBLockFunction(). All calls must
+      be matched by a call to USBUnlockFunction().
+
+   NOTE
+      It is not possible to lock USB Functions references returned by
+      USBClaimFunction(), as they are already protected against expunge.
+
+   INPUTS
+      rawfkt -  USB System Software reference for the unclaimed USB Function
+                to lock.
+                This is a reference as returned by e.g. USBFindFunction().
+
+   SEE ALSO
+      usbsys.device/USBUnlockFunction, usbsys.device/USBClaimFunction,
+      usbsys.device/USBFindFunction
+
+usbsys.device/USBLockInterface                 usbsys.device/USBLockInterface
+
+   NAME
+      USBLockInterface -- Lock an unclaimed USB Interface from being
+                          expunged
+
+   SYNOPSIS
+      USBLockInterface( rawifc )
+                          A0
+
+      void USBLockInterface( struct UsbRawInterface * );
+
+   FUNCTION
+      With this function you lock a USB Interface into the USB System.
+      Once locked, a USB Interface cannot be expunged from the USB System
+      Software, even though the physical USB Function holding the Interface
+      is detached from the USB bus.
+      This ensures that the internal USB System Software structures
+      related to the USB Interface are not freed before all locks on the
+      USB Interface are retired.
+
+      As USB Functions, and thus USB Interfaces, can be physically detached
+      from the USB bus at any time, locking is needed to ensure that all
+      users of a USB Interface are done using an Interface before the
+      System Software flushes internal structures from memory.
+      This said, USBLockInterface() only fixes the USB Interface in memory -
+      it does *not* grant access to communicate with the USB Interface.
+      Communication access is obtained through USBClaimInterface().
+
+      This function is normally only used by the USB System Software itself.
+      Every API function which returns a raw (unclaimed) USB Interface
+      reference enforces a USBLockInterface() call before returning the
+      reference, protecting the returned reference against expunge.
+
+      It is possible to nest calls to USBLockInterface(). All calls must
+      be matched by a call to USBUnlockInterface().
+
+   NOTE
+      It is not possible to lock (claimed) USB Interface references
+      returned by USBClaimInterface() as they are already protected
+      against expunge.
+
+   INPUTS
+      rawifc -  USB System Software reference for the unclaimed USB
+                Interface to lock.
+                This is a reference as returned by e.g. USBFindInterface().
+
+   SEE ALSO
+      usbsys.device/USBUnlockInterface, usbsys.device/USBClaimInterface,
+      usbsys.device/USBFindInterface
+
+usbsys.device/USBLogPuts                             usbsys.device/USBLogPuts
+
+   NAME
+      USBLogPuts -- Append an entry to the USB System log
+
+   SYNOPSIS
+      USBLogPuts( err, context, msg )
+
+
+      void USBLogPuts( LONG, STRPTR, STRPTR );
+
+   FUNCTION
+      With this function you add a single log entry to the USB System log.
+      Depending on the given error code the log entry will be added as
+      either an error (<0), warning (>0) or information (==0) entry.
+
+      If dos.library is not available at the time of calling this function
+      the log entry will be stored in memory and written to the log file
+      once dos.library becomes available.
+      Please note that the user may be able to disable logging of
+      individual log entry types. Just because you call this function it
+      is therefore not guaranteed to make a log entry.
+
+   INPUTS
+      err      The error code for the log entry. No specific error codes
+               have been defined at this time. Only the following general
+               error codes are valid:
+                  -1    Error entry
+                   0    Information entry
+                   1    Warning entry
+
+      context  A string describing the context in which the log entry is
+               generated. This could be the name of the function from which
+               the log entry is created, or an indication of the process
+               during which the log entry is being created (e.g.
+               "Camera Init").
+      msg      The actual log message.
+
+
+   RESULT
+      none
+
+   SEE ALSO
+      usbsys.device/USBLogVPrintf()
+
+usbsys.device/USBLogVPrintf                       usbsys.device/USBLogVPrintf
+
+   NAME
+      USBLogVPrintf -- Append an entry to the USB System log using a
+                       vprintf-style formatting string.
+
+   SYNOPSIS
+      USBLogVPrintf( err, context, msg, fmtargs )
+
+      void USBLogVPrintf( LONG, STRPTR, STRPTR, ULONG * );
+
+      USBLogPrintf( err, context, msg, ... ) (V53.9)
+
+      void USBLogPrintf( LONG, STRPTR, STRPTR, ... ); (V53.9)
+
+   FUNCTION
+      With this function you add a single log entry to the USB System log.
+      Depending on the given error code the log entry will be added as
+      either an error (<0), warning (>0) or information (==0) entry.
+
+      The log message string may include RawDoFmt() style formatting codes,
+      which will be replaced using the formatting arguments pointed to by
+      <fmtargs>.
+
+      For convenience, the varargs version is available since version 53.9.
+      For earlier version, it is easily implemented by using the following
+      code snippet:
+
+      #ifdef __amigaos4__
+          void VARARGS68K USBLogPrintf( LONG err,
+                                        CONST_STRPTR context,
+                                        CONST_STRPTR msg,
+                                        ...
+                                      )
+          {
+              // Description
+              //  Varargs version of USBLogVPrintf() call
+              APTR argptr;
+              va_list ap;
+
+              va_startlinear(ap, msg);
+              argptr = va_getlinearva(ap, APTR);
+
+              USBLogVPrintf( err, context, msg, argptr );
+          }
+      #else
+          void USBLogPrintf( LONG err,
+                             CONST_STRPTR context,
+                             CONST_STRPTR msg,
+                             ULONG fmtargs,
+                             ...
+                           )
+          {
+              // Description
+              //  Varargs version of USBLogVPrintf() call
+
+              USBLogVPrintf( err, context, msg, &fmtargs );
+          }
+      #endif
+
+      This function internally handles buffering. The caller does not need
+      to care about buffer sizes for the string formatting. This function
+      may choose to truncate the log entry if it is found too large to
+      handle properly, though.
+
+      If dos.library is not available at the time of calling this function
+      the log entry will be stored in memory and written to the log file
+      once dos.library becomes available.
+      Please note that the user may be able to disable logging of
+      individual log entry types. Just because you call this function it
+      is therefore not guaranteed to make a log entry.
+
+   INPUTS
+      err      The error code for the log entry. No specific error codes
+               have been defined at this time. Only the following general
+               error codes are valid:
+                  -1    Error entry
+                   0    Information entry
+                   1    Warning entry
+
+      context  A string describing the context in which the log entry is
+               generated. This could be the name of the function from which
+               the log entry is created, or an indication of the process
+               during which the log entry is being created (e.g.
+               "Camera Init").
+      msg      The actual log message. Formatting codes may be used, as
+               specified by RawDoFmt().
+      fmtargs  Pointer to array holding data arguments to insert in place
+               of the formatting codes in <msg>.
+
+   RESULT
+      none
+
+   SEE ALSO
+      usbsys.device/USBLogPuts()
+
+usbsys.device/USBNextDescriptor               usbsys.device/USBNextDescriptor
+
+   NAME
+      USBNextDescriptor -- Get next descriptor in a list of descriptors
+                           as returned by USBParseDescriptors().
+
+   SYNOPSIS
+      nextdsc = USBNextDescriptor( dscr )
+        D0                          A0
+
+      struct USBBusDscHead *USBNextDescriptor( struct USBBusDscHead * );
+
+   FUNCTION
+      This function returns the next descriptor in a list of USB
+      descriptors. If no more descriptors exist in the list a NULL
+      pointer is returned.
+
+   INPUTS
+      dscr  -  The current descriptor in the list.
+
+   RESULT
+      Pointer to the next descriptor in the descript list, or NULL if
+      the current descriptor is the last one in the list.
+
+   SEE ALSO
+      usbsys.device/USBPrevDescriptor(),
+      usb/system.h
+
+usbsys.device/USBObtainResourceA             usbsys.device/USBObtainResourceA
+
+   NAME
+      USBObtainResourceA -- Obtain access to a shared USB resource.
+
+   SYNOPSIS
+      flag = USBObtainResourceA( type, object, taglist )
+       D0                         D0     A0       A1
+
+      LONG USBObtainResourceA( ULONG, APTR, struct TagItem * );
+
+
+      flag = USBObtainResource( type, object, Tag1, ... )
+
+      LONG USBObtainResource( ULONG, APTR, ULONG, ... );
+
+   FUNCTION
+      This function is used for obtaining a shared USB resource.
+      To avoid multiple tasks operating on the same shared resources the
+      resource must be obtained using this function before it can be
+      safely used.
+      Any resources obtained using this function *must* be freed after use
+      by calling USBReleaseResource() on the same resource.
+
+      This function may try to avoid a possible deadlock. If requesting
+      a resource which may result in a deadlock situation (due to related
+      resources being already owned by other tasks) this function will
+      fail with a returnvalue of FALSE.
+
+   RESOURCES
+      The following resources are available:
+
+      USBRES_DEFAULTADDRESS
+         This resource represents the default address of a USB bus. Only
+         one USB Function (per bus) can occupy the default address.
+         Hub drivers must therefore obtain the Default Address resource
+         before enabling any hub ports for adding new USB Functions.
+         The <object> argument for USBRES_DEFAULTADDRESS is the Hub
+         Interface which is going to add a new USB Function. That is,
+         a UsbInterface pointer, as returned by USBClaimInterface().
+         The resource can be released after USBAddFunctionA() has
+         returned, as that function call will, amongst other things,
+         assign a USB Address to the new USB Function.
+
+
+   INPUTS
+      type    -   The resource to obtain. A USBRES_xxx constant
+      object  -   The base structure for the resource in question (depends
+                  on the type argument)
+      taglist -   TagList with more arguments. No tags are defined.
+
+   RESULT
+      This function does not return until the resource in question could
+      be obtained. TRUE is returned if the resource was obtained. FALSE if
+      it could not be obtained. FALSE may be returned if the USS finds
+      that a deadlock may occur if granting the resource.
+
+   SEE ALSO
+      usbsys.device/USBReleaseResource(),
+      usb/system.h
+
+usbsys.device/USBParseDescriptors           usbsys.device/USBParseDescriptors
+
+   NAME
+      USBParseDescriptors -- Parse a buffer holding one or more USB
+                             descriptors.
+
+   SYNOPSIS
+      firstdsc = USBParseDescriptors( buffer, buflen )
+         D0                             A0      D0
+
+      struct USBBusDscHead *USBParseDescriptors( struct USBBusDscHead *,
+                                                 ULONG );
+
+   FUNCTION
+      This function parses a buffer holding one or more USB descriptors
+      as returned from a USB Function into a list of separate descriptors.
+      Using this function for parsing the descriptor buffer gives easier
+      access and handling of the descriptors, and gives a standardized
+      way of working with USB descriptors in the USB System Software.
+
+      Whenever a USB System Software function operates on USB descriptors
+      it must be assumed that the descriptors must have been parsed
+      through this function.
+      The descriptor(s) returned by this function must be freed after use
+      by calling USBFreeDescriptors().
+
+   NOTE
+      This function will skip the last descriptor in the buffer if the
+      descriptor header indicates a descriptor larger than the remainder
+      of the buffer. No partial descriptors are parsed.
+
+   INPUTS
+      buffer      Buffer holding one or more USB descriptors as read from
+                  a USB Function.
+      buflen      Bytesize of buffer.
+
+   RESULT
+      Returns a pointer to the first descriptor of the parsed descriptors.
+      Use USBNextDescriptor()/USBPrevDescriptor() to traverse the list.
+      A NULL ptr is returned in case of an error.
+
+   SEE ALSO
+      usbsys.device/USBFreeDescriptors(),
+      usbsys.device/USBNextDescriptor(), usbsys.device/USBPrevDescriptor(),
+      usb/system.h
+
+usbsys.device/USBPrevDescriptor               usbsys.device/USBPrevDescriptor
+
+   NAME
+      USBPrevDescriptor -- Get previous descriptor in a list of descriptors
+                           as returned by USBParseDescriptors().
+
+   SYNOPSIS
+      prevdsc = USBPrevDescriptor( dscr )
+        D0                          A0
+
+      struct USBBusDscHead *USBPrevDescriptor( struct USBBusDscHead * );
+
+   FUNCTION
+      This function returns the previous descriptor in a list of USB
+      descriptors. If no more descriptors exist in the list a NULL
+      pointer is returned.
+
+   INPUTS
+      dscr  -  The current descriptor in the list.
+
+   RESULT
+      Pointer to the previous descriptor in the descriptor list, or NULL
+      if the current descriptor is the first one in the list.
+
+   SEE ALSO
+      usbsys.device/USBNextDescriptor(),
+      usb/system.h
+
+usbsys.device/USBReleaseResource             usbsys.device/USBReleaseResource
+
+   NAME
+      USBReleaseResource -- Release access to a shared USB resource.
+
+   SYNOPSIS
+      USBReleaseResource( type, object )
+                           D0     A0
+
+      void USBReleaseResource( ULONG, APTR );
+
+   FUNCTION
+      Use this function to release a shared USB resource after use.
+      The resource must have previously been obtained by calling
+      USBObtainResource().
+
+      See USBObtainResourceA() for a list of available resources.
+
+   INPUTS
+      type    -   The resource to release. A USBRES_xxx constant
+      object  -   The base structure for the resource in question (depends
+                  on the type argument). Must be the same argument as
+                  that given when the resource was obtained.
+
+   RESULT
+      none
+
+   SEE ALSO
+      usbsys.device/USBObtainResource(),
+      usb/system.h
+
+usbsys.device/USBRemFunction                     usbsys.device/USBRemFunction
+
+   NAME
+      USBRemFunction -- Signal physical detachment of a USB Function.
+
+   SYNOPSIS
+      USBRemFunction( rawfkt, ushubifc )
+                        A0       A1
+
+      void USBRemFunction( struct UsbRawFunction *, struct UsbInterface * );
+
+   FUNCTION
+      This function is used for informing the USB System Software that
+      a USB Function has been physically detached from the USB bus.
+      Only the hub which added the Function can remove it again. The
+      <ushubifc> argument must therefore be the same as that given when
+      the <rawfkt> was added in the first place.
+
+      The System Software is responsible for sending detach notification
+      to the Function owner (if any), and freeing internal ressources.
+      It is internally ensured that any locks on the Function are
+      respected. Only when all locks are freed will the Function be
+      fully removed from the USB System Software.
+
+      This function will return immediately - it does not wait until all
+      locks are released. On return the refenced USB Function must be
+      treated as removed and nolonger be used.
+
+      A USBUnlockFunction() call will be made on the referenced Function,
+      undoing the USBLockFunction() call made by the USBAddFunction() or
+      USBFindFunction() call which returned the Function reference.
+
+      The intended use of this function is for USB hub drivers, when a
+      USB Function is unplugged from one of the hub ports.
+
+   INPUTS
+      rawfkt    -  USB System Software private reference for the USB
+                   Function which has been detached.
+      ushubifc  -  USB System Software private referende for the
+                   (claimed) hub Interface which added the <rawfkt> in
+                   the first place.
+
+   SEE ALSO
+      usbsys.device/USBAddFunctionA, usbsys.device/USBFindFunction,
+      usbsys.device/USBUnlockFunction
+
+usbsys.device/USBSetFunctionAttrsA         usbsys.device/USBSetFunctionAttrsA
+
+   NAME
+      USBSetFunctionAttrsA -- Modify the attributes of a USB Function.
+
+   SYNOPSIS
+      success = USBSetFunctionAttrsA( usfkt, taglist )
+                                        A0      A1
+
+      LONG USBSetFunctionAttrsA( struct UsbFunction *,
+                                 struct TagItem * );
+
+
+      success = USBSetFunctionAttrs( usfkt, Tag1, ... )
+
+      LONG USBSetFunctionAttrsA( struct UsbFunction *, ULONG, ... );
+
+   FUNCTION
+      Using this function you can change the attributes of a claimed USB
+      Function.
+      The following attributes are currently defined:
+
+         USBA_FD_Title
+            Set the name of the claimer of the Function. This is the
+            owner name which will be displayed in USBInspector for the
+            Function.
+
+            ti_Data is a char *.
+
+         USBA_FD_WeakBinding
+            This attribute controls the method with which the claim on
+            Function is seen by the USB stack. If FALSE the claim is a
+            normal claim. If TRUE the claim is a weak claim.
+
+            A FD holding a weak claim on a Function will see the Function as
+            detached (and will thus receive detach notification) when the
+            USB stack goes from preboot mode into fullboot mode (when
+            dos.library is available).
+            Using this feature it is possible to have simple resident
+            preboot FDs, which are replaced by fullblown disk based FDs
+            once the OS is booted and normal operating parameters are
+            established.
+            This is e.g. used by the BootMouse and BootKeyboard FDs (being
+            the preboot drivers) in cooperation with the HID FD (being the
+            fullblown FD).
+
+            ti_Data is a LONG.
+
+         USBA_SelfPowered (v1.12)
+            This attribute controls whether the USB stack sees the Function
+            as being self powered or not. I.e. does the Function have its own
+            power supply rather than drawing its power from the USB bus.
+            The USB stack will itself figure this out when the Function is
+            first attached and added to the USB system. But as the USB bus
+            has no built-in mechanism for notifying if the external power
+            source is turned off, it is up to the FD to tell the USB stack
+            if this happens.
+            Due to the rules of the USB, this is, however, only really needed
+            to be monitored by hub drivers. This is because self-powered hubs
+            acts as a power-budget firewall, creating a new power budget
+            segment of the USB bus. If a hub goes from bus power to self
+            power (or vice versa), the entire power budget changes.
+            So if you're making a hub driver you must take this into
+            consideration. If your're not making a hub driver, you might as
+            well ignore this tag altogether.
+
+            Set to TRUE if Function is being powered by an external power
+            source. Set to FALSE if Function is being powered from the USB
+            bus.
+
+            ti_Data is LONG.
+
+
+   INPUTS
+      usfkt    -  The claimed USB Function to change attributes of
+      taglist  -  Taglist describing the attributes to change. See above for
+                  a definition of valid tags.
+
+   RESULT
+      A non-FALSE value is returned if all attributes were changed.
+      Returns FALSE if one or more attributes could not be changed.
+
+usbsys.device/USBSetInterfaceAttrsA       usbsys.device/USBSetInterfaceAttrsA
+
+   NAME
+      USBSetInterfaceAttrsA -- Modify the attributes of a USB Interface.
+
+   SYNOPSIS
+      success = USBSetInterfaceAttrsA( usifc, taglist )
+                                         A0      A1
+
+      LONG USBSetInterfaceAttrsA( struct UsbInterface *,
+                                  struct TagItem * );
+
+
+      success = USBSetInterfaceAttrs( usfkt, Tag1, ... )
+
+      LONG USBSetInterfaceAttrsA( struct UsbInterface *, ULONG, ... );
+
+   FUNCTION
+      Using this function you can change the attributes of a claimed USB
+      Interface.
+      The following attributes are currently defined:
+
+         USBA_FD_Title
+            Set the name of the claimer of the Interface. This is the
+            owner name which will be displayed in USBInspector for the
+            Interface.
+
+            ti_Data is a char *.
+
+         USBA_FD_WeakBinding
+            This attribute controls the method with which the claim on
+            Interface is seen by the USB stack. If FALSE the claim is a
+            normal claim. If TRUE the claim is a weak claim.
+
+            A FD holding a weak claim on an Interface will see the Interface
+            as detached (and will thus receive detach notification) when the
+            USB stack goes from preboot mode into fullboot mode (when
+            dos.library is available).
+            Using this feature it is possible to have simple resident
+            preboot FDs, which are replaced by fullblown disk based FDs
+            once the OS is booted and normal operating parameters are
+            established.
+            This is e.g. used by the BootMouse and BootKeyboard FDs (being
+            the preboot drivers) in cooperation with the HID FD (being the
+            fullblown FD).
+
+            ti_Data is a LONG.
+
+         USBA_SelfPowered (v1.12)
+            This attribute controls wether the USB stack sees the Function
+            hosting the Interface as being self powered or not. I.e. does
+            the Function have its own power supply rather than drawing its
+            power from the USB bus.
+
+            See usbsys.device/USBSetFunctionAttrsA() for more information.
+
+            Set to TRUE if Function is being powered by an external power
+            source. Set to FALSE if Function is being powered from the USB
+            bus.
+
+            ti_Data is LONG.
+
+   INPUTS
+      usifc    -  The claimed USB Interface to change attributes of
+      taglist  -  Taglist describing the attributes to change. See above for
+                  a definition of valid tags.
+
+   RESULT
+      A non-FALSE value is returned if all attributes were changed.
+      Returns FALSE if one or more attributes could not be changed.
+
+   SEE ALSO
+      usbsys.device/USBSetFunctionAttrsA, usbsys.device/USBFindFunction,
+
+usbsys.device/USBUnlockFunction               usbsys.device/USBUnlockFunction
+
+   NAME
+      USBUnlockFunction -- Unlock a USB Function (allow expunge)
+
+   SYNOPSIS
+      USBUnlockFunction( rawfkt )
+                          A0
+
+      void USBUnlockFunction( struct UsbRawFunction * );
+
+   FUNCTION
+      With this function you unlock a USB Function previously locked by
+      a call to USBLockFunction().
+      Function locking is nesting. Each lock set on a Function must be
+      matched by an unlock call.
+
+      When fully unlocked (all locks set on the Function by your code
+      have been unlocked) the USB Function must be treated as expunged -
+      that is, the <usfkt> reference can nolonger be used.
+
+   INPUTS
+      rawfkt -  USB System Software reference for the USB Function to unlock.
+                This is a reference as returned by e.g. USBFindFunction().
+
+   SEE ALSO
+      usbsys.device/USBLockFunction
+
+usbsys.device/USBUnlockInterface             usbsys.device/USBUnlockInterface
+
+   NAME
+      USBUnlockInterface -- Unlock a USB Interface (allow expunge)
+
+   SYNOPSIS
+      USBUnlockInterface( rawifc )
+                            A0
+
+      void USBUnlockInterface( struct UsbRawInterface * );
+
+   FUNCTION
+      With this function you unlock a USB Interface previously locked by
+      a call to USBLockInterface().
+      Interface locking is nesting. Each lock set on an INterface must be
+      matched by an unlock call.
+
+      When fully unlocked (all locks set on the Interface by your code
+      have been unlocked) the USB Interface must be treated as expunged -
+      that is, the <usifc> reference can nolonger be used.
+
+   INPUTS
+      rawifc -  USB System Software reference for the USB Interface to
+                unlock. This is a reference as returned by e.g.
+                USBFindInterface().
+
+   SEE ALSO
+      usbsys.device/USBLockInterface
+
+

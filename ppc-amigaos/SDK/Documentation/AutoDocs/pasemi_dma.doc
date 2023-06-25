@@ -1,0 +1,441 @@
+TABLE OF CONTENTS
+
+pasemi_dma/main/AllocBuffer
+pasemi_dma/main/AllocChannel
+pasemi_dma/main/AllocEvent
+pasemi_dma/main/AllocFunction
+pasemi_dma/main/AllocRing
+pasemi_dma/main/ClearEvent
+pasemi_dma/main/FreeBuffer
+pasemi_dma/main/FreeChannel
+pasemi_dma/main/FreeEvent
+pasemi_dma/main/FreeFunction
+pasemi_dma/main/FreeRing
+pasemi_dma/main/ReadDMARegByte
+pasemi_dma/main/ReadDMARegLong
+pasemi_dma/main/ReadDMARegWord
+pasemi_dma/main/SetEvent
+pasemi_dma/main/StartChannel
+pasemi_dma/main/StopChannel
+pasemi_dma/main/WriteDMARegLong
+pasemi_dma/main/WriteIOBRegLong
+pasemi_dma/main/AllocBuffer                                   pasemi_dma/main/AllocBuffer
+
+   NAME
+      AllocBuffer -- Allocate a buffer to use for DMA
+
+   SYNOPSIS
+      APTR AllocBuffer(uint32 numBytes);
+
+   FUNCTION
+      Allocate a buffer to be used by the DMA engine for read/write. The
+      given size numBytes is rounded up to a multiple of the cacheline
+      size, so you may get more memory allocated than requested.
+
+      The newly allocated memory is zero'ed and of type MEMF_SHARED.
+
+   INPUTS
+      numBytes - The size of the buffer to get allocated.
+
+   RESULT
+      Returns a pointer to the allocated buffer on success. NULL on error.
+
+   SEE ALSO
+      FreeBuffer
+pasemi_dma/main/AllocChannel                                 pasemi_dma/main/AllocChannel
+
+   NAME
+      AllocChannel -- Allocate a DMA channel
+
+   SYNOPSIS
+      struct PASDMAChannel * AllocChannel(PASDMAChannelType chanType,
+          uint32 totalSize);
+
+   FUNCTION
+      This function allocates a DMA channel for use by a client. The type
+      argument specifies whether it's a RX or TX channel, and in the case
+      of TX channels which group it needs to belong to (if any).
+
+      A call to this function MUST be matched by a call to FreeChannel()!
+
+   INPUTS
+      chanType - Type of channel to allocate. The following types are
+                 supported:
+
+                 CHTYPE_RX	     - Any receive channel
+                 CHTYPE_TX	     - Any transmit channel
+                 CHTYPE_TX_EVT0 - Transmit channel in event class 0
+                                  (channels 0-9)
+                 CHTYPE_TX_EVT1 - Transmit channel in event class 1
+                                  (channels 10-19)
+
+      totalSize - Total size of structure to allocate. Must be at least
+                  sizeof(struct PASDMAChannel).
+
+   RESULT
+      Returns a pointer to the total structure allocated on success, NULL
+      on error.
+
+   SEE ALSO
+      FreeChannel
+pasemi_dma/main/AllocEvent                                     pasemi_dma/main/AllocEvent
+
+   NAME
+      AllocEvent -- Allocate an event (flag) for channel syncronization
+
+   SYNOPSIS
+      int8 AllocEvent(void);
+
+   FUNCTION
+      This function tries to allocate a free event (flag) for channel
+      synchronization (event descriptors).
+
+   RESULT
+      Returns the ID of the allocated event (flag) index or -1 on error.
+
+   SEE ALSO
+      FreeEvent, ClearEvent, SetEvent
+pasemi_dma/main/AllocFunction                               pasemi_dma/main/AllocFunction
+
+   NAME
+      AllocFunction -- Allocate a function engine
+
+   SYNOPSIS
+      int8 AllocFunction(void);
+
+   FUNCTION
+      This function tries to allocate a free function engine.
+
+   RESULT
+      Returns the ID of the allocated engine index or -1 on error.
+
+   SEE ALSO
+      FreeFunction
+pasemi_dma/main/AllocRing                                       pasemi_dma/main/AllocRing
+
+   NAME
+      AllocRing -- Allocate a descriptor ring for a channel
+
+   SYNOPSIS
+      uint32 AllocRing(struct PASDMAChannel * dmaChannel,
+          uint32 numEntries);
+
+   FUNCTION
+      This function allocates a descriptor ring with a total size of
+      numEntries * 16 bytes for dmaChannel (64bit header + 64bit data
+      pointer or receive buffer pointer). It is ensured that the allocated
+      memory is properly cacheline aligned and cleared with 0.
+
+      As the descriptor ring is accessed by both the hardware and the
+      software, the allocated memory has MEMFATTR_CACHEINHIBIT and
+      MEMFATTR_COHERENT set.
+
+      On successful return of this function, dmaChannel->RingVirtAddr
+      contains the virtual address of the ring and dmaChannel->RingPhysAddr
+      the physical address.
+
+   INPUTS
+      dmaChannel - The DMA channel to allocate a ring buffer for.
+      numEntries - Size of this ring as number of 16 byte entries.
+
+   RESULT
+      numEntries on success. 0 on error.
+
+   SEE ALSO
+      FreeRing
+pasemi_dma/main/ClearEvent                                     pasemi_dma/main/ClearEvent
+
+   NAME
+      ClearEvent -- Clears an event (flag)
+
+   SYNOPSIS
+      void ClearEvent(uint8 eventID);
+
+   FUNCTION
+      This function clears an event (flag). I.e. it sets the event to
+      inactive.
+
+   INPUTS
+      eventID - The eventID as returned by AllocEvent().
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      SetEvent, AllocEvent, FreeEvent
+pasemi_dma/main/FreeBuffer                                     pasemi_dma/main/FreeBuffer
+
+   NAME
+      FreeBuffer -- Frees a previously allocated buffer
+
+   SYNOPSIS
+      void FreeBuffer(APTR buffer);
+
+   FUNCTION
+      This function frees a buffer previously allocated by AllocBuffer().
+
+   INPUTS
+      buffer - The buffer allocated by AllocBuffer()
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      AllocBuffer
+pasemi_dma/main/FreeChannel                                   pasemi_dma/main/FreeChannel
+
+   NAME
+      FreeChannel -- Frees an allocated DMA channel
+
+   SYNOPSIS
+      void FreeChannel(struct PASDMAChannel * dmaChannel);
+
+   FUNCTION
+      This function frees a DMA Channel which was previously allocated
+      using AllocChannel(). Neither any channel data nor possibly attached
+      userdata are valid anymore after calling this function!
+
+      In order to successfully free a channel, it MUST be stopped and
+      all resources (e.g. interrupt servers) freed first!
+
+   INPUTS
+      dmaChannel - The previously allocated DMA channel
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      AllocChannel, StopChannel
+pasemi_dma/main/FreeEvent                                       pasemi_dma/main/FreeEvent
+
+   NAME
+      FreeEvent -- Frees a previously allocated event
+
+   SYNOPSIS
+      void FreeEvent(uint8 eventID);
+
+   FUNCTION
+      This function frees an event (flag) previously allocated by
+      AllocEvent().
+
+   INPUTS
+      eventID - The eventID as returned by AllocEvent().
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      AllocEvent
+pasemi_dma/main/FreeFunction                                 pasemi_dma/main/FreeFunction
+
+   NAME
+      FreeFunction -- Frees a previously allocated function engine
+
+   SYNOPSIS
+      void FreeFunction(uint8 funcID);
+
+   FUNCTION
+      This function frees a function engine previously allocated by
+      AllocFunction().
+
+   INPUTS
+      funcID - The funcID as returned by AllocFunction().
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      AllocFunction
+pasemi_dma/main/FreeRing                                         pasemi_dma/main/FreeRing
+
+   NAME
+      FreeRing -- Frees a previously allocated DMA ring
+
+   SYNOPSIS
+      void FreeRing(struct PASDMAChannel * dmaChannel);
+
+   FUNCTION
+      This function frees a DMA ring from dmaChannel, which was previously
+      allocated using AllocRing().
+
+   INPUTS
+      dmaChannel - The DMA channel containing the allocated DMA ring
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      AllocRing
+pasemi_dma/main/ReadDMARegByte                             pasemi_dma/main/ReadDMARegByte
+
+   NAME
+      ReadDMARegByte -- Read byte values from DMA Engine registers
+
+   SYNOPSIS
+      uint8 ReadDMARegByte(uint32 reg);
+
+   FUNCTION
+      This function attempts to read a byte from the specified DMA Engine
+      register offset.
+
+   INPUTS
+      reg - The register offset in DMA Engine config space
+
+   RESULT
+      The value found at the specified offset in DMA Engine config space
+
+   SEE ALSO
+      WriteDMARegLong
+
+pasemi_dma/main/ReadDMARegLong                             pasemi_dma/main/ReadDMARegLong
+
+   NAME
+      ReadDMARegLong -- Read long word values from DMA Engine registers
+
+   SYNOPSIS
+      uint32 ReadDMARegLong(uint32 reg);
+
+   FUNCTION
+      This function attempts to read a long word from the specified DMA
+      Engine register offset.
+
+   INPUTS
+      reg - The register offset in DMA Engine config space
+
+   RESULT
+      The value found at the specified offset in DMA Engine config space
+
+   SEE ALSO
+      WriteDMARegLong
+pasemi_dma/main/ReadDMARegWord                             pasemi_dma/main/ReadDMARegWord
+
+   NAME
+      ReadDMARegWord -- Read word values from DMA Engine registers
+
+   SYNOPSIS
+      uint16 ReadDMARegWord(uint32 reg);
+
+   FUNCTION
+      This function attempts to read a word from the specified DMA Engine
+      register offset.
+
+   INPUTS
+      reg - The register offset in DMA Engine config space
+
+   RESULT
+      The value found at the specified offset in DMA Engine config space
+
+   SEE ALSO
+     WriteDMARegLong
+pasemi_dma/main/SetEvent                                         pasemi_dma/main/SetEvent
+
+   NAME
+      SetEvent -- Sets an event (flag)
+
+   SYNOPSIS
+      void SetEvent(uint8 eventID);
+
+   FUNCTION
+      This function sets an event (flag). I.e. it set the event to active.
+
+   INPUTS
+      eventID - The eventID as returned by AllocEvent()
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      ClearEvent, AllocEvent, FreeEvent
+pasemi_dma/main/StartChannel                                 pasemi_dma/main/StartChannel
+
+   NAME
+      StartChannel -- Start a DMA channel
+
+   SYNOPSIS
+      void StartChannel(struct PASDMAChannel * dmaChannel, uint32 cmdsta);
+
+   FUNCTION
+      Enables (starts) a previously allocated dmaChannel with optional
+      additional cmdsta bits.
+
+   INPUTS
+      dmaChannel - The previously allocated DMA channel which shall get
+                   started.
+      cmdsta - Additional CCMDSTA/TCMDSTA bits to set. Use 0 if no
+               additional bits shall be set.
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      StopChannel
+pasemi_dma/main/StopChannel                                   pasemi_dma/main/StopChannel
+
+   NAME
+      StopChannel -- Stops a DMA channel
+
+   SYNOPSIS
+      BOOL StopChannel(struct PASDMAChannel * dmaChannel);
+
+   FUNCTION
+      Stops (disables) a DMA channel. This is done by setting the ST bit in
+      the CMDSTA register and waiting on the ACT (active) bit to clear,
+      then finally disabling the whole channel.
+
+      This function will only try for a short while for the channel to stop,
+      if it doesn't it will return failure.
+
+   INPUTS
+      dmaChannel - The previously allocated DMA channel which shall get
+                   stopped.
+
+   RESULT
+      TRUE on success. FALSE on error.
+
+   SEE ALSO
+      StartChannel
+pasemi_dma/main/WriteDMARegLong                           pasemi_dma/main/WriteDMARegLong
+
+   NAME
+      WriteDMARegLong -- Write long word values to DMA Engine registers
+
+   SYNOPSIS
+      void WriteDMARegLong(uint32 reg, uint32 value);
+
+   FUNCTION
+      This function attempts to write a long word to the specified DMA
+      Engine register offset.
+
+      While reads from the DMA Engine registers can either be of a single
+      byte, word or long word quantity, writes MUST always be of long
+      word quantity.
+
+   INPUTS
+      register - The register offset in DMA Engine config space.
+      value - The value supposed to be written to the register.
+
+   RESULT
+      This function does not return a result
+
+   SEE ALSO
+      ReadDMARegByte, ReadDMARegWord, ReadDMARegLong
+pasemi_dma/main/WriteIOBRegLong                           pasemi_dma/main/WriteIOBRegLong
+
+   NAME
+      WriteIOBRegLong -- Write long word values to I/O bridge registers
+
+   SYNOPSIS
+      void WriteIOBRegLong(uint32 reg, uint32 value);
+
+   FUNCTION
+      This function attempts to write a long word to the specified I/O
+      bridge register offset.
+
+   INPUTS
+      register - The register offset in I/O bridge config space.
+      value - The value supposed to be written to the register.
+
+   RESULT
+      This function does not return a result
+
+

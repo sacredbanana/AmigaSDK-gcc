@@ -1,0 +1,181 @@
+TABLE OF CONTENTS
+
+propgclass/--datasheet--
+propgclass/GM_HANDLEINPUT
+
+
+propgclass/--datasheet--                                 propgclass/--datasheet--
+
+    NAME
+	propgclass -- proportional gadget class
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	A BOOPSI proportional ("prop") gadget. The BOOPSI prop gadget is
+	similar to the conventional prop gadget but extends its
+	function to make it easier to use. The BOOPSI prop gadget keeps
+	its current integer value in its PGA_Top attribute.
+
+    METHODS
+	OM_NEW -- Create the propgclass object. Passed to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	GM_HITTEST -- Determine if gadget was hit.
+
+	GM_RENDER -- Render the gadget with state.
+
+	GM_GOACTIVE -- Activate the gadget.
+
+	GM_GOINACTIVE -- Deactivate the gadget.
+
+	GM_HANDLEINPUT -- Handle input while active.
+
+	GM_EXTENT -- Inquire about rendering extent.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_Image (struct Image *)
+	    Propgclass intercepts this gadgetclass attribute before
+	    passing it on to gadgetclass. This attribute passes an
+	    image for the prop gadget's knob which gets stored in the
+	    propgclass object's Gadget.Image structure.
+
+	    An AUTOKNOB automatically sizes itself according to how
+	    large the range of the gadget is compared to the visible
+	    range of the gadget. See the PGA_Visible and PGA_Total
+	    attributes for more details.
+
+	    Defaults to AUTOKNOB.
+
+	    Applicability is (OM_NEW)
+
+	GA_Border (struct Border *)
+	    Propgclass intercepts this gadgetclass attribute to prevent
+	    gadgetclass from setting up a border. If an application
+	    tries to set this attribute for a propgclass gadget the
+	    prop gadget turns itself into an AUTOKNOB gadget.
+
+	    Applicability is (OM_NEW)
+
+	GA_Highlight (uint16)
+	    Propgclass intercepts this gadgetclass attribute before
+	    passing it on to gadgetclass. It does this to make sure
+	    the highlighting is not set to GADGHBOX. GADGHBOX will be
+	    converted to GADGHCOMP.
+
+	    Applicability is (OM_NEW)
+
+	GA_SpecialInfo (APTR)
+	    This tag is used for storing private propgclass object
+	    information and will be overridden.
+
+	    Applicability is (OM_NEW)
+
+	PGA_Freedom (uint16)
+	    This attribute tells a propgclass object on which axis
+	    the gadget's knob is free to move (horizontal or vertical).
+	    It is either FREEHORIZ or FREEVERT.
+
+	    Defaults to FREEVERT.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	PGA_Borderless (BOOL)
+	    This attribute corresponds to the PROPBORDERLESS flag of
+	    the PropInfo structure's Flags field (defined in
+	    <intuition/intuition.h>. If this attribute is TRUE the
+	    new propgclass object will not have a border around it.
+	    In an AUTOKNOB propgclass gadget, if the PROPNEWLOOK flag
+	    is set as well (see the PGA_NewLook) the knob will have a
+	    3D appearance.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	PGA_NewLook (BOOL)
+	    This attribute corresponds to the PROPNEWLOOK flag of the
+	    PropInfo structure's Flags field (defined in
+	    <intuition/intuition.h>). If this attribute is TRUE the
+	    new propgclass object will use post Release 2 imagery
+	    rather than the Release 1.3 imagery.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW)
+
+	PGA_Total (uint32)
+	PGA_Visible (uint32)
+	PGA_Top (uint32)
+	    These attributes replace the Pot and Body variables of
+	    the Release 1.3 prop gadget. They are based on the use
+	    of proportional gadgets to control scrolling text. When
+	    scrolling 100 lines of text in a 25 line visible window,
+	    you would set PGA_Total to 100, PGA_Visible to 25, and
+	    watch PGA_Top run from 0 to 75 (top line of the last page).
+
+	    If the user clicks in the prop gadget but not on the knob,
+	    the entire knob jumps one "page" (the size of the visible
+	    area minus one, PGA_Visible-1). The page jump will leave
+	    an overlap of one line unless the value PGA_Visible is 1
+	    in which case the prop gadget acts as an integer numeric
+	    slider sliding from 0 to PGA_Total - 1.
+
+	    Note that when PGA_Top changes the gadget sends itself
+	    an OM_NOTIFY message about this attribute change (see the
+	    propgclass description of GM_HANDLEINPUT for more
+	    information).
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+	    PGA_Top is also (OM_NOTIFY)
+
+propgclass/GM_HANDLEINPUT                               propgclass/GM_HANDLEINPUT
+
+    NAME
+	GM_HANDLEINPUT -- Handle input while active.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct gpInput* msg);
+
+    FUNCTION
+	If the knob position changes sufficiently to change a
+	propgclass object's PGA_Top attribute the gadget will send
+	OM_NOTIFY message to itself which the propgclass dispatcher
+	passes on to the gadgetclass dispatcher for processing
+	(see the rootclass description of OM_NOTIFY and OM_UPDATE
+	for more information).
+
+	The OM_NOTIFY message will contain two attribute/value pairs,
+	PGA_Top and GA_ID. While the prop gadget's PGA_Top is in a
+	transitory state (while it is active and the user is moving
+	the prop gadget's knob) the gadget sends interim OM_NOTIFY
+	messages. The interim OM_NOTIFY messages have the OPUF_INTERIM
+	flag of the opUpdate.opu_Flags field set. When the user finishes
+	manipulating the gadget (by letting go of the knob) the gadget
+	sends a final OM_NOTIFY message with a cleared OPUF_INTERIM flag.
+
+    INPUTS
+	obj - propgclass object pointer
+	msg - pointer to fully initialized struct gpInput
+	      (see <intuition/gadgetclass.h>)
+
+    RESULT
+	Returns a valid GMR_xxx combination.
+
+    SEE ALSO
+	gadgetclass/GM_HANDLEINPUT, rootclass/OM_NOTIFY
+
+

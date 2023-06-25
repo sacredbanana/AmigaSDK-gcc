@@ -1,0 +1,178 @@
+TABLE OF CONTENTS
+
+integer.gadget/--datasheet--
+integer.gadget/INTEGER_GetClass
+integer.gadget/--datasheet--                     integer.gadget/--datasheet--
+
+    NAME
+	integer.gadget -- Numeric entry gadget with arrows.
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	frameiclass, bevel.image, string.gadget
+
+    DESCRIPTION
+	This gadget is a special form of a strggclass gadget for entering
+	positive or negative 32-bit integers. The user can type in the
+	number or use the arrows to adjust the number up or down.
+
+    METHODS
+	OM_NEW -- Create the integer gadget. Passed to superclass and
+	          internal string.gadget class.
+
+	OM_SET -- Set object attributes. Passed to internal string.gadget
+	          class first. Passed to superclass last.
+
+	OM_DISPOSE -- Disposes object and then passed to superclass.
+
+	OM_UPDATE -- Update object attributes. Passed to internal
+	             string.gadget class first. Passed to superclass last.
+	             Any changes are rendered.
+
+	OM_NOTIFY -- Sends out a notification message with all the
+	             OM_NOTIFY attributes present. Passed to superclass.
+
+	OM_GET -- Obtain the value of an attribute. Passed to superclass.
+
+	GM_RENDER -- Renders the gadget imagery.
+
+	GM_GOACTIVE -- Handles activation. Overrides the superclass.
+
+	GM_HANDLEINPUT -- Overrides superclass, all input processed.
+
+	GM_GOINACTIVE -- Deactivates input and then passed to superclass.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_Disabled (BOOL)
+	    This attribute is passed on to the string.gadget object
+	    and is then handled by the gadget.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_TextAttr (struct TextAttr *)
+	    This attribute is passed on to the string.gadget object
+	    and is then handled by the gadget.
+
+	    Defaults to RPort->Font which is often the screen or
+	    window font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_BackFill (struct Hook *)
+	    This attribute is passed on to the string.gadget object
+	    and is then handled by the gadget.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	INTEGER_Number (int32)
+	    The value for the integer gadget. The class will adjust this
+	    number to fit into the range you define. The current value for
+	    INTEGER_Number will be returned in IntuiMessage.Code on
+	    IDCMP_GADGETUP as a int16. Note that since the gadget handles
+	    values of size int32, the value returned in IntuiMessage.Code
+	    will only be valid if the ranges you are allowing fit into a
+	    int16 value. Otherwise you will have to use GetAttr().
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	INTEGER_Minimum (int32)
+	    The minimum value the number can have.
+
+	    Defaults to -1073741824.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	INTEGER_Maximum (int32)
+	    The minimum value the number can have.
+
+	    Defaults to 1073741823.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	INTEGER_Arrows (BOOL)
+	    Should arrows be displayed for adjusting the number? The class
+	    is smart enough to not render arrows if the gadget becomes too
+	    small. The imagery for the arrows depends on the current GUI
+	    settings.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	INTEGER_SkipVal (int16)
+	    The value to increase or decrease the number by each time
+	    one of the arrow buttons is pressed. (V45)
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	INTEGER_MinVisible (int16)
+	    This attribute specifies the minimum number of numeric characters
+	    which should be visible at the gadget's minimum domain size.
+	    This tag affects the GM_DOMAIN result to tweak the display in
+	    a pleasing way.
+
+	    Defauts to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	INTEGER_MaxChars (int16)
+	    Maximum number of characters you are allowing the number to be.
+	    This is including an optional negative sign (-).
+
+	    Defaults to 10.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	Note that all attributes will be passed on to the string.gadget
+	with OM_NEW, OM_SET and OM_UPDATE. You may use any of the
+	string.gadget's attribute except those which are overridden
+	by the integer.gadget class (e.g. STRINGA_LongVal and
+	STRINGA_MaxChars). See the string.gadget autodoc for more
+	information about its attributes.
+
+integer.gadget/INTEGER_GetClass               integer.gadget/INTEGER_GetClass
+
+    NAME
+	INTEGER_GetClass -- Gets pointer to the integer class.
+
+    SYNOPSIS
+	Class * class = INTEGER_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "integer.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the integer class.
+
+

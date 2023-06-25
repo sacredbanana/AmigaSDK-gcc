@@ -1,0 +1,39 @@
+README For FDTrans
+
+NOTE:
+This program needs a shell variable "FDTRANS_HOME" in order to find some of the
+files needed. If you install FDTrans with the SDK, this will already be taken
+care of.
+
+Purpose:
+FDTrans is a small utility for legacy SFD files. It offers two functions:
+
+ * Convert an SFD file into an XML file for processing with the IDLTool
+ * Generate 68k->PPC or PPC->68k cross call stubs. These are required to use
+   a 68k Library from PPC code (automatically; implicit emulator calling works
+   too but needs special attention) and to make a PPC library callable for
+   (legacy) 68k programs.
+
+Usage:
+FDTrans requires an SFD file as input. If you only have an FD file, you need to
+revert it to an SFD file using a tool like FD2Pragma.
+
+Note that for some SFD files it might be required to do some manual correction.
+Most notably, there is great commotion about the way that vararg functions are
+specified. The following format is used throughout because it is the most commonly
+used format:
+
+VOID someFunc(ULONG someparam, ULONG Tag1, ...) (D0,A0)
+
+Although this prototype doesn't really make sense (vararg functions are not
+supposed to list the first vararg argument), this is the way that FDTrans expects
+the functions in the SFD file. If you have a function like
+
+VOID printf(char *format, ...) (A0,A1)
+
+you need to manually add a dummy argument like
+
+VOID printf(char *format, ULONG dummy, ...) (A0,A1)
+
+For more information on fdtrans, see the developer documentation on migrating
+old programs and libraries.

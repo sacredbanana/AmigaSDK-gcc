@@ -1,0 +1,244 @@
+TABLE OF CONTENTS
+
+frameiclass/--datasheet--
+frameiclass/IM_DRAW
+frameiclass/IM_DRAWFRAME
+
+
+frameiclass/--datasheet--                               frameiclass/--datasheet--
+
+    NAME
+	frameiclass -- embossed frame image class
+
+    SUPERCLASS
+	imageclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This is a class of framing image which can optionally fill itself.
+	Its purpose is to frame other display elements using an embossed
+	or recessed rectangular frame. The frame renders itself using the
+	appropriate DrawInfo pens (SHINEPEN, SHADOWPEN, etc.). This class
+	is intelligent enough to bound or center its contents.
+
+    METHODS
+	OM_NEW -- Create the frameiclass object. Passed to superclass.
+
+	OM_GET -- Get value of an attribute. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	IM_DRAW -- Draw frame image with state.
+
+	IM_DRAWFRAME -- Draw frame image within limits.
+
+	IM_FRAMEBOX -- Get recommended frame around some box.
+
+	IM_EXTENT -- Inquire about rendering extent.
+
+	IM_EXTENTFRAME -- Inquire about rendering extent with dimensions.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	IA_FrameType (uint32)
+	    The type of frame to use. The frame choices are as follows:
+	      FRAME_DEFAULT
+	        V37-type frame which has thin edges.
+
+	      FRAME_BUTTON
+	        Button gadget frames with thicker sides and nicely
+           edged corners.
+
+	      FRAME_RIDGE
+           A ridge such as used by standard string gadgets.
+           You can recess the ridge to get a groove image.
+
+	      FRAME_ICONDROPBOX
+	        A broad ridge which is the standard imagery for areas
+	        in AppWindows where icons may be dropped.
+
+	      FRAME_PROPBORDER
+	        A frame suitable for use as border of a proportional
+	        gadget container. (V50)
+
+	      FRAME_PROPKNOB
+	        A frame suitable for use as knob of a proportional
+           gadget. (V50)
+
+	      FRAME_DISPLAY
+	        A recessed frame for display elements, such as read-only
+	        text or number gadgets. (V50)
+
+	    Defaults to FRAME_DEFAULT.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Recessed (BOOL)
+	    If this attribute is TRUE a frameiclass object will appear
+	    recessed into the drawing surface. It does this by swapping
+	    its use of the SHADOWPEN and SHINEPEN. By default, the frame
+	    appears to be raised from the surface.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_EdgesOnly (BOOL)
+	    If this attribute is TRUE the frame does not fill itself and
+	    just draws its edges.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Orientation (uint32)
+	    Defines the orientation of the frame for images needing this
+	    kind of information such as the PROPKNOB frameiclass type or
+	    gaugeiclass. The orientation can either be horizontal (0) or
+	    vertical (1).
+
+	    Defaults to 0 (horizontal).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_Simple (BOOL)
+	    This attribute indicates whether the image should be drawn
+	    with the most plain graphic appearance it supports. For
+	    frameiclass this means to drop fancy styles like XEN or
+	    rounded corners. (V50)
+
+	    Defaults to FALSE (user-selected style).
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_SupportsDisable (BOOL)
+	    By default Intuition ghosts gadgets itself instead of
+	    relying on IDS_DISABLED or IDS_SELECTEDDISABLED states.
+	    An imageclass that supports these states will return this
+	    attribute as TRUE. Applications should not set or clear
+	    this attribute.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_BGPen (uint16)
+	    This attribute overrides the default IA_BGPen attribute
+	    as found in imageclass. It defines the background pen to
+	    use for rendering the frame.
+
+	    Defaults to FOREGROUNDPEN for frames not in a border.
+	    For frames in a Window's border it defaults to FILLPEN
+	    if the Window is active or INACTIVEFILLPEN otherwise.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_BackFill (struct Hook *)
+	    Pointer to the backfill hook to use for rendering in
+	    the IDS_NORMAL state. For more on the backfill hook,
+	    see layers.library/InstallLayerInfoHook(). (V50)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_SelectedBackFill (struct Hook *)
+	    Pointer to the backfill hook to use for rendering in
+	    a selected state. For more on the backfill hook,
+	    see layers.library/InstallLayerInfoHook(). (V50)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_DisabledBackFill (struct Hook *)
+	    Pointer to the backfill hook to use for rendering in
+	    a disabled state. For more on the backfill hook,
+	    see layers.library/InstallLayerInfoHook(). (V50)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_InactiveBackFill (struct Hook *)
+	    Pointer to the backfill hook to use for rendering in
+	    an inactive state. For more on the backfill hook,
+	    see layers.library/InstallLayerInfoHook(). (V50)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	IA_EraseBackground (BOOL)
+ 	    This attribute can be used to tell the image to erase
+	    the background before rendering the image. (V51)
+
+	    Defaults to TRUE for images having a non-rectangular
+	    or anti-aliased shape or else FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	IA_InBorder (BOOL)
+	    Flag to indicate if this image to be drawn inside a
+	    Window's border or not. (V51)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+frameiclass/IM_DRAW                                           frameiclass/IM_DRAW
+
+    NAME
+	IM_DRAW -- Draw frame image with state.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impDraw* msg);
+
+    FUNCTION
+	This method tells a frameiclass object to render itself using
+	the position and dimensions of its Image structure.
+
+	Depending on the state (passed in the impDraw.imp_State field)
+	the frame (of type IA_FrameType) will be rendered in different
+	ways.
+
+    INPUTS
+	obj - frame object pointer
+	msg - pointer to fully initialized struct impDraw
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	imageclass/IM_DRAW, intuition.library/DrawImageState()
+
+frameiclass/IM_DRAWFRAME                                 frameiclass/IM_DRAWFRAME
+
+    NAME
+	IM_DRAWFRAME -- Draw frame image within limits.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct impDraw* msg);
+
+    FUNCTION
+	This method is almost the same as the frameiclass IM_DRAW method
+	except this method accepts a width and height that overrides the
+	width and height stored in the object's Image structure. It uses
+	the same drawing states as the frameiclass's IM_DRAW method.
+
+    INPUTS
+	obj - frame object pointer
+	msg - pointer to fully initialized struct impDraw
+	      (see <intuition/imageclass.h>)
+
+    RESULT
+	The return value for this method is not explicitly defined.
+
+    SEE ALSO
+	IM_DRAW, imageclass/IM_DRAWFRAME
+
+

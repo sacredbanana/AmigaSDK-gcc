@@ -1,0 +1,515 @@
+TABLE OF CONTENTS
+
+performancemonitor.resource/-copyright-
+performancemonitor.resource/-items-
+performancemonitor.resource/CounterControl
+performancemonitor.resource/CounterGet
+performancemonitor.resource/CounterMatch
+performancemonitor.resource/EventControl
+performancemonitor.resource/GetSampledAddress
+performancemonitor.resource/Mark
+performancemonitor.resource/MonitorControl
+performancemonitor.resource/Query
+performancemonitor.resource/SetBreakpoint
+performancemonitor.resource/SetInterruptVector
+performancemonitor.resource/SetSampledAddress
+performancemonitor.resource/Unmark
+
+
+performancemonitor.resource/-copyright-
+
+ Copyright 2004-2020 Trevor Dickinson.
+
+performancemonitor.resource/-items-
+
+   NAME
+	Item -- Possible items to count
+
+   FUNCTION
+	This is a preliminary and incomplete list of items that can be
+	counted by the Performance Monitor.
+
+   VALUES
+	PMCI_Hold           Hold current value (disable counter)
+	PMCI_CPUCycles      Number of CPU cycles
+	PMCI_Instr          Number of CPU finished instructions
+	PMCI_FPUInstr       Number of instructions completed by FPU
+	PMCI_Tansition      Number of transitions of RTC bit from 0 to 1
+	PMCI_InstrDisp      Number of CPU instructions dispatched
+	PMCI_EIEIO          Number of eieio instructions completed
+	PMCI_SYNC           Number of sync instructions completed
+	PMCI_L1DCacheHits   Number of L1 data cache hits
+	PMCI_L1ICacheHits   Number of L1 instruction cache hits
+	PMCI_L2DCacheHits   Number of L2 data cache hits
+	PMCI_L2ICacheHits   Number of L2 instruction cache hits
+	PMCI_L1DCacheMiss   Number of L1 data cache misses
+	PMCI_L1ICacheMiss   Number of L1 instruction cache misses
+	PMCI_L2DCacheMiss   Number of L2 data cache misses
+	PMCI_L2ICacheMiss   Number of L2 instruction cache misses
+	PMCI_L2Hits         Number of hits in L2 cache
+	PMCI_L1LoadThresh   Number of L1 loads that exceed the threshold
+	PMCI_ValidEA        Number of valid virtual addresses delivered to
+                           the memory subsystem
+	PMCI_UnresolvedBra  Number of unresolved branches
+	PMCI_InstrBreak     Number of times an executed instruction's address
+	                    matches the IABR
+	PMCI_DataBreak      Number of times a generated virtual address
+	                    matches the DABR
+
+performancemonitor.resource/CounterControl
+
+   NAME
+	CounterSet -- Set counter values and control behaviour
+
+   SYNOPSIS
+	BOOL CounterControl(uint32 whichCount, int32 value, uint32 what);
+
+   FUNCTION
+	Set a counter value and the event that it counts.
+
+   INPUTS
+	whichCount - Determine which counter to set. The number range from 1
+	             to Query(PMQI_NumCounters).
+	value      - The initial value of the counter. This is a 31 bit value.
+	             Note that counters always overflow at 0x7fffffff, so to
+	             count lower amount, set the initial value appropriately.
+	what       - The item to count. See PerformanceMonitor.resource/Items.
+
+   RESULT
+	A boolean value, indicating success or failure. Failure can be
+	indicated under the following conditions:
+	   - A counter should be used that does not exist
+	   - An item is to be counted that can not be counted with this
+	     counter. See CounterMatch for details.
+
+   EXAMPLE
+	/* Make counter 1 count processor cycles, and flag an event if
+	   100 processor cycles elapsed */
+	if (IPM->CounterControl(1, 0x80000000-100, PMCI_CPUCycles))
+	{
+	    /* Counter set */
+	    ...
+	}
+	else
+	{
+	    /* Counter can't be used */
+	    ...
+	}
+
+   NOTES
+	This function must be called in Supervisor mode.
+
+   SEE ALSO
+	CounterMatch
+
+performancemonitor.resource/CounterGet
+
+   NAME
+	CounterGet -- Read counter value and overflow condition
+
+   SYNOPSIS
+	uint32	CounterGet(uint32 whatCount);
+
+   FUNCTION
+	Read a counter value and its overflow condition bit.
+
+   INPUTS
+	whatCount - The counter to read (numbered from 1 to the available
+	    number of counters).
+
+   RESULT
+	The lower 31 bit determine the counter value, while the most
+	significant bit indicates an overflow event when set.
+
+performancemonitor.resource/CounterMatch
+
+   NAME
+	CounterMatch -- Match a countable item to one or more counters.
+
+   SYNOPSIS
+	uint32 CounterMatch(uint32 itemNum);
+
+   FUNCTION
+	Determine whether an item can be counted by one or more counters.
+	Items can not always be counted by each counter. Therefore, it is
+	necessary to find out if an item can be counted by a specific
+	register, resp. by which register it can be counted.
+
+   INPUTS
+	itemNum - The item to be queried. For details, see
+	    PerformanceMonitor.resource/--Items--.
+
+   RESULT
+	A bit mask indicating which counter can count the item.
+	Counters are matched from least to most significant, i.e. bit 0
+	matches counter 1, bit 1 matches counter 2, etc.
+	If a bit is set, the matched counter can count the event.
+
+   EXAMPLE
+	/* Determine which counter can count CPU cycles */
+	uint32 match = IPM->CounterMatch(PMCI_CPUCycles);
+	uint32 nCount = IPM->Query(PMQI_NumCounters);
+	uint32 i;
+
+	printf("Item can be counted by the following counters:\n");
+	for (i = 0; i < nCount; i++)
+	{
+	    if (match & (1<<i))
+	    {
+	        printf("Counter %d\n", i+1);
+	    }
+	}
+
+performancemonitor.resource/EventControl
+
+   NAME
+	EventControl -- Control events and interrupt generation
+
+   SYNOPSIS
+	uint32 EventControl(struct TagItem *tagList);
+	uint32 EventControlTags(...);
+
+   FUNCTION
+	Control the masking of events and interrupt generation.
+
+	Each counter overflow and the realtime clock ticks can generate an
+	interrupt. When an interrupt is generated, and the event is not
+	masked, the appropriate handler is called.
+
+   INPUTS
+	The only input is a tag list that determines the operation carried
+	out. The following tagitems are defined:
+
+	  PMECT_Disable:
+	   Disable generation of events/interrupts. The data field is one of
+	   the following values: A number from 1 to the amount of available
+	   counters will block events from this counter. Additionally, the
+	   symbolic constant PMEC_Timer can be used to disable timer events.
+	   As a third possibility, PMEC_MasterInterrupt will disable generation
+	   of hardware interrupts when one of the events above happen.
+
+	  PMECT_Enable:
+	   Enable generation of events/interrupts. The data field follows the
+	   the same rules as with PMECT_Disable.
+
+   RESULT
+	The number of tagitems successfully processed.
+
+   NOTES
+	There's a distinction between the terms "event" and "interrupt". An
+	event is internal to the Performance Monitor. Only if the Master
+	Interrupt is enabled, the Performance Monitor will actually generate
+	hardware interrupts, and only in this case will the callback handlers
+	be invoked.
+
+	This function must be called in Supervisor mode.
+
+   SEE ALSO
+	SetInterruptVector
+
+performancemonitor.resource/GetSampledAddress
+
+   NAME
+	GetSampledAddress -- Get the sampled instruction address
+
+   SYNOPSIS
+	APTR GetSampledAddress(void);
+
+   FUNCTION
+	Read the SIA, the sampled instruction address. The sampled instruction
+	address contains the address of the instruction executing at the time
+	a Performance Monitor event took place. This is true even if no
+	interrupt was enabled or generated.
+
+   RESULT
+	The sampled address at the time a Performance Monitor event took place.
+
+   NOTES
+	Event refers to the overflow of a counter, or a RTC bit transition.
+	This function can be called in user mode.
+
+   SEE ALSO
+	SetSampledAddress
+
+performancemonitor.resource/Mark
+
+   NAME
+	Mark -- Mark a task for the Performance Monitor
+
+   SYNOPSIS
+	void Mark(struct Task *task);
+
+   FUNCTION
+	Indicate that the given task is Performance Monitor marked.
+	If the task is actually watched by the Monitor depends on the mode
+	set by MonitorControl.
+
+   INPUTS
+	task - The task to mark. If 0, the current task is marked.
+
+   NOTES
+	This function must not be called in an interrupt.
+
+   SEE ALSO
+	MonitorControl, Unmark
+
+performancemonitor.resource/MonitorControl
+
+   NAME
+	MonitorControl -- Control aspects of the Performance Monitor
+
+   SYNOPSIS
+	uint32 MonitorControl(struct TagItem *tagList);
+	uint32 MonitorControlTags(...);
+
+   FUNCTION
+	Control certain aspects of the monitor, for example, when to count,
+	trigger/nontrigger mode, RTC and thresholds.
+
+   INPUTS
+	The only input is a tag list. Currently, these tag items are defined:
+
+	  PMMCT_FreezeCounters:
+	    Enable or disable the conditions for freezing counters.
+	    Multiple conditions can be or'ed together to form more complex
+	    conditions:
+
+	      PMMC_Always:   Always freeze counters, regardless of other
+	                     conditions
+	      PMMC_Super:    Freeze in supervisor mode
+	      PMMC_User:     Freeze in user mode
+	      PMMC_Marked:   Freeze when marked
+	      PMMC_Unmarked: Freeze when unmarked.
+
+	    For an example, see below. Note that by default, all counting
+	    is frozen. Also note that changing any counter requires
+	    all counters to be frozen.
+
+	  PMMCT_RTCBitSelect:
+	    Select the bit to monitor for generating RTC events. Whenever the
+	    selected bit goes from 0 to 1 in the timebase, an RTC event is
+	    triggered. The speed of the timebase depends on the frontside
+	    bus speed (typical: 1/8 of the frontside bus speed).
+	    The following values can be used:
+	      PMMC_BIT0: Pick bit 0 (i.e. the least significant bit)
+	      PMMC_BIT8: Pick bit 8
+	      PMMC_BIT12: Pick bit 12
+	      PMMC_BIT16: Pick bit 16
+
+	  PMMCT_Threshold:
+	    Some counting items require a threshold value (for example, it's
+	    possible to count all cache misses which exceed a certain latency).
+	    This threshold is global for all counters.
+	    The data field of this tag holds the threshold value. Note that
+	    normally, this is a 6 bit value, but on certain machines, it
+	    is either multiplied by 2 or 32. The number you give here is
+	    converted to the appropriate value for the CPU in use. As a
+	    result, the threshold might end up being rounded or even be
+	    saturated (if it's too high, it's set to the maximum).
+
+	  PMMCT_GetThreshold:
+	    The data item must be a pointer to an uint32. The given variable
+	    will be filled with the adjusted threshold value after conversion.
+	    Note: This tag will be handled after PMMCT_Threshold, so you can
+	    use it to read the actual value without calling this function a
+	    second time. (And yeah, I know this description sucks).
+
+	  PMMCT_Trigger:
+	    This boolean tag determines if the Performance Monitor is running
+	    in trigger mode or not. Trigger mode means that all counters
+	    except counter 1 are held. As soon as an event is generated
+	    (either by an overflow of counter 1, or a RTC event is generated),
+	    all other counters resume counting (if they are initialised).
+
+   RESULT
+	The number of tagitems successfully processed.
+
+   EXAMPLE
+	/* Set the threshold value, and find out how it was modified */
+	uint32 threshold;
+
+	if (2 == IPM->MonitorControlTags(
+	      PMMCT_Threshold,        20,
+	      PMMCT_GetThreshold,     &threshold,
+             TAG_DONE))
+	    printf("Adjusted threshold value: %d\n", threshold);
+
+	/* Set count condition: Always count */
+	IPM->MonitorControlTags(
+	    PMMCT_FreezeCounters,	0,
+	    TAG_DONE);
+
+	/* Freeze when unmarked this effectively only
+	   watches marked tasks */
+	IPM->MonitorControlTags(
+	    PMMCT_FreezeCounters,	PMMC_Unmarked,
+	    TAG_DONE);
+
+ 	/* Freeze when marked or supervisor mode. This counts when an
+	   unmarked task is in user mode */
+	IPM->MonitorControlTags(
+	    PMMCT_FreezeCounters,	PMMC_Marked|PMMC_Super,
+	    TAG_DONE);
+
+   NOTES
+	This function must be called in Supervisor mode.
+
+performancemonitor.resource/Query
+
+   NAME
+	Query -- Query CPU-dependent capabilities of the Performance Monitor
+
+   SYNOPSIS
+	uint32 Query(uint32 item);
+
+   FUNCTION
+	Ask the resource about hardware peculiarities of the current CPU.
+
+   INPUTS
+	item - an item to query. The following items are defined:
+	  PMQI_NumCounters: Number of counters available
+	  PMQI_IBreakPoint: A boolean value determining whether an instruction
+	      breakpoint register is available or not.
+	  PMQI_BreakPointMask: A boolean value determining whether masking for
+             instruction or data breakpoints is available
+
+   RESULT
+	The result depends on the item queried.
+
+   EXAMPLE
+	/* Determine the amount of counters available */
+	uint32 nCount = IPM->Query(PMQI_NumCounters);
+
+performancemonitor.resource/SetBreakpoint
+
+   NAME
+	SetBreakpoint -- Set instruction or data breakpoint
+
+   SYNOPSIS
+	void SetBreakpoint(uint32 type, APTR addr, uint32 mask,
+							BOOL except);
+
+   FUNCTION
+	Set an instruction or data breakpoint, including a possible mask
+	and enabling exceptions.
+
+	Whenever an instruction address matches the instruction breakpoint,
+	or a virtual address matches the data breakpoint, and the appropriate
+	exception is enabled, a DSI exception is generated. A handler can be
+	set via SetTaskTrap. The Performance Monitor can count matches even
+	if exceptions are disabled.
+
+   INPUTS
+	type     - The breakpoint type. Can be one of PMBP_Data or PMBP_Inst.
+	addr     - The address to watch.
+	mask     - A mask that is AND'ed with the breakpoint address to
+	           determine whether a match occurred or not. If not
+	           supported by the hardware, the mask is assumed to
+	           be 0xfffffffc. Note that the mask is shared amount data
+	           and instruction breakpoints.
+	except   - If TRUE, generate an exception (DSI or Instruction
+	           breakpoint exception)
+
+   NOTES
+	Masking is not always available. Use Query to find out if it's
+	supported or not.
+
+	This function must be called in Supervisor mode.
+
+   SEE ALSO
+	Query
+
+performancemonitor.resource/SetInterruptVector
+
+   NAME
+	SetInterruptVector -- Set a performance monitor interrupt handler
+
+   SYNOPSIS
+	struct Interrupt *SetInterruptVector(uint32 event,
+	                                      struct Interrupt *handler);
+
+   FUNCTION
+	Set an interrupt vector for handling Performance Monitor events.
+
+	The Performance Monitor can generate an "event" whenever certain
+	instances occur. These instances include overflow of counters, the
+	"ticking" of the realtime clock, and a general Performance Monitor
+	interrupt.
+
+	For each of these possible events, a handler can be set that is
+	invoked every time the event occurs, the event is not blocked (see
+	EventControl), _AND_ the master interrupt is enabled
+	(see MonitorControl). If the Performance Monitor is set up not to
+	cause interrupts, the handlers will not be called, regardless of
+	whether the event occurs or not.
+
+   INPUTS
+	event   - The event this handler is tied to. Possible values are:
+	          1 .. number of counters: The handler is invoked whenever
+	              the appropriate counter overflows.
+	          PMIV_RTCEvent: The handler is invoked when the bit selected
+                     as the RTC bit in the TimeBase register flips to 1.
+	          PMIV_Monitor: The handler is invoked every time a
+	              Performance Monitor even occurs.
+	handler - An initialised interrupt structure.
+		  The handle function is invoked with the following prototype:
+	          handler->is_Code(struct ExceptionContext *context,
+					struct ExecBase *SysBase, APTR is_Data);
+		  The handler function has no return value.
+
+   RESULT
+	If another interrupt handler was set for this event, it's returned,
+	otherwise, 0 is returned.
+
+   NOTES
+	This function must not be called from an interrupt.
+
+performancemonitor.resource/SetSampledAddress
+
+   NAME
+	SetSampledAddress -- Set the sampled address register
+
+   SYNOPSIS
+	void SetSampledAddress(APTR addr);
+
+   FUNCTION
+	Set the value of the SIA, the sampled instruction address. The sampled
+	instruction address contains the address of the instruction executing at
+	the time a Performance Monitor event took place.
+
+   INPUTS
+	addr - Address to write into the SIA
+
+   NOTES
+	This function can be useful to write the SIA to make sure you're not
+	accessing the address a second time when polling the counters instead
+	of using interrupts.
+
+	This function must be called in supervisor mode.
+
+   SEE ALSO
+	GetSampledAddress
+
+performancemonitor.resource/Unmark
+
+   NAME
+	Unmark -- Unmark a task for the Performance Monitor
+
+   SYNOPSIS
+	void Unmark(struct Task *task);
+
+   FUNCTION
+	Remove a Performance Monitor mark from the given task. If the task is
+	actually watched by the Monitor depends on the mode set by
+	MonitorControl.
+
+   INPUTS
+	task - The task to unmark. If 0, the current task is unmarked.
+
+   NOTES
+	This function must not be called in an interrupt.
+
+   SEE ALSO
+	MonitorControl, Mark
+
+

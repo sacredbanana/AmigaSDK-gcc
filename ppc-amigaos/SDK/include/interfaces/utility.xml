@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="utility" basename="UtilityBase" basetype="UtilityBase" openname="utility.library" m68kbias="30">
+
+  <copyright>Copyright (C) 2003-2021 Trevor Dickinson</copyright>
+
+  <include>utility/utility.h</include>
+
+  <m68kinclude>exec/ports.h</m68kinclude>
+  <m68kinclude>utility/tagitem.h</m68kinclude>
+  <m68kinclude>utility/date.h</m68kinclude>
+  <m68kinclude>utility/hooks.h</m68kinclude>
+  <m68kinclude>utility/name.h</m68kinclude>
+  <m68kinclude>utility/data_structures.h</m68kinclude>
+  <m68kinclude>utility/random.h</m68kinclude>
+  <m68kinclude>utility/message_digest.h</m68kinclude>
+
+  <interface name="main" version="1.0" flags="protected" struct="UtilityIFace" prefix="_util_" asmprefix="IUtility" global="IUtility">
+    <method name="Obtain" result="ULONG"/>
+    <method name="Release" result="ULONG"/>
+    <method name="Expunge" result="void" status="unimplemented"/>
+    <method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+    <method name="AllocateTagItems" result="struct TagItem *" m68kslot="6">
+      <arg name="numTags" type="ULONG" m68kreg="D0"/>
+    </method>
+
+    <method name="ApplyTagChanges" result="VOID" m68kslot="26">
+      <arg name="list" type="struct TagItem *" m68kreg="A0"/>
+      <arg name="changeList" type="const struct TagItem *" m68kreg="A1"/>
+    </method>
+
+    <method name="CloneTagItems" result="struct TagItem *" m68kslot="7">
+      <arg name="original" type="const struct TagItem *" m68kreg="A0"/>
+    </method>
+
+    <method name="FilterTagChanges" result="VOID" m68kslot="4">
+      <arg name="changeList" type="struct TagItem *" m68kreg="A0"/>
+      <arg name="originalList" type="struct TagItem *" m68kreg="A1"/>
+      <arg name="apply" type="ULONG" m68kreg="D0"/>
+    </method>
+
+    <method name="FilterTagItems" result="ULONG" m68kslot="11">
+      <arg name="taglist" type="struct TagItem *" m68kreg="A0"/>
+      <arg name="filterArray" type="const Tag *" m68kreg="A1"/>
+      <arg name="logic" type="ULONG" m68kreg="D0"/>
+    </method>
+
+    <method name="FindTagItem" result="struct TagItem *" m68kslot="0">
+      <arg name="tagValue" type="Tag" m68kreg="D0"/>
+      <arg name="tagList" type="const struct TagItem *" m68kreg="A0"/>
+    </method>
+
+    <method name="FreeTagItems" result="VOID" m68kslot="8">
+      <arg name="tagList" type="struct TagItem *" m68kreg="A0"/>
+    </method>
+
+    <method name="GetTagData" result="ULONG" m68kslot="1">
+      <arg name="tagValue" type="Tag" m68kreg="D0"/>
+      <arg name="defaultVal" type="ULONG" m68kreg="D1"/>
+      <arg name="tagList" type="const struct TagItem *" m68kreg="A0"/>
+    </method>
+
+    <method name="MapTags" result="VOID" m68kslot="5">
+      <arg name="tagList" type="struct TagItem *" m68kreg="A0"/>
+      <arg name="mapList" type="const struct TagItem *" m68kreg="A1"/>
+      <arg name="mapType" type="ULONG" m68kreg="D0"/>
+    </method>
+
+    <method name="NextTagItem" result="struct TagItem *" m68kslot="3">
+      <arg name="tags" type="struct TagItem **" m68kreg="A0"/>
+    </method>
+
+    <method name="PackBoolTags" result="ULONG" m68kslot="2">
+      <arg name="initialFlags" type="ULONG" m68kreg="D0"/>
+      <arg name="tagList" type="const struct TagItem *" m68kreg="A0"/>
+      <arg name="boolMap" type="const struct TagItem *" m68kreg="A1"/>
+    </method>
+
+    <method name="RefreshTagItemClones" result="VOID" m68kslot="9">
+      <arg name="clone" type="struct TagItem *" m68kreg="A0"/>
+      <arg name="original" type="const struct TagItem *" m68kreg="A1"/>
+    </method>
+
+    <method name="TagInArray" result="BOOL" m68kslot="10">
+      <arg name="tagValue" type="Tag" m68kreg="D0"/>
+      <arg name="tagArray" type="const Tag *" m68kreg="A0"/>
+    </method>
+
+    <method name="CallHookPkt" result="ULONG" m68kslot="12">
+      <arg name="hook" type="struct Hook *" m68kreg="A0"/>
+      <arg name="object" type="APTR" m68kreg="A2"/>
+      <arg name="message" type="APTR" m68kreg="A1"/>
+    </method>
+
+    <method name="CallHook" result="ULONG">
+      <arg name="hook" type="struct Hook *"/>
+      <arg name="object" type="APTR"/>
+      <vararg name="message" type="ULONG"/>
+    </method>
+
+    <method name="AddNamedObject" result="BOOL" m68kslot="32">
+      <arg name="nameSpace" type="struct NamedObject *" m68kreg="a0"/>
+      <arg name="object" type="struct NamedObject *" m68kreg="a1"/>
+    </method>
+
+    <method name="AllocNamedObjectA" result="struct NamedObject *" m68kslot="33">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a0"/>
+      <arg name="tags" type="const struct TagItem *" m68kreg="a1"/>
+    </method>
+
+    <method name="AllocNamedObject" result="struct NamedObject *" m68kslot="33">
+      <arg name="name" type="CONST_STRPTR" m68kreg="a0"/>
+      <vararg name="tags" type="Tag" m68kreg="a1"/>
+    </method>
+
+    <method name="AttemptRemNamedObject" result="LONG" m68kslot="34">
+      <arg name="object" type="struct NamedObject *" m68kreg="a0"/>
+    </method>
+
+    <method name="FindNamedObject" result="struct NamedObject *" m68kslot="35">
+      <arg name="name_space" type="struct NamedObject *" m68kreg="a0"/>
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+      <arg name="previous_object" type="struct NamedObject *" m68kreg="a2"/>
+    </method>
+
+    <method name="FreeNamedObject" result="struct NamedObject *" m68kresult="VOID" m68kslot="36">
+      <arg name="obj" type="struct NamedObject *" m68kreg="a0"/>
+    </method>
+
+    <method name="NamedObjectName" result="STRPTR" m68kslot="37">
+      <arg name="obj" type="struct NamedObject *" m68kreg="a0"/>
+    </method>
+
+    <method name="ReleaseNamedObject" result="void" m68kslot="38">
+      <arg name="obj" type="struct NamedObject *" m68kreg="a0"/>
+    </method>
+
+    <method name="RemNamedObject" result="void" m68kslot="39">
+      <arg name="obj" type="struct NamedObject *" m68kreg="a0"/>
+      <arg name="message" type="struct Message *" m68kreg="a1"/>
+    </method>
+
+    <method name="Amiga2Date" result="void" m68kslot="15">
+      <arg name="date_amiga" type="ULONG" m68kreg="D0"/>
+      <arg name="cd" type="struct ClockData *" m68kreg="A0"/>
+    </method>
+
+    <method name="CheckDate" result="ULONG" m68kslot="17">
+      <arg name="date" type="const struct ClockData *" m68kreg="A0"/>
+    </method>
+
+    <method name="Date2Amiga" result="ULONG" m68kslot="16">
+      <arg name="date" type="const struct ClockData *" m68kreg="A0"/>
+    </method>
+
+    <method name="CreateSkipList" result="struct SkipList *" m68kslot="49">
+      <arg name="hook" type="struct Hook *" m68kreg="a0"/>
+      <arg name="max_levels" type="LONG" m68kreg="d0"/>
+    </method>
+
+    <method name="DeleteSkipList" result="void" m68kslot="50">
+      <arg name="skipList" type="struct SkipList *" m68kreg="a0"/>
+    </method>
+
+    <method name="FindSkipNode" result="struct SkipNode *" m68kslot="52">
+      <arg name="skipList" type="const struct SkipList *" m68kreg="a0"/>
+      <arg name="key" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="GetFirstSkipNode" result="struct SkipNode *" m68kslot="54">
+      <arg name="skipList" type="const struct SkipList *" m68kreg="a0"/>
+    </method>
+
+    <method name="GetNextSkipNode" result="struct SkipNode *" m68kslot="55">
+      <arg name="skipList" type="const struct SkipList *" m68kreg="a0"/>
+      <arg name="node" type="const struct SkipNode *" m68kreg="a1"/>
+    </method>
+
+    <method name="InsertSkipNode" result="struct SkipNode *" m68kslot="51">
+      <arg name="skipList" type="struct SkipList *" m68kreg="a0"/>
+      <arg name="key" type="APTR" m68kreg="a1"/>
+      <arg name="dataSize" type="ULONG" m68kreg="d0"/>
+    </method>
+
+    <method name="RemoveSkipNode" result="BOOL" m68kslot="53">
+      <arg name="skipList" type="struct SkipList *" m68kreg="a0"/>
+      <arg name="key" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="CreateSplayTree" result="struct SplayTree *" m68kslot="56">
+      <arg name="compareHook" type="struct Hook *" m68kreg="a0"/>
+    </method>
+
+    <method name="DeleteSplayTree" result="void" m68kslot="57">
+      <arg name="splayTree" type="struct SplayTree *" m68kreg="a0"/>
+    </method>
+
+    <method name="FindSplayNode" result="struct SplayNode *" m68kslot="59">
+      <arg name="splayTree" type="const struct SplayTree *" m68kreg="a0"/>
+      <arg name="key" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="InsertSplayNode" result="struct SplayNode *" m68kslot="58">
+      <arg name="splayTree" type="struct SplayTree *" m68kreg="a0"/>
+      <arg name="key" type="APTR" m68kreg="a1"/>
+      <arg name="date_size" type="ULONG" m68kreg="d0"/>
+    </method>
+    
+    <method name="RemoveSplayNode" result="struct SplayNode *" m68kslot="60">
+      <arg name="splayTree" type="struct SplayTree *" m68kreg="a0"/>
+      <arg name="key" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="FindNameNC" result="struct Node *" m68kslot="62">
+      <arg name="list" type="struct List *" m68kreg="a0"/>
+      <arg name="name" type="CONST_STRPTR" m68kreg="a1"/>
+    </method>
+
+    <method name="GetUniqueID" result="ULONG" m68kslot="40"/>
+
+    <method name="MessageDigest_SHA_Final" result="void" m68kslot="66">
+      <arg name="shas" type="struct MessageDigest_SHA *" m68kreg="a0"/>
+    </method>
+    
+    <method name="MessageDigest_SHA_Init" result="void" m68kslot="64">
+      <arg name="shas" type="struct MessageDigest_SHA *" m68kreg="a0"/>
+    </method>
+
+    <method name="MessageDigest_SHA_Update" result="void" m68kslot="65">
+      <arg name="shas" type="struct MessageDigest_SHA *" m68kreg="a0"/>
+      <arg name="data" type="APTR" m68kreg="a1"/>
+      <arg name="num_bytes" type="LONG" m68kreg="d0"/>
+    </method>
+
+    <method name="PackStructureTags" result="ULONG" m68kslot="30">
+      <arg name="pack" type="APTR" m68kreg="A0"/>
+      <arg name="pack_table" type="const ULONG *" m68kreg="A1"/>
+      <arg name="tagList" type="const struct TagItem *" m68kreg="A2"/>
+    </method>
+
+    <method name="UnpackStructureTags" result="ULONG" m68kslot="31">
+      <arg name="pack" type="CONST_APTR" m68kreg="A0"/>
+      <arg name="pack_table" type="const ULONG *" m68kreg="A1"/>
+      <arg name="tagList" type="struct TagItem *" m68kreg="A2"/>
+    </method>
+
+    <method name="Random" result="ULONG" m68kslot="63">
+      <arg name="state" type="struct RandomState *" m68kreg="a0"/>
+    </method>
+
+    <method name="SetMem" result="APTR" m68kslot="61">
+      <arg name="destination" type="APTR" m68kreg="a0"/>
+      <arg name="fillChar" type="UBYTE" m68kreg="d0"/>
+      <arg name="length" type="LONG" m68kreg="d1"/>
+    </method>
+
+    <method name="Stricmp" result="LONG" m68kslot="22">
+      <arg name="s1" type="CONST_STRPTR" m68kreg="A0"/>
+      <arg name="s2" type="CONST_STRPTR" m68kreg="A1"/>
+    </method>
+
+    <method name="Strlcpy" result="LONG" m68kslot="45">
+      <arg name="dst" type="STRPTR" m68kreg="a0"/>
+      <arg name="src" type="CONST_STRPTR" m68kreg="a1"/>
+      <arg name="size" type="LONG" m68kreg="d0"/>
+    </method>
+
+    <method name="Strlcat" result="LONG" m68kslot="46">
+      <arg name="dst" type="STRPTR" m68kreg="a0"/>
+      <arg name="src" type="CONST_STRPTR" m68kreg="a1"/>
+      <arg name="size" type="LONG" m68kreg="d0"/>
+    </method>
+
+    <method name="Strnicmp" result="LONG" m68kslot="23">
+      <arg name="s1" type="CONST_STRPTR" m68kreg="A0"/>
+      <arg name="s2" type="CONST_STRPTR" m68kreg="A1"/>
+      <arg name="n" type="LONG" m68kreg="D0"/>
+    </method>
+
+    <method name="ToLower" result="ULONG" m68kslot="25">
+      <arg name="c" type="TEXT" m68kreg="D0"/>
+    </method>
+
+    <method name="ToUpper" result="ULONG" m68kslot="24">
+      <arg name="c" type="TEXT" m68kreg="D0"/>
+    </method>
+
+    <method name="VASPrintf" result="STRPTR" m68kslot="48">
+      <arg name="fmt" type="CONST_STRPTR" m68kreg="a0"/>
+      <arg name="args" type="APTR" m68kreg="a1"/>
+    </method>
+
+    <method name="ASPrintf" result="STRPTR" m68kslot="48">
+      <arg name="fmt" type="CONST_STRPTR" m68kreg="a0"/>
+      <vararg name="arg1" type="ULONG" m68kreg="a1"/>
+    </method>
+
+    <method name="VSNPrintf" result="LONG" m68kslot="47">
+      <arg name="buffer" type="STRPTR" m68kreg="a0"/>
+      <arg name="bufferSize" type="LONG" m68kreg="d0"/>
+      <arg name="fmt" type="CONST_STRPTR" m68kreg="a1"/>
+      <arg name="args" type="APTR" m68kreg="a2"/>
+    </method>
+
+    <method name="SNPrintf" result="LONG" m68kslot="47">
+      <arg name="buffer" type="STRPTR" m68kreg="a0"/>
+      <arg name="bufferSize" type="LONG" m68kreg="d0"/>
+      <arg name="fmt" type="CONST_STRPTR" m68kreg="a1"/>
+      <vararg name="arg1" type="ULONG" m68kreg="a2"/>
+    </method>
+    
+    <method name="ClearMem" result="VOID">
+      <arg name="destination" type="APTR"/>
+      <arg name="size" type="uint32"/>
+    </method>
+   	
+    <method name="MoveMem" result="VOID">
+      <arg name="source" type="CONST_APTR"/>
+      <arg name="destination" type="APTR"/>
+      <arg name="size" type="uint32"/>
+    </method>
+
+    <method name="Strlen" result="uint32">
+      <arg name="string" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="UTF8toUCS4" result="int32">
+      <arg name="utf8_source" type="CONST_STRPTR"/>
+      <arg name="ucs4_destination" type="int32 *"/>
+      <arg name="ucs4_destination_size" type="int32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="UCS4toUTF8" result="int32">
+      <arg name="ucs4_source" type="const int32 *"/>
+      <arg name="utf8_destination" type="STRPTR"/>
+      <arg name="utf8_destination_size" type="int32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="UTF8Strnicmp" result="int32">
+      <arg name="utf8string1" type="CONST_STRPTR"/>
+      <arg name="utf8string2" type="CONST_STRPTR"/>
+      <arg name="maxUCSchars" type="int32"/>
+    </method>
+
+    <method name="UTF8Stricmp" result="int32">
+      <arg name="utf8string1" type="CONST_STRPTR"/>
+      <arg name="utf8string2" type="CONST_STRPTR"/>
+    </method>
+
+    <method name="UTF8Count" result="int32">
+      <arg name="utf8string" type="CONST_STRPTR"/>
+      <arg name="validate" type="int32"/>
+    </method>
+
+    <method name="UCS4Count" result="int32">
+      <arg name="ucs4string" type="const int32 *"/>
+      <arg name="validate" type="int32"/>
+    </method>
+
+    <method name="UTF8Encode" result="int32">
+      <arg name="ucs4" type="int32"/>
+      <arg name="buffer" type="STRPTR"/>
+      <arg name="bufsize" type="int32"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="UTF8Decode" result="int32">
+      <arg name="utf8_pptr" type="CONST_STRPTR *"/>
+      <arg name="flags" type="uint32"/>
+    </method>
+
+    <method name="UCS4ToLower" result="int32">
+      <arg name="ucs4in" type="int32"/>
+    </method>
+
+    <method name="UCS4ToUpper" result="int32">
+      <arg name="ucs4in" type="int32"/>
+    </method>
+
+    <method name="UCS4Valid" result="int32">
+      <arg name="ucs4" type="int32"/>
+    </method>
+
+    <method name="SortList" result="void">
+      <arg name="list" type="struct List *"/>
+      <arg name="cmpHook" type="struct Hook *"/>
+    </method>
+
+    <method name="SortMinList" result="void">
+      <arg name="list" type="struct MinList *"/>
+      <arg name="cmpHook" type="struct Hook *"/>
+    </method>
+  </interface>
+ 
+</library>

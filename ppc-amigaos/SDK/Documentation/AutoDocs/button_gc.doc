@@ -1,0 +1,373 @@
+TABLE OF CONTENTS
+
+button.gadget/--datasheet--
+button.gadget/BUTTON_GetClass
+button.gadget/--datasheet--                                             button.gadget/--datasheet--
+
+    NAME
+   button.gadget -- Create button BOOPSI objects
+
+    SUPERCLASS
+   gadgetclass
+
+    REQUIRES
+   bevel.image, glyph.image
+
+    DESCRIPTION
+   The button gadget class is used to create action buttons that are
+   momentary, toggle and sticky. This class also supports relativity
+   and placement within the window border.
+
+    METHODS
+   OM_NEW -- Passed to superclass, defaults set then OM_SET.
+
+   OM_DISPOSE -- Passed to superclass.
+
+   OM_SET -- Passed to superclass then custom tags set & render.
+
+   OM_GET -- Returns requested setting or passed to superclass.
+
+   OM_UPDATE -- Passed to superclass then custom tags set & render.
+
+   OM_NOTIFY -- Tag set then passed to superclass.
+
+   GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+                GDOMAIN_MAXIMUM dimensions.
+
+   GM_GOACTIVE -- Passed to superclass then button activated.
+
+   GM_HANDLEINPUT -- Handles all input events.
+
+   GM_GOINACTIVE -- Passed to superclass then button deactivated.
+
+   GM_RENDER -- Renders button imagery.
+
+   GM_LAYOUT -- Calculate relative gadget coordinates.
+
+   GM_EXTENT -- Reports gadget rendering extent.
+
+   GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+   GM_KEYTEST -- Determine if key was hit.
+
+   GM_KEYGOACTIVE -- Handle keyboard activation. (V53.6)
+
+   GM_KEYGOINACTIVE -- Handle keyboard deactivation. (V53.6)
+
+   All other methods are passed to the superclass.
+
+    ATTRIBUTES
+   GA_ID (uint16)
+       Unique ID number for the gadget.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+   GA_Selected (BOOL)
+       Determines whether the button is selected or not.
+       Changing selection state will invoke GM_RENDER.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_Disabled (BOOL)
+       Determines whether the button is disabled or not.
+       Changing disable state will invoke GM_RENDER.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+   GA_Text (CONST_STRPTR)
+       Used to specify the NULL terminated string to use as the text
+       for the gadget. The Text() function is used to draw the text.
+       NULL is valid input. Changing the label will invoke GM_RENDER.
+       Text string is clipped to fit inside the button. The text string
+       may contain varargs format specifiers compatible to RawDoFmt()
+       if the varargs data is supplied via BUTTON_VarArgs.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   GA_TextAttr (struct TextAttr *)
+       Text attribute for the font to use for the text labels.
+
+       Defaults to RPort->Font, which is often the screen or
+       window preferences font.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_ReadOnly (BOOL)
+       Read-only gadgets ignore activation attempts.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   GA_ActivateKey (CONST_STRPTR)
+       Defines the gadget's shortcut/activation key(s).
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+   GA_Underscore (uint8)
+       Underscore/escape character for keyboard shortcuts.
+
+       Defaults to the '_' character.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_BackFill (struct Hook *)
+       A layer backfill hook to provide a more complex
+       background pattern. See InstallLayerHook() for
+       more details about the backfill hook.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   GA_HintInfo (CONST_STRPTR)
+       Specify the text to use as the hint info for this gadget.
+       You can change this attribute at any time, and it will over-
+       ride any text specified in the windows HintInfo array. See
+       window.class autodoc for more information.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET).
+
+   GA_Image (struct Image *)
+   BUTTON_RenderImage (struct Image *)
+       Used to specify the image to use for the label of the gadget.
+       The DrawImageState() function is used to draw the image.
+       Changing the label will invoke GM_RENDER.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_SelectRender (struct Image *)
+   BUTTON_SelectImage (struct Image *)
+       Used to specify the image to use for the label of the gadget
+       in the selected state. The DrawImageState() function is used
+       to draw the image. Changing the label will invoke GM_RENDER
+       if the gadget is currently selected.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_DisabledImage (struct Image *)
+       Used to specify the image to use for the label of the gadget
+       in the disabled state. The DrawImageState() function is used
+       to draw the image. Changing the label will invoke GM_RENDER
+       if the gadget is currently selected.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_AutoButton (int16)
+       Used to create automatic button with one of the selected
+       scaled image glyphs. Accepted settings are:
+
+         BAG_POPFILE     - popup file selection glyph
+         BAG_POPDRAWER   - popup drawer selection glyph
+         BAG_POPFONT     - popup font selection glyph
+         BAG_CHECKBOX    - checkmark glyph (same as checkbox.gadget)
+         BAG_CANCELBOX   - not yet implemented
+         BAG_UPARROW     - up arrow
+         BAG_DNARROW     - down arrow
+         BAG_RTARROW     - right arrow
+         BAG_LFARROW     - left arrow
+         BAG_POPTIME     - popup time glyph
+         BAG_POPSCREEN   - popup screen mode glyph
+         BAG_POPUP       - generic popup
+
+       Defaults to BAG_POPFILE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   GA_ToggleSelect (BOOL)
+   BUTTON_PushButton (BOOL)
+       Used to indicate that the button stays pressed in when the
+       user selects it with the mouse. The button may
+       programmatically be deselected using {GA_Selected, FALSE}.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_TextPen (uint16)
+       Indicate the pen number used to render the IDS_NORMAL text.
+       If ~0 is specified, then TEXTPEN is used.
+
+       Defaults to ~0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_BackgroundPen (uint16)
+       Indicate the pen number used to render the IDS_NORMAL
+       background.  If ~0 is specified, then BACKGROUNDPEN
+       is used.
+
+       Defaults to ~0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_FillTextPen (uint16)
+       Indicate the pen number used to render the IDS_SELECTED text.
+       If ~0 is specified, then FILLTEXTPEN is used.
+
+       Defaults to ~0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_FillPen (uint16)
+       Indicate the pen number used to render the IDS_SELECTED
+       background.  If ~0 is specified, then FILLPEN is used.
+
+       Defaults to ~0.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_BevelStyle (uint16)
+       Button bevel box rendering style, passed to bevel.image.
+
+       Defaults to BVS_BUTTON.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   BUTTON_Transparent (BOOL)
+       Make button background rendering transparent.
+       EraseRect() is used rather than RectFill() so that
+       custom backfill rendering hooks may be utilized.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_Justification (int16)
+       Justification mode of button text label.
+
+       Supports:
+         BCJ_LEFT
+         BCJ_CENTER
+         BCJ_RIGHT
+
+       Defaults to BCJ_CENTER.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_SoftStyle (int16)
+       Set the GA_TextAttr font's soft style, i.e. BOLD, ITALIC, etc.
+       See <graphics/text.h> soft style definitions.
+
+       Defaults to FS_NORMAL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_VarArgs (APTR)
+       Varargs data array to supply data for RawDoFmt() when
+       format specifiers are to be used in GA_Text text strings.
+       The internal VarArgs result buffer is presently fixed at
+       a maximum of 512 bytes, take care not to exceed this buffer.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_DomainString (CONST_STRPTR)
+       Used to specify the NULL terminated string to use as the text
+       to domain the gadget's minimum size. This string is never
+       rendered on screen.
+
+       This is useful when you need to create a button with an
+       empty or NULL string but you want to enforce a minimum size
+       in a layout group based on some initializing string and the
+       current preferences font rather than some fixed pixel or
+       weighted minimum.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_Integer (int32) (V42)
+       Set an integer value to display a numeric string. Highly useful
+       for interconnect notifications from sliders, scrollers, etc.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   BUTTON_BitMap (struct BitMap *) (V42)
+       Specify a BitMap to render in button rather than image or
+       text.
+
+       Use of this tag is discouraged. If possible, use bitmap.image
+       or some other BOOPSI image together with GA_Image or
+       BUTTON_RenderImage.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_AnimButton (BOOL)
+   BUTTON_AnimImages (struct Image *)
+   BUTTON_SelAnimImages (struct Image *)
+   BUTTON_MaxAnimImages (int32)
+   BUTTON_AnimImageNumber (int32)
+   BUTTON_AddAnimImageNumber (uint32)
+   BUTTON_SubAnimImageNumber (uint32)
+       Button animation is not currently supported.
+
+   BUTTON_EraseBackground (BOOL) (V51)
+       Erase the background around the gadget's frame if it has an
+       irregular shape (e.g. rounded corners)? Pass TRUE, FALSE, or
+       -1 to let the frame image decide.
+
+       Defaults to TRUE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_HorizAlignment (uint16) (V51)
+       Horizontal alignment of the button's inner image or glyph, when
+       it's not scalable and its width is smaller than the button's.
+       See <gadgets/button.h> for possible values.
+
+       Defaults to BALIGN_CENTER.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   BUTTON_VertAlignment (uint16) (V51)
+       Vertical alignment of the button's inner image or glyph, when
+       it's not scalable and its height is smaller than the button's.
+       See <gadgets/button.h> for possible values.
+
+       Defaults to BALIGN_CENTER.
+
+       Applicability is (OM_NEW, OM_SET)
+
+    BUGS
+   Unfortunately, this class shares the same file name and tag range
+   as the button.gadget released by David Junod of C=, released in
+   the GI1.lha V42 beta archive on BIX, and later the AT Developer CD.
+   It's not a majorly serious issue as this class is at least 90%
+   compatible.
+
+button.gadget/BUTTON_GetClass                                         button.gadget/BUTTON_GetClass
+
+    NAME
+   BUTTON_GetClass -- Gets pointer to the button class.
+
+    SYNOPSIS
+   Class * class = BUTTON_GetClass();
+
+    FUNCTION
+   This function is deprecated as of V52.
+   Use the "button.gadget" public class ID instead.
+
+    RESULT
+   class - Pointer to the button class.
+
+

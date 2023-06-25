@@ -1,0 +1,428 @@
+TABLE OF CONTENTS
+
+diffview.gadget/--datasheet--
+diffview.gadget/--linecmp--
+diffview.gadget/main/CreateDiffObject
+diffview.gadget/main/FreeDiffObject
+diffview.gadget/main/GetDiffObjectAttr
+
+
+diffview.gadget/--datasheet--                   diffview.gadget/--datasheet--
+
+    NAME
+	diffviewgclass -- For displaying file differences side-by-side
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	nothing
+
+    DESCRIPTION
+	This gadget provides a graphical diff view of two files. You can provide
+	an original (old) and modified (new) file, and let the gadget perform the
+	diff operation internally, or you can pass either the old or new file along
+	with a diff in the unified diff format if you wish to use a different
+	diff algorythm.
+
+	Currently the diff is a very simple line-based comparison.
+
+    METHODS
+	OM_NEW -- Create the diffview gadget. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass.
+
+	OM_DISPOSE -- Disposes object and then passed to superclass.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	GM_RENDER -- Overrides superclass, renders the gadget imagery.
+
+	GM_GOACTIVE -- Handles activation. Passed to superclass first.
+
+	GM_HANDLEINPUT -- Handles all input.
+
+	GM_GOINACTIVE -- Deactivates input. Passed to superclass first.
+
+	GM_DOMAIN -- Passed to superclass.
+
+	GM_CLIPRECT -- Passed to superclass.
+
+	GM_LAYOUT -- Passed to superclass.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+
+	GA_ReadOnly (BOOL)
+
+	DIFFVIEW_CurrentLine (int32)
+	    This tag sets the "current line" of the gadget. The current line
+	    is highlighted with a border. If the diffview gadget has an
+	    associated line-compare gadget, it will automatically be updated
+	    to reflect the new current line. The tag is in the range 1..n.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	DIFFVIEW_DiffObject (APTR)
+	    Before you can display a diff of two files, you need to create
+	    a DiffObject with CreateDiffObject(). The DiffObject is a private
+	    structure that represents a parsed diff of two files. See the
+	    documentation for CreateDiffObject().
+
+	    NOTE: If you dispose of a diffview gadget with a DiffObject attached,
+	    the DiffObject will NOT be automatically de-allocated, and you must
+	    still do so with FreeDiffObject().
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	DIFFVIEW_Font (struct TextFont *)
+	    This allows you to specify a font to use with the gadget. You must
+	    use a fixed-width font.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_HorizScroller (Object *)
+	    Specifies the horizontal scroller.gadget being used to drive the
+	    diffview.gadget's view area. This is a quick and easy way to link
+	    to a scroller. Only scroller.gadget objects are supported using this
+	    tag.
+
+	    Note that the scroller.gadget object is only referenced and will not
+	    be disposed of automatically.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_LineCmp (Object *)
+	    Specifies a line-compare gadget to be associated with the diffview
+	    gadget. This gadget will show the old and new versions of the
+	    current line so that they can be compared in detail. You can obtain
+	    a pointer to the linecmp class through IDiffView->LINECMP_GetClass()
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_Screen (struct Screen *)
+	    This specifies the screen that the gadget will be used on. If you
+	    are not using the default public screen for your GUI, you need to
+	    specify this. You can change it without disposing of the gadget
+	    if you move the GUI to another screen at a later time.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_TabSize (uint32)
+	    Sets the tab size.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	DIFFVIEW_VertScroller (Object *)
+	    Specifies the vertical scroller.gadget being used to drive the
+	    diffview.gadget's view area. This is a quick and easy way to link
+	    to a scroller. Only scroller.gadget objects are supported using this
+	    tag.
+
+	    Note that the scroller.gadget object is only referenced and will not
+	    be disposed of automatically.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_ViewOffsetTop (uint32)
+	    Sets the line to show at the top of the diffview.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	DIFFVIEW_ViewOffsetLeft (uint32)
+	    Sets the column to show at the left edge of the diffview.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	The following tags allow you to customise the colours used by the
+	gadget. If you don't use them, a default colour scheme will be used.
+	The tag values for these colours are 24bit RGB (0x00RRGGBB). The upper 8
+	bits are ignored. On screens with 15bit depth or higher, no pens will be
+	used by the gadget. On screens with less than 15bit depth, the intuition
+	pen sharing scheme will be used.
+
+	DIFFVIEW_BackCol (uint32)
+	DIFFVIEW_TextCol (uint32)
+	    These tags set the background and text colours of the text areas of
+	    the gadget.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_OldCol (uint32)
+	DIFFVIEW_NewCol (uint32)
+	    These tags set the background colours for lines that only appear in
+	    the old and new files, respectively.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_BlankCol (uint32)
+	    This tag sets the colour used to draw a pattern over blank lines.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_LineNoBackCol (uint32)
+	DIFFVIEW_LineNoTextCol (uint32)
+	    These tags describe the background and text colour of the line
+	    line numbers.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_GeneralBackCol (uint32)
+	DIFFVIEW_GeneralShineCol (uint32)
+	DIFFVIEW_GeneralShadowCol (uint32)
+	    These tags set the background for non-text areas, and the shine and
+	    shadow colours used for bevels in the gadget.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	DIFFVIEW_OverviewOldCol (uint32)
+	DIFFVIEW_OverviewNewCol (uint32)
+	    These tags set the colours for the modified lines in the overview
+	    part of the gadget.
+
+	DIFFVIEW_WsDifferenceCol (uint32)
+	    This tag sets the colour for lines that differ only by whitespace
+
+	DIFFVIEW_OverviewWsCol (uint32)
+	    This tag sets the colour for lines that differ only by whitespace in
+	    the overview part of the gadget.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+diffview.gadget/--linecmp--                       diffview.gadget/--linecmp--
+
+    NAME
+	linecmpgclass
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	nothing
+
+    DESCRIPTION
+	As well as the main side-by-side diff view, diffview.gadget implements a
+	supplementary gadget designed to show two versions of a line one above the
+	other so that the exact differences can be easily seen. It is designed to
+	be shown above or below a diffview gadget to allow a line to be examined
+	closely. It is not meant to be used independantly, and most of its
+	functionality can be automatically controlled by a diffview gadget.
+
+    METHODS
+	OM_NEW -- Create the linecmp gadget. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass.
+
+	OM_DISPOSE -- Disposes object and then passed to superclass.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	GM_RENDER -- Overrides superclass, renders the gadget imagery.
+
+	GM_GOACTIVE -- Handles activation. Passed to superclass first.
+
+	GM_HANDLEINPUT -- Always returns GMR_REUSE.
+
+	GM_GOINACTIVE -- Deactivates input. Passed to superclass first.
+
+	GM_DOMAIN -- Passed to superclass then GDOMAIN_MINIMUM is handled.
+
+	GM_CLIPRECT -- Passed to superclass.
+
+	GM_LAYOUT -- Passed to superclass.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+
+	LINECMP_Font (struct TextFont *)
+	    This allows you to specify a font to use with the gadget. You must
+	    use a fixed-width font.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	LINECMP_HorizScroller (Object *)
+	    Specifies the horizontal scroller.gadget being used to drive the
+	    linecompare area. This is a quick and easy way to link to a scroller.
+	    Only scroller.gadget objects are supported using this tag.
+
+	    Note that the scroller.gadget object is only referenced and will not
+	    be disposed of automatically.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	LINECMP_Screen (struct Screen *)
+	    This specifies the screen that the gadget will be used on. If you
+	    are not using the default public screen for your GUI, you need to
+	    specify this. You can change it without disposing of the gadget
+	    if you move the GUI to another screen at a later time.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	LINECMP_TabSize (uint32)
+	    Sets the tab size.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LINECMP_ViewOffsetLeft (uint32)
+	    Sets the column to show at the left edge of the line comparison.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LINECMP_OldLine (STRPTR)
+	LINECMP_NewLine (STRPTR)
+	    Sets the text to show in the line comparison area.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+
+diffview.gadget/main/CreateDiffObject   diffview.gadget/main/CreateDiffObject
+
+   NAME
+      CreateDiffObject -- Creates a difference object.
+
+   SYNOPSIS
+      APTR CreateDiffObject(struct TagItem *tags);
+      APTR CreateDiffObjectTags(Tag Tag1, ...);
+
+   FUNCTION
+      This function takes two input files and generates a private parsed diff
+      that you then pass to the gadget when you want to display it. You can
+      pass in an original and modified file if you want diffview.gadget to
+      use its own internal diff algorythm, or you can pass one file and a
+      unified diff format. There is no need to pass both files and a diff,
+      if a diff is passed, only one of the files will be used.
+
+      Currently diffview.gadget only deals with files that have been
+      completely loaded into memory.
+
+   TAGS
+      DIFFOBJECT_OldFile (STRPTR)
+      DIFFOBJECT_OldFileLen (uint32)
+          These tags describe a memory buffer containing the original file.
+          It will appear on the left side of the diffview. You have to pass
+          both a buffer pointer and length at the same time, or these tags
+          will be ignored. Once the DiffObject has been successfully created,
+          you can free the original buffer, as it is not used by the gadget
+          directly.
+
+      DIFFOBJECT_NewFile (STRPTR)
+      DIFFOBJECT_NewFileLen (uint32)
+          These tags describe a memory buffer containing the modified file.
+          It will appear on the right side of the diffview. You have to pass
+          both a buffer pointer and length at the same time, or these tags
+          will be ignored. Once the DiffObject has been successfully created,
+          you can free the original buffer, as it is not used by the gadget
+          directly.
+
+      DIFFOBJECT_Diffs (STRPTR)
+      DIFFOBJECT_DiffsLen (uint32)
+          These tags describe a memory buffer containing a diff in the
+          unified diff format. If you use this buffer, you only need to
+          specify an original (old) or modified (new) buffer, but not both,
+          since the diff describes how to create one from the other. Once the
+          DiffObject has been successfully created, you can free the original
+          buffer, as it is not used by the gadget directly.
+
+      DIFFOBJECT_ErrorStr (STRPTR *)
+          If the call fails, the pointer you specify here will be modified to
+          point to a human-readable error string.
+
+      DIFFOBJECT_ErrorNum (uint32 *)
+          If the call fails, the uint32 variable you pass a pointer to here
+          will be set to an error value. These errors are defined in
+          gadgets/diffview.h
+
+      DIFFOBJECT_OldFileName (STRPTR)
+      DIFFOBJECT_NewFileName (STRPTR)
+          These tags allow you to specify the names to put at the top of the
+          respective columns. They are cached internally by the gadget, so
+          you can free or re-use the buffers without causing a problem.
+
+      DIFFOBJECT_WsUnimportant (BOOL)
+          When TRUE, lines that differ only in whitespace will be considered
+          as equal (although they will be highlighted in a seperate colour).
+          When FALSE, such lines will be considered different. This tag only
+          has any effect when you are passing an old and new file to compare.
+          Defaults to TRUE
+
+      DIFFOBJECT_ProgressCB (DIFFOBJPROGCB)
+          If specified, this is a callback that will be called while
+          comparing files. It gets called for every 1% of progress. The first
+          parameter to the callback is the progress percentage. The second is
+          a userdata pointer passed in with DIFFOBJECT_ProgCBData.
+
+      DIFFOBJECT_ProgCBData (APTR)
+          The userdata for the progress callback. Defaults to NULL.
+
+   RESULT
+       A non-null pointer to be passed to a diffview object, or NULL for
+       failure.
+
+   EXAMPLE
+       See SDK/Examples/GUI/DiffView/radiff.c
+
+   SEE ALSO
+       GetDiffObjectAttr, FreeDiffObject
+
+diffview.gadget/main/FreeDiffObject       diffview.gadget/main/FreeDiffObject
+
+   NAME
+      FreeDiffObject -- Frees a previously allocated diffobject
+
+   SYNOPSIS
+      void FreeDiffObject(APTR DiffObj);
+
+   FUNCTION
+      This function frees a DiffObject previously allocated with
+      CreateDiffObject. You must not free a DiffObject that is still in use
+      by a diffview object.
+
+   INPUTS
+      DiffObj - A DiffObject pointer returned from a previous call to
+                CreateDiffObject
+
+   SEE ALSO
+      CreateDiffObject
+
+diffview.gadget/main/GetDiffObjectAttr diffview.gadget/main/GetDiffObjectAttr
+
+   NAME
+       GetDiffObjectAttr
+
+   SYNOPSIS
+       APTR GetDiffObjectAttr(APTR DiffObject, uint32 Attr, APTR Storage)
+
+   FUNCTION
+       This function is used to query a DiffObject created by
+       CreateDiffObject for a specific attribute.
+
+   INPUTS
+       DiffObject - A DiffObject pointer returned from CreateDiffObject
+       Attr       - The attribute to get
+       Storage    - A pointer to the place to store the attribute. The actual
+                    item stored depends on the attribute.
+   ATTRIBUTES
+       DIFFOBJECT_DiffPositions (struct DiffPosition *)
+           This returns returns a pointer to a "struct DiffPosition" which
+           contains an array of positions of the differences between the
+           files. These positions are in the range 1..n, so that they can be
+           used with DIFFVIEW_CurrentLine. When you are finished with it,
+           you must free it with FreeVec().
+
+   RESULT
+       TRUE if the attribute could be obtained, or FALSE otherwise
+
+   SEE ALSO
+       CreateDiffObject
+
+

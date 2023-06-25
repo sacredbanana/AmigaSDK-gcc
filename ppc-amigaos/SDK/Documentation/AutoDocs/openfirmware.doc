@@ -1,0 +1,392 @@
+TABLE OF CONTENTS
+
+openfirmware/main/CallRTAS
+openfirmware/main/Child
+openfirmware/main/FindProp
+openfirmware/main/FirstProp
+openfirmware/main/GetPropData
+openfirmware/main/GetPropName
+openfirmware/main/GetRTASService
+openfirmware/main/NextProp
+openfirmware/main/Parent
+openfirmware/main/Peer
+openfirmware/main/PropDataSize
+openfirmware/main/Root
+openfirmware/main/CallRTAS                         openfirmware/main/CallRTAS
+
+   NAME
+      	CallRTAS -- Call the RTAS service routine
+
+   SYNOPSIS
+      	uint32 CallRTAS(uint32 * packet);
+
+   FUNCTION
+		Calls the RTAS handler with the provided packet. The packet is copied
+ 		into a physically mapped buffer on entry and copied back when the RTAS
+ 		service is finished.
+
+   INPUTS
+       packet - A pointer to an uint32 array containing the parameter packet
+ 				 for the RTAS call
+
+   RESULT
+       The function returns the packet from the RTAS handler in the same
+ 		memory area as the input packet. In addition, the first outout 
+ 		value of the call is returned as a return value from this function.
+
+   EXAMPLE
+ 		The following example reads the time of day via RTAS.
+ 
+ 		uint32 packet[50];
+ 		packet[0] = IOpenFirmware->GetRTASService("get-time-of-day");
+ 		packet[1] = 0;
+ 		packet[2] = 8;
+ 		
+ 		int32 status = (int32)IOpenFirmware->CallRTAS(packet);
+ 
+ 		if (status == 0)
+ 		{
+ 			printf("The time is %2d:%2d:%2d\n",
+ 				packet[7], packet[8], packet[9]);
+ 		}
+ 		else
+ 		{
+ 			printf("RTAS service call failed with status %d\n", status);
+ 		}
+
+   NOTES
+ 		IMPORTANT: All addresses passed to RTAS must be physical addresses.
+ 		That means that buffer addresses need to be translated between
+ 		virtual and physical addresses. RTAS cannot access virtual addresses
+ 		because the address translation is disabled when the handler is called.
+
+   BUGS
+
+   SEE ALSO
+ 		openfirmware/main/GetRTASService
+
+openfirmware/main/Child                               openfirmware/main/Child
+
+   NAME
+      	Child -- Get the child of a given node
+
+   SYNOPSIS
+      	OFNode Child(OFNode node);
+
+   FUNCTION
+ 		Returns the child node of a given node in the OpenFirmware device
+ 		tree, or NULL if node is a leaf node
+
+   INPUTS
+       node - The node you want to have the child node of
+
+   RESULT
+       Pointer to another OpenFirmware device node that is the child of
+ 		the input node, or NULL if the input node was a leaf.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/FindProp                         openfirmware/main/FindProp
+
+   NAME
+      	FindProp -- Find a named property of an OpenFirmware node
+
+   SYNOPSIS
+      	OFProperty FindProp(OFNode node, CONST_STRPTR propname);
+
+   FUNCTION
+ 		Search the given node's properties for a property name matching
+ 		the input string. The returned property is an abstract handle that
+ 		must not be interptreted in any way
+
+   INPUTS
+       node - The node to search int
+       propname - The property name to find
+
+   RESULT
+       This function returns an abstract handle of the named property, or
+ 		NULL if the property does not exist.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/FirstProp                       openfirmware/main/FirstProp
+
+   NAME
+      	FirstProp -- Return the first property handle of a node
+
+   SYNOPSIS
+      	OFProperty FirstProp(OFNode node);
+
+   FUNCTION
+ 		This function returns the first property of a given OpenFirmware
+ 		tree node.
+
+   INPUTS
+       node - The node to get the property from
+
+   RESULT
+       The return value is a handle to the first property of the given 
+ 		OpenFirmware tree node, or NULL if the node does not have any
+ 		properties.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/GetPropData                   openfirmware/main/GetPropData
+
+   NAME
+      	GetPropData -- Copy the data associated with a property
+
+   SYNOPSIS
+      	uint32 GetPropData(OFProperty property, APTR buffer, uint32 bufSize);
+
+   FUNCTION
+ 		This function copies the data associated with the given property into
+ 		an external buffer. The buffer must be big enough to hold the entire
+ 		property data, otherwise nothing is copied. The copy is performed
+ 		verbatim, with no data conversion taking place, and any interpretation
+ 		of the data is up to the caller.
+
+   INPUTS
+       property - The property, as obtained by FirstProp/NextProp/FindProp
+       buffer 	 - A data buffer that should receive the result 
+       bufSize  - The size (in bytes) of the data buffer 
+
+   RESULT
+       The result of this function is an uint32 indicating the number of
+ 		bytes that have been copied. Typically, this is the size of the 
+ 		property data. However, if the buffer is not big enough, or there
+ 		was another problem, the result is zero to indicate that nothing
+ 		was copied.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/GetPropName                   openfirmware/main/GetPropName
+
+   NAME
+      	GetPropName -- Get the name of a given property
+
+   SYNOPSIS
+      	uint32 GetPropName(OFProperty property, STRPTR buffer, 
+       	uint32 bufSize);
+
+   FUNCTION
+ 		This function copies out the name of the indicated property into an
+ 		external buffer. The buffer must be big enough to hold the entire name
+ 		or nothing will be copied.
+
+   INPUTS
+       property 	- The property to retrieve the name of 
+       buffer 		- The buffer to copy to 
+       bufSize 	- The size of the buffer 
+
+   RESULT
+       The result of this function is an uint32 indicating the real number
+ 		of bytes that have been copied, or zero if there had been an error 
+ 		(for example if the buffer was too small) 
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/GetRTASService             openfirmware/main/GetRTASService
+
+   NAME
+      	GetRTASService -- Map the name of an RTAS service to a token
+
+   SYNOPSIS
+      	uint32 GetRTASService(CONST_STRPTR serviceName);
+
+   FUNCTION
+ 		This function maps the given RTAS service name to an RTAS calling
+ 		token. If the token does not exist, is invalid, or not supported
+ 		by this implementation of RTAS, the value RTAS_INVALID_TOKEN is 
+ 		returned.
+
+   INPUTS
+       serviceName - The RTAS service name to map
+
+   RESULT
+       The result of this function is either a valid calling token or the
+ 		generic value RTAS_INVALID_TOKEN. If the service is not supported or
+ 		invalid, the return value RTAS_INVALID_TOKEN indicates this. Otherwise
+ 		the result of this function can be used in an RTAS parameter package
+ 		as the service token.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/NextProp                         openfirmware/main/NextProp
+
+   NAME
+      	NextProp -- Get the next property of a given node
+
+   SYNOPSIS
+      	OFProperty NextProp(OFNode node, OFProperty property);
+
+   FUNCTION
+ 		This function returns the next property of the given node following
+ 		the specified property, or NULL if there are no more properties in 
+ 		this node.
+
+   INPUTS
+       node - The node to return a property of.
+       property - A property of this node.
+
+   RESULT
+       The result of this function is a pointer to the property immediately
+ 		following the given property, or NULL if there are no more properties
+ 		in the node. The given property MUST BE a property of the given node,
+ 		or the result WILL be undefined.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/Parent                             openfirmware/main/Parent
+
+   NAME
+      	Parent -- Get the parent of the given OpenFirmware tree node
+
+   SYNOPSIS
+      	OFNode Parent(OFNode node);
+
+   FUNCTION
+ 		This function retrieves the parent node of a given node in the
+ 		OpenFirmware device tree (if it exists).
+
+   INPUTS
+       node - The node to get the parent of
+
+   RESULT
+       The result is either a handle to the node in the OpenFirmware
+ 		tree that has the input node as a child (i.e. is the parent of the
+ 		input node) or NULL if this is the root node
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/Peer                                 openfirmware/main/Peer
+
+   NAME
+      	Peer -- Get the peer (sibling) of the given OpenFirmware node
+
+   SYNOPSIS
+      	OFNode Peer(OFNode node);
+
+   FUNCTION
+ 		This function retrieves the next peer (sibling) node of the 
+ 		given OpenFirmware tree node, if it has one. 
+
+   INPUTS
+       node - The input node
+
+   RESULT
+       The result is a handle to the peer node of the input node, or NULL
+ 		if the node does not have any peer. 
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/PropDataSize                 openfirmware/main/PropDataSize
+
+   NAME
+      	PropDataSize -- Get the size of a given property's data
+
+   SYNOPSIS
+      	uint32 PropDataSize(OFProperty property);
+
+   FUNCTION
+ 		For the given property, return the number of bytes required to hold
+ 		this property's data.
+
+   INPUTS
+       property - the input property
+
+   RESULT
+       The result is the number of bytes required to store this property's
+ 		data.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+openfirmware/main/Root                                 openfirmware/main/Root
+
+   NAME
+      Root -- Returns the root node of the OpenFirmware device Tree
+
+   SYNOPSIS
+      OFNode Root(void);
+
+   FUNCTION
+ 		This function returns a handle on the OpenFirmware device tree. The
+ 		handle is an opaque data pointer that must not be interpreted in any
+ 		way by the caller, and can only be used as parameter to other
+ 		functions in this interface
+
+   INPUTS
+ 		No inputs
+
+   RESULT
+       The handle on the root node of the OpenFirmware device tree
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

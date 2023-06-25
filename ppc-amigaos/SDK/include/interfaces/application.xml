@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="application" basename="ApplicationBase" openname="application.library">
+<include>exec/libraries.h</include>
+<include>libraries/application.h</include>
+
+<!-- The main interface. This usually contains general purpose functions of your library -->
+	<interface name="application" version="2.0" struct="ApplicationIFace" prefix="_app_" asmprefix="IApplication" global="IApplication">
+		<method name="Obtain" result="uint32"/>
+		<method name="Release" result="uint32"/>
+		<method name="Expunge" result="void"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+	<!-- application.library global access functions -->
+		<method name="SetAppLibAttrsA" result="BOOL">
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="SetAppLibAttrs" result="BOOL">
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="GetAppLibAttrsA" result="BOOL">
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="GetAppLibAttrs" result="BOOL">
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+	<!-- application handling functions -->
+		<method name="RegisterApplicationA" result="uint32">
+			<arg name="appName" type="CONST_STRPTR"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="RegisterApplication" result="uint32">
+			<arg name="appName" type="CONST_STRPTR"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="UnregisterApplicationA" result="BOOL">
+			<arg name="appID" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="UnregisterApplication" result="BOOL">
+			<arg name="appID" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="SetApplicationAttrsA" result="BOOL">
+			<arg name="appID" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="SetApplicationAttrs" result="BOOL">
+			<arg name="appID" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="GetApplicationAttrsA" result="BOOL">
+			<arg name="appID" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="GetApplicationAttrs" result="BOOL">
+			<arg name="appID" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="FindApplicationA" result="uint32">
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="FindApplication" result="uint32">
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="LockApplicationIcon" result="BOOL">
+			<arg name="appID" type="uint32"/>
+		</method>
+		<method name="UnlockApplicationIcon" result="void">
+			<arg name="appID" type="uint32"/>
+		</method>
+
+		<method name="GetApplicationList" result="struct MinList *">
+		</method>
+		<method name="FreeApplicationList" result="void">
+			<arg name="list" type="struct MinList *"/>
+		</method>
+
+		<method name="SendApplicationMsg" result="BOOL">
+			<arg name="senderAppID" type="uint32"/>
+			<arg name="receiverAppID" type="uint32"/>
+			<arg name="msg" type="struct ApplicationMsg *"/>
+			<arg name="msgType" type="uint32"/>
+		</method>
+
+		<method name="NotifyA" result="uint32">
+			<arg name="appID" type="uint32"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="Notify" result="uint32">
+			<arg name="appID" type="uint32"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+	</interface>
+	
+<!-- interface for PrefsObjects -->	
+	<interface name="prefsobjects" version="2.0" struct="PrefsObjectsIFace" prefix="_pobjs_" asmprefix="IPrefsObjects" global="IPrefsObjects">
+		<method name="Obtain" result="uint32"/>
+		<method name="Release" result="uint32"/>
+		<method name="Expunge" result="void"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+	
+		<method name="BeginDeserialization" result="uint32">
+			<arg name="info" type="struct ALPOGetProcInfo *"/>
+		</method>
+		
+		<method name="PrefsBaseObjectA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsBaseObject" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="PrefsStringA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsString" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="PrefsNumberA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsNumber" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="PrefsDateA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsDate" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="PrefsBinaryA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsBinary" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		
+		<method name="PrefsDictionaryA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsDictionary" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+		
+		<method name="PrefsArrayA" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="PrefsArray" result="PrefsObject *">
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="error" type="uint32 *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+<!-- convenience methods -->		
+		
+		<method name="DictSetObjectForKey" result="BOOL">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="obj" type="PrefsObject *"/>
+			<arg name="key" type="CONST_STRPTR"/>
+		</method>
+		
+		<method name="DictGetObjectForKey" result="PrefsObject *">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="key" type="CONST_STRPTR"/>
+		</method>
+		
+		<method name="DictGetStringForKey" result="CONST_STRPTR">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="key" type="CONST_STRPTR"/>
+			<arg name="defStr" type="CONST_STRPTR"/>
+		</method>
+		
+		<method name="DictGetIntegerForKey" result="int32">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="key" type="CONST_STRPTR"/>
+			<arg name="defInt" type="int32"/>
+		</method>
+		
+		<method name="DictGetBoolForKey" result="BOOL">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="key" type="CONST_STRPTR"/>
+			<arg name="defBool" type="BOOL"/>
+		</method>
+
+		<method name="DictGetOptionForKey" result="int32">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="key" type="CONST_STRPTR"/>
+			<arg name="optionsTable" type="CONST_STRPTR *"/>
+			<arg name="defaultOption" type="int32"/>
+		</method>
+
+		
+		<method name="ReadPrefsA" result="uint32">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="ReadPrefs" result="uint32">
+			<arg name="dict" type="PrefsObject *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+		<method name="WritePrefsA" result="uint32">
+			<arg name="dict" type="PrefsObject *"/>
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="WritePrefs" result="uint32">
+			<arg name="dict" type="PrefsObject *"/>
+			<vararg name="tag1" type="Tag"/>
+		</method>
+
+	</interface>
+
+	
+</library>

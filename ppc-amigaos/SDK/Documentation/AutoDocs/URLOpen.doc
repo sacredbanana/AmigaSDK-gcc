@@ -1,0 +1,74 @@
+TABLE OF CONTENTS
+
+commands/URLOpen
+commands/URLOpen                                             commands/URLOpen
+
+   NAME
+	URLOpen - Pass a hypertext link to the URL: device.
+
+   FORMAT
+	URLOpen  "hypertextlink" 
+
+   TEMPLATE
+	PROTOCOL/K, LINK/F
+
+   PATH
+	C:URLOpen
+
+   FUNCTION
+	URLOpen is a dedicated executable for use in script files and for the
+	tool menus of external applications, to invoke a hypertext link for
+	launch-handler, via the mounted device URL:
+	
+	URLOpen may also be used as the default tool from workbench project
+	icons (V53.3+), or from a shell, to load local files into URL: clients.
+
+	The hypertextlink string is modified by this program to prepend "URL:"
+	to it, if it is not already present.
+
+	Currently, launch-handler will use the first non alpha-numeric
+	character to separate and identify the leading protocol component of
+	the URL string, any further non alpha-numeric characters/s following
+	this separator will also be stripped, before passing on the line.
+
+   EXAMPLE
+	Via a shell commandline;
+	   Open the following hypertext link in a client program.
+	       URLOpen  "http://www.hyperion-entertainment.biz"
+
+	   Open the local file "Work:html_docs/data2.html", in a client program.
+	       URLOpen  "file = Work:html_docs/data2.html"
+
+	   Open the CD relative local file "domains.html", in a client program.
+	       URLOpen  "file = domains.html"
+
+	   Open using the separate PROTOCOL=  control parameter, EG;
+	       URLOpen  PROTOCOL=file  "Work:extra_docs/info.html"
+
+	   Start the email client and pass in the destination address.
+	       URLOpen  "mailto:sales@domain.com"
+
+
+	Via a workbench icon;
+	   When this command is started as the default tool of a workbench 
+	   project type icon, the name of the file will be passed to the URL:
+	   device using the "FILE" protocol.
+
+	   EG;  PROTOCOL = <protocol>
+	   "FILE" is default for <protocol> when unspecified.
+	   Other protocols are as per the tab labels found in URL prefs.
+
+
+   NOTES
+	URL: Client programs do not work with current directory relative
+	local files, so launch-handler will always convert relative files to
+	an absolute device name centric specification by default.
+
+	This command requires the URL: device to be mounted.
+	For programmer information relating to implementing the launch-handler
+	feature in your application, see the launch-handler.doc autodoc.
+
+   SEE ALSO
+	L:Launch-Handler, launch-handler.doc
+
+

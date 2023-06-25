@@ -1,0 +1,194 @@
+TABLE OF CONTENTS
+
+timezone.library/--environment_vars--
+timezone.library/GetTimezoneAttrsA
+timezone.library/SetTimezoneAttrsA
+timezone.library/--environment_vars--   timezone.library/--environment_vars--
+
+timezone.library maintains a global environment variable called "TZONE"
+which contains current time zone names and UTC (GMT) offsets.
+It has the following format:
+
+     std offset [dst [offset]]
+
+(the spaces are for clarity only and should be ommited)
+
+where:
+
+std and dst
+are 3 or more characters specifying the local standard and daylight saving
+time (DST) zone names.
+
+offset
+is of the form [-]hh:[mm[:ss]] and specifies the offset west of UTC.
+
+If there is no offset following dst, daylight saving time is one hour
+ahead of standard time.
+
+If the 'dst offset' part is absent, system time represents standard
+time, if it is present, system time means daylight saving time.
+
+offset always specifies the absolute offset of the zone from UTC so if
+standard time applies, 'std offset' part should be used and if DST is in
+effect, the 'dst offset' should be used.
+
+   EXAMPLE
+EST5
+standard time is in effect, the current timezone is called EST and you
+are 5 hours west of UTC.
+
+CST-9:30CST-10:30
+DST is in effect, the current timezone is called CST and you are 10 hours,
+30 minutes east of UTC.
+
+CET-1CEST
+DST is in effect, the current timezone is called CEST and you are 2 hours
+east of UTC.
+
+
+timezone.library/GetTimezoneAttrsA         timezone.library/GetTimezoneAttrsA
+
+   NAME
+      GetTimezoneAttrsA -- Obtain timezone attributes.
+      GetTimezoneAttrs -- Vararg stub for GetTimezoneAttrsA().
+
+   SYNOPSIS
+      retval = GetTimezoneAttrsA(cltags, taglist);
+
+      uint32 GetTimezoneAttrsA(APTR, struct TagItem *);
+
+      retval = GetTimezoneAttrs(cltags, tag1, ...);
+
+      uint32 GetTimezoneAttrs(APTR, Tag, ...);
+
+   FUNCTION
+       This function is used to get certain timezone attributes.
+
+   INPUTS
+       cltags - tag list of attributes describing the time zone to get
+            information for, terminated with TAG_DONE.
+            When NULL, the system's current time zone is used.
+            As of now, the following tags can be used:
+
+            TZA_CountryCode (STRPTR) - Country code of desired time zone.
+
+            TZA_CountryName (STRPTR) - Country name of desired time zone.
+
+            TZA_RuleName (STRPTR) - Name of desired time zone rule.
+
+            TZA_UTCOffsetSTD (int32 *) - Offset between standard time and
+                                        UTC of desired time zone.
+
+       taglist - tag list of attributes to get, terminated with TAG_DONE.
+            ti_Tag is the attribute to get and ti_Data is a pointer to a
+            location to copy the result to.
+
+   TAGS
+       TZA_Timezone (STRPTR)
+
+       Copies a three or more letter abbreviation for the local standard or
+       daylight saving time zone.
+       The destination must be large enough to hold MAX_TZSIZE characters.
+
+       TZA_TimezoneSTD (STRPTR)
+
+       Copies a three or more letter abbreviation for the local standard time
+       zone.
+       The destination must be large enough to hold MAX_TZSIZE characters.
+
+       TZA_TimezoneDST (STRPTR)
+
+       Copies a three or more letter abbreviation for the local daylight
+       saving time zone.
+       The destination must be large enough to hold MAX_TZSIZE characters.
+
+       TZA_UTCOffset (int32 *)
+
+       Offset between local time and Universal Time Coordinated (UTC,
+       formerly referred to as "Greenwich Mean Time" GMT) in minutes.
+
+       TZA_UTCOffsetSTD (int32 *)
+
+       Offset between local standard time and UTC in minutes.
+
+       TZA_UTCOffsetDST (int32 *)
+
+       Offset between local daylight saving time and UTC in minutes.
+
+       TZA_UTCOffsetRFC (STRPTR)
+
+       Copies the offset in minutes between local time and UTC in an RFC 2822
+       compliant form.
+       The destination must be large enough to hold MAX_RFCSIZE characters.
+
+       TZA_DSTStart (uint32 *)
+
+       Number of seconds from 01-Jan-1978 to the date of the beginning
+       of DST.
+
+       TZA_DSTEnd (uint32 *)
+
+       Number of seconds from 01-Jan-1978 to the date of the end of DST.
+
+       TZA_NextDSTSwitch (uint32 *)
+
+       Number of seconds from 01-Jan-1978 to the date of the next DST switch.
+
+       TZA_TimeFlag (BYTE *)
+
+       Tells whether standard or daylight saving time is in effect.
+       Current values are:
+           TFLG_ISSTD:     Standard time is in effect for current location
+           TFLG_ISDST:     Daylight saving time is in effect for current
+                           location
+           TFLG_UNKNOWN:   Unknown whether standard or daylight saving time
+                           is in effect
+
+   RESULT
+       The number of GUI attributes successfully retrieved.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+timezone.library/SetTimezoneAttrsA         timezone.library/SetTimezoneAttrsA
+
+   NAME
+      SetTimezoneAttrsA -- Set timezone attributes.
+      SetTimezoneAttrs -- Vararg stub for SetTimezoneAttrsA().
+
+   SYNOPSIS
+      retval = SetTimezoneAttrsA(unused, taglist);
+
+      uint32 SetTimezoneAttrsA(APTR, struct TagItem *);
+
+      retval = SetTimezoneAttrs(unused, tag1, ...);
+
+      uint32 SetTimezoneAttrs(APTR, Tag, ...);
+
+   FUNCTION
+       This function is used to set certain timezone attributes.
+
+   INPUTS
+       unused  - currently unused, should be NULL for now.
+       taglist - tag list of attributes to change, terminated with TAG_DONE.
+
+   TAGS
+       There are currently no public tags available.
+
+   RESULT
+	    The number of timezone attributes successfully changed.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

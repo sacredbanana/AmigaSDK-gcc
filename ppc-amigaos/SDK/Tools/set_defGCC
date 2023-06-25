@@ -1,0 +1,109 @@
+;
+; File:    set_defGCC
+;
+;   Copyright (c) 2022, Georgios Sokianos
+;
+;   This file is part of SDK v54
+;
+; Author:   Georgios Sokianos (walkero@gmail.com)
+; Date:     February 2022
+; ver:      1.1
+;
+; Summary of File:
+;
+;   This file contains code that helps the user to 
+;   define the default GCC on installed SDK.
+;
+;   This script can be used from shell and from WB
+;
+
+.KEY VER
+.BRA {
+.KET }
+
+If "{VER}" EQ ""
+
+  Set ver `RequestChoice "GCC version" "Select default GCC version to be applied." "6.4.0" "8.4.0" "10.3.0" "11.2.0" "Cancel" TYPE QUESTION`
+  
+  If $ver EQ 1
+    Set ver 6
+  EndIf
+  
+  If $ver EQ 2
+    Set ver 8
+  EndIf
+  
+  If $ver EQ 3
+    Set ver 10
+  EndIf
+  
+  If $ver EQ 4
+    Set ver 11
+  EndIf
+  
+Else
+  
+  Set ver {VER}
+  
+EndIf
+
+If $ver MATCHES (6|8|10|11)
+  
+  If $ver EQ 6
+    Set fullver 6.4.0
+  EndIf
+
+  If $ver EQ 8
+    Set fullver 8.4.0
+  EndIf
+  
+  If $ver EQ 10
+    Set fullver 10.3.0
+  EndIf
+  
+  If $ver EQ 11
+    Set fullver 11.2.0
+  EndIf
+  
+  Delete sdk:gcc/bin/g++            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/c++            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/cpp            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/gcc            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/gcov           FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/gcov-dump      FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/gcov-tool      FORCE QUIET *>nil:
+    
+  Delete sdk:gcc/bin/ppc-amigaos-g++            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/ppc-amigaos-c++            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/ppc-amigaos-cpp            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/ppc-amigaos-gcc            FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/ppc-amigaos-gcov           FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/ppc-amigaos-gcov-dump      FORCE QUIET *>nil:
+  Delete sdk:gcc/bin/ppc-amigaos-gcov-tool      FORCE QUIET *>nil:
+  
+  MakeLink FROM sdk:gcc/bin/g++           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-c++-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/c++           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-c++-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/cpp           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-cpp-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/gcc           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcc-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/gcov          TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcov-$ver          SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/gcov-dump     TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcov-dump-$ver     SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/gcov-tool     TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcov-tool-$ver     SOFT FORCE
+  
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-g++           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-c++-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-c++           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-c++-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-cpp           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-cpp-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-gcc           TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcc-$ver           SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-gcov          TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcov-$ver          SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-gcov-dump     TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcov-dump-$ver     SOFT FORCE
+  MakeLink FROM sdk:gcc/bin/ppc-amigaos-gcov-tool     TO sdk:gcc/ppc-amigaos/bin/$fullver/ppc-amigaos-gcov-tool-$ver     SOFT FORCE
+  
+  Set rcnum `RequestChoice "GCC version" "The default GCC version is set to $fullver*nYou can check it in a shell with*ngcc -v" "Perfect"`
+  
+Else
+
+  If NOT "{VER}" EQ ""
+    echo "The version you choose is invalid. Valid options are 6, 8, 10 and 11."
+  EndIf
+  
+EndIf
+

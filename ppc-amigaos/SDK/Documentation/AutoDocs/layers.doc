@@ -1,0 +1,2138 @@
+TABLE OF CONTENTS
+
+layers.library/AllocClipRect
+layers.library/BeginUpdate
+layers.library/BehindLayer
+layers.library/ChangeLayerAlpha
+layers.library/ChangeLayerShape
+layers.library/CreateBackFillHookA
+layers.library/CreateBehindHookLayer
+layers.library/CreateBehindLayer
+layers.library/CreateLayerA
+layers.library/CreateUpfrontHookLayer
+layers.library/CreateUpfrontLayer
+layers.library/DeleteBackFillHook
+layers.library/DeleteLayer
+layers.library/DisposeLayerInfo
+layers.library/DoHookClipRects
+layers.library/EndUpdate
+layers.library/FattenLayerInfo
+layers.library/FreeClipRect
+layers.library/GetBackFillHookAttrsA
+layers.library/GetLayerInfoAttrsA
+layers.library/HideLayer
+layers.library/InitLayers
+layers.library/InstallClipRegion
+layers.library/InstallLayerHook
+layers.library/InstallLayerInfoHook
+layers.library/LayerOccluded
+layers.library/LockLayer
+layers.library/LockLayerInfo
+layers.library/LockLayers
+layers.library/MoveLayer
+layers.library/MoveLayerInFrontOf
+layers.library/MoveSizeLayer
+layers.library/NewLayerInfo
+layers.library/ScrollLayer
+layers.library/SetBackFillHookAttrsA
+layers.library/SetLayerInfoAttrsA
+layers.library/SetLayerInfoBounds
+layers.library/SetLayerOpaqueness
+layers.library/ShowLayer
+layers.library/SizeLayer
+layers.library/SortLayerCR
+layers.library/SwapBitsRastPortClipRect
+layers.library/ThinLayerInfo
+layers.library/UnlockLayer
+layers.library/UnlockLayerInfo
+layers.library/UnlockLayers
+layers.library/UpfrontLayer
+layers.library/WhichLayer
+layers.library/AllocClipRect                                 layers.library/AllocClipRect
+
+    NAME
+       AllocClipRect -- Build a ClipRect.
+
+    SYNOPSIS
+       cliprect = AllocClipRect( li )
+
+       struct ClipRect *AllocClipRect( struct Layer_Info * );
+
+    FUNCTION
+       This function allocates a new ClipRect from a Layer_Info
+       structure and returns a pointer to the ClipRect. The
+       ClipRect is initialized up to the cliprect bounds.
+
+       This cliprect belongs to the given Layer_Info structure
+       and must be released before the LayerInfo gets released.
+
+       Note: this function used to be private, since you should never
+       play with layer cliprects yourself and never attach this cliprect
+       to a layer yourself. Now it is public, with the only purpose of
+       being of support in generating alpha cliprects to be used with
+       ChangeLayerAlpha(), LAYA_AlphaClips or "alpha hooks" for custom
+       layer transparency.
+
+    INPUTS
+       li - pointer to a LayerInfo to allocate the ClipRect from.
+
+    RESULTS
+       cliprect - a pointer to a ClipRect structure or NULL
+                  in case the system runs out of memory
+
+    BUGS
+
+    SEE ALSO
+       FreeClipRect, ChangeLayerAlpha, graphics/clip.h
+
+layers.library/BeginUpdate                                     layers.library/BeginUpdate
+
+    NAME
+       BeginUpdate -- Prepare to repair damaged layer.
+
+    SYNOPSIS
+       result = BeginUpdate( l )
+
+       LONG BeginUpdate( struct Layer * );
+
+    FUNCTION
+       Convert damage list to ClipRect list and swap in for the
+       programmer to redraw through. The idea is to only render in the
+       "damaged" areas, saving time over redrawing all of the layer.
+       The layer is locked against changes made by the layer library.
+
+    INPUTS
+       l - pointer to a layer
+
+    RESULTS
+       result - TRUE if damage list converted to ClipRect list successfully
+                FALSE if list conversion aborted (probably out of memory)
+
+    BUGS
+       If BeginUpdate() returns FALSE, programmer must abort the attempt to
+       refresh this layer and instead call EndUpdate( l, FALSE ) to restore
+       original ClipRects and damage list.
+
+    SEE ALSO
+       EndUpdate, graphics/layers.h, graphics/clip.h
+
+layers.library/BehindLayer                                     layers.library/BehindLayer
+
+    NAME
+       BehindLayer -- Put layer behind other layers.
+
+    SYNOPSIS
+       result = BehindLayer( dummy, l )
+
+       LONG BehindLayer( LONG, struct Layer * );
+
+    FUNCTION
+       Move this layer to the most behind position swapping bits
+       in and out of the display with other layers.
+       If other layers are REFRESH then collect their damage lists and
+       set the LAYERREFRESH bit in the Flags fields of those layers that
+       may be revealed.  If this layer is a backdrop layer then
+       put this layer behind all other backdrop layers.
+       If this layer is NOT a backdrop layer then put in front of the
+       top backdrop layer and behind all other layers.
+       If this layer is a staytop layer then put in front of the top
+       non-staytop layer and behind all other staytop layers.
+
+       Note: this operation may generate refresh events in other layers
+          associated with this layer's Layer_Info structure.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+
+    RESULTS
+       result - TRUE if operation successful
+                FALSE if operation unsuccessful (probably out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, graphics/clip.h
+
+layers.library/ChangeLayerAlpha                           layers.library/ChangeLayerAlpha
+
+    NAME
+       ChangeLayerAlpha -- Change alpha map of a layer. (V53)
+
+    SYNOPSIS
+       oldclips = ChangeLayerAlpha( l, c, h )
+
+       struct ClipRect *ChangeLayerAlpha( struct Layer *, struct ClipRect *,
+             struct Hook * );
+
+    FUNCTION
+       Changes the alpha map of the layer on the fly. The alpha map is
+       supplied in the form of a list of one or more ClipRect structures;
+       each ClipRect structure describes a rectangular section of the
+       layer's alpha map. The ClipRect's bounds define the position and
+       size of the section, while its BitMap (which needs to be of the
+       RGBFB_ALPHA8 type) holds the actual alpha channel information for
+       that section.
+
+       Therefore, you could for instance have a single alpha ClipRect as
+       large as the whole layer, or a number of smaller alpha ClipRects
+       which only cover part of it. Any part of the layer's surface that
+       is not covered by an alpha ClipRect is considered to be opaque.
+       This way, you can save graphic memory by only having to allocate
+       ALPHA8 bitmaps for the parts of the layer where some alpha channel
+       information is actually needed.
+
+       Additionally, you may set the ClipRect's BitMap pointer to the
+       special values 0..255 which will be interpreted by layers.library
+       as an ALPHA8 BitMap completely filled with that particular value.
+
+       It is advised that you use the AllocClipRect() and FreeClipRect()
+       functions provided by layers.library to allocate and free your
+       alpha ClipRects.
+
+       You can pass the alpha ClipRect list for the layer directly, or
+       provide a callback hook that will be called whenever there might
+       be need to update the layer's alpha map (for instance, when the
+       layer changes its size).
+       The signature of the callback should look as follows:
+
+       BOOL AlphaHook(struct Hook *, struct Layer *, struct AlphaHookMsg *)
+
+       The AlphaHookMsg looks as follows:
+
+           struct AlphaHookMsg
+           {
+               ULONG             Action;
+               struct ClipRect  *NewAlphaCR;
+               struct ClipRect  *OldAlphaCR;
+               struct Rectangle *NewBounds;
+               struct Rectangle *OldBounds;
+           };
+
+       The structure members have the following purposes:
+
+           Action: The action to be performed, one of the following
+            defines
+
+               ALPHAHOOKACTION_CREATELAYER
+               ALPHAHOOKACTION_SIZELAYER
+               ALPHAHOOKACTION_MOVELAYER
+               ALPHAHOOKACTION_MOVESIZELAYER
+               ALPHAHOOKACTION_CHANGELAYERALPHA
+               ALPHAHOOKACTION_DELETELAYER
+
+           OldAlphaCR: The ClipRect list that describes the current
+            alpha map of the layer. Can be NULL.
+
+           NewAlphaCR: The ClipRect list that describes the new alpha
+            map of the layer. Must be set by your hook function. Can be
+            the same ClipRect list as OldAlphaCR. Can be NULL in which
+            case the layer will become completely opaque.
+
+           NewBounds: New bounds of the layer once the action
+            has been performed. Can be NULL (DeleteLayer()).
+
+           OldBounds: The old/current bounds of the layer. Can be
+            NULL (CreateLayer()).
+
+       Do not change any of the fields except NewAlphaCR.
+
+       The different actions have the following purposes:
+
+           ALPHAHOOKACTION_CREATELAYER
+               Called by CreateLayerA() to get the initial alpha map
+               of the layer.
+
+           ALPHAHOOKACTION_SIZELAYER
+           ALPHAHOOKACTION_MOVELAYER
+           ALPHAHOOKACTION_MOVESIZELAYER
+               Called by SizeLayer(), MoveLayer() or MoveSizeLayer().
+               Allows you to change the alpha map of the layer on the
+               fly. Please note that you need to set LAYERMOVECHANGESSHAPE
+               in Layer->Flags to receive MoveLayer() messages.
+
+           ALPHAHOOKACTION_CHANGELAYERALPHA
+               Called by ChangeLayerAlpha() when a new hook has been set.
+
+           ALPHAHOOKACTION_DELETELAYER
+               Called by DeleteLayer(), allows you to perform cleanup
+               work such as disposing of the alpha ClipRect list.
+
+       In case of an error, your hook function must return FALSE. The
+       operation will be aborted in this case. ALPHAHOOKACTION_DELETELAYER
+       must not fail! On failure OldAlphaCR will be reinstalled. Take
+       care of not disposing of it unless your function was successful.
+
+    INPUTS
+       l - pointer to a layer
+       c - pointer to a ClipRect list that describes the new alpha
+           map of the layer. May be NULL if callback is provided.
+           The ClipRect list won't be freed by layers.
+       h - pointer to a callback hook. May be NULL if a new alpha
+           ClipRect list is given.
+
+    RESULTS
+       oldclips - pointer to the previously installed alpha ClipRect list,
+        if any. A return value of -1 indicates that either the new list
+        couldn't be installed (unlikely) or that your hook returned failure.
+
+    NOTES
+       This function will only have an effect if the layer's LayerInfo
+       belongs to a screen using off-screen rendering and compositing.
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, CreateLayerA, AllocClipRect, FreeClipRect
+
+layers.library/ChangeLayerShape                           layers.library/ChangeLayerShape
+
+    NAME
+       ChangeLayerShape -- Change shape of a layer. (V45)
+
+    SYNOPSIS
+       oldregion = ChangeLayerShape( l, r, h )
+
+       struct Region *ChangeLayerShape( struct Layer *, struct Region *,
+             struct Hook * );
+
+    FUNCTION
+       Changes the shape of the layer on the fly. When the shape of a
+       layer is changed the current pixel content is copied into its
+       ClipRects so no information is lost.
+       The user can provide a callback hook that will be called when
+       the current layer's information is all backed up in ClipRects.
+       The signature of the callback should look as follows:
+
+       BOOL HookFunction(struct Hook *, struct Layer *, struct ShapeHookMsg *)
+
+       The ShapeHookMsg looks as follows:
+
+           struct ShapeHookMsg
+           {
+               ULONG             Action;
+               struct Region    *NewShape;
+               struct Region    *OldShape;
+               struct Rectangle *NewBounds;
+               struct Rectangle *OldBounds;
+           };
+
+       The structure members have the following purposes:
+
+           Action: The action to be performed, one of the following
+            defines
+
+               SHAPEHOOKACTION_CREATELAYER
+               SHAPEHOOKACTION_SIZELAYER
+               SHAPEHOOKACTION_MOVELAYER
+               SHAPEHOOKACTION_MOVESIZELAYER
+               SHAPEHOOKACTION_CHANGELAYERSHAPE
+               SHAPEHOOKACTION_DELETELAYER
+
+           OldShape: The region that comprises the current shape
+            of the layer. Can be NULL.
+
+           NewShape: The region that comprises the new shape of
+            the layer. Must be set by your hook function. Can be the
+            same region as OldShape. Can be NULL in which case the
+            layer will get the standard rectangular shape.
+
+           NewBounds: New bounds of the layer once the action
+            has been performed. Can be NULL (DeleteLayer()).
+
+           OldBounds: The old/current bounds of the layer. Can be
+            NULL (CreateLayer()).
+
+       Do not change any of the fields except NewShape.
+
+       The different actions have the following purposes:
+
+           SHAPEHOOKACTION_CREATELAYER
+               Called by CreateLayerA() to get the initial shape
+               of the layer.
+
+           SHAPEHOOKACTION_SIZELAYER
+           SHAPEHOOKACTION_MOVELAYER
+           SHAPEHOOKACTION_MOVESIZELAYER
+               Called by SizeLayer(), MoveLayer() or MoveSizeLayer().
+               Allows you to change the shape of the layer on the
+               fly. Please note that you need to set LAYERMOVECHANGESSHAPE
+               in Layer->Flags to receive MoveLayer() messages.
+
+           SHAPEHOOKACTION_CHANGELAYERSHAPE
+               Called by ChangeLayerShape() when a new hook has been set.
+
+           SHAPEHOOKACTION_DELETELAYER
+               Called by DeleteLayer(), allows you to perform
+               cleanup work such as disposing of the shape region.
+
+       In case of an error, your hook function must return FALSE. The
+       operation will be aborted in this case. SHAPEHOOKACTION_DELETELAYER
+       must not fail! On failure OldShape will be reinstalled. Take
+       care of not disposing of it unless your function was successful.
+
+    INPUTS
+       l - pointer to a layer
+       r - pointer to a region that comprises the new shape
+           of the layer. May be NULL if callback is provided.
+           The region won't be freed by layers.
+       h - pointer to a callback hook. May be NULL if a new shape
+           is given.
+
+    RESULTS
+       oldregion - pointer to the previously installed region, if any.
+        A return value of -1 indicates that either the new region couldn't
+        be installed (unlikely) or that your hook returned failure.
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, CreateLayerA
+
+layers.library/CreateBackFillHookA                     layers.library/CreateBackFillHookA
+
+    NAME
+       CreateBackFillHookA -- Create a backfill hook from a pattern or
+        bitmap. (V45)
+
+    SYNOPSIS
+       hook = CreateBackFillHookA( tags )
+
+       struct Hook *CreateBackFillHookA( struct TagItem * );
+
+
+       hook = CreateBackFillHook( ... )
+
+       struct Hook *CreateBackFillHook( ... );
+
+    FUNCTION
+       Creates a backfill hook.
+
+    INPUTS
+       tags - a tag item list:
+           BFHA_APen (UWORD) - foreground pen for simple patterns (default ~0).
+           BFHA_BPen (UWORD) - background pen for simple patterns (default ~0).
+           BFHA_DrMd (UWORD) - drawing mode to use (defaults to JAM2).
+           BFHA_Pattern (UWORD *) - pattern to use. If NULL (default), then
+               solid APen.
+           BFHA_PatSize (WORD) - simple pattern has 2^BFHA_PatSize UWORDs.
+               If negative, use colored pattern. Be sure to supply
+               enough values in BFHA_Pattern for the number of bitplanes
+               that the screen has.
+           BFHA_BitMap (struct BitMap *) - BitMap to fill the layer with,
+               overrides BFHA_Pattern.
+           BFHA_Width, BFHA_Height (UWORD) - size of BitMap.
+           BFHA_OffsetX, BFHA_OffsetY (UWORD) - the offsets within the BitMap.
+
+    RESULT
+       hook - hook for backfill or NULL (error)
+
+    NOTE
+       A backfill hook may be shared by multiple layers/tasks.
+
+    SEE ALSO
+       DeleteBackFillHook
+
+layers.library/CreateBehindHookLayer                 layers.library/CreateBehindHookLayer
+
+    NAME
+       CreateBehindHookLayer -- Create a layer behind all existing layers
+                                using supplied callback BackFill hook. (V36)
+
+    SYNOPSIS
+       result = CreateBehindHookLayer( li,bm,x0,y0,x1,y1,flags,hook[,bm2] )
+
+       struct Layer *CreateBehindHookLayer( struct Layer_Info *,
+           struct BitMap *, LONG, LONG, LONG, LONG, LONG,
+           struct Hook *, ... );
+
+    FUNCTION
+       Create a new layer of position and size (x0,y0)-(x1,y1)
+       Make this layer of type found in flags.
+       Install Layer->BackFill callback Hook.
+       If SuperBitMap, use bm2 as pointer to real SuperBitMap,
+       and copy contents of SuperBitMap into display layer.
+       If this layer is a backdrop layer then place it behind all
+       other layers including other backdrop layers. If this is
+       not a backdrop layer then place it behind all non-backdrop
+       layers. If this is a staytop layer then place it behind
+       all other staytop layers, but not behind any other layer.
+
+       Note: when using a SuperBitMap, you should also set LAYERSUPER flag.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       bm - pointer to common BitMap used by all layers
+       x0,y0 - upper left hand corner of layer
+       x1,y1 - lower right hand corner of layer
+       flags - various types of layers supported as bit sets
+               (for bit definitions, see graphics/layers.h)
+       hook -  Layer->BackFill callback Hook (see InstallLayerHook())
+
+               If hook is LAYERS_BACKFILL, the default backfill is
+               used for the layer (same as pre-2.0).
+
+               As of V39:
+               If hook is LAYERS_NOBACKFILL, the layer will not be
+               backfilled (NO-OP).
+
+       bm2 - pointer to optional SuperBitMap
+
+    RESULTS
+       result - pointer to Layer structure if successful
+                NULL if not successful
+
+    BUGS
+
+    SEE ALSO
+       InstallLayerHook, DeleteLayer, graphics/layers.h, graphics/clip.h,
+       graphics/gfx.h, utility/hooks.h
+
+layers.library/CreateBehindLayer                         layers.library/CreateBehindLayer
+
+    NAME
+       CreateBehindLayer -- Create a new layer behind all existing layers.
+
+    SYNOPSIS
+       result = CreateBehindLayer( li,bm,x0,y0,x1,y1,flags[,bm2] )
+
+       struct Layer *CreateBehindLayer( struct Layer_Info *, struct BitMap *,
+           LONG, LONG, LONG, LONG, LONG, ... );
+
+    FUNCTION
+       Create a new Layer of position and size (x0,y0)-(x1,y1)
+       Make this layer of type found in flags.
+       If SuperBitMap, use bm2 as pointer to real SuperBitMap,
+       and copy contents of SuperBitMap into display layer.
+       If this layer is a backdrop layer then place it behind all
+       other layers including other backdrop layers. If this is
+       not a backdrop layer then place it behind all nonbackdrop
+       layers. If this is a staytop layer then place it behind
+       all other staytop layers, but not behind any other layer.
+
+       Note: when using a SuperBitMap, you should also set LAYERSUPER flag.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       bm - pointer to common BitMap used by all layers
+       x0,y0 - upper left hand corner of layer
+       x1,y1 - lower right hand corner of layer
+       flags - various types of layers supported as bit sets
+               (for bit definitions, see graphics/layers.h)
+       bm2 - pointer to optional SuperBitMap
+
+    RESULTS
+       result - pointer to Layer structure if successful
+                NULL if not successful
+
+    BUGS
+
+    SEE ALSO
+       DeleteLayer, graphics/layers.h, graphics/clip.h, graphics/gfx.h
+
+layers.library/CreateLayerA                                   layers.library/CreateLayerA
+
+    NAME
+       CreateLayerA -- Create a new layer using a taglist. (V45)
+       CreateLayer  -- Varargs stub for CreateLayerA().
+
+    SYNOPSIS
+       result = CreateLayerA( li, tags )
+
+       struct Layer *CreateLayerA( struct Layer_Info *, struct TagItem * );
+
+       result = CreateLayer( li, ... )
+
+       struct Layer *CreateLayer( struct Layer_Info *, ... );
+
+    FUNCTION
+       Creates a new layer.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       tags - additional tags
+
+    TAGS
+       LAYA_BitMap (struct BitMap *) - pointer to common BitMap used by all
+           layers.
+       LAYA_Left or LAYA_MinX (WORD) - left hand corner of layer
+       LAYA_Top or LAYA_MinY (WORD) - upper hand corner of layer
+       LAYA_MaxX (WORD) - right hand corner of layer.
+       LAYA_MaxY (WORD) - lower hand corner of layer.
+       LAYA_SimpleRefresh (BOOL) - if TRUE, this layer uses simple refresh,
+           otherwise smart refresh (defaults to FALSE). Mutually exclusive
+           wih LAYA_SmartRefresh.
+       LAYA_SmartRefresh (BOOL) - if TRUE, this layer uses smart refresh,
+           otherwise simple refresh (defaults to TRUE). Mutually exclusive
+           with LAYA_SimpleRefresh.
+       LAYA_SuperBitMap (struct BitMap *) - if not NULL, use this BitMap as
+           the SuperBitMap (defaults to NULL). Setting this attribute also
+           sets the LAYERSUPER flag.
+       LAYA_BackFillHook (Hook *) - if LAYERS_BACKFILL, default backfill hook,
+           if LAYERS_NOBACKFILL no backfilling, otherwise custom backfill
+           (defaults to LAYERS_BACKFILL).
+       LAYA_Behind (BOOL) - if TRUE, put the layer behind all other layers
+          (defaults to FALSE).
+       LAYA_Hidden (BOOL) - if TRUE, make this layer invisible (defaults to
+          FALSE).
+       LAYA_Flags (ULONG) - various types of layers supported as bit sets
+          (for bit definitions, see <graphics/layers.h>). Setting this
+          tag overrides all boolean attributes preceding this tag.
+       LAYA_Backdrop (BOOL) - if TRUE, make this layer a backdrop one. This
+          tag is mutually exclusive with LAYA_StayTop (defaults to FALSE).
+       LAYA_ShapeRegion (struct Region *) - the region of the layer that
+          comprises its shape. This value is optional. The region must be
+          relative to the layer. layers.library does not free this region.
+       LAYA_ShapeHook (struct Hook *) - callback hook that is used by layers
+          to change the shape of the layer on the fly. See ChangeLayerShape()
+          for more information.
+       LAYA_AlphaClips (struct ClipRect *) - a cliprect list describing the
+          layer's alpha map. This value is optional. The cliprects must be
+          relative to the layer. layers.library does not free these cliprects.
+          Only has an effect on a compositing-enabled screen. (V53)
+       LAYA_AlphaHook (struct Hook *) - callback hook that is used by layers
+          to change the layer's alpha map on the fly. See ChangeLayerAlpha()
+          for more information. Only has an effect on a compositing-enabled
+          screen. (V53)
+       LAYA_Opaqueness (UBYTE) - initial overall opaqueness of the layer.
+          Can range from zero (invisible) to 255 (fully opaque). Defaults to
+          255. Only has an effect on a compositing-enabled screen. (V53)
+       LAYA_Padding (WORD *) - extra padding on layer sides, extending the
+          area covered by its nominal bounds. System use only. (V53)
+       LAYA_Window (struct Window *) - window associated to this layer.
+          System use only. (V53)
+       LAYA_InFrontOf (struct Layer *) - create the layer in front of the
+          given layer. If LAYER_FRONTMOST, the layer will appear in front
+          of the currently frontmost layer. If LAYER_BACKMOST, the layer
+          will appear behind all other layers.
+       LAYA_StayTop (BOOL) - create a layer that is always in front of all
+          other layers. You can still move this type of layer behind layers
+          of the same type. This tag is mutually exclusive with LAYA_Backdrop
+          (defaults to FALSE).
+
+    RESULTS
+       result - pointer to Layer structure if successful
+                NULL if not successful
+
+    SEE ALSO
+       DeleteLayer, CreateUpfrontHookLayer, CreateBehindHookLayer,
+       ChangeLayerShape, ChangeLayerAlpha
+
+layers.library/CreateUpfrontHookLayer               layers.library/CreateUpfrontHookLayer
+
+    NAME
+       CreateUpfrontHookLayer -- Create a layer on top of existing layers
+                                 using supplied callback BackFill hook. (V36)
+
+    SYNOPSIS
+       result = CreateUpfrontHookLayer( li,bm,x0,y0,x1,y1,flags,hook[,bm2] )
+
+       struct Layer *CreateUpfrontHookLayer( struct Layer_Info *,
+           struct BitMap *, LONG, LONG, LONG, LONG, LONG,
+           struct Hook *, ... );
+
+    FUNCTION
+       Create a new Layer of position and size (x0,y0)-(x1,y1)
+       and place it on top of all other layers of the same type
+       (backdrop, normal or staytop).
+       Make this layer of type found in flags.
+       Install Layer->BackFill callback hook.
+       If SuperBitMap, use bm2 as pointer to real SuperBitMap,
+       and copy contents of SuperBitMap into display layer.
+
+       Note: when using a SuperBitMap, you should also set LAYERSUPER flag.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       bm - pointer to common BitMap used by all layers
+       x0,y0 - upper left hand corner of layer
+       x1,y1 - lower right hand corner of layer
+       flags - various types of layers supported as bit sets
+       hook -  Layer->BackFill callback Hook (see InstallLayerHook())
+
+               If hook is LAYERS_BACKFILL, the default backfill is
+               used for the layer (same as pre-2.0).
+
+               As of V39:
+               If hook is LAYERS_NOBACKFILL, the layer will not be
+               backfilled (NO-OP).
+
+       bm2 - pointer to optional SuperBitMap
+
+    RESULTS
+       result - pointer to Layer structure if successful
+                NULL if not successful
+
+    BUGS
+
+    SEE ALSO
+       InstallLayerHook, DeleteLayer, graphics/layers.h, graphics/clip.h,
+       graphics/gfx.h, utility/hooks.h
+
+layers.library/CreateUpfrontLayer                       layers.library/CreateUpfrontLayer
+
+    NAME
+       CreateUpfrontLayer -- Create a new layer on top of existing layers.
+
+    SYNOPSIS
+       result = CreateUpfrontLayer( li,bm,x0,y0,x1,y1,flags[,bm2] )
+
+       struct Layer *CreateUpfrontLayer( struct Layer_Info *,struct BitMap *,
+           LONG, LONG, LONG, LONG, LONG, ... );
+
+    FUNCTION
+       Create a new Layer of position and size (x0,y0)-(x1,y1)
+       and place it on top of all other layers of the same type
+       (backdrop, normal or staytop).
+       Make this layer of type found in flags.
+       If SuperBitMap, use bm2 as pointer to real SuperBitMap,
+       and copy contents of SuperBitMap into display layer.
+
+       Note: when using a SuperBitMap, you should also set LAYERSUPER flag.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       bm - pointer to common BitMap used by all layers
+       x0,y0 - upper left hand corner of layer
+       x1,y1 - lower right hand corner of layer
+       flags - various types of layers supported as bit sets
+       bm2 - pointer to optional SuperBitMap
+
+    RESULTS
+       result - pointer to Layer structure if successful
+                NULL if not successful
+
+    BUGS
+
+    SEE ALSO
+       DeleteLayer, graphics/layers.h, graphics/clip.h, graphics/gfx.h
+
+layers.library/DeleteBackFillHook                       layers.library/DeleteBackFillHook
+
+    NAME
+       DeleteBackFillHook -- Delete a backfill hook. (V45)
+
+    SYNOPSIS
+       DeleteBackFillHook( hook )
+
+       VOID DeleteBackFillHook( struct Hook * );
+
+    FUNCTION
+       Deletes a hook previously created with CreateBackFillHookA().
+       If you shared the hook with other layers, be sure that no layer
+       uses it. It is safe to pass NULL, or 1.
+
+    INPUT
+       hook - backfill hook to delete
+
+    SEE ALSO
+       CreateBackFillHook
+
+layers.library/DeleteLayer                                     layers.library/DeleteLayer
+
+    NAME
+       DeleteLayer -- Delete layer from layer list.
+
+    SYNOPSIS
+       result = DeleteLayer( dummy, l )
+
+       LONG DeleteLayer( LONG, struct Layer * );
+
+    FUNCTION
+       Remove this layer from the list of layers.  Release memory
+       associated with it.  Restore other layers that may have been
+       obscured by it.  Trigger refresh in those that may need it.
+       If this is a SuperBitMap layer make sure SuperBitMap is current.
+       The SuperBitMap is not removed from the system but is available
+       for program use even though the rest of the layer information has
+       been deallocated.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+
+    RESULTS
+       result - TRUE if layer successfully deleted from the system
+                FALSE if layer not deleted (probably out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, graphics/clip.h
+
+layers.library/DisposeLayerInfo                           layers.library/DisposeLayerInfo
+
+    NAME
+       DisposeLayerInfo -- Return all memory for LayerInfo to memory pool.
+
+    SYNOPSIS
+       DisposeLayerInfo( li )
+
+       VOID DisposeLayerInfo( struct Layer_Info * );
+
+    FUNCTION
+       Return LayerInfo and any other memory attached to this LayerInfo
+       to memory allocator.
+
+       Note: if you wish to delete the layers associated with this Layer_Info
+             structure, remember to call DeleteLayer() for each of the layers
+             before calling DisposeLayerInfo().
+
+    INPUTS
+       li - pointer to Layer_Info structure
+
+    EXAMPLE
+
+       -- delete the layers associated with this Layer_Info structure --
+
+       DeleteLayer(0,simple_layer);
+       DeleteLayer(0,smart_layer);
+
+       -- see docs on DeleteLayer about deleting SuperBitMap layers --
+
+       my_super_bitmap_ptr = super_layer->SuperBitMap;
+       DeleteLayer(0,super_layer);
+
+       -- now dispose of the Layer_Info structure itself --
+
+       DisposeLayerInfo(li);
+
+
+    BUGS
+
+    SEE ALSO
+       DeleteLayer, graphics/layers.h
+
+layers.library/DoHookClipRects                             layers.library/DoHookClipRects
+
+    NAME
+       DoHookClipRects -- Do the given hook for each of the ClipRects. (V39)
+
+    SYNOPSIS
+       DoHookClipRects( hook, rport, rect )
+
+       VOID DoHookClipRects( CONST struct Hook *, struct RastPort *,
+                             CONST struct Rectangle * );
+
+    FUNCTION
+       This function will call the given hook for each cliprect in the
+       layer that can be rendered into.  This is how the backfill hook
+       in Layers is implemented.  This means that hidden simple refresh
+       cliprects will be ignored.  It will call the SuperBitMap cliprects,
+       smart refresh off-screen cliprects, and all on screen cliprects.
+       If the 'rect' parameter is not NULL, the cliprects are bounded to
+       the rectangle given.
+
+    INPUTS
+
+       hook - pointer to layer callback hook which will be called, with
+              object == pointer to the RastPort the hook shall render to
+              and message == pointer to a BackFillMessage structure.
+
+              The BackFillMessage structure is defined as
+
+              struct BackFillMessage
+              {
+                  struct Layer     *Layer;    /* RastPort's layer */
+                  struct Rectangle  Bounds;   /* Rectangle to fill */
+                  LONG              OffsetX;  /* Pattern X offset */
+                  LONG              OffsetY;  /* Pattern Y offset */
+              };
+
+              This hook should fill the rectangle in the RastPort defined by
+              the message's Bounds with the backfill pattern appropriate for
+              the message's OffsetX and OffsetY.
+
+              If hook is LAYERS_BACKFILL, the default backfill is used
+              for the layer.
+
+              If hook is LAYERS_NOBACKFILL, the layer will not be
+              backfilled (NO-OP).
+
+       rport - a pointer to the RastPort that is to be operated on.
+               This function will lock the layer if the RastPort is
+               layered.
+               If 'rport' is not layered your hook will be called with
+               the rectangle as passed, the RastPort, and a NULL layer.
+
+       rect - the bounding rectangle that should be used on the layer.
+              This rectangle "clips" the cliprects to the bounds given.
+              If this is NULL, no bounding will take place.
+              *MUST* not be NULL if the RastPort is not layered!
+
+    NOTES
+       The RastPort you are passed back is the same one passed to the
+       function.  You should *not* use "layered" rendering functions
+       on this RastPort.  Generally, you will wish to do BitMap operations
+       such as BltBitMap().  The callback is a raw, low-level rendering
+       callback.  If you need to call a rendering operation with a
+       RastPort, make sure you use a copy of the RastPort and NULL its
+       Layer pointer.
+
+    SEE ALSO
+       graphics/clip.h utility/hooks.h
+
+layers.library/EndUpdate                                         layers.library/EndUpdate
+
+    NAME
+       EndUpdate -- Remove damage list and restore state of layer to normal.
+
+    SYNOPSIS
+       EndUpdate( l, flag )
+
+       VOID EndUpdate( struct Layer *, UWORD );
+
+    FUNCTION
+       After the programmer has redrawn his picture he calls this
+       routine to restore the ClipRects to point to his standard
+       layer tiling. The layer is then unlocked for access by the
+       layer library.
+
+       Note: use flag = FALSE if you are only making a partial update.
+       You may use the other region functions (graphics functions such as
+       OrRectRegion(), AndRectRegion(), and XorRectRegion()) to clip adjust
+       the DamageList to reflect a partial update.
+
+    INPUTS
+       l - pointer to a layer
+       flag - use TRUE if update was completed. The damage list is cleared.
+              use FALSE if update not complete. The damage list is retained.
+
+    EXAMPLE
+
+       -- begin update for first part of two-part refresh --
+       BeginUpdate(my_layer);
+
+       -- do some refresh, but not all --
+       my_partial_refresh_routine(my_layer);
+
+       -- end update, false (not completely done refreshing yet) --
+       EndUpdate(my_layer, FALSE);
+
+       -- begin update for last part of refresh --
+       BeginUpdate(my_layer);
+
+       -- do rest of refresh --
+       my_complete_refresh_routine(my_layer);
+
+       -- end update, true (completely done refreshing now) --
+       EndUpdate(my_layer, TRUE);
+
+    BUGS
+       In V40 or below, EndUpdate() could have failed to re-install
+       the user clip region in low-memory situations. This has been
+       fixed for V45. V45 may leave the layer cliprects in sub-
+       optimal, but valid state if it runs low on memory.
+
+    SEE ALSO
+       BeginUpdate, graphics/layers.h, graphics/clip.h
+
+layers.library/FattenLayerInfo                             layers.library/FattenLayerInfo
+
+    NAME
+       FattenLayerInfo -- Convert 1.0 LayerInfo to 1.1 LayerInfo.
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+
+    SYNOPSIS
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+       FattenLayerInfo( li )
+
+       LONG FattenLayerInfo( struct Layer_Info * );
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+
+    FUNCTION
+       As of V45, this function does nothing and returns TRUE. V45 no
+       longer requires additional information in the LayerInfo, but
+       nevertheless, this function *MUST NOT* be used for new code.
+       In case the system (Intuition, namely) must roll its own
+       LayerInfo, it is mandatory to call ThinLayerInfo() if you are
+       done with it as it releases some additional internal buffers.
+       NewLayerInfo() is the approved method for getting this structure.
+       When a program needs to give up the Layer_Info structure it must
+       call ThinLayerInfo() before freeing the memory. ThinLayerInfo()
+       is not necessary if New/DisposeLayerInfo() are used, however.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+
+    BUGS
+
+    SEE ALSO
+       NewLayerInfo, ThinLayerInfo, DisposeLayerInfo, graphics/layers.h
+
+layers.library/FreeClipRect                                   layers.library/FreeClipRect
+
+    NAME
+       FreeClipRect -- Release a ClipRect built by AllocClipRect().
+
+    SYNOPSIS
+       FreeClipRect( li, cliprect )
+
+       VOID FreeClipRect( struct Layer_Info *, struct ClipRect * );
+
+    FUNCTION
+       Disposes a ClipRect that is no longer required by the caller.
+       The ClipRect is either released immediately into the free memory
+       pool, or recycled by layers as soon as clipping operations are
+       performed in the same LayerInfo.
+
+       This function also releases the BitMap linked to by the ClipRect.
+       In case you disposed this BitMap already, make sure that you
+       NULL cliprect->BitMap before calling this function.
+
+       Note: this function used to be private, since you should never
+       play with layer cliprects yourself and never attach this cliprect
+       to a layer yourself. Now it is public, with the only purpose of
+       being of support in generating alpha cliprects to be used with
+       ChangeLayerAlpha(), LAYA_AlphaClips or "alpha hooks" for custom
+       layer transparency.
+
+    INPUTS
+       li - pointer to the LayerInfo the ClipRect has been allocated
+            from by means of AllocClipRect()
+
+    RESULTS
+
+    BUGS
+
+    SEE ALSO
+       AllocClipRect, ChangeLayerAlpha, graphics/clip.h
+
+layers.library/GetBackFillHookAttrsA                 layers.library/GetBackFillHookAttrsA
+
+    NAME
+       GetBackFillHookAttrsA -- Query backfill hook attributes. (V45)
+
+    SYNOPSIS
+       result = GetBackFillHookAttrsA( hook, tags )
+
+       ULONG GetBackFillHookAttrsA( struct Hook *, struct TagItem * );
+
+
+       result = GetBackFillHookAttrs( hook, ... )
+
+       ULONG GetBackFillHookAttrs( struct Hook *, ... );
+
+    FUNCTION
+       Used to get the attributes of a backfill hook.
+
+    INPUTS
+       tags - a tag item list:
+           BFHA_APen (UWORD) - foreground pen.
+           BFHA_BPen (UWORD) - background pen.
+           BFHA_DrMd (UWORD) - drawing mode.
+           BFHA_Pattern (UWORD *) - filling pattern. If NULL, then
+               solid APen.
+           BFHA_PatSize (WORD) - simple pattern has 2^BFHA_PatSize UWORDs.
+               If negative, it's a colored pattern.
+           BFHA_BitMap (struct BitMap *) - BitMap to fill the layer with.
+           BFHA_Width, BFHA_Height (UWORD) - size of BitMap.
+           BFHA_OffsetX, BFHA_OffsetY (UWORD) - the offsets within the BitMap.
+
+    RESULT
+       result - the number of the first attribute that was not recognized by this
+        function (1..n) or 0 for success
+
+    NOTES
+       The ti_Data field of each tag item must point to a 32-bit variable to
+       be filled in.
+
+    SEE ALSO
+       SetBackFillHookAttrsA
+
+layers.library/GetLayerInfoAttrsA                       layers.library/GetLayerInfoAttrsA
+
+    NAME
+       GetLayerInfoAttrsA -- Query LayerInfo attributes. (V53)
+
+    SYNOPSIS
+       result = GetLayerInfoAttrsA( layerinfo, tags )
+
+       ULONG GetLayerInfoAttrsA( struct Layer_Info *, struct TagItem * );
+
+
+       result = GetLayerInfoAttrs( layerinfo, ... )
+
+       ULONG GetLayerInfoAttrs( struct Layer_Info *, ... );
+
+    FUNCTION
+       Used to get some attributes of a LayerInfo.
+
+    INPUTS
+       tags - a tag item list:
+           LAYERINFO_BackFillHook (struct Hook **) - backfill hook for blanking
+               the background.
+           LAYERINFO_Bounds (struct Rectangle **) - clipping bounds for all of
+               the LayerInfo's layers.
+
+       Any other tags are system private for now.
+
+    RESULT
+       result - the number of attributes successfully retrieved
+
+    NOTES
+       The ti_Data field of each tag item must point to a 32-bit variable to
+       be filled in.
+
+    SEE ALSO
+       SetLayerInfoAttrsA
+
+layers.library/HideLayer                                         layers.library/HideLayer
+
+    NAME
+       HideLayer -- Make layer invisible. (V45)
+
+    SYNOPSIS
+       result = HideLayer( l )
+
+       LONG HideLayer( struct Layer * );
+
+    FUNCTION
+       Move this layer behind the backmost layer and make all
+       of its cliprects invisible. For LAYERSMART layers, copy
+       all image data into the backing store of the layer.
+       This operation may generate refresh events in other layers
+       associated with this layer's Layer_Info structure.
+
+    INPUTS
+       l - pointer to a layer to be hidden
+
+    RESULTS
+       result - TRUE if operation successful
+                FALSE if operation unsuccessful (probably out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/InitLayers                                       layers.library/InitLayers
+
+    NAME
+       InitLayers -- Initialize Layer_Info structure.
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+
+    SYNOPSIS
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+       InitLayers( li )
+
+       VOID InitLayers( struct Layer_Info * );
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+
+    FUNCTION
+       Initialize Layer_Info structure in preparation to use
+       other layer operations on this list of layers.
+       Make the layers unlocked (open), available to layer operations.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+
+    BUGS
+
+    SEE ALSO
+       NewLayerInfo, DisposeLayerInfo, graphics/layers.h
+
+layers.library/InstallClipRegion                         layers.library/InstallClipRegion
+
+    NAME
+       InstallClipRegion -- Install clip region in layer.
+
+    SYNOPSIS
+       oldclipregion = InstallClipRegion( l,  region )
+
+       struct Region *InstallClipRegion( struct Layer *,
+                                         CONST struct Region * );
+
+    FUNCTION
+       Installs a transparent clip region in the layer. All
+       subsequent graphics calls will be clipped to this region.
+       You MUST remember to call InstallClipRegion(l,NULL) before
+       calling DeleteLayer(l) or the Intuition function CloseWindow()
+       if you have installed a non-NULL ClipRegion in l.
+
+    INPUTS
+       l - pointer to a layer
+       region - pointer to a region
+
+    RESULTS
+       oldclipregion - the pointer to the previous ClipRegion that was
+           installed. Returns NULL if no previous ClipRegion installed.
+           Returns "region" in case it could not install the user clip
+           region, for example because it ran out of memory.
+
+    NOTES
+       In V44 and before, if the system ran out of memory during this
+       function, it would not install the user cliprects, but would also
+       sweep away the previously installed cliprects, hence would leave
+       the layer completely unclipped. This has been fixed in V45.
+       Note that you should therefore check the result code against
+       your clip region. In case they are equal, the clip region
+       could not be installed.
+       Removing a clip region (i.e. installing NULL) will always work.
+
+    BUGS
+       If you try to remove a user clip region while the layer is
+       updating, i.e. BeginUpdate() has been called, then this
+       function may erroneously insert cliprects that are not
+       part of the damage list into the layer if layers runs low
+       on memory. Note that calling InstallClipRegion() under
+       this condition is discouraged.
+       If this function runs low on memory for removing a clip
+       region otherwise, the resulting layer will be still in valid
+       state, but the cliprect layout may be sub-optimal. This gets
+       fixed on the next layer resize or depth-arrange operation.
+
+    SEE ALSO
+       BeginUpdate, EndUpdate,
+       graphics/layers.h, graphics/clip.h, graphics/regions.h
+
+layers.library/InstallLayerHook                           layers.library/InstallLayerHook
+
+    NAME
+       InstallLayerHook -- Safely install a new layer backfill hook. (V36)
+
+    SYNOPSIS
+       oldhook = InstallLayerHook( layer, hook )
+
+       struct Hook *InstallLayerHook( struct Layer *, struct Hook * );
+
+    FUNCTION
+       Installs a new layer backfill hook, waiting until it is safe to do
+       so. Locks the layer while substituting the new hook and removing the
+       old one. If a new hook is not provided, will install the default layer
+       backfill hook.
+
+    INPUTS
+       layer - pointer to the layer in which to install the backfill hook.
+       hook - pointer to layer callback hook which will be called, with
+              object == pointer to the RastPort the hook shall render to
+              and message == pointer to a BackFillMessage structure.
+
+              The BackFillMessage structure is defined as
+
+              struct BackFillMessage
+              {
+                  struct Layer     *Layer;    /* This layer */
+                  struct Rectangle  Bounds;   /* Rectangle to fill */
+                  LONG              OffsetX;  /* Pattern X offset */
+                  LONG              OffsetY;  /* Pattern Y offset */
+              };
+
+              This hook should fill the rectangle in the RastPort defined by
+              the message's Bounds with the backfill pattern appropriate for
+              the message's OffsetX and OffsetY.
+
+              If hook is LAYERS_BACKFILL, the default backfill is used
+              for the layer (same as pre-2.0).
+
+              As of V39:
+              If hook is LAYERS_NOBACKFILL, the layer will not be
+              backfilled (NO-OP).
+
+    RESULTS
+       oldhook - pointer to the layer backfill hook that was previously
+                 active.  Returns NULL (i.e. LAYERS_BACKFILL) if it was
+                 the default hook.
+                 In V39, it could return 1 (i.e. LAYERS_NOBACKFILL) if
+                 there was no hook.
+
+    EXAMPLE
+       The following hook is a very simple example that does rather little
+       but gives the basis idea of what is going on.
+
+       *
+       * This is the code called by the layer hook...
+       * Note that some other setup is required for this to work, including
+       * the definition of the PrivateData structure (pd_...) and the
+       * definition of the BitMapPattern structure (bmp_...)
+       *
+       CoolHook:       xdef    CoolHook
+                       movem.l d2-d7/a3-a6,-(sp) ; Save these...
+                       move.l  h_SubEntry(a0),a4 ; (my private data #1 here)
+                       move.l  h_Data(a0),a5     ; Put data into address reg
+       *
+       * Now, we do the rendering...
+       * Note that the layer may not be important...  But it is here...
+       *
+                       move.l  (a1)+,a0          ; Get the layer...
+       *
+       * a1 now points at the rectangle...
+       *
+                       move.l  pd_GfxBase(a4),a6 ; Point at GfxBase
+                       move.l  bmp_Pattern(a5),d0; Get PatternBitMap
+                       beq     SimpleCase        ; None?  Simple (0) case
+       *
+       * Now do the complex case of a pattern...
+       *
+                       move.l  a1,a3             ; Pointer to rectangle
+                       addq.l  #8,a1             ; Get past rectangle
+                       move.l  (a1)+,d2          ; X Offset (For pattern)
+                       move.l  (a1)+,d3          ; Y Offset
+               ;
+               ; Whatever complex blitting you would do in the complex case
+               ; goes here
+               ;
+       *
+       * No bitmap, so just do the simple (0) minterm case...
+       *
+       SimpleCase:     moveq.l #0,d2             ; Clear d2
+                       move.w  ra_MinX(a1),d2    ; Get X pos
+       *
+                       moveq.l #0,d3
+                       move.w  ra_MinY(a1),d3    ; Get Y pos
+       *
+                       moveq.l #0,d4
+                       move.w  ra_MaxX(a1),d4
+                       sub.l   d2,d4
+                       addq.l  #1,d4             ; Get X size
+       *
+                       moveq.l #0,d5
+                       move.w  ra_MaxY(a1),d5
+                       sub.l   d3,d5
+                       addq.l  #1,d5             ; Get Y size
+       *
+                       move.l  d2,d0             ; X Source
+                       move.l  d3,d1             ; Y Source
+                       moveq.l #0,d6             ; NULL minterm
+                       moveq.l #-1,d7            ; FF mask
+       *
+                       move.l  rp_BitMap(a2),a1  ; Get bitmap
+                       move.l  a1,a0
+                       CALLSYS BltBitMap         ; Do the backfill-0
+       *
+       HookDone:       movem.l (sp)+,d2-d7/a3-a6 ; Restore
+                       rts
+
+    NOTES
+       You should *not* use "layered" rendering functions on the RastPort you
+       are passed back.  Generally, you will wish to do BitMap operations
+       such as BltBitMap().  The callback is a raw, low-level rendering
+       callback.  If you need to call a rendering operation with a RastPort,
+       make sure you use a copy of the RastPort and NULL its Layer pointer.
+
+    BUGS
+
+    SEE ALSO
+       graphics/clip.h utility/hooks.h
+
+layers.library/InstallLayerInfoHook                   layers.library/InstallLayerInfoHook
+
+    NAME
+       InstallLayerInfoHook -- Install a backfill hook for non-layer. (V39)
+
+    SYNOPSIS
+       oldhook = InstallLayerInfoHook( li, hook )
+
+       struct Hook *InstallLayerInfoHook( struct Layer_Info *,
+                                          CONST struct Hook * );
+
+    FUNCTION
+       This function will install a backfill hook for the Layer_Info
+       structure passed.  This backfill hook will be used to clear the
+       background area where no layer exists.  The hook function is
+       passed the RastPort and the bounds just like the layer backfill
+       hook.  Note that this hook could be called for any layer.
+
+    INPUTS
+       li - pointer to the LayerInfo in which to install the backfill hook.
+
+       hook - pointer to layer callback hook which will be called, with
+              object == pointer to the RastPort the hook shall render to
+              and message == pointer to a BackFillMessage structure.
+
+              The BackFillMessage structure is defined as
+
+              struct BackFillMessage
+              {
+                  struct Layer     *Layer;    /* Undefined, ignore this */
+                  struct Rectangle  Bounds;   /* Rectangle to fill */
+                  LONG              OffsetX;  /* Undefined, ignore this */
+                  LONG              OffsetY;  /* Undefined, ignore this */
+              };
+
+              This hook should fill the rectangle in the RastPort defined by
+              the message's Bounds with the backfill pattern appropriate for
+              the given rectangle's coordinates.
+              The message's Layer and OffsetX/Y fields have no meaning for
+              a LayerInfo backfill hook.
+
+              If hook is LAYERS_BACKFILL, the default backfill is used
+              (same as pre-2.0).
+
+              If hook is LAYERS_NOBACKFILL, there will be no backfill
+              (NO-OP).
+
+    RESULTS
+       oldhook - Returns the backfill hook that was in the LayerInfo.
+                 Returns LAYERS_BACKFILL if the default was installed.
+                 Returns LAYERS_NOBACKFILL if there was a NO-OP hook.
+                 Returns -1 if there was some failure.
+
+    EXAMPLE
+       See the example in InstallLayerHook().  Note that both the Layer
+       pointer and the OffsetX/Y values are not available in the
+       LayerInfo backfill hook.
+
+    NOTES
+       When the hook is first installed, it is *NOT* called.  It is up
+       to the application to know if it is safe to fill in the area.
+       Since the hook will be called when a layer is deleted, the easiest
+       way to have layers call this hook is to create and delete a backdrop
+       layer that is the size of the area.
+
+       Also, note that currently the first long word of the hook message
+       contains an undefined value. This value may look like a layer
+       pointer. It is *not* a layer pointer.
+
+       You should *not* use "layered" rendering functions on the RastPort you
+       are passed back.  Generally, you will wish to do BitMap operations
+       such as BltBitMap().  The callback is a raw, low-level rendering
+       callback.  If you need to call a rendering operation with a RastPort,
+       make sure you use a copy of the RastPort and NULL its Layer pointer.
+
+    SEE ALSO
+       InstallLayerHook
+
+layers.library/LayerOccluded                                 layers.library/LayerOccluded
+
+    NAME
+       LayerOccluded -- Is layer occluded by any other layer? (V45)
+
+    SYNOPSIS
+       occluded = LayerOccluded( l )
+
+       LONG LayerOccluded( struct Layer * );
+
+    FUNCTION
+       This function checks whether the indicated layer is occluded
+       by any other layer of the same LayerInfo. It returns FALSE
+       in case the layer is fully visible, or returns TRUE if parts
+       of this layer are covered by any other layer of the same
+       LayerInfo.
+
+    INPUTS
+       l - pointer to Layer structure
+
+    RESULTS
+       occluded - a boolean TRUE/FALSE indicator
+
+    NOTES
+       You should at least lock the LayerInfo of the layer or the
+       result is unpredictable as the layer arrangement may change
+       while this function is running.
+
+    SEE ALSO
+       LockLayerInfo, graphics/layers.h
+
+layers.library/LockLayer                                         layers.library/LockLayer
+
+    NAME
+       LockLayer -- Lock layer to make changes to ClipRects.
+
+    SYNOPSIS
+       LockLayer( dummy, l )
+
+       VOID LockLayer( LONG, struct Layer * );
+
+    FUNCTION
+       Make this layer unavailable for other tasks to use.
+       If another task is already using this layer then wait for
+       it to complete and then reserve the layer for your own use.
+       (This function does the same as graphics.library/LockLayerRom().)
+
+       Note: if you wish to lock MORE THAN ONE layer at a time, you
+       must call LockLayerInfo() before locking those layers and
+       then call UnlockLayerInfo() when you have finished. This
+       is to prevent system "deadlocks".
+
+       Further Note: while you hold the lock on a layer, Intuition will block
+       on operations such as sizing, dragging and depth arranging windows and
+       displaying menus in this layer's screen. It is recommended that
+       YOU do not make Intuition function calls while the layer is locked.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+
+    BUGS
+
+    SEE ALSO
+       UnlockLayer, LockLayerInfo, UnlockLayerInfo,
+       graphics.library/LockLayerRom, graphics/layers.h, graphics/clip.h
+
+layers.library/LockLayerInfo                                 layers.library/LockLayerInfo
+
+    NAME
+       LockLayerInfo -- Lock the Layer_Info structure.
+
+    SYNOPSIS
+       LockLayerInfo( li )
+
+       VOID LockLayerInfo( struct Layer_Info * );
+
+    FUNCTION
+       Before doing an operation that requires the Layer_Info
+       structure, make sure that no other task is also using the
+       Layer_Info structure.  LockLayerInfo() returns when the
+       LayerInfo belongs to the calling task.  There should be
+       a matching UnlockLayerInfo() for every LockLayerInfo().
+
+       Note: Most layer routines presently LockLayerInfo() when they
+       start up and UnlockLayerInfo() as they exit.  Programmers
+       will need to use these Lock/Unlock routines if they wish
+       to do something with the Layer structure that is not
+       supported by the layers.library.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+
+    BUGS
+
+    SEE ALSO
+       UnlockLayerInfo, graphics/layers.h
+
+layers.library/LockLayers                                       layers.library/LockLayers
+
+    NAME
+       LockLayers -- Lock all layers from graphics output.
+
+    SYNOPSIS
+       LockLayers( li )
+
+       VOID LockLayers( struct Layer_Info * );
+
+    FUNCTION
+       First calls LockLayerInfo().
+       Make all layers in this layer list locked.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+
+    BUGS
+       V44 and below might have failed on a low-memory situation.
+       In this case, layer cliprects, especially user cliprects
+       might have been un-installed and incorrect. This has been
+       fixed in V45.
+       As a side effect, LockLayers() removes all user- and
+       damage-list constraints of the layer such that it will
+       become draw-able in its full rectangle. Whether this side
+       effect is desirable or not is arguable, but we leave it
+       like this for now for backwards compatibility. The cliprect
+       layout LockLayers() results in is sub-optimal, but correct.
+       UnlockLayers() restores the original cliprect layout.
+
+    SEE ALSO
+       UnlockLayer, LockLayerInfo, graphics/layers.h
+
+layers.library/MoveLayer                                         layers.library/MoveLayer
+
+    NAME
+       MoveLayer -- Move layer to new position in BitMap.
+
+    SYNOPSIS
+       result = MoveLayer( dummy, l, dx, dy )
+
+       LONG MoveLayer( LONG, struct Layer *, LONG, LONG );
+
+    FUNCTION
+       Move this layer to new position in shared BitMap.
+       If any refresh layers become revealed, collect damage and
+       set REFRESH bit in layer Flags.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+       dx - delta to add to current x position
+       dy - delta to add to current y position
+
+    RETURNS
+       result - TRUE if operation successful
+                FALSE if failed (out of memory)
+
+    BUGS
+       May not handle (dx,dy) which attempts to move the layer outside the
+       layer's RastPort->BitMap bounds. However, starting with V45, you can
+       use SetLayerInfoBounds() to enable layers to cross the bitmap bounds.
+
+    SEE ALSO
+       graphics/layers.h, graphics/clip.h
+
+layers.library/MoveLayerInFrontOf                       layers.library/MoveLayerInFrontOf
+
+    NAME
+       MoveLayerInFrontOf -- Put layer in front of another layer.
+
+    SYNOPSIS
+       result = MoveLayerInFrontOf( layertomove, targetlayer )
+
+       LONG MoveLayerInFrontOf( struct Layer *, struct Layer * );
+
+    FUNCTION
+       Move this layer in front of target layer, swapping bits
+       in and out of the display with other layers.
+       If this is a refresh layer then collect damage list and
+       set the LAYERREFRESH bit in layer->Flags if redraw required.
+
+       Note: this operation may generate refresh events in other layers
+             associated with this layer's Layer_Info structure.
+
+    INPUTS
+       layertomove - pointer to layer which should be moved
+       targetlayer - pointer to target layer in front of which to move layer
+
+    RESULTS
+       result - TRUE if operation successful
+                FALSE if operation unsuccessful (probably out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/MoveSizeLayer                                 layers.library/MoveSizeLayer
+
+    NAME
+       MoveSizeLayer -- Position/size layer. (V36)
+
+    SYNOPSIS
+       result = MoveSizeLayer( layer, dx, dy, dw, dh )
+
+       LONG MoveSizeLayer( struct Layer *, LONG, LONG, LONG, LONG );
+
+    FUNCTION
+       Change upper left and lower right position of layer.
+
+    INPUTS
+       l - pointer to a layer
+       dx,dy - change upper left corner by (dx,dy)
+       dw,dh - change size by (dw,dh)
+
+    RETURNS
+       result - TRUE if operation successful
+                FALSE if failed (due to out of memory)
+                FALSE if failed (due to illegal layer bounds)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, graphics/clip.h
+
+layers.library/NewLayerInfo                                   layers.library/NewLayerInfo
+
+    NAME
+       NewLayerInfo -- Allocate and Initialize full Layer_Info structure.
+
+    SYNOPSIS
+       result = NewLayerInfo()
+
+       struct Layer_Info *NewLayerInfo( VOID );
+
+    FUNCTION
+       Allocate memory required for full Layer_Info structure.
+       Initialize Layer_Info structure in preparation to use
+       other layer operations on this list of layers.
+       Make the LayerInfo unlocked (open).
+
+    INPUTS
+       None
+
+    RESULT
+       result - pointer to Layer_Info structure if successful
+                NULL if not enough memory
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/ScrollLayer                                     layers.library/ScrollLayer
+
+    NAME
+       ScrollLayer -- Scroll around in a SuperBitMap, translate coordinates
+                      in non-SuperBitMap layer.
+
+    SYNOPSIS
+       ScrollLayer( dummy, l, dx, dy )
+
+       VOID ScrollLayer( LONG, struct Layer *, LONG, LONG );
+
+    FUNCTION
+       For a SuperBitMap Layer:
+       Update the SuperBitMap from the layer display, then copy bits
+       between Layer and SuperBitMap to reposition layer over different
+       portion of SuperBitMap.
+
+       For non-SuperBitMap layers, all (x,y) pairs are adjusted by
+       the scroll (x,y) value in the layer.  To cause (0,0) to actually
+       be drawn at (3,10) use ScrollLayer(-3,-10). This can be useful
+       along with InstallClipRegion() to simulate Intuition GZZWindows
+       without the overhead of an extra layer.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+       dx - delta to add to current x scroll value
+       dy - delta to add to current y scroll value
+
+    BUGS
+       May not handle (dx,dy) which attempts to move the layer outside the
+       layer's SuperBitMap bounds.
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/SetBackFillHookAttrsA                 layers.library/SetBackFillHookAttrsA
+
+    NAME
+       SetBackFillHookAttrsA -- Change backfill hook attributes. (V45)
+
+    SYNOPSIS
+       result = SetBackFillHookAttrsA( hook, tags )
+
+       ULONG SetBackFillHookAttrsA( struct Hook *, struct TagItem * );
+
+
+       result = SetBackFillHookAttrs( hook, ... )
+
+       ULONG SetBackFillHookAttrs( struct Hook *, ... );
+
+    FUNCTION
+       Used to change the attributes of a backfill hook.
+
+    INPUTS
+       tags - a tag item list:
+           BFHA_APen (UWORD) - foreground pen for simple patterns (default ~0).
+           BFHA_BPen (UWORD) - background pen for simple patterns (default ~0).
+           BFHA_DrMd (UWORD) - drawing mode to use (defaults to JAM2).
+           BFHA_Pattern (UWORD *) - pattern to use. If NULL (default), then
+               solid APen.
+           BFHA_PatSize (WORD) - simple pattern has 2^BFHA_PatSize UWORDs.
+               If negative, use colored pattern. Be sure to supply
+               enough values in BFHA_Pattern for the number of bitplanes
+               that the screen has.
+           BFHA_BitMap (struct BitMap *) - BitMap to fill the layer with,
+               overrides BFHA_Pattern.
+           BFHA_Width, BFHA_Height (UWORD) - size of BitMap.
+           BFHA_OffsetX, BFHA_OffsetY (UWORD) - the offsets within the BitMap.
+
+    RESULT
+       result - the number of the first attribute that was not recognized by this
+        function (1..n) or 0 for success
+
+    SEE ALSO
+       CreateBackFillHookA, GetBackFillHookAttrsA
+
+layers.library/SetLayerInfoAttrsA                       layers.library/SetLayerInfoAttrsA
+
+    NAME
+       SetLayerInfoAttrsA -- Change LayerInfo attributes. (V53)
+
+    SYNOPSIS
+       result = SetLayerInfoAttrsA( layerinfo, tags )
+
+       ULONG SetLayerInfoAttrsA( struct Layer_Info *, struct TagItem * );
+
+
+       result = SetLayerInfoAttrs( layerinfo, ... )
+
+       ULONG SetLayerInfoAttrs( struct Layer_Info *, ... );
+
+    FUNCTION
+       Used to change some attributes of a LayerInfo.
+
+    INPUTS
+       tags - a tag item list:
+           LAYERINFO_BackFillHook (struct Hook *) - backfill hook for blanking
+               the background. Equivalent to using InstallLayerInfoHook().
+           LAYERINFO_Bounds (struct Rectangle *) - clipping bounds for all of
+               the LayerInfo's layers. Equivalent to using SetLayerInfoBounds().
+
+       Any other tags are system private for now.
+
+    RESULT
+       result - the number of attributes successfully set
+
+    SEE ALSO
+       GetLayerInfoAttrsA, InstallLayerInfoHook, SetLayerInfoBounds
+
+layers.library/SetLayerInfoBounds                       layers.library/SetLayerInfoBounds
+
+    NAME
+       SetLayerInfoBounds -- Define clipping bounds for all layers. (V45)
+
+    SYNOPSIS
+       ok = SetLayerInfoBounds( li, bounds );
+
+       LONG SetLayerInfoBounds( struct Layer_Info *, struct Rectangle * );
+
+    FUNCTION
+       This function defines a global clipping rectangle for all
+       layers of the LayerInfo. Graphics outside of this rectangle
+       will be off-screen and non-visible. The purpose of this
+       function is therefore to allow windows that are partially
+       off-screen by installing a LayerInfo clipping rectangle of
+       the screen size.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       bounds - rectangle describing hard clipping bounds for
+                this LayerInfo. The contents of the rectangle
+                is copied, and 'bounds' may be re-used as soon
+                as SetLayerInfoBounds returns.
+
+    RESULTS
+       ok - a boolean success/failure indicator (TRUE on success)
+
+    NOTES
+       This function absolutely MUST be called before the first
+       layer gets installed into this LayerInfo. It will not affect
+       clipping of already existing layers.
+       Default LayerInfo clipping is MIN_WORD to MAX_WORD, i.e.
+       no clipping takes place. This reproduces the V40 behavior.
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/SetLayerOpaqueness                       layers.library/SetLayerOpaqueness
+
+    NAME
+       SetLayerOpaqueness -- Change the overall opaqueness of a layer. (V53)
+
+    SYNOPSIS
+       previous = SetLayerOpaqueness( layer, opaqueness )
+
+       ULONG SetLayerOpaqueness( struct Layer *, ULONG );
+
+    FUNCTION
+       Changes the overall opaqueness of the specified layer. The passed
+       opaqueness can range from zero (invisible) to 255 (fully opaque).
+       The layer's previous opaqueness is returned, or ~0UL to indicate
+       an error. You may pass ~0UL to get the layer's current opaqueness
+       without changing it.
+
+    INPUTS
+       layer - pointer to a layer
+       opaqueness - new opaqueness for the layer
+
+    RESULTS
+       previous - the previous opaqueness level of the layer if all went
+        well, ~0UL if an error occurred due to an incorrect parameter
+
+    NOTES
+       This function will only have an effect if the layer's LayerInfo
+       belongs to a screen using off-screen rendering and compositing.
+
+    BUGS
+
+    SEE ALSO
+       ChangeLayerAlpha
+
+layers.library/ShowLayer                                         layers.library/ShowLayer
+
+    NAME
+       ShowLayer -- Make invisible layer visible again. (V45)
+
+    SYNOPSIS
+       result = ShowLayer( l , other )
+
+       LONG ShowLayer( struct Layer *, struct Layer * );
+
+    FUNCTION
+       Make this layer visible again and move it in front of the
+       specified "other" layer. For LAYERSMART layers, copy the
+       image from the backing store back on the screen; for
+       simple layers, generate appropriate damage.
+       If the layer is not hidden, this call does nothing.
+       This operation may generate refresh events in other layers
+       associated with this layer's Layer_Info structure.
+
+    INPUTS
+       l - pointer to a hidden layer to be revealed
+       other - pointer to a layer to move in front of.
+               For LAYER_BACKMOST, the newly-revealed layer is moved into
+               the background behind layers of similar kind;
+               for LAYER_FRONTMOST, the newly-revealed layer is moved on
+               top of the layer stack of layers of similar kind.
+
+    RESULTS
+       result - TRUE if operation successful
+                FALSE if operation unsuccessful (probably out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/SizeLayer                                         layers.library/SizeLayer
+
+    NAME
+       SizeLayer -- Change the size of this layer.
+
+    SYNOPSIS
+       result = SizeLayer( dummy, l, dx, dy )
+
+       LONG SizeLayer( LONG, struct Layer *, LONG, LONG );
+
+    FUNCTION
+       Change the size of this layer by (dx,dy). The lower right hand
+       corner is extended to make room for the larger layer.
+       If there is a SuperBitMap for this layer then copy pixels into
+       or out of the layer depending on whether the layer increases or
+       decreases in size.  Collect damage list for those layers that may
+       need to be refreshed if damage occurred.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+       dx - delta to add to current x size
+       dy - delta to add to current y size
+
+    RESULTS
+       result - TRUE if operation successful
+                FALSE if failed (out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, graphics/clip.h
+
+layers.library/SortLayerCR                                     layers.library/SortLayerCR
+
+   NAME
+       SortLayerCR -- Sort the layer's cliprects for scroll raster. (V39)
+
+   SYNOPSIS
+       SortLayerCR(layer, dx, dy)
+
+       VOID SortLayerCR(struct Layer *, WORD, WORD);
+
+   FUNCTION
+       This function will sort the given layer's cliprects such that a
+       scroll in the direction given will be optimal.
+
+   NOTE
+       This routine is for Layers/Graphics internal use only.
+       The layer must be locked before calling this routine.
+
+   INPUTS
+       layer   - the layer to be sorted
+       dx      - x scroll offset
+       dy      - y scroll offset
+
+   SEE ALSO
+
+layers.library/SwapBitsRastPortClipRect           layers.library/SwapBitsRastPortClipRect
+
+    NAME
+       SwapBitsRastPortClipRect -- Swap bits between common bitmap
+                                   and obscured ClipRect.
+
+    SYNOPSIS
+       SwapBitsRastPortClipRect( rp, cr )
+
+       VOID SwapBitsRastPortClipRect( struct RastPort *, struct ClipRect * );
+
+    FUNCTION
+       Support routine useful for those that need to do some
+       operations not done by the layer library.  Allows programmer
+       to swap the contents of a small BitMap with a subsection of
+       the display. This is accomplished without using extra memory.
+       The bits in the display RastPort are exchanged with the
+       bits in the ClipRect's BitMap.
+
+       Note: the ClipRect structures which the layer library allocates are
+       actually a little bigger than those described in the graphics/clip.h
+       include file.  So be warned that it is not a good idea to have
+       instances of ClipRects in your code.
+
+    INPUTS
+       rp - pointer to RastPort
+       cr - pointer to ClipRect to swap bits with
+
+    NOTE
+       Because the blit operation started by this function is done
+       asynchronously, it is imperative that a WaitBlit() be performed
+       before releasing or using the processor to modify any of the
+       associated structures.
+
+    BUGS
+
+    SEE ALSO
+       graphics/clip.h, graphics/rastport.h
+
+layers.library/ThinLayerInfo                                 layers.library/ThinLayerInfo
+
+    NAME
+       ThinLayerInfo -- Convert 1.1 LayerInfo to 1.0 LayerInfo.
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+
+    SYNOPSIS
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+       ThinLayerInfo( li )
+
+       VOID ThinLayerInfo( struct Layer_Info * );
+       OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+
+    FUNCTION
+       In V45, this function only flushes the cliprect scratch list
+       of the LayerInfo. New software MUST use DisposeLayerInfo()
+       instead.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+
+    BUGS
+
+    SEE ALSO
+       DisposeLayerInfo, FattenLayerInfo, graphics/layers.h
+
+layers.library/UnlockLayer                                     layers.library/UnlockLayer
+
+    NAME
+       UnlockLayer -- Unlock layer and allow graphics routines to use it.
+
+    SYNOPSIS
+       UnlockLayer( l )
+
+       VOID UnlockLayer( struct Layer * );
+
+    FUNCTION
+       When finished changing the ClipRects or whatever you were
+       doing with this layer you must call UnlockLayer() to allow
+       other tasks to proceed with graphic output to the layer.
+
+    INPUTS
+       l - pointer to a layer
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h, graphics/clip.h
+
+layers.library/UnlockLayerInfo                             layers.library/UnlockLayerInfo
+
+    NAME
+       UnlockLayerInfo -- Unlock the Layer_Info structure.
+
+    SYNOPSIS
+       UnlockLayerInfo( li )
+
+       VOID UnlockLayerInfo( struct Layer_Info * );
+
+    FUNCTION
+       After the operation is complete that required a LockLayerInfo(),
+       unlock the Layer_Info structure so that other tasks may affect
+       the layers.
+
+    INPUTS
+       li - pointer to the Layer_Info structure
+
+     BUGS
+
+     SEE ALSO
+       LockLayerInfo, graphics/layers.h
+
+layers.library/UnlockLayers                                   layers.library/UnlockLayers
+
+    NAME
+       UnlockLayers -- Unlock all layers from graphics output.
+                       Restart graphics output to layers that have
+                       been waiting.
+
+    SYNOPSIS
+       ok = UnlockLayers( li )
+
+       BOOL UnlockLayers( struct Layer_Info * );
+
+    FUNCTION
+       Make all layers in this layer list unlocked.
+       Then calls UnlockLayerInfo().
+
+    INPUTS
+       li - pointer to the Layer_Info structure
+
+    RESULTS
+       ok - a boolean TRUE/FALSE condition for backwards
+            compatibility. V45 and above will always return TRUE.
+
+    BUGS
+       V44 and below might have failed on a low-memory situation.
+       In this case, layer cliprects, especially user cliprects
+       might have been un-installed and incorrect. This has been
+       fixed in V45.
+
+    SEE ALSO
+       LockLayers, UnlockLayer, graphics/layers.h
+
+layers.library/UpfrontLayer                                   layers.library/UpfrontLayer
+
+    NAME
+       UpfrontLayer -- Put layer in front of all other layers.
+
+    SYNOPSIS
+       result = UpfrontLayer( dummy, l )
+
+       LONG UpfrontLayer( LONG, struct Layer * );
+
+    FUNCTION
+       Move this layer to the most upfront position swapping bits
+       in and out of the display with other layers.
+       If this is a refresh layer then collect damage list and
+       set the LAYERREFRESH bit in layer->Flags if redraw required.
+       By clearing the LAYERBACKDROP bit in the layer's Flags you may
+       bring a backdrop layer up to the front of all other layers;
+       otherwise a backdrop layer will only be brought up to front of
+       all other backdrop layers (if any exist).
+       Similarly, a non-staytop layer can only be moved to the front
+       of all other non-staytop layers; to bring it in front of
+       staytop layers (if any exist), set first the LAYERSTAYTOP bit
+       in the layer's Flags.
+
+       Note: this operation may generate refresh events in other layers
+             associated with this layer's Layer_Info structure.
+
+    INPUTS
+       dummy - unused
+       l - pointer to a layer
+
+    RESULTS
+       result - TRUE if operation successful
+                FALSE if operation unsuccessful (probably out of memory)
+
+    BUGS
+
+    SEE ALSO
+       graphics/layers.h
+
+layers.library/WhichLayer                                       layers.library/WhichLayer
+
+    NAME
+       WhichLayer -- Which layer is this point in?
+
+    SYNOPSIS
+       layer = WhichLayer( li, x, y )
+
+       struct Layer *WhichLayer( struct Layer_Info *, WORD, WORD );
+
+    FUNCTION
+       Starting at the topmost layer check to see if this point (x,y)
+       occurs in this layer. If it does return the pointer to this
+       layer. Return NULL if there is no layer at this point.
+
+    INPUTS
+       li - pointer to Layer_Info structure
+       (x,y) - coordinate in the BitMap
+
+    RESULTS
+       layer - pointer to the topmost layer that this point is in
+               NULL if this point is not in a layer
+
+    NOTES
+       You should at least lock the LayerInfo of the layer or the
+       result is unpredictable as the layer arrangement may change
+       while this function is running.
+
+    SEE ALSO
+       graphics/layers.h
+
+

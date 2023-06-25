@@ -1,0 +1,984 @@
+TABLE OF CONTENTS
+
+texteditor.gadget/--datasheet--
+texteditor.gadget/GM_TEXTEDITOR_ARexxCmd
+texteditor.gadget/GM_TEXTEDITOR_BlockInfo
+texteditor.gadget/GM_TEXTEDITOR_ClearText
+texteditor.gadget/GM_TEXTEDITOR_ExportBlock
+texteditor.gadget/GM_TEXTEDITOR_ExportText
+texteditor.gadget/GM_TEXTEDITOR_HandleError
+texteditor.gadget/GM_TEXTEDITOR_InsertText
+texteditor.gadget/GM_TEXTEDITOR_MarkText
+texteditor.gadget/GM_TEXTEDITOR_Replace
+texteditor.gadget/GM_TEXTEDITOR_Search
+texteditor.gadget/TEXTEDITOR_GetClass
+texteditor.gadget/--datasheet--               texteditor.gadget/--datasheet--
+
+    NAME
+   texteditor.gadget
+
+    SUPERCLASS
+   gadgetclass
+
+    REQUIRES
+   bevel.image
+
+    DESCRIPTION
+   texteditor.gadget is a fast multiline string gadget. It can hold
+   quite large texts without noticeable slowdowns. It supports the
+   clipboard, it can show text with different styles, alignments and
+   colors. It can hold separators and has multilevel undo/redo.
+
+    METHODS
+   OM_NEW -- Create the gadget. Passed to superclass.
+
+   OM_DISPOSE -- Disposes object and then passed to superclass.
+
+   OM_SET -- Set object attributes. Passed to superclass first.
+
+   OM_UPDATE -- Update object attributes and pass to superclass.
+
+   OM_NOTIFY -- Notifies of attribute changes and pass to superclass.
+
+   OM_GET -- Obtain the value of an attribute.
+
+   GM_RENDER -- Renders the gadget imagery.
+
+   GM_HITTEST -- Determines if gadget was hit.
+
+   GM_GOACTIVE -- Handles activation.
+
+   GM_HANDLEINPUT -- All input is processed.
+
+   GM_GOINACTIVE -- Deactivates input.
+
+   GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+                GDOMAIN_MAXIMUM dimensions.
+
+   GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+   GM_LAYOUT -- Calculate relative gadget coordinates.
+
+   GM_EXTENT -- Reports gadget rendering extent.
+
+   GM_TEXTEDITOR_AddKeyBindings -- Not currently implemented.
+
+   GM_TEXTEDITOR_ARexxCmd -- Execute an ARexx command.
+
+   GM_TEXTEDITOR_BlockInfo -- Get currently marked area info.
+
+   GM_TEXTEDITOR_ClearText -- Clears all text in gadget.
+
+   GM_TEXTEDITOR_ExportText -- Export all the text.
+
+   GM_TEXTEDITOR_ExportBlock -- Export marked block of text.
+
+   GM_TEXTEDITOR_HandleError -- Handle text editing error.
+
+   GM_TEXTEDITOR_InsertText -- Insert text as some position.
+
+   GM_TEXTEDITOR_MacroBegin -- Not currently implemented.
+
+   GM_TEXTEDITOR_MacroEnd -- Not currently implemented.
+
+   GM_TEXTEDITOR_MacroExecute -- Not currently implemented.
+
+   GM_TEXTEDITOR_MarkText -- Mark a block of text.
+
+   GM_TEXTEDITOR_Replace -- Replace marked area with string.
+
+   GM_TEXTEDITOR_Search -- Search for string in text.
+
+   All other methods are passed to the superclass.
+
+    ATTRIBUTES
+   GA_Disabled (BOOL)
+       Used to disable the gadget and render a disabled image.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+   GA_BackFill (struct Hook *)
+       A layer backfill hook to provide a more complex
+       background pattern. See InstallLayerHook() for
+       more details about the backfill hook.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+   GA_HintInfo (CONST_STRPTR)
+       Specify the text to use as the hint info for this gadget.
+       You can change this attribute at any time, and it will over-
+       ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET).
+
+   GA_TEXTEDITOR_AreaMarked (BOOL)
+       This tag will be set to TRUE when text is marked and back to
+       FALSE when nothing is marked.
+
+       You can create a notifyevent with this tag and let your
+       cut/copy buttons become ghosted when nothing is marked.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_ColorMap (int32 *)
+       This is a map of allocated colors, which corresponds to the
+       pen number you set with GA_TEXTEDITOR_Pen.
+
+       By default the map looks like this:
+
+         0 = Normal (user configured text/highlight color)
+         1 = Shine
+         2 = Halfshine
+         3 = Background
+         4 = Halfshadow
+         5 = Shadow
+         6 = Text
+         7 = Fill
+         8 = Mark
+         9 = Screen pen 0
+        10 = Screen pen 1
+        11 = Screen pen 3
+        .. = ...
+       255 = Screen pen 246
+
+       If you supply your own colormap, then pen value 0 will still be
+       "Normal", i.e. the first entry in your colormap has pen value 1.
+
+       You are allowed to dynamically change the colormap. However if you
+       change an entry which is on-screen, then it won't have any immediate
+       effect. The idea is that you should e.g. supply a colormap with 16
+       unused int32s, allow the user to select a custom color, allocate that
+       color and store the screen pen value into the colormap. Now you can
+       use that entry as argument to GA_TEXTEDITOR_Pen.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_Contents (APTR)
+       Set the contents of this gadget. This should normally be a
+       pointer to a text buffer. If you have supplied your own
+       importhook via GA_TEXTEDITOR_ImportHook then you can set
+       this to anything you like, e.g. a filehandle.
+
+       The length of the contents can be controlled via the
+       GA_TEXTEDITOR_Length tag.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_Length (uint32) (V50)
+       Specifies the length of the GA_TEXTEDITOR_Contents in number
+       of characters instead of just processing until end-of-file
+       is reached.
+
+       This tag can only be used simultaneously with the
+       GA_TEXTEDITOR_Contents tag.
+
+       Defaults to EOF mode.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_CursorX (uint32)
+       You can get or set the cursors x position with this tag.
+       The first character on a line has position 0.
+       The position is not affected by the gadgets `autowrap' feature.
+       If you set a value higher than the length of the current line,
+       then it will automatically be truncated.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_CursorY (uint32)
+       You can get or set the cursors y position with this tag.
+       The first line has position 0. The position is not affected
+       by the gadgets `autowrap' feature. If you set a value higher than
+       the number of lines then it will automatically be truncated.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_DoubleClickHook (struct Hook *)
+       If you use the gadget in ReadOnly mode then you may want a special
+       action to take place when the user doubleclicks certain words.
+       For example, a mail or news client using this gadget to show mails.
+       You may want the user to be able to click on URL's to lookup the
+       link.
+
+       Your hook function will be called as follows:
+
+         BOOL DoubleClick(struct Hook *hook, APTR texteditor,
+                          ClickMessage *clickmsg)
+
+       The hook and texteditor object are provided. The ClickMessage
+       is defined in <gadgets/texteditor.h> and contains the contents
+       of the line and the position of the click. Your function should
+       return TRUE if it wants to stop the editor from blocking or
+       FALSE otherwise.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_ExportHook (struct Hook *)
+       This attribute selects the export hook which can currently
+       be one of the following values:
+         GV_TEXTEDITOR_ExportHook_Plain - plain text mode
+         GV_TEXTEDITOR_ExportHook_EMail - email text mode
+
+       The EMail export hook will convert a bold word to "*bold*",
+       italic words to "/italic/" and underlined words to "_underline_".
+       It also exports separators such as "<sb>" or "<tsb>".
+
+       Custom hooks are currently not supported.
+
+       Defaults to GV_TEXTEDITOR_ExportHook_Plain.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_ExportWrap (uint32)
+       This attribute allows the builtin export hooks to perform
+       wordwrap.
+
+       Defaults to 0 (no wrap).
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_FixedFont (BOOL) (V50)
+       Edit using a fixed size font.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_GET)
+
+   GA_TEXTEDITOR_Flow (uint16)
+       Set/get the current paragraphs alignment. If an area is
+       marked while you set this attribute, then the new alignment
+       will be set for the complete area.
+
+       Possible values include:
+         GV_TEXTEDITOR_Flow_Left      - left aligned
+         GV_TEXTEDITOR_Flow_Center    - centered
+         GV_TEXTEDITOR_Flow_Right     - right aligned
+         GV_TEXTEDITOR_Flow_Justified - not yet implemented
+
+       Defaults to GV_TEXTEDITOR_Flow_Left.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_HasChanged (BOOL)
+       This tag will show if the contents of the gadget has changed.
+       You can use notify on this tag, so that you can connect it with
+       a checkmark or textobject. You should set this tag to FALSE
+       whenever you export the contents of the gadget or overwrite it
+       with something new.
+
+       Even though you have set up notification on this tag you should
+       still get() it before you kill the text, because this makes it
+       possible to do some advanced testing to see if the text has
+       actually been modified. E.g. by checking the undobuffer,
+       comparing checksums or by checking whether or not the
+       textbuffer is empty (none of this is currently done, but it
+       may be in the future).
+
+       The tag is currently not affected by:
+         GA_TEXTEDITOR_Contents
+         GM_TEXTEDITOR_ClearText
+         GM_TEXTEDITOR_Export
+         GM_TEXTEDITOR_Import
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_HorizontalScroll (BOOL) (V50)
+       Turns on the horizontal scroller or not.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+   GA_TEXTEDITOR_ImportHook (struct Hook *)
+       Since this gadget allows different text styles, you can supply
+       an import hook to parse the text correctly.
+
+       This attribute selects the import hook which can currently
+       be one of the following values:
+         GV_TEXTEDITOR_ImportHook_Plain      - plain text mode
+         GV_TEXTEDITOR_ImportHook_EMail      - email text mode
+         GV_TEXTEDITOR_ImportHook_MIME       - MIME text mode
+         GV_TEXTEDITOR_ImportHook_MIMEQuoted - quoted MIME text mode
+
+
+       GV_TEXTEDITOR_ImportHook_Plain:
+
+       <ESC> + u      Set the soft style to underline.
+       <ESC> + b      Set the soft style to bold.
+       <ESC> + i      Set the soft style to italic.
+       <ESC> + n      Set the soft style back to normal.
+       <ESC> + h      Highlight the current line.
+       <ESC> + p[x]   Change to color x where x is taken from the colormap.
+                      0 means normal. The color is reset for each new line.
+
+       The following sequences are only valid at the beginning of a line.
+
+       <ESC> + l      Left justify current and following lines.
+       <ESC> + r      Right justify current and following lines.
+       <ESC> + c      Center current and following lines.
+       <ESC> + [s:x]  Create a separator. x is a bit combination of flags:
+                      Placement (mutually exclusive):
+                       LNSF_Top
+                       LNSF_Middle
+                       LNSF_Bottom
+                      Cosmetical:
+                       LNSF_StrikeThru - Draw separator on top of text.
+                       LNSF_Thick      - Make separator extra thick.
+
+
+       GV_TEXTEDITOR_ImportHook_MIME:
+
+       This hook will convert quoted-printables (e.g. "=E5") to the
+       ASCII representation, merge lines ending with a "=", wordwrap
+       the text (using the GA_TEXTEDITOR_ImportWrap value), highlight
+       all lines which start with ">", make real *bold*, /italic/,
+       _underline_ and #colored# and it will replace <sb> or <tsb>
+       with a real separator bar. It stops parsing when it reaches a
+       NULL byte.
+
+       The color used for #colored# text is colormap entry 6.
+       To override it, just supply a colormap with entry 6 set
+       to whatever color you would like.
+
+
+       GV_TEXTEDITOR_ImportHook_MIMEQuoted:
+
+       Like the MIME hook but each line gets quoted and highlighted.
+
+
+       GV_TEXTEDITOR_ImportHook_EMail:
+
+       Like the MIME hook but it doesn't convert quoted printables.
+
+
+       Custom hooks are currently not supported.
+
+       Defaults to GV_TEXTEDITOR_ImportHook_Plain.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_ImportWrap (uint32)
+       This is here to allow the builtin import hooks to perform wordwrap.
+       The builtin hooks accept a value between 4 and 1024.
+
+       Defaults to 1023.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_InsertMode (BOOL)
+       Controls text insert mode.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_Pen (uint8)
+       The value of this tag reflects the current render pen.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_Prop_DeltaFactor (uint32)
+   GA_TEXTEDITOR_HProp_DeltaFactor (uint32) (V50)
+       These tags are obsolete and always return 1.
+
+       Applicability is (OM_GET)
+
+   GA_TEXTEDITOR_Prop_Entries (uint32)
+       This value is the total number of lines in the editor.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_Prop_First (uint32)
+       Get or set the first displayed line.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_Prop_Visible (uint32)
+       This value is the number of lines that currently fit
+       in the visible area.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_HProp_Entries (uint32) (V50)
+       This value is the total number of columns in the editor.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_HProp_First (uint32) (V50)
+       Get or set the first displayed column.
+
+       Defaults to 0.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_HProp_Visible (uint32) (V50)
+       This value is the number of columns that currently fit
+       in the visible area.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_Quiet (BOOL)
+       If you need to insert a lot of text "line by line" you should
+       set this tag to TRUE before starting and then back to FALSE
+       when you are done adding text.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_ReadOnly (BOOL)
+   GA_TEXTEDITOR_ReadOnly (BOOL)
+       In read-only mode there will be:
+       - No cursor (but a normal TAB-frame).
+       - TAB will activate the next gadget (instead of alt TAB).
+       - There is no ARexx support except "Copy".
+       - GA_TEXTEDITOR_Style tags are still useable.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_UndoAvailable (BOOL)
+       This tag is set to TRUE when the user is able to undo
+       action(s) normally after editing.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_RedoAvailable (BOOL)
+       This tag is set to TRUE when the user is able to redo
+       action(s) normally after an undo.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_Separator (uint16)
+       Each line can act as a separator. A separator can be either
+       thick or thin. It can be rendered over the line's contents or
+       only on both sides of the contents.
+
+       The placement can be any of the following <gadgets/texteditor.h>:
+
+         LNSF_Top        - draw separator on top of line
+         LNSF_Middle     - draw separator in middle of line
+         LNSF_Bottom     - draw separator on bottom of line
+         LNSF_StrikeThru - strike through the line
+         LNSF_Thick      - thick separator
+
+       Applicability is (OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_StyleBold (BOOL)
+       This tag shows whether the cursor or block is over bolded
+       text or not.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_StyleItalic (BOOL)
+       This tag shows whether the cursor or block is over italicized
+       text or not.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_StyleUnderline (BOOL)
+       This tag shows whether the cursor or block is over underlined
+       text or not.
+
+       Applicability is (OM_GET, OM_NOTIFY)
+
+   GA_TEXTEDITOR_TabSize (uint32) (V50)
+       This tag allows the width of the TAB to be set.
+
+       Defaults to 4.
+
+       Applicability is (OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_TabToSpaces (BOOL) (V52)
+       This attribute will convert tabs to spaces. You can set the
+       tab width and if this is set to TRUE you will get that many
+       spaces inserted.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_TypeAndSpell (BOOL)
+       This tag is currently not supported.
+
+   GA_TEXTEDITOR_WrapBorder (uint32)
+       The gadget will insert a line break in front of the current
+       word if the cursor goes beyond the column given here.
+
+       Please remember that the gadget does real-time word wrap
+       which is much better. This tag is for special cases only.
+
+       Applicability is (OM_NEW, OM_SET, OM_GET)
+
+   GA_TEXTEDITOR_ExitHelp (BOOL) (V50)
+       Whether to exit when the help key is pressed or not.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_ErrorCode (uint32) (V50)
+       Access the last error code. See <gadgets/texteditor.h> for
+       the list of possible error codes.
+
+       See also the GM_TEXTEDITOR_HandleError method for ideas on
+       how to use this attribute.
+
+       Applicability is (OM_GET)
+
+   GA_TEXTEDITOR_Keymap (struct KeyMap *) (V50)
+       Sets an alternate key mapping if so desired.
+
+       Defaults to NULL (prefs key map).
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_CursorBlinkSpeed (uint32) (V50)
+       Controls the cursor blinking speed in units of ticks
+       (1/50 second).
+
+       Defaults to 0 (no blinking)
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_AutoIndent (BOOL) (V50)
+       Enables auto-indentation mode which indents the next line
+       the same number of spaces/tabs as the previous line.
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_HorizScroller (Object *) (V50)
+   GA_TEXTEDITOR_VertScroller (Object *) (V50)
+       Specifies the horizontal and/or vertical scroller.gadget being
+       used to drive the texteditor.gadget's editing area. This is
+       a quick and easy way to link in scrollers.
+
+       Only scroller.gadget objects are supported using these tags.
+       To link to other objects such as scrollergclass use the
+       GA_TEXTEDITOR_Prop_#? and GA_TEXTEDITOR_HProp_#? attributes.
+
+       Note the scroller.gadgets are only referenced and will not
+       be disposed of automatically.
+
+       Defaults to NULL.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_TextAttr (struct TextAttr *) (V50)
+       Used to set the text font to render the text in. Always use
+       this attribute to set the font to edit the text in.
+
+       Defaults to RPort->Font, which is often the screen or
+       window font.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TextAttr (struct TextAttr *)
+       Used to set the text font to render the text in. Note that
+       once GA_TEXTEDITOR_TextAttr has been set you cannot use this
+       tag to set the font. The reason for this behavior is because
+       the system-wide GUI prefs would otherwise override the text
+       font selection which is not the behavior you want for a text
+       editing gadget.
+
+       Always use GA_TEXTEDITOR_TextAttr for consistent results.
+
+       Defaults to RPort->Font, which is often the screen or
+       window font.
+
+       Applicability is (OM_NEW, OM_SET)
+
+   GA_TEXTEDITOR_Dragging (BOOL) (V53)
+       This attribute will be TRUE while the editor gadget is drag
+       selecting some text. This can be used to skip some interaction
+       with the gadget while this is happening.
+
+       Applicability is (OM_GET)
+
+   GA_TEXTEDITOR_BevelStyle (uint16) (V53.12)
+       Specifies the bevel box style. See bevel_ic.doc/BEVEL_Style for
+       possible values.
+
+       Defaults to BVS_FIELD.
+
+       Applicability is (OM_NEW)
+
+   GA_TEXTEDITOR_Transparent (BOOL) (V53.12)
+       If set causes texteditor to not render any background (i.e. keep
+       a transparent background).
+
+       Defaults to FALSE.
+
+       Applicability is (OM_NEW)
+
+texteditor.gadget/GM_TEXTEDITOR_ARexxCmdteditor.gadget/GM_TEXTEDITOR_ARexxCmd
+
+    NAME
+   GM_TEXTEDITOR_ARexxCmd -- Execute ARexx command.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_ARexxCmd* msg);
+
+    FUNCTION
+   If the user spends much of his time in the TextEditor gadget then he
+   may want to have the gadget's functions integrated in the program's
+   ARexx command set.
+
+   This can easily be done with this method. Simply call it with the
+   command that the user has executed. If the method returns something
+   other than FALSE then the command has been used by the gadget. If it
+   returns FALSE then you should parse the command yourself.
+
+   This method can also be used by you to communicate with the gadget.
+
+   The following commands are currently supported:
+     CLEAR
+     CUT
+     COPY
+     PASTE
+     ERASE
+     GOTOLINE LINE/N/A
+     GOTOCOLUMN COLUMN/N/A
+     CURSOR UP/S,DOWN/S,LEFT/S,RIGHT/S
+     LINE NUM/N/A
+     COLUMN NUM/N/A
+     NEXT WORD/S,SENTENCE/S,PARAGRAPH/S,PAGE/S
+     PREVIOUS WORD/S,SENTENCE/S,PARAGRAPH/S,PAGE/S
+     POSITION SOF/S,EOF/S,SOL/S,EOL/S,SOW/S,EOW/S,SOV/S,EOV/S
+     SETBOOKMARK NUM/N/A
+     GOTOBOOKMARK NUM/N/A
+     TEXT STRING/F
+     UNDO
+     REDO
+     GETLINE
+     GETCURSOR LINE/S,COLUMN/S
+     MARK ON/S,OFF/S
+     DELETE
+     BACKSPACE
+     INDENT
+     OUTDENT
+     TOUPPER
+     TOLOWER
+
+   Use DoGadgetMethodA() to provide rendering information when
+   invoking this method.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_ARexxCmd
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   The method will return FALSE if it couldn't use the command.
+
+   It will return TRUE if it did use the command but the command didn't
+   give a result. It will return a pointer (STRPTR) when the
+   command gives a result. You should return this pointer to the user
+   (e.g. CreateArgstring() and set it as the result in the rexx message).
+
+   Note that if a STRPTR is returned then your program owns it and must
+   call FreeVec() to free the associated memory.
+
+    SEE ALSO
+   intuition.library/DoGadgetMethodA(),
+   rexxsyslib.library/CreateArgstring()
+
+texteditor.gadget/GM_TEXTEDITOR_BlockInfoditor.gadget/GM_TEXTEDITOR_BlockInfo
+
+    NAME
+   GM_TEXTEDITOR_BlockInfo -- Get currently marked area info.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_BlockInfo* msg);
+
+    FUNCTION
+   This method is used to obtain the start and stop coordinates of
+   the currently selected text block.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_BlockInfo
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   Returns TRUE if successful or FALSE on error.
+
+    SEE ALSO
+   GM_TEXTEDITOR_MarkText
+
+texteditor.gadget/GM_TEXTEDITOR_ClearTextditor.gadget/GM_TEXTEDITOR_ClearText
+
+    NAME
+   GM_TEXTEDITOR_ClearText -- Clears all text in gadget.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_ClearText* msg);
+
+    FUNCTION
+   This will clear all the text in the gadget.
+
+   Use DoGadgetMethodA() to provide rendering information when
+   invoking this method.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_ClearText
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   Always returns TRUE.
+
+    SEE ALSO
+   intuition.library/DoGadgetMethodA()
+
+texteditor.gadget/GM_TEXTEDITOR_ExportBlockr.gadget/GM_TEXTEDITOR_ExportBlock
+
+    NAME
+   GM_TEXTEDITOR_ExportBlock -- Export marked block of text. (V52.6)
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_ExportText* msg)
+;
+
+    FUNCTION
+   This method will export the currently marked block of text using
+   the current export hook.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_ExportText
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   Returns a pointer to a null terminated string containing the
+   block of text or NULL on error.
+
+   Note that your program owns the returned buffer and must call
+   FreeVec() to free the associated memory.
+
+    SEE ALSO
+   GM_TEXTEDITOR_ExportText
+
+texteditor.gadget/GM_TEXTEDITOR_ExportTexttor.gadget/GM_TEXTEDITOR_ExportText
+
+    NAME
+   GM_TEXTEDITOR_ExportText -- Export all the text.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_ExportText* msg)
+;
+
+    FUNCTION
+   This method will export all the text using the current export hook.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_ExportText
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   Returns a pointer to a null terminated string containing all the
+   text or NULL on error.
+
+   Note that your program owns the returned buffer and must call
+   FreeVec() to free the associated memory.
+
+    SEE ALSO
+   GM_TEXTEDITOR_ExportBlock
+
+texteditor.gadget/GM_TEXTEDITOR_HandleErrorr.gadget/GM_TEXTEDITOR_HandleError
+
+    NAME
+   GM_TEXTEDITOR_HandleError -- Handle text editing error.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_HandleError* msg
+);
+
+    FUNCTION
+   This method is not supported by the editor gadget itself. The idea is
+   that you should subclass the gadget and implement your own error
+   handler. The handler should do something like bring up a requester
+   or write the error in a status line.
+
+   The different error codes are:
+
+   Error_ClipboardIsEmpty       - The clipboard doesn't hold any data.
+   Error_ClipboardIsNotFTXT     - The clipboard doesn't hold any text.
+   Error_MacroBufferIsFull      - Not yet used.
+   Error_MemoryAllocationFailed - Could not allocate memory.
+   Error_NoAreaMarked           - The user has tried to copy or cut but
+                                  hasn't marked anything.
+   Error_NoMacroDefined         - Not yet used.
+   Error_NothingToRedo          - There is nothing more to redo.
+   Error_NothingToUndo          - There is nothing more to undo.
+   Error_NotEnoughUndoMem       - The user has erased a block that is too
+                                  big to be saved. This results in a lost
+                                  undo buffer. All stored undos are freed.
+   Error_StringNotFound         - No string found during search.
+   Error_NoBookmarkInstalled    - No bookmark has been set.
+   Error_BookmarkHasBeenLost    - Not yet used.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_HandleError
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   The result code is not defined.
+
+texteditor.gadget/GM_TEXTEDITOR_InsertTexttor.gadget/GM_TEXTEDITOR_InsertText
+
+    NAME
+   GM_TEXTEDITOR_InsertText -- Insert text as some position.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_InsertText* msg)
+;
+
+    FUNCTION
+   This method will insert the given text using the current
+   import hook.
+
+   The position of the inserted text can be:
+
+     GV_TEXTEDITOR_InsertText_Cursor - current cursor position
+     GV_TEXTEDITOR_InsertText_Top    - top of text
+     GV_TEXTEDITOR_InsertText_Bottom - bottom of text
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_InsertText
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   The result code is not defined.
+
+texteditor.gadget/GM_TEXTEDITOR_MarkTextteditor.gadget/GM_TEXTEDITOR_MarkText
+
+    NAME
+   GM_TEXTEDITOR_MarkText -- Mark a block of text.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_MarkText* msg);
+
+    FUNCTION
+   This method will mark the given text area.
+
+   Use DoGadgetMethodA() to provide rendering information when
+   invoking this method.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_MarkText
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   The result code is not defined.
+
+    SEE ALSO
+   intuition.library/DoGadgetMethodA()
+
+texteditor.gadget/GM_TEXTEDITOR_Replaceexteditor.gadget/GM_TEXTEDITOR_Replace
+
+    NAME
+   GM_TEXTEDITOR_Replace -- Replace marked area with string.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_Replace* msg);
+
+    FUNCTION
+   This method replace the marked text area with the given string.
+   Currently no flags are defined and you must pass 0.
+
+   Use DoGadgetMethodA() to provide rendering information when
+   invoking this method.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_Replace
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   TRUE if the string was replaced or FALSE if not.
+   A failure is likely to caused by nothing being marked.
+
+    SEE ALSO
+   GM_TEXTEDITOR_MarkText, intuition.library/DoGadgetMethodA()
+
+texteditor.gadget/GM_TEXTEDITOR_Search texteditor.gadget/GM_TEXTEDITOR_Search
+
+    NAME
+   GM_TEXTEDITOR_Search -- Search for string in text.
+
+    SYNOPSIS
+   uint32 result = IDoMethodA(APTR obj, struct GP_TEXTEDITOR_Search* msg);
+
+    FUNCTION
+   Searches the text for the given string.
+
+   The string must not exceed 120 characters due to internal buffer
+   limitations.
+
+   By default, all searches start from the current cursor position,
+   go forward and are case insensitive. Various search flags can be
+   used to modifiy the default behavior:
+
+     GF_TEXTEDITOR_Search_FromTop       - Search from top of text.
+     GF_TEXTEDITOR_Search_Next          - Find the next match.
+     GF_TEXTEDITOR_Search_CaseSensitive - Case insensitive search.
+     GF_TEXTEDITOR_Search_DOSPattern    - Use AmigaDOS pattern matching
+                                          (not yet implemented).
+     GF_TEXTEDITOR_Search_Backwards     - Search backwards.
+     GF_TEXTEDITOR_Search_Wildstar      - Allow '*' to be used as a
+                                          wildcard (V50).
+     GF_TEXTEDITOR_Search_Word          - Search for only whole words.
+
+   Use DoGadgetMethodA() to provide rendering information when
+   invoking this method.
+
+    INPUTS
+   obj - texteditor object pointer
+   msg - pointer to fully initialized struct GP_TEXTEDITOR_Search
+         (see <gadgets/texteditor.h>)
+
+    RESULT
+   TRUE if the string was found or FALSE if not.
+
+    NOTE
+   If the string was found then it's left marked. This enables
+   you to replace it, clear it or insert a new string.
+
+    SEE ALSO
+   intuition.library/DoGadgetMethodA()
+
+texteditor.gadget/TEXTEDITOR_GetClass   texteditor.gadget/TEXTEDITOR_GetClass
+
+    NAME
+	TEXTEDITOR_GetClass -- Gets pointer to the texteditor class.
+
+    SYNOPSIS
+	Class * class = TEXTEDITOR_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "texteditor.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the texteditor class.
+
+

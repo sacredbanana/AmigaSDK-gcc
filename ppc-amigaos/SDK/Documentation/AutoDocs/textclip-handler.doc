@@ -1,0 +1,212 @@
+textclip-handler/--DATASHEET--                 textclip-handler/--DATASHEET--
+
+    PATH SYNTAX
+       A TEXTCLIP: path looks as follows:
+       TEXTCLIP:[unit][/format]
+
+       where [unit] is an optional argument specifying the clipboard unit
+       you want to operate on. It defaults to unit #0,
+       and format is the IFF type you want to receive. Currently, only
+       the IFF "FTXT" type is supported and therefore the only suitable
+       argument to "format".
+
+    SUPPORTED PACKET TYPES
+
+       ACTION_LOCATE_OBJECT:
+               Builds a lock on a clipboard object, either SHARED or
+               EXCLUSIVE.
+
+               Requesting a shared lock on a unit that is currently
+               written to by this handler will return an
+               ERROR_OBJECT_IN_USE. The handler CANNOT detect write
+               accesses to the clipboard.device by other sources and
+               will block until the corresponding unit gets available
+               then.
+               Shared locks on a clipboard device will lock out all
+               write accesses by means of this handler to the same
+               clipboard unit. They have no influence whatsoever
+               for writes to the clipboard by other sources.
+
+               Requesting an exclusive lock will fail as soon as
+               any other lock is currently active on the same unit.
+               An exclusive lock will block all other kinds of accesses
+               to the same clipboard unit that go thru this handler,
+               but it has no influence whatsoever for programs that
+               access the clipboard.device directly.
+
+               Shared locks can be used to open read-access file
+               handles by means of ACTION_FH_FROM_LOCK, exclusive locks
+               can be used to obtain write-access file handles. Due
+               to limitations of the iffparse.library and the clipboard,
+               you cannot read from exclusive or write to shared locked
+               clipboard units.
+
+       ACTION_FREE_LOCK:
+               Releases a lock obtained by ACTION_LOCATE_OBJECT.
+
+       ACTION_COPY_DIR:
+               Builds a duplicate of a SHARED_LOCK. Fails with
+               OBJECT_IN_USE on exclusive locks.
+
+       ACTION_EXAMINE_OBJECT:
+               Obtains additional information on a lock. This will
+               fill a struct FileInfoBlock with the name and the
+               byte size of the data in the clipboard unit
+               associated to the lock. Since a TEXTCLIP: lock does
+               not block accesses to the clipboard from other
+               sources, this information is only guaranteed to be
+               precise if you opened a file on the same clipboard
+               unit.
+
+       ACTION_EXAMINE_NEXT:
+               Fails with ERROR_NO_MORE_ENTRIES.
+
+       ACTION_DISK_INFO:
+               Returns information for the clipboard unit #0 for
+               FTXT streams. Returns the byte size of the text within
+               the clipboard unit, emulating a device with a block
+               size of one byte. The disk type will be set to the
+               the access type FTXT.
+
+       ACTION_INFO:
+               Returns information similar to the FileInfoBlock returned
+               by ACTION_EXAMINE for the unit and IFF type defined by
+               the lock passed in. This will return the IFF type as
+               disk type and the amount of bytes of this type within the
+               given unit as number of used blocks. The block size will
+               will be emulated as one byte per block.
+
+       ACTION_SAME_LOCK:
+               Compares whether two locks refer to the same clipboard
+               unit and the same IFF type.
+
+       ACTION_READ:
+               Reads the specified amount of bytes from a clipboard
+               stream, returns less bytes in case of an EOF. Note that
+               due to limitations of the iffparse.library, you can only
+               read from streams build by ACTION_FINDINPUT.
+               Will return less or zero bytes in case of an EOF, will
+               return -1 in case of an error as primary result.
+
+               This packet will automatically parse-off all CHRS
+               chunks of an FTXT clipboard stream and returns the
+               contents of this chunk. It does not try to parse
+               CSI/ESC sequences.
+
+       ACTION_WRITE:
+               Writes data to a clipboard stream, fitting it into
+               FTXT CHRS chunks. Due to limitations of the clipboard
+               and iffparse.library, you can only write to streams
+               created by ACTION_FINDOUTPUT or ACTION_FINDUPDATE.
+
+               Since buffering within the iffparse.library is rather
+               poor, you should buffer data yourself whenever possible
+               as otherwise memory usage might be unsuitably high.
+
+       ACTION_FINDINPUT:
+               Opens a clipboard stream for reading; the path to this
+               stream is interpreted as described above.
+               The resulting stream cannot be used for writing bytes
+               due to limitations of the iffparse.library and the
+               clipboard.device.
+
+               Unlike ACTION_LOCATE_OBJECT, this packet will wait
+               until the clipboard becomes available if another
+               task is currently writing to the same unit. This was
+               done to make clipboard handling as convenient as
+               possible for the client application. If you want to
+               check whether it is likely(!) that this packet waits,
+               try to obtain a lock onto the same path before.
+               Locking will fail in case the unit is not available.
+               Note, however, that TEXTCLIP: cannot control access of
+               the clipboard by means of other resources.
+
+               Do not attempt to open a stream for reading while having
+               opened another stream on the same unit for writing or
+               you will wait forever (unless the writing stream is
+               closed by other means).
+               Note that this deadlock is purely on the client side,
+               the handler itself *is* able to detect possible deadlock
+               situations.
+
+       ACTION_FINDOUTPUT:
+       ACTION_FINDUPDATE:
+               Opens a clipboard stream for writing with the path
+               interpreted as described above. The stream generated
+               this way cannot be read from due to the way how the
+               clipboard works.
+
+               Unlike ACTION_LOCATE_OBJECT, this packet will lock
+               out until the specified clipboard unit becomes avail-
+               able for exclusive access. If you want to find out
+               in advance whether it is likely(!) that a write access
+               is possible, try to obtain an exclusive lock to the
+               same unit and convert it to a write-access file by
+               means of ACTION_FH_FROM_LOCK. Do NOT open a stream
+               for writing while holding any other locks or streams
+               on the same clipboard unit as this will deadlock you
+               (but not the handler!) as this packet will wait for-
+               ever for the unit to become available.
+
+       ACTION_END:
+               Closes the specified stream and releases the clip-
+               board unit. This may unlock waiting requests from
+               other tasks.
+
+       ACTION_FH_FROM_LOCK:
+               Opens a file from a lock, incorporating this lock
+               into the file, i.e. the lock becomes unusable for
+               the client and will be released as soon as the
+               file gets closed by ACTION_END. Shared locks will be
+               converted into read-only streams, exclusive locks
+               generate write-access streams.
+               In case of failure, the lock remains available for
+               the client and must be released by ACTION_FREE_LOCK
+               as always.
+
+       ACTION_CHANGE_MODE:
+               Changes the access mode of a lock. An attempt to
+               change the mode of a file generates an error as it
+               is unsupported by iffparse and the clipboard. This
+               packet will fail in case the lock cannot be converted
+               to the requested lock type. The lock remains unaltered
+               in this case.
+
+       ACTION_COPY_DIR_FH:
+               Builds a lock onto the same object a filehandle is
+               reading from. Fails with ERROR_OBJECT_IN_USE for
+               write-only streams. The lock and the filehandle are
+               separate objects and must be released independently,
+               unlike ACTION_FH_FROM_LOCK.
+
+       ACTION_ADD_NOTIFY:
+               Adds a notification request for the given clipboard
+               unit. Notification is implemented by means of the
+               clipboard "ChangeHook" - hence, you are notified as
+               soon as the clipboard gets new data, let it be thru
+               this handler or by any other means.
+
+       ACTION_REMOVE_NOTIFY:
+               Releases a notification request from the unit.
+
+       ACTION_IS_FILESYSTEM:
+               Is replied by DOSFALSE as TEXTCLIP: does not implement
+               the full command set of a file handler.
+
+       ACTION_SEEK:
+               Is unsupported and returns ERROR_ACTION_NOT_KNOWN.
+               You must use sequential reading or must buffer the
+               data yourself to be able to seek.
+
+       ACTION_SET_FILE_SIZE:
+               Unsupported, and doesn't make much sense either.
+
+       ACTION_DIE:
+               Terminates the handler if possible. This works only
+               if the textclip.library is currently unused as well
+               and will flush this library from the system as well.
+               Note that shutting down TEXTCLIP: is not recommended
+               as there are no means of re-opening the textclip.library
+               by means of the exec library interface.
+
+

@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="warp3d" basename="Warp3DBase" openname="Warp3D.library">
+	<include>exec/types.h</include>
+	<include>Warp3D/Warp3D.h</include>
+	<include>graphics/gfx.h</include>
+	<interface name="main" version="1.0" struct="Warp3DIFace" prefix="_Warp3D_" asmprefix="IWarp3D" global="IWarp3D">
+		<method name="Obtain" result="ULONG"/>
+		<method name="Release" result="ULONG"/>
+		<method name="Expunge" result="void" status="unimplemented"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+		<method name="W3D_CreateContext" result="W3D_Context *">
+			<arg name="error" type="ULONG *"/>
+			<arg name="CCTags" type="struct TagItem *"/>
+		</method>
+        <method name="W3D_CreateContextTags" result="W3D_Context *">
+        	<arg name="error" type="ULONG *"/>
+            <vararg name="tag1" type="uint32"/>
+        </method>
+		<method name="W3D_DestroyContext" result="void">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_GetState" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="state" type="ULONG"/>
+		</method>
+		<method name="W3D_SetState" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="state" type="ULONG"/>
+			<arg name="action" type="ULONG"/>
+		</method>
+		<method name="W3D_CheckDriver" result="ULONG">
+		</method>
+		<method name="W3D_LockHardware" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_UnLockHardware" result="void">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_WaitIdle" result="void">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_CheckIdle" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_Query" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="query" type="ULONG"/>
+			<arg name="destfmt" type="ULONG"/>
+		</method>
+		<method name="W3D_GetTexFmtInfo" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="format" type="ULONG"/>
+			<arg name="destfmt" type="ULONG"/>
+		</method>
+		<method name="W3D_AllocTexObj" result="W3D_Texture *">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="error" type="ULONG *"/>
+			<arg name="ATOTags" type="struct TagItem *"/>
+		</method>
+        <method name="W3D_AllocTexObjTags" result="W3D_Texture *">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="error" type="ULONG *"/>
+			<vararg name="tag1" type="uint32"/>
+        </method>
+		<method name="W3D_FreeTexObj" result="void">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+		</method>
+		<method name="W3D_ReleaseTexture" result="void">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+		</method>
+		<method name="W3D_FlushTextures" result="void">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_SetFilter" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="min" type="ULONG"/>
+			<arg name="mag" type="ULONG"/>
+		</method>
+		<method name="W3D_SetTexEnv" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="envparam" type="ULONG"/>
+			<arg name="envcolor" type="W3D_Color *"/>
+		</method>
+		<method name="W3D_SetWrapMode" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="mode_s" type="ULONG"/>
+			<arg name="mode_t" type="ULONG"/>
+			<arg name="bordercolor" type="W3D_Color *"/>
+		</method>
+		<method name="W3D_UpdateTexImage" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="teximage" type="void *"/>
+			<arg name="level" type="int"/>
+			<arg name="palette" type="ULONG *"/>
+		</method>
+		<method name="W3D_UploadTexture" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+		</method>
+		<method name="W3D_DrawLine" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="line" type="W3D_Line *"/>
+		</method>
+		<method name="W3D_DrawPoint" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="point" type="W3D_Point *"/>
+		</method>
+		<method name="W3D_DrawTriangle" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="triangle" type="W3D_Triangle *"/>
+		</method>
+		<method name="W3D_DrawTriFan" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="triangles" type="W3D_Triangles *"/>
+		</method>
+		<method name="W3D_DrawTriStrip" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="triangles" type="W3D_Triangles *"/>
+		</method>
+		<method name="W3D_SetAlphaMode" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="refval" type="W3D_Float *"/>
+		</method>
+		<method name="W3D_SetBlendMode" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="srcfunc" type="ULONG"/>
+			<arg name="dstfunc" type="ULONG"/>
+		</method>
+		<method name="W3D_SetDrawRegion" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="bm" type="struct BitMap *"/>
+			<arg name="yoffset" type="int"/>
+			<arg name="scissor" type="W3D_Scissor *"/>
+		</method>
+		<method name="W3D_SetFogParams" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="fogparams" type="W3D_Fog *"/>
+			<arg name="fogmode" type="ULONG"/>
+		</method>
+		<method name="W3D_SetColorMask" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="red" type="W3D_Bool"/>
+			<arg name="green" type="W3D_Bool"/>
+			<arg name="blue" type="W3D_Bool"/>
+			<arg name="alpha" type="W3D_Bool"/>
+		</method>
+		<method name="W3D_SetStencilFunc" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="func" type="ULONG"/>
+			<arg name="refvalue" type="ULONG"/>
+			<arg name="mask" type="ULONG"/>
+		</method>
+		<method name="W3D_AllocZBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_FreeZBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_ClearZBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="clearvalue" type="W3D_Double *"/>
+		</method>
+		<method name="W3D_ReadZPixel" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="z" type="W3D_Double *"/>
+		</method>
+		<method name="W3D_ReadZSpan" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="n" type="ULONG"/>
+			<arg name="z" type="W3D_Double *"/>
+		</method>
+		<method name="W3D_SetZCompareMode" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="mode" type="ULONG"/>
+		</method>
+		<method name="W3D_AllocStencilBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_ClearStencilBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="clearval" type="ULONG *"/>
+		</method>
+		<method name="W3D_FillStencilBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="width" type="ULONG"/>
+			<arg name="height" type="ULONG"/>
+			<arg name="depth" type="ULONG"/>
+			<arg name="data" type="void *"/>
+		</method>
+		<method name="W3D_FreeStencilBuffer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_ReadStencilPixel" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="st" type="ULONG *"/>
+		</method>
+		<method name="W3D_ReadStencilSpan" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="n" type="ULONG"/>
+			<arg name="st" type="ULONG *"/>
+		</method>
+		<method name="W3D_SetLogicOp" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="operation" type="ULONG"/>
+		</method>
+		<method name="W3D_Hint" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="quality" type="ULONG"/>
+		</method>
+		<method name="W3D_SetDrawRegionWBM" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="bitmap" type="W3D_Bitmap *"/>
+			<arg name="scissor" type="W3D_Scissor *"/>
+		</method>
+		<method name="W3D_GetDriverState" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_Flush" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_SetPenMask" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pen" type="ULONG"/>
+		</method>
+		<method name="W3D_SetStencilOp" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="sfail" type="ULONG"/>
+			<arg name="dpfail" type="ULONG"/>
+			<arg name="dppass" type="ULONG"/>
+		</method>
+		<method name="W3D_SetWriteMask" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="mask" type="ULONG"/>
+		</method>
+		<method name="W3D_WriteStencilPixel" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="st" type="ULONG"/>
+		</method>
+		<method name="W3D_WriteStencilSpan" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="n" type="ULONG"/>
+			<arg name="st" type="ULONG *"/>
+			<arg name="mask" type="UBYTE *"/>
+		</method>
+		<method name="W3D_WriteZPixel" result="void">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="z" type="W3D_Double *"/>
+		</method>
+		<method name="W3D_WriteZSpan" result="void">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="x" type="ULONG"/>
+			<arg name="y" type="ULONG"/>
+			<arg name="n" type="ULONG"/>
+			<arg name="z" type="W3D_Double *"/>
+			<arg name="maks" type="UBYTE *"/>
+		</method>
+		<method name="W3D_SetCurrentColor" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="color" type="W3D_Color *"/>
+		</method>
+		<method name="W3D_SetCurrentPen" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pen" type="ULONG"/>
+		</method>
+		<method name="W3D_UpdateTexSubImage" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="teximage" type="void *"/>
+			<arg name="lev" type="ULONG"/>
+			<arg name="palette" type="ULONG *"/>
+			<arg name="scissor" type="W3D_Scissor *"/>
+			<arg name="srcbpr" type="ULONG"/>
+		</method>
+		<method name="W3D_FreeAllTexObj" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_GetDestFmt" result="ULONG">
+		</method>
+		<method name="W3D_DrawLineStrip" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="lines" type="W3D_Lines *"/>
+		</method>
+		<method name="W3D_DrawLineLoop" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="lines" type="W3D_Lines *"/>
+		</method>
+		<method name="W3D_GetDrivers" result="W3D_Driver **">
+		</method>
+		<method name="W3D_QueryDriver" result="ULONG">
+			<arg name="driver" type="W3D_Driver *"/>
+			<arg name="query" type="ULONG"/>
+			<arg name="destfmt" type="ULONG"/>
+		</method>
+		<method name="W3D_GetDriverTexFmtInfo" result="ULONG">
+			<arg name="driver" type="W3D_Driver *"/>
+			<arg name="format" type="ULONG"/>
+			<arg name="destfmt" type="ULONG"/>
+		</method>
+		<method name="W3D_RequestMode" result="ULONG">
+			<arg name="taglist" type="struct TagItem *"/>
+		</method>
+		<method name="W3D_RequestModeTags" result="ULONG">
+			<vararg name="taglist" type="Tag"/>
+		</method>
+		<method name="W3D_SetScissor" result="void">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="scissor" type="W3D_Scissor *"/>
+		</method>
+		<method name="W3D_FlushFrame" result="void">
+			<arg name="context" type="W3D_Context *"/>
+		</method>
+		<method name="W3D_TestMode" result="W3D_Driver *">
+			<arg name="ModeID" type="ULONG"/>
+		</method>
+		<method name="W3D_SetChromaTestBounds" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="rgba_lower" type="ULONG"/>
+			<arg name="rgba_upper" type="ULONG"/>
+			<arg name="mode" type="ULONG"/>
+		</method>
+		<method name="W3D_ClearDrawRegion" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="color" type="ULONG"/>
+		</method>
+		<method name="W3D_DrawTriangleV" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="triangle" type="W3D_TriangleV *"/>
+		</method>
+		<method name="W3D_DrawTriFanV" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="triangles" type="W3D_TrianglesV *"/>
+		</method>
+		<method name="W3D_DrawTriStripV" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="triangles" type="W3D_TrianglesV *"/>
+		</method>
+		<method name="W3D_GetScreenmodeList" result="W3D_ScreenMode *">
+		</method>
+		<method name="W3D_FreeScreenmodeList" result="void">
+			<arg name="list" type="W3D_ScreenMode *"/>
+		</method>
+		<method name="W3D_BestModeID" result="ULONG">
+			<arg name="tags" type="struct TagItem *"/>
+		</method>
+		<method name="W3D_BestModeIDTags" result="ULONG">
+			<vararg name="tags" type="Tag"/>
+		</method>
+		<method name="W3D_VertexPointer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pointer" type="void *"/>
+			<arg name="stride" type="int"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="W3D_TexCoordPointer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pointer" type="void *"/>
+			<arg name="stride" type="int"/>
+			<arg name="unit" type="int"/>
+			<arg name="off_v" type="int"/>
+			<arg name="off_w" type="int"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="W3D_ColorPointer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pointer" type="void *"/>
+			<arg name="stride" type="int"/>
+			<arg name="format" type="ULONG"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="W3D_BindTexture" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="tmu" type="ULONG"/>
+			<arg name="texture" type="W3D_Texture *"/>
+		</method>
+		<method name="W3D_DrawArray" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="primitive" type="ULONG"/>
+			<arg name="base" type="ULONG"/>
+			<arg name="count" type="ULONG"/>
+		</method>
+		<method name="W3D_DrawElements" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="primitive" type="ULONG"/>
+			<arg name="type" type="ULONG"/>
+			<arg name="count" type="ULONG"/>
+			<arg name="indices" type="void *"/>
+		</method>
+		<method name="W3D_SetFrontFace" result="void">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="direction" type="ULONG"/>
+		</method>
+		<method name="W3D_SetTextureBlend" result="uint32">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="tagList" type="struct TagItem *"/>
+		</method>
+		<method name="W3D_SetTextureBlendTags" result="uint32">
+			<arg name="context" type="W3D_Context *"/>
+			<vararg name="tag1" type="uint32"/>
+		</method>
+		<method name="W3D_SecondaryColorPointer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pointer" type="void *"/>
+			<arg name="stride" type="int"/>
+			<arg name="format" type="ULONG"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="W3D_FogCoordPointer" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pointer" type="void *"/>
+			<arg name="stride" type="int"/>
+			<arg name="mode" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+		<method name="W3D_InterleavedArray" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="pointer" type="void *"/>
+			<arg name="stride" type="int"/>
+			<arg name="format" type="ULONG"/>
+			<arg name="flags" type="ULONG"/>
+		</method>
+        <method name="W3D_ClearBuffers" result="ULONG">
+            <arg name="context" type="W3D_Context *"/>
+            <arg name="color" type="W3D_Color *"/>
+            <arg name="depth" type="W3D_Double *"/>
+            <arg name="stencil" type="uint32 *"/>
+        </method>
+		<method name="W3D_SetParameter" result="uint32">
+            <arg name="context" type="W3D_Context *"/>
+			<arg name="target" type="uint32"/>
+			<arg name="pattern" type="void *"/>
+		</method>
+		<method name="W3D_PinTexture" result="uint32">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="pinning" type="BOOL"/>
+		</method>
+		<method name="W3D_SetDrawRegionTexture" result="ULONG">
+			<arg name="context" type="W3D_Context *"/>
+			<arg name="texture" type="W3D_Texture *"/>
+			<arg name="scissor" type="W3D_Scissor *"/>
+		</method>
+	</interface>
+</library>

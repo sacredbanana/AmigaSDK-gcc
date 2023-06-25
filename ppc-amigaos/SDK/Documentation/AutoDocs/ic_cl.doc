@@ -1,0 +1,274 @@
+TABLE OF CONTENTS
+
+icclass/--datasheet--
+icclass/ICM_CHECKLOOP
+icclass/ICM_CLEARLOOP
+icclass/ICM_SETLOOP
+icclass/OM_NOTIFY
+icclass/OM_SET
+icclass/OM_UPDATE
+
+
+icclass/--datasheet--                                       icclass/--datasheet--
+
+    NAME
+	icclass -- interconnection class
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	Base class of simple OM_UPDATE forwarding objects. When an
+	icclass object gets an OM_UPDATE message, it maps the
+	attributes in the OM_UPDATE message according to its mapping
+	list (its ICA_MAP attribute) and forwards the OM_UPDATE to
+	its target (its ICA_TARGET attribute).
+
+    METHODS
+	OM_NEW -- Create the icclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroys object and then passed to superclass.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Options set then passed to superclass.
+
+	OM_NOTIFY -- Notifies connections of attribute changes.
+
+	ICM_SETLOOP -- Set/increment loop counter.
+
+	ICM_CLEARLOOP -- Clear/decrement loop counter.
+
+	ICM_CHECKLOOP -- Get loop counter.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	ICA_TARGET (uint32)
+	    This attribute stores the address of the icclass
+	    object's target object. Whenever the icclass object
+	    receives an OM_NOTIFY or OM_UPDATE message, it forwards
+	    that message to its target in the form of an OM_UPDATE
+	    message. If the icclass object has an attribute mapping
+	    list (see the ICA_MAP attribute below), it also maps
+	    the OM_NOTIFY/OM_UPDATE message's attribute IDs to new
+	    ones before forwarding the message.
+
+	    If the value of ICA_TARGET is ICTARGET_IDCMP the
+	    icclass object sends an IDCMP_IDCMPUPDATE IntuiMessage
+	    to its window instead of forwarding an OM_UPDATE
+	    message. See the rootclass description of OM_UPDATE
+	    for more information.
+
+	    Defaults to no target.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET)
+
+	ICA_MAP (struct TagItem *)
+	    This attribute points to a tag list of attribute
+	    mappings which the icclass object uses to change the
+	    attribute IDs of an OM_UPDATE's attribute/value pairs.
+	    For example, if an icclass object had the following
+	    ICA_MAP:
+
+	    struct TagItem map[] =
+	    {
+	        {PGA_Top, STRINGA_LongVal},
+	        {MYATTR, MYNEWATTR},
+	        {TAG_END, 0}
+	    };
+
+	    before sending an OM_UPDATE to its ICA_TARGET, the
+	    icclass object scans through the OM_UPDATE message's
+	    attribute/value pairs looking for the PGA_Top and MYATTR
+	    attributes. If it finds the PGA_Top attribute, it
+	    changes PGA_Top to STRINGA_LongVal. Likewise, if the
+	    icclass object finds the MYATTR attribute, it changes
+	    MYATTR to MYNEWATTR. The icclass object does not disturb
+	    the attribute's value.
+
+	    Defaults to no mapping.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	ICSPECIAL_CODE
+	    This is a pseudo attribute for the ICA_MAP. If any
+	    attribute maps to ICSPECIAL_CODE and ICA_TARGET is
+	    ICTARGET_IDCMP then the value of the mapped attribute
+	    will be copied into the IntuiMessage.Code field of the
+	    IDCMP_IDCMPUPDATE message. Just the lower uint16 of the
+	    attribute value will fit. The upper uint16 is ignored.
+
+	    For example, if an icclass object had the ICA_TARGET
+	    set to ICTARGET_IDCMP and set the following ICA_MAP:
+
+	    struct TagItem map[] =
+	    {
+	        {PGA_Top, ICSPECIAL_CODE},
+	        {TAG_END, 0}
+	    };
+
+	    before sending the IntuiMessage to the parent window
+	    the icclass object will take the lower uint16 of the
+	    PGA_Top attribute's value and copy it into the
+	    IntuiMessage.Code field. The upper uint16 of the
+	    PGA_Top attribute's value is ignored.
+
+    NOTES
+	The OM_UPDATE and OM_NOTIFY methods directly poke the loop
+	counter instead of using ICM_SETLOOP and ICM_CLEARLOOP which
+	prevents child classes from overriding the default behavior.
+
+icclass/ICM_CHECKLOOP                                       icclass/ICM_CHECKLOOP
+
+    NAME
+	ICM_CHECKLOOP -- Get loop counter.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+	This method retrieves the internal loop counter value
+	which used to prevent infinite notification loops.
+
+    INPUTS
+	obj - icclass object pointer
+	msg - Msg with MethodID = ICM_CHECKLOOP
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns the current loop counter value.
+
+    SEE ALSO
+	ICM_SETLOOP, ICM_CLEARLOOP
+
+icclass/ICM_CLEARLOOP                                       icclass/ICM_CLEARLOOP
+
+    NAME
+	ICM_CLEARLOOP -- Clear/decrement loop counter.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+	This method decrements the internal loop counter used to
+	prevent infinite notification loops.
+
+    INPUTS
+	obj - icclass object pointer
+	msg - Msg with MethodID = ICM_CLEARLOOP
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns a value of 1.
+
+    SEE ALSO
+	ICM_SETLOOP, ICM_CHECKLOOP
+
+icclass/ICM_SETLOOP                                           icclass/ICM_SETLOOP
+
+    NAME
+	ICM_SETLOOP -- Set/increment loop counter.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, Msg msg);
+
+    FUNCTION
+	This method increments the internal loop counter used to
+	prevent infinite notification loops.
+
+    INPUTS
+	obj - icclass object pointer
+	msg - Msg with MethodID = ICM_SETLOOP
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Returns a value of 1.
+
+    SEE ALSO
+	ICM_CLEARLOOP, ICM_CHECKLOOP
+
+icclass/OM_NOTIFY                                               icclass/OM_NOTIFY
+
+    NAME
+	OM_NOTIFY -- Broadcast object attribute value change.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method tells the object to notify its ICA_TARGET of
+	attribute changes by sending the target an OM_UPDATE
+	message. If the object has an ICA_MAP, it maps the
+	attribute IDs it finds to new attribute IDs. See the
+	rootclass description of OM_NOTIFY for more information.
+
+	The return value for this method is not explicitly defined.
+
+    INPUTS
+	obj - icclass object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_UPDATE, rootclass/OM_NOTIFY
+
+icclass/OM_SET                                                     icclass/OM_SET
+
+    NAME
+	OM_SET -- Set object attributes.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet * msg);
+
+    FUNCTION
+	This method sets the icclass object attributes and passes
+	the message on to the superclass.
+
+    INPUTS
+	obj - icclass object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	Always returns zero.
+
+    SEE ALSO
+	rootclass/OM_SET
+
+icclass/OM_UPDATE                                               icclass/OM_UPDATE
+
+    NAME
+	OM_UPDATE -- Update icclass target.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method tells the object to send an OM_UPDATE message
+	to its ICA_TARGET. If the object has an ICA_MAP, it maps
+	the attribute IDs it finds to new attribute IDs. See the
+	rootclass descriptions of OM_UPDATE for more information.
+
+	The return value for this method is not explicitly defined.
+
+    INPUTS
+	obj - icclass object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_NOTIFY, rootclass/OM_UPDATE
+
+

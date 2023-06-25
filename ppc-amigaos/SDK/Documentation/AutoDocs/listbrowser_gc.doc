@@ -1,0 +1,2043 @@
+TABLE OF CONTENTS
+
+listbrowser.gadget/--datasheet--
+listbrowser.gadget/AllocLBColumnInfoA
+listbrowser.gadget/AllocListBrowserNodeA
+listbrowser.gadget/FreeLBColumnInfo
+listbrowser.gadget/FreeListBrowserList
+listbrowser.gadget/FreeListBrowserNode
+listbrowser.gadget/GetLBColumnInfoAttrsA
+listbrowser.gadget/GetListBrowserNodeAttrsA
+listbrowser.gadget/HideAllListBrowserChildren
+listbrowser.gadget/HideListBrowserNodeChildren
+listbrowser.gadget/LBM_ADDNODE
+listbrowser.gadget/LBM_EDITNODE
+listbrowser.gadget/LBM_HIDECHILDREN
+listbrowser.gadget/LBM_REMNODE
+listbrowser.gadget/LBM_SHOWCHILDREN
+listbrowser.gadget/LBM_SORT
+listbrowser.gadget/LISTBROWSER_GetClass
+listbrowser.gadget/ListBrowserClearAll
+listbrowser.gadget/ListBrowserSelectAll
+listbrowser.gadget/SetLBColumnInfoAttrsA
+listbrowser.gadget/SetListBrowserNodeAttrsA
+listbrowser.gadget/ShowAllListBrowserChildren
+listbrowser.gadget/ShowListBrowserNodeChildren
+listbrowser.gadget/--datasheet--                                   listbrowser.gadget/--datasheet--
+
+    NAME
+	listbrowser.gadget -- For browsing linked lists in various ways.
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	string.gadget, scroller.gadget, bevel.image, glyph.image, sysiclass
+
+    DESCRIPTION
+	This gadget is similar to the LISTVIEW_KIND gadget in gadtools.library
+	with numerous enhancements. It displays a list in a scrolling view
+	so that you can browse through it and select items in various ways.
+
+	Features of this class include:
+
+	- Allows the user to select multiple items (either by dragging or
+	  shift-key selection).
+
+	- Displays items in multiple, resizeable columns.
+
+	- Displays items as a mixture of text and images in different
+	  colors.
+
+	- Items can have checkboxes that can be toggled on and off.
+
+	- Text items can be edited in place.
+
+	- Hierarchical display of items supported.
+
+	- Optional column headers.
+
+	- Allows horizontal scrolling of the list.
+
+    SCROLLWHEEL EVENTS (V52.8)
+	The listbrowser.gadget accepts mousewheel events passed to it
+	from the layout that it is in. Programs using an IDCMP Hook in
+	the parent window for this purpose no longer need to. A detailed
+	explanation is contained in the window_cl.doc autodoc.
+
+	Navigation using the built-in scrollwheel events is as follows:
+
+	  Wheel with no qualifiers - up/down one item at a time
+	  Wheel + Shift            - up/down one page at a time
+	  Wheel + CTRL             - top/bottom of list
+
+    METHODS
+	OM_NEW -- Create the listbrowser gadget. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_DISPOSE -- Disposes object and then passed to superclass.
+
+	OM_UPDATE -- Update object attributes. Passed to superclass first.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	GM_RENDER -- Overrides superclass, renders the gadget imagery.
+
+	GM_GOACTIVE -- Handles activation. Passed to superclass first.
+
+	GM_HANDLEINPUT -- Overrides superclass, all input is processed.
+
+	GM_GOINACTIVE -- Deactivates input. Passed to superclass first.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	LBM_ADDNODE -- Adds a node to the attached list.
+
+	LBM_EDITNODE -- Edit an attached nodes attributes.
+
+	LBM_REMNODE -- Removes a node from the attached list.
+
+	LBM_SORT -- Sort attached list on specified column.
+
+	LBM_SHOWCHILDREN -- Expand a node to show child nodes.
+
+	LBM_HIDECHILDREN -- Shrink a node to hide child nodes.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_Disabled (BOOL)
+	    Determines whether the listbrowser is disabled or not.
+	    Changing disable state will invoke GM_RENDER.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_ReadOnly (BOOL)
+	    Specifies that the list browser be read-only. This means that
+	    no nodes within the list can be selected, the user can just
+	    scroll through and view the list. The frame of the list will be
+	    rendered as recessed as a visual cue that no nodes can be
+	    selected. Changing state will invoke GM_RENDER.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_TextAttr (struct TextAttr *)
+	    Font to use for the contents of the list browser. Setting the
+	    font will invoke GM_RENDER.
+
+	    Defaults to RPort->Font which is often the screen or
+	    window font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_TabCycle (BOOL)
+	    Indicate whether the list browser is part of TAB/SHIFT-TAB
+	    cycle activation.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	LISTBROWSER_Top (int32)
+	    Sets the node that is to appear at the top of list browser view.
+	    Must be positive. If it is beyond the maximum possible value,
+	    the last page in the list will be displayed.
+
+	    NOTE: Before V45 this tag only worked AFTER rendering the gadget.
+	          A workaround has been added in V45.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_Bottom (int32) (V52.7)
+	    Gets the node that appears at the bottom of the list
+	    browser view.
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_MakeVisible (int32)
+	    Ensures that the specified node is within the view and will
+	    scroll only when necessary (unlike LISTBROWSER_Top which will
+	    always scroll).
+
+	    NOTE: Before V45 this tag only worked AFTER rendering the gadget.
+	          A workaround has been added in V45.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_MakeNodeVisible (struct Node *) (V52.11)
+	    Works like LISTBROWSER_MakeVisible but the node is specified
+	    by its pointer rather than its index number.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_Labels (struct List *)
+	    An Exec list. Nodes in this list must be allocated with
+	    AllocListBrowserNodeA().
+
+	    A value of ~0 or NULL indicates that the list is "detached".
+	    This must be done before you can modify a list already attached
+	    to a list browser. After detaching, you should carry out your
+	    updates to the list as quickly as possibly and then re-attach.
+	    When a list browser is initially added to a window it must have
+	    a list attached to it, NULL is not valid in this case.
+
+	    If you are using the LISTBROWSER_AutoFit attribute, the column
+	    sizes will not be re-calculated when you change lists, you must
+	    pass LISTBROWSER_AutoFit, TRUE again to adjust the column sizes
+	    to fit your new list.
+
+	    Note that when changing lists, you may want to reset certain
+	    other attributes, such as LISTBROWSER_Selected, as this value
+	    will be retained even when changing lists.
+
+	    NOTE: Lists can not be shared amongst other list browsers
+	          simultaneously.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_Spacing (int16)
+	    If you would like additional spacing between nodes in your
+	    ListBrowser, use this tag to define how many extra pixels you
+	    want.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_Selected (int32)
+	    Sets the node in a single-select list that will be selected.
+	    Any previously selected node(s) will be deselected. Note that
+	    a node can become selected without being visible. A value of
+	    -1 ( (uint32)~0 ) is used to say that no item is selected.
+	    The results of this tag are undefined in a multi-select list
+	    browser. If the supplied number is greater than the amount of
+	    nodes in the attached list, this will have the same effect as 
+	    supplying -1, and all nodes will be deselected.
+
+	    This value is returned in the IntuitMessage.Code field.
+
+	    Defaults to -1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_SelectedNode (struct Node *)
+	    This is the same as LISTBROWSER_Selected except that you refer
+	    to a node by its actual node structure. The results of this
+	    tag are undefined in a multi-select list browser.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_AllowNoSelection (BOOL)
+
+	    The usual functionality of the gadget is to notify the application
+	    when a list item is selected via OM_NOTIFY and via the window.class
+	    input handler.
+	    Due to programs that may assume the selected item is always valid, 
+	    this attribute is optional. If TRUE, this allows the gadget to 
+	    notify the application if an event has occurred which results in
+	    no item being selected. For example: the user clicking on a ReadOnly
+	    node, etc.
+	    This may be of particular use when using a button to perform an 
+	    action on a selected item, and the button can be enabled/disabled 
+	    depending on whether an item was actually selected.
+	    
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	LISTBROWSER_MultiSelect (BOOL)
+	    Puts the list browser into multi-select mode. In multi-select
+	    mode the user can select several items from the list by either
+	    dragging the mouse over items or holding down the shift key and
+	    clicking items to add them to the ones selected. Nodes can be
+	    deselected by holding down the shift key and clicking on selected
+	    nodes.
+
+	    Selected nodes will have the LBNA_Selected attribute set to
+	    TRUE (see GetListBrowserNodeAttrs()).
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_PersistSelect (BOOL)  (V42)
+	    When the list browser is in multi-select mode, this flag changes
+	    the selection behaviour so that shift does not have to be held
+	    down to select multiple nodes
+
+	    Please be aware that this is distinctly non-standard behaviour
+	    and therefore should be used with extreme discretion. About
+	    the only time this may be appropriate is when you are dealing
+	    with long lists where users are typically having to select a
+	    large number of nodes. Because there is no simple way to clear
+	    all selections when using this mode, some method should exist
+	    in your user interface for clearing all selections.
+
+	    This has no meaning if the list browser is not in multi-select
+	    mode.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_ShowSelected (BOOL)
+	    Specifies that you want the selected item in a single-select
+	    list browser to be remain visible after it is selected until
+	    some other item is selected. This tag has undefined results in
+	    a multi-select list browser.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_NumSelected (int32)
+	    The number of items selected in a multi-select list browser.
+	    This contains a meaningless value if your listbrowser is not
+	    multi-select.
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_RelEvent (uint32)
+	    Describes the event that caused the gadget release of the list
+	    browser. Currently defined events are:
+
+	    LBRE_NORMAL - Normal selection of an item.
+
+	    LBRE_HIDECHILDREN - The user tried to hide children in a
+	        hierarchical listbrowser.
+
+	    LBRE_SHOWCHILDREN - The user tried to show children in a
+	        hierarchical listbrowser.
+
+	    LBRE_EDIT - The contents of a node were edited. (V42)
+
+	    LBRE_DOUBLECLICK - The node was double-clicked on. (V42)
+
+	    LBRE_CHECKED - A checkbox node was checked. (V42)
+
+	    LBRE_UNCHECKED_ - A checkbox node was unchecked. (V42)
+
+	    LBRE_TITLECLICK - A column's title was clicked. (V42)
+
+	    LBRE_COLUMNADJUST - A column's separator was clicked/dragged. (V42)
+
+	    LBRE_EDITTABNEXT - The contents of a node were edited and the
+	        editing session was terminated by pressing [Tab]. The
+	        application should react by initiating a new editing
+	        session in the next editable column of the gadget if
+	        there is one. Note that you must pass { GA_TabCycle, TRUE }
+	        via LISTBROWSER_EditTags or LBNCA_EditTags for this value
+	        to be returned. (V51)
+
+	    LBRE_EDITTABPREV - The contents of a node were edited and the
+	        editing session was terminated by pressing [Shift+Tab]. The
+	        application should react by initiating a new editing
+	        session in the previous editable column of the gadget if
+	        there is one. Note that you must pass { GA_TabCycle, TRUE }
+	        via LISTBROWSER_EditTags or LBNCA_EditTags for this value
+	        to be returned. (V51)
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_VertSeparators (BOOL)
+	    Specifies that bevelled lines be drawn as separators between
+	    each column. Has no effect if the list only has one column.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_HorizSeparators (BOOL) (V41)
+	    Renders horizontal lines below each node. This is useful if your
+	    listbrowser is very wide and you want to make it easier for
+	    users to follow the rows of data.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_Borderless (BOOL)
+	    Create a view without a border. Useful if you wish the list
+	    browser to take up the entire window and have an attached
+	    scroller in the window border. This tag also disables the
+	    white background between the listbrowser body and the scroll
+	    gadget, and also the white space around the gadgets edges.
+	    This helps to achieve a seamless integration into a layout
+	    without visible borders.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_ColumnInfo (struct ColumnInfo *)
+	    Provides the column layout info for the list browser. This is
+	    an array of struct ColumnInfo. The array must have one entry
+	    per column plus one terminating entry where the ci_Width field
+	    is -1. Each field in an array entry is filled in as follows:
+
+	    ci_Width (int16)
+	      This specifies the percentage of the view width you want the
+	      column to be. If a virtual width is given, this will be a
+	      percentage of that, otherwise it will be a percentage of the
+	      actual gadget width. Since you are specifying a percentage,
+	      the actual size of the column will automatically adjust as the
+	      virtual or actual width of the gadget changes.
+
+	    ci_Title (CONST_STRPTR)
+	      If you have specified LISTBROWSER_ColumnTitles, TRUE then
+	      you must fill in the titles you wish to appear for each
+	      column here.
+
+	    ci_Flags (uint32)
+	      Flags for the column. (V42)
+	        CIF_WEIGHTED     -- weighted width column (default)
+	        CIF_FIXED        -- fixed pixel width specified in ci_Width
+	        CIF_DRAGGABLE    -- separator is user draggable
+	        CIF_NOSEPARATORS -- no separator on this column
+	        CIF_SORTABLE     -- column is sortable (see LBM_SORT)
+
+	    Passing NULL for the ColumnInfo means that you want a single
+	    column taking up the entire width of the gadget with no title.
+	    
+	    ColumnInfo can not be shared amongst other list browsers
+	    simultaneously. While the ColumInfo is in use by list browser,
+	    you may not modify it. If you wish to make any modifications
+	    to it then first detach the list, make your modifications then
+	    re-attach the list and pass the LISTBROWSER_ColumnInfo tag
+	    again. List browser may modify the contents of this structure.
+
+	    NOTE:
+	    Since V53.16 this structure is retained for backwards
+	    compatibility only. Use the AllocLBColumnInfoA() family of
+	    functions to safely manipulate and retrieve all column
+	    information. This structure has been extended and will
+	    continue to be extended in the future. Do not depend on any
+	    of the fields in this structure for any purpose.
+
+	    As of V53.44, setting this attribute to NULL, also implies
+	    that no column titles should be displayed, and the
+	    LISTBROWSER_ColumnTitles attribute is set to FALSE automatically.
+	    When using versions prior to this, you should always set the 
+	    ColumnTitles attribute to FALSE when removing the ColumnInfo.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_ColumnTitles (BOOL)
+	    Show titles above each column.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_SortColumn (int16)
+	    The number of a column that you want to sort by. The column
+	    must be LBCIA_Sortable as well. See the SetLBColumnInfoA()
+	    function for more details.
+
+	    Defaults to -1 (none).
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_AutoFit (BOOL)
+	    Informs the ListBrowser that you want your column widths
+	    calculated automatically for you to best fit the items in the
+	    list attached to it. This will make your gadget a virtual
+	    width gadget with the virtual width being the width needed to
+	    fit all columns.
+
+	    For this to work, you must still pass LISTBROWSER_ColumnInfo with
+	    a ColumInfo structure that has entries for each column as normal.
+	    The only change being that the initial values of the ci_Width
+	    field will be ignored and instead will be filled in by ListBrowser.
+
+	    If you are using the LISTBROWSER_AutoFit attribute, the column
+	    sizes will not be re-calculated when you change lists with
+	    LISTBROWSER_Label and you must pass LISTBROWSER_AutoFit, TRUE again
+	    to adjust the column sizes to fit your new list.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_VirtualWidth (int16)
+	    Allows rendering beyond the right edge of the view area in the
+	    gadget.
+
+	    Defaults to 0 unless LISTBROWSER_HorizontalProp is specified,
+	    in which case this value is calculated to be the width of the
+	    widest node. Applications can still set this attribute but
+	    from V52.15, this should be automatic and the prop gadget
+	    is updated accordingly.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_AutoVirtualWidth (BOOL) (V52.19)
+	    Calculates the virtual width of the gadget automatically and in
+	    turn sets the horizontal scroller to suit. As this setting makes
+	    no sense without the scroller, setting this attribute also creates
+	    the horizontal scroller automatically.
+
+	    Defaults to FALSE for compatibility reasons.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	LISTBROWSER_Left (int32)
+	    The left offset of the view. This is only useful in combination
+	    with either LISTBROWER_VirtualWidth or LISTBROWSER_AutoFit to
+	    reveal horizontal parts of the view that may be hidden. The
+	    offset is specified in units of pixels.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_VerticalProp (BOOL)
+	    Creates a vertical scrollbar with arrows for scrolling up and
+	    down through the list.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_HorizontalProp (BOOL)
+	    Creates a horizontal scrollbar with arrows for scrolling
+	    sideways across the view. Not useful unless you've used
+	    LISTBROWSER_VirtualWidth or LISTBROWSER_AutoFit since there
+	    would be nothing horizontally hidden.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_VPropTotal (uint32)
+	LISTBROWSER_VPropVisible (uint32)
+	LISTBROWSER_HPropTotal (uint32)
+	LISTBROWSER_HPropVisible (uint32)
+	    These tags are for getting the status of the two prop gadgets
+	    for the listbrowser. These are intended for linking external
+	    prop gadgets to a listbrowser.
+
+	    Applicability is (OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_VPropTop (uint32)
+	LISTBROWSER_HPropTop (uint32)
+	    These tags are for getting the status of the two prop gadgets
+	    for the listbrowser. These are intended for linking external
+	    prop gadgets to a listbrowser.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_Position (uint32)
+	    Alters the view position within the listbrowser gadget. This
+	    tag exists mainly to make complex keyboard controls simple.
+
+	    Currently defined positions are:
+
+	    LBP_LINEUP     - up one line
+	    LBP_LINEDOWN   - down one line
+	    LBP_PAGEUP     - up one page
+	    LBP_PAGEDOWN   - down one page
+	    LBP_TOP        - top of view
+	    LBP_BOTTOM     - bottom of view
+	    LBP_SHIFTLEFT  - shift left a small amount
+	    LBP_SHIFTRIGHT - shift right a small amount
+	    LBP_LEFTEDGE   - left-most of view
+	    LBP_RIGHTEDGE  - right-most of view
+	    LBP_PAGELEFT   - left one page (V51)
+	    LBP_PAGERIGHT  - right one page (V51)
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_MouseX (int16)
+	LISTBROWSER_MouseY (int16)
+	    Returns the co-ordinates of the mouse within the gadgets box
+	    when the mouse button was last released in the gadget.
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_HintInfoHook (struct Hook *)
+	    When the gadgets GM_QUERY method is invoked, the hook passed by
+	    this tag will be called. This allows the listbrowser to dynamically
+	    change the hintinfo string shown by this gadget. As there is no way
+	    for the gadget itself to determine what the string should be, the
+	    usercode hook can set it accordingly. The hook will have the following
+	    parameters initialised:
+
+	      HintInfoHook( struct Hook *hook, Object *o, struct Node *lbn )
+
+	    The first two parameters are standard hook function parameters,
+	    but the third is a pointer to the listbrowser node that the mouse
+	    pointer is currently over when the hook is called. You can use
+	    GetListBrowserNodeAttrs() on this pointer to determine what the
+	    hintinfo string should be set to. Once a string is decided on,
+	    simply return the pointer as a LONG. The hook may also pass back NULL,
+	    and the listbrowser will then use the string given in GA_HintInfo as
+	    a default. If no GA_HintInfo string is supplied, window.class will 
+	    then try to get the hintinfo string from the WINDOW_HintInfo array.
+	    If all these steps fail, no hintinfo is displayed.
+
+	    The node pointer is guaranteed to be valid when the hook is called, 
+	    but not once the hook has returned, so do not reference it after the 
+	    hook has returned.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	LISTBROWSER_ScrollRaster (BOOL)
+	    When this option is set ListBrowser will use ScrollRasterBF() for
+	    extra fast scrolling. This option is safe to use if the gadget
+	    will be in a Smart Refresh or Super Bitmap window.
+
+	    If the gadget will be in a Simple Refresh window you should be
+	    aware of an Intuition bug that will cause layer damage to not
+	    be updated properly. This problem only exists under V37 of
+	    Intuition as ListBrowser sets the GMORE_SCROLLRASTER flag which
+	    causes proper updates in V39 and above. However, if you are
+	    using ScrollRaster() in a window that contains a ListBrowser
+	    you must check the version of Intuition and use
+	    ScrollWindowRaster() instead if the version is 39 or higher.
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_Hierarchical (BOOL)
+	    Puts the ListBrowser into hierarchical mode where nodes can be
+	    browsed in a hierarchy by "generation" and generations can
+	    be hidden.
+
+	    See the LBNA_Generation node tag.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_ShowImage (struct Image *)
+	LISTBROWSER_HideImage (struct Image *)
+	LISTBROWSER_LeafImage (struct Image *)
+	    You can replace the images for showing a generation, hiding a
+	    generation and the leaf (no children) image with your own. If
+	    you do not provide any of them, default images will be rendered
+	    for you.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_Editable (BOOL)
+	    If you want to enable in place editing of selected node columns
+	    you must set this flag to TRUE.
+
+	    Note that LISTBROWSER_ShowSelected must also be TRUE for node
+	    editing to work properly.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_EditNode (int32)
+	    The number of a node that you want to start editing. You must
+	    also specify the column you want to edit with
+	    LISTBROWSER_EditColumn and then activate the gadget using
+	    ActivateGadget() (or ActivateLayoutGadget() if the listbrowser
+	    is being used with layout.gadget).
+
+	    This tag will also make the given node the selected node.
+
+	    Defaults to -1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_EditColumn (int16)
+	    The number of a column that you want to start editing. You must
+	    also specify the node number you want to edit with
+	    LISTBROWSER_EditNode and then activate the gadget using
+	    ActivateGadget() (or ActivateLayoutGadget() if the listbrowser
+	    is being used with layout.gadget).
+
+	    Defaults to -1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_EditTags (struct TagItem *)
+	    Tags that you want to be passed to the string gadget used when
+	    editing gadget text. Though you could theoretically pass any
+	    tags to the gadget, you should generally not pass tags that
+	    affect the position of the gadget.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_RelColumn (int16)
+	    The column the mouse was over when the button was released.
+	    This is most useful in a listbrowser with editable nodes in
+	    different columns. By checking both this and LISTBROWSER_RelEvent
+	    on gadget release you can tell if a node was edited and what
+	    column of that node was edited.
+
+	    This will not contain valid data if the mouse button was released
+	    over a read-only node or if your listbrowser is in read-only mode.
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_CheckImage (struct Image *)
+	LISTBROWSER_UncheckedImage (struct Image *)
+	    Provide a custom image for a checkbox node while that node is
+	    in the checked or unchecked state. A NULL image means that
+	    listbrowser render some default imagery.
+
+	    Note: These tags was first added from v53.57
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	LISTBROWSER_TotalNodes (int32)
+	    Return the total number of nodes currently attached to the
+	    listbrowser. (V41)
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_TitleClickable (BOOL)
+	    Enables column title bar clicking when TRUE. (V42)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_MinVisible (int32)
+	    Minimum visible node count. This causes the minimum domain
+	    to be large enough to hold the specified number of nodes
+	    using the estimated average node height. (V42)
+
+	    Note: *ESTIMATED* this is not a guaranteed result. The result
+	    may be slightly less or greater than specified and potentially
+	    a lot greater if other objects within the layout group cause the
+	    listbrowser to layout larger than its minimum domain.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	LISTBROWSER_CursorSelect (int32)
+	    Keyboard cursor selected node number. (V42)
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_CursorNode (struct Node *)
+	    Keyboard cursor selected node pointer. (V42)
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_FastRender (BOOL)
+	    This attribute is now obsolete and is ignored. (V42)
+
+	LISTBROWSER_TotalVisibleNodes (int32)
+	    Total visible node count (estimated). (V42)
+
+	    Note: In a hierarchical browser this is the number of nodes
+	    not hidden. In a non-hierarchical one this tag equals
+	    LISTBROWSER_TotalNodes.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_GET, OM_NOTIFY)
+
+	LISTBROWSER_WrapText (BOOL)
+	    Enables word-wrapping of column nodes flagged for word wrap.
+	    Wrapping is delimited by a ' ' space, '\n' newline or '\t' tab.
+	    (V42)
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	LISTBROWSER_MinNodeSize (int32)
+	    Minimum Node size for MemPool optimization. Useful when
+	    coupled with LBNA_NodeSize and using the internal pool. (V42)
+
+	    Applicability is (OM_GET)
+
+	LISTBROWSER_MemPool (APTR) (V51)
+	    Specifies a custom memory pool for this object's allocations.
+	    The memory pool should be allocated with AllocSysObject().
+
+	    Defaults to NULL (internal pool).
+
+	    Applicability is (OM_NEW)
+
+	LISTBROWSER_Striping (uint32) (V53.18)
+	    Enables striping effect which alternates background colors.
+	    The effect may make it easier for users to search larger
+	    data sets. Note that the striping effect overrides any other
+	    background coloring.
+
+	    Currently defined values include:
+	        LBS_NONE    - no striping effect
+	        LBS_ROWS    - rows are striped
+	        LBS_COLUMNS - columns are striped (not implemented)
+	        LBS_BOTH    - rows and columns are striped (not implemented)
+
+	    Defaults to LBS_NONE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+listbrowser.gadget/AllocLBColumnInfoA                         listbrowser.gadget/AllocLBColumnInfoA
+
+    NAME
+	AllocLBColumnInfoA -- Allocate column info array. (V45)
+
+    SYNOPSIS
+	struct ColumnInfo *AllocLBColumnInfoA(uint16 cols, struct TagItem *tags);
+
+	struct ColumnInfo *AllocLBColumnInfo(uint16 cols, Tag tag1, ...);
+
+    FUNCTION
+	Allocates a ColumnInfo array that can be passed to the list browser
+	via the LISTBROWSER_ColumnInfo tag. This is a future friendly way
+	of allocating and initializing the ColumnInfo array.
+
+    TAGS
+	See SetLBColumnInfoAttrsA() for the list of supported tags.
+	AllocLBColumnInfoA() supports the following additional tags:
+
+	LBCIA_MemPool (APTR)
+	    Specifies a custom memory pool to allocate ColumnInfo structs
+	    from. The pool should be allocated with AllocSysObject() using
+	    the ASOT_MEMPOOL type.
+
+	    Defaults to NULL (internal pool).
+
+    INPUTS
+	cols - How many columns your ListBrowser has.
+	tags - A tag list of attributes to set.
+
+    RESULT
+	Returns a pointer to the ColumnInfo array or NULL on error.
+
+    BUGS
+	Before 53.16 the ColumnInfo array was not automatically terminated.
+	The ColumnInfo array is now always properly terminated.
+
+    SEE ALSO
+	FreeLBColumnInfo(), GetLBColumnInfoAttrsA(), SetLBColumnInfoAttrsA()
+
+listbrowser.gadget/AllocListBrowserNodeA                   listbrowser.gadget/AllocListBrowserNodeA
+
+    NAME
+	AllocListBrowserNodeA -- Allocate a ListBrowser node.
+
+    SYNOPSIS
+	struct Node *AllocListBrowserNodeA(uint16 cols, struct TagItem * tags);
+
+	struct Node *AllocListBrowserNode(uint16 cols, Tag tag1, ...);
+
+    FUNCTION
+	Allocates a node that can be added to the Exec linked list of
+	labels in the listbrowser. This is the only way to allocate a
+	node for this list. You cannot allocate nodes yourself because
+	the ListBrowser class uses a private node structure.
+
+    TAGS
+	See SetListBrowserNodeAttrsA() for the list of supported tags.
+	In addition, AllocListBrowserNodeA() supports the following
+	additional tags:
+
+	LBNA_NodeSize (uint32) (V41)
+	    The size in bytes of the public portion of the node structure that
+	    should be allocated. Usually the default (sizeof(struct Node)) will
+	    suffice unless you wish to have a custom node structure embedded
+	    within the ListBrowser node in which case you'd provide the size
+	    of that structure. Then the node returned can be treated as an
+	    instance of your custom node structure.
+
+	    Defaults to sizeof(struct Node).
+
+    INPUTS
+	cols - How many columns your ListBrowser has.
+	tags - Attributes for the node passed to SetListBrowserNodeAttrsA().
+
+    RESULT
+	A node that can be added into the list of labels or NULL on error.
+
+    SEE ALSO
+	FreeListBrowserNode(), SetListBrowserNodeAttrsA()
+
+listbrowser.gadget/FreeLBColumnInfo                             listbrowser.gadget/FreeLBColumnInfo
+
+    NAME
+	FreeLBColumnInfo -- Free a column info array. (V45)
+
+    SYNOPSIS
+	VOID FreeLBColumnInfo(struct ColumnInfo *ci);
+
+    FUNCTION
+	Frees the ColumnInfo array allocated with AllocLBColumnInfoA().
+
+    INPUTS
+	ci - Pointer to the ColumnInfo array to free.
+	     Safe to call with a NULL pointer.
+
+    SEE ALSO
+	AllocLBColumnInfoA()
+
+listbrowser.gadget/FreeListBrowserList                       listbrowser.gadget/FreeListBrowserList
+
+    NAME
+	FreeListBrowserList -- Free a list of ListBrowser nodes.
+
+    SYNOPSIS
+	VOID FreeListBrowserList(struct List *list);
+
+    FUNCTION
+	Frees an entire list of ListBrowser nodes with FreeListBrowserNode().
+	The List itself is not freed. Only the nodes in the list are freed.
+	The list will be empty after this call and may be reused.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+    INPUTS
+	list - List whose nodes you will be freeing.
+	       Safe to call with a NULL pointer.
+
+    SEE ALSO
+	FreeListBrowserNode()
+
+listbrowser.gadget/FreeListBrowserNode                       listbrowser.gadget/FreeListBrowserNode
+
+   NAME
+    FreeListBrowserNode -- Free a ListBrowser node.
+
+   SYNOPSIS
+    VOID FreeListBrowserNode(struct Node * node);
+
+   FUNCTION
+    Frees a ListBrowser node allocated with the AllocListBrowserNodeA()
+    function.
+
+   INPUTS
+    node - Pointer to the node to free.
+           Safe to call with a NULL pointer. (53.8)
+
+   NOTES
+    ALWAYS ensure that you Remove() the node before calling this function. 
+    Failure to do this can potentially corrupt the label list.
+
+   SEE ALSO
+    AllocListBrowserNodeA()
+
+listbrowser.gadget/GetLBColumnInfoAttrsA                   listbrowser.gadget/GetLBColumnInfoAttrsA
+
+    NAME
+	GetLBColumnInfoAttrsA -- Get column info attributes. (V45)
+
+    SYNOPSIS
+	int32 result = GetLBColumnInfoAttrsA(struct ColumnInfo *ci,
+	                                     struct TagItem *tags);
+
+	int32 result = GetLBColumnInfoAttrs(struct ColumnInfo *ci,
+	                                    Tag tag1, ...);
+
+    FUNCTION
+	Gets attributes for a ColumnInfo structure in a future
+	friendly manner.
+
+    TAGS
+	The following tags listed in SetLBColumnInfoAttrsA() are supported:
+	  LBCIA_Column         (int16)
+	  LBCIA_Title          (CONST_STRPTR)
+	  LBCIA_Weight         (int16)
+	  LBCIA_Width          (int16)
+	  LBCIA_Flags          (uint32)
+	  LBCIA_SortDirection  (uint32)
+	  LBCIA_UserData       (APTR)
+	  LBCIA_SoftStyle      (uint8)
+	  LBCIA_HorizJustify   (uint8)
+
+    INPUTS
+	ci   - Pointer to ColumnInfo array to get the information from.
+	       Safe to call with a NULL pointer.
+
+	tags - A tag list of attributes to get. Each ti_Tag is the
+	       attribute to get and ti_Data is a pointer to a location
+	       to copy the result into. Safe to call with a NULL pointer.
+
+    RETURNS
+	result - The actual number of attributes retrieved.
+
+    NOTES
+	Do not forget that the ti_Data pointer must point to a uint32
+	sized storage location no matter what type you are getting.
+
+    SEE ALSO
+	AllocLBColumnInfoA(), SetLBColumnInfoAttrsA()
+
+listbrowser.gadget/GetListBrowserNodeAttrsA             listbrowser.gadget/GetListBrowserNodeAttrsA
+
+    NAME
+	GetListBrowserNodeAttrsA -- Get ListBrowser node attributes.
+
+    SYNOPSIS
+	VOID GetListBrowserNodeAttrsA(struct Node *node, struct TagItem *tags);
+
+	VOID GetListBrowserNodeAttrs(struct Node *node, Tag tag1, ...);
+
+    FUNCTION
+	The ListBrowser uses a private node structure and all attributes
+	are hidden and must therefore be accessed with this function.
+
+	TAGS
+	Most of the tags listed in SetListBrowserNodeAttrsA() are supported
+	including some that are only gettable.
+
+	LBNA_Selected (BOOL)
+	LBNA_Flags (uint32)
+	LBNA_Generation (int16)
+	LBNA_CheckBox (BOOL) (V41)
+	LBNA_Checked (BOOL) (V41)
+	LBNA_Priority (int8)
+	LBNA_UserData (APTR)
+
+	LBNA_NumColumns (uint8)
+	    The number of columns this Node has.
+
+	LBNA_Column (int16)
+	    A column (starting from 0) that the column attribute tags
+	    below it affect. All column attribute tags have the prefix
+	    LBNCA_#? to distinguish them from node attributes. You
+	    typically specify the column to get attributes from and
+	    then the attributes for that column. For example,
+	      uint32 text_ptr = 0;
+	      uint32 fill_pen = 0;
+	      ...
+	      LBNA_Column, 2,
+	        LBNCA_Text, &text_ptr,
+	        LBNCA_FillPen, &fill_pen,
+	      ...
+
+	LBNCA_HorizJustify (int16)
+	LBNCA_Text (STRPTR)
+	LBNCA_Editable (BOOL)
+	LBNCA_MaxChars (int16)
+	LBNCA_Integer (int32 *)
+	LBNCA_FGPen (int16)
+	LBNCA_BGPen (int16)
+	LBNCA_FillPen (int16) (V51)
+	LBNCA_SoftStyle (uint8) (V52.14)
+	LBNCA_Image (struct Image *)
+	LBNCA_SelImage (struct Image *)
+	LBNCA_RenderHook (struct Hook *) (V41)
+	LBNCA_HookHeight (int16) (V41)
+
+    INPUTS
+	node - ListBrowser node to get the information on.
+	       Safe to call with a NULL pointer.
+
+	tags - A tag list of attributes to get. Each ti_Tag is the
+	       attribute to get and ti_Data is a pointer to a location
+	       to copy the result into. Any exceptions to this rule
+	       are documented in the tag descriptions above.
+	       Safe to call with a NULL pointer.
+
+    NOTES
+	Do not forget that the ti_Data pointer must point to a uint32
+	sized storage location no matter what type you are getting.
+
+    SEE ALSO
+	SetListBrowserNodeAttrsA()
+
+listbrowser.gadget/HideAllListBrowserChildren         listbrowser.gadget/HideAllListBrowserChildren
+
+    NAME
+	HideAllListBrowserChildren -- Hide all children in a ListBrowser.
+
+    SYNOPSIS
+	VOID HideAllListBrowserChildren(struct List *list);
+
+    FUNCTION
+	Hide all the children of a ListBrowser.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+	Use the LBM_HIDECHILDREN method to do the same thing without
+	detaching the list.
+
+    INPUTS
+	list - List whose children you will be hiding.
+	       Safe to call with a NULL pointer.
+
+    SEE ALSO
+	ShowAllListBrowserChildren(), LBM_HIDECHILDREN
+
+listbrowser.gadget/HideListBrowserNodeChildren       listbrowser.gadget/HideListBrowserNodeChildren
+
+    NAME
+	HideListBrowserNodeChildren -- Hide children of a ListBrowser node.
+
+    SYNOPSIS
+	VOID HideListBrowserNodeChildren(struct Node *node, int16 depth);
+
+    FUNCTION
+	Hide the children of a ListBrowser node. The next depth generations
+	will be hidden. To only hide the next generation, use a depth of 1.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+	Use the LBM_HIDECHILDREN method to do the same thing without
+	detaching the list.
+
+    INPUTS
+	node - Node whose children you will be hiding.
+	       Safe to call with a NULL pointer.
+
+	depth - How many generations deep to hide.
+
+    SEE ALSO
+	ShowListBrowserNodeChildren(), LBM_HIDECHILDREN
+
+listbrowser.gadget/LBM_ADDNODE                                       listbrowser.gadget/LBM_ADDNODE
+
+    NAME
+     LBM_ADDNODE -- Adds a node to the attached list. (V41)
+
+    SYNOPSIS
+     uint32 result = IDoMethodA(APTR obj, struct lbAddNode * msg);
+
+    FUNCTION
+     Allocates a new node and adds it to the list currently attached to
+     the listbrowser. If rendering information is available, then any
+     necessary refreshing will take place. You do not need to detach
+     your list first. This method will have no effect if no list is
+     currently attached.
+
+     Use DoGadgetMethodA() to provide rendering information when
+     invoking this method.
+
+     This method takes the following message structure:
+
+     struct lbAddNode
+     {
+       uint32 MethodID;               // LBM_ADDNODE
+       struct GadgetInfo *lba_GInfo;  // to provide rendering info
+       struct Node *lba_Node;         // Insert() after this node
+       struct TagItem *lba_NodeAttrs; // AllocListBrowserNodeA() tags
+     };
+
+     The lba_Node field can be one of follwing three values:
+      NULL  -- add node to the head of the list
+      ~0    -- add node to the tail of the list
+      Node* -- new node will be inserted after this Node
+
+    INPUTS
+     obj - listbrowser object pointer
+     msg - pointer to fully initialized struct lbAddNode
+           (see <gadgets/listbrowser.h>)
+
+    RESULT
+     Returns the address of the newly added node or NULL on error.
+
+    SEE ALSO
+     LBM_REMNODE, LBM_EDITNODE, intuition.library/DoGadgetMethodA()
+
+listbrowser.gadget/LBM_EDITNODE                                     listbrowser.gadget/LBM_EDITNODE
+
+    NAME
+	LBM_EDITNODE -- Edit an attached node's attributes. (V41)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct lbEditNode * msg);
+
+    FUNCTION
+	Changes attributes of a node attached to a listbrowser. If rendering
+	information is available then any necessary refreshing will take
+	place. You do not need to detach your list first.
+
+	Use DoGadgetMethodA() to provide rendering information when
+	invoking this method.
+
+	This method takes the following message structure:
+
+	struct lbEditNode
+	{
+	    uint32 MethodID;               // LBM_EDITNODE
+	    struct GadgetInfo *lbe_GInfo;  // to provide rendering info
+	    struct Node *lbe_Node;         // modify this node
+	    struct TagItem *lbe_NodeAttrs; // SetListBrowserNodeAttrsA() tags
+	};
+
+    INPUTS
+	obj - listbrowser object pointer
+	msg - pointer to fully initialized struct lbEditNode
+	      (see <gadgets/listbrowser.h>)
+
+    RESULT
+	Returns non-zero on success or zero on failure.
+
+    SEE ALSO
+	LBM_ADDNODE, LBM_REMNODE, intuition.library/DoGadgetMethodA()
+
+listbrowser.gadget/LBM_HIDECHILDREN                             listbrowser.gadget/LBM_HIDECHILDREN
+
+    NAME
+	LBM_HIDECHILDREN -- Shrink a node to hide child nodes. (V42)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct lbHideChildren * msg);
+
+    FUNCTION
+	This method shrinks a node to hide child nodes in a hierarchical
+	list browser. If rendering information is available then any
+	necessary refreshing will take place. You do not need to detach
+	your list first.
+
+	Use DoGadgetMethodA() to provide rendering information when
+	invoking this method.
+
+	This method takes the following message structure:
+
+	struct lbHideChildren
+	{
+	    uint32              MethodID;   // LBM_HIDECHILDREN
+	    struct GadgetInfo * lbhc_GInfo; // to provide rendering info
+	    struct Node *       lbhc_Node;  // Starting parent node
+	    int16               lbhc_Depth; // Depth to hide
+	};
+
+	The lbsc_Node field provides the starting node where the
+	shrinking is to take place. Setting this to NULL means start
+	at the root node.
+
+	The lbsc_Depth field provides the total depth of the shrinking.
+	Setting this to 1, for example, will shrink the tree starting at
+	the lbsc_Node for one generation.
+
+    INPUTS
+	obj - listbrowser object pointer
+	msg - pointer to fully initialized struct lbHideChildren
+	      (see <gadgets/listbrowser.h>)
+
+    RESULT
+	Returns zero if changes were rendered or non-zero if not.
+
+    SEE ALSO
+	LBM_SHOWCHILDREN, intuition.library/DoGadgetMethodA()
+
+listbrowser.gadget/LBM_REMNODE                                       listbrowser.gadget/LBM_REMNODE
+
+    NAME
+	LBM_REMNODE -- Removes a node from the attached list. (V41)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct lbRemNode * msg);
+
+    FUNCTION
+	Removes and de-allocates a node from the list currently attached
+	to the listbrowser. If rendering information is available then
+	any necessary refreshing will take place. You do not need to
+	detach your list first.
+
+	Use DoGadgetMethodA() to provide rendering information when
+	invoking this method.
+
+	This method takes the following message structure:
+
+	struct lbRemNode
+	{
+	    uint32 MethodID;              // LBM_REMNODE
+	    struct GadgetInfo *lbr_GInfo; // to provide rendering info
+	    struct Node *lbr_Node;        // Remove() and free this node
+	};
+
+    INPUTS
+	obj - listbrowser object pointer
+	msg - pointer to fully initialized struct lbRemNode
+	      (see <gadgets/listbrowser.h>)
+
+    RESULT
+	Returns non-zero on success or zero on failure.
+
+    SEE ALSO
+	LBM_ADDNODE, LBM_EDITNODE, intuition.library/DoGadgetMethodA()
+
+listbrowser.gadget/LBM_SHOWCHILDREN                             listbrowser.gadget/LBM_SHOWCHILDREN
+
+    NAME
+	LBM_SHOWCHILDREN -- Expand a node to show child nodes. (V42)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct lbShowChildren * msg);
+
+    FUNCTION
+	This method expands a node to show child nodes in a hierarchical
+	list browser. If rendering information is available then any
+	necessary refreshing will take place. You do not need to detach
+	your list first.
+
+	Use DoGadgetMethodA() to provide rendering information when
+	invoking this method.
+
+	This method takes the following message structure:
+
+	struct lbShowChildren
+	{
+	    uint32              MethodID;   // LBM_SHOWCHILDREN
+	    struct GadgetInfo * lbsc_GInfo; // to provide rendering info
+	    struct Node *       lbsc_Node;  // Starting parent node
+	    int16               lbsc_Depth; // Depth to show
+	};
+
+	The lbsc_Node field provides the starting node where the
+	expansion is to take place. Setting this to NULL means
+	start at the root node.
+
+	The lbsc_Depth field provides the total depth of the expansion.
+	Setting this to 1, for example, will expand the tree starting at
+	the lbsc_Node for one generation.
+
+    INPUTS
+	obj - listbrowser object pointer
+	msg - pointer to fully initialized struct lbShowChildren
+	      (see <gadgets/listbrowser.h>)
+
+    RESULT
+	Returns zero if changes were rendered or non-zero if not.
+
+    SEE ALSO
+	LBM_HIDECHILDREN, intuition.library/DoGadgetMethodA()
+
+listbrowser.gadget/LBM_SORT                                             listbrowser.gadget/LBM_SORT
+
+    NAME
+	LBM_SORT -- Sort attached list on specified column. (V42)
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct lbSort * msg);
+
+    FUNCTION
+	Sorts the list currently attached to the listbrowser. If rendering
+	information is available then any necessary refreshing will take
+	place. You do not need to detach your list first.
+
+	The sort is stable which means it preserves the order of equal rows.
+
+	Use DoGadgetMethodA() to provide rendering information when
+	invoking this method.
+
+	This method takes the following message structure:
+
+	struct lbSort
+	{
+	    uint32             MethodID;        // LBM_SORT
+	    struct GadgetInfo *lbs_GInfo;       // to provide rendering info
+	    uint32             lbs_Column;      // Column to sort by
+	    uint32             lbs_Direction;   // Sort direction
+	    struct Hook *      lbs_CompareHook; // Optional hook to compare items
+	};
+
+	The lbs_Column specifies the column to sort the list by. Only one
+	column may be sorted on at a time. The column must also be sortable
+	(see LBCIA_Sortable tag) or an error will be returned.
+
+	Setting lbm_Direction to LBMSORT_FORWARD will sort the list in the
+	normal manner (increasing values from top to bottom) while setting it
+	to LBMSORT_REVERSE will sort the list in reverse order.
+
+	Nodes are always sorted first by their Node.ln_Pri fields (see
+	LBNA_Priority tag). If the Node.ln_Pri fields are equal the
+	lbs_CompareHook field is used to determine which Node comes first.
+	If lbs_CompareHook is NULL the list will use be sorted depending on
+	the type. Stricmp() is used for LBNCA_Text types. LBNCA_Integer types
+	are compared as integers. Any other types are not sorted by default.
+
+	If lbs_CompareHook points to an initialized Hook structure.
+	The hook function is called as follows:
+
+	  int32 Compare(struct Hook *hook, APTR obj, struct LBSortMsg *msg);
+
+	The hook parameter points to the user supplied hook passed in the
+	lbs_CompareHook field.
+
+	The obj parameter points to the listbrowser object itself.
+
+	The msg parameter points to the following message structure:
+
+	struct LBSortMsg
+	{
+	    uint32 lbsm_TypeA;
+	    union
+	    {
+	        int32        Integer;
+	        CONST_STRPTR Text;
+	    } lbsm_DataA;
+
+	    APTR lbsm_UserDataA;
+
+	    uint32 lbsm_TypeB;
+	    union
+	    {
+	        int32        Integer;
+	        CONST_STRPTR Text;
+	    } lbsm_DataB;
+
+	    APTR lbsm_UserDataB;
+
+	    int16  lbsm_Column;     // (V53.18)
+	    uint32 lbsm_Direction;  // (V53.18)
+
+	    BOOL   lbsm_CheckedA;   // (V53.41)
+	    BOOL   lbsm_CheckedB;   // (V53.41)
+	};
+
+	The sorting routine fills in this structure depending on what types
+	are being used in the rows. The lbsm_TypeA and lbsm_TypeB fields are
+	set to 1 for LBNCA_Text, 2 for LBNCA_Integer or 0 for custom types.
+
+	The lbsm_DataA and lbsm_DataB unions contain the appropriate values
+	depending on the corresponding lbsm_TypeA and lbsm_TypeB fields.
+	These fields will be initialized to zero for custom types.
+
+	The lbsm_UserDataA and lbsm_UserDataB fields contain a copy of the
+	corresponding lbn_UserData fields from the nodes. These fields may,
+	for example, provide additional information to enable your own
+	custom sorting of LBNCA_Image rows.
+
+	The lbsm_Column and lbsm_Direction fields are provided for more
+	complex sorts and are available with V53.18 and higher only.
+
+	The lbsm_CheckedA and lbsm_CheckedB fields are only valid if the nodes
+	contain a checkbox. In this case the fields reflect the state of the
+	nodes checkbox, i.e. TRUE if selected, FALSE otherwise. This fields
+	are only available with V53.41 and higher.
+
+	The Compare() function returns an int32 as follows:
+	  -1 if A < B
+	   0 if A = B
+	   1 if A > B
+
+	Starting with V53.71 this method supports proper sorting of hiarchical
+	lists. Earlier versions would separate child nodes from their parents
+	and generate a giant mess when attempting to sort such a list.
+
+    INPUTS
+	obj - listbrowser object pointer
+	msg - pointer to fully initialized struct lbSortNode
+	      (see <gadgets/listbrowser.h>)
+
+    RESULT
+	Returns zero if successful, 1 if sorted but not rendered
+	or ~0 (-1) on error.
+
+    SEE ALSO
+	intuition.library/DoGadgetMethodA(), utility.library/Stricmp()
+
+listbrowser.gadget/LISTBROWSER_GetClass                     listbrowser.gadget/LISTBROWSER_GetClass
+
+    NAME
+	LISTBROWSER_GetClass -- Gets pointer to the listbrowser class.
+
+    SYNOPSIS
+	Class * class = LISTBROWSER_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "listbrowser.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the listbrowser class.
+
+listbrowser.gadget/ListBrowserClearAll                       listbrowser.gadget/ListBrowserClearAll
+
+    NAME
+	ListBrowserClearAll -- Unselect all nodes in a multiselect ListBrowser.
+	                       (V45)
+
+    SYNOPSIS
+	VOID ListBrowserClearAll(struct List *list);
+
+    FUNCTION
+	Sets the LBNA_Selected bit to FALSE in all nodes in the list. This
+	is a quick way to unselect all nodes in a multi-select ListBrowser.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+    INPUTS
+	list - The list of ListBrowser nodes.
+	       Safe to call with a NULL pointer.
+
+    SEE ALSO
+	ListBrowserSelectAll()
+
+listbrowser.gadget/ListBrowserSelectAll                     listbrowser.gadget/ListBrowserSelectAll
+
+    NAME
+	ListBrowserSelectAll -- Select all nodes in a multiselect ListBrowser.
+
+    SYNOPSIS
+	VOID ListBrowserSelectAll(struct List *list);
+
+    FUNCTION
+	Sets the LBNA_Selected bit to TRUE for all nodes in the list.
+	This is a quick way to select all nodes in a multi-select
+	ListBrowser.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+    INPUTS
+	list - The list of ListBrowser nodes.
+	       Safe to call with a NULL pointer.
+
+    SEE ALSO
+	ListBrowserClearAll()
+
+listbrowser.gadget/SetLBColumnInfoAttrsA                   listbrowser.gadget/SetLBColumnInfoAttrsA
+
+    NAME
+	SetLBColumnInfoAttrsA -- Sets column info attributes. (V45)
+
+    SYNOPSIS
+	VOID SetLBColumnInfoAttrsA(struct ColumnInfo *ci, struct TagItem *tags);
+
+	VOID SetLBColumnInfoAttrs(struct ColumnInfo *ci, Tag tag1, ...);
+
+    FUNCTION
+	Changes attributes for a ColumnInfo structure in a future
+	friendly manner.
+
+	The ColumnInfo array must have been created using the
+	AllocLBColumnInfoA() function.
+
+	You may not change column attributes while the corresponding list
+	is attached to a ListBrowser gadget. You must first detach the list
+	with LISTBROWSER_Labels, NULL before you can change attributes and
+	then re-attach the list along with the LISTBROWSER_ColumnInfo tag.
+
+    TAGS
+	LBCIA_Column (int16)
+	    A column (starting from 0) that the attribute tags below it
+	    affect. All attribute tags have the prefix LBCIA_#? to
+	    distinguish them from other attributes. You typically specify
+	    the column to work with and then the column attributes. For
+	    example,
+	      ...
+	      LBCIA_Column, 0,
+	        LBCIA_Title, "Amiga"
+	      LBCIA_Column, 1,
+	        LBCIA_DraggableSeparator, TRUE,
+	        LBCIA_AutoSort, TRUE,
+	      ...
+
+	    Defaults to 0.
+
+	LBCIA_Title (CONST_STRPTR)
+	    The title to assign to the column. This title must be
+	    present if LISTBROWSER_ColumnTitles is TRUE.
+
+	    Defaults to NULL.
+
+	LBCIA_CopyTitle (BOOL) (V53.70)
+	    Specifies that you want the LBCIA_Title copied to an internal
+	    buffer by ListBrowser. This tag must precede LBCIA_Title in
+	    the tag list. For example,
+	      ...
+	      LBCIA_Column, 2,
+	        LBCIA_CopyTitle, TRUE,
+	        LBCIA_Title, "Amiga",   // Text will be copied
+	      ...
+
+	    Defaults to FALSE.
+
+	LBCIA_Weight (int16)
+	    The relative weight to apply to this column expressed
+	    as a percentage value. For example, a value of 40 means
+	    the column should take up 40% of the width. Note that
+	    columns are weighted by default.
+
+	    Defaults to 0.
+
+	LBCIA_Width (int16)
+	    The specific pixel width of the column. This tag also
+	    implies that the CIF_FIXED flag is set.
+
+	    Defaults to 0.
+
+	LBCIA_Flags (uint32)
+	    Specifies the flags to be used for this column.
+	      CIF_WEIGHTED     -- weighted width column (default)
+	      CIF_FIXED        -- fixed pixel width
+	      CIF_DRAGGABLE    -- separator is user draggable
+	      CIF_NOSEPARATORS -- no separator on this column
+	      CIF_SORTABLE     -- column is sortable (see LBM_SORT)
+
+	    These flags are deprecated and the equivalent tags
+	    should be used instead.
+
+	LBCIA_Sortable (BOOL)
+	    Column is sortable. This tag is equivalent to the
+	    CIF_SORTABLE flag.
+
+	    Defaults to FALSE.
+
+	LBCIA_DraggableSeparator (BOOL)
+	    Column separator is draggable. This tag is equivalent
+	    to the CIF_DRAGGABLE flag.
+
+	    Defaults to FALSE.
+
+	LBCIA_Separator (BOOL)
+	    Column separator is visible. This tag is equivalent to
+	    the CIF_NOSEPARATORS flag but reversed in meaning.
+
+	    Defaults to TRUE.
+
+	LBCIA_SortArrow (BOOL)
+	    Column has a sort arrow displayed. The arrow will be
+	    displayed either when LBM_SORT is used on this column
+	    or when LBMCIA_AutoSort sort the column automatically.
+
+	    The direction of the arrow depends on how the column
+	    was sorted. If the LBM_SORT method is use the
+	    lbs_Direction field is used to determine which arrow
+	    to display. If the column is auto-sorted then the
+	    LBMCIA_SortDirection field is used.
+
+	    Defaults to FALSE.
+
+	LBCIA_AutoSort (BOOL)
+	    Set this flag to allow the gadget to automatically
+	    handle sorting of the column. When the column is
+	    selected the LBM_SORT method will be invoked using the
+	    LBCIA_SortDirection and LBCIA_CompareHook tags.
+
+	    When the gadget is initially created the column to
+	    sort by is defined using LISTBROWSER_SortColumn.
+
+	    When the column is selected again the sort direction
+	    will be toggled.
+
+	    If TRUE then LBCIA_Sortable is also TRUE implicitly.
+
+	    Defaults to FALSE.
+
+	LBCIA_SortDirection (uint32)
+	    The current sort direction for the column.
+
+	    The direction is one of the following values:
+	      LBMSORT_FORWARD -- Forward sort (down sort arrow)
+	      LBMSORT_REVERSE -- Reverse sort (up sort arrow)
+
+	    The sort direction will automatically toggle when
+	    combined with the LBMCIA_AutoSort tag.
+
+	    It is possible to use the LBCIA_SortDirection tag and
+	    the LISTBROWSER_SortColumn tag together to save and
+	    restore sorting user preferences.
+
+	    Defaults to 0 (forward).
+
+	LBCIA_CompareHook (struct Hook *)
+	    The sort comparison hook to use on the column. This is
+	    the exact same hook used by the LBM_SORT method. See
+	    the LBM_SORT method documentation for more information.
+
+	    This hook will only be used if the column is marked
+	    sortable (see LBCIA_Sortable tag).
+
+	    Defaults to NULL (default LBM_SORT comparison).
+
+	LBCIA_UserData (APTR)
+	    Arbitrary user data for this column.
+
+	    Defaults to NULL.
+
+	LBCIA_SoftStyle (uint8) (V53.68)
+	    Soft style for column title string.
+	    Supports FSF_BOLD, FSF_ITALIC and FSF_UNDERLINED.
+
+	    Defaults to FS_NORMAL.
+
+	LBCIA_HorizJustify (int16) (V53.69)
+	    Specifies a horizontal justification for the column title.
+	    One of LCJ_LEFT, LCJ_CENTER or LCJ_RIGHT.
+
+	     Defaults to LCJ_LEFT.
+
+    INPUTS
+	ci   - Pointer to ColumnInfo array to set attributes on.
+	       Safe to call with a NULL pointer.
+
+	tags - A tag list of attributes to set.
+	       Safe to call with a NULL pointer.
+
+    RESULT
+	Returns non-zero on success or 0 on error.
+
+    SEE ALSO
+	AllocLBColumnInfoA(), GetLBColumnInfoAttrsA()
+
+listbrowser.gadget/SetListBrowserNodeAttrsA             listbrowser.gadget/SetListBrowserNodeAttrsA
+
+    NAME
+	SetListBrowserNodeAttrsA -- Set attributes of a ListBrowser node.
+
+    SYNOPSIS
+	VOID SetListBrowserNodeAttrsA(struct Node * node, struct TagItem * tags);
+
+	VOID SetListBrowserNodeAttrs(struct Node * node, Tag tag1, ...);
+
+    FUNCTION
+	Changes attributes for a ListBrowser node. Since the ListBrowser
+	class uses a private node structure, this is the only way to change
+	node attributes.
+
+	You may not change node attributes when the node is in a list
+	attached to a ListBrowser gadget. You must first detach the list
+	with LISTBROWSER_Labels, NULL before you can change attributes and
+	then re-attach the list.
+
+    TAGS
+	LBNA_Selected (BOOL)
+	    If this node is currently selected or not in a multi-select
+       list browser. This field is not meaningful in a single-select
+	    list browser.
+
+	    Defaults to FALSE.
+
+	LBNA_Flags (uint32)
+	    Flags for this node. The following flags are currently defined:
+	      LBFLG_READONLY     - node is read-only
+	      LBFLG_CUSTOMPENS   - node uses custom pen colors
+	      LBFLG_HASCHILDREN  - node has children nodes
+	      LBFLG_SHOWCHILDREN - show all child nodes
+	      LBFLG_HIDDEN       - node is hidden and not rendered
+
+	    Defaults to 0.
+
+	LBNA_Generation (int16)
+	    Sets which "generation" this node belongs to if the ListBrowser
+	    is to be in hierarchical mode. If you were to draw the nodes out
+	    in a family tree the generation would refer to the level in that
+	    tree.
+
+	    Generations start at 1. A generation 1 node's children will be
+	    generation 2 and so on. You cannot skip generations. Nodes need
+	    not have children and generations can go as deep as required.
+
+	    Defaults to 0 (no generation).
+
+	LBNA_CheckBox (BOOL) (V41)
+	    Means that this node will be a checkbox node that can be toggled
+	    on or off.
+
+	    Defaults to FALSE.
+
+	LBNA_Checked (BOOL) (V41)
+	    Indicates whether a checkbox node is in the checked or the
+	    unchecked state.
+
+	    Defaults to FALSE.
+
+	LBNA_Priority (int8)
+	    Sets the priority of the Node.ln_Pri field which is used
+	    for sorting by the LBM_SORT method.
+
+	    Defaults to 0.
+
+	LBNA_MemPool (APTR) (V42)
+	    Specifies a custom memory pool to allocate listbrowser nodes
+	    from. The pool should be allocated with AllocSysObject() using
+	    the ASOT_MEMPOOL type. The LISTBROWSER_MinNodeSize attribute
+	    may be useful in determining optimum pool parameters.
+
+	    Defaults to NULL (internal pool).
+
+	LBNA_UserData (APTR)
+	    Arbitrary user data for this node. This field will be made
+	    available in the LBSortMsg.lbsm_UserDataA or B fields when
+	    using the LBM_SORT method.
+
+	LBNA_Column (int16)
+	    A column (starting from 0) that the column attribute tags
+	    below it affect. All column attribute tags have the prefix
+	    LBNCA_#? to distinguish them from node attributes. You
+	    typically specify the column to work on and then the column
+	    attributes for that column. For example,
+	      ...
+	      LBNA_Column, 2,
+	        LBNCA_HorizJustify, LCJ_CENTER,
+	        LBNCA_Integer, &my_integer,
+	      LBNA_Column, 3,
+	        LBNCA_Image, my_image,
+	      ...
+
+	    Defaults to 0.
+
+	LBNCA_HorizJustify (int16)
+	    Specifies a horizontal justification for the column either
+	    LCJ_LEFT, LCJ_CENTER or LCJ_RIGHT.
+
+	    Defaults to LCJ_LEFT.
+
+	LBNCA_VertJustify (int16) (V53.71)
+	    Specifies a vertical justification for the column either
+	    LRJ_TOP, LRJ_CENTER or LRJ_BOTTOM.
+
+	    Defaults to LRJ_CENTER.
+
+	LBNCA_Text (STRPTR)
+	    Text that is to appear in the corresponding column for
+	    this node. Only one of LBNCA_Text, LBNA_Integer, LBNCA_Image
+	    and LBNCA_RenderHook may be non-NULL specifying the type of
+	    contents for this column. Each column of a node need not have
+	    the same type of contents. Similarly, the same column in
+	    different nodes also need not have the same type of contents.
+
+	    Defaults to NULL.
+
+	LBNCA_CopyText (BOOL)
+	    Specifies that you want the LBNCA_Text copied to an internal
+	    buffer by ListBrowser. This tag must precede LBNCA_Text in
+	    the tag list. For example,
+	      ...
+	      LBNA_Column, 2,
+	        LBNCA_CopyText, TRUE,
+	        LBNCA_Text, "Amiga",   // Text will be copied
+	      ...
+
+	    Defaults to FALSE.
+
+	LBNCA_Editable (BOOL)
+	    Specifies that this item can be edited. If the user clicks
+	    twice on this entry the text will become a string gadget
+	    where the user can edit the contents. This will only work
+	    if the contents are text (given with LBNCA_Text) and if
+	    LBNCA_CopyText was used. You must also specify LBNCA_MaxChars
+	    to specify how long the edited text can be. For example,
+	      ...
+	      LBNA_Column, 1,
+	        LBNCA_Text, "Editable Amiga",
+	        LBNCA_Editable, TRUE,
+	        LBNCA_MaxChars, 42,
+	      ...
+
+	    Defaults to FALSE.
+
+	LBNCA_MaxChars (int16)
+	    Maximum number of characters an editable text entry can have.
+	    This value will be passed on to the string gadget using the
+	    STRINGA_MaxChars tag.
+
+	    Defaults to 0.
+
+	LBNCA_EditTags (struct TagItem *) (V41)
+	    Tags that you want to be passed to the string gadget used when
+	    editing gadget text. Although you could theoretically pass any
+	    tags to the gadget, you should generally not pass tags that
+	    affect the position of the gadget.
+
+	    Defaults to NULL.
+
+	LBNCA_WordWrap (BOOL) (V42)
+	    Specifies this column's text can be word wrapped. Useful in
+	    weighted column displays or fixed pixels columns. Primarily
+	    this feature exists at the request of IRC client authors.
+
+	    Defaults to FALSE.
+
+	LBNCA_Integer (int32 *)
+	    A pointer to an integer to display in this column. NOTE THIS
+	    IS A POINTER TO AN INT32 so if your int32 is on the stack
+	    or a temporary variable listbrowser will likely print garbage
+	    or even crash when it tries to render the invalid int32 pointer.
+
+	    Defaults to NULL.
+
+	LBNCA_CopyInteger (BOOL)
+	    Specifies that you want the value pointed to by LBNCA_Integer
+	    copied to an internal buffer. This tag must precede LBCNA_Integer
+	    in the tag list. For example,
+	      ...
+	      LBNA_Column, 5,
+	        LBNCA_CopyInteger, TRUE,
+	        LBNCA_Integer, &my_int,   // Integer will be copied
+	      ...
+
+	    Defaults to FALSE.
+
+	LBNCA_FGPen (int16)
+	LBNCA_BGPen (int16)
+	    The pens to be used for rendering the text or integer in this
+	    column. Requires that the LBFLG_CUSTOMPENS flag in LBNA_Flags
+	    be specified otherwise the default system pens will be used.
+
+	    Defaults to TEXTPEN and BACKGROUNDPEN.
+
+	LBNCA_FillPen (int16) (V51)
+	    The pen to be used for rendering the background for the text
+	    or integer in this column when it is selected. Requires that
+	    the LBFLG_CUSTOMPENS flag in LBNA_Flags be specified otherwise
+	    the default system pen will be used.
+
+	    Defaults to FILLPEN.
+
+	LBNCA_SoftStyle (uint8) (V52.14)
+	    Soft style for LBNCA_Text or LBNCA_Integer text rendering.
+	    Supports FSF_BOLD, FSF_ITALIC and FSF_UNDERLINED.
+
+	    Defaults to FS_NORMAL.
+
+	LBNCA_Image (struct Image *)
+	LBNCA_SelImage (struct Image *)
+	    Specifies that the column should contain an image. The
+	    selected image is optional and if not provided the LBNA_Image
+	    will be rendered in the IDS_SELECTED state when the node is
+	    selected.
+
+	    Defaults to NULL.
+
+	LBNCA_RenderHook (struct Hook *) (V41)
+	    A custom render hook for this node column. Your hook function
+	    will be called as follows:
+
+	      uint32 Render(struct Hook *hook, struct Node *node,
+	                    struct LBDrawMsg *msg);
+
+	    The message structure is as follows:
+
+	    struct LBDrawMsg
+	    {
+	        uint32           lbdm_MethodID; // LV_DRAW
+	        struct RastPort *lbdm_RastPort; // Where to render to
+	        struct DrawInfo *lbdm_DrawInfo; // Useful to have around
+	        struct Rectangle lbdm_Bounds;   // Limits of where to render
+	        uint32           lbdm_State;    // How to render
+	    };
+
+	    LBDrawMsg.lbdm_State will be either LBR_NORMAL or LBR_SELECTED.
+	    The hook must return LBCB_OK if rendering was successful or
+	    LBCB_UNKNOWN if it doesn't understand the lbdm_Method. Always
+	    check the lbdm_MethodID to support future expansions.
+
+	    Note that this is highly compatible with a GadTools listview hook.
+
+	    Defaults to NULL.
+
+	LBNCA_HookHeight (int16) (V41)
+	    The height of this column's LBNCA_RenderHook in pixels. If not
+	    specified the height will be assumed to be the height of the
+	    text font.
+
+	    Defaults to 0 (font height).
+
+    INPUTS
+	node - Node whose attributes you are changing.
+	       Safe to call with a NULL pointer.
+
+	tags - Tag list of attributes to change.
+	       Safe to call with a NULL pointer.
+
+    BUGS
+	Prior to V45.1 the listbrowser.gadget would crash if you did
+	not specify MEMF_CLEAR for your pool via LBNA_MemPool.
+
+	Although documented in <gadgets/listbrowser.h> the LBNCA_CopyInteger
+	tag was not actually working prior to version 51.11.
+
+    SEE ALSO
+	GetListBrowserNodeAttrsA()
+
+listbrowser.gadget/ShowAllListBrowserChildren         listbrowser.gadget/ShowAllListBrowserChildren
+
+    NAME
+	ShowAllListBrowserChildren -- Show all children in a ListBrowser.
+
+    SYNOPSIS
+	VOID ShowAllListBrowserChildren(struct List *list);
+
+    FUNCTION
+	Show all the children of a ListBrowser.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+	Use the LBM_SHOWCHILDREN method to do the same thing without
+	detaching the list.
+
+    INPUTS
+	list - List whose children you will be showing.
+	       Safe to call with a NULL pointer.
+
+    SEE ALSO
+	HideAllListBrowserChildren(), LBM_SHOWCHILDREN
+
+listbrowser.gadget/ShowListBrowserNodeChildren       listbrowser.gadget/ShowListBrowserNodeChildren
+
+    NAME
+	ShowListBrowserNodeChildren -- Show children of a ListBrowser node.
+
+    SYNOPSIS
+	VOID ShowListBrowserNodeChildren(struct Node *node, int16 depth);
+
+    FUNCTION
+	Show the children of a ListBrowser node. The next depth generations
+	will be shown. To only show the next generation, use a depth of 1.
+
+	Note that as with any modifications to a ListBrowser list, the
+	list must be detached from the listbrowser before modification.
+
+	Use the LBM_SHOWCHILDREN method to do the same thing without
+	detaching the list.
+
+    INPUTS
+	node - Node whose children you will be showing.
+	       Safe to call with a NULL pointer.
+
+	depth - How many generations deep to show.
+
+    SEE ALSO
+	HideListBrowserNodeChildren(), LBM_SHOWCHILDREN
+
+

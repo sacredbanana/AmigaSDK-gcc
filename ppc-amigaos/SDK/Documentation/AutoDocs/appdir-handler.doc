@@ -1,0 +1,49 @@
+appdir-handler                                                 appdir-handler
+
+   NAME
+	appdir-handler -- The DOS handler for the APPDIR filesystem. (V54)
+
+   SYNOPSIS
+	APPDIR Filesystem.
+
+   FUNCTION
+	The appdir-handler creates the "APPDIR" filesystem DOS device.
+	The filesystem presents the contents of ENVARC:Appdir/ as a disk
+	of softlinks that causes DOS to automatically resolve all references
+	to the target objects, as it would do with any softlink.
+
+	Appdir-handler also starts a server process to monitor DOS LoadSeg()
+	events and maintain the ENVARC:AppDir/ global variables.
+  
+	The appdir-handler file must reside in the default L: directory
+	so that automatic updates can occur, relocating it will cause problems.
+
+	The appdir-handler can be loaded and started in one of two ways, the 
+	automatic and prefered installation uses method (1).
+
+	(1) An APPDIR mountlist entry added to DEVS:DOSDrivers/ that contains...
+	        Handler = L:appdir-handler
+	        GlobVec = -1
+
+	(2) An entry added to the SYS:Kickstart/KickLayout file that contains...
+	        MODULE  L/appdir-handler
+
+   NOTES
+	For objects to be found in APPDIR: they must have been loaded at some
+	time before, this may be by being run at least once, or by simply
+	having the version information read by the 'C:Version' command,
+	this will cause the file to be loaded so the version data can
+	be accessed, and this is all that is required to create an initial
+	appdir cache entry.
+	All objects loaded by RAMLIB are currently excluded from APPDIR:
+	such as libraries and devices, as are all files such as kickstart
+	modules, classes, gadgets, images, etc... with the following named
+	suffixes;   ".library", ".device", ".gadget", ".image", ".class",
+	".kmod", ".chip", "-handler".
+	All loadables from "ENV:", "ENVARC:", "RAM:" and "RAM:T" are also
+	excluded from being cached.
+	The APPDIR: cache is automatically flushed every other month of 
+	entries that have paths that no longer exist, unused entries are
+	removed after 12 full months of no access. 
+
+

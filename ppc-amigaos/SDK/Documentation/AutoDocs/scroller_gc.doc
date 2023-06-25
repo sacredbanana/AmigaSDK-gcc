@@ -1,0 +1,166 @@
+TABLE OF CONTENTS
+
+scroller.gadget/--datasheet--
+scroller.gadget/SCROLLER_GetClass
+scroller.gadget/--datasheet--                   scroller.gadget/--datasheet--
+
+    NAME
+	scroller.gadget -- Create scroller BOOPSI objects.
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	bevel.image, button.gadget
+
+    DESCRIPTION
+	The scroller gadget is used to create proportional scroller or
+	linear slider gadgets.
+
+	To create a linear slider, SCROLLER_Visible must be set to 1 and
+	SCROLLER_Top will range in value from 0 to SCROLLER_Total - 1.
+
+	The IntuiMessage.Code field will contain the SCROLLER_Top
+	attribute, cast to an int16.
+
+    METHODS
+	OM_NEW -- Passed to superclass, defaults set then OM_SET.
+
+	OM_DISPOSE -- Frees private data and passed to superclass.
+
+	OM_SET -- Passed to superclass then custom tags set.
+
+	OM_GET -- Returns requested setting or passed to superclass.
+
+	OM_UPDATE -- Passed to superclass then custom tags set.
+
+	OM_NOTIFY -- Tag set then passed to superclass.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_GOACTIVE -- Handles activation.
+
+	GM_HANDLEINPUT -- Handles input events once active.
+
+	GM_GOINACTIVE -- Handles deactivation.
+
+	GM_RENDER -- Renders the gadget imagery.
+
+	GM_HITTEST -- Test if mouse is within gadget hit area.
+
+	GM_LAYOUT -- Calculate relative gadget coordinates.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	GA_ID (uint16)
+	    Unique ID number for the gadget.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	SCROLLER_Top (int32) (V40)
+	    Set the current top value of the scroller within the
+	    proportional range.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE, OM_NOTIFY)
+
+	SCROLLER_Visible (int32) (V40)
+	    Set the visible portion of the proportional range.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	SCROLLER_Total (int32) (V40)
+	    Set the total range of the scroller.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	SCROLLER_Orientation (uint32) (V40)
+	    Define orientation of the scroller.
+
+	    Accepted values as defined in <gadgets/scroller.h> are:
+
+	      SORIENT_VERT  - vertical scroller
+	      SORIENT_HORIZ - horizontal scroller
+
+	    Defaults to SORIENT_VERT.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	SCROLLER_Arrows (BOOL) (V40)
+	    Enable rendering of optional scroller arrows. (V40)
+
+	    Defaults to TRUE.
+
+	    Applicability is (OM_NEW, OM_GET)
+
+	SCROLLER_ArrowDelta (uint32) (V41)
+	    Allows you to change the amount that clicking an arrow causes
+	    the scroller to move by.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET, OM_GET, OM_UPDATE)
+
+	SCROLLER_SignalTask (struct Task *) (V42)
+	    Signal the specified Task while scroller is active. This is
+	    very useful to reduce the load on input.device because you can
+	    render from some other task (application, or anything else)
+	    that waits for this signal and then GetAttr() SCROLLER_Top, etc.
+
+	    Defaults to NULL (no signaling).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	SCROLLER_SignalTaskBit (uint32) (V42)
+	    Signal with this bit. The task is specified with the
+	    SCROLLER_SignalTask tag.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+scroller.gadget/SCROLLER_GetClass           scroller.gadget/SCROLLER_GetClass
+
+    NAME
+	SCROLLER_GetClass -- Gets pointer to the scroller class.
+
+    SYNOPSIS
+	Class * class = SCROLLER_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "scroller.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the scroller class.
+
+

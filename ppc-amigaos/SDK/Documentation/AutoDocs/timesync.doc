@@ -1,0 +1,91 @@
+TABLE OF CONTENTS
+
+timesync.library/RemoteSyncA
+
+
+timesync.library/RemoteSyncA                     timesync.library/RemoteSyncA
+
+   NAME
+	RemoteSyncA -- Get/set time from a remote timeserver.
+	RemoteSync  -- Varargs stub for RemoteSyncA().
+
+   SYNOPSIS
+	uint32 result = RemoteSyncA( struct TagItem *TagList );
+	uint32 result = RemoteSync( uint32 Tag1, ... );
+
+
+   FUNCTION
+	This function tries to retrieve time from a remote timeserver and is
+	able to set system time and/or the hardware clock.
+
+   INPUTS
+	TagList = array of TagItem structures with attribute/value pairs.
+
+   TAGS
+	RS_PROTOCOL (UBYTE)
+	  Specify which protocol should be used.
+	  Currently only the Network Time Protocol (NTP) can be used by default.
+
+	RS_SERVER (STRPTR)
+	  Specifies the name of the remote server.
+	  When set to 'PREFS' the time server specified from the Time prefs
+	  editor will be used.
+
+	RS_PORT (uint32)
+	  Specify a port number >0 to be used when talking to the remote server.
+	  Currently defaults to '123'.
+	  When RS_SERVER is set to 'PREFS' the port number specified from the
+	  Time prefs editor will be used.
+
+	RS_UTCOFFSET (int32)
+	  Specify the offset in seconds between local time and Coordinated
+	  Universal Time (UTC, formerly referred to as "Greenwich Mean Time" GMT).
+	  Defaults to using the offset from Timezone or Locale.
+	  When RS_SERVER is set to 'PREFS' the UTC offset specified from the
+	  Time prefs editor will be used.
+
+	RS_SETSYSTIME (BOOL)
+	  Set to TRUE when the current system time shall be changed to reflect
+	  the time from the remote server.
+	  Defaults to TRUE.
+
+	RS_SAVETIME (BOOL)
+	  Set to TRUE when the battery backed clock shall be changed to reflect
+	  the time from the remote server.
+	  Defaults to FALSE.
+
+	RS_DIFFTIME (struct timeval *)
+	  Specify a pointer to a timeval which will hold the difference between
+	  current system time and the time from the remote server.
+	  Defaults to NULL.
+
+	RS_ERRNO (int32 *)
+	  Specify a pointer to a uint32 which will contain a socket error code
+	  if the time couldn't be retrieved successfully from the remote server.
+	  Defaults to NULL.
+	  Error codes are defined in <libraries/timesync.h>.
+
+	RS_ERRBUFFER (STRPTR)  (Added 53.10)
+	  Specify a pointer to a buffer for a copy of an error message, if the
+	  time could not be retrieved successfully from the remote server.
+	  This tag requires the buffer size be specified with RS_ERRBUFFERSIZE.
+	  A buffer size of at least 100 bytes is recommended.
+	  Defaults to NULL.
+
+	RS_ERRBUFFERSIZE (uint32)  (Added 53.10)
+	  Specify the size of the RS_ERRBUFFER buffer, (in bytes).
+	  Defaults to 0.
+
+   RESULTS
+	result - TSERR_NONE or an error code from TSERR_INVALID to TSERR_FAIL.
+	Error codes are defined in <libraries/timesync.h>.
+
+   BUGS
+	The RS_ERRSTR tag is obsolete from V53.10 due to misinterpretation of the
+	docs by some apps and the incorrect implementation within this function,
+	use RS_ERRBUFFER & RS_ERRBUFFERSIZE to retrieve an error message string.
+
+   SEE ALSO
+	<libraries/timesync.h>
+
+

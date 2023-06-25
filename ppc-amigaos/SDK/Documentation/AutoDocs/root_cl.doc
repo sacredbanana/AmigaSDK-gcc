@@ -1,0 +1,544 @@
+TABLE OF CONTENTS
+
+rootclass/--datasheet--
+rootclass/OM_ADDMEMBER
+rootclass/OM_ADDTAIL
+rootclass/OM_DISPOSE
+rootclass/OM_GET
+rootclass/OM_NEW
+rootclass/OM_NOTIFY
+rootclass/OM_REMMEMBER
+rootclass/OM_REMOVE
+rootclass/OM_SET
+rootclass/OM_UPDATE
+
+
+rootclass/--datasheet--                                   rootclass/--datasheet--
+
+    NAME
+	rootclass -- universal BOOPSI base class
+
+    SUPERCLASS
+	None
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This is the universal base class for all other classes.
+
+    METHODS
+	OM_NEW -- Create an object.
+
+	OM_DISPOSE -- Destroy the object.
+
+	OM_ADDTAIL -- Add object to the tail of a list.
+
+	OM_REMOVE -- Remove object from a list.
+
+    STANDARD METHODS
+	The following methods are described at the rootclass level
+	although it's up to the subclasses to actually implement them.
+	If a class does not implement these methods it should either
+	return zero, indicating that this class does not support the
+	method, or defer processing on to its superclass.
+
+	OM_ADDMEMBER -- Add an object to an object's list.
+
+	OM_REMMEMBER -- Remove an object from an object's list.
+
+	OM_GET -- Get an object's attribute.
+
+	OM_SET -- Set an object's attribute.
+
+	OM_UPDATE -- Update an object's attribute.
+
+	OM_NOTIFY -- Broadcast an object attribute value change.
+
+rootclass/OM_ADDMEMBER                                     rootclass/OM_ADDMEMBER
+
+    NAME
+	OM_ADDMEMBER -- Add an object to an object's list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember * msg);
+
+    FUNCTION
+	Tells an object to add another object to its personal Exec
+	list. What the list is for depends on the class.
+
+	One class that uses this method is modelclass. A modelclass
+	object maintains a broadcast list. When a modelclass object
+	gets an OM_NOTIFY message it broadcasts an OM_UPDATE
+	message to every object in its broadcast list.
+
+	This method uses a custom message (defined in
+	<intuition/classusr.h>):
+
+	struct opMember {
+	    uint32 MethodID;     // OM_ADDMEMBER or OM_REMMEMBER
+	    Object *opam_Object; // add or remove this object
+	};                       // to or from personal list.
+
+	opam_Object is the object to add to the list. A dispatcher
+	typically implements OM_ADDMEMBER by sending the OM_ADDTAIL
+	message to the opam_Object object.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_REMMEMBER
+
+rootclass/OM_ADDTAIL                                         rootclass/OM_ADDTAIL
+
+    NAME
+	OM_ADDTAIL -- Add object to the tail of a list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR rootobj, struct opAddTail* msg);
+
+    FUNCTION
+	This method tells an object to add itself to the end of a
+	specified Exec list. BOOPSI objects contain a struct MinNode
+	used for this purpose.
+
+	The method uses a custom message (defined in
+	<intuition/classusr.h>):
+
+	struct opAddTail {
+	    uint32      MethodID;   // OM_ADDTAIL
+	    struct List *opat_List; // The list to add the object to
+	};
+
+	The opat_List can be any Exec list. Use the Intuition function
+	NextObject() to correctly step through this list.
+
+    INPUTS
+	rootobj - root object pointer
+	msg     - pointer to fully initialized struct opAddTail
+	          (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	intuition.library/NextObject()
+
+rootclass/OM_DISPOSE                                         rootclass/OM_DISPOSE
+
+    NAME
+	OM_DISPOSE -- Destroy the object.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR rootobj, Msg msg);
+
+    FUNCTION
+	This method instructs an object to delete itself. The rootclass
+	dispatcher's OM_DISPOSE method decrements the true class's
+	internal count of instances of true class.
+
+	This method uses the default BOOPSI message.
+
+	Applications should not call this method directly. Instead they
+	should use the intuition.library function DisposeObject().
+
+	For the OM_DISPOSE method an object should do the following:
+
+	Free any additional resources the object explicitly allocated
+	itself in the OM_NEW method (this does not include the instance
+	data).
+
+	Pass the message up to the superclass which will eventually
+	reach rootclass which will free the instance data allocated
+	for the object.
+
+	If a class does not allocate any extra resources when it creates
+	an object it can defer all OM_DISPOSE processing to its
+	superclass.
+
+    INPUTS
+	rootobj - root object pointer
+	msg     - Msg with MethodID = OM_DISPOSE
+	          (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_NEW, intuition.library/DisposeObject()
+
+rootclass/OM_GET                                                 rootclass/OM_GET
+
+    NAME
+	OM_GET -- Get an object's attribute.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opGet * msg);
+
+    FUNCTION
+	Tells an object to report an attribute's value. Applications
+	should not call this method directly. Instead, use the
+	intuition.library function GetAttr().
+
+	This method uses a custom message (defined in
+	<intuition/classusr.h):
+
+	struct opGet {
+	    uint32 MethodID;     // OM_GET
+		uint32 opg_AttrID;   // ID of attribute to get
+	    uint32 *opg_Storage; // place to put attribute's value
+	};
+
+	If the object's dispatcher recognizes opg_AttrID as one of
+	the attributes defined by this class the dispatcher should
+	copy the value of that attribute to where opg_Storage points:
+
+	struct opGet *myopget;
+	...
+	*(myopget->opg_Storage) = my_attribute_value;
+	...
+
+	If the dispatcher does not recognize opg_AttrID it should
+	pass the message on to the superclass.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opGet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_SET, intuition.library/GetAttr(),
+	intuition.library/GetAttrs()
+
+rootclass/OM_NEW                                                 rootclass/OM_NEW
+
+    NAME
+	OM_NEW -- Create an object.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR rootobj, struct opSet* msg);
+
+    FUNCTION
+	This method tells a class to create a new instance of itself.
+	If OM_NEW is successful it returns a pointer to the new object.
+	Otherwise it returns NULL.
+
+	For programmers who are only creating BOOPSI objects rather than
+	creating custom classes, use the intuition.library function
+	NewObject().
+
+	The OM_NEW method receives the following arguments (defined in
+	<intuition/classusr.h>:
+
+	struct opSet // OM_NEW uses the same structure as OM_SET
+	{
+	    uint32            MethodID;      // OM_NEW
+	    struct TagItem    *ops_AttrList; // tag attributes to init
+	    struct GadgetInfo *ops_GInfo;    // Always NULL for OM_NEW
+	};
+
+	The ops_AttrList field contains a pointer to a tag list of
+	attribute/value pairs. Each pair contains an attribute ID and
+	the initial value of the corresponding attribute.
+
+	The ops_GInfo field is always NULL for the OM_NEW method.
+
+	Unlike other methods, when the dispatcher gets an OM_NEW message
+	the object pointer does not point to an object since the idea is
+	to create a new object. The pointer normally used to pass a
+	BOOPSI object is instead used to pass the address of the
+	object's "true class" (the class of which the object is an
+	instance).
+
+	The first thing the dispatcher does when it processes an OM_NEW
+	message is pass the OM_NEW message on to its superclass's dispatcher.
+	It does this using the IDoSuperMethodA() function.
+
+	Each superclass's dispatcher does this until the message gets to
+	the rootclass dispatcher.
+
+	Each class keeps a record of how much memory its local instance
+	data requires. The rootclass dispatcher's OM_NEW method looks at
+	the object's true class to find out how much memory to allocate
+	for the object's instance data. The rootclass dispatcher
+	allocates enough memory for the true class's local instance data
+	plus enough memory for the local instance data of each of the
+	true class's superclasses. If all goes well, the rootclass
+	dispatcher increments the true class's internal count of instances
+	of true class and returns a pointer to the newly created object.
+	It passes control back to the subclass dispatcher that called it.
+	If there was a problem the rootclass dispatcher passes back a NULL.
+
+	When the rootclass dispatcher returns, the subclass dispatcher regains
+	control from IDoSuperMethodA(). IDoSuperMethodA() will return either
+	a pointer to the new object or NULL if there was an error. Although
+	the rootclass dispatcher allocated all the memory the object needs,
+	it did not set up any of that memory. Now it's the subclass
+	dispatcher's turn to do some work. It has to initialize the instance
+	data that is local to its class. A dispatcher finds its local
+	instance data by using the INST_DATA() macro (defined in
+	<intuition/classes.h>).
+
+	After initializing its local instance data, the subclass dispatcher
+	passes control down to its subclass dispatcher, which in turn,
+	initializes its local instance data. Control passes down from class
+	to subclass until the true class dispatcher regains control.
+
+	Now the true class dispatcher has to initialize its local instance
+	data. It has to scan through the tag list of attribute/value pairs
+	passed in the OM_NEW message (opSet.ops_AttrList). If the dispatcher
+	finds any attributes that the true class recognizes, it has to
+	initialize them to the value passed in the attribute/value pair.
+
+	At this point the new object can allocate other resources it needs
+	that it did not allocate as part of its instance data. For example,
+	the new BOOPSI object might need a frame image around itself, so it
+	can create a new one using a BOOPSI frame image. If the object
+	allocates any resources in this step it must deallocate these
+	resources later when it is disposed in the OM_DISPOSE method.
+
+	Finally the dispatcher can return. When the dispatcher returns
+	from an OM_NEW method it returns a pointer to the new object.
+
+    INPUTS
+	rootobj - root object pointer
+	msg     - pointer to fully initialized struct opSet
+	          (see <intuition/classusr.h>)
+
+    RESULT
+	Returns a pointer to the newly created object or NULL on failure.
+
+    SEE ALSO
+	OM_DISPOSE, intuition.library/NewObject()
+
+rootclass/OM_NOTIFY                                           rootclass/OM_NOTIFY
+
+    NAME
+	OM_NOTIFY -- Broadcast an object attribute value change.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method tells an object to broadcast an attribute
+	change to a set of target objects using OM_UPDATE messages.
+
+	The OM_NOTIFY method uses the same message structure as
+	OM_UPDATE.
+
+	Most dispatchers do not handle the OM_NOTIFY message directly.
+	Normally they inherit this method from a superclass, so they
+	pass the OM_NOTIFY message on to the superclass dispatcher.
+
+	Although most dispatchers don't have to process OM_NOTIFY
+	messages, most do have to send them. Whenever an object
+	receives an OM_SET or OM_UPDATE about one of its attributes,
+	it may need to notify other objects of the change. For
+	example, when a prop. gadget's PGA_Top value changes, its
+	target object(s) need to hear about it.
+
+	If an object needs to notify other objects about a change
+	to one or more of its attributes, it sends itself an
+	OM_NOTIFY message. The OM_NOTIFY message will eventually
+	end up in the hands of a superclass that understands
+	OM_NOTIFY and it will send OM_UPDATE messages to the target
+	objects.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_SET, OM_UPDATE
+
+rootclass/OM_REMMEMBER                                     rootclass/OM_REMMEMBER
+
+    NAME
+	OM_REMMEMBER -- Remove an object from an object's list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opMember * msg);
+
+    FUNCTION
+	Tells an object to remove a member object from its
+	personal list. The member object should have already been
+	added with OM_ADDMEMBER. This method uses the same custom
+	message as OM_ADDMEMBER. Normally a dispatcher implements
+	OM_REMMEMBER by sending the OM_REMOVE message to the
+	opam_Object object.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opMember
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_ADDMEMBER
+
+rootclass/OM_REMOVE                                           rootclass/OM_REMOVE
+
+    NAME
+	OM_REMOVE -- Remove object from a list.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR rootobj, Msg msg);
+
+    FUNCTION
+	Remove an object from an Exec list. This method uses the
+	default BOOPSI message.
+
+    INPUTS
+	rootobj - root object pointer
+	msg     - Msg with MethodID = OM_REMOVE
+	          (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+rootclass/OM_SET                                                 rootclass/OM_SET
+
+    NAME
+	OM_SET -- Set an object's attribute.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opSet * msg);
+
+    FUNCTION
+	This method tells an object to set one or more of its
+	attributes. Applications should not call this method directly.
+	Instead, use the intuition.library functions SetAttrs(),
+	SetGadgetAttrs() and RefreshSetGadgetAttrs() to call
+	this method.
+
+	The return value for this method is not explicitly defined.
+	However, in general, when implementing the OM_SET method, if
+	setting an object attribute causes some sort of visual state
+	change, the OM_SET method should return a value greater than
+	zero. If changing an attribute does not affect the visual
+	state, OM_SET should return zero. The RefreshSetGadgetAttrs()
+	function relies on this behavior in order to know whether
+	to refresh a gadget's visual state or not.
+
+	This method uses a custom message (defined in
+	<intuition/classusr.h>):
+
+	struct opSet {
+	    uint32            MethodID;      // OM_SET
+	    struct TagItem    *ops_AttrList; // attributes to set
+	    struct GadgetInfo *ops_GInfo;
+	};
+
+	The ops_AttrList field contains a pointer to a tag list of
+	attribute/value pairs. These pairs contain the IDs and the
+	new values of the attributes to set. The dispatcher has to
+	look through this list (see docs for the utility.library
+	NextTagItem() function) for attributes its class recognizes
+	and set the attribute's value accordingly. The dispatcher
+	should let its superclass handle any attributes it does not
+	recognize.
+
+	If the object is a Gadget, the ops_GInfo field contains a
+	pointer to a GadgetInfo structure.  Otherwise, the value
+	in ops_GInfo is undefined. Intuition use the GadgetInfo
+	structure to pass display information to gadgets. See the
+	gadgetclass methods for more details.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opSet
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined. However, if
+	setting of an attribute requires a visual state change
+	the method should return a value greater than zero.
+
+    SEE ALSO
+	OM_GET, intuition.library/SetAttrs(),
+	intuition.library/SetGadgetAttrs(),
+	intuition.library/RefreshSetGadgetAttrs()
+
+rootclass/OM_UPDATE                                           rootclass/OM_UPDATE
+
+    NAME
+	OM_UPDATE -- Update an object's attribute.
+
+    SYNOPSIS
+	uint32 result = IDoMethodA(APTR obj, struct opUpdate * msg);
+
+    FUNCTION
+	This method tells an object to update one or more of its
+	attributes. No application should call this method. Only BOOPSI
+	objects send OM_UPDATE messages.
+
+	A BOOPSI object uses an OM_UPDATE message to notify another
+	BOOPSI object about transitory changes to one or more
+	attributes.
+
+	From the point of view of most objects, an OM_UPDATE message
+	is almost identical to OM_SET. Because the methods are so
+	similar, when a typical dispatcher receives an OM_UPDATE
+	message, it processes the OM_UPDATE the same way it would
+	process an OM_SET message, usually using the same code.
+
+	There are actually two kinds of OM_UPDATE. An interim
+	OM_UPDATE and a final OM_UPDATE. While a BOOPSI object's
+	attribute is in a transient state it can send out interim
+	OM_UPDATE messages to its target(s). For example, while the
+	user is sliding a BOOPSI prop. gadget, the prop. gadget
+	sends interim OM_UPDATE messages about changes to its
+	PGA_Top value (the integer value of the prop. gadget is
+	the PGA_Top attribute) to some target object. When the
+	user lets go of the prop. gadget, the gadget is no longer
+	in a transient state so the gadget sends out a final
+	OM_UPDATE about its PGA_Top attribute. The target object
+	can choose to change its attributes based on the OM_UPDATE
+	messages it receives.
+
+	The layout of the OM_UPDATE message is almost identical to
+	the OM_SET message:
+
+	struct opUpdate {  // OM_NOTIFY also uses this structure
+	    uint32            MethodID;      // OM_UPDATE
+	    struct TagItem    *opu_AttrList; // list of attributes
+	    struct GadgetInfo *opu_GInfo;    // that changed.
+	    uint32            opu_Flags;     // extra flags
+	};
+
+	Some dispatchers need to know the difference between an
+	interim and final OM_UPDATE. A dispatcher can tell the
+	difference between an interim and final OM_UPDATE message
+	because the OM_UPDATE message has an extra field for flags.
+	If the OPUF_INTERIM flag is set, this is an interim
+	OM_UPDATE message. The interim flag is useful to a class
+	that wants to ignore any interim messages, processing only
+	final attribute values.
+
+    INPUTS
+	obj - object pointer
+	msg - pointer to fully initialized struct opUpdate
+	      (see <intuition/classusr.h>)
+
+    RESULT
+	The return value is not explicitly defined.
+
+    SEE ALSO
+	OM_SET, OM_NOTIFY
+
+

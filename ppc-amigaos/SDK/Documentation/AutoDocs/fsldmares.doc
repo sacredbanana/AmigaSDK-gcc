@@ -1,0 +1,483 @@
+TABLE OF CONTENTS
+
+fsldma.resource/-copyright-
+fsldma.resource/CopyMemDMA
+fsldma.resource/CopyMemDMATagList
+fsldma.resource/StartDMAChain
+fsldma.resource/StartDMAChainTagList
+
+
+fsldma.resource/-copyright-
+
+ Copyright 2021 Trevor Dickinson.
+
+fsldma.resource/CopyMemDMA
+
+   NAME
+     CopyMemDMA -- Attempt a memory copy using DMA hardware
+
+   SYNOPSIS
+     BOOL CopyMemDMA(CONST_APTR source, APTR dest, uint32 size);
+
+   FUNCTION
+     Copy memory from source to destination using the DMA engine.
+
+     Arbitrary overlapping copies are not supported.
+
+   INPUTS
+     source - a pointer to the source data region
+     dest   - a pointer to the destination data region
+     size   - size of the copy in bytes
+
+   RESULT
+     This function returns TRUE if the DMA copy was successful,
+     or FALSE if passed invalid parameters or an error occurred.
+
+     FALSE may also be returned if all DMA channels are currently
+     busy when this request is made. See CopyMemDMATagList() for
+     options on how to check a further result code.
+
+   EXAMPLE
+     See the fsldma_example_1.c source in the SDK:Examples/fsldma/
+     folder for an example of using IfslDMA->CopyMemDMA() to make
+     simple "Blocking" memory copies using the DMA hardware on
+     the X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+
+   NOTES
+     The CopyMemDMA() function is provided as a convenient way
+     to accelerate "blocking" copy memory functions that work
+     with virtual memory, like IExec->CopyMemQuick().
+
+   BUGS
+
+   SEE ALSO
+     CopyMemDMATagList, CopyMemDMATags, StartDMAChain
+
+fsldma.resource/CopyMemDMATagList
+
+   NAME
+     CopyMemDMATagList -- Attempt a memory copy using DMA hardware
+
+   SYNOPSIS
+     BOOL CopyMemDMATagList(CONST_APTR source, APTR dest, uint32 size,
+                            const struct TagItem *tags);
+     BOOL CopyMemDMATags(CONST_APTR source, APTR dest, uint32 size,
+                         uint32 Tag1, ...);
+
+   FUNCTION
+     Copy memory from source to destination using the DMA engine.
+
+     Arbitrary overlapping copies are not supported.
+
+   INPUTS
+     source - a pointer to the source data region
+     dest   - a pointer to the destination data region
+     size   - size of the copy in bytes
+     tags   - A list of tag items used to access advanced
+              features of the DMA hardware or control the
+              operational mode of the DMA transaction.
+              Currently, the following tags are defined
+              (the information in brackets refers to the
+              data type of the tag item, as well as its
+              default value):
+
+              FSLDMA_CM_SourceIsPhysical (BOOL, FALSE)
+                  If this tag is provided and set to TRUE,
+                  then the pointer to the source buffer
+                  (source) will be treated as a Physical
+                  address and will not be handled using
+                  StartDMA()/EndDMA().
+
+                  Therefore, the Physical Memory address
+                  provided must point to contiguous hardware
+                  I/O space or a contiguous, cache-inhibited
+                  memory buffer.
+
+              FSLDMA_CM_DestinationIsPhysical (BOOL, FALSE)
+                  If this tag is provided and set to TRUE,
+                  then the pointer to the destination buffer
+                  (dest) will be treated as a Physical
+                  address and will not be handled using
+                  StartDMA()/EndDMA().
+
+                  Therefore, the Physical Memory address
+                  provided must point to contiguous hardware
+                  I/O space or a contiguous, cache-inhibited
+                  memory buffer.
+
+              FSLDMA_CM_NotifyHook (struct Hook *)
+                  If this tag is provided then the Hook structure
+                  is called based on the provided NotifyHookFlags.
+
+                  The Notify Hook is separate from the Notify signals
+                  and as such does not require FSLDMA_CM_NotifyTask
+                  to be provided.
+
+              FSLDMA_CM_NotifyHookFlags (uint32)
+                  This tag is used to request which notification
+                  events should call the Notify Hook.
+
+                  FSLDMA_CM_NotifyHook must be provided with
+                  a pointer to a proper Hook structure.
+
+                  This tags defaults to call the Hook on completion
+                  or error events.
+
+                  The possible values for this tag are listed below.
+                  The specified Hook function with be called on each
+                  event type listed here.
+
+                  FSLDMA_NF_COMPLETE   = "DMA Chain completed successfully"
+                  FSLDMA_NF_INPROGRESS = "Sub-block completed successfully"
+                  FSLDMA_NF_ERROR      = "Error occurred"
+                  FSLDMA_NF_COMMON     = Requests "Completed" or "Error" only
+                  FSLDMA_NF_ALL        = Call Hook function on all three listed above
+
+              FSLDMA_CM_DoNotWait (BOOL, FALSE)
+                If set to TRUE, the DMA Copy will start and
+                return immediately. See the "Notify" tags
+                below if you wish to be notified that the
+                requested copy has been completed.
+
+                If you do not also set at least FSLDMA_CM_NotifyTask
+                and FSLDMA_CM_NotifySignalNumber, then the caller
+                will *not* be notify when the copy is complete.
+
+                This is effectively "spray-and-pray" mode,
+                where the caller only needs to queue up DMA
+                transfers, but does not care when (or if) they
+                have completed.
+
+              FSLDMA_CM_NotifyTask (struct Task *, NULL)
+                Provide the Task to be Signaled upon completion,
+                error, or status changes. Passing a valid Task
+                pointer here, plus at least one of the three
+                possible signal numbers (listed below) will also
+                set FSLDMA_CM_DoNotWait to TRUE, causing the
+                call to return immediately and signal notifications
+                upon completion.
+
+              FSLDMA_CM_NotifySignalNumber (int8, no default)
+                Provide the Signal Number to be sent
+                upon the successful completion of the
+                entire transfer.
+
+                Requires FSLDMA_CM_NotifyTask to be set
+                or silently does nothing.
+
+              FSLDMA_CM_NotifyProgessSignalNumber (int8, no default)
+                Provide the Signal Number to be sent
+                upon the successful completion of one
+                sub-block of the total transfer.
+
+                Requires FSLDMA_CM_NotifyTask to be set
+                or silently does nothing.
+
+              FSLDMA_CM_NotifyErrorSignalNumber (int8, no default)
+                Provide the Signal Number to be sent
+                upon an error in the requested transfer.
+
+                Requires FSLDMA_CM_NotifyTask to be set
+                or silently does nothing.
+
+              FSLDMA_CM_ResultCode (uint32 *)
+                If a pointer to a uint32 variable is provided using
+                this tag, then the specific DMA Transaction Result Code
+                will be filled into that memory location.
+
+                This tag is optional but provides a good way to
+                determine why the requested DMA transaction may
+                have returned before it was started.
+
+                The most common use of this tag is to determine
+                why the API call (eg. CopyMemDMATags()) returned
+                during setup.
+
+                The possible DMA Result Code values are listed below.
+
+                FSLDMA_RC_STARTED  = The DMA transaction was started successfully*
+
+                FSLDMA_RC_BUSY     = The transaction was not started because all
+                                     DMA Channels are currently busy.
+                                     Try the call again.
+
+                FSLDMA_RC_PRGERROR = The transaction could not start because missing
+                                     or incorrect arguments were provided
+
+                FSLDMA_RC_HALTED   = The DMA transaction was halted
+                                     (most likely in response to an Abort request)
+
+                FSLDMA_RC_TRANSERR = The DMA transaction failed to complete,
+                                      a transfer error occurred
+
+                *The FSLDMA_CM_ResultCode will be set to FSLDMA_RC_STARTED when
+                 either a "blocking" request was completed without error, or
+                 when a "non-blocking" request was successfully started and is
+                 currently running. See the FSLDMA_CM_Notify tags for details
+                 about capturing the results from "non-blocking" transactions.
+
+                 The uint32 variable provided to the FSLDMA_CM_ResultCode Tag
+                 should be initialize to FSLDMA_RC_UNKNOWN before the API call is made.
+
+              FSLDMA_CM_SourceUpper (uint32)
+                If the location of the Source Buffer is found at a memory
+                  address greater than 4GB (lower 32-Bits) then the upper
+                  32-bits of the address may be set with this tag.
+                 
+                  For example if:
+                    pSourceBuffer         = 0x0001FEE0
+                    FSLDMA_CM_SourceUpper = 0x00CE0000
+                  then the address of the source buffer passed to the DMA would be:
+                    0x00CE00000001FEE0
+
+              FSLDMA_CM_DestUpper (uint32)
+                If the location of the Destination Buffer is found at a memory
+                address greater than 4GB (lower 32-Bits) then the upper
+                32-bits of the address may be set with this tag.
+                 
+                For example if:
+                  pDestBuffer         = 0x0021FEA0
+                  FSLDMA_CM_DestUpper = 0x000000FE
+                then the address of the source buffer passed to the DMA would be:
+                  0x000000FE0021FEA0
+
+
+   RESULT
+     This function returns TRUE if the DMA copy was possible
+     and successful, or FALSE if using the DMA was not possible
+     or submitting the copy to the DMA hardware returned an
+     error (see FSLDMA_CM_ResultCode for more).
+
+   EXAMPLE
+     See the fsldma_example_2.c source in the SDK:Examples/fsldma/
+     folder for an example of using IfslDMA->CopyMemDMATags() to make
+     "Non-Blocking" memory copies using the DMA hardware on
+     the X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+     CopyMemDMA, CopyMemDMATags, StartDMAChain
+
+fsldma.resource/StartDMAChain
+
+   NAME
+     StartDMAChain -- Attempt to start a chain of DMA copies
+
+   SYNOPSIS
+     BOOL StartDMAChain(struct dma_link_descriptor *pDMALinkArray);
+
+   FUNCTION
+     Copy memory from source to destination using the DMA engine.
+
+     Arbitrary overlapping copies are not supported.
+
+   INPUTS
+     pDMALinkArray - a pointer to the struct dma_link_descriptor
+                     which has been programmed with the chain
+                     of DMA Transactions to be performed.
+
+   RESULT
+     This function returns a non zero value on success,
+     or 0 if the transaction failed to setup or run.
+
+   EXAMPLE
+     See the fsldma_example_3.c source in the SDK:Examples/fsldma/
+     folder for an example of using IfslDMA->StartDMAChain() to make
+     either "Blocking" or "Non-Blocking" memory copies of an entire
+     set of memory blocks using the DMA hardware on the
+     X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+
+   NOTES
+     StartDMAChain() provides a highly efficient means to perform
+     a series of memory transactions using the DMA hardware. This
+     is accomplished by constructing an array of DMA Link Descriptors
+     (defined in the <resources/fsldma.h> header file), which can
+     be processed directly by the hardware without translation.
+
+     The fsldma_example_3.c source contains helper functions to aid
+     in building a proper array of DMA Link Descriptors for your
+     programs.
+
+   BUGS
+
+   SEE ALSO
+     StartDMAChainTagList, StartDMAChainTags,
+     CopyMemDMA, CopyMemDMATagList, CopyMemDMATags
+
+fsldma.resource/StartDMAChainTagList
+
+   NAME
+     StartDMAChainTagList -- Attempt to start a chain of DMA copies
+
+   SYNOPSIS
+     BOOL StartDMAChainTagList(struct dma_link_descriptor *pDMALinkArray,
+                               const struct TagItem *tags);
+
+     BOOL StartDMAChainTags(struct dma_link_descriptor *pDMALinkArray,
+                            uint32 Tag1, ...);
+
+   FUNCTION
+     Copy memory from source to destination using the DMA engine.
+
+     Arbitrary overlapping copies are not supported.
+
+   INPUTS
+     pDMALinkArray - a pointer to the struct dma_link_descriptor
+                     which has been programmed with the chain
+                     of DMA Transactions to be performed.
+
+     tags - A list of tag items used to access advanced
+            features of the DMA hardware or control the
+            operational mode of the DMA transaction.
+            Currently, the following tags are defined
+            (the information in brackets refers to the
+            data type of the tag item, as well as its
+            default value):
+
+            FSLDMA_CM_NotifyHook (struct Hook *)
+              If this tag is provided then the Hook structure
+              is called based on the provided NotifyHookFlags.
+
+              The Notify Hook is separate from the Notify signals
+              and as such does not require FSLDMA_CM_NotifyTask
+              to be provided.
+
+            FSLDMA_CM_NotifyHookFlags (uint32)
+              This tag is used to request which notification
+              events should call the Notify Hook.
+
+              FSLDMA_CM_NotifyHook must be provided with
+              a pointer to a proper Hook structure.
+
+              This tags defaults to call the Hook on completion
+              or error events.
+
+              The possible values for this tag are listed below.
+              The specified Hook function with be called on each
+              event type listed here.
+
+              FSLDMA_NF_COMPLETE   = "DMA Chain completed successfully"
+              FSLDMA_NF_INPROGRESS = "Sub-block completed successfully"
+              FSLDMA_NF_ERROR      = "Error occurred"
+              FSLDMA_NF_COMMON     = Requests "Completed" or "Error" only
+              FSLDMA_NF_ALL        = Call Hook function on all three listed above
+
+            FSLDMA_CM_DoNotWait (BOOL, FALSE)
+              If set to TRUE, the DMA Copy will start and
+              return immediately. See the "Notify" tags
+              below if you wish to be notified that the
+              requested copy has been completed.
+
+              If you do not also set at least FSLDMA_CM_NotifyTask
+              and FSLDMA_CM_NotifySignalNumber, then the caller
+              will *not* be notify when the copy is complete.
+
+              This is effectively "spray-and-pray" mode,
+              where the caller only needs to queue up DMA
+              transfers, but does not care when (or if) they
+              have completed.
+
+            FSLDMA_CM_NotifyTask (struct Task *, NULL)
+              Provide the Task to be Signaled upon completion,
+              error, or status changes. Passing a valid Task
+              pointer here, plus at least one of the three
+              possible signal numbers (listed below) will also
+              set FSLDMA_CM_DoNotWait to TRUE, causing the
+              call to return immediately and signal notifications
+              upon completion.
+
+            FSLDMA_CM_NotifySignalNumber (int8, no default)
+              Provide the Signal Number to be sent
+              upon the successful completion of the
+              entire transfer.
+
+              Requires FSLDMA_CM_NotifyTask to be set
+              or silently does nothing.
+
+            FSLDMA_CM_NotifyProgessSignalNumber (int8, no default)
+              Provide the Signal Number to be sent
+              upon the successful completion of one
+              sub-block of the total transfer.
+
+              Requires FSLDMA_CM_NotifyTask to be set
+              or silently does nothing.
+
+            FSLDMA_CM_NotifyErrorSignalNumber (int8, no default)
+              Provide the Signal Number to be sent
+              upon an error in the requested transfer.
+
+              Requires FSLDMA_CM_NotifyTask to be set
+              or silently does nothing.
+
+            FSLDMA_CM_ResultCode (uint32 *)
+              If a pointer to a uint32 variable is provided using
+              this tag, then the specific DMA Transaction Result Code
+              will be filled into that memory location.
+
+              This tag is optional but provides a good way to
+              determine why the requested DMA transaction may
+              have returned before it was started.
+
+              The most common use of this tag is to determine
+              why the API call (eg. CopyMemDMATags()) returned
+              during setup.
+
+                The possible DMA Result Code values are listed below.
+
+                FSLDMA_RC_STARTED  = The DMA transaction was started successfully*
+
+                FSLDMA_RC_BUSY     = The transaction was not started because all
+                                     DMA Channels are currently busy.
+                                     Try the call again.
+
+                FSLDMA_RC_PRGERROR = The transaction could not start because missing
+                                     or incorrect arguments were provided
+
+                FSLDMA_RC_HALTED   = The DMA transaction was halted
+                                     (most likely in response to an Abort request)
+
+                FSLDMA_RC_TRANSERR = The DMA transaction failed to complete,
+                                      a transfer error occurred
+
+              *The FSLDMA_CM_ResultCode will be set to FSLDMA_RC_STARTED when
+               either a "blocking" request was completed without error, or
+               when a "non-blocking" request was successfully started and is
+               currently running. See the FSLDMA_CM_Notify tags for details
+               about capturing the results from "non-blocking" transactions.
+
+               The uint32 variable provided to the FSLDMA_CM_ResultCode Tag
+               should be initialize to FSLDMA_RC_UNKNOWN before the API call is made.
+
+   RESULT
+     This function returns TRUE if the DMA copy was possible
+     and successful, or FALSE if using the DMA was not possible
+     or submitting the copy to the DMA hardware returned an
+     error (see FSLDMA_CM_ResultCode for more).
+
+   EXAMPLE
+     See the fsldma_example_3.c source in the SDK:Examples/fsldma/
+     folder for an example of using IfslDMA->StartDMAChainTags() to make
+     either "Blocking" or "Non-Blocking" memory copies of an entire
+     set of memory blocks using the DMA hardware on the
+     X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+
+   NOTES
+     StartDMAChain() provides a highly efficient means to perform
+     a series of memory transactions using the DMA hardware. This
+     is accomplished by constructing an array of DMA Link Descriptors
+     (defined in the <resources/fsldma.h> header file), which can
+     be processed directly by the hardware without translation.
+
+     The fsldma_example_3.c source contains helper functions to aid
+     in building a proper array of DMA Link Descriptors for your
+     programs.
+
+   BUGS
+
+   SEE ALSO
+     StartDMAChain, CopyMemDMA, CopyMemDMATagList, CopyMemDMATags
+
+

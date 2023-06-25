@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="elf" basename="ElfBase" openname="elf.library">
+  <include>libraries/elf.h</include>
+  <include>utility/tagitem.h</include>
+
+  <!-- Main Interface -->
+  <interface name="main" version="1.0" struct="ElfIFace" prefix="_elf32_" asmprefix="IElf" global="IElf">
+	<method name="Obtain" result="ULONG"/>
+	<method name="Release" result="ULONG"/>
+	<method name="Expunge" result="void" status="unimplemented"/>
+	<method name="Clone" result="struct Interface *" status="unimplemented"/>
+
+	<!-- Opening ELF files -->
+	<method name="OpenElf" result="Elf32_Handle">
+	  <arg name="taglist" type="struct TagItem *"/>
+	</method>
+
+	<method name="OpenElfTags" result="Elf32_Handle">
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<method name="CloseElf" result="void">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="TagList" type="struct TagItem *"/>
+	</method>
+
+	<method name="CloseElfTags" result="void">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<!-- Getting elf sections and headers -->
+	<method name="GetElfAttrs" result="ULONG">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="taglist" type="struct TagItem *"/>
+	</method>
+
+	<method name="GetElfAttrsTags" result="ULONG">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<method name="SetElfAttrs" result="ULONG">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="taglist" type="struct TagItem *"/>
+	</method>
+
+	<method name="SetElfAttrsTags" result="ULONG">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<method name="GetSectionHeader" result="Elf32_Shdr *">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="TagList" type="struct TagItem *"/>
+	</method>
+
+	<method name="GetSectionHeaderTags" result="Elf32_Shdr *">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<method name="GetSection" result="APTR">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="TagList" type="struct TagItem *"/>
+	</method>
+
+	<method name="GetSectionTags" result="APTR">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+	
+	<!-- LoadSeg() an ELF file -->
+	<method name="ElfLoadSeg" result="Elf32_Error">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="taglist" type="struct TagItem *"/>
+	</method>
+
+	<method name="ElfLoadSegTags" result="Elf32_Error">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<!-- Get a string from a string table -->
+	<method name="GetElfString" result="CONST_STRPTR">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="SectionIndex" type="UWORD"/>
+	  <arg name="StringIndex" type="UWORD"/>
+	</method>
+
+	<!-- Search for symbols -->
+	<method name="SymbolQuery" result="ULONG">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="NumQueries" type="ULONG"/>
+	  <arg name="Queries" type="struct Elf32_SymbolQuery *"/>
+	</method>
+
+	<!-- Unload a section -->
+	<method name="UnloadSection" result="void">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="taglist" type="struct TagItem *"/>
+	</method>
+
+	<method name="UnloadSectionTags" result="void">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+    <!-- Map an address in an elf image to a section number -->
+	<method name="AddressToSection" result="uint32">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="Address" type="APTR"/>
+	</method>
+
+	<!-- Scan all symbol tables in an ELF image using a hook -->
+	<method name="ScanSymbolTable" result="void">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="hook" type="struct Hook *"/>
+	  <arg name="tagList" type="struct TagItem *"/>
+	</method>
+
+	<method name="ScanSymbolTableTags" result="void">
+	  <arg name="ElfHandle" type="Elf32_Handle"/>
+	  <arg name="hook" type="struct Hook *"/>
+	  <vararg name="Tag" type="ULONG"/>
+	</method>
+
+	<method name="RelocateSection" result="BOOL">
+    	<arg name="ElfHandle" type="Elf32_Handle"/>
+        <arg name="taglist" type="struct TagItem *"/>
+    </method>
+
+    <method name="RelocateSectionTags" result="BOOL">
+    	<arg name="ElfHandle" type="Elf32_Handle"/>
+        <vararg name="Tag" type="ULONG"/>
+    </method>
+    
+    <method name="CopyDataSegment" result="void *">
+    	<arg name="ElfHandle" type="Elf32_Handle"/>
+    	<arg name="baseOffset" type="uint32 *"/>
+    </method>
+    
+    <method name="FreeDataSegmentCopy" result="void">
+    	<arg name="ElfHandle" type="Elf32_Handle"/>
+    	<arg name="SegmentCopy" type="void *"/>
+    </method>
+
+
+    <method name="InitSHLibs" result="void">
+	<arg name="ElfHandle" type="Elf32_Handle"/>
+	<arg name="DoInit" type="BOOL"/>
+    </method>
+
+    <method name="DLOpen" result="APTR">
+	<arg name="RootHandle" type="Elf32_Handle"/>
+	<arg name="Name" type="CONST_STRPTR"/>
+	<arg name="Flags" type="uint32"/>
+    </method>
+
+    <method name="DLClose" result="Elf32_Error">
+	<arg name="RootHandle" type="Elf32_Handle"/>
+	<arg name="Handle" type="APTR"/>
+    </method>
+
+    <method name="DLSym" result="Elf32_Error">
+	<arg name="RootHandle" type="Elf32_Handle"/>
+	<arg name="Handle" type="APTR"/>
+	<arg name="SymbolName" type="CONST_STRPTR"/>
+	<arg name="Result" type="APTR *"/>
+    </method>
+
+  </interface>
+</library>

@@ -1,0 +1,755 @@
+TABLE OF CONTENTS
+
+libamiga.a/ACrypt
+libamiga.a/AddTOF
+libamiga.a/ArgArrayDone
+libamiga.a/ArgArrayInit
+libamiga.a/ArgInt
+libamiga.a/ArgString
+libamiga.a/BeginIO
+libamiga.a/CheckRexxMsg
+libamiga.a/CreateExtIO
+libamiga.a/CreatePort
+libamiga.a/CreateStdIO
+libamiga.a/CreateTask
+libamiga.a/DeleteExtIO
+libamiga.a/DeletePort
+libamiga.a/DeleteStdIO
+libamiga.a/DeleteTask
+libamiga.a/FastRand
+libamiga.a/FreeIEvents
+libamiga.a/GetRexxVar
+libamiga.a/HotKey
+libamiga.a/InvertString
+libamiga.a/NewList
+libamiga.a/RangeRand
+libamiga.a/RemTOF
+libamiga.a/SetRexxVar
+libamiga.a/TimeDelay
+libamiga.a/ACrypt                                           libamiga.a/ACrypt
+
+   NAME
+        ACrypt -- Encrypt a password
+
+   SYNOPSIS
+        newpass = ACrypt( buffer, password, username )
+
+        STRPTR ACrypt( STRPTR, STRPTR, STRPTR) ;
+
+   FUNCTION
+        This function takes a buffer of at least 12 characters in length,
+        an unencrypted password and the user's name (as known to the host
+        system) and returns an encrypted password in the passed buffer.
+        This is a one-way encryption. Normally, the user's encrypted
+        password is stored in a file for future password comparison.
+
+   INPUTS
+        buffer     - a pointer to a buffer at least 12 bytes in length.
+        password   - a pointer to an unencrypted password string.
+        username   - a pointer to the user's name.
+
+   RESULT
+        newpass    - a pointer to the passed buffer if successful, NULL
+                     upon failure. The encrypted password placed in the
+                     buffer will be be eleven (11) characters in length
+                     and will be NUL-terminated.
+
+   EXAMPLE
+
+        CONST_STRPTR pw, getpassword();
+        CONST_STRPTR user = "alf";
+        STRPTR newpass;
+        TEXT buffer[16];         /* size >= 12 */
+
+        pw = getpassword();   /* your own function */
+
+        if ((newpass = ACrypt(buffer, pw, user)) != NULL)
+        {
+            printf("pw = %s\n", newpass); /* newpass = &buffer[0] */
+        }
+        else
+        {
+            printf("ACrypt failed\n");
+        }
+
+libamiga.a/AddTOF                                           libamiga.a/AddTOF
+
+   NAME
+        AddTOF - add a task to the VBlank interrupt server chain.
+
+   SYNOPSIS
+        AddTOF(i,p,a);
+
+        VOID AddTOF(struct Isrvstr *, LONG (*)(APTR), APTR);
+
+   FUNCTION
+        Adds a task to the vertical-blanking interval interrupt server
+        chain. This prevents C programmers from needing to write an
+        assembly language stub to do this function.
+
+   INPUTS
+        i - pointer to an initialized Isrvstr structure
+        p - pointer to the C-code routine that this server is to call each
+            time TOF happens
+        a - pointer to the first longword in an array of longwords that
+            is to be used as the arguments passed to your routine
+            pointed to by p.
+
+   SEE ALSO
+        RemTOF(), <graphics/graphint.h>
+
+libamiga.a/ArgArrayDone                               libamiga.a/ArgArrayDone
+
+   NAME
+        ArgArrayDone -- release the memory allocated by a previous call
+                        to ArgArrayInit(). (V36)
+
+   SYNOPSIS
+        ArgArrayDone();
+
+        VOID ArgArrayDone(VOID);
+
+   FUNCTION
+        This function frees memory and does cleanup required after a
+        call to ArgArrayInit(). Don't call this until you are done using
+        the ToolTypes argument strings.
+
+   SEE ALSO
+        ArgArrayInit()
+
+libamiga.a/ArgArrayInit                               libamiga.a/ArgArrayInit
+
+   NAME
+        ArgArrayInit -- allocate and initialize a tooltype array. (V36)
+
+   SYNOPSIS
+        ttypes = ArgArrayInit(argc,argv);
+
+        STRPTR *ArgArrayInit(LONG,CONST_STRPTR *);
+
+   FUNCTION
+        This function returns a null-terminated array of strings
+        suitable for sending to icon.library/FindToolType(). This array will
+        be the ToolTypes array of the program's icon, if it was started from
+        Workbench. It will just be 'argv' if the program was started from
+        a shell.
+
+        Pass ArgArrayInit() your startup arguments received by main().
+
+        ArgArrayInit() requires that icon.library be open (even if the caller
+        was started from a shell, so that the function FindToolType() can be
+        used) and may call GetDiskObject(), so clean up is necessary when
+        the strings are no longer needed. The function ArgArrayDone() does
+        just that.
+
+   INPUTS
+        argc - the number of arguments in argv, 0 when started from Workbench
+        argv - an array of pointers to the program's arguments, or the
+               Workbench startup message when started from WB.
+
+   RESULTS
+        ttypes - the initialized argument array or NULL if it could not be
+                 allocated
+
+   EXAMPLE
+        Use of these routines facilitates the use of ToolTypes or command-
+        line arguments to control end-user parameters in Commodities
+        applications. For example, a filter used to trap a keystroke for
+        popping up a window might be created by something like this:
+
+            STRPTR *ttypes  = ArgArrayInit(argc, argv);
+            CxObj   *filter = UserFilter(ttypes, "POPWINDOW", "alt f1");
+
+            ... with ...
+
+            CxObj *UserFilter(STRPTR *tt, CONST_STRPTR action_name,
+                              CONST_STRPTR default_descr)
+            {
+                STRPTR desc;
+
+                desc = FindToolType(tt,action_name);
+
+                return(CxFilter((ULONG)(desc? desc: default_descr)));
+            }
+
+        In this way the user can assign "alt f2" to the action by
+        entering a tooltype in the program's icon of the form:
+
+            POPWINDOW=alt f2
+
+        or by starting the program from the CLI like so:
+
+            myprogram "POPWINDOW=alt f2"
+
+   NOTE
+        Your program must open icon.library and set up IconBase before calling
+        this routine. In addition IconBase must remain valid until after
+        ArgArrayDone() has been called!
+
+   SEE ALSO
+        ArgArrayDone(), ArgString(), ArgInt(), icon.library/FindToolType()
+
+libamiga.a/ArgInt                                           libamiga.a/ArgInt
+
+   NAME
+        ArgInt -- return an integer value from a ToolTypes array. (V36)
+
+   SYNOPSIS
+        value = ArgInt(tt,entry,defaultval)
+
+        LONG ArgInt(STRPTR *,STRPTR,LONG);
+
+   FUNCTION
+        This function looks in the ToolTypes array 'tt' returned
+        by ArgArrayInit() for 'entry' and returns the value associated
+        with it. 'tt' is in standard ToolTypes format such as:
+
+            ENTRY=Value
+
+        The Value string is passed to atoi() and the result is returned by
+        this function.
+
+        If 'entry' is not found, the integer 'defaultval' is returned.
+
+   INPUTS
+        tt - a ToolTypes array as returned by ArgArrayInit()
+        entry - the entry in the ToolTypes array to search for
+        defaultval - the value to return in case 'entry' is not found within
+                     the ToolTypes array
+
+   RESULTS
+        value - the value associated with 'entry', or defaultval if 'entry'
+                is not in the ToolTypes array
+
+   NOTES
+        This function requires that dos.library V36 or higher be opened.
+
+   SEE ALSO
+        ArgArrayInit()
+
+libamiga.a/ArgString                                     libamiga.a/ArgString
+
+   NAME
+        ArgString -- return a string pointer from a ToolTypes array. (V36)
+
+   SYNOPSIS
+        string = ArgString(tt,entry,defaultstring)
+
+        STRPTR ArgString(STRPTR *,STRPTR,STRPTR);
+
+   FUNCTION
+        This function looks in the ToolTypes array 'tt' returned
+        by ArgArrayInit() for 'entry' and returns the value associated
+        with it. 'tt' is in standard ToolTypes format such as:
+
+            ENTRY=Value
+
+        This function returns a pointer to the Value string.
+
+        If 'entry' is not found, 'defaultstring' is returned.
+
+   INPUTS
+        tt - a ToolTypes array as returned by ArgArrayInit()
+        entry - the entry in the ToolTypes array to search for
+        defaultstring - the value to return in case 'entry' is not found within
+                        the ToolTypes array
+
+   RESULTS
+        value - the value associated with 'entry', or defaultstring if 'entry'
+                is not in the ToolTypes array
+
+   SEE ALSO
+        ArgArrayInit()
+
+libamiga.a/BeginIO                                         libamiga.a/BeginIO
+
+   NAME
+        BeginIO -- initiate asynchronous device I/O (obsolete)
+
+   SYNOPSIS
+        BeginIO(ioReq)
+
+   FUNCTION
+        This function is obsolete. Use exec.library/BeginIO()
+        instead.
+
+   SEE ALSO
+        exec.library/BeginIO()
+
+libamiga.a/CheckRexxMsg                               libamiga.a/CheckRexxMsg
+
+   NAME
+        CheckRexxMsg - Check if a RexxMsg is from ARexx
+
+   SYNOPSIS
+        result = CheckRexxMsg(message)
+
+        BOOL CheckRexxMsg(struct RexxMsg *);
+
+   FUNCTION
+        This function checks to make sure that the message is from ARexx
+        directly.  It is required when using the Rexx Variable Interface
+        routines (RVI) that the message be from ARexx.
+
+   EXAMPLE
+        if (CheckRexxMsg(rxmsg))
+        {
+            /* Message is one from ARexx */
+        }
+
+   INPUTS
+        message   A pointer to the RexxMsg in question
+
+   RESULTS
+        result    A boolean - TRUE if message is from ARexx.
+
+   SEE ALSO
+        GetRexxVar(), SetRexxVar()
+
+libamiga.a/CreateExtIO                                 libamiga.a/CreateExtIO
+
+   NAME
+        CreateExtIO -- create an IORequest structure (obsolete)
+
+   SYNOPSIS
+        ioReq = CreateExtIO(port,ioSize);
+
+   FUNCTION
+        This function is obsolete. Use exec.library/CreateIORequest()
+        instead.
+
+   SEE ALSO
+        exec.library/CreateIORequest(), <clib/alib_protos.h>
+
+libamiga.a/CreatePort                                   libamiga.a/CreatePort
+
+   NAME
+        CreatePort - Allocate and initialize a new message port (obsolete)
+
+   SYNOPSIS
+        port = CreatePort(name,pri)
+
+   FUNCTION
+        This function is obsolete. Use exec.library/CreatePort()
+        instead.
+
+   SEE ALSO
+        exec.library/CreatePort()
+
+libamiga.a/CreateStdIO                                 libamiga.a/CreateStdIO
+
+   NAME
+        CreateStdIO -- create an IOStdReq structure (obsolete)
+
+   SYNOPSIS
+        ioReq = CreateStdIO(port);
+
+   FUNCTION
+        This function is obsolete. Use exec.library/CreateIORequest()
+        instead.
+
+   SEE ALSO
+        exec.library/CreateIORequest(), <clib/alib_protos.h>
+
+libamiga.a/CreateTask                                   libamiga.a/CreateTask
+
+   NAME
+        CreateTask -- Create task with given name,priority,stacksize(obsolete)
+
+   SYNOPSIS
+        task = CreateTask(name,pri,initPC,stackSize)
+
+   FUNCTION
+        This function is obsolete. Use exec.library/CreateTask()
+        instead.
+
+   SEE ALSO
+        exec.library/CreateTask()
+
+libamiga.a/DeleteExtIO                                 libamiga.a/DeleteExtIO
+
+   NAME
+        DeleteExtIO - return memory allocated for extended IOrequest(obsolete)
+
+   SYNOPSIS
+        DeleteExtIO(ioReq);
+
+   FUNCTION
+        This function is obsolete. Use exec.library/DeleteIORequest()
+        instead.
+
+   SEE ALSO
+        exec.library/DeleteIORequest(), <clib/alib_protos.h>
+
+libamiga.a/DeletePort                                   libamiga.a/DeletePort
+
+   NAME
+        DeletePort - free a message port created by CreatePort() (obsolete)
+
+   SYNOPSIS
+        DeletePort(port)
+
+   FUNCTION
+        This function is obsolete. Use exec.library/DeletePort()
+        instead.
+
+   SEE ALSO
+        exec.library/DeletePort()
+
+libamiga.a/DeleteStdIO                                 libamiga.a/DeleteStdIO
+
+   NAME
+        DeleteStdIO - return memory allocated for IOStdReq (obsolete)
+
+   SYNOPSIS
+        DeleteStdIO(ioReq);
+
+   FUNCTION
+        This function is obsolete. Use exec.library/DeleteIORequest()
+        instead.
+
+   SEE ALSO
+        exec.library/DeleteIORequest(), <clib/alib_protos.h>
+
+libamiga.a/DeleteTask                                   libamiga.a/DeleteTask
+
+   NAME
+        DeleteTask -- delete a task created with CreateTask() (obsolete)
+
+   SYNOPSIS
+        DeleteTask(task)
+
+   FUNCTION
+        This function is obsolete. Use exec.library/DeleteTask()
+        instead.
+
+   SEE ALSO
+        exec.library/DeleteTask()
+
+libamiga.a/FastRand                                       libamiga.a/FastRand
+
+   NAME
+        FastRand - quickly generate a somewhat random integer
+
+   SYNOPSIS
+        number = FastRand(seed);
+
+        ULONG FastRand(ULONG);
+
+   FUNCTION
+        Seed value is taken from stack, shifted left one position,
+        exclusive-or'ed with hex value $1D872B41 and returned.
+
+   INPUTS
+        seed - a 32-bit integer
+
+   RESULT
+        number - new random seed, a 32-bit value
+
+   SEE ALSO
+        RangeRand()
+
+libamiga.a/FreeIEvents                                 libamiga.a/FreeIEvents
+
+   NAME
+        FreeIEvents -- free a chain of input events allocated by
+                       InvertString(). (V36)
+
+   SYNOPSIS
+        FreeIEvents(events)
+
+        VOID FreeIEvents(struct InputEvent *);
+
+   FUNCTION
+        This function frees a linked list of input events as obtained from
+        InvertString().
+
+   INPUTS
+       events - the list of input events to free, may be NULL.
+
+   SEE ALSO
+        InvertString()
+
+libamiga.a/GetRexxVar                                   libamiga.a/GetRexxVar
+
+   NAME
+        GetRexxVar - Gets the value of a variable from a running ARexx program
+
+   SYNOPSIS
+        error = GetRexxVar(message,varname,bufpointer)
+
+        LONG GetRexxVar(struct RexxMsg *,STRPTR,STRPTR *);
+
+   FUNCTION
+        This function will attempt to extract the value of the symbol
+        varname from the ARexx script that sent the message.  A pointer
+        to the extracted value will be placed in the pointer pointed to
+        by bufpointer.  (*bufpointer will be the pointer to the value)
+
+        The value string returned *MUST* *NOT* be modified.
+
+   NOTE
+        This routine does a CheckRexxMsg() on the message.
+
+   EXAMPLE
+
+        STRPTR value;
+
+        /* Message is one from ARexx */
+        if (!GetRexxVar(rxmsg,"TheVar",&value))
+        {
+            /* The value was gotten and now is pointed to by value */
+            printf("Value of TheVar is %s\n",value);
+        }
+
+   INPUTS
+        message         A message gotten from an ARexx script
+        varname         The name of the variable to extract
+        bufpointer      A pointer to a string pointer.
+
+   RESULTS
+        error           0 for success, otherwise an error code.
+			(Other codes may exists, these are documented)
+			3  == Insufficient Storage
+			9  == String too long
+			10 == invalid message
+
+   SEE ALSO
+        SetRexxVar(), CheckRexxMsg()
+
+libamiga.a/HotKey                                           libamiga.a/HotKey
+
+   NAME
+        HotKey -- create a commodity triad. (V36)
+
+   SYNOPSIS
+        filterObj = Hotkey(description,port,id);
+
+        CxObj *HotKey(STRPTR,struct MsgPort *,LONG);
+
+   FUNCTION
+        This function creates a triad of commodity objects to accomplish a
+        high-level function.
+
+        The three objects are a filter, which is created to match by the call
+        CxFilter(description), a sender created by the call CxSender(port,id),
+        and a translator which is created by CxTranslate(NULL), so that it
+        swallows any commodity input event messages that are passed down by
+        the filter.
+
+        This is the simple way to get a message sent to your program when the
+        user performs a particular input action.
+
+        It is strongly recommended that the ToolTypes environment be used to
+        allow the user to specify the input descriptions for your application's
+        hotkeys.
+
+   INPUTS
+        description - the description string to use for the filter in the same
+                      format as accepted by commodities.library/SetFilter()
+        port - port for the sender to send messages to.
+        id - id of the messages sent by the sender
+
+   RESULTS
+        filterObj - a pointer to a filter object, or NULL if it could
+                    not be created.
+
+   SEE ALSO
+        CxFilter(), CxSender(), CxTranslate(),
+        commodities.library/CxObjError(), commodities.library/SetFilter()
+
+libamiga.a/InvertString                               libamiga.a/InvertString
+
+   NAME
+        InvertString -- produce input events that would generate the
+                        given string. (V36)
+
+   SYNOPSIS
+        events = InvertString(str,km)
+
+        struct InputEvent *InvertString(STRPTR,struct KeyMap *);
+
+   FUNCTION
+        This function returns a linked list of input events which would
+        translate into the string using the supplied keymap (or the system
+        default keymap if 'km' is NULL).
+
+        'str' is null-terminated and may contain:
+           - ANSI character codes
+           - backslash escaped characters:
+                \n   -   CR
+                \r   -   CR
+                \t   -   TAB
+                \0   -   illegal, do not use!
+                \\   -   backslash
+           - a text description of an input event as used by ParseIX(),
+             enclosed in angle brackets.
+
+        An example is:
+          abc<alt f1>\nhi there.
+
+   INPUTS
+        str - null-terminated string to convert to input events
+        km - keymap to use for the conversion, or NULL to use the default
+             keymap.
+
+   RESULTS
+        events - a chain of input events, or NULL if there was a problem. The
+                 most likely cause of failure is an illegal description
+                 enclosed in angled brackets.
+
+                 This chain should eventually be freed using FreeIEvents().
+
+   SEE ALSO
+        commodities.library/ParseIX(), FreeIEvents()
+
+libamiga.a/NewList                                         libamiga.a/NewList
+
+   NAME
+        NewList -- prepare a list structure for use (obsolete)
+
+   SYNOPSIS
+        NewList(list)
+
+   FUNCTION
+        This function is obsolete. Use exec.library/NewList()
+        instead.
+
+   SEE ALSO
+        exec.library/NewList()
+
+libamiga.a/RangeRand                                     libamiga.a/RangeRand
+
+   NAME
+        RangeRand - generate a random number within a specific integer range
+
+   SYNOPSIS
+        number = RangeRand(maxValue);
+
+        UWORD RangeRand(UWORD);
+
+   FUNCTION
+        RangeRand() accepts a value from 0 to 65535, and returns a value
+        within that range.
+
+        maxValue is passed on stack as a 32-bit integer but used as though
+        it is only a 16-bit integer. Variable named RangeSeed is available
+        beginning with V33 that contains the global seed value passed from
+        call to call and thus can be changed in a program by declaring:
+
+          extern ULONG RangeSeed;
+
+   INPUTS
+        maxValue - the returned random number will be in the range
+                   [0..maxValue-1]
+
+   RESULT
+        number - pseudo random number in the range of [0..maxValue-1].
+
+   SEE ALSO
+        FastRand()
+
+libamiga.a/RemTOF                                           libamiga.a/RemTOF
+
+   NAME
+        RemTOF - remove a task from the VBlank interrupt server chain.
+
+   SYNOPSIS
+        RemTOF(i);
+
+        VOID RemTOF(struct Isrvstr *);
+
+   FUNCTION
+        Removes a task from the vertical-blanking interval interrupt server
+        chain.
+
+   INPUTS
+        i - pointer to an Isrvstr structure
+
+   SEE ALSO
+        AddTOF(), <graphics/graphint.h>
+
+libamiga.a/SetRexxVar                                   libamiga.a/SetRexxVar
+
+   NAME
+        SetRexxVar - Sets the value of a variable of a running ARexx program
+
+   SYNOPSIS
+        error = SetRexxVar(message,varname,value,length)
+
+        LONG SetRexxVar(struct RexxMsg *,STRPTR,STRPTR,ULONG);
+
+   FUNCTION
+        This function will attempt to the the value of the symbol
+        varname in the ARexx script that sent the message.
+
+   NOTE
+        This routine does a CheckRexxMsg() on the message.
+
+   EXAMPLE
+
+        STRPTR value;
+
+        /* Message is one from ARexx */
+        if (!SetRexxVar(rxmsg,"TheVar","25 Dollars",10))
+        {
+            /* The value of TheVar will now be "25 Dollars" */
+        }
+
+   INPUTS
+        message         A message gotten from an ARexx script
+        varname         The name of the variable to set
+        value           A string that will be the new value of the variable
+        length          The length of the value string
+
+
+   RESULTS
+        error           0 for success, otherwise an error code.
+			(Other codes may exists, these are documented)
+			3  == Insufficient Storage
+			9  == String too long
+			10 == invalid message
+
+   SEE ALSO
+        SetRexxVar(), CheckRexxMsg()
+
+libamiga.a/TimeDelay                                     libamiga.a/TimeDelay
+
+   NAME
+        TimeDelay -- Return after a period of time has elapsed.
+
+   SYNOPSIS
+        Error = TimeDelay( Unit, Seconds, MicroSeconds )
+
+        LONG TimeDelay( LONG, ULONG, ULONG );
+
+   FUNCTION
+        Waits for the period of time specified before returning to the
+        the caller.
+
+   INPUTS
+        Unit -- timer.device unit to open for this command.
+        Seconds -- The Seconds field of a TimeRequest is filled with
+            this value. Check the documentation for what a particular
+            timer.device unit expects there.
+        MicroSeconds -- The Microseconds field of a TimeRequest is
+            filled with this value. Check the documentation for what
+            a particular timer.device units expects there.
+
+   RESULTS
+        Error -- will be zero if all went well; otherwise, non-zero.
+
+   NOTES
+        Two likely reasons for failures are invalid unit numbers or
+        no more free signal bits for this task.
+
+        While this function first appears in V37 amiga.lib, it works
+        on Kickstart V33 and higher.
+
+   SEE ALSO
+        timer.device/TR_ADDREQUEST,
+        timer.device/TR_WAITUNTIL
+
+   BUGS
+
+

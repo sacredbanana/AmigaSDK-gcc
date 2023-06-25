@@ -1,0 +1,89 @@
+TABLE OF CONTENTS
+
+xena.resource/AllocResource
+xena.resource/FreeResource
+xena.resource/AllocResource                       xena.resource/AllocResource
+
+   NAME
+      AllocResource -- Obtain exclusive access to Xena resources
+
+   SYNOPSIS
+      CONST_STRPTR AllocResource(uint32 unitNum, CONST_STRPTR name);
+
+   FUNCTION
+      This function attempts to allocate one of the resources provided
+      by the Xena subsystem. If the resource has already been allocated,
+      a STRPTR describing the user who has the resource is returned.
+
+   INPUTS
+       unitNum - one of:
+           XR_XTAGPORT, The JTAG programming port used to program
+             or debug the onboard XMOS chip and any additional XMOS
+             chips attached by the Xorro card.
+
+           XR_DATABUS, The LocalBus CPU interface attached to the
+             onboard XMOS chip
+
+           XR_INTERRUPT, The interrupt used to alert the CPU
+             when Xena needs attention.
+
+           XR_LONELYBIT, The extra, unassigned bit from Xena to
+             the PLD.
+
+       name - A string describing your app, to be provided to any
+              who are denied access because you have not released
+              a resource.
+
+   RESULT
+       NULL on success, pointer to resource holders name on failure.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       FreeResource()
+
+xena.resource/FreeResource                         xena.resource/FreeResource
+
+   NAME
+      FreeResource -- Returns a resource to the system.
+
+   SYNOPSIS
+      void FreeResource(uint32 unitNum);
+
+   FUNCTION
+      Releases exclusive access granted by AllocResource.
+
+   INPUTS
+       unitNum - One of:
+           XR_XTAGPORT, The JTAG programming port used to program
+             or debug the onboard XMOS chip and any additional XMOS
+             chips attached by the Xorro card.
+
+           XR_DATABUS, The LocalBus CPU interface attached to the
+             onboard XMOS chip
+
+           XR_INTERRUPT, The interrupt used to alert the CPU
+             when Xena needs attention.
+
+           XR_LONELYBIT, The extra, unassigned bit from Xena to
+             the PLD.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+       You should not free a resource that you have not
+       successfully allocated with IXena->AllocResource().
+
+   BUGS
+
+   SEE ALSO
+       AllocResource()
+
+

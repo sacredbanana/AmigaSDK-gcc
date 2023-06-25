@@ -1,0 +1,1126 @@
+TABLE OF CONTENTS
+
+asl.library/AbortAslRequest
+asl.library/ActivateAslRequest
+asl.library/AllocAslRequest
+asl.library/AllocFileRequest
+asl.library/ASL_FileRequest
+asl.library/ASL_FontRequest
+asl.library/ASL_ScreenModeRequest
+asl.library/AslRequest
+asl.library/FreeAslRequest
+asl.library/FreeFileRequest
+asl.library/RequestFile
+asl.library/AbortAslRequest                         asl.library/AbortAslRequest
+
+   NAME
+	AbortAslRequest -- attempt to abort an asl requester. (V44)
+
+   SYNOPSIS
+	VOID AbortAslRequest(APTR requester);
+
+   FUNCTION
+	The different types of asl requesters are modal (as of V44). Yet at
+	times it may be necessary to abort a modal requester from a different
+	task context. AbortAslRequest() will attempt to tell the modal asl
+	requester provided to shut down and perform as if the user had
+	clicked on the requester's window close gadget. This may take some
+	time to complete; be prepared to handle this.
+
+   INPUTS
+	requester - Requester obtained from AllocAslRequest() or NULL in
+	            which case this function does nothing.
+
+   SEE ALSO
+	AslRequest()
+
+asl.library/ActivateAslRequest                   asl.library/ActivateAslRequest
+
+   NAME
+	ActivateAslRequest -- attempt to activate an asl requester. (V44)
+
+   SYNOPSIS
+	VOID ActivateAslRequest(APTR requester);
+
+   FUNCTION
+	The different types of asl requesters are modal (as of V44). Yet at
+	times it may be necessary to activate a modal requester from a
+	different task context.
+
+   INPUTS
+	requester - Requester obtained from AllocAslRequest() or NULL in
+	            which case this function does nothing.
+
+   SEE ALSO
+	AslRequest()
+
+asl.library/AllocAslRequest                         asl.library/AllocAslRequest
+
+   NAME
+	AllocAslRequest -- allocate an ASL requester. (V36)
+	AllocAslRequestTags -- varargs stub for AllocAslRequest(). (V36)
+
+   SYNOPSIS
+	APTR requester = AllocAslRequest(uint32 type, struct TagItem *tags);
+
+	APTR requester = AllocAslRequestTags(uint32 type, Tag firstTag, ...);
+
+   FUNCTION
+	Allocates an ASL requester data structure of the specified type.
+
+   INPUTS
+	type - Type of requester to allocate. Currently defined types
+	       are ASL_FileRequest, ASL_FontRequest and ASL_ScreenModeRequest.
+
+	tags - Pointer to an optional tag list specifying how to initialize
+	       the data structure returned by this function. See the
+	       documentation for AslRequest() for an explanation of
+	       how to use the currently defined tags.
+
+   RESULT
+	requester - An initialized requester data structure or NULL on
+	            failure. The data structure returned corresponds to the
+	            requested type:
+
+	            ASL_FileRequest       -> (struct FileRequester *)
+	            ASL_FontRequest       -> (struct FontRequester *)
+	            ASL_ScreenModeRequest -> (struct ScreenModeRequester *)
+
+   NOTES
+	ASL_ScreenModeRequest is available starting with asl.library
+	V38 only.
+
+   SEE ALSO
+	AslRequest(), FreeAslRequest()
+
+asl.library/AllocFileRequest                       asl.library/AllocFileRequest
+
+   NAME
+	AllocFileRequest -- allocates an ASL FileRequester structure. (V36)
+
+   SYNOPSIS
+	struct FileRequester *requester = AllocFileRequest();
+
+   NOTES
+	This function is obsolete, please use AllocAslRequest() instead.
+
+   SEE ALSO
+	AllocAslRequest()
+
+asl.library/ASL_FileRequest                         asl.library/ASL_FileRequest
+
+   NAME
+	ASL_FileRequest -- File requester
+
+   TAGS
+	ASLFR_Window (struct Window *)
+	    Parent window of requester. If no ASLFR_Screen tag is specified,
+	    the window structure is used to determine on which screen to
+	    open the requesting window. (V36)
+
+	ASLFR_PubScreenName (CONST_STRPTR)
+	    Name of a public screen to open on. This overrides the screen
+	    used by ASLFR_Window. (V38)
+
+	ASLFR_Screen (struct Screen *)
+	    Screen on which to open the requester. This overrides the screen
+	    used by ASLFR_Window or by ASLFR_PubScreenName. (V38)
+
+	ASLFR_PrivateIDCMP (BOOL)
+	    When set to TRUE, this tells ASL to allocate a new IDCMP port
+	    for the requesting window. If not specified or set to FALSE and
+	    if ASLFR_Window is provided, the requesting window will share
+	    ASLFR_Window's IDCMP port. (V38)
+
+	    Defaults to FALSE.
+
+	ASLFR_IntuiMsgFunc (struct Hook *)
+	    A function to call whenever an unknown Intuition message arrives
+	    at the message port being used by the requesting window. (V38)
+
+	    The function has the following signature:
+
+	      VOID Unknown(struct Hook *hook,          (A0 on 68k)
+	                   struct FileRequester *req,  (A2 on 68k)
+	                   struct IntuiMessage *msg);  (A1 on 68k)
+
+	ASLFR_SleepWindow (BOOL)
+	    When set to TRUE, this tag will cause the window specified
+	    by ASLFR_Window to be "put to sleep". That is, a busy pointer
+	    will be displayed in the parent window and no gadget or menu
+	    activity will be allowed. This is done by opening an invisible
+	    Intuition Requester in the parent window. (V38)
+
+	ASLFR_StayOnTop (BOOL)
+	    When set to TRUE, this stops file requesters being depth-arranged.
+	    Useful especially in cases where the parent window input is blocked
+	    while the requester is open, otherwise the requester may be pushed 
+	    to the back of the stack of windows, and the user may be confused as 
+	    to what is blocking the input. (V53.34)
+
+	    Defaults to FALSE;
+
+	ASLFR_UserData (APTR)
+	    A 32-bit value that is simply copied in the fr_UserData field
+	    of the requester structure. (V38)
+
+	ASLFR_TextAttr (struct TextAttr *)
+	    Font to be used for the requesting window's gadgets. If this
+	    tag is not provided or its value is NULL the default font of
+	    the screen on which the requesting window opens will be used.
+	    (V38)
+
+	ASLFR_Locale (struct Locale *)
+	    Locale to use for the requesting window. This determines the
+	    language used for the requester's gadgets and menus. If this
+	    tag is not provided or its value is NULL, the system's current
+	    default locale will be used. (V38)
+
+	ASLFR_TitleText (CONST_STRPTR)
+	    Title to use for the requesting window. (V36)
+
+	    Default is no title.
+
+	ASLFR_PositiveText (CONST_STRPTR)
+	    Label of the positive gadget in the requester. (V36)
+
+	    English default is "OK".
+
+	ASLFR_NegativeText (CONST_STRPTR)
+	    Label of the negative gadget in the requester. (V36)
+
+	    English default is "Cancel".
+
+	ASLFR_InitialLeftEdge (int16)
+	ASLFR_InitialTopEdge (int16)
+	ASLFR_InitialWidth (int16)
+	ASLFR_InitialHeight (int16)
+	    Suggested initial dimension of requesting window. (V36)
+
+	ASLFR_InitialFile (CONST_STRPTR)
+	    Initial contents of the file requester's File text gadget.
+	    (V36)
+
+	    Default is empty.
+
+	ASLFR_InitialDrawer (CONST_STRPTR)
+	    Initial contents of the file requester's Drawer text gadget.
+	    (V36)
+
+	    Default is empty.
+
+	ASLFR_InitialPattern (CONST_STRPTR)
+	    Initial contents of the file requester's Pattern text gadget.
+	    (V36)
+
+	    Default is "#?".
+
+	ASLFR_InitialShowVolumes (BOOL)
+	    When opening the file requester, read the list of active
+	    volumes, do not read the contents of the specified drawer.
+	    (V44)
+
+	ASLFR_Flags1 (uint32)
+	ASLFR_Flags2 (uint32)
+	    Bulk initialization of many of the requester's options.
+	    See <libraries/asl.h> for the possible flag values. (V36)
+
+	    Default is 0.
+
+	ASLFR_DoSaveMode (BOOL)
+	    Set this tag to TRUE when the file requester is being used
+	    for saving. (V38)
+
+	    Default is FALSE.
+
+	ASLFR_DoMultiSelect (BOOL)
+	    Set this tag to TRUE to let the user select multiple files
+	    at once. This tag excludes save mode. (V38)
+
+	    Default is FALSE.
+
+	ASLFR_DoPatterns (BOOL)
+	    Set this tag to TRUE to cause a pattern gadget to be
+	    displayed. (V38)
+
+	    Default is FALSE.
+
+	ASLFR_DrawersOnly (BOOL)
+	    Set this tag to TRUE to cause the requester to only display
+	    drawers and have no File gadget. This is useful to let the
+	    user choose a destination directory. (V38)
+
+	    Default is FALSE.
+
+	ASLFR_FilterFunc (struct Hook *) [DEPRECATED]
+	    A function to call for each file encountered. If the function
+	    returns TRUE the file is included in the file list. Otherwise
+	    it is rejected and not displayed. (V38)
+
+	    The function has the following signature:
+	      BOOL Filter(struct Hook *hook,          (A0 on 68k)
+	                  struct FileRequester *req,  (A2 on 68k)
+	                  struct AnchorPathOld *ap);  (A1 on 68k)
+
+	    This tag has been deprecated. Use ASLFR_FilterHook instead.
+
+	    Use of this tag will slow down the directory scan because
+	    it will call Examine() on each entry before passing it on to
+	    the filtering function.
+
+	ASLFR_FilterHook (struct Hook *)
+	    A function to call for each file and directory encountered.
+	    If the function returns TRUE the file or directory is included
+	    in the list. Otherwise it is rejected and not displayed.
+	    (V52.27)
+
+	    The function has the following signature:
+	      BOOL Filter(struct Hook *hook,
+	                  const struct FileRequester *req,
+	                  const struct ExamineData *data);
+
+	    If multiple filtering methods are employed simultaneously,
+	    the hook specified by this tag will always take precedence.
+
+	ASLFR_RejectIcons (BOOL)
+	    Set this tag to TRUE to cause the requester not to display
+	    Workbench icons. This flag should normally be set. (V38)
+
+	    Default is FALSE.
+
+	ASLFR_RejectPattern (CONST_STRPTR)
+	    Specifies an AmigaDOS pattern that is used to reject files.
+	    That is, any files with names matching this pattern are not
+	    included in the file list. Note that the pattern must have been
+	    parsed by dos.library/ParsePatternNoCase(). (V38)
+
+	    Default is ~(#?) which matches nothing.
+
+	ASLFR_AcceptPattern (CONST_STRPTR)
+	    Specifies an AmigaDOS pattern that is used to accept files.
+	    That is, only files with names matching this pattern are
+	    included in the file list. Note that the pattern must have
+	    been parsed by dos.library/ParsePatternNoCase(). (V38)
+
+	    Default is #? which matches everything.
+
+	ASLFR_FilterDrawers (BOOL)
+	    Set this tag to TRUE if you want the ASLFR_RejectPattern,
+	    ASLFR_AcceptPattern and the Pattern text gadget to also apply
+	    to drawer names. Normally, drawers are always displayed. (V38)
+
+	    Default is FALSE.
+
+	ASLFR_HookFunc (APTR) [DEPRECATED]
+	    This tag has been deprecated. Do not use in new code.
+
+	ASLFR_SetSortBy (uint32)
+	    Criteria for sorting the file list. This must be one of
+	    ASLFRSORTBY_Name (sort by name), ASLFRSORTBY_Date (sort by date)
+	    or ASLFRSORTBY_Size (sort by size). (V44)
+
+	    Default is ASLFRSORTBY_Name.
+
+	ASLFR_GetSortBy (uint32 *)
+	    Before leaving AslRequest() the file requester will store its
+	    current sort criteria (ASLFRSORTBY_Name, ASLFRSORTBY_Date or
+	    ASLFRSORTBY_Size) in the uint32 pointed to by this tag. (V44)
+
+	    Default is NULL.
+
+	ASLFR_SetSortDrawers (uint32)
+	    Determines where drawers are placed in the sorted list. This
+	    must be one of ASLFRSORTDRAWERS_First (drawers appear before all
+	    other files), ASLFRSORTDRAWERS_Mix (drawers are sorted along
+	    with the the other files) or ASLFRSORTDRAWERS_Last (drawers
+	    appear after all other files). (V44)
+
+	    Default is ASLFRSORTDRAWERS_First.
+
+	ASLFR_GetSortDrawers (uint32 *)
+	    Before leaving AslRequest() the file requester will store its
+	    current drawer list placement (ASLFRSORTDRAWERS_First,
+	    ASLFRSORTDRAWERS_Mix or ASLFRSORTDRAWERS_Last) in the uint32
+	    pointed to by this tag. (V44)
+
+	    Default is NULL.
+
+	ASLFR_SetSortOrder (uint32)
+	    Selects the order in which the list is sorted. This must be
+	    one of ASLFRSORTORDER_Ascend (smallest/oldest files first,
+	    largest/newest files last) or ASLFRSORTORDER_Descend
+	    (largest/newest files first, smallest/oldest files last). (V44)
+
+	    Default is ASLFRSORTORDER_Ascend.
+
+	ASLFR_GetSortOrder (uint32 *)
+	    Before leaving AslRequest() the file requester will store its
+	    current sort order (ASLFRSORTORDER_Ascend,
+	    ASLFRSORTORDER_Descend) in the uint32 pointed to by this tag.
+	    (V44)
+
+	    Default is NULL.
+
+	ASLFR_PopToFront (BOOL)
+	    If set to TRUE, this tells ASL to bring the screen to the front
+	    the requester has opened on. The position of the screen will be
+	    adjusted to bring the area into view the window has opened in.
+	    The screen brought to the front will be pushed into the
+	    background again when the requester window closes. (V44)
+
+	    Default is TRUE.
+
+	ASLFR_Activate (BOOL)
+	    If set to TRUE, the requester window will open in active state.
+	    (V45)
+
+	    Default is TRUE.
+
+   WARNING
+	All ASL requester data structures are READ-ONLY and can only be
+	modified by using tags.
+
+	You must not specify requester options by using both pre-V38
+	tags like ASLFR_Flags1 and V38 tags like ASLFR_DoSaveMode as
+	this can lead to unexpected results.
+
+   BUGS
+	Under V38 and V39, the filtering functions for the file requester
+	were only asked to filter drawer selections if the
+	ASLFR_FilterDrawers tag was set to TRUE. The compatible behavior,
+	reestablished in V40, is to always pass drawers for filtering.
+
+   SEE ALSO
+	AslRequest()
+
+asl.library/ASL_FontRequest                         asl.library/ASL_FontRequest
+
+   NAME
+	ASL_FontRequest -- Font requester
+
+   TAGS
+	ASLFO_Window (struct Window *)
+	    Parent window of requester. If no ASLFO_Screen tag is specified,
+	    the window structure is used to determine on which screen to
+	    open the requesting window. (V36)
+
+	ASLFO_PubScreenName (CONST_STRPTR)
+	    Name of a public screen to open on. This overrides the screen
+	    used by ASLFO_Window. (V38)
+
+	ASLFO_StayOnTop (BOOL)
+	    When set to TRUE, this stops font requesters being depth-arranged.
+	    Useful especially in cases where the parent window input is blocked
+	    while the requester is open, otherwise the requester may be pushed 
+	    to the back of the stack of windows, and the user may be confused as 
+	    to what is blocking the input. (V53.34)
+
+	    Defaults to FALSE;
+
+	ASLFO_Screen (struct Screen *)
+	    Screen on which to open the requester. This overrides the screen
+	    used by ASLFO_Window or by ASLFO_PubScreenName. (V38)
+
+	ASLFO_PrivateIDCMP (BOOL)
+	    When set to TRUE, this tells ASL to allocate a new IDCMP port
+	    for the requesting window. If not specified or set to FALSE and
+	    if ASLFO_Window is provided, the requesting window will share
+	    ASLFO_Window's IDCMP port. (V38)
+
+	    Defaults to FALSE.
+
+	ASLFO_IntuiMsgFunc (struct Hook *)
+	    A function to call whenever an unknown Intuition message arrives
+	    at the message port being used by the requesting window. (V38)
+
+	    The function has the following signature:
+
+	      VOID Unknown(struct Hook *hook,          (A0 on 68k)
+	                   struct FontRequester *req,  (A2 on 68k)
+	                   struct IntuiMessage *msg);  (A1 on 68k)
+
+	ASLFO_SleepWindow (BOOL)
+	    When set to TRUE, this tag will cause the window specified by
+	    ASLFO_Window to be "put to sleep". That is, a busy pointer will
+	    be displayed in the parent window and no gadget or menu activity
+	    will be allowed. This is done by opening an invisible Intuition
+	    Requester in the parent window. (V38)
+
+	ASLFO_UserData (APTR)
+	    A 32-bit value that is simply copied in the fo_UserData field
+	    of the requester structure. (V38)
+
+	ASLFO_TextAttr (struct TextAttr *)
+	    Font to be used for the requesting window's gadgets. If this tag
+	    is not provided or its value is NULL the default font of the
+	    screen on which the requesting window opens will be used. (V38)
+
+	ASLFO_Locale (struct Locale *)
+	    Locale to use for the requesting window. This determines the
+	    language used for the requester's gadgets and menus. If this tag
+	    is not provided or its value is NULL, the system's current
+	    default locale will be used. (V38)
+
+	ASLFO_TitleText (CONST_STRPTR)
+	    Title to use for the requesting window. (V36)
+
+	    Default is NULL.
+
+	ASLFO_PositiveText (CONST_STRPTR)
+	    Label of the positive gadget in the requester. (V36)
+
+	    English default is "OK".
+
+	ASLFO_NegativeText (CONST_STRPTR)
+	    Label of the negative gadget in the requester. (V36)
+
+	    English default is "Cancel".
+
+	ASLFO_InitialLeftEdge (int16)
+	ASLFO_InitialTopEdge (int16)
+	ASLFO_InitialWidth (int16)
+	ASLFO_InitialHeight (int16)
+	    Suggested initial dimension of requesting window. (V36)
+
+	ASLFO_InitialName (CONST_STRPTR)
+	    Initial contents of the font requester's Name text gadget. (V36)
+
+	    Default is none.
+
+	ASLFO_InitialSize (uint16)
+	    Initial contents of the font requester's Size numeric gadget
+	    (fo_Attr.ta_YSize). (V36)
+
+	    Default is 8.
+
+	ASLFO_InitialStyle (uint8)
+	    Initial setting of the font requester's Style gadget
+	    (fo_Attr.ta_Style). (V36)
+
+	    Default is FS_NORMAL.
+
+	ASLFO_InitialFlags (uint8)
+	    Initial setting of the font requester's fo_Flags field
+	    (fo_Attr.ta_Flags). (V36)
+
+	    Default is FPF_ROMFONT.
+
+	ASLFO_InitialFrontPen (uint8)
+	    Initial setting of the font requester's Front Color gadget
+	    (fo_FrontPen). This value also determines the color used to
+	    render the text in the sample font area. (V36)
+
+	    Default is 1.
+
+	ASLFO_InitialBackPen (uint8)
+	    Initial setting of the font requester's Back Color gadget
+	    (fo_BackPen). This value also determines the color used to
+	    render the background of the sample font area. (V36)
+
+	    Default is 0.
+
+	ASLFO_InitialDrawMode (uint8)
+	    Initial setting of the font requester's Mode gadget
+	    (fo_DrawMode). (V38)
+
+	    Default is JAM1.
+
+	ASLFO_InitialSpecMode (uint8)
+	    Initial setting of the font requester's special Mode gadget
+	    (fo_SpecialDrawMode). (V50)
+
+	    Default is FO_SPECIALMODE_NONE.
+
+	ASLFO_InitialCharSet (uint32)
+	    Initial charset of the fonts to be displayed. If specified,
+	    the returned TTextAttr.tta_Tags is a pointer to a taglist
+	    containing the TA_CharSet tag. The filter hook functions
+	    receive a TTextAttr pointer as parameter with the special
+	    TA_CharSet value of 1000 for bullet API fonts. (V50)
+
+	    Defaults to the current system default charset.
+
+	ASLFO_Flags (uint32)
+	    Bulk initialization of many of the requester's options.
+	    See <libraries/asl.h> for the possible flag values. (V36)
+
+	    Default is 0.
+
+	ASLFO_DoFrontPen (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Front Color selection gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLFO_DoBackPen (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Back Color selection gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLFO_DoStyle (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Style checkboxes. (V38)
+
+	    Default is FALSE.
+
+	ASLFO_DoDrawMode (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Mode cycle gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLFO_DoSpecialMode (BOOL)
+	    Set this tag to TRUE to cause the requester to display a
+	    special version of the Mode cycle gadget with options Text,
+	    Text+Background, Text+Outline and Text+Shadow.
+
+	    The selected mode is returned in fo_SpecialDrawMode and
+	    fo_DrawMode, if fo_SpecialDrawMode is FO_SPECIALMODE_OUTLINE
+	    or FO_SPECIALMODE_SHADOW, fo_DrawMode is always
+	    JAM1 ("Text"). (V50)
+
+	    Default is FALSE.
+
+	ASLFO_DoCharSet (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    CharSet selection gadget. You must also specify
+	    ASLFO_InitialCharSet if you set ASLFO_DoCharSet to TRUE to
+	    get the selected charset. (V50)
+
+	    Default is FALSE.
+
+	ASLFO_SampleText (CONST_STRPTR)
+	    The sample text to print in the font preview area. This can
+	    either be a null-terminated string which should not be
+	    longer than 80 characters or NULL will tell ASL to use the
+	    default sample text. (V45)
+
+	    Default is NULL.
+
+	ASLFO_FixedWidthOnly (BOOL)
+	    Set this tag to TRUE to cause the requester to only display
+	    fixed-width fonts. (V38)
+
+	    Default is FALSE.
+
+	ASLFO_OTagOnly (BOOL)
+	    Set this tag to TRUE to cause the requester to only display
+	    bullet API (.otag) fonts. (V50)
+
+	    Default is FALSE.
+
+	ASLFO_ScalableOnly (BOOL)
+	    Set this tag to TRUE to cause the requester to only display
+	    bullet API (.otag) fonts that are freely scalable.
+	    YSize will be 0. (V50)
+
+	    Default is FALSE.
+
+	ASLFO_MinHeight (uint16)
+	    The minimum font height to let the user select. (V36)
+
+	    Default is 5.
+
+	ASLFO_MaxHeight (uint16)
+	    The maximum font height to let the user select. (V36)
+
+	    Default is 24.
+
+	ASLFO_FilterFunc (struct Hook *)
+	    A function to call for each font encountered. If the
+	    function returns TRUE the font is included in the font list
+	    otherwise it is rejected and not displayed. (V38)
+
+	    The function has the following signature:
+
+	      BOOL Filter(struct Hook *hook,          (A0 on 68k)
+	                  struct FontRequester *req,  (A2 on 68k)
+	                  struct TTextAttr *tattr);   (A1 on 68k)
+
+	    Since V50 the third parameter is a struct TTextAttr *.
+
+	ASLFO_CSFilterFunc (struct Hook *)
+	    A function to call for each charset encountered. If the
+	    function returns TRUE the charset is included in the charset
+	    list otherwise it is rejected and not displayed. The
+	    function is only called if ASLFO_DoCharSet is specified and
+	    not for charset specified with ASLFO_InitialCharSet. (V50)
+
+	    The function has the following signature:
+
+	      BOOL CSFilter(struct Hook *hook,          (A0 on 68k)
+	                    struct FontRequester *req,  (A2 on 68k)
+	                    uint32 charset);            (A1 on 68k)
+
+	ASLFO_HookFunc (APTR)
+	    This tag has been deprecated. Do not use in new code.
+
+	ASLFO_MaxFrontPen (uint8)
+	    The maximum number of pens that are offered to the user when
+	    the ASLFO_DoFrontPen tag is specified. (V40)
+
+	    Default is 255.
+
+	ASLFO_MaxBackPen (uint8)
+	    The maximum number of pens that are offered to the user when
+	    the ASLFO_DoBackPen tag is specified. (V40)
+
+	    Default is 255.
+
+	ASLFO_ModeList (CONST_STRPTR *)
+	    Replacement list of modes to display in Mode cycle gadget.
+	    The first string pointer is used as the name of the gadgets
+	    and following strings are used as the different labels of
+	    the cycle gadget until a NULL string pointer which denotes
+	    the end of the string pointer array. The first string in this
+	    array corresponds to JAM1, the second is JAM2, the third to
+	    COMPLEMENT. The array can be early terminated by not
+	    providing all entries. (V36)
+
+	    English default for the array is "Text", "Text+Field" and
+	    "Complement".
+
+	ASLFO_FrontPens (uint8 *)
+	    Pointer to a table of pen numbers indicating which colors
+	    should be used and edited by the palette gadget when the
+	    ASLFO_DoFrontPen tag is specified. This array must contain
+	    as many entries as there are colors displayed in the palette
+	    gadget. (V40)
+
+	    Default is NULL which causes a 1-to-1 mapping of pens.
+
+	ASLFO_BackPens (uint8 *)
+	    Pointer to a table of pen numbers indicating  which colors
+	    should be used and edited by the palette gadget when the
+	    ASLFO_DoBackPen tag is specified. This array must contain
+	    as many entries as there are colors displayed in the palette
+	    gadget. (V40)
+
+	    Default is NULL which causes a 1-to-1 mapping of pens.
+
+	ASLFO_PopToFront (BOOL)
+	    If set to TRUE, this tells ASL to bring the screen to the
+	    front the requester has opened on. The position of the
+	    screen will be adjusted as well to bring the area into
+	    view the window has opened in. The screen brought to the
+	    front will be pushed into the background again when the
+	    requester window closes. (V44)
+
+	    Default is TRUE.
+
+	ASLFO_Activate (BOOL)
+	    If set to TRUE, the requester window will open in active
+	    state. (V45)
+
+	    Default is TRUE.
+
+   WARNING
+	All ASL requester data structures are READ-ONLY and can only be
+	modified by using tags.
+
+	You must not specify requester options by using both pre-V38
+	tags like ASLFO_Flags and V38 tags like ASLFO_PopToFront as
+	this can lead to unexpected results.
+
+   SEE ALSO
+	AslRequest()
+
+asl.library/ASL_ScreenModeRequest             asl.library/ASL_ScreenModeRequest
+
+   NAME
+	ASL_ScreenModeRequest -- Screen mode requester
+
+   TAGS
+	ASLSM_Window (struct Window *)
+	    Parent window of requester. If no ASLSM_Screen tag is specified,
+	    the window structure is used to determine on which screen to
+	    open the requesting window. (V38)
+
+	ASLSM_PubScreenName (CONST_STRPTR)
+	    Name of a public screen to open on. This overrides the screen
+	    used by ASLSM_Window. (V38)
+
+	ASLSM_StayOnTop (BOOL)
+	    When set to TRUE, this stops screen mode requesters being depth-
+	    arranged. Useful especially in cases where the parent window input 
+	    is blocked while the requester is open, otherwise the requester may 
+	    be pushed to the back of the stack of windows, and the user may be 
+	    confused as to what is blocking the input. (V53.34)
+
+	    Defaults to FALSE;
+
+	ASLSM_Screen (struct Screen *)
+	    Screen on which to open the requester. This overrides the screen
+	    used by ASLSM_Window or by ASLSM_PubScreenName. (V38)
+
+	ASLSM_PrivateIDCMP (BOOL)
+	    When set to TRUE, this tells ASL to allocate a new IDCMP port
+	    for the requesting window. If not specified or set to FALSE and
+	    if ASLSM_Window is provided, the requesting window will share
+	    ASLSM_Window's IDCMP port. (V38)
+
+	    Defaults to TRUE.
+
+	ASLSM_IntuiMsgFunc (struct Hook *)
+	    A function to call whenever an unknown Intuition message arrives
+	    at the message port being used by the requesting window. (V38)
+
+	    The function has the following signature:
+
+	      VOID Unknown(struct Hook *hook,                (A0 on 68k)
+	                   struct ScreenModeRequester *req,  (A2 on 68k)
+	                   struct IntuiMessage *msg);        (A1 on 68k)
+
+	ASLSM_SleepWindow (BOOL)
+	    When set to TRUE, this tag will cause the window specified by
+	    ASLSM_Window to be "put to sleep". That is, a busy pointer will
+	    be displayed in the parent window and no gadget or menu activity
+	    will be allowed. This is done by opening an invisible Intuition
+	    Requester in the parent window. (V38)
+
+	ASLSM_UserData (APTR)
+	    A 32-bit value that is simply copied in the sm_UserData field
+	    of the requester structure. (V38)
+
+	ASLSM_TextAttr (struct TextAttr *)
+	    Font to be used for the requesting window's gadgets. If this
+	    tag is not provided or its value is NULL, the default font
+	    of the screen on which the requesting window opens will be
+	    used. (V38)
+
+	ASLSM_Locale (struct Locale *)
+	    Locale to use for the requesting window. This determines the
+	    language used for the requester's gadgets and menus. If this
+	    tag is not provided or its value is NULL, the system's current
+	    default locale will be used. (V38)
+
+	ASLSM_TitleText (CONST_STRPTR)
+	    Title to use for the requesting window. (V38)
+
+	    Default is no title.
+
+	ASLSM_PositiveText (CONST_STRPTR)
+	    Label of the positive gadget in the requester. (V36)
+
+	    English default is "OK".
+
+	ASLSM_NegativeText (CONST_STRPTR)
+	    Label of the negative gadget in the requester. (V36)
+
+	    English default is "Cancel".
+
+	ASLSM_InitialLeftEdge (int16)
+	ASLSM_InitialTopEdge (int16)
+	ASLSM_InitialWidth (int16)
+	ASLSM_InitialHeight (int16)
+	    Suggested initial dimension of requesting window. (V36)
+
+	ASLSM_InitialDisplayID (uint32)
+	    Initial setting of the Mode list view gadget (sm_DisplayID).
+	    (V38)
+
+	    Default is 0 (LORES_KEY).
+
+	ASLSM_InitialDisplayWidth (uint32)
+	    Initial setting of the Width gadget (sm_DisplayWidth). (V38)
+
+	    Default is 640.
+
+	ASLSM_InitialDisplayHeight (uint32)
+	    Initial setting of the Height gadget (sm_DisplayHeight). (V38)
+
+	    Default is 200.
+
+	ASLSM_InitialDisplayDepth (uint16)
+	    Initial setting of the Colors gadget (sm_DisplayDepth). (V38)
+
+	    Default is 2.
+
+	ASLSM_InitialOverscanType (uint16)
+	    Initial setting of the Overscan Type cycle gadget
+	    (sm_OverscanType). These values are the OSCAN_#? values from
+	    <intuition/screens.h>. (V38)
+
+	    User-space naming of overscan types is different than
+	    programmer-space:
+
+	    Under V38:
+	    0               -->  "Regular Size"
+	    OSCAN_TEXT      -->  "Text Size"
+	    OSCAN_STANDARD  -->  "Graphics Size"
+	    OSCAN_MAXIMUM   -->  "Maximum Size"
+
+	    Under V39 and above:
+	    OSCAN_TEXT      -->  "Text Size"
+	    OSCAN_STANDARD  -->  "Graphics Size"
+	    OSCAN_MAXIMUM   -->  "Extreme Size"
+	    OSCAN_VIDEO     -->  "Maximum Size"
+
+	    OSCAN_VIDEO is not supported prior to V39. The value 0
+	    corresponds to "Regular Size" under V38. Since this value
+	    isn't supported by Intuition's SA_Overscan tag, it was
+	    removed from ASL in V39. Asking for 0 under V39 will
+	    yield OSCAN_TEXT.
+
+	    Default is OSCAN_TEXT.
+
+	ASLSM_InitialAutoScroll (BOOL)
+	    Initial setting of the AutoScroll cycle gadget
+	    (sm_AutoScroll). (V38)
+
+	    Default is TRUE.
+
+	ASLSM_InitialInfoOpened (BOOL)
+	    Whether to open the property information window automatically.
+	    (V38)
+
+	Default is FALSE.
+
+	ASLSM_InitialInfoLeftEdge (int16)
+	    Initial left edge of information window. (V38)
+
+	ASLSM_InitialInfoTopEdge (int16)
+	    Initial top edge of information window. (V38)
+
+	ASLSM_DoWidth (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Width numeric gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLSM_DoHeight (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Height numeric gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLSM_DoDepth (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Colors slider gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLSM_DoOverscanType (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    Overscan Type cycle gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLSM_DoAutoScroll (BOOL)
+	    Set this tag to TRUE to cause the requester to display the
+	    AutoScroll checkbox gadget. (V38)
+
+	    Default is FALSE.
+
+	ASLSM_PropertyFlags (uint32)
+	    A mode must have these property flags to appear in the list
+	    of modes. Only the bits set in ASLSM_PropertyMask are
+	    considered. See the description of ASLSM_PropertyMask for
+	    more info. (V38)
+
+	    Default is DIPF_IS_WB.
+
+	ASLSM_PropertyMask (uint32)
+	    A mask to apply to ASLSM_PropertyFlags to determine which
+	    bits to consider. The use of these two values is identical
+	    in concept to how Exec uses the two flag paraneters in
+	    exec.library/SetSignal(). (V38)
+
+	    This is how this tag and ASLSM_PropertyFlags tag interact:
+
+	    if ((displayInfo.PropertyFlags & propertyMask) ==
+	        (propertyFlags & propertyMask))
+	    {
+	        // Mode accepted
+	    }
+	    else
+	    {
+	        // Mode rejected
+	    }
+
+	    where "displayInfo" is a filled in DisplayInfo structure
+	    for a given mode.
+
+	    Default is DIPF_IS_WB.
+
+	ASLSM_MinWidth (uint32)
+	    The minimum display width to let the user choose. (V38)
+
+	    Default is 16.
+
+	ASLSM_MaxWidth (uint32)
+	    The maximum display width to let the user choose. (V38)
+
+	    Default is 16368.
+
+	ASLSM_MinHeight (uint32)
+	    The minimum display height to let the user choose. (V38)
+
+	    Default is 16.
+
+	ASLSM_MaxHeight (uint32)
+	    The maximum display height to let the user choose. (V38)
+
+	    Default is 16384.
+
+	ASLSM_MinDepth (uint16)
+	    The minimum display depth to let the user choose. (V38)
+
+	    Default is 1.
+
+	ASLSM_MaxDepth (uint16)
+	    The maximum display depth to let the user choose. (V38)
+
+	    Default is 24.
+
+	ASLSM_FilterFunc (struct Hook *)
+	    A function to call for each mode encountered. If the
+	    function returns TRUE, the mode is included in the
+	    file list, otherwise it is rejected and not displayed.
+	    (V38)
+
+	    The function has the following signature:
+
+	    BOOL Filter(struct Hook *hook,               (A0 on 68k)
+	                struct ScreenModeRequester *req, (A2 on 68k)
+	                uint32 modeid);                  (A1 on 68k)
+
+	ASLSM_CustomSMList (struct List *)
+	    Custom list of modes to let the user choose from. This is
+	    a list of DisplayNode nodes. See <libraries/asl.h> for the
+	    definitions. (V38)
+
+	ASLSM_PopToFront (BOOL)
+	    If set to TRUE, this tells ASL to bring the screen to the
+	    front the requester has opened on. The position of the screen
+	    will be adjusted, too, to bring the area into view the window
+	    has opened in. The screen brought to the front will be pushed
+	    into the background again when the requester window closes.
+	    (V44)
+
+	    Default is TRUE.
+
+	ASLSM_Activate (BOOL)
+	    If set to TRUE, the requester window will open in active state.
+	    (V45)
+
+	    Default is TRUE.
+
+   WARNING
+	All ASL requester data structures are READ-ONLY and can only be
+	modified by using tags.
+
+   SEE ALSO
+	AslRequest()
+
+asl.library/AslRequest                                   asl.library/AslRequest
+
+   NAME
+	AslRequest -- get input from user using an ASL requester. (V36)
+	AslRequestTags -- varargs stub for AslRequest(). (V36)
+
+   SYNOPSIS
+	BOOL result = AslRequest(APTR requester, struct TagItem *tags);
+
+	BOOL result = AslRequestTags(APTR requester, Tag firstTag, ...);
+
+   FUNCTION
+	Prompts the user for input based on the specific type of requester
+	and modifying tags. The actions and results are specific to the
+	type of requester but in general the action is to open a requesting
+	window prompting the user for a specific input. If the user cancels
+	or the system aborts the request, FALSE is returned. Otherwise the
+	requester's data structure is updated to reflect the user input.
+
+	Note that tag values stay in effect for each use of the requester
+	until they are cleared or modified by passing the same tag with a
+	new value.
+
+   INPUTS
+	requester - Requester structure allocated with AllocAslRequest(). If
+	            this parameter is NULL this function will always return
+	            FALSE with a dos.library/IoErr() result of
+	            ERROR_NO_FREE_STORE.
+
+	tags - Pointer to an optional tag list which may be used to
+	       control features of the requester.
+
+   TAGS
+	See ASL_FileRequest, ASL_FontRequest or ASL_ScreenModeRequest
+	for the list of tags for use with the corresponding requester.
+
+   WARNING
+	All ASL requester data structures are READ-ONLY and can only be
+	modified by using tags.
+
+	Take care when attaching an ASL requester to a simple refresh
+	window or a window that already shares its IDCMP with other
+	windows. In such cases you must ask for the ASL requester to
+	allocate a private IDCMP (with the ASLFR_PrivateIDCMP,
+	ASLFO_PrivateIDCMP and ASLSM_PrivateIDCMP tags) or your window
+	will lose IDCMP_REFRESHWINDOW events and other messages.
+
+   NOTES
+	As of V38-V40 the ASL requester uses gadtools.library routines to
+	create and maintain its user interface. Every IntuiMessage the
+	library passes through the functions specified with
+	ASLSM_IntuiMsgFunc and ASLSM_HookFunc will have been filtered
+	through the gadtools.library/GT_GetIMsg() routine.
+
+	As of V52.15 all requesters use window.class to create and
+	maintain their user interfaces.
+
+   SEE ALSO
+	AllocAslRequest(), FreeAslRequest(),
+	ASL_FileRequest, ASL_FontRequest, ASL_ScreenModeRequest
+
+asl.library/FreeAslRequest                           asl.library/FreeAslRequest
+
+   NAME
+	FreeAslRequest -- frees resources allocated by AllocAslRequest(). (V36)
+
+   SYNOPSIS
+	VOID FreeAslRequest(APTR requester);
+
+   FUNCTION
+	FreeAslRequest() frees any system resources allocated by
+	AllocAslRequest(). Once a requester has been freed it can no
+	longer be used with other calls to AslRequest().
+
+   INPUTS
+	requester - Requester obtained from AllocAslRequest() or NULL in
+	            which case this function does nothing.
+
+   SEE ALSO
+	AllocAslRequest()
+
+asl.library/FreeFileRequest                         asl.library/FreeFileRequest
+
+   NAME
+	FreeFileRequest -- free file requester structure. (V36)
+
+   SYNOPSIS
+	VOID FreeFileRequest(struct FileRequester *requester);
+
+   NOTES
+	This function is obsolete, please use FreeAslRequest() instead.
+
+   SEE ALSO
+	FreeAslRequest()
+
+asl.library/RequestFile                                 asl.library/RequestFile
+
+   NAME
+	RequestFile -- request user to select files. (V36)
+
+   SYNOPSIS
+	BOOL result = RequestFile(struct FileRequester *requester);
+
+   NOTES
+	This function is obsolete, please use AslRequest() instead.
+
+   SEE ALSO
+	AslRequest()
+
+

@@ -1,0 +1,2886 @@
+TABLE OF CONTENTS
+
+utility.library/-copyright-
+utility.library/AddNamedObject
+utility.library/AllocateTagItems
+utility.library/AllocNamedObject
+utility.library/Amiga2Date
+utility.library/ApplyTagChanges
+utility.library/ASPrintf
+utility.library/AttemptRemNamedObject
+utility.library/CallHookPkt
+utility.library/CheckDate
+utility.library/ClearMem
+utility.library/CloneTagItems
+utility.library/CreateSkipList
+utility.library/CreateSplayTree
+utility.library/Date2Amiga
+utility.library/DeleteSkipList
+utility.library/DeleteSplayTree
+utility.library/FilterTagChanges
+utility.library/FilterTagItems
+utility.library/FindNamedObject
+utility.library/FindNameNC
+utility.library/FindSkipNode
+utility.library/FindSplayNode
+utility.library/FindTagItem
+utility.library/FreeNamedObject
+utility.library/FreeTagItems
+utility.library/GetFirstSkipNode
+utility.library/GetNextSkipNode
+utility.library/GetTagData
+utility.library/GetUniqueID
+utility.library/InsertSkipNode
+utility.library/InsertSplayNode
+utility.library/MapTags
+utility.library/MessageDigest_SHA_Final
+utility.library/MessageDigest_SHA_Init
+utility.library/MessageDigest_SHA_Update
+utility.library/MoveMem
+utility.library/NamedObjectName
+utility.library/NextTagItem
+utility.library/PackBoolTags
+utility.library/PackStructureTags
+utility.library/Random
+utility.library/RefreshTagItemClones
+utility.library/ReleaseNamedObject
+utility.library/RemNamedObject
+utility.library/RemoveSkipNode
+utility.library/RemoveSplayNode
+utility.library/SetMem
+utility.library/SNPrintf
+utility.library/SortList
+utility.library/SortMinList
+utility.library/Stricmp
+utility.library/Strlcat
+utility.library/Strlcpy
+utility.library/Strlen
+utility.library/Strnicmp
+utility.library/TagInArray
+utility.library/ToLower
+utility.library/ToUpper
+utility.library/UCS4Count
+utility.library/UCS4ToLower
+utility.library/UCS4ToUpper
+utility.library/UCS4toUTF8
+utility.library/UCS4Valid
+utility.library/UnpackStructureTags
+utility.library/UTF8Count
+utility.library/UTF8Decode
+utility.library/UTF8Encode
+utility.library/UTF8Stricmp
+utility.library/UTF8Strnicmp
+utility.library/UTF8toUCS4
+utility.library/VASPrintf
+utility.library/VSNPrintf
+
+
+utility.library/-copyright-
+
+ Copyright 1985-2001 Amiga, Inc.
+
+ Copyright 2002-2019 Trevor Dickinson.
+
+utility.library/AddNamedObject
+
+   NAME
+       AddNamedObject -- add a named object to the given namespace. (V39)
+
+   SYNOPSIS
+       success = AddNamedObject(nameSpace, object);
+
+       BOOL AddNamedObject(struct NamedObject *, struct NamedObject *);
+
+   FUNCTION
+       Adds a new item to a NameSpace.  If the NameSpace doesn't support
+       duplicate names, a search for a duplicate will be made, and
+       0 (failure) will be returned.  Otherwise, the entry will be
+       Enqueue()ed to the NameSpace.
+
+   INPUTS
+       nameSpace - the name space to add to (NULL for root namespace)
+       object - the object to add  (If NULL, will return failure)
+
+   RESULT
+       success - whether the operation succeeded.  Check this always!
+
+   SEE ALSO
+       AttemptRemNamedObject(), RemNamedObject()
+
+utility.library/AllocateTagItems
+
+   NAME
+        AllocateTagItems -- allocate a tag list. (V36)
+
+   SYNOPSIS
+        tagList = AllocateTagItems(numTags);
+
+        struct TagItem *AllocateTagItems(ULONG);
+
+   FUNCTION
+        Allocates the specified number of usable TagItems slots.
+	 The TagItems are allocated in one linear block.
+
+   INPUTS
+        numTags - the number of TagItem slots you want to allocate.
+
+   RESULTS
+        tagList - the allocated chain of TagItem structures, or NULL if
+                  there was not enough memory. An allocated tag list must
+                  eventually be freed using FreeTagItems().
+
+   SEE ALSO
+        <utility/tagitem.h>, FreeTagItems(), CloneTagItems()
+
+utility.library/AllocNamedObject
+
+   NAME
+       AllocNamedObject -- allocate a named object. (V39)
+
+   SYNOPSIS
+       object = AllocNamedObjectA(name, tagList);
+
+       struct NamedObject *AllocNamedObjectA(STRPTR, struct TagItem *);
+
+       object = AllocNamedObject(name, Tag1, ...);
+
+       struct NamedObject *AllocNamedObject(STRPTR, ULONG, ...);
+
+   FUNCTION
+       Allocates a NamedObject and initializes it as needed to the
+       name given. This object can then be used as an object in the
+       namespaces. Tags can be given to make an object contain a
+       namespace such that nested namespaces can be built.
+       When the object is allocated, it automatically has one use.
+       If you later wish to release this object such that others may
+       remove it from the namespace you must do a ReleaseNamedObject().
+
+   INPUTS
+       name - name for the object (must not be NULL)
+       tagList - tags with additional information for the allocation or NULL
+
+   TAGS
+       ANO_NameSpace - BOOL tag, default FALSE.  If this tag is
+                       TRUE, the named object will also have a
+                       name space attached to it.
+       ANO_UserSpace - ULONG tag, default 0.  If this tag is non-NULL
+                       it defines the size (in bytes) of the user
+                       space to be allocated with the named object
+                       and that will be pointed to by the no_Object
+                       pointer.  This memory is long-word aligned.
+                       If no space is defined, no_Object will be NULL.
+       ANO_Priority  - BYTE tag, default 0.  This tag lets you pick
+                       a priority for the named object for when it is
+                       placed into a name space.
+       ANO_Flags     - ULONG tag, default 0.  This tag lets you set
+                       the flags of the NameSpace (if you allocated
+                       one)  There currently are only TWO flags.
+                       Do *NOT* set *any* other bits as they are for
+                       future use!!!  (You can't read them anyway)
+                       The flags are:
+                       NSF_NODUPS      - Name space must be unique.
+                       NSF_CASE        - Name space is case sensitive
+
+   RESULT
+       object - the object allocated, or NULL for failure. The object
+                is defined as a pointer to a pointer.  You can do what you
+                wish with the pointer. (It may be NULL or contain a pointer
+                to memory that you had asked for in the tags.)
+
+   SEE ALSO
+       FreeNamedObject(), <utility/name.h>
+
+utility.library/Amiga2Date
+
+   NAME
+       Amiga2Date -- fill in a ClockData structure based on a system
+                     time stamp (V36)
+
+   SYNOPSIS
+       Amiga2Date(seconds,result);
+
+       VOID Amiga2Date(ULONG,struct ClockData *);
+
+   FUNCTION
+       Fills in a ClockData structure with the date and time calculated
+       from a ULONG containing the number of seconds from 01-Jan-1978
+       to the date.
+
+   INPUTS
+       seconds - the number of seconds from 01-Jan-1978.
+       result - a pointer to a ClockData structure that will be altered
+                by this function
+
+   SEE ALSO
+       CheckDate(), Date2Amiga(), IDOS->DateStampToSeconds()
+
+utility.library/ApplyTagChanges
+
+   NAME
+        ApplyTagChanges -- change a tag list based on a second tag list. (V39)
+
+   SYNOPSIS
+        ApplyTagChanges(list,changeList);
+
+        VOID ApplyTagChanges(struct TagItem *, struct TagItem *);
+
+   FUNCTION
+        For any tag that appears in both 'list' and 'changeList', this
+        function will change the ti_Data field of the tag in 'list' to
+        match the ti_Data field of the tag in 'changeList'. In effect,
+        'changeList' contains a series of new values for tags already in
+        'list'. Any tag in 'changeList' that is not in 'list' is ignored.
+
+   INPUTS
+        list - a list of existing tags (may be NULL)
+        changeList - a list of tags to modify 'list' with (may be NULL)
+
+   SEE ALSO
+        <utility/tagitem.h>, FilterTagChanges()
+
+utility.library/ASPrintf
+
+   NAME
+       ASPrintf -- Formatted output conversion; results are stored in
+                   dynamically allocated buffer. (V50)
+
+   SYNOPSIS
+       STRPTR buffer = ASPrintf(CONST_STRPTR format, ...);
+
+       STRPTR buffer = VASPrintf(CONST_STRPTR format, APTR args);
+
+   FUNCTION
+       ASPrintf() is an application of RawDoFmt() which stores the output
+       in a buffer which is dynamically allocated and extended as more
+       data needs to be stored.
+
+   INPUTS
+       format -- Format specifier; see exec.library/RawDoFmt() for options.
+
+       args -- Parameters to be read and formatted.
+
+   RESULT
+       buffer -- Pointer to a NUL-terminated string which contains the
+           formatted output, or NULL if there was not enough memory
+           available to create it. Use FreeVec() to release the buffer
+           when you no longer need it.
+
+   EXAMPLE
+       /* Format a string, print it, then release it again. */
+       STRPTR buffer;
+
+       buffer = ASPrintf("%ld + %ld = %ld",1,2,3);
+       if(buffer != NULL)
+       {
+           Printf("string is '%s'.\n",buffer);
+           FreeVec(buffer);
+       }
+
+   SEE ALSO
+       exec.library/RawDoFmt(), exec.library/FreeVec()
+
+utility.library/AttemptRemNamedObject
+
+   NAME
+       AttemptRemNamedObject -- attempt to remove a named object. (V39)
+
+   SYNOPSIS
+       result = AttemptRemNamedObject(object);
+
+       LONG AttemptRemNamedObject(struct NamedObject *);
+
+   FUNCTION
+       Attempts to remove an object from whatever NameSpace it's in.
+       You must have found the object first (in order to get a use count)
+       before trying to remove it.  If the object is in use or is
+       in the process of being removed, this function will return
+       a failure code.  If the object is fully removed, the object will
+       then be available to be FreeNamedObject().
+
+   INPUTS
+       object - the object to attempt to remove  The object must be valid
+
+   RESULT
+       success - FALSE if object is still in use (somewhere)
+                 TRUE if object was removed
+
+   SEE ALSO
+       RemNamedObject(), AddNamedObject(), ReleaseNamedObject()
+
+utility.library/CallHookPkt
+
+   NAME
+       CallHookPkt -- invoke a Hook function callback. (V36)
+
+   SYNOPSIS
+       return = CallHookPkt(hook,object,message);
+
+       ULONG CallHookPkt(struct Hook *,APTR,APTR);
+
+       return = CallHook(hook, object, ...);
+
+       ULONG CallHook(struct Hook *, APTR, ...);
+
+   FUNCTION
+       Performs the callback standard defined by a Hook structure.
+       Starting with release 50, Hooks *must* be called via one
+       of the system-supplied functions. Emulated code might need
+       a different calling convention than native code.
+
+       The prototype for a hook function looks like this:
+       ULONG HookFunc(struct Hook *hook, APTR object, APTR message);
+
+       'hook' is a pointer to the hook structure, 'object' points to the
+       object receiving the message, and 'message' points to the message
+       packet.
+
+       The second form, CallHook, allows the message packet to be built
+       on the stack.
+
+   INPUTS
+       hook    - pointer to an initialized Hook structure as defined in
+                 <utility/hooks.h>
+       object  - useful data structure in the particular context the hook is
+                 being used for.
+       message - pointer to a message to be passed to the hook. This is not
+                 an Exec Message structure, but is a message in the OOP sense.
+
+   RESULTS
+       return - the value returned by the hook function.
+
+   NOTE
+       Starting with V50, hooks and hook functions must completely adhere
+       to the standards set out in the documentation. This basically means:
+       - No direct calling of hook functions. This has been documented as being
+         OK in the past, but this is not allowed anymore. You'll get away with
+         it for now (to stay backward compatible), but this *is* considered
+         a programming error.
+       - Don't mix up parameters, or ommit them. The parameters for a hook
+         function are hook, object, message. No ommisions, no change in order.
+
+		CallHookPkt calls the code in h_Entry. This pointer can either be a
+		pointer to legacy 68k code, or to native code. ExecSG takes care to
+		place native code into specially marked segments of memory. When h_Entry
+		points to such a place, CallHookPkt knows that the code is native, and
+		will directly branch to the code pointer. If it doesn't, then the code
+		is assumed to be non-native (i.e. legacy 68k code), and the emulator
+		is invoked at this code address.
+
+		This form of transparency comes at a price: h_Entry must not be jumped
+		to directly, as calling 68k legacy code from native code will result in
+		a crash, and calling native code from 68k legacy code will result in
+		native code being interpreted as 68k code, with completely unpredictable
+		results.
+
+		This function does not access any member of the hook structure except
+		for the h_Entry field, therefore all other members are available for
+		the applications use.
+
+
+   SEE ALSO
+       <utility/hooks.h>
+
+utility.library/CheckDate
+
+   NAME
+       CheckDate -- checks a ClockData structure for legal date. (V36)
+
+   SYNOPSIS
+       seconds = CheckDate(date);
+
+       ULONG CheckDate(struct ClockData *);
+
+   FUNCTION
+       Determines if the ClockData structure contains legal date information
+       and returns the number of seconds from 01-Jan-1978 to that date, or 0
+       if the ClockData structure contains illegal data.
+
+   INPUTS
+       date - a filled-in ClockData structure
+
+   RESULTS
+       seconds - 0 if date is invalid, otherwise the number of seconds from
+                 01-Jan-1978 to the date
+
+   BUGS
+       The wday field of the ClockData structure is not checked.
+
+   SEE ALSO
+       Amiga2Date(), Date2Amiga()
+
+utility.library/ClearMem
+
+   NAME
+	ClearMem -- Set memory area to all zeros                     (V51)
+
+   SYNOPSIS
+	void ClearMem(APTR destination, uint32 size);
+
+   FUNCTION
+	This functions clears a block of memory to zeros, using the fastest
+	possible method. If possible, it will use cache manipulation
+	instructions to clear larger areas.
+
+   INPUTS
+	destination - Base address of block to be cleared
+	size        - Size of the block
+
+   NOTES
+	Since the function might use cache manipulation, it should not be
+	used on non-cacheable regions. The system will install an exception
+	handler to catch those cases (so this function will actually clear
+	non-cacheable areas), but it will be slow.
+
+   SEE ALSO
+	SetMem
+
+utility.library/CloneTagItems
+
+   NAME
+        CloneTagItems -- copy a tag list. (V36)
+
+   SYNOPSIS
+        clone = CloneTagItems(original);
+
+        struct TagItem *CloneTagItems(struct TagItem *);
+
+   FUNCTION
+        Copies the essential contents of a tag list into a new tag list.
+
+        The cloning is such that calling FindTagItem() with a given tag on
+        the original or cloned tag lists will always return the same
+        tag value. That is, the ordering of the tags is maintained.
+
+   INPUTS
+        original - tag list to clone. May be NULL, in which case an
+                   empty tag list is returned.
+
+   RESULTS
+        clone - copy of the original tag list, or NULL if there was not enough
+                memory. This tag list must eventually by freed by calling
+                FreeTagItems().
+
+   SEE ALSO
+        <utility/tagitem.h>, AllocateTagItems(), FreeTagItems(),
+        RefreshTagItemClones()
+
+utility.library/CreateSkipList
+
+   NAME
+       CreateSkipList -- Allocate a skip list data structure. (V50)
+
+   SYNOPSIS
+       list = CreateSkipList(hook,max_levels)
+
+       struct SkipList * CreateSkipList(struct Hook * hook,LONG max_levels);
+
+   FUNCTION
+       This function allocates and initializes a skip list data structure
+       which will be empty to start with. Subsequently, nodes can be added,
+       searched for and removed.
+
+       A skip list, as implemented here, is a linear list which has a
+       short search table associated with each node. How large that search
+       table, or rather, skip table, is, is decided by a probabilistic
+       process. As an alternative to balanced trees, skip lists offer the
+       same performance, if not better, and no recursion is required to
+       maintain them.
+
+   INPUTS
+       hook -- Hook to invoke for comparing node keys on the list
+           with new keys to be added and keys to be searched for. Your hook
+           function is called as follows:
+
+               difference = hook_function(hook,key1,key2)
+                   D0                      A0   A2   A1
+
+               LONG hook_function(struct Hook * hook,
+                                  APTR key1,APTR key2);
+
+           Your hook function must compare the two keys and return
+           a value which indicates whether there is a difference between
+           the two. The difference must be < 0 if key1 < key2, it must
+           be 0 if key1 == key2 and it must be > 0 if key1 > key2.
+           This is the same order a 'C' library function such as
+           strcmp() uses.
+
+       max_levels -- Maximum number of nodes that can be skipped ahead
+           during a search. This parameter mainly affects performance, but
+           it also defines how much memory can be allocated for each list
+           node. This value cannot be larger than 32, which allows for
+           up to 2^32 entries per list. Values < 1 are not permitted, and
+           values < 4 are practically useless. Choose wisely.
+
+   RESULT
+       list -- If sufficient memory was available, a pointer to an empty
+           skip list. NULL otherwise. NULL will be returned, too, if you
+           fail to provide a hook parameter or if the maximum number of
+           levels specified is invalid.
+
+   SEE ALSO
+       DeleteSkipList()
+
+utility.library/CreateSplayTree
+
+   NAME
+       CreateSplayTree -- Allocate a splay tree data structure. (V53.2)
+
+   SYNOPSIS
+       tree = CreateSplayTree(hook)
+
+       struct SplayTree * CreateSplayTree(struct Hook * hook);
+
+   FUNCTION
+       This function allocates and initializes a splay tree data structure
+       which will be empty to start with. Subsequently, nodes can be added,
+       searched for and removed.
+
+       A splay tree is a binary tree which reorganizes itself as new nodes
+       are added, removed and searched for. In response to the search
+       operations, the tree will become flatter and wider, improving the
+       responsiveness to search queries. As such, it is particularly
+       well-suited for cache operations.
+
+   INPUT
+       hook -- Hook to invoke for comparing node keys in the tree.
+           Your hook function is called as follows:
+
+               difference = hook_function(hook,key1,key2)
+                   D0                      A0   A2   A1
+
+               LONG hook_function(struct Hook * hook,
+                                  APTR key1,APTR key2);
+
+           Your hook function must compare the two keys and return
+           a value which indicates whether there is a difference between
+           the two. The difference must be < 0 if key1 < key2, it must
+           be 0 if key1 == key2 and it must be > 0 if key1 > key2.
+           This is the same order a 'C' library function such as
+           strcmp() uses.
+
+   RESULT
+       tree -- If sufficient memory was available, a pointer to an empty
+           splay tree. NULL otherwise. NULL will be returned if you
+           forget to provide for the hook parameter.
+
+   NOTE
+       This function originally was documented to be present since version
+       50 of utility.library, but in fact was broken until 53.2.
+
+       Access arbitration is not ensured by the functions dealing with this
+       data structure and is therefore up to the caller. Both,
+       InsertSplayNode() and FindSplayNode() assume to have exclusive
+       access.
+
+   SEE ALSO
+       DeleteSplayTree(), InsertSplayNode(), FindSplayNode()
+
+utility.library/Date2Amiga
+
+   NAME
+       Date2Amiga -- calculate seconds from 01-Jan-1978. (V36)
+
+   SYNOPSIS
+       seconds = Date2Amiga(date);
+
+       ULONG Date2Amiga(struct ClockData *);
+
+   FUNCTION
+       Calculates the number of seconds from 01-Jan-1978 to the date
+       specified in the ClockData structure.
+
+   INPUTS
+       date - pointer to a ClockData structure containing the date of
+              interest.
+
+   RESULTS
+       seconds - the number of seconds from 01-Jan-1978 to the date specified.
+
+   WARNING
+       This function does no sanity checking of the data in the ClockData
+       structure.
+
+   SEE ALSO
+       Amiga2Date(), CheckDate()
+
+utility.library/DeleteSkipList
+
+   NAME
+       DeleteSkipList -- Free a skip list and all its nodes. (V50)
+
+   SYNOPSIS
+       DeleteSkipList(list)
+
+       VOID DeleteSkipList(struct SkipList * list);
+
+   FUNCTION
+       This is the counterpart to CreateSkipList(); the base list and the
+       associated nodes are deallocated one by one, releasing the memory
+       reserved for them.
+
+   INPUTS
+       list -- Pointer to skip list to be freed. If NULL, nothing
+           will be done.
+
+   SEE ALSO
+       CreateSkipList()
+
+utility.library/DeleteSplayTree
+
+   NAME
+       DeleteSplayTree -- Free a splay tree and all its nodes. (V50)
+
+   SYNOPSIS
+       DeleteSplayTree(tree)
+
+       VOID DeleteSplayTree(struct SplayTree * tree);
+
+   FUNCTION
+       This is the counterpart to CreateSplayTree(); the base tree and the
+       associated nodes are deallocated one by one, releasing the memory
+       reserved for them.
+
+   INPUTS
+       tree -- Pointer to splay tree to be freed. If NULL, nothing
+           will be done.
+
+   SEE ALSO
+       CreateSplayTree()
+
+utility.library/FilterTagChanges
+
+   NAME
+        FilterTagChanges -- eliminate tags which specify no change. (V36)
+
+   SYNOPSIS
+        FilterTagChanges(changeList,originalList,apply);
+
+        VOID FilterTagChanges(struct TagItem *, struct TagItem *, ULONG);
+
+   FUNCTION
+        This function goes through changeList. For each item found in
+        changeList, if the item is also present in originalList, and their
+        data values are identical, then the tag is removed from changeList.
+        If the two tag's data values are different and the 'apply' value is
+        non-zero, then the tag data in originalList will be updated to match
+        the value from changeList.
+
+   INPUTS
+        changeList - list of new tags (may be NULL)
+        originalList - a list of existing tags (may be NULL)
+        apply - boolean specification as to whether the data values in
+                originalList are to be updated to the data values in
+                changeList.
+
+   EXAMPLE
+        Assume you have an attribute list for an object (originalList)
+        which looks like this:
+
+                {ATTR_Size,  "large"},
+                {ATTR_Color, "orange"},
+                {ATTR_Shape, "square"}
+
+        If you receive a new tag list containing some changes (changeList),
+        which looks like this:
+
+                {ATTR_Size,  "large"},
+                {ATTR_Shape, "triangle"}
+
+        If you call FilterTagChanges(), changeList will be modified to
+        contain only those attributes which are different from those
+        in originalList. All other items will have their tag values set to
+        TAG_IGNORE. The resulting changeList will become:
+
+                {TAG_IGNORE, "large"},
+                {ATTR_Shape, "triangle"}
+
+        If 'apply' was set to 0, originalList would be unchanged. If 'apply'
+        was non-zero, originalList would be changed to:
+
+                {ATTR_Size,  "large"},
+                {ATTR_Color, "orange"},
+                {ATTR_Shape, "triangle"}
+
+   SEE ALSO
+        <utility/tagitem.h>, ApplyTagChanges()
+
+utility.library/FilterTagItems
+
+   NAME
+        FilterTagItems -- remove selected items from a tag list. (V36)
+
+   SYNOPSIS
+        numValid = FilterTagItems(tagList,filterArray,logic);
+
+        ULONG FilterTagItems(struct TagItem *,Tag *,ULONG);
+
+   FUNCTION
+        Removes tag items from 'tagList' (by changing ti_Tag to
+        TAG_IGNORE) depending on whether its ti_Tag value is
+        found in an array of filtering tag values.
+
+        If the 'logic' parameter is TAGFILTER_AND, then only items
+        appearing in both 'filterArray' and 'tagList' are preserved,
+        the rest are cast out.
+
+        If 'logic' is TAGFILTER_NOT, then all items appearing in
+        'filterArray' are cast out of 'tagList', the rest are preserved.
+
+   INPUTS
+        tagList - input list of tag items to be filtered by having
+                  selected items changed to TAG_IGNORE.
+        filterArray - an array of tag values, terminated by TAG_DONE, as
+                  specified in the documentation for TagInArray().
+        logic   - specification whether items in 'tagList' are to be
+                  included or excluded in the filtered result.
+
+   RESULTS
+        numValid - number of valid items left in resulting filtered list.
+
+   SEE ALSO
+        <utility/tagitem.h>, TagInArray()
+
+
+utility.library/FindNamedObject
+
+   NAME
+       FindNamedObject -- find the next object of a given name. (V39)
+
+   SYNOPSIS
+       object = FindNamedObject(nameSpace, name, lastObject);
+
+       struct NamedObject *FindNamedObject(struct NamedObject *, STRPTR,
+                                           struct NamedObject *);
+
+   FUNCTION
+       Finds an object and adds to the open count of the object. The
+       object is guaranteed not to be freed until ReleaseNamedObject() is
+       called. The name comparison is caseless, using the current
+       locale string comparison routines.
+
+       If name is NULL, then all objects will be matched.
+
+       If lastObject is non-NULL, it must be an object from the same
+       NameSpace found on a previous call to FindNamedObject(). It
+       will not be freed by this call. The search will start at the
+       node after lastobject, if non-NULL.
+
+       nameSpace is the name space from the named object given
+       or the root name space if NULL is given.
+
+   INPUTS
+       nameSpace - the name space to search
+       name - the name of the object to search for
+       lastObject - the starting point for the search or NULL
+
+   RESULT
+       object - the first match found, or NULL for no match
+
+   SEE ALSO
+       ReleaseNamedObject(), <utility/name.h>
+
+utility.library/FindNameNC
+
+   NAME
+       FindNameNC -- find a list node with a name; the case of the
+           name is ignored. (V50)
+
+   SYNOPSIS
+       node = FindNameNC(start, name)
+
+   FUNCTION
+       Traverse a system list until a node with the given case-insensitive
+       name is found. To find multiple occurances of a string, this
+       function may be called with a node starting point.
+
+   INPUTS
+       start -- A list header or a list node to start the search
+           (if node, this one is skipped)
+
+       name -- A pointer to a name string terminated with NUL.
+
+   RESULTS
+       node -- A pointer to the node with the same name else
+           NULL to indicate that the string was not found.
+
+utility.library/FindSkipNode
+
+   NAME
+       FindSkipNode -- Search for a key in a skip list. (V50)
+
+   SYNOPSIS
+       node = FindSkipNode(list,key)
+
+       struct SkipNode * FindSkipNode(struct SkipList * list,
+                                      APTR key);
+
+   FUNCTION
+       This function will look for a key in a skip list and return a
+       pointer to the node which that key is associated with.
+
+   INPUTS
+       list -- Pointer to a skip list created by CreateSkipList(). If
+           this parameter is NULL, then this function will pretend that
+           a pointer to an empty skip list was passed.
+
+       key -- The key to look for.
+
+   RESULT
+       node -- A pointer to the node with the specified key, or NULL
+           if the node could not be found.
+
+   SEE ALSO
+       GetNextSkipNode()
+
+utility.library/FindSplayNode
+
+   NAME
+       FindSplayNode -- Search for a key in a splay tree. (V50)
+
+   SYNOPSIS
+       node = FindSplayNode(tree,key)
+
+       struct SplayNode * FindSplayNode(struct SplayTree * tree,
+                                        APTR key);
+
+   FUNCTION
+       This function will look for a key in a splay tree and return a
+       pointer to the node which that key is associated with.
+
+   INPUTS
+       tree -- Pointer to a splay tree created by CreateSplayTree(). If
+           this parameter is NULL, then this function will pretend that
+           a pointer to an empty splay tree was passed.
+
+       key -- The key to look for.
+
+   RESULT
+       node -- A pointer to the node with the specified key, or NULL
+           if the node could not be found.
+
+utility.library/FindTagItem
+
+   NAME
+        FindTagItem -- scan a tag list for a specific tag. (V36)
+
+   SYNOPSIS
+        tag = FindTagItem(tagValue,tagList);
+
+        struct TagItem *FindTagItem(Tag,struct TagItem *);
+
+   FUNCTION
+        Scans a tag list and returns a pointer to the first item with
+        ti_Tag matching the 'tagValue' parameter.
+
+   INPUTS
+        tagValue - tag value to search for
+        tagList - tag item list to search (may be NULL)
+
+   RESULTS
+        tag - a pointer to the item with ti_Tag matching 'tagValue' or NULL
+              if no match was found.
+
+   SEE ALSO
+
+        <utility/tagitem.h>, GetTagData(), PackBoolTags(), NextTagItem()
+
+utility.library/FreeNamedObject
+
+   NAME
+       FreeNamedObject -- frees a name object. (V39)
+
+   SYNOPSIS
+       FreeNamedObject(object);
+
+       VOID FreeNamedObject(struct NamedObject *);
+
+   FUNCTION
+       Free one of a number of structures used by utility.library.
+       The item must not be a member of any NameSpace, and no one
+       may have it open other than yourself. If the object also
+       contained a NameSpace, that namespace must be empty.
+       Any additional space allocated via the datasize parameter
+       for AllocNamedObject() is also released.
+
+   INPUTS
+       object - the object to be freed
+
+   SEE ALSO
+       AllocNamedObjectA()
+
+utility.library/FreeTagItems
+
+   NAME
+        FreeTagItems -- free an allocated tag list. (V36)
+
+   SYNOPSIS
+        FreeTagItems(tagList);
+
+        VOID FreeTagItems(struct TagItem *);
+
+   FUNCTION
+        Frees the memory of a TagItem list allocated either by
+        AllocateTagItems() or CloneTagItems().
+
+   INPUTS
+        tagList - list to free, must have been obtained from
+                  AllocateTagItems() or CloneTagItems() (may be NULL)
+
+   SEE ALSO
+        <utility/tagitem.h>, AllocateTagItems(), CloneTagItems()
+
+utility.library/GetFirstSkipNode
+
+   NAME
+       GetFirstSkipNode -- Obtain a pointer to the first node of a skip
+           list. (V50)
+
+   SYNOPSIS
+       node = GetFirstSkipNode(list)
+
+       struct SkipNode * GetFirstSkipNode(struct SkipList * list);
+
+   FUNCTION
+       A pointer to the first node of a skip list is returned, or NULL
+       if the list is currently empty. You can use the pointer to step
+       through the entire list one node at a time.
+
+   INPUTS
+       list -- Pointer to a skip list created by CreateSkipList(). If
+           this parameter is NULL, then this function will pretend that
+           a pointer to an empty skip list was passed.
+
+   RESULT
+       node -- Pointer to the first node of a skip list, or NULL if the
+           list is empty.
+
+   SEE ALSO
+       CreateSkipList(), DeleteSkipList(), GetNextSkipNode()
+
+utility.library/GetNextSkipNode
+
+   NAME
+       GetNextSkipNode -- Obtain a pointer to the next following node in
+           a skip list. (V50)
+
+   SYNOPSIS
+       node = GetNextSkipNode(list,previous_node)
+
+       struct SkipNode * GetNextSkipNode(struct SkipList * list,
+                                         struct SkipNode * previous_node);
+
+   FUNCTION
+       This function can be used to walk through a skip list one node at
+       a time. You start by obtaining a pointer to the first list node,
+       then call GetNextSkipNode() for each following node until it
+       returns NULL.
+
+   INPUTS
+       list -- Pointer to a skip list created by CreateSkipList(). If
+           this parameter is NULL, then this function will pretend that
+           a pointer to an empty skip list was passed.
+
+       previous_node -- Pointer to the previous you looked at, as was
+           returned by GetFirstSkipNode() or a previous call to
+           GetNextSkipNode(). If this is NULL, then this function
+           will pretend that the end of the list was reached.
+
+   RESULT
+       node -- Pointer to the node following the 'previous_node',
+           or NULL if the end of the list was reached.
+
+   EXAMPLE
+       /* Process all nodes in a skip list */
+       struct SkipNode * node;
+
+       node = GetFirstSkipNode(list);
+       while(node != NULL)
+       {
+           /* Process it... */
+           node = GetNextSkipNode(list,node);
+       }
+
+   SEE ALSO
+       CreateSkipList(), DeleteSkipList(), GetFirstSkipNode()
+
+utility.library/GetTagData
+
+   NAME
+        GetTagData -- obtain the data corresponding to a tag. (V36)
+
+   SYNOPSIS
+        value = GetTagData(tagValue,defaultVal,tagList);
+
+        ULONG GetTagData(Tag,ULONG,struct TagItem *);
+
+   FUNCTION
+        Searches a tag list for a matching tag, and returns the
+        corresponding ti_Data value for the TagItem found. If no match is
+        found, this function returns the value passed in as 'default'.
+
+   INPUTS
+        tagValue - tag value to search for.
+        defaultVal - value to be returned if tagValue is not found.
+        tagList - the tag list to search.
+
+   RESULTS
+        value - the ti_Data value for the first matching TagItem, or 'default'
+                if a ti_Tag matching 'Tag' is not found.
+
+
+   SEE ALSO
+        <utility/tagitem.h>, FindTagItem(), PackBoolTags(), NextTagItem()
+
+utility.library/GetUniqueID
+
+   NAME
+       GetUniqueID -- return a relatively unique number. (V39)
+
+   SYNOPSIS
+       id = GetUniqueID();
+
+       ULONG GetUniqueID(VOID);
+
+   FUNCTION
+       Returns a unique value each time it is called. This is useful for
+       things that need unique ID such as the GadgetHelp ID, etc.
+       Note that this is only unique for 4,294,967,295 calls to this
+       function. Under normal use this is not a problem.
+       This function is safe in interrupts.
+
+   RESULT
+       id - a 32-bit value that is unique.
+
+utility.library/InsertSkipNode
+
+   NAME
+       InsertSkipNode -- Insert a new key into a skip list. (V50)
+
+   SYNOPSIS
+       node = InsertSkipNode(list,key,total_size)
+
+       struct SkipNode * InsertSkipNode(struct SkipList * list,
+                                        APTR key,
+                                        ULONG total_size);
+
+   FUNCTION
+       This function will allocate memory for a new skip list node,
+       plus some extra room for your own use, and then attempt to
+       insert the new key into the list, at the proper position.
+
+   INPUTS
+       list -- Pointer to a skip list created by CreateSkipList(). If
+           this parameter is NULL, then this function will return NULL.
+
+       key -- The key to insert into the skip list. Note that keys must
+           be unique.
+
+       total_size -- Size of the SkipNode to be allocated. This must be
+	        at least sizeof(struct SkipNode). If you want to extend the
+           data structure, provide as much memory as the extended form
+           requires.
+
+   RESULT
+       node -- A pointer to the new node with the specified key, or NULL
+           if the node could not be inserted. An explanation as to why this
+           could not be done can be found in the list->sl_Error member.
+
+   NOTES
+       Keys in the list must be unique. Trying to add a duplicate key
+       will be treated as an error.
+
+       The keys must remain valid until you either remove the associated
+       nodes from the list or the list itself is deallocated. You may
+       not change the keys or the list data structure will take damage;
+       subsequent search, insert or remove operations may not work
+       correctly any more.
+
+   SEE ALSO
+       CreateSkipList(), DeleteSkipList(), RemoveSkipNode()
+
+utility.library/InsertSplayNode
+
+   NAME
+       InsertSplayNode -- Insert a new key into a splay tree. (V50)
+
+   SYNOPSIS
+       node = InsertSplayNode(tree,key,data_size)
+
+       struct SplayNode * InsertSplayNode(struct SplayTree * tree,
+                                          APTR key,
+                                          ULONG data_size);
+
+   FUNCTION
+       This function will allocate memory for a new splay tree node,
+       plus some extra room for your own use, and then attempt to
+       insert the new key into the tree.
+
+   INPUTS
+       tree -- Pointer to a splay tree created by CreateSplayTree(). If
+           this parameter is NULL, then this function will return NULL.
+
+       key -- The key to insert into the splay tree. Note that keys must
+           be unique.
+
+       data_size -- If desired, extra memory will be allocated for the
+           list node, you just need to specify how many bytes are needed.
+           A pointer to this memory will be placed in the node->sn_UserData
+           member; if no extra memory is allocated, a NULL will be put
+           there instead.
+
+   RESULT
+       node -- A pointer to the new node with the specified key, or NULL
+           if the node could not be inserted. An explanation as to why this
+           could not be done can be found in the tree->st_Error member.
+
+   NOTES
+       Keys in the tree must be unique. Trying to add a duplicate key
+       will be treated as an error.
+
+       The keys must remain valid until you either remove the associated
+       nodes from the tree or the tree itself is deallocated. You may
+       not change the keys or the tree data structure will take damage;
+       subsequent search, insert or remove operations may not work
+       correctly any more.
+
+   SEE ALSO
+       CreateSplayTree(), DeleteSplayTree(), RemoveSplayNode()
+
+utility.library/MapTags
+
+   NAME
+        MapTags -- convert ti_Tag values in a list via map pairing. (V36)
+
+   SYNOPSIS
+        MapTags(tagList,mapList,mapType);
+
+        VOID MapTags(struct TagItem *,struct TagItem *,ULONG);
+
+   FUNCTION
+        Apply a "mapping list" mapList to tagList.
+
+        If the ti_Tag field of an item in tagList appears as ti_Tag in some
+        item in mapList, overwrite ti_Tag with the corresponding ti_Data
+        from the map list.
+
+        The mapType parameter specifies how the mapping operation is to
+        proceed, with the following available types:
+
+                MAP_REMOVE_NOT_FOUND
+                If a tag in tagList does not appear in the mapList, remove
+                it from tagList.
+
+                MAP_KEEP_NOT_FOUND
+                To have items which do not appear in the mapList survive the
+                mapping process as-is.
+
+        MapTags() is central to BOOPSI gadget interconnections where you want
+        to convert the tag values from one space (the sender) to another (the
+        receiver).
+
+        The procedure will change the values of the input tag list
+        tagList (but not mapList).
+
+        You can "filter" a list by passing MAP_REMOVE_NOT_FOUND as mapType,
+        and having the data items in mapList equal the corresponding tags.
+
+        You can perform the inverse filter ("everything but") by passing
+        a mapType of MAP_KEEP_NOT_FOUND, and creating a map item for every tag
+        you want to filter out, pairing it with a mapped data value of
+        TAG_IGNORE.
+
+        For safety and "order independence" of tag item arrays, if you
+        attempt to map some tag to the value TAG_DONE, the value TAG_IGNORE
+        will be substituted instead.
+
+   INPUTS
+        tagList - input list of tag items which is to be mapped to tag values
+                  as specified in mapList.
+        mapList - a "mapping list" tag list which pairs tag values expected to
+                  appear in tagList with new values to be substituted in the
+                  ti_Tag fields of tagList (may be NULL)
+        mapType - one of the available mapping types as defined in
+                  <utility/tagitem.h>
+
+   EXAMPLE
+        /* Consider this source list: */
+            struct TagItem list[] =
+            {
+                {MY_SIZE,       71},
+                {MY_WEIGHT,     200},
+                {TAG_DONE,      }
+           };
+
+        /* And the mapping list: */
+            struct TagItem map[] =
+            {
+                {MY_SIZE,       HIS_TALL},
+                {TAG_DONE,      }
+            };
+
+        /* Then after MapTags(list,map,MAP_REMOVE_NOT_FOUND), 'list' will
+           become: */
+                {HIS_TALL,71},
+                {TAG_IGNORE,},
+                {TAG_DONE,}
+
+        /* Or after MapTags(list,map,MAP_KEEP_NOT_FOUND), 'list' will
+           become: */
+                {HIS_TALL,  71},
+                {MY_WEIGHT, 200},
+                {TAG_DONE,  }
+
+   BUGS
+        Prior to V39, the mapType parameter did not work. The function
+        always behaved as if the parameter was set to MAP_KEEP_NOT_FOUND.
+
+   SEE ALSO
+        <utility/tagitem.h>, ApplyTagChanges(), FilterTagChanges()
+
+utility.library/MessageDigest_SHA_Final
+
+   NAME
+       MessageDigest_SHA_Final -- Compute a condensed representation of a
+           message or a data file using the Secure Hash Algorithm;
+           final calculation of the digest (V50)
+
+   SYNOPSIS
+       MessageDigest_SHA_Final(mdsha)
+
+       VOID MessageDigest_SHA_Final(struct MessageDigest_SHA * mdsha);
+
+   FUNCTION
+       The MessageDigest_SHA_Final() function is one of three which can
+       be used to calculate a 160 bit "digest" or "checksum" of data.
+       The result is a so-called "hash value", as computed by a
+       cryptographic hash function.
+
+       MessageDigest_SHA_Final() wraps up the calculation of the
+       message digest. When the function returns you will find the
+       digest information (160 bits) stored in the mdsha->mdsha_Code
+       field.
+
+   INPUTS
+       mdsha -- Pointer to state information to be updated;
+           the message digest value will be calculated and
+           placed in the mdsha->mdsha_Code field.
+
+   NOTES
+       The hash function implemented by the SHA message digest
+       calculation routines is compatible with the Secure Hash
+       Standard, as described in Federal Information Processing
+       Standards Publication 180-1 (National Institute of
+       Standards and Technology; 1995).
+
+       The use of this implementation of the SHA function in
+       cryptographic applications is discouraged. There is no
+       guarantee that the set of functions implementing this
+       algorithm has not been compromised. At this time the Amiga
+       operating system design offers no protection against
+       tampering.
+
+   SEE ALSO
+       MessageDigest_SHA_Init, MessageDigest_SHA_Update
+
+utility.library/MessageDigest_SHA_Init
+
+   NAME
+       MessageDigest_SHA_Init -- Compute a condensed representation of a
+           message or a data file using the Secure Hash Algorithm;
+           initialization of state data (V50)
+
+   SYNOPSIS
+       MessageDigest_SHA_Init(mdsha)
+
+       VOID MessageDigest_SHA_Init(struct MessageDigest_SHA * mdsha);
+
+   FUNCTION
+       The MessageDigest_SHA_Init() function is one of three which can
+       be used to calculate a 160 bit "digest" or "checksum" of data.
+       The result is a so-called "hash value", as computed by a
+       cryptographic hash function.
+
+       MessageDigest_SHA_Init() initializes the supplied state buffer.
+       This must be done before the first call is made to the
+       MessageDigest_SHA_Update() function.
+
+   INPUTS
+       mdsha -- Pointer to state information to be initialized.
+
+   NOTES
+       The hash function implemented by the SHA message digest
+       calculation routines is compatible with the Secure Hash
+       Standard, as described in Federal Information Processing
+       Standards Publication 180-1 (National Institute of
+       Standards and Technology; 1995).
+
+       The use of this implementation of the SHA function in
+       cryptographic applications is discouraged. There is no
+       guarantee that the set of functions implementing this
+       algorithm has not been compromised. At this time the Amiga
+       operating system design offers no protection against
+       tampering.
+
+   SEE ALSO
+       MessageDigest_SHA_Update, MessageDigest_SHA_Final
+
+utility.library/MessageDigest_SHA_Update
+
+   NAME
+       MessageDigest_SHA_Update -- Compute a condensed representation of a
+           message or a data file using the Secure Hash Algorithm;
+           updating the checksum (V50)
+
+   SYNOPSIS
+       MessageDigest_SHA_Update(mdsha,data,num_bytes)
+
+       VOID MessageDigest_SHA_Update(struct MessageDigest_SHA * mdsha,
+                                     APTR data, LONG num_bytes);
+
+   FUNCTION
+       The MessageDigest_SHA_Update() function is one of three which can
+       be used to calculate a 160 bit "digest" or "checksum" of data.
+       The result is a so-called "hash value", as computed by a
+       cryptographic hash function.
+
+       MessageDigest_SHA_Update() uses the supplied data to update its
+       internal representation of the checksum which is finally calculated
+       by the MessageDigest_SHA_Final() function.
+
+   INPUTS
+       mdsha -- Pointer to state information to be updated.
+
+       data -- Pointer to to data to use for updating the state
+           information. This data will only be read and not be
+           modified in any way.
+
+       num_bytes -- Number of bytes to process.
+
+   NOTES
+       The hash function implemented by the SHA message digest
+       calculation routines is compatible with the Secure Hash
+       Standard, as described in Federal Information Processing
+       Standards Publication 180-1 (National Institute of
+       Standards and Technology; 1995).
+
+       The use of this implementation of the SHA function in
+       cryptographic applications is discouraged. There is no
+       guarantee that the set of functions implementing this
+       algorithm has not been compromised. At this time the Amiga
+       operating system design offers no protection against
+       tampering.
+
+   SEE ALSO
+       MessageDigest_SHA_Init, MessageDigest_SHA_Final
+
+utility.library/MoveMem
+
+   NAME
+	MoveMem - Copy memory with possible overlap		   (V51)
+
+   SYNOPSIS
+	void MoveMem(CONST_APTR source, APTR destination, uint32 size);
+
+   FUNCTION
+	Copy memory like exec.library/CopyMem, but take overlapping regions
+	into account.
+
+   INPUTS
+	source      - Source ("from") address
+	destination - Destination ("to") address
+	size        - Number of bytes to copy
+
+   NOTES
+	Contrary to memmove, source is the first parameter and destination
+	the second. This is constent with CopyMem/CopyMemQuick
+
+   SEE ALSO
+ 	exec.library/CopyMem, exec.library/CopyMemQuick
+
+utility.library/NamedObjectName
+
+   NAME
+       NamedObjectName -- return the name of the object. (V39)
+
+   SYNOPSIS
+       name = NamedObjectName(object);
+
+       STRPTR NamedObjectName(struct NamedObject *);
+
+   FUNCTION
+       Returns the name of the object passed in...
+       Note that the name string is passed back as just a pointer to
+       a read-only name. If the object goes away, so does the name.
+
+   INPUTS
+       object - the object, may be NULL in which case this function
+                returns NULL.
+
+   RESULT
+       name - pointer to the name string, or NULL if 'object' is NULL.
+
+   SEE ALSO
+       FindNamedObject(), RemNamedObject()
+
+utility.library/NextTagItem
+
+   NAME
+        NextTagItem -- iterate through a tag list. (V36)
+
+   SYNOPSIS
+        tag = NextTagItem(tagItemPtr);
+
+        struct TagItem *NextTagItem(struct TagItem **);
+
+   FUNCTION
+        Iterates through a tag list, skipping and chaining as dictated by
+        system tags. TAG_SKIP will cause it to skip the entry and a number
+        of following tags as specified in ti_Data. TAG_IGNORE ignores that
+        single entry, and TAG_MORE has a pointer to another array of tags (and
+        terminates the current array!). TAG_DONE also terminates the current
+        array. Each call returns either the next tagitem you should examine,
+        or NULL when the end of the list has been reached.
+
+   INPUTS
+        tagItemPtr - doubly-indirect reference to a TagItem structure.
+                     The pointer will be changed to keep track of the
+                     iteration.
+
+   RESULTS
+        nextTag - each TagItem in the array or chain of arrays that should be
+                  processed according to system tag values defined in
+                  <utility/tagitem.h>) is returned in turn with successive
+                  calls.
+
+   EXAMPLE
+        Iterate(struct TagItem *tags);
+        {
+            struct TagItem *tstate;
+            struct TagItem *tag;
+
+            tstate = tags;
+            while (tag = NextTagItem(&tstate))
+            {
+                switch (tag->ti_Tag)
+                {
+                    case TAG1: ...
+                               break;
+
+                    case TAG2: ...
+                               break;
+
+                    ...
+                }
+            }
+        }
+
+   WARNING
+        Do NOT use the value of *tagItemPtr, but rather use the pointer
+        returned by NextTagItem().
+
+   SEE ALSO
+        <utility/tagitem.h>, GetTagData(), PackBoolTags(), FindTagItem()
+
+
+utility.library/PackBoolTags
+
+   NAME
+        PackBoolTags -- builds a "flag" word from a tag list. (V36)
+
+   SYNOPSIS
+        flags = PackBoolTags(initialFlags,tagList,boolMap);
+
+        ULONG PackBoolTags(ULONG,struct TagItem *,struct TagItem *);
+
+   FUNCTION
+        Picks out the boolean tag items in a tag list and converts
+        them into bit-flag representations according to a correspondence
+        defined by the tag list 'boolMap'.
+
+        A boolean tag item is one where only the logical value of
+        the ti_Data is relevant. If this field is 0, the value is
+        FALSE, otherwise TRUE.
+
+   INPUTS
+        initialFlags - a starting set of bit-flags which will be changed
+                       by the processing of TRUE and FALSE boolean tags
+                       in tagList.
+        tagList - a TagItem list which may contain several tag items defined to
+                  be boolean by their presence in boolMap. The logical value of
+                  ti_Data determines whether a tag item causes the bit-flag
+                  value related by boolMap to be set or cleared in the returned
+                  flag longword.
+        boolMap - a tag list defining the boolean tags to be recognized, and
+                  the bit (or bits) in the returned longword that are to be set
+                  or cleared when a boolean Tag is found to be TRUE or FALSE in
+                  tagList.
+
+   RESULTS
+        flags - the accumulated longword of bit-flags, starting with
+                initialFlags and modified by each boolean tag item
+                encountered.
+
+   EXAMPLE
+        /* define some nice user tag values ... */
+        enum mytags { tag1 = TAG_USER+1, tag2, tag3, tag4, tag5 };
+
+        /* this TagItem list defines the correspondence between boolean tags
+         * and bit-flag values.
+         */
+        struct TagItem boolMap[] =
+        {
+            {tag1,     0x0001},
+            {tag2,     0x0002},
+            {tag3,     0x0004},
+            {tag4,     0x0008},
+            {TAG_DONE, }
+        };
+
+        /* You are probably passed these by some client, and you want
+         * to "collapse" the boolean content into a single longword.
+         */
+
+        struct TagItem boolExample[] =
+        {
+            {tag1,     TRUE},
+            {tag2,     FALSE},
+            {tag5,     Irrelevant},
+            {tag3,     TRUE},
+            {TAG_DONE, }
+        };
+
+        /* Perhaps 'boolFlags' already has a current value of 0x800002. */
+        boolFlags = PackBoolTags(boolFlags,boolExample,boolMap);
+
+        /* The resulting new value of 'boolFlags' will be 0x80005. */
+
+   WARNING
+        In a case where there is duplication of a tag in tagList, the
+        last of the identical tags will hold sway.
+
+   SEE ALSO
+        <utility/tagitem.h>, GetTagData(), FindTagItem(), NextTagItem()
+
+utility.library/PackStructureTags
+
+   NAME
+       PackStructureTags -- pack a structure with values from taglist. (V39)
+
+   SYNOPSIS
+       num = PackStructureTags(pack,packTable,tagList);
+
+       ULONG PackStructureTags(APTR,ULONG *,struct TagItem *);
+
+   FUNCTION
+       For each table entry, a FindTagItem() will be done and if the
+       matching tag is found in the taglist, the data field will be
+       packed into the given structure based on the packtable
+       definition.
+
+   INPUTS
+       pack - a pointer to the data area to fill in.
+       packTable - a pointer to the packing information table.
+                   See <utility/pack.h> for definition and macros.
+       tagList - a pointer to the taglist to pack into the structure
+
+   RESULTS
+       num - the number of tag items packed
+
+   SEE ALSO
+       <utility/pack.h>, FindTagItem(), UnpackStructureTags()
+
+utility.library/Random
+
+   NAME
+       Random -- Calculate a pseudo-random number. (V50)
+
+   SYNOPSIS
+       number = Random(state)
+
+       LONG Random(struct RandomState * state);
+
+   FUNCTION
+       Random() will generate a long sequence of pseudo-random numbers from
+       the state information you provide.
+
+   INPUTS
+       state -- The generator uses the information you provide to calculate
+           the next pseudo-random number and then stores that state
+           information to calculate the next number. This state is the
+           seed for the generator and it must never be set to zero.
+           It is recommended to initialize it with the contents of a
+           'struct timeval' which holds the current system time.
+
+   RESULT
+       number -- A value in the range 1..2147483647. A value of 0 will be
+          returned if you pass NULL as the 'state' parameter.
+
+   NOTES
+       The use of this generator for cryptographic applications is
+       strongly discouraged.
+
+       The state variable's contents must never be zero or the results
+       produced by the generator may be constant.
+
+utility.library/RefreshTagItemClones
+
+   NAME
+        RefreshTagItemClones -- rejuvenate a clone from the original. (V36)
+
+   SYNOPSIS
+        RefreshTagItemClones(clone,original)
+
+        VOID RefreshTagItemClones(struct TagItem *,struct TagItem *);
+
+   FUNCTION
+        If (and only if) the tag list 'clone' was created from 'original' by
+        CloneTagItems(), and if 'original' has not been changed in any way,
+        you can reset the clone list to its original state by using this
+        function.
+
+   INPUTS
+        clone - return value from CloneTagItems(original)
+        original - a tag list that hasn't changed since CloneTagItems()
+
+   SEE ALSO
+        <utility/tagitem.h>, CloneTagItems(), AllocateTagItems(),
+        FreeTagItems(), ApplyTagChanges()
+
+utility.library/ReleaseNamedObject
+
+   NAME
+       ReleaseNamedObject -- free a named object. (V39)
+
+   SYNOPSIS
+       ReleaseNamedObject(object);
+
+       VOID ReleaseNamedObject(struct NamedObject *);
+
+   FUNCTION
+       Decrements the open count of the object. If the object has been
+       removed, and the count goes to 0, the remover will be notified
+       that the object is now free.
+
+   INPUTS
+       object - the object to release.  (No action if NULL)
+
+   SEE ALSO
+       FindNamedObject(), RemNamedObject()
+
+utility.library/RemNamedObject
+
+   NAME
+       RemNamedObject -- remove a named object. (V39)
+
+   SYNOPSIS
+       RemNamedObject(object, message);
+
+       VOID RemNamedObject(struct NamedObject *, struct Message *);
+
+   FUNCTION
+       This function will post a request to release the object
+       from whatever NameSpace it is in.  It will reply the message
+       when the object is fully removed.  The message.mn_Node.ln_Name
+       field will contain the object pointer or NULL if the object
+       was removed by another process.
+
+       This function will effectively do a ReleaseNamedObject()
+       thus you must have "found" the object first.
+
+   INPUTS
+       object - the object to remove: Must be a valid NamedObject.
+       message - message to ReplyMsg() (must be supplied)
+
+   RESULT
+       The message is replied with the ln_Name field either being
+       the object or NULL. If it contains the object, the object
+       is completely removed.
+
+   SEE ALSO
+       AttemptRemNamedObject(), AddNamedObject(), ReleaseNamedObject()
+
+utility.library/RemoveSkipNode
+
+   NAME
+       RemoveSkipNode -- Remove a node from a skip list. (V50)
+
+   SYNOPSIS
+       success = RemoveSkipNode(list,key)
+
+       BOOL RemoveSkipNode(struct SkipList * list,
+                           APTR key);
+
+   FUNCTION
+       This function will try to find a skip list node and, if successful,
+       will remove it and deallocate the memory reserved for it.
+
+   INPUTS
+       list -- Pointer to a skip list created by CreateSkipList(). If
+           this parameter is NULL, then this function will pretend that
+           a pointer to an empty skip list was passed.
+
+       key -- The key to be removed.
+
+   RESULT
+       success -- TRUE if the list node could be found and removed,
+           FALSE otherwise.
+
+   SEE ALSO
+       CreateSkipList(), DeleteSkipList(), InsertSkipNode()
+
+utility.library/RemoveSplayNode
+
+   NAME
+       RemoveSplayNode -- Remove a node from a splay tree. (V50)
+
+   SYNOPSIS
+       BOOL success = RemoveSplayNode(struct SplayTree * tree,
+                                      APTR key);
+
+   FUNCTION
+       This function will try to find a splay tree node and, if successful,
+       will remove it and deallocate the memory reserved for it.
+
+   INPUTS
+       list -- Pointer to a splay tree created by CreateSplayTree(). If
+               this parameter is NULL, then this function will pretend
+               that a pointer to an empty splay tree was passed.
+
+       key -- The key to be removed.
+
+   RESULT
+       success -- TRUE if the list node could be found and removed,
+                  FALSE otherwise.
+
+   BUGS
+       Did not work correctly until utility.library 53.5.
+
+   SEE ALSO
+       CreateSplayTree(), DeleteSplayTree(), InsertSplayNode()
+
+utility.library/SetMem
+
+   NAME
+       SetMem -- Fill memory with a constant byte. (V50)
+
+   SYNOPSIS
+       APTR destination = SetMem(APTR destination, uint8 value, int32 length);
+
+   FUNCTION
+       Similar to the 'C' library memset() function, SetMem() will fill
+       memory with a constant byte.
+
+   INPUTS
+       destination -- Address of the memory range to be filled.
+
+       value       -- The constant value the memory range is to be
+                      filled with.
+
+       length      -- Size of the memory range to be filled.
+
+   RESULT
+       destination -- The 'destination' parameter is returned.
+
+   NOTES
+	Since the function might use cache manipulation, it should not be
+	used on non-cacheable regions. The system will install an exception
+	handler to catch those cases (so this function will actually clear
+	non-cacheable areas), but it will be slow.
+
+   SEE ALSO
+	ClearMem
+
+utility.library/SNPrintf
+
+   NAME
+       SNPrintf -- Size-bounded formatted output conversion. (V50)
+
+   SYNOPSIS
+       int32 size = SNPrintf(STRPTR buffer, int32 buffer_size,
+                              CONST_STRPTR format, ... );
+
+       int32 size = VSNPrintf(STRPTR buffer, int32 buffer_size,
+                              CONST_STRPTR format, APTR args);
+
+   FUNCTION
+       SNPrintf() is an application of RawDoFmt() which stores the output
+       in a buffer, making sure that the string is always properly
+       NUL-terminated and no more than 'buffer_size' characters are
+       written, including the terminating NUL byte.
+
+   INPUTS
+       buffer -- Pointer to a string which the formatted output
+           should be stored in. This can be NULL in which case no data
+           is written, the output size is still calculated, though.
+
+       buffer_size -- Size of the buffer.
+
+       format -- Format specifier; see exec.library/RawDoFmt() for
+           options.
+
+       args -- Parameters to be read and formatted.
+
+   RESULT
+       size -- Total length of the string that would have been
+           created by converting the parameters into a string.
+           This can be larger than the 'buffer_size' parameter,
+           which means that the formatted string was truncated.
+           The size includes the terminating NUL byte.
+
+   EXAMPLE
+       /* Format a string and check if the result is too large
+          for the destination buffer to hold. */
+       char buf[10];
+
+       if(SNPrintf(buf,sizeof(buf),"%ld + %ld = %ld",1,2,3) > sizeof(buf))
+           Printf("string was truncated.\n");
+
+   SEE ALSO
+       Strlcat(), Strlcpy(), exec.library/RawDoFmt()
+
+utility.library/SortList
+
+   NAME
+      SortList -- Sort a List, using hook for comparison (V54.2)
+
+   SYNOPSIS
+      void SortList(struct List *list, struct Hook *cmpHook);
+
+   FUNCTION
+      Sorts an exec-style doubly linked list, using the provided hook
+      for comparing nodes.
+
+   INPUTS
+       list - pointer to the List that is to be sorted.
+       cmpHook - comparison hook. The prototype for the hook function is:
+
+                 int32 cmpHookFunc(struct Hook *hook,
+                                   struct Node *n1,
+                                   struct Node *n2);
+
+                 The return value should be:
+                   <0 if n1 should go before n2
+                   0  if n1 and n2 are equal
+                   >0 if n1 should go after n2
+
+   EXAMPLE
+       /* Sort a list in alphabetical order based on ln_Name */
+
+       STATIC LONG compare_name(struct Hook *hook,
+                                struct Node *n1,
+                                struct Node *n2)
+       {
+           return IUtility->Stricmp(n1->ln_Name, n2->ln_Name);
+       }
+
+       void sort_list_by_name(struct List *list)
+       {
+           struct Hook hook;
+
+           memset(&hook, 0, sizeof(hook));
+           hook.h_Entry = (HOOKFUNC)compare_name;
+
+           IUtility->SortList(list, &hook);
+       }
+
+   SEE ALSO
+       SortMinList()
+
+utility.library/SortMinList
+
+   NAME
+      SortMinList -- Sort a MinList, using hook for comparison (V54.2)
+
+   SYNOPSIS
+      void SortMinList(struct MinList *list, struct Hook *cmpHook);
+
+   FUNCTION
+      Sorts an exec-style doubly linked list, using the provided hook
+      for comparing nodes.
+
+   INPUTS
+       list - pointer to the MinList that is to be sorted.
+       cmpHook - comparison hook. The prototype for the hook function is:
+
+                 int32 cmpHookFunc(struct Hook *hook,
+                                   struct MinNode *n1,
+                                   struct MinNode *n2);
+
+                 The return value should be:
+                   <0 if n1 should go before n2
+                   0  if n1 and n2 are equal
+                   >0 if n1 should go after n2
+
+   SEE ALSO
+       SortList()
+
+utility.library/Stricmp
+
+   NAME
+       Stricmp -- case-insensitive string comparison. (V37)
+
+   SYNOPSIS
+       result = Stricmp(string1,string2);
+
+       LONG Stricmp(STRPTR,STRPTR);
+
+   FUNCTION
+       This function compares two strings, ignoring case using a generic
+       case conversion routine. If the strings have different lengths,
+       the shorter is treated as if it were extended with zeros.
+
+   INPUTS
+       string1, string2 - strings to be compared
+
+   RESULTS
+       result - relationship between string1 and string2
+                       <0 means string1 < string2
+                       =0 means string1 = string2
+                       >0 means string1 > string2
+
+   NOTES
+       Whenever locale.library is installed in a system, this function is
+       replaced by language-specific code. This means that depending on
+       which language the user has currently selected, identical pairs of
+       strings may return different values when passed to this function.
+       This fact must be taken into consideration when using this function.
+
+   SEE ALSO
+       Strnicmp(), locale.library/StrnCmp()
+
+utility.library/Strlcat
+
+   NAME
+	Strlcat -- Size-bounded string concatenation. (V50)
+
+   SYNOPSIS
+	size = Strlcat(destination,source,destination_size)
+
+	LONG Strlcat(STRPTR destination,CONST_STRPTR source,
+	             LONG destination_size);
+
+   FUNCTION
+	Strlcat() works very much like the standard 'C' library strcat()
+	routine. The big difference is in that Strlcat() will always
+	make sure that the 'destination' string is properly NUL-terminated
+	and that no more than 'destination_size' characters will be
+	stored in the 'destination' string. This size limit covers both
+	the number of characters that are already present in the string
+	and the characters to be added, including the final NUL character.
+
+   INPUTS
+	destination -- Pointer to a NUL-terminated string which the
+	    contents of the 'source' string are to be appended to.
+	    The destination pointer can be NULL in which case no data
+	    will be written; the number of characters that would have
+	    been stored is still calculated, though.
+
+	source -- Pointer to a NUL-terminated string which should be
+	    added to the 'destination' string buffer. This can be NULL
+	    in which case an empty string is appended.
+
+	destination_size -- Size of the 'destination' buffer.
+
+   RESULT
+	size -- Total length of the string that would have been
+	    created by concatenating the 'destination' and 'source'
+	    buffers, not including the terminating NUL character. This
+	    can be as large or even larger than the 'destination_size'
+	    parameter, which means that the concatenated string was
+	    truncated.
+
+   EXAMPLE
+	// Concatenate two strings and check if the result
+	// is too large for the destination buffer to hold.
+	char buffer[5];
+
+	IUtility->Strlcpy(buffer, "one", sizeof(buffer));
+	if(IUtility->Strlcat(buffer, "one", sizeof(buffer)) >= sizeof(buffer))
+	    IDOS->Printf("string was truncated.\n");
+
+   SEE ALSO
+	Strlcpy(), VSNPrintf()
+
+utility.library/Strlcpy
+
+   NAME
+	Strlcpy -- Size-bounded string copy. (V50)
+
+   SYNOPSIS
+	size = Strlcpy(destination,source,destination_size)
+
+	LONG Strlcpy(STRPTR destination,CONST_STRPTR source,
+	             LONG destination_size);
+
+   FUNCTION
+	Strlcpy() works very much like the standard 'C' library strcpy()
+	routine. The big difference is in that Strlcpy() will always
+	make sure that the 'destination' string is properly NUL-terminated
+	and that no more than 'destination_size' characters will be
+	stored in the 'destination' string. This size limit covers both
+	the number of characters to be copied, including the final NUL
+	character.
+
+   INPUTS
+	destination -- Pointer to a string which the contents of the
+	    'source' string are to be copied to. The destination pointer
+	    can be NULL in which case no data will be written; the number
+	    of characters that would have been stored is still calculated,
+	    though.
+
+	source -- Pointer to a NUL-terminated string which should be
+	    copied to the 'destination' string buffer. This can be NULL
+	    in which case an empty string is copied.
+
+	destination_size -- Size of the 'destination' buffer.
+
+   RESULT
+	size -- Total length of the string that would have been
+	    created by copying the 'source' to the 'destination'
+	    buffer, not including the terminating NUL character. This
+	    can be as large or even larger than the 'destination_size'
+	    parameter, which means that the copied string was truncated.
+
+   EXAMPLE
+	/* Copy a string and check if the result is too large
+	   for the destination buffer to hold. */
+	char buffer[3];
+
+	if(Strlcpy(buffer,"four",sizeof(buffer)) >= sizeof(buffer))
+	    Printf("string was truncated.\n");
+
+   SEE ALSO
+	Strlcat(), VSNPrintf()
+
+utility.library/Strlen
+
+   NAME
+	Strlen -- Determine the length of a string. (V53.4)
+
+   SYNOPSIS
+	uint32 length = Strlen(string);
+
+   FUNCTION
+	Strlen() works very much like the standard 'C' library strlen()
+	routine. It is primarily useful for situations where the standard
+	'C' library is not available.
+
+   INPUTS
+	string -- Pointer to a NUL-terminated string to measure the length of.
+
+   RESULT
+	length -- Total length of the string excluding the NUL terminator.
+
+utility.library/Strnicmp
+
+   NAME
+       Strnicmp -- length-limited case-insensitive string compare. (V37)
+
+   SYNOPSIS
+       result = Strnicmp(string1,string2,length);
+
+       LONG Strnicmp(STRPTR,STRPTR,LONG);
+
+   FUNCTION
+       This function compares two strings, ignoring case using a generic
+       case conversion routine. If the strings have different lengths,
+       the shorter is treated as if it were extended with zeros. This function
+       never compares more than 'length' characters.
+
+   INPUTS
+       string1, string2 - strings to be compared
+       length - maximum number of characters to examine
+
+   RESULTS
+       result - relationship between string1 and string2
+                       <0 means string1 < string2
+                       =0 means string1 = string2
+                       >0 means string1 > string2
+
+   NOTES
+       Whenever locale.library is installed in a system, this function is
+       replaced by language-specific code. This means that depending on
+       which language the user has currently selected, identical pairs of
+       strings may return different values when passed to this function.
+       This fact must be taken into consideration when using this function.
+
+   SEE ALSO
+       Stricmp(), locale.library/StrnCmp()
+
+utility.library/TagInArray
+
+   NAME
+        TagInArray -- check if a tag value appears in an array of tag values.
+                      (V36)
+
+   SYNOPSIS
+        result = TagInArray(tagValue,tagArray);
+
+        BOOL TagInArray(Tag,Tag *);
+
+   FUNCTION
+        Performs a quick scan to see if a tag value appears in an array
+        terminated with TAG_DONE. Returns TRUE if the value is found.
+
+        The 'tagArray' must be terminated by TAG_DONE. Note that this is an
+        array of tag values, NOT an array of TagItems.
+
+   INPUTS
+        tagValue - tag value to search array for in array.
+        tagArray - a simple array of tag values terminated by TAG_DONE.
+
+   RESULTS
+        result - TRUE if tagValue was found in tagArray.
+
+   SEE ALSO
+        <utility/tagitem.h>, FilterTagItems()
+
+utility.library/ToLower
+
+   NAME
+       ToLower -- convert a character to lower case. (V37)
+
+   SYNOPSIS
+       char = ToLower(char);
+
+       TEXT ToLower(TEXT);
+
+   FUNCTION
+       Converts a character to lower case, handling international character
+       sets.
+
+   INPUTS
+       char - character to be converted.
+
+   RESULTS
+       char - lower case version of the input character.
+
+   NOTES
+       Whenever locale.library is installed in a system, this function is
+       replaced by language-specific code. This means that depending on
+       which language the user has currently selected, a given character may
+       return different results when passed to this function. This fact must
+       be taken into consideration when using this function.
+
+   SEE ALSO
+       ToUpper(), locale.library/ConvToLower()
+
+utility.library/ToUpper
+
+   NAME
+       ToUpper -- convert a character to upper case. (V37)
+
+   SYNOPSIS
+       char = ToUpper(char);
+
+       TEXT ToUpper(TEXT);
+
+   FUNCTION
+       Converts a character to upper case, handling international character
+       sets.
+
+   INPUTS
+       char - character to be converted.
+
+   RESULTS
+       char - upper case version of the input character.
+
+   NOTES
+       Whenever locale.library is installed in a system, this function is
+       replaced by language-specific code. This means that depending on
+       which language the user has currently selected, a given character may
+       return different results when passed to this function. This fact must
+       be taken into consideration when using this function.
+
+   SEE ALSO
+       ToLower(), locale.library/ConvToLower()
+
+utility.library/UCS4Count
+
+   NAME
+       UCS4Count -- Count the number of UCS-4 characters in a string.(V54)
+
+   SYNOPSIS
+       int32 count = UCS4Count(const int32 *ucs4_string, int32 validate);
+
+   FUNCTION
+       UCS4Count() returns the number of Universal Character Set (UCS)
+       characters in the UCS-4 string.
+       This function also serves as a validator for the UCS-4 values
+       when the 'validate' argument is set to a TRUTH value.
+
+   INPUTS
+       ucs4_string -- Pointer to a wide UCS-4 character string.
+                      NULL pointer is safe, just returns 0.
+
+       validate -- TRUE to validate UCS-4 string, FALSE to not validate.
+
+   RESULT
+       count -- Number of UCS-4 characters, or -1 on error if validating.
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UCS4ToLower
+
+   NAME
+       UCS4ToLower -- Low level function to convert a wide UCS-4 character
+                      to lower case. (V54)
+
+   SYNOPSIS
+       int32 ucs4Out = UCS4ToLower( int32 ucs4In );
+
+   FUNCTION
+       Converts a Universal Character Set (UCS) wide character to lower
+       case if it has a lower case mapping, otherwise it returns the same
+       character.
+
+   INPUTS
+       ucs4In  -- UCS-4 character to be converted.
+
+   RESULTS
+       ucs4Out -- Lower case version of the input UCS-4 character, or same.
+
+   NOTES
+       All negative or zero values will be passed straight through.
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+       This function uses the official unicode simple mode static case
+       folding mapping, it does not use locale.library data.
+
+   EXAMPLE
+       /* Do a case-insensitive comparison between 2 wide UCS-4 strings, */
+       /* up to 'num' chars. Valid UCS-4 wide strings are assumed here. */
+
+       int32 UCS4Strnicmp(const int32 *ucs1, const int32 *ucs2, int32 num)
+       {
+           int32 c1, c2;
+
+           do
+           {
+               c1 = IUtility->UCS4ToLower(*ucs1++);
+               c2 = IUtility->UCS4ToLower(*ucs2++);
+           }
+           while ((c1 > 0) && (c1 == c2) && (--num >0));
+
+           return( c1 - c2 )
+       }
+
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UCS4ToUpper
+
+   NAME
+       UCS4ToUpper -- Low level function to convert a wide UCS-4 character
+                      to upper case. (V54)
+
+   SYNOPSIS
+       int32 ucs4Out = UCS4ToUpper( int32 ucs4In );
+
+   FUNCTION
+       Converts a Universal Character Set (UCS) wide character to upper
+       case if it has an upper case mapping, otherwise it returns the
+       same character.
+
+   INPUTS
+       ucs4In --  UCS-4 character to be converted.
+
+   RESULTS
+       ucs4Out -- Upper case version of the input UCS-4 character, or same.
+
+   NOTES
+       All negative or zero values will be passed straight through.
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+       This function uses the official unicode simple mode static case
+       folding mapping, it does not use locale.library data.
+
+   EXAMPLE
+       /* Do a case-insensitive comparison between 2 wide UCS-4 strings.*/
+       /* Valid UCS-4 wide strings are assumed here. */
+
+       int32 UCS4Stricmp(const int32 *ucs1, const int32 *ucs2)
+       {
+           int32 c1, c2;
+
+           do
+           {
+               c1 = IUtility->UCS4ToUpper(*ucs1++);
+               c2 = IUtility->UCS4ToUpper(*ucs2++);
+           }
+           while ((c1 > 0) && (c1 == c2));
+
+           return( c1 - c2 )
+       }
+
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UCS4toUTF8
+
+   NAME
+       UCS4toUTF8 -- UCS-4 to UTF-8 string encoder. (V54)
+
+   SYNOPSIS
+       int32 count = UCS4toUTF8(const int32 *ucs4_source,
+                                  STRPTR utf8_destination,
+                                     int32 utf8_destination_size,
+                                         uint32 flags)
+   FUNCTION
+       UCS4toUTF8() encodes a Universal Character Set (UCS) wide string
+       into variable-byte UTF-8 format. The destination UTF-8 string will
+       be correctly nul-terminated and no more than 'utf8_destination_size'
+       bytes will be stored in the 'utf8_destination' buffer.
+
+   INPUTS
+       ucs4_source -- Pointer to a NUL-terminated UCS-4 wide string to be
+           converted and placed in the 'utf8_destination' buffer.
+           If this is NULL, an empty string is copied.
+
+       utf8_destination -- Pointer to a buffer where the 'ucs_source'
+           string will be encoded and stored in UTF-8 format.
+           If this is NULL, no data will be written, however the number of
+           UTF-8 characters that would have been stored is still calculated.
+
+       utf8_destination_size -- Size in bytes of 'utf8_destination' buffer.
+                               ( See NOTES below )
+
+       flags -- Encoder control option flags, or 0 for none.
+           The currently supported flags are;
+
+           UTF_INVALID_SUBST_FFFD -  Do not abort encoding when an
+               invalid UCS-4 character is encountered, instead, substitute
+               the invalid character with the special 0xFFFD character.
+               (inverse ? on square background)
+
+   RESULT
+       count -- The number of bytes that would have been copied into the
+           'utf8_destination' buffer, (not including the \0).
+           Or -1 if the encoder detected an illegal UCS-4 character.
+           Or -2 if the buffer was too small to hold the entire string.
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+       The 'utf8_destination_size' is the size of the buffer in bytes,
+       the size should be carefully calculated to prevent encoder failure.
+       If not known beforehand, an adequate buffer size can be determined
+       by using the UCS4Count() function. The worse case encoding requires
+       four bytes per UCS-4 character, plus one more for the nul-terminator.
+       EG:  destsize = (1+ IUtility->UCS4Count(ucs4_source,0)) * 4;
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UCS4Valid
+
+   NAME
+       UCS4Valid -- Low level function to validate a UCS-4 character. (V54)
+
+   SYNOPSIS
+       int32 valid = UCS4Valid( int32 ucs4 );
+
+   FUNCTION
+       This function determins if the Universal Character Set (UCS) wide
+       character, represented in UCS-4 format, is a valid character or not.
+
+   INPUTS
+       ucs4    -- The UCS-4 wide character value to test.
+
+   RESULTS
+       valid   -- TRUE if valid, FALSE if invalid.
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UnpackStructureTags
+
+   NAME
+       UnpackStructureTags -- unpack a structure to values in taglist. (V39)
+
+   SYNOPSIS
+       num = UnpackStructureTags(pack,packTable,tagList);
+
+       ULONG UnpackStructureTags(APTR,ULONG *,struct TagItem *);
+
+   FUNCTION
+       For each table entry, a FindTagItem() will be done and if the
+       matching tag is found in the taglist, the data in the structure
+       will be placed into the memory pointed to by the tag's ti_Data.
+       ti_Data *must* point to a LONGWORD.
+
+   INPUTS
+       pack - a pointer to the data area to be unpacked
+       packTable - a pointer to the packing information table.
+                   See <utility/pack.h> for definition and macros
+       tagList - a pointer to the taglist to unpack into
+
+   RESULTS
+       num - the number of tag items unpacked
+
+   SEE ALSO
+       <utility/pack.h>, FindTagItem(), PackStructureTags()
+
+utility.library/UTF8Count
+
+   NAME
+       UTF8Count -- Count the number of UCS-4 characters in a UTF-8 encoding.
+                    (V54)
+
+   SYNOPSIS
+       int32 count = UTF8Count( CONST_STRPTR utf8_string, int32 validate );
+
+   FUNCTION
+       UTF8Count() returns the number of Universal Character Set (UCS)
+       characters encoded in the UTF-8 string, or -1 for invalid encodings
+       if the validation feature is enabled.
+
+   INPUTS
+       utf8_string -- Pointer to a UTF-8 encoded string.
+                      NULL pointer safe, only returns 0.
+
+       validate -- TRUE to validate UTF-8 string, FALSE to not validate.
+
+   RESULT
+       count -- Number of 32 bit wide UCS-4 characters encoded in the
+                UTF-8 string, or -1 on error if validating is enabled.
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UTF8Decode
+
+   NAME
+       UTF8Decode -- Low level function to decode the next UCS-4 wide
+                     character from a UTF-8 encoded string. (V54)
+
+   SYNOPSIS
+       int32 ucs4 = UTF8Decode(CONST_STRPTR *utf8_string_pptr,uint32 flags);
+
+   FUNCTION
+       This function decodes the next Universal Character Set (UCS) wide
+       character from the UTF-8 encoded string. It also updates the pointer
+       to point to the beginning of the next character encoding sequence,
+       providing the last one did not cause an error and that there are
+       still more UCS-4 characters remaining.
+       Keep calling this function until it returns 0 or -1 on error.
+
+   INPUTS
+       utf8_string_pptr -- Doubly-indirect reference to the utf-8 string
+               to decode, (a pointer to the utf-8 string pointer),
+               the pointer will be changed to keep track of the iterations.
+
+       flags -- Decoder control option flags, or 0 for none.
+                The currently supported flags are;
+
+                UTF_INVALID_SUBST_FFFD -  Do not abort decoding when an
+                    invalid utf-8 sequence is encountered, instead,
+                    substitute the invalid byte sequence with the special
+                    0xFFFD character. (inverse ? on square background)
+
+   RESULTS
+       ucs4 -- Universal character Set (UCS) value, zero when the end is
+               hit, or -1 if an invalid UTF-8 encoded string is supplied.
+
+   EXAMPLE
+       /* Convert utf-8 string to wide ucs-4 character string. */
+       /* Returns ucs count, -1 for bad stream, -2 for small buffer */
+       /* This example is similar to the UTF8toUCS4() function. */
+
+       int32 utf8_to_ucs4(CONST_STRPTR utf8,int32 *ucsbuffer,int32 bufsize)
+       {
+           int32 ucs, len =0;
+
+           bufsize -= sizeof(int32); /* reserve space for 0 terminator.*/
+
+           while(( ucs = IUtility->UTF8Decode(&utf8,0) ) != 0)
+           {
+               if( -1 == ucs )  /* returns -1 on stream error. */
+               {
+                   len = -1;
+                   break;
+               }
+
+               if( bufsize < (int32)sizeof(int32) )
+               {
+                   len = -2;  /* returns -2 if buffer too small */
+                   break;
+               }
+
+               bufsize -= sizeof(int32);
+               (*ucsbuffer) = ucs;
+               ucsbuffer ++;
+               len ++;
+           }
+           (*ucsbuffer) = 0; /* nul-terminate */
+           return(len);
+       }
+
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UTF8Encode
+
+   NAME
+       UTF8Encode -- Low level function to encode a UCS-4 value into UTF-8
+                     variable-byte format. (V54)
+
+   SYNOPSIS
+       int32 bytes = UTF8Encode(int32 ucs4, STRPTR buffer, int32 bufsize,
+                                   uint32 flags);
+
+   FUNCTION
+       This function encodes the Universal Character Set (UCS) wide
+       character into the output buffer in variable-byte UTF-8 format.
+       The number of bytes used to encode the UCS-4 wide character is
+       returned, this will currently be 1 to 4.
+       No nul-terminating is performed on the encoding, you MUST do it.
+
+   INPUTS
+       ucs4   -- The UCS-4 wide character value to encode.
+
+       buffer -- The buffer for the variable-byte UTF-8 encoding.
+
+       bufsize-- The size of the buffer.
+
+       flags  -- Encoder control option flags, or 0 for none.
+                 The currently supported flags are;
+
+                 UTF_INVALID_SUBST_FFFD -  Do not abort encoding when an
+                     invalid 'ucs4' char is encountered, instead,
+                     substitute the invalid character with the valid
+                     0xFFFD character. (inverse ? on square background)
+
+   RESULTS
+       bytes  -- The number of bytes used to UTF-8 encode the UCS-4 value,
+                 or -1 if an invalid UCS-4 character value was supplied,
+                 (unless the UTF_INVALID_SUBST_FFFD flag was specified)
+                 or -2 if the buffer was too-small.
+
+   EXAMPLE
+       /* Encode a UTF-8 string from a wide UCS-4 character array. */
+       /* Returns utf8 strlen, -1 for bad ucs, -2 for small buffer */
+       /* This example is similar to the UCS4toUTF8() function. */
+
+       int32 ucs4_to_utf8(int32 *ucs_source, STRPTR utf8buffer,
+                                                    int32 utf8bufsize)
+       {
+           int32 nb, bytes_encoded = 0;
+
+           utf8bufsize --;  /* leave space for nul-terminator byte */
+
+           while( *ucs_source != 0 )
+           {
+               nb = IUtility->UTF8Encode(*ucs_source, utf8buffer,
+                                                      utf8bufsize,0);
+               if( nb < 0 )
+               {
+                   bytes_encoded = nb;  /* -1 or -2 */
+                   break;
+               }
+
+               ucs_source ++;
+               utf8bufsize -= nb;
+               bytes_encoded += nb;
+
+               /* bump output buffer ptr by encoding size. */
+               switch( nb )
+               {
+                   case 4:
+                         utf8buffer ++;
+                   case 3:
+                         utf8buffer ++;
+                   case 2:
+                         utf8buffer ++;
+                   case 1:
+                         utf8buffer ++;
+                   default:
+                         break;
+               }
+           }
+           (*utf8buffer) = '\0'; /* nul-terminate UTF8 encoded string. */
+
+           return(bytes_encoded);
+       }
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UTF8Stricmp
+
+   NAME
+       UTF8Stricmp -- UTF-8 encoded string case-insensitive compare. (V54)
+
+   SYNOPSIS
+       int32 result = UTF8Stricmp(CONST_STRPTR UTF8string1,
+                                      CONST_STRPTR UTF8string2);
+
+   FUNCTION
+       This function takes two UTF-8 encoded strings, decodes them to the
+       Universal Character Set (UCS) wide character values, one UCS-4
+       character at a time and compares them while ignoring case.
+       If the strings have different lengths, the shorter is treated as
+       if it were extended with zeros.
+
+   INPUTS
+       UTF8string1, UTF8string2 - UTF-8 encoded strings to be compared.
+
+   RESULTS
+       result -- relationship between UTF8string1 and UTF8string2
+                       <0 means UTF8string1 < UTF8string2
+                       =0 means UTF8string1 = UTF8string2
+                       >0 means UTF8string1 > UTF8string2
+
+   NOTES
+       This function will return MAXINT32 (0x7FFFFFFF) if either of the
+       UTF-8 strings failed to decode due to an invalid encoding.
+       This function uses the official unicode simple mode static case
+       folding mapping, it does not use locale.library data.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UTF8Strnicmp
+
+   NAME
+       UTF8Strnicmp -- UTF-8 string case-insensitive compare, length limited.
+                       (V54)
+   SYNOPSIS
+       int32 result = UTF8Strnicmp(CONST_STRPTR UTF8string1,
+                                       CONST_STRPTR UTF8string2,
+                                           int32 MaxUCSchars);
+   FUNCTION
+       This function takes two UTF-8 encoded strings, decodes them to the
+       Universal Character Set (UCS) wide character values, one UCS-4
+       character at a time and compares them while ignoring case,
+       up to MaxUCSchars.
+       If the strings have different lengths, the shorter is treated as
+       if it were extended with zeros.
+
+   INPUTS
+       UTF8string1, UTF8string2 -- UTF-8 encoded strings to be compared.
+       MaxUCSchars -- Number of decoded UCS-4 wide characters to compare.
+
+   RESULTS
+       result -- relationship between UTF8string1 and UTF8string2
+                       <0 means UTF8string1 < UTF8string2
+                       =0 means UTF8string1 = UTF8string2
+                       >0 means UTF8string1 > UTF8string2
+
+   NOTES
+       This function will return MAXINT32 (0x7FFFFFFF) if either of the
+       UTF-8 strings failed to decode due to an invalid encoding or the
+       supplied MaxUCSchars value was < 1.
+       This function uses the official unicode simple mode static case
+       folding mapping, it does not use locale.library data.
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/UTF8toUCS4
+
+   NAME
+       UTF8toUCS4 -- UTF-8 to UCS-4 string converter. (V54)
+
+   SYNOPSIS
+       int32 count = UTF8toUCS4(CONST_STRPTR utf8_source,
+                                     int32 *ucs4_destination,
+                                           int32 ucs4_destination_size,
+                                                  uint32 flags)
+   FUNCTION
+       UTF8toUCS4() decodes a UTF-8 encoded character string into wide
+       Universal Character Set (UCS) format.  The destination UCS-4
+       string will be correctly nul-terminated and no more than
+       'ucs4_destination_size' bytes will be stored in the buffer.
+
+   INPUTS
+       utf8_source -- Pointer to a NUL-terminated UTF-8 encoded string
+           which is to be converted to wide UCS-4 character format in
+           'ucs4_destination'. If this is NULL, an empty string is copied.
+
+       ucs4_destination -- Pointer to a buffer where the decoded
+           'utf8_source' characters are to be placed, in wide UCS-4 format.
+           If this is NULL, no data will be written, however the number of
+           wide UCS-4 characters that would have been stored will still be
+           calculated.
+
+       ucs4_destination_size -- Size (in bytes) of the 'ucs4_destination'
+           buffer. ( See NOTES below for more information. )
+
+       flags -- Decoder control option flags, or 0 for none.
+           The currently supported flags are;
+
+           UTF_INVALID_SUBST_FFFD -  Do not abort decoding when an
+               invalid UTF-8 byte sequence is encountered, instead,
+               substitute the invalid character sequence with the special
+               0xFFFD UCS-4 character. (inverse ? on square background)
+
+   RESULT
+       count -- The number of 32 bit wide UCS-4 characters that would have
+           been stored in the 'ucs4_destination' buffer,
+           (not including the \0 terminator).
+           Or -1 if the decoder aborted on an illegal UTF-8 sequence.
+           Or -2 if the buffer was too-small to hold the UCS-4 string.
+
+   NOTES
+       The UCS-4 format is 32 bit wide, big-endian and without any BOM.
+       Export strings only in UTF-8 format, UCS-4 is intended for use
+       within applications and should not appear externally.
+       The 'ucs4_destination_size' is the size of the buffer in bytes,
+       the size should be carefully calculated to prevent decoder failure.
+       If not known beforehand, a worst case buffer size can be determined
+       by either the Strlen() of the UTF-8 string, or by the actual number
+       of wide UCS-4 characters encoded, which can be determined by using
+       the UTF8Count() function, the second choice being more conservative.
+       As the buffer is filled by 32 bit wide characters, the byte size
+       needs to be four times larger, plus one more terminating int32.
+       EG:  dsize = (1+IUtility->Strlen(utf8_source)) * sizeof(int32);
+            dsize = (1+IUtility->UTF8Count(utf8_source,0) * sizeof(int32);
+
+   SEE ALSO
+       UTF8toUCS4(),  UCS4toUTF8(),  UTF8Strnicmp(), UTF8Stricmp(),
+       UTF8Count(),   UCS4Count(),   UTF8Encode(),   UTF8Decode(),
+       UCS4ToLower(), UCS4ToUpper(), UCS4Valid().
+
+utility.library/VASPrintf
+
+   NAME
+       VASPrintf -- Formatted output conversion; results are stored in
+                    dynamically allocated buffer. (V50)
+
+   SYNOPSIS
+       STRPTR buffer = VASPrintf(CONST_STRPTR format, APTR args);
+
+       STRPTR buffer = ASPrintf(CONST_STRPTR format, ...);
+
+   FUNCTION
+       VASPrintf() is an application of RawDoFmt() which stores the output
+       in a buffer which is dynamically allocated and extended as more
+       data needs to be stored.
+
+   INPUTS
+       format -- Format specifier; see exec.library/RawDoFmt() for options.
+
+       args -- Parameters to be read and formatted.
+
+   RESULT
+       buffer -- Pointer to a NUL-terminated string which contains the
+           formatted output, or NULL if there was not enough memory
+           available to create it. Use FreeVec() to release the buffer
+           when you no longer need it.
+
+   EXAMPLE
+       /* Format a string, print it, then release it again. */
+       STRPTR buffer;
+
+       buffer = ASPrintf("%ld + %ld = %ld",1,2,3);
+       if(buffer != NULL)
+       {
+           Printf("string is '%s'.\n",buffer);
+           FreeVec(buffer);
+       }
+
+   SEE ALSO
+       exec.library/RawDoFmt(), exec.library/FreeVec()
+
+utility.library/VSNPrintf
+
+   NAME
+       VSNPrintf -- Size-bounded formatted output conversion. (V50)
+
+   SYNOPSIS
+       int32 size = VSNPrintf(STRPTR buffer, int32 buffer_size,
+                              CONST_STRPTR format, APTR args);
+
+       int32 size = SNPrintf(STRPTR buffer, int32 buffer_size,
+                             CONST_STRPTR format, ... );
+
+   FUNCTION
+       VSNPrintf() is an application of RawDoFmt() which stores the output
+       in a buffer, making sure that the string is always properly
+       NUL-terminated and no more than 'buffer_size' characters are
+       written, including the terminating NUL byte.
+
+   INPUTS
+       buffer -- Pointer to a string which the formatted output
+           should be stored in. This can be NULL in which case no data
+           is written, the output size is still calculated, though.
+
+       buffer_size -- Size of the buffer.
+
+       format -- Format specifier; see exec.library/RawDoFmt() for
+           options.
+
+       args -- Parameters to be read and formatted.
+
+   RESULT
+       size -- Total length of the string that would have been
+           created by converting the parameters into a string.
+           This can be larger than the 'buffer_size' parameter,
+           which means that the formatted string was truncated.
+           The size includes the terminating NUL byte.
+
+   EXAMPLE
+       /* Format a string and check if the result is too large
+          for the destination buffer to hold. */
+       char buf[10];
+
+       if(SNPrintf(buf,sizeof(buf),"%ld + %ld = %ld",1,2,3) > sizeof(buf))
+           Printf("string was truncated.\n");
+
+   SEE ALSO
+       Strlcat(), Strlcpy(), exec.library/RawDoFmt()
+
+

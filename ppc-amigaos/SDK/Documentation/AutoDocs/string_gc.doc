@@ -1,0 +1,420 @@
+TABLE OF CONTENTS
+
+string.gadget/--datasheet--
+string.gadget/STRING_GetClass
+string.gadget/--datasheet--                       string.gadget/--datasheet--
+
+    NAME
+	string.gadget -- Single line string gadget.
+
+    SUPERCLASS
+	gadgetclass
+
+    REQUIRES
+	bevel.image
+
+    DESCRIPTION
+	The string gadget is used to create single line editable strings.
+
+    MOUSE CONTROL
+	Aside from being able to drag-select portions of the text in the gadget,
+	double and triple clicking in the text will also select a word or the entire
+	string accordingly. A popup menu is available accessed from the right mouse
+	button while the gadget is active, and this gives easy mouse access to the
+	Cut, Copy and Paste functions. This functionality is available when the mous
+e
+	pointer is within the string gadget when the right button is selected.
+
+    KEYBOARD CONTROLS
+	The following additional keyboard controls are available:
+
+	Home              = Navigate to start of string.
+	End               = Navigate to end of string.
+	Help              = Activate help.
+	Esc               = Abort edited string.
+	Insert            = Toggle insert mode.
+	F1 - F3           = Navigate to F1, F2 or F3 bookmark.
+
+	Ctrl + a          = Navigate to start of string.
+	Ctrl + h          = Backspace one character.
+	Ctrl + k          = Delete from cursor to end of string.
+	Ctrl + m          = Return.
+	Ctrl + w          = Delete one word to the left of the cursor.
+	Ctrl + u          = Delete from cursor to start of string.
+	Ctrl + x          = Clear entire string.
+	Ctrl + z          = Navigate cursor to end of string.
+	Ctrl + Left       = Select and navigate cursor left.
+	Ctrl + Right      = Select and navigate cursor right.
+	Ctrl + Home       = Select and navigate to start of string.
+	Ctrl + End        = Select and navigate to end of string.
+	Ctrl + Navigate   = Select while navigating.
+	Ctrl + Tab        = Complete current volume, assign or path.
+	                    Again for next. Shift to reverse direction.
+
+	Alt + Left        = Navigate to start of current or next word.
+	Alt + Right       = Navigate to start of current or previous word.
+	Alt + Delete      = Delete to end of current word or next word.
+	Alt + Backspace   = Delete to start of current word or previous word.
+
+	Shift + Left      = Navigate to start of string.
+	Shift + Right     = Navigate to end of string.
+	Shift + Delete    = Delete to end of string.
+	Shift + Backspace = Delete to start of string.
+	Shift + (F1 - F3) = Store cursor position as F1, F2 or F3 bookmark.
+
+	RCommand + G      = Toggle case from cursor to start of next word.
+	RCommand + g      = Toggle case on current character.
+	RCommand + c      = Copy selected or complete string to clipboard.
+	RCommand + C      = Copy & append selected or complete string to clipboard.
+	RCommand + x      = Cut selected or complete string to clipboard.
+	RCommand + v      = Paste from clipboard replacing selection or at cursor.
+	RCommand + V      = Paste from clipboard replacing the current string.
+	RCommand + i      = Increment the nearest decimal number.
+	RCommand + +      = Increment the nearest decimal number.
+	RCommand + d      = Decrement the nearest decimal number.
+	RCommand + -      = Decrement the nearest decimal number.
+	RCommand + a      = Select the complete string. Again to deselect.
+	RCommand + q      = Revert to original string.
+	RCommand + Q      = Revert to original string. Again for modified string.
+	RCommand + z      = Undo previous change only.
+	RCommand + Z      = Redo the last undo.
+	RCommand + #      = Convert nearest hexdecimal number to decimal.
+	RCommand + $      = Convert nearest decimal number to hexadecimal.
+	RCommand + Tab    = Complete current volume, assign or path.
+	                    Again for next. Shift to reverse direction.
+
+    METHODS
+	OM_NEW -- Create the string gadget. Passed to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_DISPOSE -- Disposes object and then passed to superclass.
+
+	OM_UPDATE -- Passed to superclass, options set then rendered.
+
+	OM_GET -- Obtain the value of an attribute.
+
+	GM_RENDER -- Renders the gadget imagery.
+
+	GM_HITTEST -- Overrides superclass, returns GMR_HITTEST.
+
+	GM_GOACTIVE -- Handles activation. Overrides the superclass.
+
+	GM_HANDLEINPUT -- Overrides superclass, all input processed.
+
+	GM_GOINACTIVE -- Deactivates input and then passed to superclass.
+
+	GM_DOMAIN -- Returns GDOMAIN_MINIMUM, GDOMAIN_NOMINAL and
+	             GDOMAIN_MAXIMUM dimensions.
+
+	GM_CLIPRECT -- Installs ClipRect for virtual group support.
+
+	GM_EXTENT -- Reports gadget rendering extent.
+
+    ATTRIBUTES
+	GA_Disabled (BOOL)
+	    Determines whether the string is disabled or not.
+	    Changing disable state will invoke GM_RENDER.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_TextAttr (struct TextAttr *)
+	    Text attribute for the font to use for the string.
+
+	    Defaults to RPort->Font which is often the screen or
+	    window font.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_ReadOnly (BOOL)
+	    Specifies the gadget be read-only. The frame will be
+	    rendered as recessed.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	GA_BackFill (struct Hook *)
+	    A layer backfill hook to provide a more complex
+	    background pattern. See InstallLayerHook() for
+	    more details about the backfill hook.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	GA_HintInfo (CONST_STRPTR)
+	    Specify the text to use as the hint info for this gadget.
+	    You can change this attribute at any time, and it will over-
+	    ride any text specified in the windows HintInfo array. See
+	    window.class autodoc for more information.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET).
+
+	STRINGA_LongVal (int32)
+	    This attribute tells string.gadget that this
+	    gadget is an integer string gadget and the new value
+	    of the integer is this attribute's value.
+
+	    It is recommended to use the much more powerful
+	    integer.gadget instead.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	STRINGA_TextVal (STRPTR)
+	    This attribute tells the string.gadget that this
+	    gadget is a plain string gadget. The attribute
+	    points to a string which the object copies into the
+	    gadget's current string value buffer.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET, OM_NOTIFY)
+
+	    When a string.gadget's value changes (usually because
+	    the user manipulated the gadget), an OM_NOTIFY
+	    message will be sent. The message will contain two
+	    attribute/value pairs, GA_ID and either STRINGA_LongVal
+	    or STRINGA_TextVal depending on what kind of gadget
+	    it is.
+
+	STRINGA_Buffer (STRPTR)
+	    Specifies the buffer used for displaying the
+	    value to be edited.
+
+	    Defaults to an internal buffer of size
+	    SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_WorkBuffer (STRPTR)
+	    Specifies the buffer to be used while the user
+	    edits the text in the gadget.
+
+	    Defaults to an internal buffer of size
+	    SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_UndoBuffer (STRPTR)
+	    Specifies the buffer to be used for undo while
+	    the user edits the text in the gadget.
+
+	    Defaults to an internal buffer of size
+	    SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_MaxChars (int16)
+	    The maximum number of characters the user can edit,
+	    including the nul-terminator character.
+
+	    Defaults to SG_DEFAULTMAXCHARS (currently 128 bytes).
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_BufferPos (int16)
+	    The current position of the cursor within the buffer
+	    from zero to the current length of the buffer string.
+
+	    Defaults to the end of the buffer string.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_DispPos (int16)
+	    The current position of the cursor within the
+	    displayed buffer area which can range from zero to
+	    the current length of the buffer string.
+
+	    Defaults to the end of the buffer string.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_AltKeyMap (struct KeyMap *)
+	    Alternative key map to use for this string gadget
+	    which will be passed to MapRawKey().
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_Font (struct TextFont *)
+	    The font to use for rendering text.
+
+	    Defaults to the RastPort font of the parent Window.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	STRINGA_Pens (uint32)
+	    Pen numbers packed as two uint16 values into a
+	    single uint32 value for rendering inactive gadget
+	    text. The upper uint16 is the background color and
+	    the lower uint16 is the text color.
+
+	    Defaults to TEXTPEN (text) and FOREGROUNDPEN.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_ActivePens (uint32)
+	    Pen numbers packed as two uint16 values into a
+	    single uint32 value for rendering active gadget
+	    text. The upper uint16 is the background color and
+	    the lower uint16 is the text color.
+
+	    Defaults to TEXTPEN (text) and BACKGROUNDPEN.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_HookType (uint16) (V41)
+	    Use one of the built-in string editing hooks:
+	        SHK_CUSTOM
+	        SHK_PASSWORD
+	        SHK_IPADDRESS
+	        SHK_FLOAT
+	        SHK_HEXADECIMAL
+	        SHK_TELEPHONE
+	        SHK_POSTALCODE (Not Implemented)
+	        SHK_AMOUNT (Not Implemented)
+	        SHK_UPPERCASE
+	        SHK_HOTKEY (V45)
+
+	    Defaults to SHK_CUSTOM.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_EditHook (struct Hook *)
+	    Custom string gadget edit hook. The hook is called
+	    with the following paramters:
+
+	    result = Edit( hook, sgw, msg )
+
+	    int32 Edit(struct Hook * hook, struct SGWork * sgw,
+	               uint32 * msg);
+
+	    See <intuition/sghooks.h> for more details on how
+	    to implement string gadget edit hooks.
+
+	    Defaults to no edit hook.
+
+	    Applicability is (OM_NEW)
+
+	STRINGA_EditModes (uint32)
+	    Value taken from flags defined in
+	    <intuition/sghooks.h> for initial editing modes.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_ReplaceMode (BOOL)
+	    This flag corresponds to the SGM_REPLACE flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_FixedFieldMode (BOOL)
+	    This flag corresponds to the SGM_FIXEDFIELD flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_NoFilterMode (BOOL)
+	    This flag corresponds to the SGM_NOFILTER flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_ExitHelp (BOOL)
+	    This flag corresponds to the SGM_EXITHELP flag
+	    defined in <intuition/sghooks.h>.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_Justification (uint32)
+	    Takes the values GACT_STRINGCENTER, GACT_STRINGRIGHT
+	    and GACT_STRINGLEFT.
+
+	    Defaults to GACT_STRINGLEFT.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	STRINGA_AllowMarking (BOOL) (V45)
+	    Enable or disable marking.
+
+	    Default to TRUE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_Mark (uint32) (V45)
+	    Mark the given block. The upper uint16 of the uint32
+	    contains the start position and the lower uint16 the
+	    end position. If one or both values are -1 (0xFFFF)
+	    the current block will be unmarked.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_GetBlockPos (uint32)
+	    Deprecated tag. Use STRINGA_Mark instead.
+
+	    Applicability is (OM_GET)
+
+	STRINGA_MinVisible (uint16) (V41)
+	    Set the minimum number of characters that should be
+	    visible for a GDOMAIN_MIMIMUM domain size. Nominal
+	    domain sizes to twice this minimum. This is a handy
+	    addition to ensure a mimimum number characters will
+	    be visible in a string gadget.
+
+	    Defaults to 4.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	STRINGA_MarkActive (BOOL) (V50)
+	    Mark contents of gadget when it is made  active. This
+	    includes the use of ActivateGadget() and friends, 
+	    activating via keyboard short cut, and via tab cycling.
+	    When the user clicks into the gadget with the mouse 
+	    the mark active status is cleared to prevent interference
+	    with editing the gadget contents. Normal double clicking 
+	    to mark the contents still functions in this context.
+	    Use this option wisely. It should only be used on data 
+	    that is sure to change under user control. 
+	    A single keypress in an  active gadget will replace the 
+	    whole string data.
+	    Be warned.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	STRINGA_RelVerifySpecial (BOOL)
+	    Send IDCMP_GADGETUP whenever the gadget goes
+	    inactive. Do not use this tag for ENDGADGET like
+	    gadgets.
+
+	STRINGA_DisablePopup (BOOL)
+	    Disable the right mouse button menu.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+    NOTES
+	Up to V45 the string.gadget was a ROM strgclass wrapper.
+
+string.gadget/STRING_GetClass                   string.gadget/STRING_GetClass
+
+    NAME
+	STRING_GetClass -- Gets pointer to the string class.
+
+    SYNOPSIS
+	Class * class = STRING_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "string.gadget" public class ID instead.
+
+    RESULT
+	class - Pointer to the string class.
+
+

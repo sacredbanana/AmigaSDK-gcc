@@ -1,0 +1,1346 @@
+TABLE OF CONTENTS
+
+Picasso96API.library/--background--
+Picasso96API.library/--multi-buffering--
+Picasso96API.library/p96AllocBitMap
+Picasso96API.library/p96AllocModeListTagList
+Picasso96API.library/p96BestModeIDTagList
+Picasso96API.library/p96CloseScreen
+Picasso96API.library/p96EncodeColor
+Picasso96API.library/p96FreeBitMap
+Picasso96API.library/p96FreeModeListTagList
+Picasso96API.library/p96GetBitMapAttr
+Picasso96API.library/p96GetBoardDataTagList
+Picasso96API.library/p96GetModeIDAttr
+Picasso96API.library/p96GetRTGDataTagList
+Picasso96API.library/p96LockBitMap
+Picasso96API.library/p96LockBitMapToBoard
+Picasso96API.library/p96OpenScreenTagList
+Picasso96API.library/p96PIP_Close
+Picasso96API.library/p96PIP_GetTagList
+Picasso96API.library/p96PIP_OpenTagList
+Picasso96API.library/p96PIP_SetTagList
+Picasso96API.library/p96ReadPixel
+Picasso96API.library/p96ReadPixelArray
+Picasso96API.library/p96ReadTrueColorData
+Picasso96API.library/p96RectFill
+Picasso96API.library/p96RequestModeIDTagList
+Picasso96API.library/p96UnlockBitMap
+Picasso96API.library/p96UnlockBitMapFromBoard
+Picasso96API.library/p96WritePixel
+Picasso96API.library/p96WritePixelArray
+Picasso96API.library/p96WriteTrueColorData
+
+
+Picasso96API.library/--background--                             Picasso96API.library/--background--
+
+   The Picasso96API.library was used to provide programmers with the
+   extra functionality needed to directly use HiColor and TrueColor
+   bitmaps. Most of the functions supplied were quite similar to the
+   ones that graphics.library offered except that they allow the use of
+   RGB values where graphics.library would need a pen value.
+
+   Starting with graphics.library V54, the vast majority of Picasso96
+   is now redundant. The graphics.library has been expanded and extended
+   to seemlessly handle the traditional native (ECS, AGA) chip sets as
+   well as modern graphics cards (RTG).
+
+   The only functionality not incorporated into graphics.library has been
+   the Picture-In-Picture (PIP) support. Modern graphics cards don't
+   support PIP and instead use techniques like composited video which is
+   now supported in graphics.library directly.
+
+Picasso96API.library/--multi-buffering--                   Picasso96API.library/--multi-buffering--
+
+   PIP windows may be double or triple-buffered. This is highly
+   recommended, because using only a single PIP buffer creates
+   undesirable visual distortions as the monitor is outputting the
+   pixels of the visible PIP BitMap while at the same time the BitMap
+   is being modified by the application.
+
+   When using multibuffering, the application opens a PIP by specifying
+   a value >1 with the tag P96PIP_NumberOfBuffers. In case there is not
+   enough free video memory available to allocate all requested buffers,
+   or the hardware or driver does not support multibuffering, a PIP with
+   fewer buffers may be opened. After the PIP has opened, the application
+   must check using p96PIP_GetTags() how many buffers the allocated PIP
+   has. If the requested number of buffers could not be allocated, the
+   application should fall back to using fewer buffers.
+
+   When a PIP with two or more buffers was opened, the application can
+   control which buffer it wants to work on and which buffer it wants to
+   be visible on the screen. This is done by using two variables which
+   are associated with the PIP: WorkBuffer and VisibleBuffer. These
+   can take a value between 0 and NumberOfBuffers-1 and can be accessed via
+   p96PIP_GetTags and p96PIP_SetTags(). The application must ensure that it
+   does not work on the same buffer as the visible buffer, e.g. WorkBuffer
+   must never be the same as VisibleBuffer, except when using only a single
+   buffer of course. When the PIP is Opened with more than one buffer, the
+   value of VisibleBuffer is initialized to 0, and the value of WorkBuffer
+   is initialized to 1.
+
+   There is a third, read-only variable called DisplayedBuffer, which is
+   used for the purposes of synchronising to the monitor's refresh cycle.
+   When the application completed rendering into the WorkBuffer and wants
+   to make the newly rendered image visible on the screen, it changes the
+   value of VisibleBuffer to the current WorkBuffer. However this could
+   happen while the monitor is in the middle of refreshing (drawing) the
+   previous buffer, and the new VisibleBuffer will only be displayed after
+   the monitor's refresh cycle reached the bottom of the screen. When this
+   happens, the value of DisplayedBuffer will change to the value of
+   VisibleBuffer. The application should use the value of DisplayedBuffer
+   to ensure that it does not try to change the buffers at the wrong time.
+
+   Example (using triplebuffered PIP):
+   -----------------------------------
+   struct Window *win =
+     p96PIP_OpenTags( { P96PIP_SourceFormat,   ... },
+                      { P96PIP_SourceWidth,    ... },
+                      { P96PIP_SourceHeight,   ... },
+                      { P96PIP_NumberOfBuffers, 3  },
+                      { TAG_END, TAG_DONE };
+   while(win) {
+     uint32 bmlock, numbuffers=0;
+     struct BitMap *bm = NULL;
+     struct RenderInfo ri;
+     p96PIP_GetTags(win, { P96PIP_NumberOfBuffers, &numbuffers },
+                         { P96PIP_SourceBitMap,    &bm         },
+                         { TAG_END, TAG_DONE } );
+     if(bm) {
+       if( (BMLock = p96LockBitMap(bm, &ri, sizeof(ri))) ) {
+
+         // render into BitMap here
+         ...
+
+         // if more than 1 buffer, we use multibuffering
+         if(numbuffers>1) {
+           uint32 WorkBuf, DispBuf, NextWorkBuf;
+
+           // Get the current Work and Displayed buffers
+           p96PIP_GetTags(win, { P96PIP_WorkBuffer,      &WorkBuf },
+                               { P96PIP_DisplayedBuffer, &DispBuf },
+                               { TAG_END, TAG_DONE } );
+
+           // calculate next work buffer we will use
+           NextWorkBuf = (WorkBuf+1) % numbuffers;
+
+           // if next work buffer is on display, wait for end of refresh
+           if(NextWorkBuf==DispBuf) WaitTOF();
+
+           // now we can swap the buffers (make current work buffer the
+           // visible buffer, and change to next work buffer)
+           p96PIP_SetTags(win, { P96PIP_VisibleBuffer, WorkBuf     },
+                               { P96PIP_WorkBuffer,    NextWorkBuf },
+                               { TAG_END, TAG_DONE} );
+         }
+         p96UnlockBitMap(bm, bmlock);
+       }
+     }
+   }
+
+   The example above opens a PIP requesting 3 buffers. In case the opened
+   PIP only has 1 buffer (which can happen if the hardware does not support
+   multibuffering or not enough memory was available for more buffers, then
+   the program simply keeps rendering into the same buffer. If the PIP was
+   opened with more than 1 buffer, then the work buffer is incremented until
+   it wraps around to 0 again (depending on the number of buffers) and the
+   value of DisplayedBuffer is checked to ensure that the program waits for
+   the completion of a monitor refresh cycle, in case the next work buffer
+   it wants to render into is currently being displayed on the screen. This
+   generic code will also work in case only 2 buffers could be allocated due
+   to low memory situations or a hardware limitation.
+
+Picasso96API.library/p96AllocBitMap                             Picasso96API.library/p96AllocBitMap
+
+   NAME
+       p96AllocBitMap -- Allocate a Picasso96 BitMap and its graphics memory
+
+       - DEPRECATED - use Graphics's AllocBitMapTags() - DEPRECATED -
+
+   SYNOPSIS
+       bitmap=p96AllocBitMap(SizeX, SizeY, Depth, Flags, Friend, RGBFormat)
+
+       struct BitMap *p96AllocBitMap(ULONG, ULONG, ULONG, ULONG,
+                        struct BitMap *, RGBFTYPE);
+
+   FUNCTION
+       Does the same as graphics.library/AllocBitMap except that the
+       result is a Picasso96 chunky, hicolor or truecolor bitmap.
+
+   INPUTS
+       SizeX = width in pixels
+       SizeY = Height in pixels
+       Depth = Depth, valid values are: 1-8, 15, 16, 24, 32
+       Flags = same as in graphics.library/AllocBitMap plus:
+               BMF_USERPRIVATE which returns a static fast memory user
+               bitmap that does not need to be locked for each access as
+               it will never move or be accessed by graphics board hardware.
+       Friend = pointer to another bitmap, or NULL. If bitmap is supplied,
+                the bitmap will be allocated with the same color format.
+       RGBFormat = used to select the color format when no friend_bitmap
+                   is supplied
+
+   NOTE
+       From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+       Deprecated.
+
+   SEE ALSO
+       p96FreeBitMap(), graphics.library/AllocBitMap()
+
+Picasso96API.library/p96AllocModeListTagList           Picasso96API.library/p96AllocModeListTagList
+
+   NAME
+       p96AllocModeListTagList -- allocate mode list
+       p96AllocModeListTags -- varargs stub for p96AllocModeListTagList
+
+   SYNOPSIS
+       list = p96AllocModeListTagList(Tags)
+
+       list = p96AllocModeListTags(Tag, ...)
+
+       struct List *p96AllocModeListTagList(struct TagItem *)
+       struct List *p96AllocModeListTags(ULONG Tag, ...)
+
+   FUNCTION
+       p96AllocModeListTags() creates a list of modes according to the
+       supplied tags. This list is the same as internally used in
+       p96RequestModeIDTagList(). The user can filter this list to reject
+       any unwanted modes before feeding the resulting list to
+       p96RequestModeIDTagList(). Use p96FreeModeListTagList() to deallocate
+       the list.
+
+   INPUTS
+       Same tags as p96RequestModeIDTagList()
+
+   RESULT
+       list = modes for p96RequestModeIDTagList().
+
+   SEE ALSO
+       p96FreeModeListTagList(), p96RequestModeIDTagList()
+
+Picasso96API.library/p96BestModeIDTagList                 Picasso96API.library/p96BestModeIDTagList
+
+   NAME
+       p96BestModeIDTagList -- find DisplayID matching requested
+       p96BestModeIDTags -- varargs stub for p96BestModeIDTagList
+
+   SYNOPSIS
+       DisplayID = p96BestModeIDTagList(Tags)
+
+       DisplayID = p96BestModeIDTags(Tag, ...)
+
+       ULONG p96BestModeIDTagList(struct TagItem *)
+       ULONG p96BestModeIDTags(ULONG Tag, ...)
+
+   FUNCTION
+       p96BestModeIDTagList searches the DisplayInfoDatabase for a DisplayID
+       which matches the user supplied requirements best.
+
+   INPUTS
+       Tags = any of:
+           P96BIDTAG_NominalWidth       requested width
+           P96BIDTAG_NominalHeight      requested height
+           P96BIDTAG_Depth              requested depth
+           P96BIDTAG_FormatsAllowed     RGBFormats which are ok
+           P96BIDTAG_FormatsForbidden   RGBFormats which have to be rejected
+           P96BIDTAG_VideoCompatible    set TRUE to allow only modes that
+                                        are video compatible (e.g. Pablo)
+           P96BIDTAG_PabloIVCompatible  set TRUE to allow only modes that
+                                        can be used for output on PabloIV
+           P96BIDTAG_PalomaIVCompatible set TRUE to allow only modes that
+                                        can display PalomaIV input
+
+   RESULT
+       DisplayID = a valid DisplayID or INVALID_ID
+
+   SEE ALSO
+       p96RequestModeIDTagList()
+
+Picasso96API.library/p96CloseScreen                             Picasso96API.library/p96CloseScreen
+
+   NAME
+       p96CloseScreen -- Close a Picasso96API screen
+
+   SYNOPSIS
+       success = p96CloseScreen(screen)
+
+       BOOL p96CloseScreen(struct Screen *)
+
+   FUNCTION
+       Closes a screen opened with p96OpenScreenTagList(). The main
+       difference to intuition.library/CloseScreen is, that this
+       function also deallocates extra handles and structures allocated
+       by p96OpenScreenTagList() which are used internally.
+
+   INPUTS
+       screen = pointer to a Picasso96API-screen.
+
+   NOTE
+       DO NEVER CALL intuition.library's CloseScreen() function with screens
+       that have been opened by p96OpenScreenTagList() !!!
+
+   RESULT
+       success = returns TRUE (1) if screen could be successfully closed.
+
+   SEE ALSO
+       p96OpenScreenTagList(), intuition.library/CloseScreen()
+
+Picasso96API.library/p96EncodeColor                             Picasso96API.library/p96EncodeColor
+
+   NAME
+       p96EncodeColor -- Convert color value to destination RGB format
+
+   SYNOPSIS
+       value=p96EncodeColor(RGBFormat, Color)
+
+       ULONG p96EncodeColor(RGBFTYPE, ULONG);
+
+   FUNCTION
+       Converts an ARGB color value to the specified RGB format.
+
+   INPUTS
+       RGBFormat = RGB format to convert the color to.
+       Color = 32 bit ARGB color value.
+
+   RESULT
+       Value = representation value for the given color value in
+               the target RGB format.
+
+   SEE ALSO
+       --colors--
+
+Picasso96API.library/p96FreeBitMap                               Picasso96API.library/p96FreeBitMap
+
+   NAME
+       p96FreeBitMap -- Free a Picasso96 BitMap
+
+       - DEPRECATED - use Graphics's FreeBitMap() - DEPRECATED -
+
+   SYNOPSIS
+       p96FreeBitMap(bm);
+
+       void p96FreeBitMap(struct BitMap *)
+
+   FUNCTION
+       Frees BitMap and associated graphics memory
+
+   INPUTS
+       bm = a pointer to a BitMap structure. Passing NULL is ok (a NOP).
+
+   NOTE
+       From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+       Deprecated.
+
+   SEE ALSO
+       p96AllocBitMap()
+
+Picasso96API.library/p96FreeModeListTagList             Picasso96API.library/p96FreeModeListTagList
+
+   NAME
+       p96FreeModeList -- free mode list
+
+   SYNOPSIS
+       p96FreeModeList(ModeList)
+
+       void p96FreeModeList(struct List *)
+
+   FUNCTION
+       p96FreeModeList() deallocates the entire list allocated by a
+       previous call to p96AllocModeListTagList().
+
+   INPUTS
+       List returned by p96AllocModeListTagList().
+
+   SEE ALSO
+       p96AllocModeListTagList()
+
+Picasso96API.library/p96GetBitMapAttr                         Picasso96API.library/p96GetBitMapAttr
+
+   NAME
+       p96GetBitMapAttr -- Returns information about a Picasso96 BitMap
+
+   SYNOPSIS
+       value=p96GetBitMapAttr(bm, attribute_number)
+
+       ULONG p96GetBitMapAttr(struct BitMap *, ULONG)
+
+   FUNCTION
+       Query function to get information about a Picasso96 BitMap, similar
+       to graphics.library/GetBitMapAttr.
+
+   INPUTS
+       bm = pointer to a valid Picasso96 BitMap
+       attribute_number = one of these:
+           P96BMA_WIDTH          returns the width of the bitmap in pixels
+           P96BMA_HEIGHT         returns the height of the bitmap in lines
+           P96BMA_DEPTH          returns number of memory bits per pixel
+           P96BMA_BYTESPERPIXEL  returns number of bytes per pixel
+           P96BMA_BITSPERPIXEL   returns number of valid bits per pixel
+           P96BMA_RGBFORMAT      returns the pixel format of the bitmap
+           P96BMA_ISP96          returns TRUE if the bitmap is a P96 one
+
+       you must have locked the bitmap with p96LockBitMap() before calling
+       p96GetBitMapAttr() with one of the following attributes, or you may
+       get incorrect results!
+
+           P96BMA_BYTESPERROW    returns BytesPerRow of the supplied bitmap
+           P96BMA_MEMORY         returns current memory location
+           P96BMA_ISONBOARD      returns TRUE if the bitmap is on the board
+           P96BMA_BOARDMEMBASE   returns the board's memory base address if
+                                         the bitmap is on a board
+           P96BMA_BOARDIOBASE    returns the base address of the board's IO
+                                         registers if the bitmap is on a board
+           P96BMA_BOARDMEMIOBASE returns the base address of the board's MEMIO
+                                         registers if the bitmap is on a board
+
+   RESULT
+       value = result of the query
+
+   SEE ALSO
+       graphics.library/GetBitMapAttr()
+
+Picasso96API.library/p96GetBoardDataTagList             Picasso96API.library/p96GetBoardDataTagList
+
+   NAME
+       p96GetBoardDataTagList -- Returns information about a Picasso96 board
+       p96GetBoardDataTags -- Varargs stub for p96GetBoardDataTagList
+
+   SYNOPSIS
+       value=p96GetBoardDataTagList(BoardNum, taglist)
+
+       LONG p96GetBoardDataTagList(ULONG, struct TagItem *);
+
+       value=p96GetBoardDataTags(BoardNum, Tag1, ...)
+
+       LONG p96GetBoardDataTags(ULONG, ULONG, ... );
+
+   FUNCTION
+       Query function to get information about a Picasso96 board. You
+       can get some constants, strings and variables you can use to
+       figure out the configuration of the host system and run time
+       information on which you should not depend too heavily.
+
+   INPUTS
+       BoardNum = ordinal number of the Picasso96 board to query
+       taglist: the ti_Data must hold a pointer to a variable to hold
+                the resulting value or pointer.
+           P96BD_BoardName       returns a string pointer to the board name
+           P96BD_ChipName        the same thing for the VGA chip
+           P96BD_TotalMemory     the total number of bytes available for
+                                 bitmaps
+           P96BD_FreeMemory      the number of currently free bytes (this
+                                 function does not lock to gather this
+                                 information so it could change before
+                                 you get the result; use only for tools
+                                 that display free memory and the like)
+           P96BD_LargestFreeMemory   returns the size of the largest
+                                 chunk of free memory
+           P96BD_MonitorSwitch   returns the state of the monitor switch
+                                 of the board: 0 = Amiga signal is shown,
+                                 otherwise board signal is supplied to the
+                                 output connector. Does not necessarily work
+                                 with each and every board.
+           P96BD_RGBFormats      gets the RGB format flag field with all
+                                 usable RGBFF_#?'s for that board
+           P96BD_MemoryClock     queries the current memory clock of the
+                                 board (this should only be used by debug
+                                 programs to help developers to track down
+                                 problems)
+
+       The following new tags (V2.354) query DDC information from the monitor
+       attached to the board:
+
+           P96BD_MonitorVendorID
+           P96BD_MonitorProduct
+           P96BD_MonitorProductID
+           P96BD_MonitorHSyncMin
+           P96BD_MonitorHSyncMax
+           P96BD_MonitorVSyncMin
+           P96BD_MonitorVSyncMax
+           P96BD_MonitorDotClockMin
+           P96BD_MonitorDotClockMax
+           P96BD_MonitorInputType
+           P96BD_MonitorEDIDVer
+           P96BD_MonitorEDIDRev
+           P96BD_MonitorDisplayWidth
+           P96BD_MonitorDisplayHeight
+
+   RESULT
+       value = number of successfully processed tags or -1 for an invalid
+               board number
+
+   SEE ALSO
+       p96GetRTGDataTagList()
+
+Picasso96API.library/p96GetModeIDAttr                         Picasso96API.library/p96GetModeIDAttr
+
+   NAME
+       p96GetModeIDAttr -- Returns information about a Picasso96 mode
+
+   SYNOPSIS
+       value=p96GetModeIDAttr(DisplayID, attribute_number)
+
+       ULONG p96GetModeIDAttr(ULONG, ULONG)
+
+   FUNCTION
+       Query function to get information about a Picasso96 mode.
+       As you can not get all information about a display mode by calling
+       graphics.library/GetDisplayInfoData, this function supplies some
+       attributes which may be of some interest.
+
+   INPUTS
+       DisplayID = a DisplayID, preferably a Picasso96 one
+       attribute_number = one of these:
+           P96IDA_WIDTH          returns the standard width of the mode
+                                         in pixels
+           P96IDA_HEIGHT         returns the standard height of the mode
+                                         in lines
+           P96IDA_DEPTH          returns number of memory bits per pixel
+           P96IDA_BYTESPERPIXEL  returns number of bytes per pixel
+           P96IDA_BITSPERPIXEL   returns number of valid bits per pixel
+           P96IDA_RGBFORMAT      returns the pixel format of the mode
+           P96IDA_ISP96          returns TRUE if supplied mode is a P96 one
+           P96IDA_BOARDNUMBER    returns number of the Picasso96 board
+                                         that belongs to this mode
+           P96IDA_STDBYTESPERROW returns number of bytes per row for
+                                         screens using STDSCREENWIDTH
+           P96IDA_BOARDNAME      returns name of the Picasso96 board
+                                         that belongs to this mode
+           P96IDA_COMPATIBLEFORMATS
+                                 returns the flags of all RGBFormats that
+                                         can be accessed simultaneously to
+                                         a screen with this mode without
+                                         reconfiguring the memory access
+                                         (for unlocked direct access checks)
+           P96IDA_VIDEOCOMPATIBLE
+                                 returns set TRUE to allow only modes that
+                                         are video compatible (e.g. Pablo)
+
+           P96IDA_PABLOIVCOMPATIBLE
+                                 returns TRUE if this mode can generate
+                                         video output on PabloIV (PicassoIV
+                                         add-on module)
+
+           P96IDA_PALOMAIVCOMPATIBLE
+                                 returns TRUE if PalomaIV (PicassoIV add-on
+                                         module) can create a video overlay
+                                         on this mode
+
+   retval
+       value = retval of the query or -1 for an invalid query id
+
+   SEE ALSO
+       p96GetBitMapAttr(), graphics.library/GetDisplayInfoData()
+
+Picasso96API.library/p96GetRTGDataTagList                 Picasso96API.library/p96GetRTGDataTagList
+
+   NAME
+       p96GetRTGDataTagList -- Get global informations about Picasso96
+       p96GetRTGDataTags -- Varargs stub for p96GetRTGDataTagList
+
+   SYNOPSIS
+       value=p96GetRTGDataTagList(taglist)
+
+       LONG p96GetRTGDataTagList(struct TagItem *);
+
+       value=p96GetRTGDataTags(Tag1, ...)
+
+       LONG p96GetRTGDataTags(ULONG, ... );
+
+   FUNCTION
+       Query function to get information about global Picasso96 RTG
+       variables. Currently there is only one value which might be of
+       general interest, others may follow.
+
+   INPUTS
+       taglist: the ti_Data must hold a pointer to a variable to hold
+                the resulting value or pointer.
+           P96RD_NumberOfBoards    returns the number of currently
+                                   installed and active graphics boards
+
+   RESULT
+       value = number of successfully processed tags
+
+   SEE ALSO
+       p96GetBoardDataTagList()
+
+Picasso96API.library/p96LockBitMap                               Picasso96API.library/p96LockBitMap
+
+   NAME
+       p96LockBitMap -- Lock BitMap against relocation
+
+       - DEPRECATED - use Graphics's LockBitMapTags() - DEPRECATED -
+
+   SYNOPSIS
+       lock = p96LockBitMap(bm, buf, size)
+
+       LONG p96LockBitMap(struct BitMap *, UBYTE *, ULONG)
+
+   FUNCTION
+       This function prevents the Picasso96 system from moving the
+       BitMap to another location. Use this function only to protect
+       direct accesses to the BitMap memory. Call p96UnlockBitMap as
+       soon as you are done. Never hold the lock for longer than about
+       one second as all screen switching is disabled during you hold
+       this lock!
+
+       During holding this lock, your task or process will get a higher
+       priority to help avoiding deadlocks.
+
+   INPUTS
+       bm = Picasso96 BitMap to lock
+       buf = pointer to a RenderInfo struct buffer which will be filled
+       size = size of the buffer for the RenderInfo
+
+   RESULT
+       lock = handle to the lock. Do not try to interpret it in any way!
+
+   NOTE
+       Every call to this function MUST be matched with a call to
+       p96UnlockBitMap or your system will be blocked indefinetely!
+       Using functions of graphics.library or Picasso96API.library
+       while holding the lock is possible but should be avoided as
+       these functions lock the touched bitmaps internally.
+
+       From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+       Deprecated.
+
+   SEE ALSO
+       p96UnlockBitMap()
+
+Picasso96API.library/p96LockBitMapToBoard                 Picasso96API.library/p96LockBitMapToBoard
+
+    NAME
+        p96LockBitMapToBoard -- Locks a BitMap to a specific board
+
+        - DEPRECATED - use Graphics's LockBitMapToBoardTags() - DEPRECATED -
+
+    SYNOPSIS
+        success = p96LockBitMapToBoard(bm, board_number, buf, size)
+
+        BOOL p96LockBitMapToBoard(struct BitMap *,
+						ULONG board_number, UBYTE *, ULONG)
+
+    FUNCTION
+        This function is similar to p96LockBitMap(), except that it will lock
+        a bitmap to a specific board. If the bitmap is currently not on the
+        specified board, then this will attempt to copy it accross This function
+        is intended only for 3D drivers which need to temporarily lock a buffer
+        in graphics memory. As such, it does NOT wait for blitter and does
+        NOT lock the graphics card so that the CPU can access the bitmap.
+        Call p96UnlockBitMapFromBoard() as soon as you are done.
+
+    INPUTS
+        bm = Picasso96 BitMap to lock
+        board_number = The number of the board to lock the bitmap to
+        buf = pointer to a RenderInfo struct buffer which will be filled
+        size = size of the buffer for the RenderInfo
+
+    RESULT
+        success = TRUE if successful; FALSE if failed (e.g., could not move the
+            bitmap to the specifiec board)
+
+    NOTE
+        From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+        Deprecated.
+
+    SEE ALSO
+        p96UnlockBitMapFromBoard()
+
+Picasso96API.library/p96OpenScreenTagList                 Picasso96API.library/p96OpenScreenTagList
+
+   NAME
+       p96OpenScreenTagList -- Open a Picasso96API screen
+
+   SYNOPSIS
+       screen = p96OpenScreenTagList(Tags)
+
+       struct Screen *p96OpenScreenTagList(struct TagItem *)
+
+   FUNCTION
+       Opens a Picasso96API screen. The main difference to
+       intuition.library/OpenScreen is that extra handles an structures
+       for Picasso96API internal use are allocated and more options are
+       offered, which still are to be implemented.
+
+   INPUTS
+       Tags = any of these which behave like OpenScreen tags:
+           P96SA_Left
+           P96SA_Top
+           P96SA_Width
+           P96SA_Height
+           P96SA_Depth
+           P96SA_DetailPen
+           P96SA_BlockPen
+           P96SA_Title
+           P96SA_Colors
+           P96SA_ErrorCode
+           P96SA_Font
+           P96SA_SysFont
+           P96SA_Type
+           P96SA_BitMap
+           P96SA_PubName
+           P96SA_PubSig
+           P96SA_PubTask
+           P96SA_DisplayID
+           P96SA_DClip
+           P96SA_ShowTitle
+           P96SA_Behind
+           P96SA_Quiet
+           P96SA_AutoScroll
+           P96SA_Pens
+           P96SA_SharePens
+           P96SA_BackFill
+           P96SA_Colors32
+           P96SA_VideoControl
+
+       and:
+           P96SA_RGBFormat     RGBFormat for screen (which must be
+                               compatible to a given P96SA_DisplayID).
+
+           P96SA_NoSprite      Do not show mouse sprite (BOOL).
+
+           P96SA_NoMemory      Dumb render screen without backup memory.
+                               Drawing on this Screen will only be done
+                               if it is located in memory of a graphics
+                               card (use ScreenToFront()) and anything
+                               drawn will be discarded when the screen
+                               leaves the card.
+
+           P96SA_RenderFunc    Custom hook function, will be called when
+                               screen is put to card. Usefull with no
+                               memory render screens (P96SA_NoMemory).
+
+           P96SA_SaveFunc      Will be called when screen has to leave card.
+                               Usefull with no memory render screens.
+
+           P96SA_Alignment     Screen base address on board and in memory
+                               will be aligned to argument which must be a
+                               power of two, e.g. 4096, 32768 etc...
+                               This is mainly for MMU based emulator drivers,
+                               which use a virtual frame buffer e.g. for
+                               ShapeShifter.
+
+           *** NEW *** Not yet implemented! ***
+           P96SA_DirectAccess  For drivers that need direct access to the
+                               VGA hardware. This also implies RenderFunc
+                               and SaveFunc in which you will have to save
+                               or write your video memory and register
+                               settings. You will have to allocate and use
+                               your own screen backup memory. You will
+                               always get a Picasso96 compatible setting
+                               when activated again.
+                               ti_Data points a variable to hold a pointer
+                               to the direct access handle.
+                               Do not use this unless really necessary!
+
+   RESULT
+       screen = pointer to a Picasso96API-screen or NULL for failure.
+
+   SEE ALSO
+       intuition.library/OpenScreen()
+
+Picasso96API.library/p96PIP_Close                                 Picasso96API.library/p96PIP_Close
+
+   NAME
+       p96PIP_Close -- Close a Picasso96API PIP window
+
+   SYNOPSIS
+       success = p96PIP_Close(Window)
+
+       BOOL p96PIP_Close(struct Window *);
+
+   FUNCTION
+       Closes a Picasso96API PIP window (and only these!).
+
+   INPUTS
+       Window - pointer to PIP window created by p96PIP_OpenTagList,
+                may be NULL which is a no-op.
+
+   RESULT
+       success - TRUE if successful, FALSE otherwise
+
+   SEE ALSO
+       p96PIP_OpenTagList
+
+Picasso96API.library/p96PIP_GetTagList                       Picasso96API.library/p96PIP_GetTagList
+
+   NAME
+       p96PIP_GetTagList -- Get information about a Picasso96API PIP window
+       p96PIP_GetTags -- Varargs stub for p96PIP_GetTagList
+
+   SYNOPSIS
+       total = p96PIP_GetTagList(Window, TagItems)
+
+       ULONG p96PIP_GetTagList(struct Window *, struct TagItem *);
+
+       total = p96PIP_GetTags(Window, Tag1, ...)
+
+       ULONG p96PIP_GetTags(struct Window *, ULONG, ... );
+
+   FUNCTION
+       p96PIP_GetTagList provides a way to query certain properties from a
+       Picasso96API PIP window.
+
+   INPUTS
+       Window   - pointer to Picasso96API PIP window,
+       TagItems - currently any of these:
+           P96PIP_SourceBitMap - pointer to the bitmap containing the source
+                                 data, created by p96PIP_OpenTagList(). You
+                                 can use this bitmap similar to other Picasso96
+                                 bitmaps, like rendering into it using system
+                                 graphics functions.
+
+           P96PIP_SourceRPort  - pointer to an unclipped rastport for the
+                                 source bitmap. More convenient if you want to
+                                 use rastport based graphics functions.
+
+           P96PIP_Brightness   - unsigned long that determines the brightness
+                                 control value of the PIP. 0x00000000 stands
+                                 for the darkest (default) and 0xffffffff for
+                                 the brightest value.
+
+           P96PIP_ColorKeyPen  - pen of the colorkey background. The PIP is
+                                 only visible in parts of the window filled
+                                 with this color. The default window backfill
+                                 routine fills the window using this pen.
+
+                                 Starting with V53.5 this tag will return -1
+                                 when the PIP is on a CLUT screen.
+
+           P96PIP_ColorKeyARGB - (V53.5) ARGB value of the colorkey
+                                 background. The PIP is only visible in parts
+                                 of the window filled with this color. The
+                                 default window backfill routine fills the
+                                 window using this pen.
+
+                                 This is the equivalent of P96PIP_ColorKeyPen
+                                 for non-CLUT screens.
+
+           P96PIP_NumberOfBuffers
+                               - the number of buffers in this PIP
+
+           P96PIP_WorkBuffer   - number of the current work buffer which can be
+                                 changed. The value of this can be in the range
+                                 0..(P96PIP_NumberOfBuffers-1). Reading
+                                 P96PIP_SourceBitMap via p96PIP_GetTags() will
+                                 return the BitMap of this buffer.
+
+           P96PIP_VisibleBuffer
+                               - number of the current visible buffer.
+                                 The value of this can be in the range
+                                 0..(P96PIP_NumberOfBuffers-1). When the value
+                                 is changed, the new buffer will not be
+                                 displayed immediately, but after the next
+                                 vblank (vertical blanking) period, so that the
+                                 display update can be synchronised to the
+                                 monitor's refresh rate.
+
+           P96PIP_DisplayedBuffer
+                               - number of the buffer currently displayed on
+                                 the screen. The value of this can be in the
+                                 range 0..(P96PIP_NumberOfBuffers-1). When
+                                 P96PIP_VisibleBuffer is changed, the previous
+                                 buffer is still being displayed on the screen.
+                                 When the monitor's refresh cycle reaches the
+                                 bottom of the screen (vblank), the currently
+                                 set visible buffer is output to the display,
+                                 and the value of P96PIP_DisplayedBuffer will
+                                 change to the value of P96PIP_VisibleBuffer.
+
+   RESULT
+       total - number of tags processed.
+
+Picasso96API.library/p96PIP_OpenTagList                     Picasso96API.library/p96PIP_OpenTagList
+
+   NAME
+       p96PIP_OpenTagList -- Open a Picasso96API PIP window
+       p96PIP_OpenTags -- Varargs stub for p96PIP_OpenTagList
+
+   SYNOPSIS
+       Window = p96PIP_OpenTagList(TagItems)
+
+       struct Window *p96PIP_OpenTagList(struct TagItem *);
+
+       Window = p96PIP_OpenTags(Tag1, ... )
+
+       struct Window *p96PIP_OpenTags(ULONG, ... );
+
+   FUNCTION
+       Opens a Picasso96API picture-in-picture window. The window
+       behaves like a standard intuition window.
+
+   INPUTS
+       Tags = most of the intuition/OpenWindowTags() tags and
+           P96PIP_SourceFormat - the RGBFormat of the source bitmap
+
+           P96PIP_SourceWidth  - the width of the source bitmap
+
+           P96PIP_SourceHeight - the height of the source bitmap
+
+           P96PIP_Type         - PIP type, can currently be one of:
+                                 P96PIPT_MemoryWindow (default) or
+                                 P96PIPT_VideoWindow.
+
+           P96PIP_ErrorCode    - optional pointer to a long word to receive any
+                                 error code which might occur. See includes for
+                                 possible failure reasons.
+
+           P96PIP_Brightness   - unsigned long that determines the brightness
+                                 control value of the PIP. 0x00000000 stands
+                                 for the darkest (default) and 0xffffffff for
+                                 the brightest value.
+
+           P96PIP_Left         - PIP offset from the left and top edge of the
+           P96PIP_Top            window's interior. If P96PIP_Relativity is
+                                 PIPRel_Right or PIPRel_Bottom then the these
+                                 values are relative to the right or bottom
+                                 edge of the window's interior (and negative).
+                                 (default is 0)
+
+           P96PIP_Width        - the dimensions of the PIP can be specified
+           P96PIP_Height         directly, if the window's interior is used for
+                                 other GUI elements as well. P96PIP_Relativity
+                                 is used to choose whether the values are an
+                                 absolute size or the (negative) amount of
+                                 pixels reserved for non-PIP space at the right
+                                 or bottom of the window's interior if
+                                 PIPRel_Width or PIPRel_Height is set.
+
+           P96PIP_Relativity   - toggles the sense of P96PIP_Left, P96PIP_Top,
+                                 P96PIP_Width and P96PIP_Height.
+
+           P96PIP_Colors
+           P96PIP_Colors32     - for CLUT PIPs on non-CLUT screens these tags
+                                 allow to set the PIP palette. See SA_Colors
+                                 and SA_Colors32 for details.
+
+           P96PIP_InitialIntScaling
+                               - force PIP to have an integer (non-fractional)
+                                 scaling factor at window open time (default
+                                 is FALSE). This will not forbid sizing.
+
+           P96PIP_AllowCropping
+                               - allow PIP to be cropped right and bottom, if
+                                 the source data cannot be scaled down further
+                                 (default is FALSE).
+
+           P96PIP_NumberOfBuffers
+                               - the number of image buffers to allocate for
+                                 this PIP. This allows double/triple-buffering.
+                                 If the requested number of buffers cannot be
+                                 allocated, a PIP with fewer buffers may be
+                                 opened, thus after the PIP has opened, the
+                                 number of buffers in the opened PIP should be
+                                 checked with p96PIP_GetTags().
+                                 (default is 1)
+
+       At this time, these tags are not valid and ignored:
+           WA_Width, WA_Height (use the WA_Inner... tags),
+           WA_SuperBitMap, WA_GimmeZeroZero, WA_BackFill.
+
+   RESULT
+       Window = window handle
+
+   SEE ALSO
+       intuition/OpenWindowTags()
+
+Picasso96API.library/p96PIP_SetTagList                       Picasso96API.library/p96PIP_SetTagList
+
+   NAME
+       p96PIP_SetTagList -- Modify attributes of a Picasso96API PIP window
+       p96PIP_SetTags -- Varargs stub for p96PIP_SetTagList
+
+   SYNOPSIS
+       total = p96PIP_SetTagList(Window, TagItems)
+
+       ULONG p96PIP_SetTagList(struct Window *, struct TagItem *);
+
+       total = p96PIP_SetTags(Window, Tag1, ...)
+
+       ULONG p96PIP_SetTags(struct Window *, ULONG, ... );
+
+   FUNCTION
+       p96PIP_SetTagList provides a way to modify certain properties of a
+       Picasso96API PIP window.
+
+   INPUTS
+       Window   - pointer to Picasso96API PIP window,
+       TagItems - currently any of these:
+
+           P96PIP_SourceFormat - the RGBFormat of the source bitmap
+
+           P96PIP_SourceWidth  - the width of the source bitmap
+
+           P96PIP_SourceHeight - the height of the source bitmap
+
+           P96PIP_Brightness   - unsigned long that determines the brightness
+                                 control value of the PIP. 0x00000000 stands
+                                 for the darkest (default) and 0xffffffff for
+                                 the brightest value.
+
+           P96PIP_Colors
+           P96PIP_Colors32     - for CLUT PIPs on non-CLUT screens these tags
+                                 allow to set the PIP palette. See SA_Colors
+                                 and SA_Colors32 for details.
+
+           P96PIP_WorkBuffer   - number of the current work buffer which can be
+                                 changed. The value of this can be in the range
+                                 0..(P96PIP_NumberOfBuffers-1). Reading
+                                 P96PIP_SourceBitMap via p96PIP_GetTags() will
+                                 return the BitMap of this buffer.
+
+           P96PIP_VisibleBuffer
+                               - number of the current visible buffer.
+                                 The value of this can be in the range
+                                 0..(P96PIP_NumberOfBuffers-1). When the value
+                                 is changed, the new buffer will not be
+                                 displayed immediately, but after the next
+                                 vblank (vertical blanking) period, so that the
+                                 display update can be synchronised to the
+                                 monitor's refresh rate.
+
+   RESULT
+       total - number of tags processed.
+
+Picasso96API.library/p96ReadPixel                                 Picasso96API.library/p96ReadPixel
+
+    NAME
+        p96ReadPixel -- read the ARGB color value of a pixel
+
+        - DEPRECATED - use Graphics's ReadPixelColor() - DEPRECATED -
+
+    SYNOPSIS
+        color=p96ReadPixel(rp, x, y);
+
+        ULONG p96ReadPixel(struct RastPort *, UWORD, UWORD);
+
+    FUNCTION
+        Behaves similar to graphics.library/ReadPixel except that it does
+        not return a pen value, but the ARGB value of a pixel.
+
+    INPUTS
+        rp = pointer to a RastPort structure
+        (x,y) = a point in this RastPort
+
+    RESULT
+        color = ARGB value of the pixel in the RastPort at position (x,y)
+
+    NOTE
+        From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+        Deprecated.
+
+    SEE ALSO
+        graphics.library/ReadPixel()
+
+Picasso96API.library/p96ReadPixelArray                       Picasso96API.library/p96ReadPixelArray
+
+    NAME
+        p96ReadPixelArray -- read pen values of a rectangular area
+
+        - DEPRECATED - use Graphics's ReadPixelArray() - DEPRECATED -
+
+    SYNOPSIS
+        p96ReadPixelArray(ri, DestX, DestY, rp, SrcX, SrcY, SizeX, SizeY)
+
+        void p96ReadPixelArray(struct RenderInfo *, UWORD, UWORD,
+              struct RastPort *, UWORD, UWORD, UWORD, UWORD)
+
+    FUNCTION
+        Reads the pen values of all pixels in a rectangular area of the
+        RastPort to memory area specified in the RenderInfo.
+
+    INPUTS
+        ri = pointer to a RenderInfo structure
+        (DestX, DestY) = starting point in the memory area described by the
+                         RenderInfo
+        rp = pointer to a RastPort structure
+        (SrcX, SrcY) = starting point in the RastPort
+        (SizeX, SizeY) = size of the RastPort area which will be read
+
+    RESULT
+        The area specified by the RenderInfo will be filled with the pen
+        values of the corresponding pixels in the RastPort.
+
+    NOTE
+        From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+        Deprecated.
+
+    SEE ALSO
+        graphics.library/ReadPixelArray()
+
+Picasso96API.library/p96ReadTrueColorData                 Picasso96API.library/p96ReadTrueColorData
+
+   NAME
+       p96ReadTrueColorData -- read RGB data from Hi- or TrueColor RastPort
+
+   SYNOPSIS
+       p96ReadTrueColorData(tci, DestX, DestY, rp, SrcX, SrcY, SizeX, SizeY)
+
+       void p96ReadTrueColorData(struct TrueColorInfo *, UWORD, UWORD,
+             struct RastPort *, UWORD, UWORD, UWORD, UWORD)
+
+   FUNCTION
+       This function reads RGB data specified in the TrueColorInfo structure
+       from a rectangular area within the rastport. This is necessary if the RGB
+       data is not in one of the supported RGBFormats, e.g. separated red,
+       green and blue data areas. Otherwise you should use p96ReadPixelArray().
+
+   INPUTS
+       tci = pointer to a TrueColorInfo structure
+       (DestX, DestY) = starting point in the RGB data area described by the
+                      TrueColorInfo
+       rp = pointer to a RastPort structure
+       (SrcX, SrcY) = starting point in the RastPort
+       (SizeX, SizeY) = size of the RastPort area which will be read
+
+   RESULT
+       The graphics data in the RastPort will be transfered to the RGB data
+       area specified in the TrueColorInfo.
+
+   SEE ALSO
+       p96ReadPixelArray()
+
+Picasso96API.library/p96RectFill                                   Picasso96API.library/p96RectFill
+
+    NAME
+        p96RectFill -- fill a rectangular area in a RastPort with a ARGB color
+
+        - DEPRECATED - use Graphics's RectFillColor() - DEPRECATED -
+
+    SYNOPSIS
+        p96RectFill(rp, MinX, MinY, MaxX, MaxY, color)
+
+        void p96RectFill(struct RastPort *, UWORD, UWORD, UWORD, UWORD, ULONG)
+
+    FUNCTION
+        This function is similar to graphics.library/RectFill, except that it
+        uses the ARGB value supplied as the color to fill with.
+
+    INPUTS
+        rp = pointer to a RastPort structure
+        (MinX,MinY,MaxX,MaxY) describe the rectangle
+        color = ARGB value used for the fill operation
+
+    NOTE
+        From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+        Deprecated.
+
+    SEE ALSO
+        graphics.library/RectFill()
+
+Picasso96API.library/p96RequestModeIDTagList           Picasso96API.library/p96RequestModeIDTagList
+
+   NAME
+       p96RequestModeIDTagList -- launch DisplayID requester
+       p96RequestModeIDTags -- varargs stub for p96RequestModeIDTagList
+
+   SYNOPSIS
+       DisplayID = p96RequestModeIDTagList(Tags)
+
+       DisplayID = p96RequestModeIDTags(Tags)
+
+       ULONG p96RequestModeIDTagList(struct TagItem *)
+       ULONG p96RequestModeIDTags(ULONG Tags, ...)
+
+   FUNCTION
+       User chooses DisplayID from a requester.
+
+   INPUTS
+       Tags = any of:
+           P96MA_MinWidth
+           P96MA_MinHeight
+           P96MA_MinDepth
+               minimum dimensions of allowed modes.
+           P96MA_MaxWidth
+           P96MA_MaxHeight
+           P96MA_MaxDepth
+               maximum dimensions of allowed modes.
+           P96MA_DisplayID
+               prefered DisplayID.
+           P96MA_FormatsAllowed
+               a mask consisting of all RGB formats which may be
+               displayed in the requester.
+           P96MA_FormatsForbidden
+               a mask consisting of all RGB formats which may not be
+               displayed in the requester.
+           P96MA_WindowTitle
+               pointer to the name for the requester window. Defaults to
+               "Picasso96 - Best Mode".
+           P96MA_OKText
+               string will be displayed in the 'Ok' button.
+           P96MA_CancelText
+               string will be displayed in the 'Cancel' button.
+           P96MA_Window
+               the requester will be displayed on the same screen as the
+               supplied window.
+           P96MA_PubScreenName
+               name of the public screen requester will be opened upon.
+           P96MA_Screen
+               pointer to screen where the requester will be opened.
+           P96MA_VideoCompatible
+               set TRUE to allow only modes that are video compatible
+               (e.g. Pablo)
+           P96MA_PabloIVCompatible
+               set TRUE to allow only modes that can be used for output
+               on PabloIV
+           P96MA_PalomaIVCompatible
+               set TRUE to allow only modes that can display PalomaIV input
+
+   RESULT
+       DisplayID = a valid DisplayID or INVALID_ID
+
+Picasso96API.library/p96UnlockBitMap                           Picasso96API.library/p96UnlockBitMap
+
+   NAME
+       p96UnlockBitMap -- unlock a Picasso96 BitMap
+
+       - DEPRECATED - use Graphics's UnlockBitMap() - DEPRECATED -
+
+   SYNOPSIS
+       p96UnlockBitMap(bm, lock)
+
+       void p96UnlockBitMap(struct BitMap *, LONG)
+
+   FUNCTION
+       This function releases the BitMap lock obtained by a prior call
+       to p96LockBitMap.
+
+   INPUTS
+       bm = BitMap to a locked Picasso96 BitMap
+       lock = lock obtained with p96LockBitMap
+
+   NOTE
+       From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+       Deprecated.
+
+   SEE ALSO
+       p96LockBitMap()
+
+Picasso96API.library/p96UnlockBitMapFromBoard         Picasso96API.library/p96UnlockBitMapFromBoard
+
+    NAME
+        p96UnlockBitMapFromBoard -- unlock a Picasso96 BitMap
+
+        - DEPRECATED - use Graphics's UnlockBitMapFromBoard() - DEPRECATED -
+
+    SYNOPSIS
+        p96UnlockBitMapFromBoard(bm, modified)
+
+        void p96UnlockBitMapFromBoard(struct BitMap *, BOOL)
+
+    FUNCTION
+        This function releases the bitmap lock obtained by a prior call
+        to p96LockBitMapToBoard().
+
+    INPUTS
+        bm = pointer to a locked Picasso96 bitmap
+        modified = set to TRUE if the bitmap was modified
+
+    NOTE
+        From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+        Deprecated.
+
+    SEE ALSO
+        p96LockBitMapToBoard()
+
+Picasso96API.library/p96WritePixel                               Picasso96API.library/p96WritePixel
+
+    NAME
+        p96WritePixel -- Write an ARGB pixel
+
+        - DEPRECATED - use Graphics's WritePixelColor() - DEPRECATED -
+
+    SYNOPSIS
+        result=p96WritePixel(rp, x, y, color);
+
+        ULONG p96WritePixel(struct RastPort *, UWORD, UWORD, ULONG);
+
+    FUNCTION
+        Behaves similar to graphics.library/WritePixel except that it does
+        not use a pen value, but the ARGB value of a pixel.
+
+    INPUTS
+        rp = pointer to a RastPort structure
+        (x,y) = a point in this RastPort
+        color = ARGB color value for the pixel
+
+    RESULT
+        currently, this function always returns NULL
+
+    NOTE
+       From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+       Deprecated.
+
+    SEE ALSO
+        graphics.library/WritePixel()
+
+Picasso96API.library/p96WritePixelArray                     Picasso96API.library/p96WritePixelArray
+
+   NAME
+       p96WritePixelArray -- Write pen values of a rectangular area
+
+       - DEPRECATED - use Graphics's WritePixelArray() - DEPRECATED -
+
+   SYNOPSIS
+       p96WritePixelArray(ri, SrcX, SrcY, rp, DestX, DestY, SizeX, SizeY)
+
+       void p96WritePixelArray(struct RenderInfo *, UWORD, UWORD,
+             struct RastPort *, UWORD, UWORD, UWORD, UWORD)
+
+   FUNCTION
+       Writes the pen values of all pixels in the memory area specified in
+       the RenderInfo to a rectangular area of the RastPort.
+
+   INPUTS
+       ri = pointer to a RenderInfo structure
+       (SrcX, SrcY) = starting point in the memory area described by the
+                      RenderInfo
+       rp = pointer to a RastPort structure
+       (DestX, DestY) = starting point in the RastPort
+       (SizeX, SizeY) = size of the RastPort area which will be written
+
+   RESULT
+       The pixels in the RastPort will be filled with the pen values
+       specified in the corresponding area in the RenderInfo.
+
+   NOTE
+       From AmigaOS 4.1 Final Edition (Graphics v54.177) this function is
+       Deprecated.
+
+   SEE ALSO
+       graphics.library/WritePixelArray()
+
+Picasso96API.library/p96WriteTrueColorData               Picasso96API.library/p96WriteTrueColorData
+
+   NAME
+       p96WriteTrueColorData -- write RGB data to Hi- or TrueColor RastPort
+
+   SYNOPSIS
+       p96WriteTrueColorData(tci, SrcX, SrcY, rp, DestX, DestY, SizeX, SizeY)
+
+       void p96WriteTrueColorData(struct TrueColorInfo *, UWORD, UWORD,
+             struct RastPort *, UWORD, UWORD, UWORD, UWORD)
+
+   FUNCTION
+       This function fills RGB data specified in the TrueColorInfo structure
+       to a rectangular area within the rastport. This is necessary if the RGB
+       data is not in one of the supported RGBFormats, e.g. separated red,
+       green and blue data areas. Otherwise you should use p96WritePixelArray().
+
+   INPUTS
+       tci = pointer to a TrueColorInfo structure
+       (SrcX, SrcY) = starting point in the RGB data area described by the
+                      TrueColorInfo
+       rp = pointer to a RastPort structure
+       (DestX, DestY) = starting point in the RastPort
+       (SizeX, SizeY) = size of the RastPort area which will be written
+
+   RESULT
+       The pixels in the RastPort will be filled with the RGB data
+       specified in the corresponding area in the TrueColorInfo.
+
+   SEE ALSO
+       p96WritePixelArray()
+
+

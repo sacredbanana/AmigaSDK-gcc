@@ -1,0 +1,194 @@
+TABLE OF CONTENTS
+
+pointerclass/--datasheet--
+
+
+pointerclass/--datasheet--                             pointerclass/--datasheet--
+
+    NAME
+	pointerclass -- Intuition pointer class
+
+    SUPERCLASS
+	rootclass
+
+    REQUIRES
+	None
+
+    DESCRIPTION
+	This class is used to represent Intuition pointer images. Each
+	Intuition Window may have a different pointer images associated
+	with it using the WA_Pointer attribute (see the intuition.library
+	autodoc). The SetWindowPointerA() function can also be used to
+	change the window's pointer images (normal or busy) which are
+	pointerclass objects.
+
+    COMPATIBILITY NOTE
+	The AA chipset supports variable sprite width and resolution
+	but the setting of width and resolution is global for all sprites.
+	When no other sprites are in use, Intuition controls the sprite
+	width and sprite resolution for correctness based on pointerclass
+	attributes specified by the creator of the pointer. Intuition
+	controls sprite resolution with the VTAG_DEFSPRITERESN_SET tag
+	to VideoControl(). Applications can override this on a
+	per-viewport basis with the VTAG_SPRITERESN_SET tag to
+	VideoControl().
+
+	If an application uses a sprite other than the pointer sprite,
+	Intuition will automatically regenerate the pointer sprite's image
+	in a compatible width. This might involve BitMap scaling of the
+	imagery you supply.
+
+	If any sprites other than the pointer sprite were obtained with
+	the old GetSprite() call, Intuition assumes that the owner of
+	those sprites is unaware of sprite resolution, hence Intuition
+	will set the default sprite resolution (VTAG_DEFSPRITERESN_SET)
+	to ECS-compatible instead of as requested by the various
+	pointerclass attributes.
+
+	No resolution fallback occurs when applications use ExtSprites.
+	Such applications are expected to use VTAG_SPRITERESN_SET tag if
+	necessary.
+
+	Under release V39, only sprite width compatibility is implemented.
+	Sprite resolution compatibility was added for V40.
+
+	None of this compatibility note applies to graphics card users.
+
+    METHODS
+	OM_NEW -- Create the pointerclass object. Passed to superclass.
+
+	OM_DISPOSE -- Destroy the object and then pass to superclass.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	POINTERA_BitMap (struct BitMap *)
+	    Pointer to bitmap to reference pointer imagery from.
+	    Note that bitplane data need not be in Chip RAM.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_XOffset (int8)
+	POINTERA_YOffset (int8)
+	    These attributes are used to offset the upper-left corner
+	    of the image from what Intuition regards as the current
+	    position. Another way of describing it is as the offset
+	    from the "hot spot" of the pointer to the top-left corner
+	    of the image. For instance, if you specify offsets of zero
+	    and zero then the top-left corner of your image will be
+	    placed at the mouse position. On the other hand, if you
+	    specify a POINTERA_XOffset of -7 then your sprite will be
+	    centered over the mouse position (assuming the image is 16
+	    pixels wide). If you specify a POINTERA_XOffset of -15 the
+	    right-edge of the image will be over the mouse position.
+
+	    Defaults to 0.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_WordWidth (uint16)
+	    The width of the image in number of uint16 words. For example,
+	    if your image is 12 pixels wide the word with would be 1. If
+	    it were 17 pixels wide the word width would be 2.
+
+	    Defaults to 1.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_XResolution (uint16)
+	    These are the choices for the POINTERA_XResolution
+	    attribute which will determine what resolution pixels are
+	    used for this pointer:
+
+	    POINTERXRESN_DEFAULT (ECS-compatible pointer width)
+	     70 ns if SUPERHIRES-type mode, 140 ns if not
+
+	    POINTERXRESN_SCREENRES
+	     Same as pixel speed of screen
+
+	    POINTERXRESN_LORES (pointer always in lores-like pixels)
+	     140 ns in 15kHz modes, 70 ns in 31kHz modes
+
+	    POINTERXRESN_HIRES (pointer always in hires-like pixels)
+	     70 ns in 15kHz modes, 35 ns in 31kHz modes
+
+	    POINTERXRESN_140NS (pointer always in 140 ns pixels)
+	     140 ns always
+
+	    POINTERXRESN_70NS (pointer always in 70 ns pixels)
+	     70 ns always
+
+	    POINTERXRESN_35NS (pointer always in 35 ns pixels)
+	     35 ns always
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_YResolution (uint16)
+	    These are the choices for the POINTERA_YResolution
+	    attribute which will determine what vertical resolution is
+	    used for this pointer:
+
+	    POINTERYRESN_DEFAULT
+	     In 15 kHz modes, the pointer resolution will be the same
+	     as a non-interlaced screen.  In 31 kHz modes, the pointer
+	     will be doubled vertically.  This means there will be about
+	     200-256 pointer lines per screen.
+
+	    POINTERYRESN_HIGH
+	    POINTERYRESN_HIGHASPECT
+	     Where the hardware/software supports it, the pointer
+	     resolution will be high. This means there will be about
+	     400-480 pointer lines per screen. POINTERYRESN_HIGHASPECT
+	     also means that when the pointer comes out double-height
+	     due to hardware/software restrictions, its width would be
+	     doubled as well, if possible (to preserve aspect).
+
+	    POINTERYRESN_SCREENRES
+	    POINTERYRESN_SCREENRESASPECT
+	     Will attempt to match the vertical resolution of the pointer
+	     to the screen's vertical resolution. POINTERYRESN_SCREENASPECT
+	     also means that when the pointer comes out double-height due
+	     to hardware/software restrictions, its width would be doubled
+	     as well, if possible (to preserve aspect).
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_ImageData (uint32 *) (V52)
+	    Pointer to image data to reference pointer imagery from.
+	    The format of the image data is direct mapped ARGB true
+	    color.
+
+	    The total number of bytes in the block of data must be
+	    POINTERA_Width * POINTERA_Height * sizeof(uint32).
+
+	    Note that POINTERA_BitMap, POINTERA_WordWidth,
+	    POINTERA_XResolution and POINTERA_XResolution are still
+	    required to store a backup image in case the destination
+	    hardware cannot display true color pointers.
+
+	    If no POINTERA_BitMap is provided the default pointer will
+	    be used and the POINTERA_ImageData will be ignored.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_Width (uint8) (V52)
+	    The width of the image pointed to by POINTERA_ImageData
+	    in pixels. The range is 0 < width <= 64.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	POINTERA_Height (uint8) (V52)
+	    The height of the image pointed to by POINTERA_ImageData
+	    in pixels. The range is 0 < height <= 64;
+
+	    Applicability is (OM_NEW, OM_SET)
+
+    BUGS
+	Use of true color pointers requires a backup POINTERA_BitMap in
+	case the graphics driver cannot handle true color pointers. If
+	no POINTERA_BitMap is provided the default pointer will be used
+	and the POINTERA_ImageData will be ignored.
+
+

@@ -1,0 +1,186 @@
+TABLE OF CONTENTS
+
+penmap.image/--datasheet--
+penmap.image/PENMAP_GetClass
+penmap.image/--datasheet--                         penmap.image/--datasheet--
+
+    NAME
+	penmap.image -- Create penmap BOOPSI objects
+
+    SUPERCLASS
+	imageclass
+
+    DESCRIPTION
+	This class will yield color remapped images on any public screen.
+	It also supports bitmap scaling. If used with V39 or or greater
+	of AmigaOS it can take advantage of pen sharing.
+
+    METHODS
+	OM_NEW -- Create the penmap image. Passed to superclass then OM_SET.
+
+	OM_DISPOSE -- Delete the penmap image.
+
+	OM_GET -- Get object attributes. Passed to superclass first.
+
+	OM_SET -- Set object attributes. Passed to superclass first.
+
+	OM_UPDATE -- Set object notification attributes.
+	             Passed to superclass first.
+
+	IM_DRAW -- Renders the image. Supports IDS_NORMAL and IDS_SELECTED
+	           drawing states and does not require a DrawInfo structure.
+	           Uses BitMapScale() function to scale the image if required.
+
+	IM_DRAWFRAME -- Renders the image scaled to the frame size specified.
+	                Supports IDS_NORMAL and IDS_SELECTED drawing states
+	                and does not require a DrawInfo structure. Uses
+	                BitMapScale() function to scale the image if required.
+
+	IM_ERASE -- Erase the image.
+
+	IM_ERASEFRAME -- Erase the image using the frame size.
+
+	IM_DOMAINFRAME -- Query the domain frame size.
+
+	All other methods are passed to the superclass.
+
+    ATTRIBUTES
+	IA_Width (int16)
+	IA_Height (int16)
+	    Set size of the image, scaling via BitMapScale() if different
+	    from the chunky image data size.
+
+	    Defaults to width and height of IA_Data.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	IA_BGPen (uint8)
+	    Specify background pen of a normal image.
+
+	    Defaults to BACKGROUNDPEN of the screen passed in PENMAP_Screen.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	IA_Pens (uint16 *)
+	    Sets the pens which the values in the data array represents.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	IA_Data (uint8 *)
+	    Chunky format image data for normal render.
+
+	    The data format is a uint8 array of chunky pen numbers.
+	    Note this data must be uint16 aligned as the first 4 bytes
+	    are accessed as two uint16's which specify the width and
+	    height of the following chunky image data.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PENMAP_SelectData (uint8 *)
+	    Chunky format image data for selected image render.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PENMAP_Palette (uint32 *)
+	    An array of uint32 describing the palette for the picture.
+	    If you are obtaining pens yourself, you should only pass the
+	    IA_Pens attribute at object creation time.
+
+	    The format of the array is:
+
+	    uint32 palette[] =
+	    {
+	        number_triplets,
+	        red1, green1, blue1,
+	        red2, green2, blue2,
+	        ...
+	    };
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PENMAP_Screen (struct Screen *)
+	    Pointer to the screen to use image on. This attribute must
+	    be provided when creating an object of this class.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE, OM_GET)
+
+	PENMAP_Transparent (BOOL)
+	    Remaps chunky pen 0 to the BACKGROUNDPEN.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PENMAP_Precision (int16)
+	    Set the precision for ObtainBestPen() when penmap is used
+	    under AmigaOS 3.0 or later. See the ObtainBestPen autodoc
+	    for more details.
+
+	    Defaults to PRECISION_IMAGE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PENMAP_ColorMap (struct ColorMap *)
+	    Pointer to a colormap to use in obtaining best matching pens.
+	    This tag or PENMAP_Screen must be provided when creating an
+	    object of this class. If PENMAP_Screen is passed, penmap will
+	    use Screen->ViewPort.ColorMap.
+
+	    Defaults to NULL.
+
+	    Applicability is (OM_NEW, OM_SET, OM_UPDATE)
+
+	PENMAP_MaskBlit (BOOL)
+	    Causes penmap to render on screen using a mask plane. This
+	    mask plane is created dynamically by the class.
+
+	    The mask is created by OR'ing the source bitplanes into a single
+	    mask plane using some nifty blitting techniques. This tag should
+	    be used if penmap objects are used in a layout group that may
+	    contain a user or program specified backfill. This will allow the
+	    backfill pattern to flow around the image, making it transparent.
+
+	    Defaults to FALSE.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+	PENMAP_MaskPlane (uint8 *) (V53.3)
+	    Retrieves the mask plane generated when PENMAP_MaskBlit is TRUE.
+	    If no mask is in use then this attribute is NULL.
+
+	    Applicability is (OM_GET)
+
+	PENMAP_SelectMaskPlane (uint8 *) (V53.3)
+	    Retrieves the select mask plane generated when PENMAP_MaskBlit
+	    is TRUE. If no mask is in use then this attribute is NULL.
+
+	    Applicability is (OM_GET)
+
+	PENMAP_Compressed (uint32) (V50)
+	    The compression type used in the image data.
+	    Supported values are cmpNone and cmpByteRun1.
+
+	    Defaults to cmpNone.
+
+	    Applicability is (OM_NEW, OM_SET)
+
+penmap.image/PENMAP_GetClass                     penmap.image/PENMAP_GetClass
+
+    NAME
+	PENMAP_GetClass -- Gets pointer to the penmap class.
+
+    SYNOPSIS
+	Class * class = PENMAP_GetClass();
+
+    FUNCTION
+	This function is deprecated as of V52.
+	Use the "penmap.image" public class ID instead.
+
+    RESULT
+	class - Pointer to the penmap class.
+
+
