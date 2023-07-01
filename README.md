@@ -19,3 +19,6 @@ The other included SDKs not counting the ones already included which are from Be
 - Pthreads 53.12
 - Python 53.35
 - SDI 1.7
+
+A Dockerfile is also included for building an AmigaOS 3 & 4 compiler dev environment with everything included.
+The latest image can also be obtained by running `docker pull sacredbanana/amiga-compiler:latest`
