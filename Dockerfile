@@ -2,27 +2,24 @@
 
 FROM amigadev/crosstools:m68k-amigaos AS builder
 
-WORKDIR /home
+COPY ./m68k-amigaos /opt/m68k-amigaos/m68k-amigaos
 
-RUN git clone https://github.com/sacredbanana/AmigaSDK-gcc.git
-
-RUN rm -dr AmigaSDK-gcc/m68k-amigaos/Autodocs
-RUN rm -dr AmigaSDK-gcc/m68k-amigaos/doc
-RUN rm -dr AmigaSDK-gcc/m68k-amigaos/guide
-RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/Documentation
-RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/Examples
-RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/Tools
-RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/*.pdf*
-RUN cp -R AmigaSDK-gcc/* /tools/
-RUN rm -rf AmigaSDK-gcc
+RUN rm -dr /opt/m68k-amigaos/m68k-amigaos/Autodocs
+RUN rm -dr /opt/m68k-amigaos/m68k-amigaos/doc
+RUN rm -dr /opt/m68k-amigaos/m68k-amigaos/guide
 
 FROM amigadev/crosstools:ppc-amigaos
 
 COPY --from=builder /opt /opt
+COPY ./ppc-amigaos /opt/ppc-amigaos/ppc-amigaos
 
-COPY --from=builder /tools /tools
+RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/Documentation
+RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/Examples
+RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/Tools
+RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/*.pdf*
 
 RUN ln -s /opt/m68k-amigaos /opt/amiga
+RUN ln -s /opt /tools
 
 WORKDIR /work
 
