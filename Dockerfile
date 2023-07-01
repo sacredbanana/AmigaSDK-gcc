@@ -6,15 +6,14 @@ WORKDIR /home
 
 RUN git clone https://github.com/sacredbanana/AmigaSDK-gcc.git
 
+RUN rm -dr AmigaSDK-gcc/m68k-amigaos/Autodocs
+RUN rm -dr AmigaSDK-gcc/m68k-amigaos/doc
+RUN rm -dr AmigaSDK-gcc/m68k-amigaos/guide
+RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/Documentation
+RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/Examples
+RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/Tools
+RUN rm -dr AmigaSDK-gcc/ppc-amigaos/SDK/*.pdf*
 RUN cp -R AmigaSDK-gcc/* /tools/
-RUN rm -dr /tools/m68k-amigaos/Autodocs
-RUN rm -dr /tools/m68k-amigaos/doc
-RUN rm -dr /tools/m68k-amigaos/guide
-RUN rm -dr /tools/ppc-amigaos/SDK/Documentation
-RUN rm -dr /tools/ppc-amigaos/SDK/Examples
-RUN rm -dr /tools/ppc-amigaos/SDK/Tools
-RUN rm -dr /tools/ppc-amigaos/SDK/Documentation
-RUN rm -dr /tools/ppc-amigaos/SDK/*.pdf*
 RUN rm -rf AmigaSDK-gcc
 
 FROM amigadev/crosstools:ppc-amigaos
