@@ -2,24 +2,30 @@
 
 FROM amigadev/crosstools:m68k-amigaos AS builder
 
-COPY ./m68k-amigaos /opt/m68k-amigaos/m68k-amigaos
+RUN mv /opt/m68k-amigaos /opt/amiga
 
-RUN rm -dr /opt/m68k-amigaos/m68k-amigaos/Autodocs
-RUN rm -dr /opt/m68k-amigaos/m68k-amigaos/doc
-RUN rm -dr /opt/m68k-amigaos/m68k-amigaos/guide
+COPY ./m68k-amigaos /opt/amiga/m68k-amigaos
+
+RUN rm -dr /opt/amiga/m68k-amigaos/Autodocs
+RUN rm -dr /opt/amiga/m68k-amigaos/doc
+RUN rm -dr /opt/amiga/m68k-amigaos/guide
 
 FROM amigadev/crosstools:ppc-amigaos
 
-COPY --from=builder /opt /opt
-COPY ./ppc-amigaos /opt/ppc-amigaos/ppc-amigaos
+RUN mv /opt/ppc-amigaos /opt/amiga
 
-RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/Documentation
-RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/Examples
-RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/Tools
-RUN rm -dr /opt/ppc-amigaos/ppc-amigaos/SDK/*.pdf*
+COPY --from=builder /opt/amiga /opt/amiga
+COPY ./ppc-amigaos /opt/amiga/ppc-amigaos
 
-RUN ln -s /opt/m68k-amigaos /opt/amiga
-RUN ln -s /opt /tools
+RUN rm -dr /opt/amiga/ppc-amigaos/SDK/Documentation
+RUN rm -dr /opt/amiga/ppc-amigaos/SDK/Examples
+RUN rm -dr /opt/amiga/ppc-amigaos/SDK/Tools
+RUN rm -dr /opt/amiga/ppc-amigaos/SDK/*.pdf*
+
+RUN rm /tools
+RUN ln -s /opt/amiga /tools
+
+ENV PATH="/opt/amiga/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WORKDIR /work
 
