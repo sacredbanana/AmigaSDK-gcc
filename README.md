@@ -9,9 +9,9 @@ The other included SDKs not counting the ones already included which are from Be
 - AmiSSL 5.13 http://aminet.net/package/util/libs/AmiSSL-5.13-SDK
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
-- json-c 0.17
+- json-c 0.17 https://github.com/json-c/json-c
 **AmigaOS 4**
-- AmiSSL 5.13
+- AmiSSL 5.13 http://aminet.net/package/util/libs/AmiSSL-5.13-SDK
 - Cairo 53.3
 - Flex 2.5.27
 - Expat 53.6
@@ -20,8 +20,8 @@ The other included SDKs not counting the ones already included which are from Be
 - Pthreads 53.12
 - Python 53.35
 - SDI 1.7
-- Flite Device 53.1
-- json-c 0.17
+- Flite Device 53.1 http://aminet.net/package/mus/misc/flite_device
+- json-c 0.17 https://github.com/json-c/json-c
 
 2 Dockerfiles are also included for building the AmigaOS 3 & 4 compiler dev environments with everything included.
 The latest images can also be obtained by running `docker pull sacredbanana/amiga-compiler:m68k-amigaos` and `docker pull sacredbanana/amiga-compiler:ppc-amigaos`.
