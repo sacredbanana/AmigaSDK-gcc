@@ -12,25 +12,25 @@
 /* #undef HAS_GNU_WARNING_LONG */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-// #define HAVE_DLFCN_H
+/* #undef HAVE_DLFCN_H */
 
 /* Define to 1 if you have the <endian.h> header file. */
 /* #undef HAVE_ENDIAN_H */
 
 /* Define to 1 if you have the <fcntl.h> header file. */
-// #define HAVE_FCNTL_H
+#define HAVE_FCNTL_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-// #define HAVE_INTTYPES_H
+#define HAVE_INTTYPES_H
 
 /* Define to 1 if you have the <limits.h> header file. */
-// #define HAVE_LIMITS_H
+#define HAVE_LIMITS_H
 
 /* Define to 1 if you have the <locale.h> header file. */
-#define HAVE_LOCALE_H
+/* #undef HAVE_LOCALE_H */
 
 /* Define to 1 if you have the <memory.h> header file. */
-// #define HAVE_MEMORY_H
+#define HAVE_MEMORY_H
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H
@@ -42,49 +42,49 @@
 #define HAVE_STDLIB_H
 
 /* Define to 1 if you have the <strings.h> header file. */
-// #define HAVE_STRINGS_H
+#define HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H
 
 /* Define to 1 if you have the <syslog.h> header file. */
-// #define HAVE_SYSLOG_H 1
+#define HAVE_SYSLOG_H 1
 
 /* Define to 1 if you have the <sys/cdefs.h> header file. */
-// #define HAVE_SYS_CDEFS_H
+#define HAVE_SYS_CDEFS_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
-// #define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/random.h> header file. */
-// #define HAVE_SYS_RANDOM_H
+/* #undef HAVE_SYS_RANDOM_H */
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
-// #define HAVE_SYS_RESOURCE_H
+#define HAVE_SYS_RESOURCE_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-// #define HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-// #define HAVE_SYS_TYPES_H 1
+#define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-// #define HAVE_UNISTD_H 1
+#define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <xlocale.h> header file. */
-// #define HAVE_XLOCALE_H
+#define HAVE_XLOCALE_H
 
 /* Define to 1 if you have the <bsd/stdlib.h> header file. */
 /* #undef HAVE_BSD_STDLIB_H */
 
 /* Define to 1 if you have `arc4random' */
-// #define HAVE_ARC4RANDOM
+/* #undef HAVE_ARC4RANDOM */
 
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
 
 /* Has atomic builtins */
-// #define HAVE_ATOMIC_BUILTINS
+#define HAVE_ATOMIC_BUILTINS
 
 /* Define to 1 if you have the declaration of `INFINITY', and to 0 if you
    don't. */
@@ -112,56 +112,11 @@
 /* Define to 1 if you have the `open' function. */
 #define HAVE_OPEN
 
-#define	_FOPEN		(-1)	/* from sys/file.h, kernel use only */
-#define	_FREAD		0x0001	/* read enabled */
-#define	_FWRITE		0x0002	/* write enabled */
-#define	_FAPPEND	0x0008	/* append (writes guaranteed at the end) */
-#define	_FMARK		0x0010	/* internal; mark during gc() */
-#define	_FDEFER		0x0020	/* internal; defer for next gc pass */
-#define	_FASYNC		0x0040	/* signal pgrp when data ready */
-#define	_FSHLOCK	0x0080	/* BSD flock() shared lock present */
-#define	_FEXLOCK	0x0100	/* BSD flock() exclusive lock present */
-#define	_FCREAT		0x0200	/* open with file create */
-#define	_FTRUNC		0x0400	/* open with truncation */
-#define	_FEXCL		0x0800	/* error on open if file exists */
-#define	_FNBIO		0x1000	/* non blocking I/O (sys5 style) */
-#define	_FSYNC		0x2000	/* do all writes synchronously */
-#define	_FNONBLOCK	0x4000	/* non blocking I/O (POSIX style) */
-#define	_FNDELAY	_FNONBLOCK	/* non blocking I/O (4.2 style) */
-#define	_FNOCTTY	0x8000	/* don't assign a ctty on this open */
-
-#define	O_APPEND	_FAPPEND
-#define	O_CREAT		_FCREAT
-#define	O_TRUNC		_FTRUNC
-#define	O_EXCL		_FEXCL
-#define O_SYNC		_FSYNC
-
-#ifndef SEEK_SET
-# define SEEK_SET 0
-# define SEEK_CUR 1
-# define SEEK_END 2
-#endif
-#ifndef F_OK
-# define F_OK 0
-# define X_OK 1
-# define W_OK 2
-# define R_OK 4
-#endif
-#ifndef O_RDONLY
-# define O_RDONLY 0
-#endif
-#ifndef O_WRONLY
-# define O_WRONLY 1
-#endif
-#ifndef O_BINARY
-# define O_BINARY 0
-#endif
-
 /* Define to 1 if you have the `realloc' function. */
 #define HAVE_REALLOC
 
 /* Define to 1 if you have the `setlocale' function. */
-// #define HAVE_SETLOCALE
+/* #undef HAVE_SETLOCALE */
 
 /* Define to 1 if you have the `snprintf' function. */
 #define HAVE_SNPRINTF
@@ -174,7 +129,7 @@
 #define HAVE_STRDUP
 
 /* Define to 1 if you have the `strerror' function. */
-// #define HAVE_STRERROR
+#define HAVE_STRERROR
 
 /* Define to 1 if you have the `strncasecmp' function. */
 #define HAVE_STRNCASECMP 1
@@ -182,8 +137,11 @@
 /* Define to 1 if you have the `uselocale' function. */
 /* #undef HAVE_USELOCALE */
 
+/* Define to 1 if newlocale() needs freelocale() called on it's `base` argument */
+/* #undef NEWLOCALE_NEEDS_FREELOCALE */
+
 /* Define to 1 if you have the `vasprintf' function. */
-// #define HAVE_VASPRINTF
+/* #undef HAVE_VASPRINTF */
 
 /* Define to 1 if you have the `vprintf' function. */
 #define HAVE_VPRINTF
@@ -192,31 +150,31 @@
 #define HAVE_VSNPRINTF
 
 /* Define to 1 if you have the `vsyslog' function. */
-// #define HAVE_VSYSLOG 1
+#define HAVE_VSYSLOG 1
 
 /* Define if you have the `getrandom' function. */
 /* #undef HAVE_GETRANDOM */
 
 /* Define if you have the `getrusage' function. */
-// #define HAVE_GETRUSAGE
+/* #undef HAVE_GETRUSAGE */
 
-// #define HAVE_STRTOLL
+#define HAVE_STRTOLL
 #if !defined(HAVE_STRTOLL)
 #define strtoll strtoll
 /* #define json_c_strtoll strtoll*/
 #endif
 
-// #define HAVE_STRTOULL
+#define HAVE_STRTOULL
 #if !defined(HAVE_STRTOULL)
 #define strtoull strtoull
 /* #define json_c_strtoull strtoull */
 #endif
 
 /* Have __thread */
-// #define HAVE___THREAD
+/* #undef HAVE___THREAD */
 
 /* Public define for json_inttypes.h */
-// #define JSON_C_HAVE_INTTYPES_H 1
+#define JSON_C_HAVE_INTTYPES_H 1
 
 /* Name of package */
 #define PACKAGE "json-c"
@@ -228,7 +186,7 @@
 #define PACKAGE_NAME "json-c"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "json-c 0.16.99"
+#define PACKAGE_STRING "json-c 0.17.99"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "json-c"
@@ -237,7 +195,7 @@
 #define PACKAGE_URL "https://github.com/json-c/json-c"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.16.99"
+#define PACKAGE_VERSION "0.17.99"
 
 /* The number of bytes in type int */
 #define SIZEOF_INT 4
@@ -246,25 +204,25 @@
 #define SIZEOF_INT64_T 8
 
 /* The number of bytes in type long */
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG 4
 
 /* The number of bytes in type long long */
 #define SIZEOF_LONG_LONG 8
 
 /* The number of bytes in type size_t */
-#define SIZEOF_SIZE_T 8
+#define SIZEOF_SIZE_T 4
 
 /* The number of bytes in type ssize_t */
-#define SIZEOF_SSIZE_T 8
+#define SIZEOF_SSIZE_T 4
 
 /* Specifier for __thread */
-#define SPEC___THREAD __thread
+/* #undef SPEC___THREAD */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS
 
 /* Version number of package */
-#define VERSION "0.16.99"
+#define VERSION "0.17.99"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
