@@ -3,17 +3,17 @@
 #ifndef PROTO_CDPLAYER_H
 #define PROTO_CDPLAYER_H
 
-#include L<clib/cdplayer_protos.h>
+#include <clib/cdplayer_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/cdplayer.h>
+#   include <defines/cdplayer.h>
 #  else
-#   include L<inline/cdplayer.h>
+#   include <inline/cdplayer.h>
 #  endif
 # else
-#  include L<pragmas/cdplayer_pragmas.h>
+#  include <pragmas/cdplayer_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

@@ -3,17 +3,17 @@
 #ifndef PROTO_GUIGFX_H
 #define PROTO_GUIGFX_H
 
-#include L<clib/guigfx_protos.h>
+#include <clib/guigfx_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/guigfx_lib.h>
+#   include <defines/guigfx_lib.h>
 #  else
-#   include L<inline/guigfx_lib.h>
+#   include <inline/guigfx_lib.h>
 #  endif
 # else
-#  include L<pragmas/guigfx_pragmas.h>
+#  include <pragmas/guigfx_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

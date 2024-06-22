@@ -3,17 +3,17 @@
 #ifndef PROTO_CYBERGFX_H
 #define PROTO_CYBERGFX_H
 
-#include L<clib/cybergraphics_protos.h>
+#include <clib/cybergraphics_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/cybergraphics.h>
+#   include <defines/cybergraphics.h>
 #  else
-#   include L<inline/cybergraphics.h>
+#   include <inline/cybergraphics.h>
 #  endif
 # else
-#  include L<pragmas/cybergraphics_pragmas.h>
+#  include <pragmas/cybergraphics_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

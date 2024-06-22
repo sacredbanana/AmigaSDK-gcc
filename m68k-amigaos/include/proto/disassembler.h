@@ -3,17 +3,17 @@
 #ifndef PROTO_DISASSEMBLER_H
 #define PROTO_DISASSEMBLER_H
 
-#include L<clib/disassembler_protos.h>
+#include <clib/disassembler_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/disassembler.h>
+#   include <defines/disassembler.h>
 #  else
-#   include L<inline/disassembler.h>
+#   include <inline/disassembler.h>
 #  endif
 # else
-#  include L<pragmas/disassembler_pragmas.h>
+#  include <pragmas/disassembler_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

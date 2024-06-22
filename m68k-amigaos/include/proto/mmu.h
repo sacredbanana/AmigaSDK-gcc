@@ -3,17 +3,17 @@
 #ifndef PROTO_MMU_H
 #define PROTO_MMU_H
 
-#include L<clib/mmu_protos.h>
+#include <clib/mmu_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/mmu.h>
+#   include <defines/mmu.h>
 #  else
-#   include L<inline/mmu.h>
+#   include <inline/mmu.h>
 #  endif
 # else
-#  include L<pragmas/mmu_pragmas.h>
+#  include <pragmas/mmu_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

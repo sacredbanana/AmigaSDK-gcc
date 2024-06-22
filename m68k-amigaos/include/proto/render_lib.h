@@ -3,17 +3,17 @@
 #ifndef PROTO_RENDER_H
 #define PROTO_RENDER_H
 
-#include L<clib/render_protos.h>
+#include <clib/render_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/render.h>
+#   include <defines/render.h>
 #  else
-#   include L<inline/render.h>
+#   include <inline/render.h>
 #  endif
 # else
-#  include L<pragmas/render_pragmas.h>
+#  include <pragmas/render_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

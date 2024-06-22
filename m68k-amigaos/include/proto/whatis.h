@@ -3,17 +3,17 @@
 #ifndef PROTO_WHATIS_H
 #define PROTO_WHATIS_H
 
-#include L<clib/whatis_protos.h>
+#include <clib/whatis_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/whatis.h>
+#   include <defines/whatis.h>
 #  else
-#   include L<inline/whatis.h>
+#   include <inline/whatis.h>
 #  endif
 # else
-#  include L<pragmas/whatis_pragmas.h>
+#  include <pragmas/whatis_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

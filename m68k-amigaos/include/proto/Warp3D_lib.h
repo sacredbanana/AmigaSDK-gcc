@@ -3,17 +3,17 @@
 #ifndef PROTO_WARP3D_H
 #define PROTO_WARP3D_H
 
-#include L<clib/warp3d_protos.h>
+#include <clib/warp3d_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/warp3d.h>
+#   include <defines/warp3d.h>
 #  else
-#   include L<inline/warp3d.h>
+#   include <inline/warp3d.h>
 #  endif
 # else
-#  include L<pragmas/warp3d_pragmas.h>
+#  include <pragmas/warp3d_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

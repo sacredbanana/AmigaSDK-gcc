@@ -3,17 +3,17 @@
 #ifndef PROTO_MC68040_H
 #define PROTO_MC68040_H
 
-#include L<clib/mc68040_protos.h>
+#include <clib/mc68040_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/mc68040.h>
+#   include <defines/mc68040.h>
 #  else
-#   include L<inline/mc68040.h>
+#   include <inline/mc68040.h>
 #  endif
 # else
-#  include L<pragmas/mc68040_pragmas.h>
+#  include <pragmas/mc68040_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

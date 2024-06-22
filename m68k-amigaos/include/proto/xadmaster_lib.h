@@ -3,17 +3,17 @@
 #ifndef PROTO_XADMASTER_H
 #define PROTO_XADMASTER_H
 
-#include L<clib/xadmaster_protos.h>
+#include <clib/xadmaster_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/xadmaster.h>
+#   include <defines/xadmaster.h>
 #  else
-#   include L<inline/xadmaster.h>
+#   include <inline/xadmaster.h>
 #  endif
 # else
-#  include L<pragmas/xadmaster_pragmas.h>
+#  include <pragmas/xadmaster_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

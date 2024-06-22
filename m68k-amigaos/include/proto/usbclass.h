@@ -3,17 +3,17 @@
 #ifndef PROTO_USBCLASS_H
 #define PROTO_USBCLASS_H
 
-#include L<clib/usbclass_protos.h>
+#include <clib/usbclass_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/usbclass.h>
+#   include <defines/usbclass.h>
 #  else
-#   include L<inline/usbclass.h>
+#   include <inline/usbclass.h>
 #  endif
 # else
-#  include L<pragmas/usbclass_pragmas.h>
+#  include <pragmas/usbclass_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 

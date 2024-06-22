@@ -3,17 +3,17 @@
 #ifndef PROTO_PCCARD_H
 #define PROTO_PCCARD_H
 
-#include L<clib/pccard_protos.h>
+#include <clib/pccard_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/pccard.h>
+#   include <defines/pccard.h>
 #  else
-#   include L<inline/pccard.h>
+#   include <inline/pccard.h>
 #  endif
 # else
-#  include L<pragmas/pccard_pragmas.h>
+#  include <pragmas/pccard_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 
