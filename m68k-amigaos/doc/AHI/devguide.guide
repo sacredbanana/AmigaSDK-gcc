@@ -1,0 +1,1217 @@
+@database AHI:Developer/docs/devguide.guide
+
+@Master ahidev.texinfo
+
+@Width 72
+
+
+This is the AmigaGuide�  file AHI:Developer/docs/devguide.guide, produced by Makeinfo-1.67 from 
+the input file ahidev.texinfo.
+
+   This file documents AHI version 4.16, a hardware independent audio
+system for Amiga.
+
+   Copyright (C) 1994-1997 Martin Blom.  This publication may not be
+modified in any way, including translation, without prior consent, in
+writing, by the author.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   THIS PUBLICATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS PUBLICATION, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+
+     $Id: ahidev.texinfo,v 4.7 1997/10/21 01:33:40 lcs Exp $
+     $Log: ahidev.texinfo,v $
+     Revision 4.7  1997/10/21 01:33:40  lcs
+     The version number is now the AHI release version, not the documents version.
+     
+     Revision 4.6  1997/08/21 01:11:30  lcs
+     Added description of the samle formats AHI_LoadSound() understands
+     
+     Revision 4.5  1997/08/10 15:38:57  lcs
+     Added AHI macro!
+     Added note about LoadSound:ing the most important sounds first
+     
+     Revision 4.4  1997/07/27 00:13:32  lcs
+     Fixed a mistypeing: was SetFreq() instead of AHI_SetFreq().
+     
+     Revision 4.3  1997/07/15 00:50:40  lcs
+     This is the second bugfix release of AHI 4.
+     
+     Revision 4.2  1997/05/11 12:38:39  lcs
+     Added note about unrolling short sounds.
+     
+     Revision 4.1  1997/05/04 15:52:15  lcs
+     Initial revision.
+
+
+@Node Main "AHI:Developer/docs/devguide.guide"
+@Next "Overview"
+
+AHI Developer's Guide, version 4.16
+***********************************
+
+   Copyright (C) 1994-1997 Martin Blom
+
+   The latest release of AHI can always be found at
+@{b}http://www.lysator.liu.se/~lcs/ahi.html@{ub}.
+
+
+ @{" Overview                  " Link "Overview"}  Brief introduction
+ @{" Distribution              " Link "Distribution"}  What you are allowed to do and not
+ @{" The Author                " Link "The Author"}  Who designed it?
+
+ @{" Definitions               " Link "Definitions"}  Terms used in this document
+ @{" Function Interface        " Link "Function Interface"}  The low-level API
+ @{" Device Interface          " Link "Device Interface"}  The high-level API
+ @{" Data Types And Structures " Link "Data Types And Structures"}  The structures explained
+
+ @{" Concept Index             " Link "Concept Index"}  Concept Index
+ @{" Data Type Index           " Link "Data Type Index"}  Data Type Index
+ @{" Function Index            " Link "Function Index"}  Function Index
+ @{" Variable Index            " Link "Variable Index"}  Variable Index
+
+ -- The Detailed Node Listing --
+
+Function Interface
+
+ @{" Guidelines                " Link "Guidelines"}  
+ @{" Opening And Closing ahi.device For Low-level Access " Link "Opening And Closing ahi.device For Low-level Access"}  
+ @{" Obtaining The Hardware    " Link "Obtaining The Hardware"}  
+ @{" Declaring Sounds          " Link "Declaring Sounds"}  
+ @{" Making Noise              " Link "Making Noise"}  
+
+Device Interface
+
+ @{" Opening And Closing ahi.device For High-level Access " Link "Opening And Closing ahi.device For High-level Access"}  
+ @{" Reading From The Device   " Link "Reading From The Device"}  
+ @{" Writing To The Device     " Link "Writing To The Device"}  
+
+Data Types And Structures
+
+ @{" Data Types                " Link "Data Types"}  
+ @{" Structures                " Link "Structures"} 
+
+
+@EndNode
+
+@Node "Overview" "devguide.guide/Overview"
+@Next "Distribution"
+@Prev "Main"
+@Toc "Main"
+
+Overview
+********
+
+   This document was written in order to make it easier for developers
+to understand and use AHI in their own productions, and write Software
+That Works(TM).
+
+   @{b}ahi.device@{ub} has two different API's; one library-like function
+interface (low-level), and one "normal" device interface (high-level).
+Each of them serves different purposes.  The low-level interface is
+targeting music players, games and real-time applications. The
+high-level interface is targeting applications that just want to have a
+sample played, play audio streams or record samples as easily as
+possible.
+
+   As with everything else, it is important that you chose the right
+tool for the job--you'll only get frustrated otherwise.
+
+   Not everything about AHI is documented here; for more information,
+see `AHI User's Guide' and the autodocs.
+
+
+@EndNode
+
+@Node "Distribution" "devguide.guide/Distribution"
+@Next "The Author"
+@Prev "Overview"
+@Toc "Main"
+
+Distribution
+************
+
+   Copyright (C) 1994-1997 Martin Blom
+
+   AHI is available as @{i}freeware@{ui}.  That is, it may be freely distributed
+in unmodified form with no changes what so ever, but you may not charge
+more than a nominal fee covering distribution costs. However, donations
+are welcome (see `AHI User's Guide').
+
+   If you use this software in a commercial or shareware product, please
+consider giving the author (see @{"The Author" Link "The Author"})--and preferably each one of
+the contributors too (see `AHI User's Guide')--an original or
+registered version of your work.  Should you want to distribute the AHI
+software with your own product, there is really nothing to consider, is
+it?
+
+   If you wish to distribute this software with a hardware product,
+contact the author (see @{"The Author" Link "The Author"}).  Distribution of AHI with hardware
+products is @{i}not@{ui} free.
+
+   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+@EndNode
+
+@Node "The Author" "devguide.guide/The Author"
+@Next "Definitions"
+@Prev "Distribution"
+@Toc "Main"
+
+The Author
+**********
+
+   The author can be reached at the following addresses:
+
+Electronic mail
+     <lcs@lysator.liu.se>
+
+Standard mail
+     Martin Blom
+     Als�ttersgatan 15A:24
+     SE-584 35 Link�ping
+     Sweden
+
+World-Wide Web
+     @{b}http://www.lysator.liu.se/~lcs@{ub}
+
+
+@EndNode
+
+@Node "Definitions" "devguide.guide/Definitions"
+@Next "Function Interface"
+@Prev "The Author"
+@Toc "Main"
+
+Definitions
+***********
+
+   Following are some general definitions of terms that are used in this
+document.
+
+@{i}Sample@{ui}
+     A sample is one binary number, representing the amplitude at a
+     fixed point in time.  A sample is often stored as an 8 bit signed
+     integer, a 16 bit signed integer, a 32 bit floating point number
+     etc.  AHI only supports integers.
+
+@{i}Sample frame@{ui}
+     In mono environments, a sample frame is the same as a sample.  In
+     stereo environments, a sample frame is a tuple of two samples.
+     The first member is for the left channel, the second for the right.
+
+@{i}Sound@{ui}
+     Many sample frames stored in sequence as an array can be called a
+     sound.  A sound is, however, not limited to being formed by
+     samples, it can also be parameters to an analog synth or a MIDI
+     instrument, or be white noise.  AHI only supports sounds formed by
+     samples.
+
+
+@EndNode
+
+@Node "Function Interface" "devguide.guide/Function Interface"
+@Next "Device Interface"
+@Prev "Definitions"
+@Toc "Main"
+
+Function Interface
+******************
+
+   The device has, in addition to the usual I/O request protocol, a set
+of functions that allows the programmer to gain full control (at least
+as much as possible with device independence) over the audio hardware.
+The advantages are low overhead and much more advanced control over the
+playing sounds.  The disadvantages are greater complexity and only one
+user per sound card.
+
+   If you want to play music or sound effects for a game, record in high
+quality or want to do realtime effects, this is the API to use.
+
+
+ @{" Guidelines                " Link "Guidelines"}  
+ @{" Opening And Closing ahi.device For Low-level Access " Link "Opening And Closing ahi.device For Low-level Access"}  
+ @{" Obtaining The Hardware    " Link "Obtaining The Hardware"}  
+ @{" Declaring Sounds          " Link "Declaring Sounds"}  
+ @{" Making Noise              " Link "Making Noise"} 
+
+
+@EndNode
+
+@Node "Guidelines" "devguide.guide/Guidelines"
+@Next "Opening And Closing ahi.device For Low-level Access"
+@Prev "Function Interface"
+@Toc "Function Interface"
+
+Guidelines
+==========
+
+Follow The Rules
+----------------
+
+   It's really simple.  If I tell you to check return values, check
+sample types when recording, not to trash d2-d7/a2-a6 in hooks, or not
+to call @{b}AHI_ControlAudio()@{ub} with the @{b}AHIC_Play@{ub} tag from interrupts or
+hooks, you do as you are told.
+
+The Library Base
+----------------
+
+   The @{b}AHIBase@{ub} structure is private, so are the sub libraries' library
+base structures.  Don't try to be clever.
+
+The Audio Database
+------------------
+
+   The implementation of the database is private, and may change any
+time.  @{b}ahi.device@{ub} provides functions access the information in the
+database (@{b}AHI_NextAudioID()@{ub}, @{b}AHI_GetAudioAttrsA()@{ub} and
+@{b}AHI_BestAudioIDA()@{ub}).
+
+User Hooks
+----------
+
+   All user hooks must follow normal register conventions, which means
+that d2-d7 and a2-a6 must be preserved.  They may be called from an
+interrupt, but you cannot count on that; it can be your own process or
+another process.  Don't assume the system is in single-thread mode.
+Never spend much time in a hook, get the work done as quick as possible
+and then return.
+
+Function Calls From Other Tasks, Interrupts Or User Hooks
+---------------------------------------------------------
+
+   The @{b}AHIAudioCtrl@{ub} structure may not be shared with other
+tasks/threads.  The task that called @{b}AHI_AllocAudioA()@{ub} must do all
+other calls too (except those callable from interrupts).
+
+   Only calls specifically said to be callable from interrupts may be
+called from user hooks or interrupts.  Note that @{b}AHI_ControlAudioA()@{ub} has
+some tags that must not be present when called from an interrupt.
+
+Multitasking
+------------
+
+   Most audio drivers need multitasking to be turned on to function
+properly.  Don't turn it off while using the device.
+
+
+@EndNode
+
+@Node "Opening And Closing ahi.device For Low-level Access" "devguide.guide/Opening And Closing ahi.device For Low-level Access"
+@Next "Obtaining The Hardware"
+@Prev "Guidelines"
+@Toc "Function Interface"
+
+Opening And Closing @{b}ahi.device@{ub} For Low-level Access
+===================================================
+
+   Not too hard.  Just open @{b}ahi.device@{ub} unit @{b}AHI_NO_UNIT@{ub} and initialize
+@{b}AHIBase@{ub}.  After that you can access all the functions of the device
+just as if you had opened a standard shared library.
+
+@{b}Assembler@{ub}
+---------
+
+   For the assembler programmer there are two handy macros: @{b}OPENAHI@{ub} and
+@{b}CLOSEAHI@{ub}.  Here is a small example how to use them:
+
+             OPENAHI 4                  ;Open at least version 4.
+             lea     _AHIBase(pc),a0
+             move.l  d0,(a0)
+             beq     error
+     
+     ; AHI's functions can now be called as normal library functions:
+             move.l  _AHIBase(pc),a6
+             moveq   #AHI_INVALID_ID,d0
+             jsr     _LVOAHI_NextAudioID(a6)
+     
+     error:
+             CLOSEAHI
+             rts
+
+   Note that you @{b}have@{ub} to execute the @{b}CLOSEAHI@{ub} macro even if @{b}OPENAHI@{ub}
+failed!
+
+@{b}C@{ub}
+-
+
+   For the C programmer, here is how it should be done:
+
+     struct Library    *AHIBase;
+     struct MsgPort    *AHImp=NULL;
+     struct AHIRequest *AHIio=NULL;
+     BYTE               AHIDevice=-1;
+     
+     if(AHImp = CreateMsgPort())
+     {
+       if(AHIio = struct AHIRequest *) CreateIORequest(
+           AHImp, sizeof(struct AHIReques(t)))
+       {
+         AHIio->ahir_Version = 4;  /* Open at least version 4. */
+         if(!(AHIDevice = OpenDevice(AHINAME, AHI_NO_UNIT,
+             (struct IORequest *) AHIio, NULL)))
+         {
+           AHIBase = (struct Library *) AHIio->ahir_Std.io_Device;
+     
+     // AHI's functions can now be called as normal library functions:
+           AHI_NextAudioID(AHI_INVALID_ID);
+     
+           CloseDevice((struct IORequest *) AHIio);
+           AHIDevice = -1;
+         }
+         DeleteIORequest((struct IORequest *) AHIio);
+         AHIio = NULL;
+       }
+       DeleteMsgPort(AHImp);
+       AHImp = NULL;
+     }
+
+
+@EndNode
+
+@Node "Obtaining The Hardware" "devguide.guide/Obtaining The Hardware"
+@Next "Declaring Sounds"
+@Prev "Opening And Closing ahi.device For Low-level Access"
+@Toc "Function Interface"
+
+Obtaining The Hardware
+======================
+
+   If you wish to call any other function than
+
+   @{b}*@{ub}     @{b}AHI_AllocAudioRequestA()@{ub}
+
+   @{b}*@{ub}     @{b}AHI_AudioRequestA()@{ub}
+
+   @{b}*@{ub}     @{b}AHI_BestAudioIDA()@{ub}
+
+   @{b}*@{ub}     @{b}AHI_FreeAudioRequest()@{ub}
+
+   @{b}*@{ub}     @{b}AHI_GetAudioAttrsA()@{ub}
+
+   @{b}*@{ub}     @{b}AHI_NextAudioID()@{ub}
+
+   @{b}*@{ub}     @{b}AHI_SampleFrameSize()@{ub}
+
+   ...you have to allocate the actual sound hardware.  This is done with
+@{b}AHI_AllocAudioA()@{ub}.  @{b}AHI_AllocAudioA()@{ub} returns an @{b}AHIAudioCtrl@{ub}
+structure, or @{b}NULL@{ub} if the hardware could not be allocated.  The
+@{b}AHIAudioCtrl@{ub} structure has only one public field, @{b}ahiac_UserData@{ub}.
+This is unused by AHI and you may store anything you like here.
+
+   If @{b}AHI_AllocAudioA()@{ub} fails it is important that you handle the
+situation gracefully.
+
+   When you are finished playing or recording, call @{b}AHI_FreeAudio()@{ub} to
+deallocate the hardware and other resources allocated by
+@{b}AHI_AllocAudioA()@{ub}.  @{b}AHI_FreeAudio()@{ub} also deallocates all loaded
+sounds (see @{"Declaring Sounds" Link "Declaring Sounds"}).
+
+@{b}AHI_AllocAudioA()@{ub} Tags
+----------------------
+
+   @{b}AHI_AllocAudioA()@{ub} takes several tags as input.
+
+@{b}AHIA_AudioID@{ub}
+     This is the audio mode to be used.  You must not use any hardcoded
+     values other than @{b}AHI_DEFAULT_ID@{ub}, which is the user's default
+     fallback ID.  In most cases you should ask the user for an ID code
+     (with @{b}AHI_AudioRequestA()@{ub}) and then store the value in your
+     settings file.
+
+@{b}AHIA_MixFreq@{ub}
+     This is the mixing frequency to be used.  The actual frequency
+     will be rounded to the nearest frequency supported by the sound
+     hardware.  To find the actual frequency, use @{b}AHI_GetAudioAttrsA()@{ub}.
+     If omitted or @{b}AHI_DEFAULT_FREQ@{ub}, the user's preferred fallback
+     frequency will be used.  In most cases you should ask the user for
+     a frequency (with @{b}AHI_AudioRequestA()@{ub}) and then store the value in
+     your settings file.
+
+@{b}AHIA_Channels@{ub}
+     All sounds are played on a @{i}channel@{ui}, and this tag selects how many
+     you wish to use.  In general it takes more CPU power the more
+     channels you use and the volume gets lower and lower.
+
+@{b}AHIA_Sounds@{ub}
+     You must tell AHI how many different sounds you are going to play.
+     See @{"Declaring Sounds" Link "Declaring Sounds"} for more information.
+
+@{b}AHIA_SoundFunc@{ub}
+     With this tag you tell AHI to call a hook when a sound has been
+     started.  It works just like Paula's audio interrupts.  The hook
+     receives an @{b}AHISoundMessage@{ub} structure as message.
+     @{b}AHISoundMessage->ahism_Channel@{ub} indicates which channel the
+     sound that caused the hook to be called is played on.
+
+@{b}AHIA_PlayerFunc@{ub}
+     If you are going to play a musical score, you should use this
+     "interrupt" source instead of VBLANK or CIA timers in order to get
+     the best result with all audio drivers.  If you cannot use this,
+     you must not use any "non-realtime" modes (see
+     @{b}AHI_GetAudioAttrsA()@{ub} in the autodocs, the @{b}AHIDB_Realtime@{ub}
+     tag).
+
+@{b}AHIA_PlayerFreq@{ub}
+     If non-zero, it enables timing and specifies how many times per
+     second @{b}PlayerFunc@{ub} will be called.  This must be specified if
+     @{b}AHIA_PlayerFunc@{ub} is!  It is suggested that you keep the
+     frequency below 100-200 Hz.  Since the frequency is a fixpoint
+     number @{b}AHIA_PlayerFreq@{ub} should be less than 13107200 (that's 200
+     Hz).
+
+@{b}AHIA_MinPlayerFreq@{ub}
+     The minimum frequency (@{b}AHIA_PlayerFreq@{ub}) you will use.  You should
+     always supply this if you are using the device's interrupt feature!
+
+@{b}AHIA_MaxPlayerFreq@{ub}
+     The maximum frequency (@{b}AHIA_PlayerFreq@{ub}) you will use.  You should
+     always supply this if you are using the device's interrupt feature!
+
+@{b}AHIA_RecordFunc@{ub}
+     This hook will be called regularly when sampling is turned on (see
+     @{b}AHI_ControlAudioA()@{ub}).  It is important that you always check
+     the format of the sampled data, and ignore it if you can't parse
+     it.  Since this hook may be called from an interrupt, it is not
+     legal to directly @{b}Write()@{ub} the buffer to disk.  To record directly
+     to harddisk you have to copy the samples to another buffer and
+     signal a process to save it.  To find out the required size of the
+     buffer, see @{b}AHI_GetAudioAttrsA()@{ub} in the autodocs, the
+     @{b}AHIDB_MaxRecordSamples@{ub} tag.
+
+@{b}AHIA_UserData@{ub}
+     Can be used to initialize the @{b}ahiac_UserData@{ub} field.  You do not
+     have to use this tag to change @{b}ahiac_UserData@{ub}, you may write to it
+     directly.
+
+
+@EndNode
+
+@Node "Declaring Sounds" "devguide.guide/Declaring Sounds"
+@Next "Making Noise"
+@Prev "Obtaining The Hardware"
+@Toc "Function Interface"
+
+Declaring Sounds
+================
+
+   Before you can play a sample array, you must @{b}AHI_LoadSound()@{ub} it.
+Why?  Because if AHI knows what kind of sounds that will be played
+later, tables and stuff can be set up in advance.  Some drivers may even
+upload the samples to the sound cards local RAM and play all samples
+from there, drastically reducing CPU and bus load.
+
+   You should @{b}AHI_LoadSound()@{ub} the most important sounds first, since
+the sound cards RAM may not be large enough to hold all your sounds.
+
+   @{b}AHI_LoadSound()@{ub} also associates each sound or sample array with a
+number, which is later used to refer to that particular sound.
+
+   There are 2 types of sounds, namely @{b}AHIST_SAMPLE@{ub} and
+@{b}AHIST_DYNAMICSAMPLE@{ub}.
+
+@{b}AHIST_SAMPLE@{ub}
+     This is used for static samples.  Most sounds that will be played
+     are of this type.  Once the samples has been "loaded", you may not
+     alter the memory where the samples are located.  You may, however,
+     read from it.
+
+@{b}AHIST_DYNAMICSAMPLE@{ub}
+     If you wish to play samples that you calculate in realtime, or
+     load in portions from disk, you must use this type.  These samples
+     will never be uploaded to a sound cards local RAM, but always
+     played from the normal memory.  There is a catch, however.
+     Because of the fact that the sound is mixed in chunks, you must
+     have a certain number of samples in memory before you start a
+     sound of this type.  To calculate the size of the buffer (in
+     samples), use the following formula:
+
+          size = samples * Fs / Fm
+
+     where samples is the value returned from @{b}AHI_GetAudioAttrsA()@{ub} when
+     called with the @{b}AHIDB_MaxPlaySamples@{ub} tag, Fs is the highest
+     frequency the sound will be played at and Fm is the actual mixing
+     frequency (@{b}AHI_ControlAudioA()/AHIC_MixFreq_Query@{ub}).
+
+   The samples can be in one of four different formats, named @{b}AHIST_M8S@{ub},
+@{b}AHIST_S8S@{ub}, @{b}AHIST_M16S@{ub}, and @{b}AHIST_S16S@{ub}.
+
+@{b}AHIST_M8S@{ub}
+     This is an 8 bit mono sound. Each sample frame is just one signed
+     byte.
+
+@{b}AHIST_S8S@{ub}
+     This is an 8 bit stereo sound. Each sample frame is one signed
+     byte representing the left channel, followed by another one for
+     the right channel.
+
+@{b}AHIST_M16S@{ub}
+     This is a 16 bit mono sound.  Each sample frame is just one signed
+     16 bit word, in big endian/network order format (most significant
+     byte first).
+
+@{b}AHIST_S16S@{ub}
+     This is a 16 bit stereo sound.  Each sample frame is one signed 16
+     bit word, in big endian/network order format (most significant
+     byte first) representing the left channel, followed by another one
+     for the right channel.
+
+   If you know that you won't use a sound anymore, call
+@{b}AHI_UnloadSound()@{ub}.  @{b}AHI_FreeAudio()@{ub} will also do that for you for
+any sounds left when called.
+
+   There is no need to place a sample array in @{i}Chip memory@{ui}, but it
+@{b}must not@{ub} be swapped out!  Allocate your sample memory with the
+@{b}MEMF_PUBLIC@{ub} flag set.  If you wish to have your samples in virtual
+memory, you have to write a double-buffer routine that copies a chunk of
+memory to a @{b}MEMF_PUBLIC@{ub} buffer.  The @{i}SoundFunc@{ui} should signal a task to
+do the transfer, since it may run in supervisor mode (see
+@{b}AHI_AllocAudioA()@{ub}).
+
+
+@EndNode
+
+@Node "Making Noise" "devguide.guide/Making Noise"
+@Prev "Declaring Sounds"
+@Toc "Function Interface"
+
+Making Noise
+============
+
+   After you have allocated the sound hardware and declared all your
+sounds, you're ready to start playback.  This is done with a call to
+@{b}AHI_ControlAudioA()@{ub}, with the @{b}AHIC_Play@{ub} tag set to @{b}TRUE@{ub}.  When this
+function returns the @{i}PlayerFunc@{ui} (see @{b}AHI_AllocAudioA()@{ub}) is active, and
+the audio driver is feeding silence to the sound hardware.
+
+Playing A Sound
+---------------
+
+   All you have to do now is to set the desired sound, it's frequency
+and volume.  This is done with @{b}AHI_SetSound()@{ub}, @{b}AHI_SetFreq()@{ub} and
+@{b}AHI_SetVol()@{ub}.  Make sure the @{b}AHISF_IMM@{ub} flag is set for all these
+function's FLAG argument.  And don't try to modify a channel that is
+out of range!  If you have allocated 4 channels you may only modify
+channels 0-3.
+
+   The sound will not start until both @{b}AHI_SetSound()@{ub} and @{b}AHI_SetFreq()@{ub}
+has been called.  The sound will play even if @{b}AHI_SetVol()@{ub} was not
+called, but it will play completely silent.  If you wish to temporary
+stop a sound, set its frequency to 0.  When you change the frequency
+again, the sound will continue where it were.
+
+   When the sound has been started it will play to the end and then
+repeat.  In order to play a one-shot sound you have use the @{b}AHI_PlayA()@{ub}
+function, or install a sound interrupt using the @{b}AHIA_SoundFunc@{ub} tag
+with @{b}AHI_AllocAudioA()@{ub}.  For more information about using sound
+interrupts, see below.
+
+   A little note regarding @{b}AHI_SetSound()@{ub}:  OFFSET is the first sample
+that will be played, both when playing backwards and forwards.  This
+means that if you call @{b}AHI_SetSound()@{ub} with OFFSET 0 and LENGTH 4,
+sample 0,1,2 and 3 will be played.  If you call @{b}AHI_SetSound()@{ub} with
+OFFSET 3 and LENGTH -4, sample 3,2,1 and 0 will be played.
+
+   Also note that playing very short sounds will be very CPU intensive,
+since there are many tasks that must be done each time a sound has
+reached its end (like starting the next one, calling the @{i}SoundFunc@{ui},
+etc.).  Therefore, it is recommended that you "unroll" short sounds a
+couple of times before you play them.  How many times you should
+unroll?  Well, it depends on the situation, of course, but try making
+the sound a thousand samples long if you can. Naturally, if you need
+your @{i}SoundFunc@{ui} to be called, you cannot unroll.
+
+Playing One-shot Sounds And Advanced Loops
+------------------------------------------
+
+   Some changes has been made since earlier releases.  One-shot sounds
+and sounds with only one loop segment can now be played without using
+sample interrupts.  This is possible because one of the restrictions
+regarding the @{b}AHISF_IMM@{ub} flag has been removed.
+
+   The @{b}AHISF_IMM@{ub} flag determines if @{b}AHI_SetSound()@{ub}, @{b}AHI_SetFreq()@{ub} and
+@{b}AHI_SetVol()@{ub} should take effect immediately or when the current
+sound has reached its end.  The rules for this flags are:
+
+   @{b}*@{ub} If used inside a sample interrupt (@{i}SoundFunc@{ui}):  Must be cleared.
+
+   @{b}*@{ub} If used inside a player interrupt (@{i}PlayerFunc@{ui}):  May be set or
+     cleared.
+
+   @{b}*@{ub} If used elsewhere:  Must be set.
+
+   What does this mean?  It means that if all you want to do is to play
+a one-shot sound from inside a @{i}PlayerFunc@{ui}, you can do that by first
+calling @{b}AHI_SetSound()@{ub}, @{b}AHI_SetFreq()@{ub} and @{b}AHI_SetVol()@{ub} with @{b}AHISF_IMM@{ub}
+set, and then use @{b}AHI_SetSound(ch, AHI_NOSOUND, 0, 0, actrl, 0L)@{ub} to
+stop the sound when it has reached the end.  You can also set one loop
+segment this way.
+
+   @{b}AHI_PlayA()@{ub} was added in AHI version 4, and combines @{b}AHI_SetSound()@{ub},
+@{b}AHI_SetFreq()@{ub} and @{b}AHI_SetVol()@{ub} into one tag-based function.  It
+also allows you to set one loop and play one-shot sounds.
+
+   To play a sound with more than one loop segment or ping-pong
+looping, a sample interrupt needs to be used.  AHI's @{i}SoundFunc@{ui} works
+like Paula's interrupts and is very easy to use.
+
+   The @{i}SoundFunc@{ui} hook will be called with an @{b}AHIAudioCtrl@{ub} structure as
+object and an @{b}AHISoundMessage@{ub} structure as message.  @{b}ahism_Channel@{ub}
+indicates which channel caused the hook to be called.
+
+   An example @{i}SoundFunc@{ui} which handles the repeat part of an instrument
+can look like this (SAS/C code):
+
+     __asm __saveds ULONG SoundFunc(register __a0 struct Hook *hook,
+         register __a2 struct AHIAudioCtrl *actrl,
+         register __a1 struct AHISoundMessage *chan)
+     {
+       if(ChannelDatas[chan->ahism_Channel].Length)
+         AHI_SetSound(chan->ahism_Channel, 0,
+             (ULONG) ChannelDatas[chan->ahism_Channel].Address,
+             ChannelDatas[chan->ahism_Channel].Length,
+             actrl, NULL);
+       else
+         AHI_SetSound(chan->ahism_Channel, AHI_NOSOUND,
+             NULL, NULL, actrl, NULL);
+       return NULL;
+     }
+
+   This example is from an old version of the AHI NotePlayer for
+@{i}DeliTracker 2@{ui}.  @{b}ChannelDatas@{ub} is an array where the start and length
+of the repeat part is stored.  Here, a repeat length of zero indicates
+a one-shot sound.  Note that this particular example only uses one
+sound (0).  For applications using multiple sounds, the sound number
+would have to be stored in the array as well.
+
+   Once again, note that the @{b}AHISF_IMM@{ub} flag should @{b}never@{ub} be set in a
+@{i}SoundFunc@{ui} hook!
+
+Tricks With The Volume
+----------------------
+
+   Starting with V4, @{b}AHI_SetVol()@{ub} can take both negative volume and pan
+parameters.  If you set the volume to a negative value, the sample
+will, if the audio mode supports it, invert each sample before playing.
+If pan is negative, the sample will be encoded to go to the surround
+speakers.
+
+
+@EndNode
+
+@Node "Device Interface" "devguide.guide/Device Interface"
+@Next "Data Types And Structures"
+@Prev "Function Interface"
+@Toc "Main"
+
+Device Interface
+****************
+
+   The I/O request protocol makes it very easy to play audio streams,
+sounds from disk and non time-critical sound effects in a multitasking
+friendly way.  Recoding is just as easy, on behalf of quality.  Several
+programs can play sounds at the same time, and even record at the same
+time if your hardware is full duplex.
+
+   If you want to write a sample player, play (warning?) sounds in your
+applications, play an audio stream from a CD via the SCSI/IDE bus,
+write a voice command utility etc., this is the API to use.
+
+   Note that while all the low-level functions (see @{"Function Interface" Link "Function Interface"})
+count lengths and offsets in sample frames, the device interface--like
+all Amiga devices--uses bytes.
+
+
+ @{" Opening And Closing ahi.device For High-level Access " Link "Opening And Closing ahi.device For High-level Access"}  
+ @{" Reading From The Device   " Link "Reading From The Device"}  
+ @{" Writing To The Device     " Link "Writing To The Device"} 
+
+
+@EndNode
+
+@Node "Opening And Closing ahi.device For High-level Access" "devguide.guide/Opening And Closing ahi.device For High-level Access"
+@Next "Reading From The Device"
+@Prev "Device Interface"
+@Toc "Device Interface"
+
+Opening And Closing @{b}ahi.device@{ub} For High-level Access
+====================================================
+
+   Four primary steps are required to open ahi.device:
+
+   @{b}*@{ub} Create a message port using @{b}CreateMsgPort()@{ub}.  Reply messages from
+     the device must be directed to a message port.
+
+   @{b}*@{ub} Create an extended I/O request structure of type @{b}AHIRequest@{ub} using
+     @{b}CreateIORequest()@{ub}.  @{b}CreateIORequest()@{ub} will initialize the I/O
+     request to point to your reply port.
+
+   @{b}*@{ub} Specify which version of the device you need.  The lowest
+     supported version is 4.  Version 1 and 3 are obsolete, and version
+     2 only has the low-level API.
+
+   @{b}*@{ub} Open @{b}ahi.device@{ub} unit @{b}AHI_DEFAULT_UNIT@{ub} or any other unit the user
+     has specified with, for example, a UNIT tooltype.  Call
+     @{b}OpenDevice()@{ub}, passing the I/O request.
+
+   Each @{b}OpenDevice()@{ub} must eventually be matched by a call to
+@{b}CloseDevice()@{ub}.  When the last close is performed, the device will
+deallocate all resources.
+
+   All I/O requests must be completed before @{b}CloseDevice()@{ub}.  Abort any
+pending requests with @{b}AbortIO()@{ub}.
+
+   Example:
+
+     struct MsgPort    *AHImp      = NULL;
+     struct AHIRequest *AHIio      = NULL;
+     BYTE               AHIDevice  = -1;
+     UBYTE              unit       = AHI_DEFAULT_UNIT;
+     
+     /* Check if user wants another unit here... */
+     
+     if(AHImp = CreateMsgPort())
+     {
+       if(AHIio = (struct AHIRequest *)
+           CreateIORequest(AHImp, sizeof(struct AHIRequest)))
+       {
+         AHIio->ahir_Version = 4;
+         if(!(AHIDevice = OpenDevice(AHINAME, unit,
+             (struct IORequest *) AHIio, NULL)))
+         {
+     
+     
+           /* Send commands to the device here... */
+     
+     
+           if(! CheckIO((struct IORequest *) AHIio))
+           {
+             AbortIO((struct IORequest *) AHIio);
+           }
+     
+           WaitIO((struct IORequest *) AHIio);
+     
+           CloseDevice((struct IORequest *) AHIio);
+           AHIDevice = -1;
+         }
+         DeleteIORequest((struct IORequest *) AHIio);
+         AHIio = NULL;
+       }
+       DeleteMsgPort(AHImp);
+       AHImp = NULL;
+     }
+
+
+@EndNode
+
+@Node "Reading From The Device" "devguide.guide/Reading From The Device"
+@Next "Writing To The Device"
+@Prev "Opening And Closing ahi.device For High-level Access"
+@Toc "Device Interface"
+
+Reading From The Device
+=======================
+
+   You read from @{b}ahi.device@{ub} by passing an @{b}AHIRequest@{ub} to the device with
+@{b}CMD_READ@{ub} set in @{b}io_Command@{ub}, the number of bytes to be read set in
+@{b}io_Length@{ub}, the address of the read buffer set in @{b}io_Data@{ub}, the
+desired sample format set in @{b}ahir_Type@{ub} and the desired sample frequency
+set in @{b}ahir_Frequency@{ub}.  The first read command in a sequence should
+also have @{b}io_Offset@{ub} set to 0.  @{b}io_Length@{ub} must be an even multiple of
+the sample frame size.
+
+Double Buffering
+----------------
+
+   To do double buffering, just fill the first buffer with @{b}DoIO()@{ub} and
+@{b}io_Offset@{ub} set to 0, then start filling the second buffer with
+@{b}SendIO()@{ub} using the same I/O request (but don't clear @{b}io_Offset@{ub}!).
+After you have processed the first buffer, wait until the I/O request
+is finished and start over with @{b}SendIO()@{ub} on the first buffer.
+
+Distortion
+----------
+
+   The samples will automatically be converted to the sample format set
+in @{b}ahir_Type@{ub} and to the sample frequency set in @{b}ahir_Frequency@{ub}.
+Because it is quite unlikely that you ask for the same sample frequency
+the user has chosen in the preference program, chances that the quality
+is lower than expected are pretty high.  The worst problem is probably
+the anti-aliasing filter before the A/D converter.  If the user has
+selected a higher sampling/mixing frequency than you request, the
+signal will be distorted according to the Nyquist sampling theorem.
+If, on the other hand, the user has selected a lower sampling/mixing
+frequency than you request, the signal will not be distorted but rather
+bandlimited more than necessary.
+
+
+@EndNode
+
+@Node "Writing To The Device" "devguide.guide/Writing To The Device"
+@Prev "Reading From The Device"
+@Toc "Device Interface"
+
+Writing To The Device
+=====================
+
+   You write to the device by passing an @{b}AHIRequest@{ub} to the device with
+@{b}CMD_WRITE@{ub} set in @{b}io_Command@{ub}, the precedence in
+@{b}io_Message.mn_Node.ln_Pri@{ub}, the number of bytes to be written in
+@{b}io_Length@{ub}, the address of the write buffer set in @{b}io_Data@{ub}, the
+sample format set in @{b}ahir_Type@{ub}, the desired sample frequency set in
+@{b}ahir_Frequency@{ub}, the desired volume set in @{b}ahir_Volume@{ub} and the
+desired stereo position set in @{b}ahir_Position@{ub}.  Unless you are doing
+double buffering, @{b}ahir_Link@{ub} should be set to @{b}NULL@{ub}.  @{b}io_Length@{ub} must be
+an even multiple of the sample frame size.
+
+Double Buffering
+----------------
+
+   To do double buffering, you need two I/O requests.  Create the
+second one by making a copy of the request you used in @{b}OpenDevice()@{ub}.
+Start the first with @{b}SendIO()@{ub}.  Set @{b}ahir_Link@{ub} in the second request to
+the address of the first request, and @{b}SendIO()@{ub} it.  Wait on the first,
+fill the first buffer again and repeat, this time with @{b}ahir_Link@{ub} of the
+first buffer set to the address of the second I/O request.
+
+Distortion
+----------
+
+   The problems with aliasing are present but not as obvious as with
+reading.  Just make sure your source data is bandlimited correctly, and
+do not play samples at a lower frequency than they were recorded.
+
+Playing multiple sounds at the same time
+----------------------------------------
+
+   If you want to play several sounds at the same time, just make a new
+copy of the I/O request you used in @{b}OpenDevice()@{ub}, and @{b}CMD_WRITE@{ub} it.
+The user has set the number of channels available in the preference
+tool, and if too many requests are sent to the device the one with
+lowest precedence will be muted.  When a request is finished, the muted
+request with the highest precedence will be played.  Note that all
+muted requests continue to play silently, so the programmer will not
+have to worry if there are enough channels or not.
+
+Suggested precedences
+---------------------
+
+   The precedences to use depend on what kind of sound you are playing.
+The recommended precedences are the same as for @{b}audio.device@{ub}, listed in
+`AMIGA ROM Kernel Reference manual - Devices'.  Reprinted without
+permission.  So sue me.
+
+      Precedences  | Type of sound
+      -------------+----------------------------------------------------------
+         127       |  Unstoppable.  Sounds first allocated at lower
+                   | precedencies, then set to this highest level.
+         90 - 100  |  Emergencies.  Alert, urgent situation that requires
+                   | immediate action.
+         80 - 90   |  Annunciators.  Attention, bell (CTRL-G).
+         75        |  Speech.  Synthesized or recorded speech
+                   | (narrator.device).
+         50 - 70   |  Sonic cues.  Sounds that provide information that is not
+                   | provided by graphics.  Only the beginning of of each sound
+                   | should be at this level; the rest should ne set to sound
+                   | effects level.
+        -50 - 50   |  Music program.  Musical notes in a music-oriented program.
+                   | The higher levels should be used for the attack portions
+                   | of each note.
+        -70 - -50  |  Sound effects.  Sounds used in conjunction with graphics.
+                   | More important sounds should use higher levels.
+        -100 - -80 |  Background.  Theme music and restartable background sounds.
+        -128       |  Silence.  Lowest level (freeing the channel completely is
+                   | preferred).
+
+   Right.  As you can see, some things do not apply to @{b}ahi.device@{ub}.
+First, there is no way to change the precedence of a playing sound, so
+the precedences should be set from the beginning.  Second, it is not
+recommended to use the device interface to play music.  However,
+playing an audio stream from CD or disk comes very close.  Third, there
+are no channels to free in AHI since they are dynamically allocated by
+the device.
+
+
+@EndNode
+
+@Node "Data Types And Structures" "devguide.guide/Data Types And Structures"
+@Next "Concept Index"
+@Prev "Device Interface"
+@Toc "Main"
+
+Data Types And Structures
+*************************
+
+   In this chapter some of the data types and structures used will be
+explained.  For more information, please consult the autodocs and the
+include files.
+
+
+ @{" Data Types                " Link "Data Types"}  
+ @{" Structures                " Link "Structures"} 
+
+
+@EndNode
+
+@Node "Data Types" "devguide.guide/Data Types"
+@Next "Structures"
+@Prev "Data Types And Structures"
+@Toc "Data Types And Structures"
+
+Data Types
+==========
+
+@{b}Fixed@{ub}
+-----
+
+   @{b}Fixed@{ub} is a signed long integer.  It is used to represent decimal
+numbers without using floating point arithmetics.  The decimal point is
+assumed to be in the middle of the 32 bit integer, thus giving 16 bits
+for the integer part of the number and 16 bits for the fraction.  The
+largest number that can be stored in a @{b}Fixed@{ub} is +32767.999984741, and
+the lowest number is -32768.
+
+   Example:
+
+      Decimal | Fixed
+      --------+----------
+       1.0    | 0x00010000
+       0.5    | 0x00008000
+       0.25   | 0x00004000
+       0      | 0x00000000
+      -0.25   | 0xffffc000
+      -0.5    | 0xffff8000
+      -1.0    | 0xffff0000
+
+@{b}sposition@{ub}
+---------
+
+   @{b}sposition@{ub} (stereo position) is a @{b}Fixed@{ub}, and is used to represent the
+stereo position of a sound.  0 is far left, 0.5 is center and 1.0 is
+far right.
+
+
+@EndNode
+
+@Node "Structures" "devguide.guide/Structures"
+@Prev "Data Types"
+@Toc "Data Types And Structures"
+
+Structures
+==========
+
+@{b}AHIUnitPrefs@{ub} And @{b}AHIGlobalPrefs@{ub}
+-------------------------------
+
+   These structures are used in the @{b}AHIU@{ub} and @{b}AHIG@{ub} chunks, respective,
+which are part of the settings file (@{b}ENV:Sys/ahi.prefs@{ub}), The file is
+read by AHI on each call to @{b}OpenDevice()@{ub}, just before the audio
+hardware is allocated.
+
+   @{b}AHIUnitPrefs@{ub} specifies the audio mode and its parameters to use for
+each device unit (currently 0-3 and @{b}AHI_NO_UNIT@{ub}; unit 0 is also called
+@{b}AHI_DEFAULT_UNIT@{ub}).
+
+   @{b}AHIGlobalPrefs@{ub} contains some global options that can be used to gain
+speed on slow CPUs, the global debug level and a protection against CPU
+overload.  The debug level specifies which of the functions in AHI
+should print debugging information to the serial port (the output can be
+redirected to a console window or a file with tools like @{i}Sushi@{ui} (1)).
+
+   ---------- Footnotes ----------
+
+   (1)  Available from AmiNet, for example
+@{b}ftp://ftp.germany.aminet.org/pub/aminet/dev/debug/Sushi.lha@{ub}.
+
+
+@EndNode
+
+@Node "Concept Index" "devguide.guide/Concept Index"
+@Next "Data Type Index"
+@Prev "Data Types And Structures"
+@Toc "Main"
+
+Concept Index
+*************
+
+@Index "Concept Index"
+
+
+
+ @{" Audio streams, playing                   " Link "Device Interface"}   Device Interface
+ @{" Author of AHI                            " Link "The Author"}   The Author
+ @{" Copyright                                " Link "Distribution"}   Distribution
+ @{" Data Types                               " Link "Data Types"}   Data Types
+ @{" Data Types And Structures                " Link "Data Types And Structures"}   Data Types And Structures
+ @{" Definitions                              " Link "Definitions"}   Definitions
+ @{" Disclaimer                               " Link "Distribution"}   Distribution
+ @{" Distortion, playing                      " Link "Writing To The Device"}   Writing To The Device
+ @{" Distortion, recording                    " Link "Reading From The Device"}   Reading From The Device
+ @{" Distribution                             " Link "Distribution"}   Distribution
+ @{" Double Buffering, reading                " Link "Reading From The Device"}   Reading From The Device
+ @{" Double Buffering, writing                " Link "Writing To The Device"}   Writing To The Device
+ @{" Function Interface                       " Link "Function Interface"}   Function Interface
+ @{" Games, music                             " Link "Function Interface"}   Function Interface
+ @{" Games, sound effects                     " Link "Function Interface"}   Function Interface
+ @{" Guidelines                               " Link "Guidelines"}   Guidelines
+ @{" Hooks                                    " Link "Guidelines"}   Guidelines
+ @{" Legal nonsense                           " Link "Distribution"}   Distribution
+ @{" Library base                             " Link "Guidelines"}   Guidelines
+ @{" License                                  " Link "Distribution"}   Distribution
+ @{" Loading Sounds                           " Link "Declaring Sounds"}   Declaring Sounds
+ @{" Multitasking                             " Link "Guidelines"}   Guidelines
+ @{" Music, games                             " Link "Function Interface"}   Function Interface
+ @{" Music, streams from disk                 " Link "Device Interface"}   Device Interface
+ @{" Overview                                 " Link "Overview"}   Overview
+ @{" Playing                                  " Link "Writing To The Device"}   Writing To The Device
+ @{" Playing audio streams                    " Link "Device Interface"}   Device Interface
+ @{" Precedences                              " Link "Writing To The Device"}   Writing To The Device
+ @{" Programming guidelines                   " Link "Guidelines"}   Guidelines
+ @{" Reading                                  " Link "Reading From The Device"}   Reading From The Device
+ @{" Realtime effects                         " Link "Function Interface"}   Function Interface
+ @{" Recording                                " Link "Reading From The Device"}   Reading From The Device
+ @{" Recording, high quality                  " Link "Function Interface"}   Function Interface
+ @{" Recording, quick and easy                " Link "Device Interface"}   Device Interface
+ @{" Recursion                                " Link "Concept Index"}   Concept Index
+ @{" Sample                                   " Link "Definitions"}   Definitions
+ @{" Sample frame                             " Link "Definitions"}   Definitions
+ @{" Software license                         " Link "Distribution"}   Distribution
+ @{" Sound                                    " Link "Definitions"}   Definitions
+ @{" Sound effects, games                     " Link "Function Interface"}   Function Interface
+ @{" Sound effects, system                    " Link "Device Interface"}   Device Interface
+ @{" Structures                               " Link "Structures"}   Structures
+ @{" Surround sound                           " Link "Making Noise"}   Making Noise
+ @{" The Audio Database                       " Link "Guidelines"}   Guidelines
+ @{" The Author                               " Link "The Author"}   The Author
+ @{" Unloading Sounds                         " Link "Declaring Sounds"}   Declaring Sounds
+ @{" Writing                                  " Link "Writing To The Device"}   Writing To The Device
+
+
+@EndNode
+
+@Node "Data Type Index" "devguide.guide/Data Type Index"
+@Next "Function Index"
+@Prev "Concept Index"
+@Toc "Main"
+
+Data Type Index
+***************
+
+
+
+ @{" AHIAudioCtrl                             " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIBase                                  " Link "Guidelines"}   Guidelines
+ @{" AHIGlobalPrefs                           " Link "Structures"}   Structures
+ @{" AHIRequest                               " Link "Opening And Closing ahi.device For High-level Access"}   Opening And Closing ahi.device For High-level Access
+ @{" AHISoundMessage                          " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIUnitPrefs                             " Link "Structures"}   Structures
+ @{" Fixed                                    " Link "Data Types"}   Data Types
+ @{" sposition                                " Link "Data Types"}   Data Types
+
+
+@EndNode
+
+@Node "Function Index" "devguide.guide/Function Index"
+@Next "Variable Index"
+@Prev "Data Type Index"
+@Toc "Main"
+
+Function Index
+**************
+
+
+
+ @{" AHI_AllocAudioA()                        " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHI_BestAudioIDA()                       " Link "Guidelines"}   Guidelines
+ @{" AHI_ControlAudioA()                      " Link "Making Noise"}   Making Noise
+ @{" AHI_FreeAudio()                          " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHI_GetAudioAttrsA()                     " Link "Guidelines"}   Guidelines
+ @{" AHI_LoadSound()                          " Link "Declaring Sounds"}   Declaring Sounds
+ @{" AHI_NextAudioID()                        " Link "Guidelines"}   Guidelines
+ @{" AHI_PlayA()                              " Link "Making Noise"}   Making Noise
+ @{" AHI_SetFreq()                            " Link "Making Noise"}   Making Noise
+ @{" AHI_SetSound()                           " Link "Making Noise"}   Making Noise
+ @{" AHI_SetVol()                             " Link "Making Noise"}   Making Noise
+ @{" AHI_UnloadSound()                        " Link "Declaring Sounds"}   Declaring Sounds
+
+
+@EndNode
+
+@Node "Variable Index" "devguide.guide/Variable Index"
+@Prev "Function Index"
+@Toc "Main"
+
+Variable Index
+**************
+
+
+
+ @{" AHI_DEFAULT_FREQ                         " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHI_DEFAULT_ID                           " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHI_DEFAULT_UNIT                         " Link "Opening And Closing ahi.device For High-level Access"}   Opening And Closing ahi.device For High-level Access
+ @{" AHIA_AudioID                             " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_Channels                            " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_MaxPlayerFreq                       " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_MinPlayerFreq                       " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_MixFreq                             " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_PlayerFreq                          " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_PlayerFunc                          " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_RecordFunc                          " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_SoundFunc                           " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_Sounds                              " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIA_UserData                            " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" ahiac_UserData                           " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIC_Play                                " Link "Making Noise"}   Making Noise
+ @{" ahir_Frequency <1>                       " Link "Reading From The Device"}   Reading From The Device
+ @{" ahir_Frequency                           " Link "Writing To The Device"}   Writing To The Device
+ @{" ahir_Link                                " Link "Writing To The Device"}   Writing To The Device
+ @{" ahir_Position                            " Link "Writing To The Device"}   Writing To The Device
+ @{" ahir_Type <1>                            " Link "Reading From The Device"}   Reading From The Device
+ @{" ahir_Type                                " Link "Writing To The Device"}   Writing To The Device
+ @{" ahir_Volume                              " Link "Writing To The Device"}   Writing To The Device
+ @{" AHISF_IMM                                " Link "Making Noise"}   Making Noise
+ @{" ahism_Channel                            " Link "Obtaining The Hardware"}   Obtaining The Hardware
+ @{" AHIST_DYNAMICSAMPLE                      " Link "Declaring Sounds"}   Declaring Sounds
+ @{" AHIST_M16S                               " Link "Declaring Sounds"}   Declaring Sounds
+ @{" AHIST_M8S                                " Link "Declaring Sounds"}   Declaring Sounds
+ @{" AHIST_S16S                               " Link "Declaring Sounds"}   Declaring Sounds
+ @{" AHIST_S8S                                " Link "Declaring Sounds"}   Declaring Sounds
+ @{" AHIST_SAMPLE                             " Link "Declaring Sounds"}   Declaring Sounds
+ @{" CMD_READ                                 " Link "Reading From The Device"}   Reading From The Device
+ @{" CMD_WRITE                                " Link "Writing To The Device"}   Writing To The Device
+ @{" io_Command <1>                           " Link "Reading From The Device"}   Reading From The Device
+ @{" io_Command                               " Link "Writing To The Device"}   Writing To The Device
+ @{" io_Data <1>                              " Link "Writing To The Device"}   Writing To The Device
+ @{" io_Data                                  " Link "Reading From The Device"}   Reading From The Device
+ @{" io_Length <1>                            " Link "Reading From The Device"}   Reading From The Device
+ @{" io_Length                                " Link "Writing To The Device"}   Writing To The Device
+ @{" io_Offset                                " Link "Reading From The Device"}   Reading From The Device
+ @{" ln_Pri                                   " Link "Writing To The Device"}   Writing To The Device
+
+@EndNode
+

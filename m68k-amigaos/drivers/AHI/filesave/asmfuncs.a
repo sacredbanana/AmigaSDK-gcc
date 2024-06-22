@@ -1,0 +1,75 @@
+
+	incdir	include:
+	include	exec/tasks.i
+	include	devices/ahi.i
+	include	libraries/ahi_sub.i
+	include	lvo/exec_lib.i
+	include	filesave.i
+	include	macros.i
+
+	XDEF	_intAHIsub_Disable
+	XDEF	_intAHIsub_Enable
+	XDEF	@SlaveEntry
+	XDEF	@RecSlaveEntry
+	XDEF	_SlaveEntry
+	XDEF	_RecSlaveEntry
+	XREF	_SlaveTask
+	XREF	_RecSlaveTask
+;in:
+* a2	struct AHI_AudioCtrl
+_intAHIsub_Disable:
+	pushm	d0-d1/a0-a1/a6
+	move.l	ahiac_DriverData(a2),a0
+	addq.w	#1,fs_DisableCount(a0)
+	move.b	fs_DisableSignal(a0),d1
+	bmi	.exit
+	moveq	#0,d0
+	bset	d1,d0
+	move.l	fs_SlaveTask(a0),a1
+	move.l	4.w,a6
+	call	Signal
+.exit
+	popm	d0-d1/a0-a1/a6
+	rts
+
+;in:
+* a2	struct AHI_AudioCtrl
+_intAHIsub_Enable:
+	pushm	d0-d1/a0-a1/a6
+	move.l	ahiac_DriverData(a2),a0
+	subq.w	#1,fs_DisableCount(a0)
+	bne	.exit
+	move.b	fs_EnableSignal(a0),d1
+	bmi	.exit
+	moveq	#0,d0
+	bset	d1,d0
+	move.l	fs_SlaveTask(a0),a1
+	move.l	4.w,a6
+	call	Signal
+.exit
+	popm	d0-d1/a0-a1/a6
+	rts
+
+* Set up a2 and a6 for SlaveTask()
+_SlaveEntry:
+@SlaveEntry:
+	move.l	4.w,a6
+	suba.l	a1,a1
+	call	FindTask
+	move.l	d0,a0
+	move.l	TC_Userdata(a0),a2
+	move.l	ahiac_DriverData(a2),a0
+	move.l	fs_AHIsubBase(a0),a6
+	bra	_SlaveTask
+
+* Set up a2 and a6 for RecSlaveTask()
+_RecSlaveEntry:
+@RecSlaveEntry:
+	move.l	4.w,a6
+	suba.l	a1,a1
+	call	FindTask
+	move.l	d0,a0
+	move.l	TC_Userdata(a0),a2
+	move.l	ahiac_DriverData(a2),a0
+	move.l	fs_AHIsubBase(a0),a6
+	bra	_RecSlaveTask

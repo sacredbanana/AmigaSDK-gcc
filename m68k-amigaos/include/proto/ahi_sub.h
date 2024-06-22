@@ -3,17 +3,17 @@
 #ifndef PROTO_AHI_SUB_H
 #define PROTO_AHI_SUB_H
 
-#include L<clib/ahi_sub_protos.h>
+#include <clib/ahi_sub_protos.h>
 
 #ifndef _NO_INLINE
 # if defined(__GNUC__)
 #  ifdef __AROS__
-#   include L<defines/ahi_sub.h>
+#   include <defines/ahi_sub.h>
 #  else
-#   include L<inline/ahi_sub.h>
+#   include <inline/ahi_sub.h>
 #  endif
 # else
-#  include L<pragmas/ahi_sub_pragmas.h>
+#  include <pragmas/ahi_sub_pragmas.h>
 # endif
 #endif /* _NO_INLINE */
 
