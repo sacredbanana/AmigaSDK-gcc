@@ -14,19 +14,19 @@ SECTIONS
     *(.gnu.linkonce.t.*)
     *(.gnu.linkonce.r.*)
     *(.gcc_except_table*)
-    CONSTRUCTORS
     *(SORT_BY_NAME(.list___EH_FRAME*))
     *(SORT_BY_NAME(.list_*))
     *(.end_of_lists)
   }
   .data :
   {
+    *(.data)
+    *(SORT_BY_NAME(.data.*))
+    CONSTRUCTORS
     *(SORT_BY_NAME(.dlist___EH_FRAME_OBJECT*))
     *(SORT_BY_NAME(.dlist_*))
     *(.end_of_dlists)
     *(.data.__EH_FRAME_OBJECT__*)
-    *(.data)
-    *(.data.*)
     *(.gnu.linkonce.d.*)
   }
   .bss :
@@ -42,5 +42,17 @@ SECTIONS
   .bsschip :
   {
     *(.bsschip)
+  }
+  .dwarf :
+  {
+    *(.debug_frame)
+    *(.debug_info)
+    *(.debug_abbrev)
+    *(.debug_loclists)
+    *(.debug_aranges)
+    *(.debug_rnglists)
+    *(.debug_line)
+    *(.debug_str)
+    *(.debug_line_str)
   }
 }

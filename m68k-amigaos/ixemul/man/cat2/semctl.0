@@ -1,0 +1,120 @@
+
+SEMCTL(2)                  UNIX Programmer's Manual                  SEMCTL(2)
+
+NNAAMMEE
+     sseemmccttll - semaphore control operations
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//sseemm..hh>>
+
+     _i_n_t
+     sseemmccttll(_i_n_t _s_e_m_i_d, _i_n_t _s_e_m_n_u_m, _i_n_t _c_m_d, _u_n_i_o_n _s_e_m_u_n _a_r_g)
+
+DDEESSCCRRIIPPTTIIOONN
+     The sseemmccttll() system call provides a number of control operations on the
+     semaphore specified by _s_e_m_n_u_m and _s_e_m_i_d. The operation to be performed is
+     specified in _c_m_d (see below).  _a_r_g is a union of the following fields:
+
+         int     val;            /* value for SETVAL */
+         struct  semid_ds *buf;  /* buffer for IPC_{STAT,SET} */
+         u_short *array;         /* array for GETALL & SETALL */
+
+     The semid_ds  structure used in the IPC_SET and IPC_STAT commands is de-
+     fined as follows in <_s_y_s_/_s_e_m_._h>:
+
+     struct semid_ds {
+         struct ipc_perm sem_perm;  /* operation permissions */
+         struct  sem *sem_base;     /* semaphore set */
+         u_short sem_nsems;         /* number of sems in set */
+         time_t  sem_otime;         /* last operation time */
+         time_t  sem_ctime;         /* last change time */
+     };
+
+     The ipc_perm  structure used inside the semid_ds  structure is defined in
+     <_s_y_s_/_i_p_c_._h> and looks like this:
+
+     struct ipc_perm {
+         ushort cuid; /* creator user id */
+         ushort cgid; /* creator group id */
+         ushort uid;  /* user id */
+         ushort gid;  /* group id */
+         ushort mode; /* r/w permission (see chmod(2)) */
+         ushort seq;  /* sequence # (to generate unique msg/sem/shm id) */
+         key_t key;   /* user specified msg/sem/shm key */
+     };
+
+     sseemmccttll() provides the following operations:
+
+     GETVAL     Return the value of the semaphore.
+
+     SETVAL     Set the value of the semaphore to _a_r_g_._v_a_l.
+
+     GETPID     Return the pid of the last process that did an operation on
+                this semaphore.
+
+     GETNCNT    Return the number of processes waiting to acquire the
+                semaphore.
+
+     GETZCNT    Return the number of processes waiting for the value of the
+                semaphore to reach 0.
+
+     GETALL     Return the values for all the semaphores associated with
+
+
+                _s_e_m_i_d.
+
+     SETALL     Set the values for all the semaphores that are associated with
+                the semaphore identifier _s_e_m_i_d to the corresponding values in
+                _a_r_g_._a_r_r_a_y.
+
+     IPC_STAT   Gather statistics about a semaphore and place the information
+                in the semid_ds  structure pointed to by _a_r_g_._b_u_f (see above).
+
+     IPC_SET    Set the value of the _s_e_m___p_e_r_m_._u_i_d, _s_e_m___p_e_r_m_._g_i_d and
+                _s_e_m___p_e_r_m_._m_o_d_e fields in the structure associated with the
+                semaphore.  The values are taken from the corresponding fields
+                in the structure pointed to by _a_r_g_._b_u_f. This operation can on-
+                ly be executed by the super-user, or a process that has an ef-
+                fective user id equal to either _s_e_m___p_e_r_m_._c_u_i_d or _s_e_m___p_e_r_m_._u_i_d
+                in the data structure associated with the message queue.
+
+     IPC_RMID   Remove the semaphores associated with _s_e_m_i_d from the system
+                and destroy the data structures associated with it. Only the
+                super-user or a process with an effective uid equal to the
+                _s_e_m___p_e_r_m_._c_u_i_d or _s_e_m___p_e_r_m_._u_i_d values in the data structure as-
+                sociated with the semaphore can do this.
+
+     The permission to read or change a message queue (see semop(2))  is de-
+     termined by the _s_e_m___p_e_r_m_._m_o_d_e field in the same way as is done with files
+     (see chmod(2)),  but the effective uid can match either the _s_e_m___p_e_r_m_._c_u_i_d
+     field or the _s_e_m___p_e_r_m_._u_i_d field, and the effective gid can match either
+     _s_e_m___p_e_r_m_._c_g_i_d or _s_e_m___p_e_r_m_._g_i_d.
+
+RREETTUURRNN VVAALLUUEESS
+     For the GETVAL, GETPID, GETNCNT and GETZCNT operations, sseemmccttll() returns
+     one of the values described above if successful. All other operations
+     will make sseemmccttll() return 0 if no errors occur. Otherwise -1 is returned
+     and _e_r_r_n_o set to reflect the error.
+
+EERRRROORRSS
+     sseemmccttll() will fail if:
+
+     [EPERM]       _c_m_d is equal to IPC_SET or IPC_RMID and the caller is not
+                   the super-user, nor does the effective uid match either the
+                   _s_e_m___p_e_r_m_._u_i_d or _s_e_m___p_e_r_m_._c_u_i_d fields of the data structure
+                   associated with the message queue.
+
+     [EACCESS]     The caller has no operation permission for this semaphore.
+
+     [EINVAL]      _s_e_m_i_d is not a valid message semaphore identifier.
+
+                   _c_m_d is not a valid command.
+
+     [EFAULT]      _a_r_g_._b_u_f specifies an invalid address.
+
+SSEEEE AALLSSOO
+     semop(2) semget(2)
+
+ NetBSD                         August 17, 1995                              2

@@ -50,7 +50,7 @@
 /****************************************************************************/
 
 #ifdef __cplusplus
-extern __stdargs "C" {
+extern "C" {
 #endif /* __cplusplus */
 
 #ifndef INADDR_LOOPBACK

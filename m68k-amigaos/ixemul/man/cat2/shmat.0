@@ -1,0 +1,66 @@
+
+SHMAT(2)                   UNIX Programmer's Manual                   SHMAT(2)
+
+NNAAMMEE
+     sshhmmaatt, sshhmmddtt - map/unmap shared memory
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//sshhmm..hh>>
+
+     _v_o_i_d _*
+     sshhmmaatt(_i_n_t _s_h_m_i_d, _v_o_i_d _*_s_h_m_a_d_d_r, _i_n_t _s_h_m_f_l_g)
+
+     _i_n_t
+     sshhmmddtt(_v_o_i_d _*_s_h_m_a_d_d_r)
+
+DDEESSCCRRIIPPTTIIOONN
+     sshhmmaatt() maps the shared memory segment associated with the shared memory
+     identifier _s_h_m_i_d into the address space of the calling process. The ad-
+     dress at which the segment is mapped is determined by the _s_h_m_a_d_d_r parame-
+     ter. If it is equal to 0, the system will pick an address itself.  Other-
+     wise, an attempt is made to map the shared memory segment at the address
+     _s_h_m_a_d_d_r specifies. If SHM_RND is set in _s_h_m_f_l_g, the system will round the
+     address down to a multiple of SHMLBA bytes (SHMLBA is defined in
+     <_s_y_s_/_s_h_m_._h> ).
+
+     A shared memory segment can be mapped read-only by specifying the
+     SHM_RDONLY flag in _s_h_m_f_l_g.
+
+     sshhmmddtt() unmaps the shared memory segment that is currently mapped at
+     _s_h_m_a_d_d_r from the calling process' address space.  _s_h_m_a_d_d_r must be a value
+     returned by a prior sshhmmaatt() call. A shared memory segment will remain ex-
+     istant until it is removed by a call to shmctl(2) with the IPC_RMID com-
+     mand.
+
+RREETTUURRNN VVAALLUUEESS
+     sshhmmaatt() returns the address at which the shared memory segment has been
+     mapped into the calling process' address space when successful, sshhmmddtt()
+     returns 0 on successful completion. Otherwise, a value of -1 is returned,
+     and the global variable _e_r_r_n_o is set to indicate the error.
+
+EERRRROORRSS
+     sshhmmaatt() will fail if:
+
+     [EACCESS]     The calling process has no permission to access this shared
+                   memory segment.
+
+     [ENOMEM]      There is not enough available data space for the calling
+                   process to map the shared memory segment.
+
+     [EINVAL]      _s_h_m_i_d is not a valid shared memory identifier.
+
+                   _s_h_m_a_d_d_r specifies an illegal address.
+
+     [EMFILE]      The number of shared memory segments has reached the sys-
+                   tem-wide limit.
+
+     sshhmmddtt() will fail if:
+
+     [EINVAL]      _s_h_m_a_d_d_r is not the start address of a mapped shared memory
+                   segment.
+
+SSEEEE AALLSSOO
+     shmctl(2),  shmget(2),  mmap(2)
+

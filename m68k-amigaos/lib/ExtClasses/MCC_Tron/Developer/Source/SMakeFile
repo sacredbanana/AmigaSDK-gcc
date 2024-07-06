@@ -1,0 +1,50 @@
+# Generates Tron classes
+# (c) 1996 kmel, Klaus Melchior
+
+REVDIR    = rev/
+
+LINKERLIBS  = lib:debug.lib lib:sc.lib lib:amiga.lib
+LINKERFLAGS = SC SD BATCH NOICONS 
+CFLAGS      = StringMerge NoStackCheck NoStackExt UnsignedChars \
+		CommentNest ErrorRexx NoMultipleIncludes \
+		StructureEquivalence NoIcons GenProtoParameters \
+		Ignore=147 MultipleCharacterConstants STREQ noOPTIMIZE \
+		MemorySize=Huge IDLen=64
+
+UTILS   = brush2c
+BRUSHES = prefs_image.c
+CLASSES = Tron.mcc Tron.mcp
+
+all: $(UTILS) $(BRUSHES) $(CLASSES)
+
+install:
+	@echo "*e[32mInstall classes...*e[0m"
+	@copy $(CLASSES) MUI:Libs/mui/
+
+clean:
+	@echo "*e[32mClean up...*e[0m"
+	@delete $(CLASSES) $(BRUSHES) $(UTILS) *.o 
+
+
+brush2c: brush2c.c
+	@echo "*e[32mMaking utility $@*e[0m"
+	@sc $(CFLAGS) $*.c OBJNAME $(OBJDIR)*.o
+	@slink to $@ from lib:c.o $(OBJDIR)$*.o lib $(LINKERLIBS) $(LINKERFLAGS)
+
+
+prefs_image.c: prefs_image.mbr
+	@echo "*e[32mMaking brush source $@*e[0m"
+	@brush2c $< > $@
+
+Tron.mcc: tron.c
+	@echo "*e[32mMaking new custom class $@*e[0m"
+	@sc $(CFLAGS) $*.c OBJNAME $*.o
+	@slink to $@ from $*.o lib $(LINKERLIBS) $(LINKERFLAGS)
+	@avail flush
+
+Tron.mcp: tronp.c
+	@echo "*e[32mMaking new custom class $@*e[0m"
+	@sc $(CFLAGS) $*.c OBJNAME $*.o
+	@slink to $@ from $*.o lib $(LINKERLIBS) $(LINKERFLAGS)
+	@avail flush
+

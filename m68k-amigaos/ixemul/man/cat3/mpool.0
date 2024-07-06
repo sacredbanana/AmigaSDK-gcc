@@ -1,0 +1,198 @@
+
+
+
+MPOOL(3)                                                 MPOOL(3)
+
+
+NNAAMMEE
+       mpool - shared memory buffer pool
+
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<ddbb..hh>>
+       ##iinncclluuddee <<mmppooooll..hh>>
+
+       MMPPOOOOLL **
+       mmppooooll__ooppeenn ((DDBBTT **kkeeyy,, iinntt ffdd,, ppggnnoo__tt ppaaggeessiizzee,, ppggnnoo__tt mmaaxxccaacchhee));;
+
+       vvooiidd
+       mmppooooll__ffiilltteerr ((MMPPOOOOLL **mmpp,, vvooiidd ((**ppggiinn))((vvooiidd **,, ppggnnoo__tt,, vvooiidd **)),,
+            vvooiidd ((**ppggoouutt))((vvooiidd **,, ppggnnoo__tt,, vvooiidd **)),, vvooiidd **ppggccooookkiiee));;
+
+       vvooiidd **
+       mmppooooll__nneeww ((MMPPOOOOLL **mmpp,, ppggnnoo__tt **ppggnnooaaddddrr));;
+
+       vvooiidd **
+       mmppooooll__ggeett ((MMPPOOOOLL **mmpp,, ppggnnoo__tt ppggnnoo,, uu__iinntt ffllaaggss));;
+
+       iinntt
+       mmppooooll__ppuutt ((MMPPOOOOLL **mmpp,, vvooiidd **ppggaaddddrr,, uu__iinntt ffllaaggss));;
+
+       iinntt
+       mmppooooll__ssyynncc ((MMPPOOOOLL **mmpp));;
+
+       iinntt
+       mmppooooll__cclloossee ((MMPPOOOOLL **mmpp));;
+
+DDEESSCCRRIIPPTTIIOONN
+       _M_p_o_o_l  is  the  library interface intended to provide page
+       oriented buffer management of files.  The buffers  may  be
+       shared between processes.
+
+       The  function  _m_p_o_o_l___o_p_e_n  initializes a memory pool.  The
+       _k_e_y argument is the byte string used to negotiate  between
+       multiple  processes wishing to share buffers.  If the file
+       buffers are mapped in shared memory, all  processes  using
+       the  same key will share the buffers.  If _k_e_y is NULL, the
+       buffers are mapped into private memory.  The  _f_d  argument
+       is  a  file descriptor for the underlying file, which must
+       be seekable.  If  _k_e_y  is  non-NULL  and  matches  a  file
+       already being mapped, the _f_d argument is ignored.
+
+       The  _p_a_g_e_s_i_z_e argument is the size, in bytes, of the pages
+       into which the file is broken up.  The  _m_a_x_c_a_c_h_e  argument
+       is the maximum number of pages from the underlying file to
+       cache at any one time.  This value is not relative to  the
+       number of processes which share a file's buffers, but will
+       be the largest value specified by  any  of  the  processes
+       sharing the file.
+
+       The  _m_p_o_o_l___f_i_l_t_e_r function is intended to make transparent
+       input and output processing of the pages possible.  If the
+
+
+
+                           June 4, 1993                         1
+
+
+
+
+
+MPOOL(3)                                                 MPOOL(3)
+
+
+       _p_g_i_n  function  is  specified,  it  is  called each time a
+       buffer is read into the memory pool from the backing file.
+       If the _p_g_o_u_t function is specified, it is called each time
+       a buffer is written into the backing file.  Both functions
+       are  are called with the _p_g_c_o_o_k_i_e pointer, the page number
+       and a pointer to the page to being read or written.
+
+       The function _m_p_o_o_l___n_e_w  takes  an  MPOOL  pointer  and  an
+       address  as  arguments.  If a new page can be allocated, a
+       pointer to the page is returned and  the  page  number  is
+       stored  into  the  _p_g_n_o_a_d_d_r  address.   Otherwise, NULL is
+       returned and errno is set.
+
+       The function _m_p_o_o_l___g_e_t takes a MPOOL pointer  and  a  page
+       number as arguments.  If the page exists, a pointer to the
+       page is returned.  Otherwise, NULL is returned  and  errno
+       is set.  The flags parameter is not currently used.
+
+       The  function  _m_p_o_o_l___p_u_t  unpins  the  page  referenced by
+       _p_g_a_d_d_r.  _P_g_a_d_d_r must be an address previously returned  by
+       _m_p_o_o_l___g_e_t  or  _m_p_o_o_l___n_e_w.   The flag value is specified by
+       _o_r'ing any of the following values:
+
+       MPOOL_DIRTY
+              The page has been modified and needs to be  written
+              to the backing file.
+
+       _M_p_o_o_l___p_u_t  returns 0 on success and -1 if an error occurs.
+
+       The function _m_p_o_o_l___s_y_n_c writes all modified pages  associ-
+       ated   with   the  MPOOL  pointer  to  the  backing  file.
+       _M_p_o_o_l___s_y_n_c returns 0 on success and -1 if an error occurs.
+
+       The  _m_p_o_o_l___c_l_o_s_e  function  free's up any allocated memory
+       associated with the memory pool  cookie.   Modified  pages
+       are  nnoott written to the backing file.  _M_p_o_o_l___c_l_o_s_e returns
+       0 on success and -1 if an error occurs.
+
+EERRRROORRSS
+       The _m_p_o_o_l___o_p_e_n function may fail and set _e_r_r_n_o for any  of
+       the errors specified for the library routine _m_a_l_l_o_c(3).
+
+       The _m_p_o_o_l___g_e_t function may fail and set _e_r_r_n_o for the fol-
+       lowing:
+
+       [EINVAL]       The requested record doesn't exist.
+
+       The _m_p_o_o_l___n_e_w and _m_p_o_o_l___g_e_t functions  may  fail  and  set
+       _e_r_r_n_o for any of the errors specified for the library rou-
+       tines _r_e_a_d(2)_, _w_r_i_t_e(2)_, and _m_a_l_l_o_c(3).
+
+       The _m_p_o_o_l___s_y_n_c function may fail and set _e_r_r_n_o for any  of
+       the errors specified for the library routine _w_r_i_t_e(2).
+
+
+
+
+                           June 4, 1993                         2
+
+
+
+
+
+MPOOL(3)                                                 MPOOL(3)
+
+
+       The _m_p_o_o_l___c_l_o_s_e function may fail and set _e_r_r_n_o for any of
+       the errors specified for the library routine _f_r_e_e(3).
+
+SSEEEE AALLSSOO
+       _d_b_o_p_e_n(3), _b_t_r_e_e(3), _h_a_s_h(3), _r_e_c_n_o(3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                           June 4, 1993                         3
+
+

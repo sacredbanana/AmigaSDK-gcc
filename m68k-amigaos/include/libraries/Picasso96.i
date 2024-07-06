@@ -149,6 +149,7 @@ BMF_USERPRIVATE		EQU	$8000
 	EITEM	P96IDA_VIDEOCOMPATIBLE
 	EITEM	P96IDA_PABLOIVCOMPATIBLE
 	EITEM	P96IDA_PALOMAIVCOMPATIBLE
+	EITEM	P96IDA_MODE * private
 
 ************************************************************************
 * Tags for p96BestModeIDTagList

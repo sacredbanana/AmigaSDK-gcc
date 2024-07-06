@@ -1,0 +1,198 @@
+
+
+
+IXTRACE(1)                                             IXTRACE(1)
+
+
+NNAAMMEE
+       ixtrace - a tracer for ixemul.library
+
+SSYYNNOOPPSSIISS
+       iixxttrraaccee [ --aa ] [ --ii ] [ --mm ] [ --ll ] [ --vv ] [ --ww ] [ --zz ] [
+       --cc syscall name ] [ --nn N ] [ --oo logfile ] [ --pp pid ] [  --ss
+       syscall-number ]
+
+DDEESSCCRRIIPPTTIIOONN
+       _I_x_t_r_a_c_e  is a utility that reports every call that is made
+       to the _i_x_e_m_u_l_._l_i_b_r_a_r_y.  Since it  scans  every  call  made
+       through  the library base, it catches even more calls than
+       for example SnoopDOS.
+
+       Obviously, tracing support slows down _a_l_l clients  of  the
+       library  (as each call is now routed through a trace func-
+       tion). For this reason there  are  two  library  versions.
+       _I_x_e_m_u_l_._l_i_b_r_a_r_y  itself  doesn't  contain  tracing support.
+       Using the tracer with this library gives a  "Function  not
+       implemented" error. To use the _i_x_t_r_a_c_e utility, you should
+       use the _i_x_e_m_u_l_._t_r_a_c_e library  instead  of  _i_x_e_m_u_l_._l_i_b_r_a_r_y.
+       See UUSSAAGGEE for more detailed instructions.
+
+       The  option  most  often  used  is --mm, as the library uses
+       _s_i_g_s_e_t_m_a_s_k_(_) a lot internally, and  mentioning  this  call
+       again and again would just clutter the screen.
+
+OOPPTTIIOONNSS
+       --aa     Print  all calls, even those considered `not inter-
+              esting': internal stdio-calls and 32 bit arithmetic
+              emulation for 68000, for example.
+
+       --ii     Normally,  the  tracer  shows  a function call when
+              that function returns, to be able  to  display  the
+              return value (and _e_r_r_n_o in parenthesis). When --ii is
+              specified,  it  always  displays  the  function  on
+              entry,  instead  of  on exit.  See BBUUGGSS for current
+              problems if  you  invoke  _i_x_t_r_a_c_e  without  the  --ii
+              option.
+
+       --mm     Skip  _s_i_g_s_e_t_m_a_s_k_(_)  calls.  This  function  is used
+              extensively inside the library, and  will  in  most
+              cases just clutter the tracer output.
+
+       --ll     List  _a_l_l  system  calls to stdout. No more need to
+              look  up  a  call  you  want  to   trace   in   the
+              include/sys/syscall.def file.
+
+       --vv     Print the current _v_e_r_s_i_o_n number.
+
+       --ww     Wipe out the syscalls you _D_O_N_'_T want to trace.
+
+       --zz     Allows  the  input  of  _s_y_s_c_a_l_l _n_a_m_e_s that the user
+              wants to trace.
+
+
+
+                                                                1
+
+
+
+
+
+IXTRACE(1)                                             IXTRACE(1)
+
+
+       --cc     Only print calls to  a  specific  system  call,  by
+              name.  Differs  from  _-_s  , which expects a syscall
+              number.
+
+       --nn     Skip the first _N traces.
+
+       --oo     Specify a logfile. If --oo is omitted, output goes to
+              _s_t_d_o_u_t.
+
+       --pp     Only print output from a specific process. You have
+              to provide the  decimal  address  of  the  process.
+              Default  is  to  scan  all  current  _i_x_e_m_u_l_._l_i_b_r_a_r_y
+              clients.
+
+       --ss     Only print calls to a  specific  system  call.  You
+              have  to specify the system call number as found in
+              <<ssyyss//ssyyssccaallllss..ddeeff>>.
+
+UUSSAAGGEE
+       Before you can use _i_x_t_r_a_c_e, you will first have  to  flush
+       the  old  _i_x_e_m_u_l_._l_i_b_r_a_r_y  out of the system. The Workbench
+       option FFlluusshhLLiibbss can do that for you, AAvvaaiill FFLLUUSSHH achieves
+       the  same  from a shell. This assumes no currently running
+       process is using the library.
+
+       Next make sure the system loads  _i_x_e_m_u_l_._t_r_a_c_e  instead  of
+       _i_x_e_m_u_l_._l_i_b_r_a_r_y  next  time  it  starts a program that uses
+       _i_x_e_m_u_l_._l_i_b_r_a_r_y
+
+       You  can  do  that  by   replacing   _i_x_e_m_u_l_._l_i_b_r_a_r_y   with
+       _i_x_e_m_u_l_._t_r_a_c_e.  You can also use LLooaaddLLiibb iixxeemmuull..ttrraaccee.  But
+       LLooaaddLLiibb is not an official CLI command.
+
+       Now Start the tracer (probably in its  own  window).   You
+       should  now  see  a  log of all functions called from your
+       program(s), and some functions called as a consequence  of
+       your  functions  from inside the library. A typical output
+       line is:
+
+       $$77558888779900:: <<ssttrrccmmpp((""ffoooo"",, --nn ))==5577 ((00))
+
+
+       $$77558888779900
+              This is the process address.
+
+       <<      Type of log, << means on exit, >> means on entry.
+
+       ssttrrccmmpp((""ffoooo"",, --nn ))
+              The function with the parameters.
+
+       ==5577    The result of the function.
+
+       ((00))    The value of _e_r_r_n_o.
+
+
+
+
+                                                                2
+
+
+
+
+
+IXTRACE(1)                                             IXTRACE(1)
+
+
+BBUUGGSS
+       There seems to be some race condition, that can result  in
+       deadlock when running without the --ii flag.
+
+       Currently,  if  trace-on-exit  is enabled, the function is
+       called with 16 arguments, no matter how many arguments you
+       passed  to it. This should be enough for 99% of all appli-
+       cations, but you may have more  than  16  arguments  to  a
+       _p_r_i_n_t_f_(_) somewhere.
+
+       Functions  returning more than a 4 byte result do _n_o_t work
+       unless you specify the --ii option!
+
+HHIISSTTOORRYY
+       Adapted by David Zaroski from the original RREEAADDMMEE  written
+       by Markus Wild.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                3
+
+

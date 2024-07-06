@@ -116,6 +116,7 @@ struct GfxBase
 	UWORD	MonitorFlags;
 	UBYTE	ScanDoubledSprites;
 	UBYTE	BP3Bits;
+#ifndef __KICK13__
 	struct	AnalogSignalInterval MonitorVBlank;
 	struct	MonitorSpec *natural_monitor;
 	APTR	ProgData;
@@ -127,6 +128,7 @@ struct GfxBase
 	ULONG	*HWEmul[9];
         struct  RegionRectangle *Scratch;
         ULONG   ScratchSize;
+#endif
 };
 
 #define ChunkyToPlanarPtr HWEmul[0]

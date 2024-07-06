@@ -1,0 +1,88 @@
+
+MSGSND(2)                  UNIX Programmer's Manual                  MSGSND(2)
+
+NNAAMMEE
+     mmssggssnndd - send a message to a message queue
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//mmssgg..hh>>
+
+     _i_n_t
+     mmssggssnndd(_i_n_t _m_s_q_i_d, _v_o_i_d _*_m_s_g_p, _s_i_z_e___t _m_s_g_s_z, _i_n_t _m_s_g_f_l_g)
+
+DDEESSCCRRIIPPTTIIOONN
+     The mmssggssnndd() function sends a message from the message queue specified in
+     _m_s_q_i_d. _m_s_g_p points to a structuer containing the message. This structure
+     should consist of the following members:
+
+         long mtype;    /* message type */
+         char mtext[1]; /* body of message */
+
+     _m_t_y_p_e is an integer greater than 0 that can be used for selecting mes-
+     sages (see msgrcv(2)),  _m_t_e_x_t is an array of bytes, with a size up to
+     that of the system limit (MSGMAX).
+
+     If the number of bytes already on the message queue plus _m_s_g_s_z is bigger
+     than the maximum number of bytes on the message queue ( _m_s_g___q_b_y_t_e_s, see
+     msgctl(2)),  or the number of messages on all queues system-wide is al-
+     ready equal to the system limit, _m_s_g_f_l_g determines the action of
+     mmssggssnndd().  If _m_s_g_f_l_g has IPC_NOWAIT mask set in it, the call will return
+     immediately. If _m_s_g_f_l_g does not have IPC_NOWAIT set in it, the call will
+     block until:
+
+     ++oo   The condition which caused the call to block does no longer exist.
+         The message will be sent.
+
+     ++oo   The messag queue is removed, in which case -1 will be returned, and
+         _e_r_r_n_o is set to EINVAL.
+
+     ++oo   The caller catches a signal. The call returns with _e_r_r_n_o set to EIN-
+         TR.
+
+     After a successful call, the data structure associated with the message
+     queue is updated in the following way:
+
+     ++oo   _m_s_g___c_b_y_t_e_s is incremented by the size of the message.
+
+     ++oo   _m_s_g___q_n_u_m is incremented by 1.
+
+     ++oo   _m_s_g___l_s_p_i_d is set to the pid of the calling process.
+
+     ++oo   _m_s_g___s_t_i_m_e is set to the current time.
+
+RREETTUURRNN VVAALLUUEESS
+     Upon successful completion, 0 is returned. Otherwise, -1 is returned and
+     _e_r_r_n_o is set to indicate the error.
+
+EERRRROORRSS
+     mmssggssnndd() will fail if:
+
+     [EINVAL]      _m_s_q_i_d is not a valid message queue identifier
+
+                   The message queue was removed while mmssggssnndd() was waiting
+                   for a resource to become available in order to deliver the
+                   message.
+
+                   _m_s_g_s_z is less than 0, or greater than _m_s_g___q_b_y_t_e_s.
+
+     [EACCESS]     The calling process does not have write access to the mes-
+                   sage queue.
+
+     [EAGAIN]      There was no space for this message either on the queue, or
+                   in the whole system, and IPC_NOWAIT was set in _m_s_g_f_l_g.
+
+     [EFAULT]      _m_s_g_p points to an invalid address.
+
+     [EINTR]       The system call was interrupted by the delivery of a sig-
+                   nal.
+
+BBUUGGSS
+     NetBSD does not define the EIDRM error value, which should be used in the
+     case of a removed message queue.
+
+HHIISSTTOORRYY
+     Message queues appeared in the first release of AT&T Unix System V.
+
+ NetBSD                         August 17, 1995                              2

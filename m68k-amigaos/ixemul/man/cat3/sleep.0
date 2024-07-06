@@ -1,0 +1,48 @@
+
+SLEEP(3)                   UNIX Programmer's Manual                   SLEEP(3)
+
+NNAAMMEE
+     sslleeeepp - suspend process execution for interval of seconds
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<uunniissttdd..hh>>
+
+     _u_n_s_i_g_n_e_d _i_n_t
+     sslleeeepp(_u_n_s_i_g_n_e_d _i_n_t _s_e_c_o_n_d_s)
+
+DDEESSCCRRIIPPTTIIOONN
+     The sslleeeepp() function suspends execution of the calling process until ei-
+     ther the number of seconds specified by _s_e_c_o_n_d_s have elapsed or a signal
+     is delivered to the calling process and its action is to invoke a signal-
+     catching function or to terminate the process.  The suspension time may
+     be longer than requested due to the scheduling of other activity by the
+     system.
+
+     If a timer is already running on the process its state is saved.  If the
+     value _s_e_c_o_n_d_s is more than or equal to the remaining clock time for the
+     saved timer, the sleep time is set to the remaining clock time.  The
+     state of the previous timer is restored after _s_e_c_o_n_d_s has passed.
+
+     This function is implemented using setitimer(2);  it requires eight sys-
+     tem calls each time it is invoked.  A similar but less compatible func-
+     tion can be obtained with a single select(2);  such a function would not
+     restart after signals, but would not interfere with other uses of
+     setitimer.
+
+RREETTUURRNN VVAALLUUEE
+     If the sslleeeepp() function returns because the requested time has elapsed,
+     the value returned will be zero.  If the sslleeeepp() function returns due to
+     the delivery of a signal, the value returned will be the unslept amount
+     (the request time minus the time actually slept) in seconds.
+
+SSEEEE AALLSSOO
+     setitimer(2),  sigaction(2),  sigsuspend(2),  alarm(3),  pause(3),
+     usleep(3)
+
+SSTTAANNDDAARRDDSS
+     The sslleeeepp() function conforms to .
+
+HHIISSTTOORRYY
+     A sslleeeepp() function appeared in Version 7 AT&T UNIX.
+
+BSD Experimental                 June 4, 1993                                1

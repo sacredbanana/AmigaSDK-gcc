@@ -1,0 +1,1145 @@
+TABLE OF CONTENTS
+
+Listtree.mcc/Listtree.mcc
+Listtree.mcc/MUIA_Listtree_Active
+Listtree.mcc/MUIA_Listtree_CloseHook
+Listtree.mcc/MUIA_Listtree_ConstructHook
+Listtree.mcc/MUIA_Listtree_DestructHook
+Listtree.mcc/MUIA_Listtree_DisplayHook
+Listtree.mcc/MUIA_Listtree_DoubleClick
+Listtree.mcc/MUIA_Listtree_DragDropSort
+Listtree.mcc/MUIA_Listtree_DuplicateNodeName
+Listtree.mcc/MUIA_Listtree_EmptyNodes
+Listtree.mcc/MUIA_Listtree_Format
+Listtree.mcc/MUIA_Listtree_OpenHook
+Listtree.mcc/MUIA_Listtree_Quiet
+Listtree.mcc/MUIA_Listtree_SortHook
+Listtree.mcc/MUIA_Listtree_Title
+Listtree.mcc/MUIA_Listtree_TreeColumn
+Listtree.mcc/MUIM_Listtree_Close
+Listtree.mcc/MUIM_Listtree_CloseNode
+Listtree.mcc/MUIM_Listtree_ConstructNode
+Listtree.mcc/MUIM_Listtree_DestructNode
+Listtree.mcc/MUIM_Listtree_DisplayNode
+Listtree.mcc/MUIM_Listtree_Exchange
+Listtree.mcc/MUIM_Listtree_FindName
+Listtree.mcc/MUIM_Listtree_GetEntry
+Listtree.mcc/MUIM_Listtree_GetNr
+Listtree.mcc/MUIM_Listtree_Insert
+Listtree.mcc/MUIM_Listtree_Move
+Listtree.mcc/MUIM_Listtree_Open
+Listtree.mcc/MUIM_Listtree_OpenNode
+Listtree.mcc/MUIM_Listtree_Remove
+Listtree.mcc/MUIM_Listtree_Rename
+Listtree.mcc/MUIM_Listtree_SetDropMark
+Listtree.mcc/MUIM_Listtree_Sort
+Listtree.mcc/MUIM_Listtree_TestPos
+Listtree.mcc/Listtree.mcc
+
+   This listtree class handles tree nodes, which can be defined as node or as
+   leaf. Only nodes contain a list where other tree nodes can be inserted.
+
+   Every tree node contains a name, flags and a pointer to user data, this is
+   handled by the MUIS_Listtree_TreeNode struct.
+
+   ********************************************************************
+        This struct is read-only, never change it by your own !!!
+   ********************************************************************
+
+   You can create a very complex tree. There exist two different lists of tree
+   nodes, first the one which contains all the tree nodes you have inserted. All
+   modifications are made to this list. The second list is the display list,
+   which is shown as ListObject. As you can open or close a node, not all of the
+   existing tree nodes are displayed.
+
+   Tree nodes contain a flag bitfield:
+
+     TNF_LIST    The node contains a list where other nodes can be inserted.
+     TNF_OPEN    The list node is open, sub nodes are displayed.
+     TNF_FROZEN  The node doesn't react on doubleclicks or open/close by user.
+     TNF_NOSIGN  The indicator of list nodes isn't shown.
+
+   The tree nodes can be inserted and removed, sorted, moved, exchanged or
+   renamed. To sort you can also drag&drop them. Modifications can be made in
+   relation to the whole tree, to one level, to a sub-tree or to only one tree
+   node, the visibility is checked or not.
+
+   The user can control the listtree by the MUI keys, this means a node is
+   opened with "Right" and closed with "Left". Check your MUI preferences for
+   the specified keys.
+
+   You can define which of the columns will react on double-clicking. The node
+   toggles its status: opened or closed.
+
+   Only one entry can be selected yet, so you can't use the listtree for multi
+   selecting.
+
+   Drag&Drop capabilities:
+   If you set MUIA_Listview_DragType of the parent listview to
+   MUIV_Listview_DragType_Immediate, the list tree will become active for
+   Drag&Drop. This means you can only drag one entry and will drop it on the
+   same listtree again. While dragging an indicator shows where to drop.
+
+     Drag a   Drop on       Result
+
+     Leaf     Leaf          Exchange leaves.
+     Node     Leaf          Nothing happens.
+     Entry    Closed Node   Move entry, MUIA_Listtree_SortHook is used.
+     Entry    Open Node     Move entry to defined position.
+
+   You cannot drop an entry on itself, nor you can drop an opened node on any of
+   its members.
+
+   To interchange data with other object you have to create your own subclass of
+   Listtree.mcc and react on the drag methods.
+Listtree.mcc/MUIA_Listtree_Active
+
+   NAME
+   MUIA_Listtree_Active -- [.SG], struct TreeNode *
+
+   SPECIAL VALUES
+   MUIA_Listtree_Active_Off
+
+   FUNCTION
+   Setting this attribute will move the cursor on the defined tree node, if it
+   is visible. If the node is in an opened tree the listview is scrolling into
+   the visible area. Setting MUIV_Listtree_Actice_Off will vanish the cursor.
+
+   If this attribute is read it returns the active tree node. The result is
+   MUIV_Listtree_Actice_Off if there is no active entry.
+
+   NOTIFICATIONS
+   Now you can create a notification on MUIA_Listtree_Active. The TriggerValue
+   is the active tree node. Be prepared to receive MUIV_Listtree_Active_Off
+   (== NULL) as triggered tree node. Check for NULL tree nodes to be safe.
+
+   SEE ALSO
+   MUIA_List_First, MUIA_List_Visible
+Listtree.mcc/MUIA_Listtree_CloseHook
+
+   NAME
+   MUIA_Listtree_CloseHook -- [IS.], struct Hook *
+
+   FUNCTION
+   The close hook is called after a list node is closed, then you can change the
+   list.
+
+   The close hook will be called with the hook in A0, the tree node in register
+   A1.
+
+   To remove the hook set this to NULL.
+
+   SEE ALSO
+   MUIA_Listtree_Open, MUIA_Listtree_CloseHook, MUIM_Listtree_CloseNode
+Listtree.mcc/MUIA_Listtree_ConstructHook
+
+   NAME
+   MUIA_Listtree_ConstructHook -- [IS.], struct Hook *
+
+   SPECIAL VALUES
+   MUIV_Listtree_ConstructHook_String
+
+   FUNCTION
+   The construct hook is called whenever you add an entry to your listtree. The
+   pointer isn't inserted directly, the construct hook is called and its result
+   code is added.
+
+   When an entry shall be removed the corresponding destruct hook is called.
+
+   The construct hook will be called with the hook in A0, the data given to
+   MUIM_Listtree_Insert as message in register A1 and with pointer to a standard
+   kick 3.x memory pool in A2. If you want, you can use the Exec or amiga.lib
+   functions for allocating memory within this pool, but this is only an option.
+
+   If the construct hook returns NULL, nothing will be added to the list.
+
+   There is a builtin construct hook available called
+   MUIV_Listtree_ConstructHook_String. This expects that the 'User' data in the
+   treenode is a string, which is copied. Of course you have to use
+   MUIV_Listtree_DestructHook_String in this case!
+
+   SEE ALSO
+   MUIA_List_ConstructHook, MUIA_Listtree_DestructHook,
+   MUIA_Listtree_DisplayHook, MUIM_Listtree_Construct, MUIM_Listtree_Destruct
+Listtree.mcc/MUIA_Listtree_DestructHook
+
+   NAME
+   MUIA_Listtree_DestructHook -- [IS.], struct Hook *
+
+   SPECIAL VALUES
+   MUIV_Listtree_DestructHook_String
+
+   FUNCTION Set up a destruct hook for your listtree. For more info see
+   MUIA_Listtree_ConstructHook.
+
+   SEE ALSO
+   MUIA_List_ConstructHook, MUIA_Listtree_ConstructHook,
+   MUIA_Listtree_DisplayHook
+Listtree.mcc/MUIA_Listtree_DisplayHook
+
+   NAME
+   MUIA_Listtree_DisplayHook -- [IS.], struct Hook *
+
+   FUNCTION
+   You have to supply a display hook to specify what should be shown in the
+   listview, otherwise only the name of the nodes is displayed.
+
+   The hook will be called with a pointer to the tree node to be displayed in A1
+   and a pointer to a string array containing as many entries as your listtree
+   may have columns in A2.
+
+   You have to fill this array with the strings you want to display. Check out
+   that the array pointer of the tree column isn't used or set to NULL, if the
+   normal name of the node should appear.
+
+   You can set the array pointer of the tree column to a string, which is
+   diplayed instead of the node name. You can use this to mark nodes.
+
+   See MUIA_List_Format for details about column handling.
+
+   SEE ALSO
+   MUIA_List_Format, MUIA_Text_Contents
+Listtree.mcc/MUIA_Listtree_DoubleClick
+
+   NAME
+   MUIA_Listtree_DoubleClick -- [ISG], ULONG
+
+   SPECIAL VALUES
+   MUIA_Listtree_DoubleClick_Off
+   MUIA_Listtree_DoubleClick_All
+   MUIA_Listtree_DoubleClick_Tree
+
+   FUNCTION
+   A doubleclick opens a node if it was closed, it is closed if the node was
+   open. You have to set the column which should do this.
+
+   Normally only the column number is set here, but there are special values:
+
+   MUIV_Listtree_DoubleClick_Off:
+     A doubleclick is not handled.
+
+   MUIV_Listtree_DoubleClick_All:
+     All columns reacts on a doubleclick.
+
+   MUIV_Listtree_DoubleClick_Tree
+     Only a doubleclick on the defined tree column is recognized.
+
+   NOTIFICATIONS
+   The TriggerValue of the notification is the tree node you have doubleclicked,
+   you can get() MUIA_Listtree_DoubleClick for the column number. The struct
+   'MUIS_Listtree_TreeNode' is used for trigger.
+
+   The notification is done on leaves and on node columns, which are not set in
+   MUIA_Listtree_DoubleClick.
+Listtree.mcc/MUIA_Listtree_DragDropSort
+
+   NAME
+   MUIA_Listtree_DragDropSort -- [IS.], BOOL
+
+   FUNCTION
+   Setting this attribute to FALSE will disable the ability to sort the list
+   tree by drag&drop.
+   Defaults to TRUE.
+Listtree.mcc/MUIA_Listtree_DuplicateNodeName
+
+   NAME
+   MUIA_Listtree_DuplicateNodeName -- [IS.], BOOL
+
+   FUNCTION
+   If this attribute is set to FALSE the names of the node will not be
+   duplicated, only the string pointers are used. Be careful the string have to
+   be valid everytime.
+   Defaults to TRUE.
+Listtree.mcc/MUIA_Listtree_EmptyNodes
+
+   NAME
+   MUIA_Listtree_EmptyNodes -- [IS.], BOOL
+
+   FUNCTION
+   Setting this attribute to TRUE will display all empty nodes as leaves, this
+   means no list indicator is shown. Nevertheless the entry is handled like a
+   node.
+   Defaults to FALSE.
+Listtree.mcc/MUIA_Listtree_Format
+
+   NAME
+   MUIA_Listtree_Format -- [IS.], STRPTR
+
+   FUNCTION
+   Same as MUIA_List_Format, but one column is reserved for the tree indicators
+   and the names of the nodes.
+
+   For further detailed information see MUIA_List_Format!
+
+   SEE ALSO
+   MUIA_List_Format, MUIA_Listtree_DisplayHook, MUIA_Text_Contents
+Listtree.mcc/MUIA_Listtree_OpenHook
+
+   NAME
+   MUIA_Listtree_OpenHook -- [IS.], struct Hook *
+
+   FUNCTION
+   The open hook is called whenever a list node will be opened, so you can
+   change the list before the node is open.
+
+   The open hook will be called with the hook in A0, the tree node in register
+   A1.
+
+   To remove the hook set this to NULL.
+
+   SEE ALSO
+   MUIA_Listtree_Open, MUIA_Listtree_CloseHook, MUIM_Listtree_OpenNoide
+Listtree.mcc/MUIA_Listtree_Quiet
+
+   NAME
+   MUIA_Listtree_Quiet -- [.S.], BOOL
+
+   FUNCTION
+   If you add/remove lots of entries to/from a listtree, this will cause lots of
+   screen action and slow down the operation. Setting MUIA_Listtree_Quiet to
+   TRUE will temporarily prevent the listtree from being refreshed, this refresh
+   will take place only once when you set it back to FALSE again.
+
+   Do not use MUIA_List_Quiet here!
+
+   SEE ALSO
+   MUIM_Listtree_Insert, MUIM_Listtree_Remove
+Listtree.mcc/MUIA_Listtree_SortHook
+
+   NAME
+   MUIA_Listtree_SortHook -- [IS.], struct Hook *
+
+   SPECIAL VALUES
+   MUIV_Listtree_SortHook_Head
+   MUIV_Listtree_SortHook_Tail
+   MUIV_Listtree_SortHook_LeavesTop
+   MUIV_Listtree_SortHook_LeavesMixed
+   MUIV_Listtree_SortHook_LeavesBottom
+
+   FUNCTION
+   Set this attribute to your own hook if you want to sort the entries in the
+   list tree by your own way.
+
+   When you are using the insert method with MUIV_Listtree_Insert_Sort or
+   dropping an entry on a closed node, this sort hook is called.
+
+   There are some builtin sort hooks available, called:
+
+   MUIV_Listtree_SortHook_Head
+     Any entry is inserted at head of the list.
+
+   MUIV_Listtree_SortHook_Tail
+     Any entry is inserted at tail of the list.
+
+   MUIV_Listtree_SortHook_LeavesTop
+     Leaves are inserted at top of the list, nodes at bottom. They are
+     alphabetically sorted.
+
+   MUIV_Listtree_SortHook_LeavesMixed
+     The entries are only alphabetically sorted.
+
+   MUIV_Listtree_SortHook_LeavesBottom
+     Leaves are inserted at bottom of the list, nodes at top. They are
+     alphabetically sorted. This is default.
+
+   The hook will be called with one list tree element in A1 and another one in
+   A2. You should return something like:
+
+      <0   e1 <  e2
+       0   e1 == e2
+      >0   e1 >  e2
+
+   SEE ALSO
+   MUIA_Listtree_Insert, MUIM_DragDrop, MUIA_List_CompareHook
+Listtree.mcc/MUIA_Listtree_Title
+
+   NAME
+   MUIA_Listtree_Title -- [IS.], char *
+
+   FUNCTION
+   Specify a title for the current listtree.
+
+   For detailed information see MUIA_List_Title!
+
+   BUGS
+   The title should not be a string as for single column listviews. This
+   attribute can only be set to TRUE or FALSE.
+
+   SEE ALSO
+   MUIA_List_Title, MUIA_Listtree_DisplayHook
+Listtree.mcc/MUIA_Listtree_TreeColumn
+
+   NAME
+   MUIA_Listtree_TreeColumn -- [IS.], ULONG
+
+   FUNCTION
+   Specify the column of the list tree, the node indicator and the name of the
+   node are displayed in.
+
+   SEE ALSO
+   MUIA_Listtree_DisplayHook, MUIA_Listtree_Format
+Listtree.mcc/MUIM_Listtree_Close
+
+   NAME
+   MUIM_Listtree_Close
+
+   SYNOPSIS
+   DoMethod(obj, MUIM_Listtree_Close,
+      APTR ListNode, APTR TreeNode, ULONG Flags);
+
+   FUNCTION
+   Closes a node or nodes of a listtree, it is checked if the tree node is a
+   node, not a leaf!
+
+   When the active entry was a child of the closed node, the closed node will
+   become active.
+
+   INPUTS
+   ListNode:
+      Specify the node which list is used to find the entry. The search is
+      started at the head of the list.
+
+      Special values:
+
+      MUIV_Listtree_Close_ListNode_Root:
+         The root list.
+
+      MUIV_Listtree_Close_ListNode_Parent:
+         ??? (n/a)
+
+      MUIV_Listtree_Close_ListNode_Active:
+         The list of the active node. (n/a)
+
+   TreeNode:
+      The node which is closed. If there are children of the node, they are
+      removed from the display list.
+
+      Special values:
+
+      MUIV_Listtree_Close_TreeNode_Head
+         The head of the list, defined in 'ListNode', is closed.
+
+      MUIV_Listtree_Close_TreeNode_Tail:
+         Closes the tail of the list.
+
+      MUIV_Listtree_Close_TreeNode_Active:
+         Closes the active node.
+
+      MUIV_Listtree_Close_TreeNode_All:
+         All nodes of the list, which is specified in 'ListNode', are
+         closed.
+
+   Flags:
+      Specifies the data in 'TreeNode'. Normally this is a pointer to a tree
+      node, but the flags can change this into an ULONG.
+
+      MUIV_Listtree_Close_Flags_Nr:
+         Position (ULONG number) of the node in the list of 'ListNode'.
+
+      MUIV_Listtree_Close_Flags_Visible:
+         The position is counted on visible entries only.
+
+   BUGS
+   Not implemented yet:
+      MUIV_Listtree_Close_Flags_Nr
+      MUIV_Listtree_Close_Flags_Visible
+
+   SEE ALSO
+   MUIM_Listtree_CloseNode, MUIM_Listtree_Open
+Listtree.mcc/MUIM_Listtree_CloseNode
+
+   NAME
+   MUIM_Listtree_CloseNode
+
+   FUNCTION
+   A treenode has been closed. This method is meant to replace
+   MUIA_Listtree_CloseHook for subclasses of Listtree class.
+
+   User code never calls this method itself. Instead this method is called by
+   Listtree class whenever a treenode has been closed.
+
+   INPUTS
+   TreeNode:
+      The closed treenode.
+
+   SEE ALSO
+   MUIA_Listtree_OpenHook, MUIA_Listtree_CloseHook, MUIM_Listtree_OpenNode
+Listtree.mcc/MUIM_Listtree_ConstructNode
+
+   NAME
+   MUIM_Listtree_ConstructNode
+
+   FUNCTION
+   Construct a new listtree node. This method is meant to replace
+   MUIA_Listtree_ConstructHook for subclasses of Listtree class.
+
+   User code never calls this method itself. Instead this method is called by
+   Listtree class whenever a new treenode is to be constructed.
+
+   INPUTS
+   Pool:
+      Pointer to an Exec memory pool to allocate the memory from.
+
+   User:
+      The user data pointer as passed to the MUIM_Listtree_Insert method.
+
+   RESULT
+   Return a pointer to the newly created listtree node, or NULL upon failure.
+
+   SEE ALSO
+   MUIA_Listtree_ConstructHook, MUIA_Listtree_DestructHook,
+   MUIM_Listtree_Destruct
+Listtree.mcc/MUIM_Listtree_DestructNode
+
+   NAME
+   MUIM_Listtree_DestructNode
+
+   FUNCTION
+   Destruct a new listtree node. This method is meant to replace
+   MUIA_Listtree_DestructHook for subclasses of Listtree class.
+
+   User code never calls this method itself. Instead this method is called by
+   Listtree class whenever a new treenode is to be destructed.
+
+   INPUTS
+   Pool:
+      Pointer to an Exec memory pool to return the memory to.
+
+   User:
+      The user data pointer to be destructed as returned by
+      MUIM_Listtree_Construct.
+
+   SEE ALSO
+   MUIA_Listtree_ConstructHook, MUIA_Listtree_DestructHook,
+   MUIM_Listtree_Construct
+Listtree.mcc/MUIM_Listtree_DisplayNode
+
+   NAME
+   MUIM_Listtree_DisplayNode
+
+   FUNCTION
+   Distplay a listtree node. This method is meant to replace
+   MUIA_Listtree_DisplayHook for subclasses of Listtree class.
+
+   User code never calls this method itself. Instead this method is called by
+   Listtree class whenever a new treenode is to be displayed.
+
+   INPUTS
+   TreeNode:
+      Specify the node which is to be displayed. A value if NULL represents the
+      listtree title.
+
+   Array:
+      Pointer to an array of string pointers. Fill in a valid pointer for each
+      defined listtree column.
+
+   Row:
+      The current row number of the treenode. A value of -1 represents the
+      listtree title.
+
+   SEE ALSO
+   MUIA_Listtree_DisplayHook
+Listtree.mcc/MUIM_Listtree_Exchange
+
+   NAME
+   MUIM_Listtree_Exchange
+
+   SYNOPSIS
+   BOOL success = DoMethod(obj, MUIM_Listtree_Exchange,
+      APTR ListNode1, APTR TreeNode1, APTR ListNode2, APTR TreeNode2,
+      ULONG Flags);
+
+   FUNCTION
+   Exchanges the two tree entries TreeNode and TreeNode2.
+
+   INPUTS
+   ListNode1:
+      Specify the node which list is used to exchange the node.
+
+   TreeNode1:
+      Specify the node which is exchanged.
+
+   ListNode2:
+      Specify the other one.
+
+   TreeNode2:
+      Specify the other one.
+
+   Flags:
+      None defined yet, set to zero.
+
+   RESULT
+   A boolean value indicating whether the actual exchange of nodes really
+   happened or not.
+
+   SEE ALSO
+   MUIM_Listtree_Move, MUIM_Listtree_Insert, MUIM_Listtree_Remove
+Listtree.mcc/MUIM_Listtree_FindName
+
+   NAME
+   MUIM_Listtree_FindName
+
+   SYNOPSIS
+   struct MUIS_Listtree_TreeNode *tn = DoMethod(obj, MUIM_Listtree_FindName,
+      APTR ListNode, char *Name, ULONG Flags);
+
+   FUNCTION
+   Find a node which name matches the specified one.
+
+   INPUTS
+   ListNode:
+      Specify the node which list is used to find the name.
+
+      Special values:
+
+      MUIV_Listtree_FindName_ListNode_Root:
+         The root list.
+
+      MUIV_Listtree_FindName_ListNode_Active:
+         The list of the active node.
+
+   Flags:
+      MUIV_Listtree_FindName_SameLevel:
+         Only nodes on the same level are affected.
+
+      MUIV_Listtree_FindName_Flags_Visible:
+         Only on visible entries is looked at.
+
+   RESULT
+   A pointer to the found treenode or NULL upon failure.
+
+   SEE ALSO
+   MUIM_Listtree_GetEntry
+Listtree.mcc/MUIM_Listtree_GetEntry
+
+   NAME
+   MUIM_Listtree_GetEntry
+
+   SYNOPSIS
+   struct MUIS_Listtree_TreeNode *tn = DoMethod(obj, MUIM_Listtree_GetEntry,
+      APTR Node, LONG Position, ULONG Flags);
+
+   FUNCTION
+   Get another node in relation to the specified list or node.
+
+   INPUTS
+   Node:
+      Define the node which is used to find another one. This can also be a list
+      node, if the position a related to a list.
+
+      Special values:
+
+      MUIV_Listtree_GetEntry_ListNode_Root
+         The root list is used.
+
+      MUIV_Listtree_GetEntry_ListNode_Active:
+         The list with the active entry is used.
+
+   Position:
+      The number of nodes of the list 'Node'.
+
+      Special values:
+
+      MUIV_Listtree_GetEntry_Position_Head
+         The head of the list, see 'Node', is returned.
+
+      MUIV_Listtree_GetEntry_Position_Tail
+         The tail of the list is returned.
+
+      MUIV_Listtree_GetEntry_Position_Active
+         The active node is returned, it is NULL if there isn't an active entry.
+
+      MUIV_Listtree_GetEntry_Position_Next
+         The next node after the tree node 'Node' is returned. NULL if it isn't
+         available.
+
+      MUIV_Listtree_GetEntry_Position_Previous
+         The node before the tree node 'Node', NULL is returned if 'Node' is the
+         head of the list.
+
+      MUIV_Listtree_GetEntry_Position_Parent
+         The list node of the 'Node', it's the parent one.
+
+   Flags:
+       MUIV_Listtree_GetEntry_SameLevel:
+         Only nodes on the same level are affected.
+
+       MUIV_Listtree_GetEntry_Flags_Visible:
+         The position is counted on visible entries only.
+
+   RESULT
+   A pointer to the found treenode or NULL upon failure.
+
+   SEE ALSO
+   MUIM_List_GetEntry
+Listtree.mcc/MUIM_Listtree_GetNr
+
+   NAME
+   MUIM_Listtree_GetNr
+
+   SYNOPSIS
+   LONG Nr = DoMethod(obj, MUIM_Listtree_GetNr,
+      APTR TreeNode, ULONG Flags);
+
+   FUNCTION
+   Get the position of a tree node.
+
+   Special values:
+
+   MUIV_Listtree_GetNr_TreeNode_Active:
+      All counts are related on the active node.
+
+   Special flags:
+
+   MUIV_Listtree_GetNr_Flags_CountAll
+      Returns the number of all entries.
+
+   MUIV_Listtree_GetNr_Flags_CountLevel
+      Returns the number of the entries of the list the specified node is in.
+
+   MUIV_Listtree_GetNr_Flags_CountList
+      Returns the number of the entries of the list of the specified node.
+
+   MUIV_Listtree_GetNr_Flags_ListEmpty
+      Returns if the list of the specified node is empty.
+
+   BUGS
+   Not implemented yet:
+      MUIV_Listtree_GetNr_TreeNode_Active
+      MUIV_Listtree_GetNr_Flags_CountAll
+      MUIV_Listtree_GetNr_Flags_CountLevel
+      MUIV_Listtree_GetNr_Flags_CountList
+
+   RESULT
+   The number of found treenodes.
+
+   SEE ALSO
+   MUIM_Listtree_GetEntry
+Listtree.mcc/MUIM_Listtree_Insert
+
+   NAME
+   MUIM_Listtree_Insert
+
+   SYNOPSIS
+   struct MUIS_Listtree_TreeNode *tn = DoMethod(obj, MUIM_Listtree_Insert,
+      char *Name, APTR User, APTR ListNode, APTR PrevNode, ULONG Flags);
+
+   FUNCTION
+   Inserts an entry at the position, which is defined with ListNode and
+   PrevNode. Name contains the name of the entry as string, it is buffered.
+   The User entry can be used as you like.
+
+   INPUTS
+   ListNode:
+      Specify the node which list is used to insert the entry.
+
+      Special values:
+
+      MUIV_Listtree_Insert_ListNode_Root:
+         The root list.
+
+      MUIV_Listtree_Insert_ListNode_Active:
+         The list of the active node. If there is no active entry yet the
+         insert action will fall back to the root node's list.
+
+   PrevNode:
+      The node which is the predecessor of the node to insert.
+
+      Special values:
+
+      MUIV_Listtree_Insert_PrevNode_Head:
+         It will be inserted at the head of the list.
+
+      MUIV_Listtree_Insert_PrevNode_Tail:
+         It will be inserted at the tail of the list.
+
+      MUIV_Listtree_Insert_PrevNode_Active:
+         After the active node it will be inserted.
+
+      MUIV_Listtree_Insert_PrevNode_Sorted:
+         The node is inserted using the sort hook.
+
+   Flags:
+      MUIV_Listtree_Insert_Flags_Active:
+         The inserted entry will be set active, this means the cursor is moved
+         on it.
+
+      MUIV_Listtree_Insert_Flags_NextNode:
+         'PrevNode' is the successor, not the predecessor.
+
+      The other ones specify the data in 'PrevNode'. Normally this is a pointer
+      to a tree node, but the flags can change this into an ULONG.
+
+      MUIV_Listtree_Insert_Flags_Nr:
+         Position (ULONG number) of the node in the list of 'ListNode'.
+
+      MUIV_Listtree_Insert_Flags_Visible:
+         The position is counted on visible entries only.
+
+   BUGS
+   Not implemented yet:
+      MUIV_Listtree_Insert_Flags_Nr
+      MUIV_Listtree_Insert_Flags_Visible
+
+   RESULT
+   A pointer to the newly inserted treenode or NULL upon failure.
+
+   SEE ALSO
+   MUIA_Listtree_SortHook
+Listtree.mcc/MUIM_Listtree_Move
+
+   NAME
+   MUIM_Listtree_Move
+
+   SYNOPSIS
+   struct MUIS_Listtree_TreeNode *tn = DoMethod(obj, MUIM_Listtree_Move,
+      APTR OldListNode, APTR OldTreeNode, APTR NewListNode, APTR NewTreeNode,
+      ULONG Flags);
+
+   FUNCTION
+   Move an entry to the position after a defined node.
+
+   INPUTS
+   OldListNode:
+      Specify the node which list is used to find the entry. The search is
+      started at the head of the list.
+
+      Special values:
+
+      MUIV_Listtree_Move_OldListNode_Root:
+         The root list.
+
+      MUIV_Listtree_Move_OldListNode_Active:
+         The list of the active node.
+
+   OldTreeNode:
+      Specify the node which should be moved.
+
+      Special values:
+
+      MUIV_Listtree_Move_OldTreeNode_Head
+         The head of the list, defined in 'OldListNode', is moved.
+
+      MUIV_Listtree_Move_OldTreeNode_Tail:
+         The tail of the list is moved.
+
+      MUIV_Listtree_Move_OldTreeNode_Active:
+         The active node is moved.
+
+   NewListNode:
+      Specify the node which list is used to find the entry. The search is
+      started at the head of the list.
+
+      Special values:
+
+      MUIV_Listtree_Move_NewListNode_Root:
+         The root list.
+
+      MUIV_Listtree_Move_NewListNode_Active:
+         The list of the active node.
+
+   NewTreeNode:
+      This node is the predecessor of the entry which is inserted.
+
+      Special values:
+
+      MUIV_Listtree_Move_NewTreeNode_Head
+         The node is moved to the head of the list defined in
+         'NewListNode'.
+
+      MUIV_Listtree_Move_NewTreeNode_Tail:
+         The node is moved to the tail of the list.
+
+      MUIV_Listtree_Move_NewTreeNode_Active:
+         The node is moved after the active node.
+
+      MUIV_Listtree_Move_NewTreeNode_Sorted:
+         The node is moved to the list using the sort hook.
+
+   Flags:
+      Specify the data in 'OldTreeNode' and 'NewTreeNode'. Normally this is a
+      pointer to a tree node, but the flags can change this into an ULONG.
+
+      MUIV_Listtree_Move_Flags_Nr:
+         Position (ULONG number) of the nodes in the list.
+
+      MUIV_Listtree_Move_Flags_Visible:
+         The position is counted on visible entries only.
+
+   BUGS
+   Not implemented yet:
+      MUIV_Listtree_Move_Flags_Nr
+      MUIV_Listtree_Move_Flags_Visible
+
+   RESULT
+   A pointer to the moved treenode or NULL upon failure.
+
+   SEE ALSO
+   MUIM_Listtree_Insert, MUIM_Listtree_Remove, MUIM_Listtree_Exchange
+Listtree.mcc/MUIM_Listtree_Open
+
+   NAME
+   MUIM_Listtree_Open
+
+   SYNOPSIS
+   ULONG count = DoMethod(obj, MUIM_Listtree_Open,
+      APTR ListNode, APTR TreeNode, ULONG Flags);
+
+   FUNCTION
+   Opens a node in the listtree. To open a child, which isn't displayed, use
+   'MUIV_Listtree_Open_ListNode_Parent' to open all its parents, too.
+
+   Only nodes can be opened.
+
+   INPUTS
+   ListNode:
+      Specify the node which list is used to open the node.
+
+      Special values:
+
+      MUIV_Listtree_Open_ListNode_Root:
+         The root list.
+
+      MUIV_Listtree_Open_ListNode_Parent:
+         Flag to open all the parents of the node, too.
+
+      MUIV_Listtree_Open_ListNode_Active:
+         The list of the active node.
+
+   TreeNode:
+      The node to open.
+
+      Special values:
+
+      MUIV_Listtree_Open_TreeNode_Head:
+         Opens the head node of the list.
+
+      MUIV_Listtree_Open_TreeNode_Tail:
+         Opens the tail node of the list.
+
+      MUIV_Listtree_Open_TreeNode_Active:
+         The active node will be opened.
+
+      MUIV_Listtree_Open_TreeNode_All:
+         All the nodes of the list are opened.
+
+   Flags:
+      The data in 'TreeNode' is normally a pointer to a tree node, but the flags
+      can change this into an ULONG.
+
+      MUIV_Listtree_Open_Flags_Nr:
+         Position (ULONG number) of the node in the list of 'ListNode'.
+
+      MUIV_Listtree_Open_Flags_Visible:
+         The position is counted on visible entries only.
+
+   BUGS
+   Not implemented yet:
+      MUIV_Listtree_Open_Flags_Nr
+      MUIV_Listtree_Open_Flags_Visible
+
+   RESULT
+   The number of the opened treenodes.
+
+   SEE ALSO
+   MUIA_Listtree_Close
+Listtree.mcc/MUIM_Listtree_OpenNode
+
+   NAME
+   MUIM_Listtree_OpenNode
+
+   FUNCTION
+   A treenode is about to be opened. This method is meant to replace
+   MUIA_Listtree_OpenHook for subclasses of Listtree class.
+
+   User code never calls this method itself. Instead this method is called by
+   Listtree class whenever a treenode is to about be opened.
+
+   INPUTS
+   TreeNode:
+      The treenode to be opened.
+
+   SEE ALSO
+   MUIA_Listtree_OpenHook, MUIA_Listtree_CloseHook, MUIM_Listtree_CloseNode
+Listtree.mcc/MUIM_Listtree_Remove
+
+   NAME
+   MUIM_Listtree_Remove
+
+   SYNOPSIS
+   ULONG count = DoMethod(obj, MUIM_Listtree_Remove,
+      APTR ListNode, APTR TreeNode, ULONG Flags);
+
+   FUNCTION
+   Removes a node or nodes from a listtree. When the active entry is removed,
+   the following entry will become active.
+
+   INPUTS
+   ListNode:
+      Specify the node which list is used to find the entry. The search is
+      started at the begin of this list.
+
+      Special values:
+
+      MUIV_Listtree_Remove_ListNode_Root:
+         The root list.
+
+      MUIV_Listtree_Remove_ListNode_Active:
+         The list of the active node. (n/a)
+
+   TreeNode:
+      The node which is removed. If there are children of the node, they are
+      also removed.
+
+      Special values:
+
+      MUIV_Listtree_Remove_TreeNode_Head
+         The head of the list, defined in 'ListNode', is removed.
+
+      MUIV_Listtree_Remove_TreeNode_Tail:
+         Removes the tail of the list.
+
+      MUIV_Listtree_Remove_TreeNode_Active:
+         Removes the active node.
+
+      MUIV_Listtree_Remove_TreeNode_All:
+         All nodes of the list, which is specified in 'ListNode', are removed.
+         Other nodes of parent lists are not affected.
+
+   Flags:
+      Specifies the data in 'TreeNode'. Normally this is a pointer to a
+      treenode, but the flags can change this into a ULONG.
+
+      MUIV_Listtree_Remove_Flags_Nr:
+         Position (ULONG number) of the node in the list of 'ListNode'.
+
+      MUIV_Listtree_Remove_Flags_Visible:
+         The position is counted on visible entries only.
+
+   BUGS
+   Not implemented yet:
+      MUIV_Listtree_Remove_Flags_Nr
+      MUIV_Listtree_Remove_Flags_Visible
+
+   RESULT
+   The number of modified treenodes.
+
+   EXAMPLE
+   /* if delete is pressed, remove the active entry */
+   DoMethod(bt_delete, MUIM_Notify, MUIA_Pressed, FALSE,
+      lt_sample, 4,
+      MUIM_Listtree_Remove, NULL, MUIV_Listtree_Remove_TreeNode_Active, 0);
+
+   SEE ALSO
+   MUIM_Listtree_Insert, MUIA_Listtree_DestructHook,
+   MUIM_List_Active
+Listtree.mcc/MUIM_Listtree_Rename
+
+   NAME
+   MUIM_Listtree_Rename
+
+   SYNOPSIS
+   BOOL success = DoMethod(obj, MUIM_Listtree_Rename,
+      APTR TreeNode, char *NewName, ULONG Flags);
+
+   FUNCTION
+   Rename the name of specified node.
+
+   If you want to rename the tn_User field, the construct and destruct hook are
+   used, check them! If there are not these hook the pointer is only copied.
+
+   INPUTS
+   TreeNode:
+      Define the node which should be renamed.
+
+      Special values:
+
+      MUIV_Listtree_Rename_TreeNode_Active:
+         The active tree node is used.
+
+   NewName:
+      The new name or pointer.
+
+   Flags:
+      MUIV_Listtree_Rename_Flags_User
+         The tn_User field is renamed.
+      MUIV_Listtree_Rename_Flags_NoRefresh
+         The entry will not be refreshed.
+
+   RESULT
+   A boolean value indicating whether the rename action succeeded or not.
+
+   SEE ALSO
+   MUIA_Listtree_ConstructHook, MUIA_Listtree_DestructHook
+Listtree.mcc/MUIM_Listtree_SetDropMark
+
+   NAME
+   MUIM_Listtree_SetDropMark
+
+   SYNOPSIS
+   DoMethod(obj, MUIM_Listtree_SetDropMark,
+      LONG  Entry, ULONG Values);
+
+   SPECIAL VALUES
+   MUIA_Listtree_SetDropMark_Values_None
+   MUIA_Listtree_SetDropMark_Values_Above
+   MUIA_Listtree_SetDropMark_Values_Below
+   MUIA_Listtree_SetDropMark_Values_Onto
+   MUIA_Listtree_SetDropMark_Values_Sorted
+
+   SEE ALSO
+   MUIA_Listtree_TestPos
+Listtree.mcc/MUIM_Listtree_Sort
+
+   NAME
+   MUIM_Listtree_Sort
+
+   SYNOPSIS
+   DoMethod(obj, MUIM_Listtree_Sort,
+      APTR ListNode, ULONG Flags);
+
+   SEE ALSO
+   MUIA_Listtree_SortHook
+Listtree.mcc/MUIM_Listtree_TestPos
+
+   NAME
+   MUIM_Listtree_TestPos
+
+   SYNOPSIS
+   DoMethod(obj, MUIM_Listtree_TestPos,
+      LONG X, LONG Y, struct MUIS_Listtree_TestPos_Result *Result);
+
+   FUNCTION
+   Asks the listtree which entry is under the coordinates. It is NULL if the
+   entry isn't valid.
+
+   The flags contains detailed information about the position at the entry:
+
+      TestPos_Result_Flags_None
+      TestPos_Result_Flags_Above
+      TestPos_Result_Flags_Below
+      TestPos_Result_Flags_Onto
+      TestPos_Result_Flags_Sorted
+
+   This is useful for Drag&Drop routines.
+
+   INPUTS
+   X:
+      X position.
+
+   Y:
+      Y position.
+
+   Result:
+      Pointer to a MUIS_Listtree_TestPos_Result struct.
+
+   RESULTS
+   TreeNode:
+      Entry under the specified position.
+
+   Flags:
+      Position of the entry.
+
+   SEE ALSO
+   MUIM_List_TestPos, MUIM_DragReport, MUIM_DragDrop
+

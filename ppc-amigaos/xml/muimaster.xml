@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="muimaster" basename="MUIMasterBase" basetype="Library" openname="muimaster.library">
+	<include>exec/types.h</include>
+	<include>intuition/classes.h</include>
+	<include>utility/tagitem.h</include>
+	<include>libraries/mui.h</include>
+	<interface name="main" version="1.0" struct="MUIMasterIFace" prefix="_MUIMaster_" asmprefix="IMUIMaster" global="IMUIMaster" m68ksupport="yes">
+		<method name="Obtain" result="uint32"/>
+		<method name="Release" result="uint32"/>
+		<method name="Expunge" result="void" status="unimplemented"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+		<method name="MUI_NewObjectA" result="Object *">
+			<arg name="cl" type="CONST_STRPTR" m68kreg="a0"/>
+			<arg name="tags" type="struct TagItem *" m68kreg="a1"/>
+		</method>
+		<method name="MUI_NewObject" result="Object *" inline4="simple">
+			<arg name="cl" type="CONST_STRPTR" m68kreg="a0"/>
+			<vararg name="tags" type="Tag" m68kreg="a1"/>
+		</method>
+		<method name="MUI_DisposeObject" result="VOID">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_RequestA" result="LONG">
+			<arg name="app" type="Object *" m68kreg="d0"/>
+			<arg name="win" type="Object *" m68kreg="d1"/>
+			<arg name="flags" type="ULONG" m68kreg="d2"/>
+			<arg name="title" type="CONST_STRPTR" m68kreg="a0"/>
+			<arg name="gadgets" type="CONST_STRPTR" m68kreg="a1"/>
+			<arg name="format" type="CONST_STRPTR" m68kreg="a2"/>
+			<arg name="params" type="APTR" m68kreg="a3"/>
+		</method>
+		<method name="MUI_Request" result="LONG">
+			<arg name="app" type="Object *" m68kreg="d0"/>
+			<arg name="win" type="Object *" m68kreg="d1"/>
+			<arg name="flags" type="ULONG" m68kreg="d2"/>
+			<arg name="title" type="CONST_STRPTR" m68kreg="a0"/>
+			<arg name="gadgets" type="CONST_STRPTR" m68kreg="a1"/>
+			<arg name="format" type="CONST_STRPTR" m68kreg="a2"/>
+			<vararg name="tag1" type="ULONG" m68kreg="a3"/>
+		</method>
+		<method name="MUI_AllocAslRequest" result="APTR">
+			<arg name="type" type="ULONG" m68kreg="d0"/>
+			<arg name="tags" type="struct TagItem *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_AllocAslRequestTags" result="APTR">
+			<arg name="type" type="ULONG" m68kreg="d0"/>
+			<vararg name="tags" type="Tag" m68kreg="a0"/>
+		</method>
+		<method name="MUI_AslRequest" result="BOOL">
+			<arg name="req" type="APTR" m68kreg="a0"/>
+			<arg name="tags" type="struct TagItem *" m68kreg="a1"/>
+		</method>
+		<method name="MUI_AslRequestTags" result="BOOL">
+			<arg name="req" type="APTR" m68kreg="a0"/>
+			<vararg name="tags" type="Tag" m68kreg="a1"/>
+		</method>
+		<method name="MUI_FreeAslRequest" result="VOID">
+			<arg name="req" type="APTR" m68kreg="a0"/>
+		</method>
+		<method name="MUI_Error" result="DEPRECATED LONG">
+		</method>
+		<method name="MUI_SetError" result="DEPRECATED LONG">
+			<arg name="errnum" type="LONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_GetClass" result="DEPRECATED struct IClass *">
+			<arg name="name" type="CONST_STRPTR" m68kreg="a0"/>
+		</method>
+		<method name="MUI_FreeClass" result="DEPRECATED VOID">
+			<arg name="cl" type="struct IClass *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_RequestIDCMP" result="DEPRECATED VOID">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+			<arg name="flags" type="ULONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_RejectIDCMP" result="DEPRECATED VOID">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+			<arg name="flags" type="ULONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_Redraw" result="VOID">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+			<arg name="flags" type="ULONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_CreateCustomClass" result="struct MUI_CustomClass *">
+			<arg name="base" type="struct Library *" m68kreg="a0"/>
+			<arg name="supername" type="CONST_STRPTR" m68kreg="a1"/>
+			<arg name="supermcc" type="struct MUI_CustomClass *" m68kreg="a2"/>
+			<arg name="datasize" type="ULONG" m68kreg="d0"/>
+			<arg name="dispatcher" type="APTR" m68kreg="a3"/>
+		</method>
+		<method name="MUI_DeleteCustomClass" result="BOOL">
+			<arg name="mcc" type="struct MUI_CustomClass *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_MakeObjectA" result="Object *">
+			<arg name="type" type="LONG" m68kreg="d0"/>
+			<arg name="params" type="ULONG *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_MakeObject" result="Object *">
+			<arg name="type" type="LONG" m68kreg="d0"/>
+			<vararg name="tag1" type="ULONG" m68kreg="a0"/>
+		</method>
+		<method name="MUI_Layout" result="BOOL">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+			<arg name="l" type="LONG" m68kreg="d0"/>
+			<arg name="t" type="LONG" m68kreg="d1"/>
+			<arg name="w" type="LONG" m68kreg="d2"/>
+			<arg name="h" type="LONG" m68kreg="d3"/>
+			<arg name="flags" type="ULONG" m68kreg="d4"/>
+		</method>
+		<method name="MUIP_private0" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private1" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private2" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private3" result="VOID" status="private">
+		</method>
+		<method name="MUI_ObtainPen" result="LONG">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="spec" type="const struct MUI_PenSpec *" m68kreg="a1"/>
+			<arg name="flags" type="ULONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_ReleasePen" result="VOID">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="pen" type="LONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_AddClipping" result="APTR">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="l" type="WORD" m68kreg="d0"/>
+			<arg name="t" type="WORD" m68kreg="d1"/>
+			<arg name="w" type="WORD" m68kreg="d2"/>
+			<arg name="h" type="WORD" m68kreg="d3"/>
+		</method>
+		<method name="MUI_RemoveClipping" result="VOID">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="h" type="APTR" m68kreg="a1"/>
+		</method>
+		<method name="MUI_AddClipRegion" result="APTR">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="region" type="struct Region *" m68kreg="a1"/>
+		</method>
+		<method name="MUI_RemoveClipRegion" result="VOID">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="region" type="APTR" m68kreg="a1"/>
+		</method>
+		<method name="MUI_BeginRefresh" result="BOOL">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="flags" type="ULONG" m68kreg="d0"/>
+		</method>
+		<method name="MUI_EndRefresh" result="VOID">
+			<arg name="mri" type="struct MUI_RenderInfo *" m68kreg="a0"/>
+			<arg name="flags" type="ULONG" m68kreg="d0"/>
+		</method>
+		<method name="MUIP_private4" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private5" result="VOID" status="private">
+		</method>
+		<method name="MUI_Show" result="ULONG">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_Hide" result="ULONG">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+		</method>
+		<method name="MUI_LayoutObj" result="BOOL">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+			<arg name="l" type="LONG" m68kreg="d0"/>
+			<arg name="t" type="LONG" m68kreg="d1"/>
+			<arg name="w" type="LONG" m68kreg="d2"/>
+			<arg name="h" type="LONG" m68kreg="d3"/>
+			<arg name="flags" type="ULONG" m68kreg="d4"/>
+		</method>
+		<method name="MUI_Offset" result="VOID">
+			<arg name="obj" type="Object *" m68kreg="a0"/>
+			<arg name="x" type="LONG" m68kreg="d0"/>
+			<arg name="y" type="LONG" m68kreg="d1"/>
+		</method>
+		<method name="MUIP_private6" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private7" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private8" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private9" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private10" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private11" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private12" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private13" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private14" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private15" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private16" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private17" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private18" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private19" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private20" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private21" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private22" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private23" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private24" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private25" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private26" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private27" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private28" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private29" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private30" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private31" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private32" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private33" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private34" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private35" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private36" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private37" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private38" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private39" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private40" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private41" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private42" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private43" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private44" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private45" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private46" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private47" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private48" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private49" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private50" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private51" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private52" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private53" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private54" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private55" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private56" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private57" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private58" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private59" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private60" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private61" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private62" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private63" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private64" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private65" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private66" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private67" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private68" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private69" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private70" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private71" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private72" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private73" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private74" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private75" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private76" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private77" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private78" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private79" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private80" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private81" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private82" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private83" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private84" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private85" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private86" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private87" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private88" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private89" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private90" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private91" result="VOID" status="private">
+		</method>
+		<method name="MUIP_private92" result="VOID" status="private">
+		</method>
+	</interface>
+</library>

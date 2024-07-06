@@ -1,0 +1,54 @@
+
+CUSERID(3)                 UNIX Programmer's Manual                 CUSERID(3)
+
+NNAAMMEE
+     ccuusseerriidd - get user name
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssttddiioo..hh>>
+
+     _c_h_a_r _*
+     ccuusseerriidd(_c_h_a_r _*_b_u_f)
+
+DDEESSCCRRIIPPTTIIOONN
+     TThhiiss iinntteerrffaaccee iiss aavvaaiillaabbllee ffrroomm tthhee ccoommppaattiibbiilliittyy lliibbrraarryy,, lliibbccoommppaatt..
+
+     The ccuusseerriidd() function returns a character string representation of the
+     user name associated with the effective user ID of the calling process.
+
+     If _b_u_f is not the NULL pointer, the user name is copied into the memory
+     referenced by _b_u_f. The argument _b_u_f is assumed to point to an array at
+     least L_cuserid (as defined in the include file <_s_t_d_i_o_._h>) bytes long.
+     Otherwise, the user name is copied to a static buffer.
+
+RREETTUURRNN VVAALLUUEESS
+     If _b_u_f is not the NULL pointer, _b_u_f is returned; otherwise the address of
+     the static buffer is returned.
+
+     If the user name could not be determined, if _b_u_f is not the NULL pointer,
+     the null character `\0' will be stored at _*_b_u_f; otherwise the NULL point-
+     er is returned.
+
+SSEEEE AALLSSOO
+     getlogin(2),  getpwent(3)
+
+SSTTAANNDDAARRDDSS
+     The ccuusseerriidd() function conforms to IEEE Std1003.1-1988 (``POSIX'').
+
+BBUUGGSS
+     Due to irreconcilable differences in historic implementations, ccuusseerriidd()
+     was removed from the  standard.  This implementation exists purely for
+     compatibility with existing programs.  New programs should use one of the
+     following three alternatives to obtain the user name:
+
+           1.   ggeettllooggiinn() to return the user's login name.
+           2.   ggeettppwwuuiidd(ggeetteeuuiidd()) to return the user name associated with
+                the calling process' effective user ID.
+           3.   ggeettppwwuuiidd(ggeettuuiidd()) to return the user name associated with the
+                calling process' real user ID.
+
+     The ccuusseerriidd() function uses ggeettppwwuuiidd(); thus the results of a user's call
+     to ggeettppwweenntt(), ggeettppwwnnaamm() or ggeettppwwuuiidd() will be overwritten by subsequent
+     calls to ccuusseerriidd().
+
+BSD Experimental               November 28, 1993                             1

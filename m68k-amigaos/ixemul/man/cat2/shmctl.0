@@ -1,0 +1,103 @@
+
+SHMCTL(2)                  UNIX Programmer's Manual                  SHMCTL(2)
+
+NNAAMMEE
+     sshhmmccttll - shared memory control operations
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//mmssgg..hh>>
+
+     _i_n_t
+     sshhmmccttll(_i_n_t _s_h_m_i_d, _i_n_t _c_m_d, _s_t_r_u_c_t _s_h_m_i_d___d_s _*_b_u_f)
+
+DDEESSCCRRIIPPTTIIOONN
+     The sshhmmccttll() system call performs some control operations on the shared
+     memory area specified by _s_h_m_i_d.
+
+     Each shared memory segment has a data structure associated with it, parts
+     of which may be altered by sshhmmccttll() and parts of which determine the ac-
+     tions of sshhmmccttll().
+
+     This structure is defined as follows in <_s_y_s_/_s_h_m_._h>:
+
+     struct shmid_ds {
+         struct ipc_perm shm_perm;     /* operation permissions */
+         int             shm_segsz;    /* size of segment in bytes */
+         pid_t           shm_lpid;     /* pid of last shm op */
+         pid_t           shm_cpid;     /* pid of creator */
+         short           shm_nattch;   /* # of current attaches */
+         time_t          shm_atime;    /* last shmat() time*/
+         time_t          shm_dtime;    /* last shmdt() time */
+         time_t          shm_ctime;    /* last change by shmctl() */
+         void           *shm_internal; /* sysv stupidity */
+     };
+     The ipc_perm  structure used inside the shmid_ds  structure is defined in
+     <_s_y_s_/_i_p_c_._h> and looks like this:
+
+     struct ipc_perm {
+         ushort cuid; /* creator user id */
+         ushort cgid; /* creator group id */
+         ushort uid;  /* user id */
+         ushort gid;  /* group id */
+         ushort mode; /* r/w permission (see chmod(2)) */
+         ushort seq;  /* sequence # (to generate unique msg/sem/shm id) */
+         key_t key;   /* user specified msg/sem/shm key */
+     };
+
+     The operation to be performed by sshhmmccttll() is specified in _c_m_d and is one
+     of:
+
+     IPC_STAT   Gather information about the shared memory segment and place
+                it in the structure pointed to by _b_u_f.
+
+     IPC_SET    Set the value of the _s_h_m___p_e_r_m_._u_i_d, _s_h_m___p_e_r_m_._g_i_d and
+                _s_h_m___p_e_r_m_._m_o_d_e fields in the structure associated with _s_h_m_i_d.
+                The values are taken from the corresponding fields in the
+                structure pointed to by _b_u_f. This operation can only be exe-
+                cuted by the super-user, or a process that has an effective
+                user id equal to either _s_h_m___p_e_r_m_._c_u_i_d or _s_h_m___p_e_r_m_._u_i_d in the
+                data structure associated with the shared memory segment.
+
+
+     IPC_RMID   Remove the shared memory segment specified by _s_h_m_i_d and de-
+                stroy the data associated with it. Only the super-user or a
+                process with an effective uid equal to the _s_h_m___p_e_r_m_._c_u_i_d or
+                _s_h_m___p_e_r_m_._u_i_d values in the data structure associated with the
+                queue can do this.
+
+     The read and write permissions on a shared memory identifier are deter-
+     mined by the _s_h_m___p_e_r_m_._m_o_d_e field in the same way as is done with files
+     (see chmod(2)),  but the effective uid can match either the _s_h_m___p_e_r_m_._c_u_i_d
+     field or the _s_h_m___p_e_r_m_._u_i_d field, and the effective gid can match either
+     _s_h_m___p_e_r_m_._c_g_i_d or _s_h_m___p_e_r_m_._g_i_d.
+
+RREETTUURRNN VVAALLUUEESS
+     Upon successful completion, a value of 0 is returned. Otherwise, -1 is
+     returned and the global variable _e_r_r_n_o is set to indicate the error.
+
+EERRRROORRSS
+     sshhmmccttll() will fail if:
+
+     [EPERM]       _c_m_d is equal to IPC_SET or IPC_RMID and the caller is not
+                   the super-user, nor does the effective uid match either the
+                   _s_h_m___p_e_r_m_._u_i_d or _s_h_m___p_e_r_m_._c_u_i_d fields of the data structure
+                   associated with the shared memory segment.
+
+                   An attempt is made to increase the value of _s_h_m___q_b_y_t_e_s
+                   through IPC_SET but the caller is not the super-user.
+
+     [EACCESS]     The command is IPC_STAT and the caller has no read permis-
+                   sion for this shared memory segment.
+
+     [EINVAL]      _s_h_m_i_d is not a valid shared memory segment identifier.
+
+                   _c_m_d is not a valid command.
+
+     [EFAULT]      _b_u_f specifies an invalid address.
+
+SSEEEE AALLSSOO
+     shmat(2),  shmdt(2),  shmget(2)
+
+ NetBSD                         August 17, 1995                              2

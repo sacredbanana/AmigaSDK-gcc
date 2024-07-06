@@ -1,0 +1,278 @@
+TABLE OF CONTENTS
+
+Urltext.mcc/Urltext.mcc
+Urltext.mcc/MUIA_Urltext_Active
+Urltext.mcc/MUIA_Urltext_DoOpenURL
+Urltext.mcc/MUIA_Urltext_DoVisitedPen
+Urltext.mcc/MUIA_Urltext_FallBack
+Urltext.mcc/MUIA_Urltext_NoMenu
+Urltext.mcc/MUIA_Urltext_NoOpenURLPrefs
+Urltext.mcc/MUIA_Urltext_SetMax
+Urltext.mcc/MUIA_Urltext_Text
+Urltext.mcc/MUIA_Urltext_Underline
+Urltext.mcc/MUIA_Urltext_Url
+Urltext.mcc/MUIA_Urltext_Visited
+Urltext.mcc/MUIM_Urltext_Copy
+Urltext.mcc/MUIM_Urltext_OpenURLUrltext.mcc/Urltext.mcc
+
+   Urltext.mcc is an deprecated and obsolete 3rd-party MUI custom class. New
+   applications should use Hyperlink.mcc which includes all functionality of
+   Urltext.mcc, but also offers additional features and a cleaned up API. The
+   main difference between the two classes is that Hyperlink.mcc is a direct
+   subclass of MUI's internal Text.mui class. Hence it automatically supports
+   all of Text.mui's attributes and method automatically.
+
+   For convenience MUI5 provides two ways for old applications and old code to
+   wrap over Urltext.mcc API usage automatically. This makes migrating to the
+   new Hyperlink.mcc class easy and seamlessly, for both users and developers.
+
+   This document is targetted at developers who need to know the exact
+   differences between the two APIs and how they are performing the wrapping
+   exactly. This document is not meant as a reference for each obsolete
+   attribute and method. For convenience the full old documentation of all
+   attributes and methods is still included. However, please obey the
+   differences described below.
+
+
+
+   Urltext.mcc API wrapper
+   -----------------------
+
+   The Urltext.mcc API wrapper allows old legacy code to make use of
+   Hyperlink.mcc instead of Urltext.mcc transparently without any code change at
+   all.
+
+   The wrapper is included in "mui/Urltext_mcc.h" and can be enabled by
+   defining the symbol "USE_HYPERLINK_MCC", either ahead of the #include
+   directive or via command line parameter when invoking the compiler.
+   In case of the GNU compiler this is "-DUSE_HYPERLINK_MCC", which usually can
+   be part of a CFLAGS variable in the project's Makefile.
+
+   This works well for all common Urltext.mcc use cases. However, some obsolete
+   attributes are not handled and will be ignored.
+
+       MUIA_Urltext_Url            - wrapped to MUIA_Hyperlink_URI
+
+           No notification will be triggered on this attribute if the user
+           hovers the object with the mouse pointer due to the redefinition
+           to an attribute of Hyperlink.mcc. This 'feature' is an inconsistency
+           and design flaw of the original API and is not supported by this
+           class. It cannot be handled by the API wrapper automatically. If the
+           to be ported application depends on the hover notifications then
+           MUIA_Hyperlink_HoverTip can be used, which has been introduced for
+           exactly this purpose.
+
+       MUIA_Urltext_Text           - wrapped to MUIA_Text_Contents
+       MUIA_Urltext_SetMax         - wrapped to MUIA_Text_SetMax
+       MUIA_Urltext_Active         - ignored
+       MUIA_Urltext_Visited        - ignored
+       MUIA_Urltext_Underline      - ignored
+       MUIA_Urltext_FallBack       - ignored
+       MUIA_Urltext_DoVisitedPen   - ignored
+       MUIA_Urltext_DoOpenURL      - ignored
+
+           All these attribute of the original API are obsolete, because the
+           original purpose of Urltext.mcc was to open URLs. If the old code
+           depends on one of these attributes then MUIM_Urltext_OpenURL can be
+           overloaded or the default notification on MUIA_Pressed becoming FALSE
+           can be reversed with a MUIM_KillNotify call.
+
+       MUIA_Urltext_NoMenu         - ignored
+
+           MUIA_Context_Menu can be set to NULL value to disable the menu. This
+           also works with the original 68k version of Urltext.mcc.
+
+       MUIA_Urltext_NoOpenURLPrefs - ignored
+
+       MUIM_Urltext_OpenURL        - wrapped to MUIM_Hyperlink_Follow
+       MUIM_Urltext_Copy           - wrapped to MUIM_Hyperlink_Copy
+
+
+
+    Urltext.mcc binary wrapper
+    --------------------------
+
+    MUI5 includes a dummy Urltext.mcc implementation which serves as a wrapper
+    for Hyperlink.mcc for old legacy applications which use Urltext.mcc
+    directly. New applications should not depend on this wrapper.
+
+    The binary wrapper implements all relevant Urltext.mcc attributes and
+    methods (including certain design flaws) to provide a fully compatible
+    drop-in replacement for the original 3rd-party Urltext.mcc class.
+
+    There are just a few attributes which are considered obsolete and therefore
+    are no longer supported and will be ignored. Other attributes have limited
+    functionality.
+
+        MUIA_Urltext_Url            - fully emulated, including hover
+                                      notifications
+        MUIA_Urltext_Text           - fully emulated
+        MUIA_Urltext_SetMax         - fully emulated
+        MUIA_Urltext_Active         - always returns TRUE, OpenURL is
+                                      considered to be always available
+        MUIA_Urltext_Visited        - returns TRUE, when object was clicked
+                                      once
+        MUIA_Urltext_Underline      - ignored for consistency reasons
+        MUIA_Urltext_FallBack       - ignored, see MUIA_Urltext_Active
+        MUIA_Urltext_DoVisitedPen   - ignored
+        MUIA_Urltext_DoOpenURL      - fully emulated
+        MUIA_Urltext_NoMenu         - fully emulated
+        MUIA_Urltext_NoOpenURLPrefs - ignored
+
+        MUIM_Urltext_OpenURL        - fully emulated
+        MUIM_Urltext_Copy           - fully emulated
+Urltext.mcc/MUIA_Urltext_Active
+
+   NAME
+   MUIA_Urltext_Active -- [..G.], BOOL
+
+   FUNCTION
+   Urltext.mcc needs openurl.library installed and configured to work. This
+   attribute is set to TRUE if OpenURL in installed or FALSE otherwise.
+Urltext.mcc/MUIA_Urltext_DoOpenURL
+
+   NAME
+   MUIA_Urltext_DoOpenURL -- [I...], BOOL
+
+   FUNCTION
+   If this attribute is set to TRUE the URL is opened when the user clicks the
+   object. If it is set to FALSE nothing will happen.
+
+   Defaults to TRUE.
+Urltext.mcc/MUIA_Urltext_DoVisitedPen
+
+   NAME
+   MUIA_Urltext_DoVisitedPen -- [I...], BOOL
+
+   FUNCTION
+   This attribute defines how the URL text is displayed after the object was
+   clicked at least once. If set to TRUE the user defined color from the
+   preferences will be used.
+
+   Defaults to TRUE.
+
+   NOTE
+   This attribute overrides the user preferences and hence should be used only
+   if absolutely necessary.
+Urltext.mcc/MUIA_Urltext_FallBack
+
+   NAME
+   MUIA_Urltext_Fallback -- [I...], BOOL
+
+   FUNCTION
+   This attribute defines how the URL text is displayed in case OpenURL is not
+   installed. If OpenURL is installed this attribute will be ignored. Without
+   OpenURL and this attribute set to FALSE the URL text will be drawn with the
+   default MUI text pen and the object does not accept clicks. If OpenURL is not
+   installed and this attribute is set to TRUE the URL text will be drawn as if
+   OpenURL was installed, but the object will still not accept clicks.
+
+   NOTE
+   This attribute overrides the user preferences and hence should be used only
+   if absolutely necessary.
+Urltext.mcc/MUIA_Urltext_NoMenu
+
+   NAME
+   MUIA_Urltext_NoMenu -- [I...], BOOL
+
+   FUNCTION
+   Urltext.mcc object offer a context menu. Set this attribute to TRUE if you
+   don't want the internal context menu to be displayed. A custom context menu
+   can still be created.
+
+   Defaults to FALSE.
+Urltext.mcc/MUIA_Urltext_NoOpenURLPrefs
+
+   NAME
+   MUIA_Urltext_NoOpenURLPrefs -- [I...], BOOL
+
+   FUNCTION
+   If this attribute is set to TRUE the internal context menu will not include
+   the "OpenURL prefs" item.
+
+   Defaults to FALSE.
+Urltext.mcc/MUIA_Urltext_SetMax
+
+   NAME
+   MUIA_Urltext_SetMax -- [I...], BOOL
+
+   FUNCTION
+   Same as MUIA_Text_SetMax.
+Urltext.mcc/MUIA_Urltext_Text
+
+   NAME
+   MUIA_Urltext_Text -- [ISGN], CONST_STRPTR
+
+   FUNCTION
+   This is the tet to be shown. If it is not specified or is set to NULL then
+   the URL passed to MUIA_Urltext_Url will be used. The maximum length is 256
+   characters including the terminating NUL byte. The supplied string will be
+   copied internally. All escape codes of the MUI text engine are supported.
+
+   SEE ALSO
+   MUIA_Urltext_Url
+Urltext.mcc/MUIA_Urltext_Underline
+
+   NAME
+   MUIA_Urltext_Underline -- [I...], BOOL
+
+   FUNCTION
+   Define whether the text will be underlined.
+
+   NOTE
+   This attribute overrides the user preferences and hence should be used only
+   if absolutely necessary.
+Urltext.mcc/MUIA_Urltext_Url
+
+   NAME
+   MUIA_Urltext_Url -- [ISGN], CONST_STRPTR
+
+
+   FUNCTION
+   The URL to be shown. The maximum length is 256 characters including the
+   terminating NUL byte. The supplied string will be copied internally. When the
+   mouse is hovering the object this attribute will get a notification with the
+   current URL string. When the mouse if not hovering the object this attribute
+   will get a notification of NULL.
+
+   The supplied string will be used instead of MUIA_Urltext_Text if that
+   attribute is omitted or NULL.
+
+   SEE ALSO
+   MUIA_Urltext_Text
+Urltext.mcc/MUIA_Urltext_Visited
+
+   NAME
+   MUIA_Urltext_Visited -- [..GN], BOOL
+
+   FUNCTION
+   This attribute will be set to TRUE if the object is clicked for the first
+   time. Additionally a notification will be issued.
+Urltext.mcc/MUIM_Urltext_Copy
+
+   NAME
+   MUIM_Urltext_Copy
+
+   SYNOPSIS
+   res = DoMethod(obj, MUIM_Urltext_Copy, unit);
+
+   FUNCTION
+   The URL string will be copied to the specified clipboard unit.
+
+   RESULT
+   A boolean which indicates if the URL string was successfully copied or not.
+Urltext.mcc/MUIM_Urltext_OpenURL
+
+   NAME
+   MUIM_Urltext_OpenURL
+
+   SYNOPSIS
+   res = DoMethod(obj, MUIM_Urltext_OpenURL, flags);
+
+   FUNCTION
+   Let the object react as if the user has clicked it. Currently there are no
+   flags defined. Set them to 0.
+
+   RESULT
+   A boolean which indicates if the URL was successfully opened or not.
+

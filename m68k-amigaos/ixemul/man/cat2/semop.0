@@ -1,0 +1,94 @@
+
+SEMOP(2)                   UNIX Programmer's Manual                   SEMOP(2)
+
+NNAAMMEE
+     sseemmoopp - semaphore operations
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//sseemm..hh>>
+
+     _i_n_t
+     sseemmoopp(_i_n_t _s_e_m_i_d, _s_t_r_u_c_t _s_e_m_b_u_f _*_s_o_p_s, _i_n_t _n_s_o_p_s)
+
+DDEESSCCRRIIPPTTIIOONN
+     sseemmoopp() provides a number of atomic operations on a set of semaphores.
+     The semaphore set is specified by _s_e_m_i_d. _s_o_p_s is an array of semaphore
+     operations, _n_s_o_p_s is the number of operations in this array. The _s_e_m_b_u_f
+     structures in the array contain the following members:
+
+             u_short sem_num;        /* semaphore # */
+             short   sem_op;         /* semaphore operation */
+             short   sem_flg;        /* operation flags */
+
+     Each operation (specified in _s_e_m___o_p) is applied to semaphore number
+     _s_e_m___n_u_m in the set of semaphores specified by _s_e_m_i_d. The value of _s_e_m___o_p
+     determines the action taken in the following way:
+
+     ++oo   _s_e_m___o_p is less than 0. The current process is blocked until the value
+         of the semaphore is greater than or equal to the absolute value of
+         _s_e_m___o_p. The absolute value of _s_e_m___o_p is then subtracted from the val-
+         ue of the semaphore, and the calling process continues. Negative val-
+         ues of _s_e_m___o_p are thus used to enter critical regions.
+
+     ++oo   _s_e_m___o_p is greater than 0. Its value is added to the value of the
+         specified semaphore. This is used to leave critical regions.
+
+     ++oo   _s_e_m___o_p is equal to 0. The calling process is blocked until the value
+         of the specified semaphore reaches 0.
+
+     The behaviour of each operation is influenced by the flags set in _s_e_m___f_l_g
+     in the following way:
+
+     IPC_NOWAIT   In the case where the calling process would normally block,
+                  waiting for a semaphore to reach a certain value, IPC_NOWAIT
+                  makes the call return immediately, returning a value of -1
+                  and setting _e_r_r_n_o to EAGAIN.
+
+     SEM_UNDO     Keep track of the changes that this call makes to the value
+                  of a semaphore, so that they can be undone when the calling
+                  process terminates. This is useful to prevent other process-
+                  es waiting on a semaphore to block forever, should the pro-
+                  cess that has the semaphore locked terminate in a critical
+                  section.
+
+RREETTUURRNN VVAALLUUEESS
+     Upon successful completion, a value of 0 is returned. Otherwise, -1 is
+     returned and the global variable _e_r_r_n_o is set to indicate the error.
+
+EERRRROORRSS
+     sseemmoopp() will fail if:
+
+     [EINVAL]      There is no semaphore associated with _s_e_m_i_d.
+
+                   The semaphore set was removed while the process was waiting
+                   for one of its semaphores to reach a certain value.
+
+
+     [EACCESS]     The calling process has no permission to access the speci-
+                   fied semaphore set.
+
+     [E2BIG]       The value of _n_s_o_p_s is too big. The maximum is specified in
+                   MAX_SOPS in <sys/sem.h>
+
+     [EFBIG]       _s_e_m___n_u_m in one of the sem_buf structures is less than 0, or
+                   greater than the actual number of semaphores in the set
+                   specified by _s_e_m_i_d.
+
+     [ENOSPC]      SEM_UNDO was requested, and there is not enough space left
+                   in the kernel to store the unfo information.
+
+     [EAGAIN]      The requested operation can not immediately be performed,
+                   and IPC_NOWAIT was set in _s_e_m___f_l_g.
+
+     [EFAULT]      _s_o_p_s points to an illegal address.
+
+SSEEEE AALLSSOO
+     semctl(2),  semget(2)
+
+BBUUGGSS
+     In case of a removed semaphore identifier, _e_r_r_n_o should be set to EIDRM,
+     but NetBSD does not define this error.
+
+ NetBSD                         August 17, 1995                              2

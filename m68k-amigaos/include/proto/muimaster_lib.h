@@ -10,7 +10,12 @@
 #  ifdef __AROS__
 #   include <defines/muimaster_lib.h>
 #  else
+#define NO_INLINE_STDARG
+#define NO_INLINE_VARARGS
 #   include <inline/muimaster_lib.h>
+#undef NO_INLINE_STDARG
+#undef NO_INLINE_VARARGS
+
 #  endif
 # else
 #  include <pragmas/muimaster_pragmas.h>

@@ -1,0 +1,58 @@
+
+GROUP(5)                   UNIX Programmer's Manual                   GROUP(5)
+
+NNAAMMEE
+     ggrroouupp - format of the group permissions file
+
+DDEESSCCRRIIPPTTIIOONN
+     The file <_/_e_t_c_/_g_r_o_u_p> consists of newline separated ASCII records, one
+     per group, containing four colon `:' separated fields. These fields are
+     as follows:
+           group     Name of the group.
+           passwd    Group's _e_n_c_r_y_p_t_e_d password.
+           gid       The group's decimal ID.
+           member    Group members.
+
+     The _g_r_o_u_p field is the group name used for granting file access to users
+     who are members of the group.  The _g_i_d field is the number associated
+     with the group name.  They should both be unique across the system (and
+     often across a group of systems) since they control file access.  The
+     _p_a_s_s_w_d field is an optional _e_n_c_r_y_p_t_e_d password.  This field is rarely
+     used and an asterisk is normally placed in it rather than leaving it
+     blank.  The _m_e_m_b_e_r field contains the names of users granted the privi-
+     leges of _g_r_o_u_p. The member names are separated by commas without spaces
+     or newlines.  A user is automatically in a group if that group was speci-
+     fied in their _/_e_t_c_/_p_a_s_s_w_d entry and does not need to be added to that
+     group in the _/_e_t_c_/_g_r_o_u_p _f_i_l_e_.
+
+YYPP SSUUPPPPOORRTT
+     If YP is active, the ggrroouupp file may also contain lines of the format
+
+     +name:*::
+
+     which causes the specified group to be included from the _g_r_o_u_p_._b_y_n_a_m_e YP
+     map.
+
+     If no group name is specified, or the ``+'' (plus sign) appears alone on
+     line, all groups are included from the YP map.
+
+     YP references may appear anywhere in the file, but the single ``+'' form
+     should be on the last line, for historical reasons.  Only the first group
+     with a specific name encountered, whether in the ggrroouupp file itself, or
+     included via YP, will be used.
+
+FFIILLEESS
+     /etc/group
+
+SSEEEE AALLSSOO
+     setgroups(2),  initgroups(3),  crypt(3),  passwd(1),  passwd(5),  yp(8)
+
+BBUUGGSS
+     The passwd(1) command does not change the ggrroouupp passwords.
+
+HHIISSTTOORRYY
+     A ggrroouupp file format appeared in Version 6 AT&T UNIX.
+
+     YP file format first appeared in SunOS.
+
+BSD Experimental                 July 18, 1995                               1

@@ -1,0 +1,110 @@
+
+MSGCTL(2)                  UNIX Programmer's Manual                  MSGCTL(2)
+
+NNAAMMEE
+     mmssggccttll - message control operations
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//mmssgg..hh>>
+
+     _i_n_t
+     mmssggccttll(_i_n_t _m_s_q_i_d, _i_n_t _c_m_d, _s_t_r_u_c_t _m_s_q_i_d___d_s _*_b_u_f)
+
+DDEESSCCRRIIPPTTIIOONN
+     The mmssggccttll() system call performs some control operations on the message
+     queue specified by _m_s_q_i_d.
+
+     Each message queue has a data structure associated with it, parts of
+     which may be altered by mmssggccttll() and parts of which determine the actions
+     of mmssggccttll().  The data structure is defined in <_s_y_s_/_m_s_g_._h> and contains
+     (amongst others) the following members:
+
+     struct msqid_ds {
+         struct ipc_perm msg_perm;   /* msg queue permission bits */
+         u_long msg_cbytes; /* # of bytes in use on the queue */
+         u_long msg_qnum;   /* # of msgs in the queue */
+         u_long msg_qbytes; /* max # of bytes on the queue */
+         pid_t  msg_lspid;  /* pid of last msgsnd() */
+         pid_t  msg_lrpid;  /* pid of last msgrcv() */
+         time_t msg_stime;  /* time of last msgsnd() */
+         time_t msg_rtime;  /* time of last msgrcv() */
+         time_t msg_ctime;  /* time of last msgctl() */
+     };
+
+     The ipc_perm  structure used inside the shmid_ds  structure is defined in
+     <_s_y_s_/_i_p_c_._h> and looks like this:
+
+     struct ipc_perm {
+         ushort cuid; /* creator user id */
+         ushort cgid; /* creator group id */
+         ushort uid;  /* user id */
+         ushort gid;  /* group id */
+         ushort mode; /* permission (9 bits, see chmod(2)) */
+         ushort seq;  /* sequence # (to generate unique id) */
+         key_t key;   /* user specified msg/sem/shm key */
+     };
+
+     The operation to be performed by mmssggccttll() is specified in _c_m_d and is one
+     of:
+
+     IPC_STAT   Gather information about the message queue and place it in the
+                structure pointed to by _b_u_f.
+
+     IPC_SET    Set the value of the _m_s_g___p_e_r_m_._u_i_d, _m_s_g___p_e_r_m_._g_i_d, _m_s_g___p_e_r_m_._m_o_d_e
+                and _m_s_g___q_b_y_t_e_s fields in the structure associated with _m_s_q_i_d.
+                The values are taken from the corresponding fields in the
+                structure pointed to by _b_u_f. This operation can only be exe-
+                cuted by the super-user, or a process that has an effective
+                user id equal to either _m_s_g___p_e_r_m_._c_u_i_d or _m_s_g___p_e_r_m_._u_i_d in the
+                data structure associated with the message queue.  The value
+                of _m_s_g___q_b_y_t_e_s can only be increased by the super-user. Values
+                for _m_s_g___q_b_y_t_e_s that exceed the system limit (MSGMNB from
+                <_s_y_s_/_m_s_g_._h>) are silently truncated to that limit.
+
+
+
+     IPC_RMID   Remove the message queue specified by _m_s_q_i_d and destroy the
+                data associated with it. Only the super-user or a process with
+                an effective uid equal to the _m_s_g___p_e_r_m_._c_u_i_d or _m_s_g___p_e_r_m_._u_i_d
+                values in the data structure associated with the queue can do
+                this.
+
+     The permission to read from or write to a message queue (see msgsnd(2)
+     and msgrcv(2))  is determined by the _m_s_g___p_e_r_m_._m_o_d_e field in the same way
+     as is done with files (see chmod(2)),  but the effective uid can match
+     either the _m_s_g___p_e_r_m_._c_u_i_d field or the _m_s_g___p_e_r_m_._u_i_d field, and the effec-
+     tive gid can match either _m_s_g___p_e_r_m_._c_g_i_d or _m_s_g___p_e_r_m_._g_i_d.
+
+RREETTUURRNN VVAALLUUEESS
+     Upon successful completion, a value of 0 is returned. Otherwise, -1 is
+     returned and the global variable _e_r_r_n_o is set to indicate the error.
+
+EERRRROORRSS
+     mmssggccttll() will fail if:
+
+     [EPERM]       _c_m_d is equal to IPC_SET or IPC_RMID and the caller is not
+                   the super-user, nor does the effective uid match either the
+                   _m_s_g___p_e_r_m_._u_i_d or _m_s_g___p_e_r_m_._c_u_i_d fields of the data structure
+                   associated with the message queue.
+
+                   An attempt is made to increase the value of _m_s_g___q_b_y_t_e_s
+                   through IPC_SET but the caller is not the super-user.
+
+     [EACCESS]     The command is IPC_STAT and the caller has no read permis-
+                   sion for this message queue.
+
+     [EINVAL]      _m_s_q_i_d is not a valid message queue identifier.
+
+                   _c_m_d is not a valid command.
+
+     [EFAULT]      _b_u_f specifies an invalid address.
+
+SSEEEE AALLSSOO
+     msgsnd(2),  msgrcv(2),  msgget(2)
+
+HHIISSTTOORRYY
+     Message queues appeared in the first release of AT&T Unix System V.
+
+ NetBSD                         August 17, 1995                              2

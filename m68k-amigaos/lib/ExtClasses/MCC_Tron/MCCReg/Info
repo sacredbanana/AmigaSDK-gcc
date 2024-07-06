@@ -1,0 +1,202 @@
+/*** Information about MUI Custom Classes  $VER: 0.8 ***/
+
+
+- Preface:
+
+You should *only* make MCCs when you intend to release a custom class
+to the public and you have to document its interface. You should *not*
+make MCCs for classes which are only used by yourself. If you need a
+class in different executables, you may put this class into an
+external library to reuse the code.
+
+So again... a xyz.mcc needs to be public and needs to have its
+interface well documented, otherwise it shouldnt be a public xyz.mcc.
+If you don't want others to use your classes, dont make them as MCCs!
+
+
+
+- Info:
+
+* to register
+
+  1) At first send *only* information to about what kind of class you
+     are writing. A short description is fine.
+
+  2) Ask yourself if the class should be made publically,
+     is there an *interest*?
+     All new classes *should* be discussed in the MUI mailing list:
+       mui@sunsite.Informatik.RWTH-Aachen.DE !
+
+  3) If you don't know your MUI serial nr (4 digits), ask me!
+
+  4) Create Autodocs, Includes and an example for your class,
+     test it with the latest MUI release, Enforcer and Mungwall or
+     PoolWatch!
+
+  5) Make a list of _all_ IDs the class is using, this means all
+     public and private ones! Furthermore the config IDs which are
+     used by the MCC and the MCP. Create a *Registration Report*!
+
+  6) Create a archive with:
+     - class, readme
+     - autodocs, C includes
+     - demo, demo source
+     - Registration Report
+     > send it to: mccreg@sasg.com
+
+* Registration Report
+
+  ...looks like this:
+
+    MCC Tron -- Registration Report
+    
+    MCC Tron is (c) 1996 by Klaus 'kmel' Melchior
+    
+    
+    Classname:
+    
+            Tron.mcc
+            Tron.mcp
+    
+    Public:
+    
+            MUIM_Tron_Demo                      0x8002000b
+            MUIA_Tron_Running                   0x80020040
+    
+    Private:
+    
+            MUIA_Tron_PenSpec1                  0x80020043
+            MUIA_Tron_PenSpec2                  0x8002003e
+            MUIA_Tron_PenSpecB                  0x80020065
+            MUIA_Tron_Sample                    0x8002003f
+            MUIA_Tron_Speed                     0x80020042
+    
+    Config:
+    
+            MUICFG_Tron_Pen1                    0x80020005
+            MUICFG_Tron_Pen2                    0x80020006
+            MUICFG_Tron_PenB                    0x8002000c
+            MUICFG_Tron_Speed                   0x80020007
+    
+    
+    MCC END
+
+* to get an example C source for MCCs and MCPs
+
+> write to: mccreg@sasg.com
+> or better, take it from aminet: dev/mui/MCC_Tron0_8.lha
+
+
+
+- More Info:
+
+* Public name for the custom class.
+
+Note that you *must* register public names with the author of MUI. All
+unregistered public classes are promised to go on a builtin blacklist
+and will fail with future versions of MUI!
+
+
+* Uniqueness.
+
+I suggest a format like this: 1441_Toolbar.mcc
+ie 4-digit serial number, followed by an underscore, followed by a
+somewhat meaningfull name. This fixed format allows me to handle these
+classes in a preferences editor some day.
+
+
+* Private custom classes.
+
+Private custom classes need to be placed in a 'MUI/' subdir of your
+applications main directory. MUI will find it there if you simply do a
+MUI_NewObject("1441_Toolbar.mcc"). Do not install them in 'MUI:Libs/'!
+
+
+* Attributes and methods for the new class.
+
+Your tags have to be named MUI(A/M)_<classname>_<foobar>. The upper
+sixteen bits of your tag values need to be (TAG_USER | ( <your MUI
+serial Nr> << 16 )) Again, classes with invalid tag specs are promised
+to go on the blacklist. This implies that you have to be a registered
+MUI user if you want to distribute public classes.
+
+The first ID tag is used for internal purpose, so you don't have to
+use it!
+
+Example:
+
+If your serial number is 4711 (decimal):
+
+          4711 = 0x1267
+        tagbase: 0x9267xxxx
+First usable ID: 0x92670001
+           last: 0x9267ffff
+
+
+* Config IDs
+
+Also the IDs to store configuration data of you MCP have to be named
+MUICFG_<classname>_<foobar>, these are private at normal conditions.
+The upper sixteen bits of your IDs need to be (TAG_USER | ( <your MUI
+serial Nr> << 16 )), as you IDs.
+
+The first config ID is used for internal purpose, so you don't have to
+use it!
+
+Example:
+
+                 4711 = 0x1267
+               tagbase: 0x9267xxxx
+First usable config ID: 0x92670001
+                  last: 0x9267ffff
+
+> WARNING: Don't use your config IDs twice, nor use any old config ID!
+
+
+* File specification:
+
+- Custom class header files should have a "_mcc.h" appended and should
+  be place in 'Include:mui/'!
+
+- Autodocs files should be named "MCC_<Name>.doc".
+
+- Example code & source: <Name>-Demo & <Name>-Demo.c
+
+- Documentation: <Name>.mcc.doc & <Name>.mcc.guide
+
+- Catalogs: <Name>_mcc.catalog
+
+
+* MCC archives:
+
+Filename: 'MCC_<Name><Version>.lha'
+
+MCC_<Name>/Demos/<Name>-Demo
+MCC_<Name>/Developer/AutoDocs/MCC_<Name>.doc             [option]
+MCC_<Name>/Developer/C/Examples/<Name>-Demo.c            [option]
+MCC_<Name>/Developer/C/Include/MUI/<Name>_mcc.h          [option]
+MCC_<Name>/Developer/Amiga-E/Modules/MUI/<Name>_mcc.e    [option]
+MCC_<Name>/Developer/Amiga-E/Examples/<Name>-Demo.e      [option]
+MCC_<Name>/Developer/Modula/txt/MCC<Name>.def            [option]
+MCC_<Name>/Developer/Modula/txt/MCC<Name>.mod            [option]
+MCC_<Name>/Developer/Modula/Demo/<Name>Demo.mod          [option]
+MCC_<Name>/Developer/Oberon/txt/MCC<Name>.mod            [option]
+MCC_<Name>/Developer/Oberon/examples/<Name>Demo.mod      [option]
+MCC_<Name>/Developer/Assembler/Include/MUI/<Name>_mcc.i  [option]
+MCC_<Name>/Developer/Assembler/Examples/<Name>-Demo.s    [option]
+MCC_<Name>/Developer/Source/...                          [option]
+MCC_<Name>/Docs/English/<Name>.mcc.doc
+MCC_<Name>/Docs/English/<Name>.mcc.guide
+MCC_<Name>/Docs/.../<Name>.mcc.doc                       [option]
+MCC_<Name>/Docs/.../<Name>.mcc.guide                     [option]
+MCC_<Name>/Images/...                                    [option]
+MCC_<Name>/Libs/MUI/<Name>.mcc
+MCC_<Name>/Libs/MUI/<Name>.mcp                           [option]
+MCC_<Name>/Locale/Catalogs/.../<Name>_mcc.catalog        [option]
+MCC_<Name>/Locale/Catalogs/.../<Name>_mcp.catalog        [option]
+MCC_<Name>/MCC_<Name>.readme
+MCC_<Name>/MCC-Install                                   [option]
+
+As example take this from Aminet: dev/mui/MCC_Tron0_8.lha
+
+

@@ -1,0 +1,113 @@
+
+MSGRCV(2)                  UNIX Programmer's Manual                  MSGRCV(2)
+
+NNAAMMEE
+     mmssggrrccvv - receive a message from a message queue
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//mmssgg..hh>>
+
+     _i_n_t
+     mmssggrrccvv(_i_n_t _m_s_q_i_d, _v_o_i_d _*_m_s_g_p, _s_i_z_e___t _m_s_g_s_z, _l_o_n_g _m_s_g_t_y_p, _i_n_t _m_s_g_f_l_g)
+
+DDEESSCCRRIIPPTTIIOONN
+     The mmssggrrccvv() function receives a message from the message queue specified
+     in _m_s_q_i_d, and places it into the structure pointed to by _m_s_g_p. This
+     structure should consist of the following members:
+
+         long mtype;    /* message type */
+         char mtext[1]; /* body of message */
+
+     _m_t_y_p_e is an integer greater than 0 that can be used for selecting mes-
+     sages, _m_t_e_x_t is an array of bytes, with a size up to that of the system
+     limit (MSGMAX).
+
+     The value of _m_s_g_t_y_p has one of the following meanings:
+
+     ++oo   _m_s_g_t_y_p is greater than 0. The first message of type _m_s_g_t_y_p will be
+         received.
+
+     ++oo   _m_s_g_t_y_p is equal to 0. The first message on the queue will be re-
+         ceived.
+
+     ++oo   _m_s_g_t_y_p is less than 0. The first message of the lowest message type
+         that is less than or equal to the absolute value of _m_s_g_t_y_p will be
+         received.
+
+     _m_s_g_s_z specifies the maximum length of the requested message. If the re-
+     ceived message has a length greater than _m_s_g_s_z it will be silently trun-
+     cated if the MSG_NOERROR flag is set in _m_s_g_f_l_g, otherwise an error will
+     be returned.
+
+     If no matching message is present on the message queue specified by
+     _m_s_q_i_d, the behaviour of mmssggrrccvv() depends on whether the IPC_NOWAIT flag
+     is set in _m_s_g_f_l_g or not. If IPC_NOWAIT is set, mmssggrrccvv() will immediately
+     return a value of -1, and set _e_r_r_n_o to EAGAIN. If IPC_NOWAIT is not set,
+     the calling process will be blocked until:
+
+     ++oo   A message of the requested type becomes available on the message
+         queue.
+
+     ++oo   The message queue is removed, in which case -1 will be returned, and
+         _e_r_r_n_o set to EINVAL.
+
+     ++oo   A signal is received and caught. -1 is returned, and _e_r_r_n_o set to
+         EINTR.
+
+     If a message is successfully received, the data structure associated with
+     _m_s_q_i_d is updated as follows:
+
+     ++oo   _m_s_g___c_b_y_t_e_s is decremented by the size of the message.
+
+
+
+     ++oo   _m_s_g___l_r_p_i_d is set to the pid of the caller.
+
+     ++oo   _m_s_g___l_r_t_i_m_e is set to the current time.
+
+     ++oo   _m_s_g___q_n_u_m is decremented by 1.
+
+RREETTUURRNN VVAALLUUEESS
+     Upon successful completion, mmssggrrccvv() returns the number of bytes received
+     into the _m_t_e_x_t field of the structure pointed to by _m_s_g_p. Otherwise, -1
+     is returned, and _e_r_r_n_o set to indicate the error.
+
+EERRRROORRSS
+     mmssggrrccvv() will fail if:
+
+     [EINVAL]      _m_s_q_i_d is not a valid message queue identifier
+
+                   The message queue was removed while mmssggrrccvv() was waiting
+                   for a message of the requested type to become available on
+                   it.
+
+                   _m_s_g_s_z is less than 0.
+
+     [E2BIG]       A matching message was received, but its size was greater
+                   than _m_s_g_s_z and the MSG_NOERROR flag was not set in _m_s_g_f_l_g.
+
+     [EACCESS]     The calling process does not have read access to the mes-
+                   sage queue.
+
+     [EFAULT]      _m_s_g_p points to an invalid address.
+
+     [EINTR]       The system call was interrupted by the delivery of a sig-
+                   nal.
+
+     [EAGAIN]      There is no message of the requested type available on the
+                   message queue, and IPC_NOWAIT is set in _m_s_g_f_l_g.
+
+SSEEEE AALLSSOO
+     msgsnd(2),  msgctl(2),  msgget(2)
+
+BBUUGGSS
+     NetBSD does not define the EIDRM error value, which should be used in the
+     case of a removed message queue, nor the ENOMSG value, which should be
+     used when no suitable message is available and IPC_NOWAIT is set.
+
+HHIISSTTOORRYY
+     Message queues appeared in the first release of AT&T Unix System V.
+
+ NetBSD                         August 17, 1995                              2

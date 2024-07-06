@@ -1,0 +1,66 @@
+
+SEMGET(2)                  UNIX Programmer's Manual                  SEMGET(2)
+
+NNAAMMEE
+     sseemmggeett - get semaphore set
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssyyss//iippcc..hh>>
+     ##iinncclluuddee <<ssyyss//sseemm..hh>>
+
+     _i_n_t
+     sseemmggeett(_k_e_y___t _k_e_y, _i_n_t _n_s_e_m_s, _i_n_t _s_e_m_f_l_g)
+
+DDEESSCCRRIIPPTTIIOONN
+     The sseemmggeett() system call returns the semaphore identifier associated with
+     _k_e_y.
+
+     A new set containing _n_s_e_m_s semaphores is created if either _k_e_y is equal
+     to IPC_PRIVATE, or _k_e_y does not have a semaphore set associated with it,
+     and the IPC_CREAT bit is set in _m_s_g_f_l_g_.
+
+     If a new set of semaphores is created, the data structure associated with
+     it (the _s_e_m_i_d___d_s structure, see semctl(2))  is intialized as follows:
+
+     ++oo   _s_e_m___p_e_r_m_._c_u_i_d and _s_e_m___p_e_r_m_._u_i_d are set to the effective uid of the
+         calling process.
+
+     ++oo   _s_e_m___p_e_r_m_._g_i_d and _s_e_m___p_e_r_m_._c_g_i_d are set to the effective gid of the
+         calling process.
+
+     ++oo   _s_e_m___p_e_r_m_._m_o_d_e is set to the lower 9 bits of _m_s_g_f_l_g.
+
+     ++oo   _s_e_m___n_s_e_m_s is set to the value of _n_s_e_m_s
+
+     ++oo   _s_e_m___c_t_i_m_e is set to the current time
+
+     ++oo   _s_e_m___o_t_i_m_e is set to 0
+
+RREETTUURRNN VVAALLUUEESS
+     sseemmggeett() returns a non-negative semaphore identifier if successful. Oth-
+     erwise, -1 is returned and _e_r_r_n_o is set to reflect the error.
+
+EERRRROORRSS
+     [EACCESS]     The caller has no permission to access a semaphore set al-
+                   ready associated with _k_e_y_.
+
+     [EEXIST]      Both IPC_CREAT and IPC_EXCL are set in _m_s_g_f_l_g, and a
+                   semaphore set is already associated with _k_e_y.
+
+     [EINVAL]      _n_s_e_m_s is less than 0 or greater than the system limit for
+                   the number in a semaphore set.
+
+                   A semaphore set associated with _k_e_y exists, but has fewer
+                   semaphores than the number specified in _n_s_e_m_s.
+
+     [ENOSPC]      A new set of semaphores could not be created because the
+                   system limit for the number of semaphores or the number of
+                   semaphore sets has been reached.
+
+     [ENOENT]      IPC_CREAT was not set in _m_s_g_f_l_g and no semaphore set asso-
+                   ciated with _k_e_y was found.
+
+SSEEEE AALLSSOO
+     semop(2) semctl(2)
+

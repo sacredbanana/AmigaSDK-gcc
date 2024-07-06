@@ -1,0 +1,123 @@
+
+RESOLV.CONF(5)             UNIX Programmer's Manual             RESOLV.CONF(5)
+
+NNAAMMEE
+     rreessoollvv..ccoonnff - resolver configuration file
+
+DDEESSCCRRIIPPTTIIOONN
+     The rreessoollvv..ccoonnff file specifies how the resolver(3) routines in the C li-
+     brary (which provide access to the Internet Domain Name System) should
+     operate.  The resolver configuration file contains information that is
+     read by the resolver routines the first time they are invoked by a pro-
+     cess.  The file is designed to be human readable and contains a list of
+     keywords with values that provide various types of resolver information.
+
+     On a normally configured system this file should not be necessary.  The
+     only name server to be queried will be on the local machine, the domain
+     name is determined from the host name, and the domain search path is con-
+     structed from the domain name.
+
+     The different configuration options are:
+
+     nnaammeesseerrvveerr  Internet address (in dot notation) of a name server that the
+                 resolver should query.  Up to MAXNS (currently 3) name
+                 servers may be listed, one per keyword.  If there are multi-
+                 ple servers, the resolver library queries them in the order
+                 listed.  If no nnaammeesseerrvveerr entries are present, the default is
+                 to use the name server on the local machine.  (The algorithm
+                 used is to try a name server, and if the query times out, try
+                 the next, until out of name servers, then repeat trying all
+                 the name servers until a maximum number of retries are made).
+
+     ddoommaaiinn      Local domain name.  Most queries for names within this domain
+                 can use short names relative to the local domain.  If no
+                 ddoommaaiinn entry is present, the domain is determined from the
+                 local host name returned by gethostname(2);  the domain part
+                 is taken to be everything after the first `.'.  Finally, if
+                 the host name does not contain a domain part, the root domain
+                 is assumed.
+
+     llooookkuupp      This keyword is used by the library routines gethostbyname(3)
+                 and gethostbyaddr(3).  It specifies which databases should be
+                 searched, and the order to do so.  The legal space-separated
+                 values are
+
+                 bbiinndd  use the Domain Name server by querying the named(8)
+
+                 ffiillee  search for entries in //eettcc//hhoossttss
+
+                 yypp    talk to the YP system if ypbind(8) is running
+
+                 If the llooookkuupp keyword is not used in the system's _r_e_s_o_l_v_._c_o_n_f
+                 file then the assumed order is bbiinndd ffiillee. Furthermore, if the
+                 system's _r_e_s_o_l_v_._c_o_n_f file does not exist, then the only
+                 database used is ffiillee.
+
+     sseeaarrcchh      Search list for host-name lookup.  The search list is normal-
+                 ly determined from the local domain name; by default, it be-
+                 gins with the local domain name, then successive parent do-
+                 mains that have at least two components in their names.  This
+                 may be changed by listing the desired domain search path fol-
+                 lowing the sseeaarrcchh keyword with spaces or tabs separating the
+                 names.  Most resolver queries will be attempted using each
+                 component of the search path in turn until a match is found.
+                 Note that this process may be slow and will generate a lot of
+                 network traffic if the servers for the listed domains are not
+                 local, and that queries will time out if no server is avail-
+                 able for one of the domains.
+
+                 The search list is currently limited to six domains with a
+                 total of 256 characters.
+
+     ssoorrttlliisstt    Sortlist allows addresses returned by gethostbyname to be
+                 sorted.  A sortlist is specified by IP address netmask pairs.
+                 The netmask is optional and defaults to the natural netmask
+                 of the net.  The IP address and optional network pairs are
+                 seperated by slashes.  Up to 10 pairs may be specified, ie.
+
+                 ssoorrttlliisstt 113300..115555..116600..00//225555..225555..224400..00 113300..115555..00..00
+
+     ooppttiioonnss     Options allows certain internal resolver variables to be mod-
+                 ified.  The syntax is:
+
+                 ooppttiioonnss ooppttiioonn ......
+
+                 where option is one of the following:
+
+                 ddeebbuugg    sets RES_DEBUG in _res.options.
+
+                 nnddoottss::nn  sets a threshold for the number of dots which must
+                          appear in a name given to res_query (see
+                          resolver(3))  before an initial absolute query will
+                          be made.  The default for n is 1, meaning that if
+                          there are any dots in a name, the name will be tried
+                          first as an absolute name before any search list el-
+                          ements are appended to it.
+
+     The ddoommaaiinn and sseeaarrcchh keywords are mutually exclusive.  If more than one
+     instance of these keywords is present, the last instance will override.
+
+     The sseeaarrcchh keyword of a system's _r_e_s_o_l_v_._c_o_n_f file can be overridden on a
+     per-process basis by setting the environment variable LOCALDOMAIN to a
+     space-separated list of search domains.
+
+     The ooppttiioonnss keyword of a system's _r_e_s_o_l_v_._c_o_n_f file can be amended on a
+     per-process basis by setting the environment variable RES_OPTIONS to a
+     space-separated list of resolver options as explained above.
+
+     The keyword and value must appear on a single line, and the keyword (e.g.
+     nnaammeesseerrvveerr) must start the line.  The value follows the keyword, separat-
+     ed by white space.
+
+FFIILLEESS
+     /etc/resolv.conf  The file rreessoollvv..ccoonnff resides in _/_e_t_c.
+
+SSEEEE AALLSSOO
+     gethostbyname(3),  resolver(3),  hostname(7),  named(8)
+
+     _N_a_m_e _S_e_r_v_e_r _O_p_e_r_a_t_i_o_n_s _G_u_i_d_e _f_o_r _B_I_N_D.
+
+HHIISSTTOORRYY
+     The rreessoollvv..ccoonnff file format appeared in 4.3BSD.
+
+4th Berkeley Distribution        May 10, 1991                                2

@@ -1,0 +1,132 @@
+
+
+
+IXRUN(1)                                                 IXRUN(1)
+
+
+NNAAMMEE
+       ixrun - run AmigaOS scripts from within /bin/sh
+
+SSYYNNOOPPSSIISS
+       iixxrruunn [ --qq | --qqvv | --nn | --nnvv ] filename [ arguments... ]
+
+DDEESSCCRRIIPPTTIIOONN
+       _I_x_r_u_n  makes  it  possible  to  run  AmigaOS  scripts from
+       /bin/sh or from other Unix programs.   The  _i_x_e_m_u_l_._l_i_b_r_a_r_y
+       uses the first line of a file to find out to which program
+       it should feed the file.  Normally this  is  _/_b_i_n_/_s_h,  but
+       you  can  use  any program you want. Shell scripts usually
+       start with ##!!//bbiinn//sshh.  Unfortunately, AmigaOS scripts  use
+       a semi-colon to start a comment, not the ##-sign.  However,
+       the _i_x_e_m_u_l_._l_i_b_r_a_r_y also accepts ;;!!.  So one  would  expect
+       that  starting  a script with ;;!!//cc//eexxeeccuuttee would work. But
+       it doesn't. First of all, _c_:_e_x_e_c_u_t_e does some weird things
+       that  prevent  us  from using this possibility.  Secondly,
+       AmigaOS won't recognize the ..kkeeyy sequence unless it is  at
+       the  beginning  of  the script. To work around this second
+       problem, the _i_x_e_m_u_l_._l_i_b_r_a_r_y skips the first  line  of  the
+       script  if  it starts with ..kkeeyy.  So you should put the ;;!!
+       sequence at the second line  instead.  If  you  _d_o_n_'_t  use
+       ..kkeeyy,  then  you should put the ;;!!  sequence at the begin-
+       ning of the script as usual.
+
+       To work around the first problem I wrote  _i_x_r_u_n,  a  small
+       utility  to  replace  _c_:_e_x_e_c_u_t_e.   Just  start  an AmigaOS
+       script with ;;!!//bbiinn//iixxrruunn (possibly preceeded by  the  ..kkeeyy
+       line)  and  you  can now run it from within _/_b_i_n_/_s_h or any
+       other Unix program.
+
+OOPPTTIIOONNSS
+       --nn     Don't put quotes around the arguments.
+
+       --qq     Put quotes around every argument that you  pass  to
+              your  script.  This is the default.  _i_x_r_u_n builds a
+              command line which starts with the filename of  the
+              script  (the  ffiilleennaammee  argument)  followed  by the
+              other arguments passed to _i_x_r_u_n.  This command line
+              is  executed  by  calling  the _d_o_s_._l_i_b_r_a_r_y function
+              _E_x_e_c_u_t_e.  That is, iixxrruunn ssccrriipptt ""HHeelllloo wwoorrlldd""  will
+              execute  ssccrriipptt ""HHeelllloo wwoorrlldd"", as one would expect.
+              But iixxrruunn --nn  ssccrriipptt  ""HHeelllloo  wwoorrlldd""  will  execute
+              ssccrriipptt  HHeelllloo  wwoorrlldd.  That is, the single argument
+              HHeelllloo wwoorrlldd has been split into two. So take  care.
+
+       --qqvv    Debugging:  show  the  command  line that should be
+              executed if the option --qq was used,  without  actu-
+              ally executing it.
+
+       --nnvv    Debugging:  show  the  command  line that should be
+              executed if the option --nn was used,  without  actu-
+              ally executing it.
+
+
+
+                                                                1
+
+
+
+
+
+IXRUN(1)                                                 IXRUN(1)
+
+
+AAUUTTHHOORR
+       Hans Verkuil (_h_a_n_s_@_w_y_s_t_._h_o_b_b_y_._n_l)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                2
+
+

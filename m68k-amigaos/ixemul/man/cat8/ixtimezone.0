@@ -1,0 +1,198 @@
+
+
+
+IXTIMEZONE(8)                                       IXTIMEZONE(8)
+
+
+NNAAMMEE
+       ixtimezone - allows Unix timezone-handling to be used with
+       ixemul.library
+
+SSYYNNOOPPSSIISS
+       iixxttiimmeezzoonnee option
+
+DDEESSCCRRIIPPTTIIOONN
+       _I_x_t_i_m_e_z_o_n_e uses the TTZZ environment variable  to  determine
+       the  offset  in seconds between Universal Coordinated Time
+       (aka Greenwich Mean Time) and  the  local  timezone.  This
+       offset  is  stored  in a field in the ixemul library base.
+       The offset is also written  to  the  environment  variable
+       IIXXGGMMTTOOFFFFSSEETT.   The _i_x_e_m_u_l_._l_i_b_r_a_r_y is now able to correctly
+       determine the local time and GMT.
+
+       The TTZZ environment variable should contain the name of one
+       of  the files in the //eettcc//zzoonneeiinnffoo directory. For example,
+       I live in the Netherlands, so my TTZZ is set to  EEuurrooppee//AAmmss--
+       tteerrddaamm.   The  TTZZ  environment variable _m_u_s_t be set before
+       using _i_x_t_i_m_e_z_o_n_e, otherwise _i_x_t_i_m_e_z_o_n_e wouldn't know  what
+       the  local  timezone is, and therefore it wouldn't be able
+       to compute the offset from GMT.
+
+       You should put  _i_x_t_i_m_e_z_o_n_e  in  your  ssttaarrttuupp--sseeqquueennccee  to
+       ensure  that  it  is called every time you start your com-
+       puter. After _i_x_t_i_m_e_z_o_n_e has been executed, you can set  TTZZ
+       to  whatever value you want. For example, to see what time
+       it is in Japan, set TTZZ to JJaappaann and type _i_x_t_i_m_e_z_o_n_e _-_t_e_s_t.
+       But  don't  use any other option, as the other options set
+       the GMT offset based on the current  TTZZ  value,  which  is
+       JJaappaann!
+
+       Note  that  you  need  to  call this tool at least twice a
+       year, when Daylight Saving Time comes in effect  and  when
+       it ends.
+
+OOPPTTIIOONNSS
+       --tteesstt  Print   the   local  time  and  GMT  (according  to
+              _i_x_e_m_u_l_._l_i_b_r_a_r_y) to standard output.   Use  this  to
+              test  the  current settings. It doesn't affect any-
+              thing else.
+
+       --ggeett--ooffffsseett
+              Calculate the difference between local time and GMT
+              in  seconds.  The resulting offset is stored in the
+              library base of _i_x_e_m_u_l_._l_i_b_r_a_r_y and is also  written
+              to the global environment variable IIXXGGMMTTOOFFFFSSEETT.
+
+              If  the  IIXXGGMMTTOOFFFFSSEETT  environment  variable  didn't
+              exist or the offset stored in the original environ-
+              ment  variable  differed from the new offset (which
+              happens when Daylight Saving Time starts or  ends),
+              then  a  copy  of  IIXXGGMMTTOOFFFFSSEETT  is  written  to the
+
+
+
+                                                                1
+
+
+
+
+
+IXTIMEZONE(8)                                       IXTIMEZONE(8)
+
+
+              EENNVVAARRCC:: directory.
+
+              Since _i_x_e_m_u_l_._l_i_b_r_a_r_y reads the IIXXGGMMTTOOFFFFSSEETT environ-
+              ment  variable just after it is loaded into memory,
+              it is sufficient to use _i_x_t_i_m_e_z_o_n_e only  when  Day-
+              light  Saving  Time  starts  or  ends. Provided, of
+              course, that the contents of the EENNVVAARRCC::  directory
+              is  copied to EENNVV:: before _i_x_e_m_u_l_._l_i_b_r_a_r_y is loaded.
+
+       --cchheecckk--ddsstt
+              This option does the same as  --ggeett--ooffffsseett,  but  it
+              also detects if Daylight Saving Time has started or
+              ended. If so, it automatically sets the Amiga clock
+              to  the  correct  time.  So  you  no longer need to
+              change the time manually twice a year.
+
+       --ppaattcchh--rreessoouurrccee
+              This option does the same as  --ggeett--ooffffsseett,  but  it
+              also  patches the _b_a_t_t_c_l_o_c_k_._r_e_s_o_u_r_c_e.  This is most
+              useful if you also run the Unix operating system on
+              your  Amiga  (NetBSD  or  Linux, for example). Unix
+              requires that the clock is set  to  Greenwich  Mean
+              Time,  while  the  Amiga requires that the clock is
+              set   to    local    time.    By    patching    the
+              _b_a_t_t_c_l_o_c_k_._r_e_s_o_u_r_c_e  one  can  set  the Amiga clock,
+              which is managed by the _b_a_t_t_c_l_o_c_k_._r_e_s_o_u_r_c_e, to  GMT
+              time.  The  patch  ensures  that whenever the Amiga
+              wants to obtain the time, the GMT time is converted
+              into  local  time. There is also no longer any need
+              to change the Amiga clock when Daylight Saving Time
+              starts  or  ends, since the battery clock is set to
+              GMT.
+
+              _i_x_t_i_m_e_z_o_n_e  detects  if  you  try  to   patch   the
+              _b_a_t_t_c_l_o_c_k_._r_e_s_o_u_r_c_e  a  second  time. It won't patch
+              the resource again, but it will check if  the  cur-
+              rent GMT offset is still the same as when the patch
+              was originally installed. If it  has  changed,  the
+              _b_a_t_t_c_l_o_c_k_._r_e_s_o_u_r_c_e offset will also be changed.
+
+       --rreemmoovvee--ppaattcchh
+              Removes  the _b_a_t_t_c_l_o_c_k_._r_e_s_o_u_r_c_e patch. It checks if
+              the patch was really installed before removing  it.
+              This option doesn't do anything else.
+
+FFIILLEE
+       /etc/zoneinfo  standard directory used for created files
+
+HHIISSTTOORRYY
+       The original idea for the --ppaattcchh--rreessoouurrccee option came from
+       the  _u_n_i_x_c_l_o_c_k  utility  written  by  Geert  Uytterhoeven.
+       _u_n_i_x_c_l_o_c_k is available on Aminet.
+
+
+
+
+
+                                                                2
+
+
+
+
+
+IXTIMEZONE(8)                                       IXTIMEZONE(8)
+
+
+SSEEEE AALLSSOO
+       The  time functions, the timezone databases and the _z_i_c(8)
+       utility for compiling the timezone files in the //eettcc//zzoonnee--
+       iinnffoo directory are available from _e_l_s_i_e_._n_c_i_._n_i_h_._g_o_v in the
+       //ppuubb directory.
+
+AAUUTTHHOORR
+       Hans Verkuil (_h_a_n_s_@_w_y_s_t_._h_o_b_b_y_._n_l)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                3
+
+

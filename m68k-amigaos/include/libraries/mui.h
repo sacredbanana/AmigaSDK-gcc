@@ -153,7 +153,7 @@ extern "C" {
 ***************************************************************************/
 
 #define MUIMASTER_NAME    "muimaster.library"
-#define MUIMASTER_VMIN    19
+#define MUIMASTER_VMIN    20
 #define MUIMASTER_VLATEST 20
 
 /*

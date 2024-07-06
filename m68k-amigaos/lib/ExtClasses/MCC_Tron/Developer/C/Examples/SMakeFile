@@ -1,0 +1,27 @@
+# Generates Tron demo
+# (c) 1996 kmel, Klaus Melchior
+
+REVDIR    = rev/
+
+LINKERLIBS  = lib:debug.lib lib:sc.lib lib:amiga.lib
+LINKERFLAGS = SC SD BATCH NOICONS 
+CFLAGS      = StringMerge NoStackCheck NoStackExt UnsignedChars \
+		CommentNest ErrorRexx NoMultipleIncludes \
+		StructureEquivalence NoIcons GenProtoParameters \
+		Ignore=147 MultipleCharacterConstants STREQ noOPTIMIZE \
+		MemorySize=Huge IDLen=64
+
+PRGS = Tron-Demo
+
+all: $(PRGS)
+
+clean:
+	@echo "*e[32mClean up...*e[0m"
+	@delete $(PRGS) *.o
+
+
+Tron-Demo: tron-demo.c
+	@echo "*e[32mMaking new application $@*e[0m"
+	@sc $(CFLAGS) $*.c OBJNAME *.o
+	@slink to Tron-Demo from lib:c.o $*.o lib $(LINKERLIBS) $(LINKERFLAGS)
+

@@ -18,7 +18,6 @@ SECTIONS
     *(.gnu.linkonce.t.*)
     *(.gnu.linkonce.r.*)
     *(.gcc_except_table*)
-    CONSTRUCTORS
     *(SORT_BY_NAME(.list___EH_FRAME*))
     *(SORT_BY_NAME(.list_*))
     *(.end_of_lists)
@@ -30,12 +29,13 @@ SECTIONS
   .data :
   {
     __sdata = .;
+    *(.data)
+    *(SORT_BY_NAME(.data.*))
+    CONSTRUCTORS
     *(SORT_BY_NAME(.dlist___EH_FRAME_OBJECT*))
     *(SORT_BY_NAME(.dlist_*))
     *(.end_of_dlists)
     *(.data.__EH_FRAME_OBJECT__*)
-    *(.data)
-    *(.data.*)
     *(.gnu.linkonce.d.*)
     ___a4_init = 0x7ffe;
     __edata = .;
@@ -59,5 +59,26 @@ SECTIONS
   .bsschip :
   {
     *(.bsschip)
+  }
+  .dwarf :
+  {
+    __debug_frame_start = .;
+    *(.debug_frame)
+    __debug_info_start = .;
+    *(.debug_info)
+    __debug_abbrev_start = .;
+    *(.debug_abbrev)
+      __debug_loclists_start = .;
+    *(.debug_loclists)
+    __debug_aranges_start = .;
+    *(.debug_aranges)
+    __debug_rgnlists_start = .;
+    *(.debug_rnglists)
+    __debug_line_start = .;
+    *(.debug_line)
+    __debug_str_start = .;
+    *(.debug_str)
+    __debug_line_str_start = .;
+    *(.debug_line_str)
   }
 }

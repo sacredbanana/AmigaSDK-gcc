@@ -1,0 +1,198 @@
+
+
+
+NEWCTIME(3)                                           NEWCTIME(3)
+
+
+NNAAMMEE
+       asctime, ctime, difftime, gmtime, localtime, mktime - con-
+       vert date and time to ASCII
+
+SSYYNNOOPPSSIISS
+       eexxtteerrnn cchhaarr **ttzznnaammee[[22]];;
+
+       vvooiidd ttzzsseett(())
+
+       ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+
+       cchhaarr **ccttiimmee((cclloocckk))
+       ccoonnsstt ttiimmee__tt **cclloocckk;;
+
+       ddoouubbllee ddiiffffttiimmee((ttiimmee11,, ttiimmee00))
+       ttiimmee__tt ttiimmee11;;
+       ttiimmee__tt ttiimmee00;;
+
+       ##iinncclluuddee <<ttiimmee..hh>>
+
+       cchhaarr **aassccttiimmee((ttmm))
+       ccoonnsstt ssttrruucctt ttmm **ttmm;;
+
+       ssttrruucctt ttmm **llooccaallttiimmee((cclloocckk))
+       ccoonnsstt ttiimmee__tt **cclloocckk;;
+
+       ssttrruucctt ttmm **ggmmttiimmee((cclloocckk))
+       ccoonnsstt ttiimmee__tt **cclloocckk;;
+
+       ttiimmee__tt mmkkttiimmee((ttmm))
+       ssttrruucctt ttmm **ttmm;;
+
+       cccc ...... --llzz
+
+DDEESSCCRRIIPPTTIIOONN
+       _C_t_i_m_e converts a long integer, pointed to by _c_l_o_c_k, repre-
+       senting the time in seconds since 00:00:00 UTC, January 1,
+       1970, and returns a pointer to a  26-character  string  of
+       the form
+                      Thu Nov 24 18:22:48 1986\n\0
+       All the fields have constant width.
+
+       _L_o_c_a_l_t_i_m_e and _g_m_t_i_m_e return pointers to ``tm'' structures,
+       described below.  _L_o_c_a_l_t_i_m_e corrects for the time zone and
+       any time zone adjustments (such as Daylight Saving Time in
+       the U.S.A.).   After  filling  in  the  ``tm''  structure,
+       _l_o_c_a_l_t_i_m_e  sets  the  ttmm__iissddsstt'th  element  of ttzznnaammee to a
+       pointer to an ASCII string that's the time zone  abbrevia-
+       tion to be used with _l_o_c_a_l_t_i_m_e's return value.
+
+       _G_m_t_i_m_e converts to Coordinated Universal Time.
+
+       _A_s_c_t_i_m_e converts a time value contained in a ``tm'' struc-
+       ture to a 26-character  string,  as  shown  in  the  above
+
+
+
+                                                                1
+
+
+
+
+
+NEWCTIME(3)                                           NEWCTIME(3)
+
+
+       example, and returns a pointer to the string.
+
+       _M_k_t_i_m_e  converts  the broken-down time, expressed as local
+       time, in the structure pointed to by _t_m  into  a  calendar
+       time  value  with  the same encoding as that of the values
+       returned by the _t_i_m_e function.  The original values of the
+       ttmm__wwddaayy  and  ttmm__yyddaayy  components  of  the  structure  are
+       ignored, and the original values of the  other  components
+       are not restricted to their normal ranges.  (A positive or
+       zero value for ttmm__iissddsstt causes _m_k_t_i_m_e to presume initially
+       that summer time (for example, Daylight Saving Time in the
+       U.S.A.)  respectively, is or is  not  in  effect  for  the
+       specified  time.  A negative value for ttmm__iissddsstt causes the
+       _m_k_t_i_m_e function to attempt to divine whether  summer  time
+       is  in effect for the specified time.)  On successful com-
+       pletion, the values of the ttmm__wwddaayy and ttmm__yyddaayy  components
+       of the structure are set appropriately, and the other com-
+       ponents are set to represent the specified calendar  time,
+       but  with  their values forced to their normal ranges; the
+       final value of ttmm__mmddaayy is not set until ttmm__mmoonn and ttmm__yyeeaarr
+       are  determined.   _M_k_t_i_m_e  returns  the specified calendar
+       time; If the  calendar  time  cannot  be  represented,  it
+       returns --11.
+
+       _D_i_f_f_t_i_m_e  returns  the  difference  between  two  calendar
+       times, (_t_i_m_e_1 - _t_i_m_e_0), expressed in seconds.
+
+       Declarations of all the functions and externals,  and  the
+       ``tm''  structure,  are  in the <<ttiimmee..hh>> header file.  The
+       structure (of  type)  ssttrruucctt  ttmm  includes  the  following
+       fields:
+
+                   int tm_sec;      /* seconds (0 - 60) */
+                   int tm_min;      /* minutes (0 - 59) */
+                   int tm_hour;     /* hours (0 - 23) */
+                   int tm_mday;     /* day of month (1 - 31) */
+                   int tm_mon;      /* month of year (0 - 11) */
+                   int tm_year;     /* year - 1900 */
+                   int tm_wday;     /* day of week (Sunday = 0) */
+                   int tm_yday;     /* day of year (0 - 365) */
+                   int tm_isdst;    /* is summer time in effect? */
+                   char *tm_zone;   /* abbreviation of timezone name */
+                   long tm_gmtoff;  /* offset from UTC in seconds */
+
+       The _t_m___z_o_n_e and _t_m___g_m_t_o_f_f fields exist, and are filled in,
+       only if arrangements to do so were made when  the  library
+       containing these functions was created.  There is no guar-
+       antee that these fields will continue  to  exist  in  this
+       form in future releases of this code.
+
+       _T_m___i_s_d_s_t is non-zero if summer time is in effect.
+
+       _T_m___g_m_t_o_f_f  is  the  offset (in seconds) of the time repre-
+       sented from UTC, with positive values indicating  east  of
+
+
+
+                                                                2
+
+
+
+
+
+NEWCTIME(3)                                           NEWCTIME(3)
+
+
+       the Prime Meridian.
+
+FFIILLEESS
+       /usr/local/etc/zoneinfo             time  zone information
+       directory
+       /usr/local/etc/zoneinfo/localtime   local time zone file
+       /usr/local/etc/zoneinfo/posixrules  used with  POSIX-style
+       TZ's
+       /usr/local/etc/zoneinfo/GMT         for UTC leap seconds
+
+       If //uussrr//llooccaall//eettcc//zzoonneeiinnffoo//GGMMTT is absent, UTC leap seconds
+       are loaded from //uussrr//llooccaall//eettcc//zzoonneeiinnffoo//ppoossiixxrruulleess.
+
+SSEEEE AALLSSOO
+       getenv(3), newstrftime(3), newtzset(3), time(2), tzfile(5)
+
+NNOOTTEESS
+       The  return values point to static data; the data is over-
+       written by each call.  The ttmm__zzoonnee  field  of  a  returned
+       ssttrruucctt  ttmm  points  to a static array of characters, which
+       will also be overwritten at the next call (and by calls to
+       _t_z_s_e_t).
+
+       Avoid  using  out-of-range values with _m_k_t_i_m_e when setting
+       up lunch with promptness sticklers in Riyadh.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                3
+
+
