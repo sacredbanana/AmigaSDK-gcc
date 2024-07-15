@@ -57,6 +57,8 @@ __stdargs void swab(const void *, void *, ssize_t);
 __stdargs int stricmp(const char *, const char *);
 __stdargs int strnicmp(const char *, const char *, size_t);
 
+__stdargs char *concat(const char *, ...);
+
 __stdargs char *strerror_r(int errnum, char *buf, size_t buflen);
 #endif 
 

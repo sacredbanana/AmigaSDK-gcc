@@ -1,6 +1,10 @@
 #ifndef _HEADERS_DIRENT_H
 #define _HEADERS_DIRENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct dirent {
   union {
     unsigned long  d_fileno;
@@ -56,5 +60,9 @@ __stdargs DIR *opendir(const char *dirname);
 __stdargs struct dirent *readdir(DIR *dirp);
 __stdargs void rewinddir(DIR *dirp);
 __stdargs int closedir(DIR *dirp);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _HEADERS_DIRENT_H */
