@@ -1,0 +1,157 @@
+/****** openssl3.library/---Overview--- ***************************************
+*
+*   NAME
+*
+*        openssl3.library -- MorphOS shared OpenSSL library
+*
+*   DESCRIPTION
+*
+*        openssl3.library provides the OpenSSL library functionality as a
+*        system-wide, shared library. Using the library reduces the size of
+*        the application binary and reduces the run-time memory footprint.
+*        Addidionally, the shared library can be easily upgraded to
+*        incorporate security and functionality fixes.
+*
+*        The library differs from typical shared library in that it doesn't
+*        provide a traditional LVO function entries. Instead the library
+*        functions are called via function stubs provided at linking time.
+*        libcrypto_shared.a and libssl_shared.a contain these stub functions
+*        and constructor / destructor to open and close the shared library as
+*        needed. In normal applications there is no need to manually open
+*        the library or adjust the code in any way.
+*
+*        This library is only intended for libnix, that is for code compiled
+*        with -noixemul.
+*
+*   SUB-PROCESSES / THREADING
+*
+*        Sub-processes of the same application should not open the library
+*        separately. The main process must keep the library open for as long
+*        as the sub-processes are using the library base. All types of
+*        threads (CreateNewProc(), GCC threads, libpthread, OBThread erc) are
+*        supported.
+*
+*        Opening the library again in a sub-process would lead to undesired
+*        behaviour: the subproces would then get a new application context
+*        and would not share configuration with the parent process.
+*
+*   USING
+*
+*        Compile your code normally, using the SDK provided openssl headers.
+*        For linking specify: -lssl_shared -lcrypto_shared
+*
+*   SOCKETS
+*
+*        The library opens bsdsocket.library internally and uses it when
+*        needed. The application may of course open bsdsocket.library itself
+*        too, if needed, and pass sockets descriptors to library functions as
+*        needed.
+*
+*   FILEHANDLES
+*
+*        Passing standard I/O file streams (FILE *) works as expected. You can
+*        use BIO_set_fp(), BIO_get_fp() and BIO_new_fp() or any other function
+*        that accepts FILE *, just like with any other platform. BIO_s_fd is
+*        also fully functional.
+*
+*        If dos.library BPTR file handles need to be used, this can be done
+*        via BIO_meth_new function. For details refer to:
+*        https://www.openssl.org/docs/manmaster/man3/BIO_meth_new.html
+*
+*   SPECIAL USE CASES
+*
+*        1. Using openssl3.library without a startup code
+*
+*        Using openssl3.library without the standard startup code is possible.
+*        Declare 'struct Library *OpenSSL3Base;' and open and close the
+*        library as needed. Note that each library open gives you a unique
+*        library base. This base refers to single application context, so you
+*        likely only should open the library once at startup and close it
+*        before application termination.
+*
+*        2. Using openssl3.library in a shared library/device/class
+*
+*        Using openssl3.library in such case is possible, but requires care.
+*        Here are some considerations:
+*         - You *MUST NOT* open the library from your LIB_Init and close it
+*           at LIB_expunge. This will not work correctly.
+*         - Opening / closing the library in your LIB_Open / LIB_Close will
+*           likely not work well. It's highly recommended to use a worker
+*           process instead.
+*         - You must CloseLibrary the library base you get from OpenLibrary.
+*           Opening the library multiple times gives a new base each time
+*           so your code must be careful to maintain the returned library
+*           base in re-entrant manner. The safest bet is to use a worker
+*           process that opens the library once and closes it when
+*           terminating. This worker can launch new child processes that use
+*           the same library base.
+*         - If your code must be fully re-entrant and cannot use a single
+*           global OpenSSL3Base, you can link the code against -lssl_sharedext
+*           -lcrypto_sharedext *and* provide a _fetch_OpenSSL3Base function
+*           that returns the relevant library base. This code be implemented
+*           for example as:
+*
+*           struct OpenSSL3Lib
+*           {
+*               struct Library LibNode;
+*               UWORD pad;
+*               void *r13ctx;
+*           };
+*
+*           struct OpenSSL3Lib *_fetch_OpenSSL3Base(void)
+*           {
+*               ABOX_DEFTASKSYSBASE;
+*
+*               /* Just an example; do whatever is needed to get the base */
+*               struct OpenSSL3Lib *OpenSSL3Base = FindTask(NULL)->tc_UserData;
+*
+*               /* Fetch the application context and return it in r13 */
+*               __asm volatile ("mr 13,%0" :: "r" (OpenSSL3Base->r13ctx) :
+*                               "r13", "memory");
+*               return OpenSSL3Base;
+*           }
+*
+*         - Depending on your implementation it might not be sensible to
+*           load the global configuration. If you do not wish to load it,
+*           use: OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL) and
+*           OPENSSL_init_ssl(OPENSSL_INIT_NO_LOAD_CONFIG, NULL).
+*
+*   FUTURE
+*
+*        The library API/ABI will remain stable. If new functions are added,
+*        or their ABI changes, new functions will be added to the library and
+*        the library version is bumped. If existing functions are removed they
+*        will be changed to either implement a compatible functionality, or
+*        if infeasible, return an error.
+*
+*        If at some point in the future upstream openssl library introduces
+*        sweeping API/ABI changes, a new library with a different name will
+*        be provided.
+*
+*        In case a library with a new name is introduced, the old versions
+*        of the library will still be provided as well. This ensures that
+*        existing applications will continue to function.
+*
+*   HISTORY
+*
+*        1.0    OpenSSL 3.0.1, included with MorphOS 3.16
+*        2.0    OpenSSL 3.0.2, included with MorphOS 3.17, hotfix for 
+*               CVE-2022-0778, see:
+*               https://www.openssl.org/news/secadv/20220315.txt
+*        3.0    OpenSSL 3.0.3, hotfix for CVE-2022-1343, CVE-2022-1434 and 
+*               CVE-2022-1473, see:
+*               https://www.openssl.org/news/secadv/20220503.txt
+*        4.0    OpenSSL 3.0.7, hotfix for CVE-2022-3786 and CVE-2022-3602,
+*               see: https://www.openssl.org/news/secadv/20221101.txt
+*        5.0    OpenSSL 3.0.8, hotfix for CVE-2023-0286, CVE-2022-4304, 
+*               CVE-2022-4203, CVE-2023-0215, CVE-2022-4450, CVE-2023-0216,
+*               CVE-2023-0217 and CVE-2023-0401, see:
+*               https://www.openssl.org/news/secadv/20230207.txt
+*        6.0    OpenSSL 3.1.0, included with MorphOS 3.18
+*
+*   NOTES
+*
+*        This library is not related to AmiSSL, nor is it ABI compatible
+*        with it.
+*
+******************************************************************************/

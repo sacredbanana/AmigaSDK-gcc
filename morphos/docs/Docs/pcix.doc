@@ -1,0 +1,335 @@
+TABLE OF CONTENTS
+
+pcix.library/PCIXAttemptBoard
+pcix.library/PCIXCreateIntObjectTagList
+pcix.library/PCIXDMAGetPhysical
+pcix.library/PCIXDeleteIntObject
+pcix.library/PCIXFindBoardTagList
+pcix.library/PCIXGetBoardAttr
+pcix.library/PCIXObtainBoard
+pcix.library/PCIXReleaseBoard
+pcix.library/PCIXSetBoardAttr
+pcix.library/PCIXAttemptBoard
+
+   NAME
+    PCIXAttemptBoard - test and obtain boardobject
+
+   SYNOPSIS
+    Success=PCIXAttemptBoard(BoardObject)
+    D0                      A0
+
+    ULONG   PCIXAttemptBoard(void*);
+
+
+   FUNCTION
+    This function tries to obtain a board exclusive.
+    Every driver must do this before it can use the
+    hw.
+    The difference to PCIXObtainBoard is that it returns
+    with a failure if it couldn't obtain it.
+
+   INPUTS
+    BoardObject - a valid BoardObject
+
+pcix.library/PCIXCreateIntObjectTagList
+
+   NAME
+    PCIXCreateIntObjectTagList - remove intobject
+
+   SYNOPSIS
+    IntObject PCIXCreateIntObject(BoardObject,Code,Data,MyTags)
+                                 A0          A1   A2   A3
+
+    void    *PCIXCreateIntObjectTagList(void*,void*,void*,struct TagItem*);
+
+
+   FUNCTION
+    This function creates an IntObject and adds it to
+    the board's interrupt chain.
+
+
+   INPUTS
+    BoardObject - the next BoardObject that matches the
+                  given parameters or NULL for no more matches.
+
+    Code        - Interrupt Code. You can define the code type with
+                  a tag. Useful for MorphOS.
+
+    Data        - Interrupt Data
+
+    MyTags      - Tag Stream to define additional parameters
+
+    o PCIXINTTAG_PRI, LONG
+      to define the local interrupt priority of the handler.
+
+    o PCIXINTTAG_MACHINE, ULONG
+      to define the handler's code type and calling convention.
+
+      MACHINE_M68k - 68k Mode, Default.
+                     A1 = Data
+                     A6 = SysBase
+
+      MACHINE_PPC  - PPC Mode (Only useful under MorphOS)
+                     Arg1 = Data
+                     Arg2 = SysBase
+
+   RESULTS
+    IntObject - the IntObject handle or NULL if the operation
+                fails.
+
+pcix.library/PCIXDMAGetPhysical
+
+   NAME
+    PCIXDMAGetPhysical - Get a physical address for DMA use from
+                           a given virtual address
+
+   SYNOPSIS
+    PCIXDMAGetPhysical( BoardObject, address)
+                A0       A1
+
+    void    *PCIXDMAGetPhysical(void*,void *);
+
+   FUNCTION
+
+   INPUTS
+    BoardObject - a valid BoardObject
+       address - a virtual address
+
+   SEE ALSO
+
+   BUGS
+
+pcix.library/PCIXDeleteIntObject
+
+   NAME
+    PCIXDeleteIntObject - remove intobject
+
+   SYNOPSIS
+    PCIXDeleteIntObject(IntObject)
+                       A0
+
+    void    PCIXDeleteIntObject(void*);
+
+
+   FUNCTION
+    This function removes the intobject from the
+    int server chain and if it's the last completely
+    disables the int server
+
+   INPUTS
+    IntObject - a valid IntObject
+
+pcix.library/PCIXFindBoardTagList
+
+   NAME
+    PCIXFindBoardTagList - find a matching board entry
+    PCIXFindBoardTags - Varargs stub for PCIXFindBoardTaglist
+
+   SYNOPSIS
+    BoardObject = PCIXFindBoardTagList( OldBoardObject, MyTags)
+    D0                                 A0              A1
+
+    void*   PCIXFindBoardTagList(void*,struct TagItem*);
+
+    void*   PCIXFindBoardTags(void*,...);
+
+   FUNCTION
+    This function searches the list of existing Boards
+    structures in the system for the one that matches
+    the specified search attributes like Bus, Class,
+    Vendor and Device fields.
+
+    If the OldBoardObject is NULL the search is from the
+    start of the bus list.  If it is not null then
+    it searches from the board entry AFTER OldBoardObject.
+
+    There are specific wildcard ID codes defined for each
+    of the ID parameters.
+
+   INPUTS
+    OldBoardObject - a valid BoardObject, or NULL to start
+                     from the beginning of the bus list.
+    MyTags         - the tag attributes to specify the search
+                     filter attribtes.
+   RESULTS
+    BoardObject - the next BoardObject that matches the
+                  given parameters or NULL for no more matches.
+
+   EXAMPLES
+    // to find all BoardObjects of the proper type
+    void *BoardObject = NULL;
+    struct TagItem MyTags[1];
+
+    MyTags[0].ti_Tag = TAG_END;
+    while (BoardObject = PCIXFindBoardTagList(BoardObject,
+                                             MyTags))
+       {
+      // do something with the returned BoardObject
+      // like PCIXGetBoardAttr()
+    }
+
+   SEE ALSO
+
+   BUGS
+
+pcix.library/PCIXGetBoardAttr
+
+   NAME
+    PCIXGetBoardAttr - get informations about a board
+
+   SYNOPSIS
+    Info = PCIXGetBoardAttr( BoardObject, Attr)
+    D0                      A0           D0
+
+    ULONG   PCIXGetBoardAttr(void*,ULONG);
+
+   FUNCTION
+    This routine returns informations about the
+    board object dependent on the requested attribute
+
+   INPUTS
+    BoardObject - a valid BoardObject
+    Attr        - valid attributes listed below
+
+     o PCIXTAG_BUS (Read)
+       get the bus number where your board is located.
+
+     o PCIXTAG_BUSNAME (Read)
+       get the bus name where your board is located.
+
+     o PCIXTAG_IOBASE (Read)
+       get the IO Base or NULL. Useful to access non dynamic
+       ISA io addresses like serial, parallel, keyboard are
+       using. The size is always 1K when it exists.
+
+     o PCIXTAG_SLOT (Read)
+       get the slot number where your board is located.
+
+     o PCIXTAG_FUNCTION (Read)
+       get the function number of your boardobject.
+       A function number > 0 means that it's a multi
+       function board with more than 1 configheader.
+       There are also boards which aren't declared as
+       multifunction but with hidden configheaders.
+       Hidden configheaders's addressbases ARE NOT MAPPED
+       into the addressspace.
+       The Voodoo5 is such a board and you can search
+       for such configs with the PCIXFINDTAG_SHOWHIDDEN
+       tag for PCIFindBoardTagList()
+
+     o PCIXTAG_OWNER (Read)
+       get the owner task of the board.
+       Everybody which wants to use a board must use
+       PCIObtainBoard/PCIAttemptBoard.
+
+     o PCIXTAG_BASEADDRESS0 (Read)
+     o PCIXTAG_BASEADDRESS1 (Read)
+     o PCIXTAG_BASEADDRESS2 (Read)
+     o PCIXTAG_BASEADDRESS3 (Read)
+     o PCIXTAG_BASEADDRESS4 (Read)
+     o PCIXTAG_BASEADDRESS5 (Read)
+       get the configheader's baseaddress's address entry.
+       This is a virtual address is not guranteed to
+       be equal the physical.
+
+     o PCIXTAG_BASESIZE0 (Read)
+     o PCIXTAG_BASESIZE1 (Read)
+     o PCIXTAG_BASESIZE2 (Read)
+     o PCIXTAG_BASESIZE3 (Read)
+     o PCIXTAG_BASESIZE4 (Read)
+     o PCIXTAG_BASESIZE5 (Read)
+       get the configheader's baseaddress's size entry.
+       A size of 0 means it's not mapped.
+
+     o PCIXTAG_ROMADDRESS (Read)
+       get the board's copied romaddress.
+       This is not the real rom.
+
+     o PCIXTAG_ROMSIZE (Read)
+       get the board's copied romsize.
+
+   RESULTS
+    Information - depending on the requested attribute
+
+   SEE ALSO
+
+   BUGS
+
+pcix.library/PCIXObtainBoard
+
+   NAME
+    PCIXObtainBoard - obtain boardobject
+
+   SYNOPSIS
+    PCIXObtainBoard(BoardObject)
+                   A0
+
+    void    PCIXObtainBoard(void*);
+
+
+   FUNCTION
+    This function tries to obtain a board exclusive.
+    Every driver must do this before it can use the
+    hw.
+    Beware..if somebody else already owns the board
+    this function won't return until the ownership
+    is released.
+
+   INPUTS
+    BoardObject - a valid BoardObject
+
+pcix.library/PCIXReleaseBoard
+
+   NAME
+    PCIXReleaseBoard - release boardobject
+
+   SYNOPSIS
+    PCIXReleaseBoard(BoardObject)
+                    A0
+
+    void    PCIXReleaseBoard(void*);
+
+
+   FUNCTION
+    Release access to board. This function must be
+    called as soon as exclusive access to the hardware
+    is no longer needed. This allows other callers to
+    get access to the hw.
+
+   INPUTS
+    BoardObject - a valid BoardObject
+
+pcix.library/PCIXSetBoardAttr
+
+   NAME
+    PCIXSetBoardAttr - set configheader entries
+
+   SYNOPSIS
+    Status = PCIXSetBoardAttr( BoardObject, Attr, Data)
+    D0                        A0           D0    D1
+
+    ULONG   PCIXSetBoardAttr(void*,ULONG,ULONG);
+
+   FUNCTION
+    This routine sets data into a board's configheader.
+
+   INPUTS
+    BoardObject - a valid BoardObject
+    Attr        - valid attributes listed below
+
+         o PCIXTAG_OWNER
+           Set a reference for a device driver
+           If a non-NULL reference has been set, it can only
+           be reset by setting it to NULL first
+
+    Data        - the Data which should be set.
+
+
+   RESULTS
+    Boolean - TRUE for success.
+
+   SEE ALSO
+
+   BUGS
+
+

@@ -1,0 +1,645 @@
+TABLE OF CONTENTS
+
+btree.library/--background--
+btree.library/CreateTree
+btree.library/DeleteTree
+btree.library/DeleteTreeNode
+btree.library/EnumTreeNodes
+btree.library/FindTreeNodeByData
+btree.library/FindTreeNodeByKey
+btree.library/FlushTree
+btree.library/ForTreeNodes
+btree.library/GetTreeHeight
+btree.library/GetTreeNodeData
+btree.library/GetTreeNodeKey
+btree.library/GetTreeSize
+btree.library/InsertTreeNode
+btree.library/MaxTreeNode
+btree.library/MinTreeNode
+btree.library/PredTreeNode
+btree.library/SetTreeNodeData
+btree.library/SuccTreeNode
+btree.library/--background--
+
+   PURPOSE
+    The btree.library provides transparent binary tree datatype
+    handling to applications.
+
+   OVERVIEW
+    Binary trees are method to keep nodes sorted in a way that it is
+    very fast to add nodes and search for specific node.
+
+    btree.library provides generic binary tree API, without limiting
+    the actual internal implementation. The caller may ask for "default"
+    or specific tree type when creating the tree.
+
+   IMPLEMENTATION
+    Current btree.library implements AVL and Red-Black balanced
+    binary tree routines. The speed is in O(lg n) category.
+
+    All functions and callbacks are sysv (PPC) routines.
+
+btree.library/CreateTree
+
+   NAME
+    CreateTree -- allocate and initialize a binary tree
+
+   SYNOPSIS
+    Tree = CreateTree(Type, argArray)
+    (sysv)
+
+    APTR CreateTree(ULONG, const struct BTArgArray *);
+
+   FUNCTION
+    Create a binary tree. This function must be called before other
+    functions, and the returned Tree must be passed to the other
+    functions.
+
+   INPUTS
+    Type     - Type of the binary tree to create. One of:
+
+               BT_DEFAULT
+                 The best overall generic tree algorithm. This
+                 should be used most of the time.
+
+               BT_AVL_TREE
+                 AVL balanced binary tree. The average and
+                 worst-case insert/search time is O(lg n).
+
+               BT_RED_BLACK_TREE
+                 Red-Black balanced binary tree. The average and
+                 worst-case insert/search time is O(lg n). Insert
+                 is slightly faster than AVL tree, but searching
+                 is slower.
+
+    argArray - struct BTArgArray initialized. The structure has
+               following fields:
+
+         Alloc       - routine to call to allocate memory.
+         Free        - routine to call to free memory allocated by Alloc.
+         Compare     - node compare routine, like qsort.
+         DestroyKey  - routine to call to destroy node's Key. Optional.
+         DestroyData - routine to call to destroy node's Data. Optional.
+         UserData    - userdata passed to functions above. Optional.
+
+   RESULT
+    Tree - a pointer to the newly created empty Tree or NULL.
+
+   EXAMPLES
+
+    APTR MyPool; /* Assumed initialized */
+    APTR MyTree;
+
+    APTR MyAlloc(APTR userdata, ULONG size)
+    {
+        return AllocPooled(MyPool, size);
+    }
+
+    void MyFree(APTR userdata, APTR ptr, ULONG size)
+    {
+        FreePooled(MyPool, ptr, size);
+    }
+
+    LONG MyCompare(APTR userdata, const APTR keya, const APTR keyb)
+    {
+        if (*(LONG*) keya > *(LONG *) keyb) return 1;
+        else if (*(LONG*) keya < *(LONG*) keyb) return -1;
+        return 0;
+    }
+
+    void MyDestroyKey(APTR userdata, APTR key)
+    {
+    }
+
+    void MyDestroyData(APTR userdata, APTR data)
+    {
+    }
+
+    /* ... */
+
+    const struct BTArgArray array =
+    {
+        MyAlloc,
+        MyFree,
+        MyCompare,
+        MyDestroyKey,
+        MyDestroyData,
+        NULL
+    };
+
+    MyTree = CreateTree(BT_DEFAULT, &array);
+    if (MyTree)
+    {
+        /* ... */
+
+        DeleteTree(MyTree);
+    }
+
+   NOTE
+    The argArray is copied into the created Tree, so it doesn't need
+    to stay available while the Tree is in use.
+
+   BUGS
+    DestroyKey and DestroyData can't be NULL prior btree.library 50.5.
+
+   SEE ALSO
+    DeleteTree, libraries/btree.h
+
+btree.library/DeleteTree
+
+   NAME
+    DeleteTree -- delete a binary tree
+
+   SYNOPSIS
+    DeleteTree(Tree)
+    (sysv)
+
+    void DeleteTree(APTR);
+
+   FUNCTION
+    Deallocate a binary tree, deallocating all the nodes.
+
+   INPUTS
+    Tree - tree to delete.
+
+   RESULT
+
+   NOTE
+    argArray DestroyKey and DestroyData callbacks are called for
+    the deleted nodes.
+
+   SEE ALSO
+    CreateTree, libraries/btree.h
+
+btree.library/DeleteTreeNode
+
+   NAME
+    DeleteTreeNode -- delete node from binary tree
+
+   SYNOPSIS
+    DeleteTreeNode(Tree, Node)
+    (sysv)
+
+    void DeleteTreeNode(APTR, APTR);
+
+   FUNCTION
+    Remove and free a node from the binary tree.
+
+   INPUTS
+    Tree - tree to remove the node from.
+
+    Node - pointer to node to remove.
+
+   RESULT
+
+   NOTE
+    argArray DestroyKey and DestroyData callbacks are called for
+    the deleted node.
+
+   SEE ALSO
+    InsertTreeNode, libraries/btree.h
+
+btree.library/EnumTreeNodes
+
+   NAME
+    EnumTreeNodes -- call a function for nodes between lowKey and highKey
+
+   SYNOPSIS
+    NumNodes = EnumTreeNodes(Tree, lowKey, highKey, nodeFunc, userData)
+    (sysv)
+
+    ULONG EnumTreeNodes(const APTR, const APTR, const APTR,
+                        LONG (*)(APTR, const APTR), const APTR);
+
+   FUNCTION
+    Call nodeFunc for all nodes between keys lowKey and highKey or until
+    nodeFunc return FALSE.
+
+   INPUTS
+    Tree - tree to call nodeFunc for.
+
+    nodeFunc - function to call for matching nodes.
+               nodeFunc is called as:
+               LONG nodeFunc(APTR userData, const APTR Node);
+               If nodeFunc return FALSE, no further nodes
+               are enumerated.
+
+    userData - data pointer passed to nodeFunc.
+
+   RESULT
+    NumNodes - number of nodes the nodeFunc got called for.
+
+   NOTE
+    The nodes are called in ascending order.
+
+   SEE ALSO
+    ForTreeNodes, libraries/btree.h
+
+btree.library/FindTreeNodeByData
+
+   NAME
+    FindTreeNodeByData -- find a node by data.
+
+   SYNOPSIS
+    Node = FindTreeNodeByData(Tree, Data)
+    (sysv)
+
+    APTR FindTreeNodeByData(const APTR, const APTR);
+
+   FUNCTION
+    Return pointer to the node with the given data. This routine is
+    very slow, typically O(n^2). Don't call this function without
+    a good justification.
+
+   INPUTS
+    Tree - tree to search a node from.
+
+    Data - data of the node to find.
+
+   RESULT
+    Node - the node with the data, or NULL if no node with such data
+           was found.
+
+   NOTE
+    If multiple nodes have the same data there is no guarantee which
+    of these nodes is actually returned.
+
+   SEE ALSO
+    FindTreeNodeByKey, libraries/btree.h
+
+btree.library/FindTreeNodeByKey
+
+   NAME
+    FindTreeNodeByKey -- find a node by key.
+
+   SYNOPSIS
+    Node = FindTreeNodeByKey(Tree, Key)
+    (sysv)
+
+    APTR FindTreeNodeByKey(const APTR, const APTR);
+
+   FUNCTION
+    Return pointer to the node with the given key. This routine is
+    very fast, typically O(lg n).
+
+   INPUTS
+    Tree - tree to search a node from.
+
+    Key - key of the node to find.
+
+   RESULT
+    Node - the node with the key, or NULL if no node with such key
+           was found.
+
+   NOTE
+    If multiple nodes have the same key there is no guarantee which
+    of these nodes is actually returned.
+
+   SEE ALSO
+    FindTreeNodeByData, libraries/btree.h
+
+btree.library/FlushTree
+
+   NAME
+    FlushTree -- delete all nodes in a binary tree
+
+   SYNOPSIS
+    FlushTree(Tree)
+    (sysv)
+
+    void FlushTree(APTR);
+
+   FUNCTION
+    Deallocate all nodes in a binary tree. The tree is in the
+    empty state like after CreateTree.
+
+   INPUTS
+    Tree - tree to delete nodes from.
+
+   RESULT
+
+   NOTE
+    argArray DestroyKey and DestroyData callbacks are called for
+    the deleted nodes.
+
+   BUGS
+    BT_RED_BLACK_TREE FlushTree was broken before V50.7.
+
+   SEE ALSO
+    DeleteTree, libraries/btree.h
+
+btree.library/ForTreeNodes
+
+   NAME
+    ForTreeNodes -- call a function for all nodes in a tree.
+
+   SYNOPSIS
+    NumNodes = ForTreeNodes(Tree, nodeFunc, userData)
+    (sysv)
+
+    ULONG ForTreeNodes(const APTR, void (*)(APTR, const APTR), APTR);
+
+   FUNCTION
+    Call nodeFunc for all nodes in the tree.
+
+   INPUTS
+    Tree - tree to call nodeFunc for.
+
+    nodeFunc - function to call for each node.
+               nodeFunc is called as:
+               void nodeFunc(APTR userData, const APTR Node);
+
+    userData - data pointer passed to nodeFunc.
+
+   RESULT
+    NumNodes - number of nodes the nodeFunc got called for.
+
+   NOTE
+    The nodes are not called in any partifular order, typically
+    in the fastest possible order for the internal implementation.
+    It is not safe to delete the node or to modify the tree in the
+    nodeFunc. Get/SetTreeNodeData can be called for the node.
+
+   SEE ALSO
+    EnumTreeNodes, libraries/btree.h
+
+btree.library/GetTreeHeight
+
+   NAME
+    GetTreeHeight -- get height of the tree
+
+   SYNOPSIS
+    Height = GetTreeHeight(Tree)
+    (sysv)
+
+    ULONG GetTreeHeight(const APTR);
+
+   FUNCTION
+    Return height of the tree. For example for a tree:
+
+          a
+        /   \
+       b     c
+     /   \
+    d     e
+
+    ...this function would return 3.
+
+   INPUTS
+    Tree - tree to count the height for.
+
+   RESULT
+    Height - height of the tree.
+
+   NOTE
+
+   SEE ALSO
+    GetTreeSize, libraries/btree.h
+
+btree.library/GetTreeNodeData
+
+   NAME
+    GetTreeNodeData -- get data of the node
+
+   SYNOPSIS
+    Data = GetTreeNodeData(Tree, Node)
+    (sysv)
+
+    APTR GetTreeNodeData(const APTR, const APTR);
+
+   FUNCTION
+    Return data of the node.
+
+   INPUTS
+    Tree - tree the node belongs to.
+
+    Node - node to get data of.
+
+   RESULT
+    Data - data of the given node.
+
+   NOTE
+
+   SEE ALSO
+    GetTreeNodeKey, libraries/btree.h
+
+btree.library/GetTreeNodeKey
+
+   NAME
+    GetTreeNodeKey -- get key of the node
+
+   SYNOPSIS
+    Key = GetTreeNodeKey(Tree, Node)
+    (sysv)
+
+    APTR GetTreeNodeKey(const APTR, const APTR);
+
+   FUNCTION
+    Return key of the node.
+
+   INPUTS
+    Tree - tree the node belongs to.
+
+    Node - node to get key of.
+
+   RESULT
+    Key - key of the given node.
+
+   NOTE
+
+   SEE ALSO
+    GetTreeNodeData, libraries/btree.h
+
+btree.library/GetTreeSize
+
+   NAME
+    GetTreeSize -- get total number of nodes in a tree
+
+   SYNOPSIS
+    NumNodes = GetTreeSize(Tree)
+    (sysv)
+
+    ULONG GetTreeSize(const APTR);
+
+   FUNCTION
+    Return total number of nodes in the tree.
+
+   INPUTS
+    Tree - tree to count the nodes from.
+
+   RESULT
+    NumNodes - total number of nodes.
+
+   NOTE
+
+   SEE ALSO
+    GetTreeHeight, libraries/btree.h
+
+btree.library/InsertTreeNode
+
+   NAME
+    InsertTreeNode -- insert key/data pair to binary tree
+
+   SYNOPSIS
+    Node = InsertTreeNode(Tree, Key, Data)
+    (sysv)
+
+    APTR InsertTreeNode(APTR, const APTR, const APTR);
+
+   FUNCTION
+    Insert a node into the binary tree, with key 'Key' and data
+    pointer 'Data'. The tree is sorted by 'Key' using argArray
+    Compare.
+
+   INPUTS
+    Tree - tree to insert node to.
+
+    Key - key of the node.
+
+    Data - data pointer related to key.
+
+   RESULT
+    Node - pointer to newly created node, or NULL.
+
+   NOTE
+
+   SEE ALSO
+    DeleteTreeNode, libraries/btree.h
+
+btree.library/MaxTreeNode
+
+   NAME
+    MaxTreeNode -- get pointer to the node with highest key.
+
+   SYNOPSIS
+    MaxNode = MaxTreeNode(Tree)
+    (sysv)
+
+    APTR MaxTreeNode(const APTR);
+
+   FUNCTION
+    Return pointer to the node with highest key.
+
+   INPUTS
+    Tree - tree to get the highest key node of.
+
+   RESULT
+    MaxNode - the node with the highest key, or NULL if empty tree.
+
+   NOTE
+
+   SEE ALSO
+    MinTreeNode, libraries/btree.h
+
+btree.library/MinTreeNode
+
+   NAME
+    MinTreeNode -- get pointer to the node with lowest key.
+
+   SYNOPSIS
+    MinNode = MinTreeNode(Tree)
+    (sysv)
+
+    APTR MinTreeNode(const APTR);
+
+   FUNCTION
+    Return pointer to the node with lowest key.
+
+   INPUTS
+    Tree - tree to get the lowest key node of.
+
+   RESULT
+    MinNode - the node with the lowest key, or NULL if empty tree.
+
+   NOTE
+
+   SEE ALSO
+    MaxTreeNode, libraries/btree.h
+
+btree.library/PredTreeNode
+
+   NAME
+    PredTreeNode -- get pointer to previous node
+
+   SYNOPSIS
+    PredNode = PredTreeNode(Tree, Node)
+    (sysv)
+
+    APTR PredTreeNode(const APTR, const APTR);
+
+   FUNCTION
+    Return pointer to previous node.
+
+   INPUTS
+    Tree - tree the node belongs to.
+
+    Node - node to get predecessor of.
+
+   RESULT
+    PredNode - previous node pointer or NULL if no more nodes.
+
+   NOTE
+
+   SEE ALSO
+    SuccTreeNode, libraries/btree.h
+
+btree.library/SetTreeNodeData
+
+   NAME
+    SetTreeNodeData -- set data of the node (V50.7)
+
+   SYNOPSIS
+    OldData = SetTreeNodeData(Tree, Node, NewData)
+    (sysv)
+
+    APTR GetTreeNodeData(const APTR, APTR, const APTR);
+
+   FUNCTION
+    Set new data for the node, return old data.
+
+   INPUTS
+    Tree - tree the node belongs to.
+
+    Node - node to set data of.
+
+    NewData - new data for the given node.
+
+   RESULT
+    OldData - previous data of the given node.
+
+   NOTE
+    There is no SetTreeNodeKey, for obvious reasons.
+    This function didn't exist before V50.7. You MUST check
+    for version & revision before using this function.
+
+   SEE ALSO
+    GetTreeNodeData, libraries/btree.h
+
+btree.library/SuccTreeNode
+
+   NAME
+    SuccTreeNode -- get pointer to next node
+
+   SYNOPSIS
+    SuccNode = SuccTreeNode(Tree, Node)
+    (sysv)
+
+    APTR SuccTreeNode(const APTR, const APTR);
+
+   FUNCTION
+    Return pointer to next node.
+
+   INPUTS
+    Tree - tree the node belongs to.
+
+    Node - node to get successor of.
+
+   RESULT
+    SuccNode - next node pointer or NULL if no more nodes.
+
+   NOTE
+
+   SEE ALSO
+    PredTreeNode, libraries/btree.h
+
+

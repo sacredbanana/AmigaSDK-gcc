@@ -1,0 +1,78 @@
+TABLE OF CONTENTS
+
+tiff.encoder/--background--
+tiff.encoder/MMM_Pull
+tiff.encoder/OM_DISPOSE
+tiff.encoder/OM_NEW
+tiff.encoder/--background--
+
+ DESCRIPTION
+   The class converts Reggae common video formats into TIFF stream.
+   On input port it accepts Reggae video format:
+   - MMF_VIDEO_ABGR32, MMF_VIDEO_RGB24, MMF_VIDEO_GRAY8, MMFC_VIDEO_GRAY8
+
+   Video data may be converted to following formats:
+   - MMF_VIDEO_TIFF.
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.1  (12.03.2013)
+   - Initial release
+    51.2  (03.08.2014)
+   - Saving DPI metadata if available
+   51.3  (07.02.2018)
+   - Fixed memory handling
+
+tiff.encoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Converts block of PCM video data (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, buffer, bytes);
+
+ FUNCTION
+   Gets video data in one of Reggae base formats from its input. Converts
+   it, then stores in a buffer specified.
+
+ INPUTS
+   buffer - buffer to store data. It must be aligned for AltiVec
+     (preferrably allocated with MediaAllocVec()).
+   bytes - number of bytes requested on output. It will be rounded down to
+     nearest pixel boundary.
+
+tiff.encoder/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes tiff.encoder object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Frees processing buffer, disposes object.
+
+tiff.encoder/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new tiff.encoder object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "tiff.encoder", ...);
+
+ FUNCTION
+   Creates a new object with default settings. The default input format is
+   MMF_VIDEO_ABGR32. The default output format is MMF_VIDEO_TIFF. Usually
+   input format is later set when object's input is connected to the data
+   source. Output format is either set when object's output is connected to
+   data receiver, or set explicitly by application.
+
+ RESULT
+   Object pointer or NULL when construction fails. MMA_ErrorCode may be used
+   to get reason of failure. The only reason for fail may be out of memory.
+
+

@@ -1,0 +1,313 @@
+TABLE OF CONTENTS
+
+magicbeacon.library/--overview--
+magicbeacon.library/MagicBeacon_ApplicationRegisterTagList()
+magicbeacon.library/MagicBeacon_ApplicationUnregister()
+magicbeacon.library/MagicBeacon_BeaconDispose()
+magicbeacon.library/MagicBeacon_BeaconObtain()
+magicbeacon.library/MagicBeacon_BeaconSendTagList()
+magicbeacon.library/MagicBeacon_GetAttr()
+magicbeacon.library/MagicBeacon_GetAttrsTagList()
+magicbeacon.library/--overview--
+
+   OVERVIEW
+
+   magicbeacon.library implements an application backend for sending
+   notifications and retrieving their potential results.
+
+   A notification is send along with a so called notification string.
+   The notification string is like an e-mail header. In this case
+   the senders address and the topic.
+
+   Example: "Wayfarer.TransferDone". Along with a message we have a
+   notification. It is really that simple.
+
+   There is a list of predefined MBN_#? notification names and the required
+   payload in form of a standard message. So e.g. MBN_SCREENSHOT should
+   always send the full screen shot path as message.
+
+   Of course you can invent your own MBN_ notification names, but keep in
+   mind that other application may want to use the same name, so choose
+   the notification name wise. Even better if you come to the MorphOS
+   team and ask for a special notification. That way it will be officially
+   part of magic beacon and could even get auto translated and auto
+   generate notification like the ones already available. The information
+   within the magicbeacon.h file provides a simple rule set of what is
+   required to send proper messages.
+
+   Back to the implementation of MagicBeacon into your application:
+
+   First step is to use MagicBeacon_ApplicationRegister() and sign up
+   with your application name. This is also your applications sender name.
+   Step two is sending a beacon using the MagicBeacon_BeaconSend() specify
+   the name of the beacon and a message. And you are done.
+
+   During application shutdown call MagicBeacon_ApplicationUnregister() to
+   free all resources and you are done.
+
+   Of course this simple way does not open the full potential of MagicBEacon
+   as that would require to listen to a potential user response.
+
+   If you provide a exec task signal number, a signal mask or let the
+   library allocate a signal for you during application registering process,
+   you enable the full potential.
+
+   By using exec Wait() along with the signal connected to the library
+   you can call MagicBeacon_BeaconObtain() to get the next finished beacon.
+   Use MagicBeacon_GetAttr#?() functions to gather information on the
+   result and you can react on the users input.
+
+   Once done call MagicBeacon_BeaconDispose() to free related resources
+   and repeat calling MagicBeacon_BeaconObtain() until you get NULL. Now
+   you can return to your application and wait for signals again.
+
+   The entire system is like a GetMsg/ReplyMsg() scenario. I included an
+   example to show and test the library and Magic beacon. Make sure you
+   enabled auto show (default) or auto create in MagicBeacon settings and
+   the bubbles will appear on example execution without any configuration.
+
+   Please note that MagicBeacon_ApplicationUnregister() will wait for any
+   notifications a result was expected from. This delay can vary in length
+   as the user can define the display length for any notification. So if
+   you want to prevent this "little" delay, make sure your applications ui
+   is already gone and this delay is invisible to the user, or handle any
+   missing notifications yourself in a way suitable for the situation.
+
+magicbeacon.library/MagicBeacon_ApplicationRegisterTagList()
+
+ NAME
+   MagicBeacon_ApplicationRegisterTagList -- Register an application so it
+   can send beacons.
+
+ SYNOPSIS
+   APTR MagicBeacon_ApplicationRegisterTagList(struct TagItem *taglist);
+
+   APTR MagicBeacon_ApplicationRegisterTags(IPTR tag1, ...);
+
+ FUNCTION
+   Prepares an application to be able to send beacons into the world.
+
+ INPUTS
+   taglist - list of tags. Following tags are recognized:
+
+     - MAGICBEACON_APPLICATIONNAME - Name of the application and part of the
+       beacon address scheme. Only [a-z], [A-Z], [0-9], "-" and "_" are
+       allowed.
+     - MAGICBEACON_APPLICATIONSIGNALNUMBER  - specifies a task signal
+       number (0-31) the application needs to allocate using AllocSignal().
+       If (-1) is specified a signal will provided internally. In this
+       case use any MagicBeacon_GetAttr#?() function to obtain the signal
+       created by the library. In this case the signal will be freed during
+       unregistering process.
+     - MAGICBEACON_APPLICATIONSIGNALMASK  - specifies a task signal in mask
+       form. Only one bit is allowed to be set in this mask or registering
+       will fail.
+
+ RESULT
+   Handle for any future library interaction.
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_ApplicatonUnregister(), MagicBeacon_GetAttr(),
+   MagicBeacon_GetAttrsTagList()
+
+magicbeacon.library/MagicBeacon_ApplicationUnregister()
+
+ NAME
+   MagicBeacon_ApplicationUnregister -- Unregister an application and free
+   all related resources.
+
+ SYNOPSIS
+   void MagicBeacon_ApplicationUnregister(APTR handle);
+
+ FUNCTION
+   Frees all resources obtained by the library. If there are any beacons in
+   the wild, this function will wait for them to finish. The handle gets
+   invalid immediately and the application is no longer able to send beacons.
+
+ INPUTS
+   handle - previous obtained communication handle.
+
+ RESULT
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_ApplicatonRegisterTagList()
+
+magicbeacon.library/MagicBeacon_BeaconDispose()
+
+ NAME
+   MagicBeacon_BeaconDispose -- Dispose a finished beacon
+
+ SYNOPSIS
+   void MagicBeacon_BeaconDispose( APTR handle, APTR beacon )
+
+ FUNCTION
+   Once an application obtained a beacon using MagicBeacon_BeaconObtain()
+   and finished processing the beacon result it needs to be disposed. There
+   is no other use for it.
+
+ INPUTS
+   handle - previous obtained communication handle.
+   beacon - previous obtained beacon. May be NULL.
+
+ RESULT
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_BeaconObtain()
+
+magicbeacon.library/MagicBeacon_BeaconObtain()
+
+ NAME
+   MagicBeacon_BeaconObtain -- Obtain a finished beacon from MagicBeacon
+   application.
+
+ SYNOPSIS
+   APTR MagicBeacon_BeaconObtain( APTR handle )
+
+ FUNCTION
+   A previous send beacon may has returned with a result caused by user
+   interaction. This functions obtains the first finished beacon from
+   the internal pile and returns it, so the application can, depending on
+   the result, react on it.
+
+   Typical an application would gather userdata, message and result to
+   e.g. open a folder or skip a music track.
+
+ INPUTS
+   handle - previous obtained communication handle.
+
+ RESULT
+   Finished beacon which now can be used to obtain and handle the result.
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_GetAttrsTagList(), MagicBeacon_GetAttr(),
+   MagicBeacon_BeaconDispose()
+
+magicbeacon.library/MagicBeacon_BeaconSendTagList()
+
+ NAME
+   MagicBeacon_BeaconSendTagList -- Send a beacon to the MagicBeacon
+   application.
+
+ SYNOPSIS
+   IPTR MagicBeacon_BeaconSendTagList( APTR handle,
+   struct TagItem *taglist);
+
+   IPTR MagicBeacon_BeaconSendTags( APTR handle, ... );
+
+ FUNCTION
+   Send a beacon to the MagicBeacon application for processing. When
+   sending at least one message with result handling (default) you need
+   to call MagicBeacon_BeaconObtain() to obtain any beacon
+   result and terminate the beacon by using MagicBeacon_BeaconDispose().
+   When MAGICBEACON_WAITFORRESULT, FALSE is used the beacon will be send and
+   disposed automatically, but there is no way of dealing with a potential
+   user interaction.
+
+   Please note that if no signal or signal mask was set during registration
+   no user interaction is possible and the MAGICBEACON_WAITFORRESULT tag
+   will be forced to FALSE even when specified otherwise.
+
+ INPUTS
+   handle - previous obtained communication handle.
+   taglist - list of tags. Following tags are recognized:
+     - MAGICBEACON_NAME          - this argument is required.
+     - MAGICBEACON_MESSAGE       - Notification message in system charset.
+     - MAGICBEACON_MESSAGE_UTF8  - Notification message in utf8 charset.
+     - MAGICBEACON_USERDATA      - application data. MagicBeacon does not
+     touch or use this information.
+     - MAGICBEACON_WAITFORRESULT - Defaults to TRUE. When FALSE is used
+     there won´t be any result processing. The notification just gets
+     pushed out into the world and forgotten.
+
+ RESULT
+   MAGICBEACON_ERROR_#? error code as defined in magicbeacon.h
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_BeaconObtain(), MagicBeacon_BeaconDispose(),
+
+magicbeacon.library/MagicBeacon_GetAttr()
+
+ NAME
+   MagicBeacon_GetAttr -- Obtain a single information on the linked
+   application or beacon.
+
+ SYNOPSIS
+   IPTR MagicBeacon_GetAttr( APTR handle, APTR beacon, IPTR tag );
+
+ FUNCTION
+   Gather information a single on the application or the beacon. The beacon
+   argument is optional. When NULL is provided only MAGICBEACON_APPLICATION#?
+   tags return a result.
+
+ INPUTS
+   handle - previous obtained communication handle.
+   beacon - previous obtained beacon. May be NULL.
+   tag    - tag item to read. Check MagicBeacon_GetAttrsTagList() for
+   details.
+
+ RESULT
+   Tag value of the specific tag.
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_GetAttrsTagList()
+
+magicbeacon.library/MagicBeacon_GetAttrsTagList()
+
+ NAME
+   MagicBeacon_GetAttrsTagList -- Obtain information on the linked
+   application or beacon.
+
+ SYNOPSIS
+   IPTR MagicBeacon_GetAttrsTagList( APTR handle, APTR beacon, struct
+   TagItem *taglist);
+
+   IPTR MagicBeacon_GetAttrsTags(APTR handle, APTR beacon, IPTR tag1, ...);
+
+ FUNCTION
+   Gather information on the application or the beacon. The beacon argument
+   is optional. When NULL is provided only MAGICBEACON_APPLICATION#? tags
+   return a result.
+
+ INPUTS
+   handle - previous obtained communication handle.
+   beacon - previous obtained beacon. May be NULL.
+   taglist - list of tags. Following tags are recognized:
+
+     - MAGICBEACON_APPLICATIONNAME - Name of the application and part of the
+       beacon address scheme. Only [a-z], [A-Z], [0-9], "-" and "_" are
+       allowed.
+     - MAGICBEACON_APPLICATIONSIGNALNUMBER  - returns the task signal
+       number. If you used this tag and -1 as tag value, when registering
+       the application, then use this tag to get the allocated signal.
+     - MAGICBEACON_APPLICATIONSIGNALMASK  - returns the task signal mask.
+       If you used MAGICBEACON_APPLICATIONSIGNALNUMBER set to -1 when
+       registering your application is contains a proper signal mask.
+     - MAGICBEACON_NAME - Returns the beacon name.
+     - MAGICBEACON_MESSAGE - Returns the beacon message in its original
+       form. Same as MAGICBEACON_MESSAGE_UTF8
+     - MAGICBEACON_MESSAGE_UTF8 - Returns the beacon message in its original
+       form. Same as MAGICBEACON_MESSAGE
+     - MAGICBEACON_USERDATA - user data applied when sending beacon.
+     - MAGICBEACON_RESULT - result code. see magicbeacon.h for details.
+
+ RESULT
+   Number of tags filled.
+
+ BUGS
+
+ SEE ALSO
+   MagicBeacon_GetAttr()
+
+

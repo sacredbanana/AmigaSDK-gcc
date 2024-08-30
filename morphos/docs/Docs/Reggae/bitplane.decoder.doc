@@ -1,0 +1,141 @@
+TABLE OF CONTENTS
+
+bitplane.decoder/MMA_Video_BitsPerPixel
+bitplane.decoder/MMA_Video_Height
+bitplane.decoder/MMA_Video_Palette
+bitplane.decoder/MMA_Video_UseAlpha
+bitplane.decoder/MMA_Video_Width
+bitplane.decoder/MMM_Pull
+bitplane.decoder/background
+bitplane.decoder/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [ISGPQ], ULONG
+
+ FUNCTION
+   Number of bitplanes. The default value is 0. It is then overridden in
+   MMM_Setup method by value returned in the previous object (only if
+   MMM_Setup is called when connecting the object input to something). Then
+   it can be overridden by application.
+
+bitplane.decoder/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [ISGPQ], ULONG
+
+ FUNCTION
+   Number of pixel rows in every bitplane. The default value is 0, it is
+   overridden in MMM_Setup method by value returned in the previous object
+   (only if MMM_Setup is called when connecting the object input to
+   something). Then it can be overridden by application.
+
+bitplane.decoder/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [IS.P.], ULONG*
+
+ FUNCTION
+   This is the palette used to "resolve" color numbers after gathering plane
+   bits into color numbers of pixels. It is assumed the palette has at least
+   as many entries as number two raised to the power of
+   MMA_Video_BitsPerPixel. Every entry is ARGB 32-bit color. Note that alpha
+   value is used, so it is possible to apply palette based alpha channel to
+   image data. The default palette is a linear grayscale one from white
+   (background) to black (with no alpha). It may be overridden in MMM_Setup,
+   where the previous object (a demuxer usually) is asked for a palette
+   stored in the image data. Then it can be overridden by an application.
+   Setting this attribute to NULL restores the default grayscale palette.
+
+ NOTES
+   The palette passed is not copied, the palette must stay in memory until
+   the object is disposed, or the attribute is set to another value.
+
+
+bitplane.decoder/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V51) [ISGPQ], BOOL
+
+ FUNCTION
+   Controls usage of alpha channel data provided by demuxer. The default
+   value for this attribute is FALSE. Then, when the object input is
+   connected to a previous object, this previous object (a demuxer usually)
+   is asked for alpha channel data presence. An application can override the
+   attribute value later.
+
+bitplane.decoder/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [ISGPQ], ULONG
+
+ FUNCTION
+   Number of pixels in one row of a bitplane. Note that bitplane row is
+   always padded to the nearest byte boundary. The default value is 0. It is
+   then overridden in MMM_Setup method by value returned in the previous
+   object (only if MMM_Setup is called when connecting the object input to
+   something). Then it can be overridden by application.
+
+bitplane.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Converts bitplane data to a common format. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   The method pulls bitplane data from input and converts them to ARGB32
+   pixels. ARGB32 values are placed in the passed buffer. Note that for more
+   than one bitplane, all bitplanes, except the last one, must be buffered,
+   so for large images this call may need huge amounts of memory. Buffering
+   bitplanes consumes less memory than buffering ARGB32 output however.
+   One-bitplane images are not buffered and very large images can be
+   processed with small amount of memory.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from output, so 1.
+   buffer - destination buffer for common format image data. This buffer
+     must be allocated with MediaAllocMem().
+   length - amount of data to be pulled in bytes. It should be evenly
+     divisible by number of bytes per pixel for the common format (4 for
+     MMFC_VIDEO_ARGB32), if not, it is rounded down, and the rest of
+     bytes are undefined.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+bitplane.decoder/background
+
+ DESCRIPTION
+   The class is designed to convert bitplane (planar) formatted graphics
+   into the common ARGB32 format. The current version handles only one
+   bitplane (two colours) data. The class has two main purposes. The first
+   one is to decode bitplane data found in some formats like PBM or IFF
+   ILBM. In this case image width, height, number of bitplanes and palette
+   are read from a demuxer object. The second purpose is to directly process
+   raw bitplane data (delivered via stream object), in the case image width,
+   height, number of bitplanes and palette are set by application.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_BitsPerPixel   (V51) [ISGPQ], ULONG
+   MMA_Video_Height         (V51) [ISGPQ], ULONG
+   MMA_Video_Palette        (V51) [IS.P.], ULONG*
+   MMA_Video_Width          (V51) [ISGPQ], ULONG
+   MMA_Video_UseAlpha       (V51) [ISGPQ], BOOL
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+

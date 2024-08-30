@@ -1,0 +1,187 @@
+TABLE OF CONTENTS
+
+audiopcm.decoder/--background--
+audiopcm.decoder/MMA_StreamPosFrames
+audiopcm.decoder/MMA_StreamPosTime
+audiopcm.decoder/MMM_Pull
+audiopcm.decoder/MMM_Seek
+audiopcm.decoder/--background--
+
+ DESCRIPTION
+  This class is a Reggae decoder for decoding common PCM audio formats. Its
+  job is sample width reduction/expansion, endianness change or conversion
+  from/to floating point format. All conversions are AltiVec accelerated
+  (available on G4 machines), giving speedups of 120 to 150% for integer
+  formats, 200 to 400% if floating point is involved. An audiopcm.decoder
+  object has one input (port 0) and one output (port 1). The input accepts
+  following formats (all formats are with interleaved channels):
+
+  - MMF_AUDIO_PCM8, 8-bit signed integers,
+  - MMF_AUDIO_PCM8U, 8-bit unsigned integers,
+  - MMF_AUDIO_PCM16BE, 16-bit signed integers, big endian,
+  - MMF_AUDIO_PCM16LE, 16-bit signed integers, little endian,
+  - MMF_AUDIO_PCM16UBE, 16-bit unsigned integers, big endian,
+  - MMF_AUDIO_PCM16ULE, 16-bit unsigned integers, little endian,
+  - MMF_AUDIO_PCM24BE, 24-bit signed integers (packed), big endian,
+  - MMF_AUDIO_PCM24LE, 24-bit signed integers (packed), little endian,
+  - MMF_AUDIO_PCM32BE, 32-bit signed integers, big endian,
+  - MMF_AUDIO_PCM32LE, 32-bit signed integers, little endian,
+  - MMF_AUDIO_PCMF32LE, single precision IEEE floats, normalized to (-1.0,
+    +1.0) range, little endian,
+  - MMF_AUDIO_PCMF32BE, single precision IEEE floats, normalized to (-1.0,
+    +1.0) range, big endian.
+
+  On the output an object can produce following formats:
+
+  - MMFC_AUDIO_INT16, 16-bit signed interegs,
+  - MMFC_AUDIO_INT32, 32-bit signed integers,
+  - MMFC_AUDIO_FLOAT32, 32-bit single precision floats, normalized to (-1.0,
+    +1.0) range.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamPosFrames      (V51) [..G.Q], UQUAD*
+   MMA_StreamPosTime        (V51) [..G.Q], UQUAD*
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.10 (19.10.2015)
+   - Fixed bug in MMM_Seek(), new stream position for MMA_StreamPosFrames/
+     /Time was calculated incorrectly.
+
+   51.9  (24.08.2012)
+   - Fixed error propagation in MMM_Pull(), could make Reggae run into a
+     busy loop if end of pull request exactly matched end of stream.
+
+   51.8  (13.06.2012)
+   - Added support for 16-bit unsigned PCM data (MMF_AUDIO_PCM16UBE and
+     MMF_AUDIO_PCM16ULE), without and with AltiVec acceleration.
+
+   51.7  (22.01.2011)
+   - Uses multimedia.class functions for time <-> frames conversion.
+   - Requires multimedia.class v53.
+   - Source made compatible with GCC 4.
+
+   51.6  (25.06.2010)
+   - Input buffer is allocated in MMM_Setup() now. Its size depends on
+     input bytes per sample, to accomodate the fact, that most classes use
+     power of two sized buffers at output. Input buffer has 32 kB * bytes
+     per sample. It makes stream less fragmented across the pipeline.
+   - New style MMM_Seek(), with MMM_PreSeek() and MMM_PostSeek(). Now
+     MMM_Seek() accepts time/frames seek and converts it to byte seek. Hacky
+     workarounds in some demuxer classes may be removed now.
+
+   51.5  (06.06.2010)
+   - Source has been reformatted, indenting with spaces is gone.
+   - Only types defined in <exec/types.h> are used for vectors.
+   - New style MMM_Pull(), with MMM_PrePull() and MMM_PostPull() calls.
+   - A static, 48 kB input buffer, created in OM_NEW() is used instead of
+     dynamic one allocated at each MMM_Pull() call.
+
+   51.4  (22.02.2007)
+   - Added scalar conversions from MMFC_AUDIO_FLOAT32 to MMFC_AUDIO_INT16
+     and to MMFC_AUDIO_INT32.
+
+audiopcm.decoder/MMA_StreamPosFrames
+
+ NAME
+   MMA_StreamPosFrames -- [GQ], UQUAD*. (V51)
+
+ FUNCTION
+   Returns current absolute stream position in sample frames. It is exactly
+   the number of the whole sample frames pulled from object's output.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+audiopcm.decoder/MMA_StreamPosTime
+
+ NAME
+   MMA_StreamPosTime -- [GQ], UQUAD*. (V51)
+
+ FUNCTION
+   Returns absolute stream time position in microseconds. This time position
+   is strictly based on MMA_Sound_SampleRate, and reflects only the whole
+   sample frames already pulled from the object output. The exact formula
+   is:
+
+   time_pos = whole_frames_pulled / MMA_Sound_SampleRate
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+audiopcm.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- gets audio PCM data from object. (V50)
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   Places required amount of sound common format data (in bytes) in the
+   specified buffer. The method calculates how many bytes it must pull from
+   the previous object, to get required amount of output. Then data are
+   pulled, converted and placed in the buffer. Note that requested number
+   of bytes should be a multiply of sample frame size (for example 8 bytes
+   for stereo sound if MMFC_INT32 is set as output format). If it is not, it
+   will be rounded down to the nearest sample frame boundary, left bytes are
+   undefined.
+
+ INPUTS
+   - port - number of port is always 1 (the output port).
+   - buffer - a memory buffer for pulled data, must be aligned to 16-byte
+     boundary (preferrably allocated with MediaAllocVec()).
+   - length - amount of pulled data in bytes. Will be rounded down to the
+     nearest sample frame boundary.
+
+ RESULT
+   Number of bytes pulled actually. If less than requested, MMA_ErrorCode
+   provides additional information.
+
+ NOTES
+   In some cases specified conversion may be identity. The method detects
+   it and simply passes pull request through, to the object input.
+
+audiopcm.decoder/MMM_Seek
+
+ NAME
+   MMM_Seek -- moves current position in the stream. (V50)
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Seek, LONG port, LONG type, QUAD *position);
+
+ FUNCTION
+   Moves current stream read position to a new point specified in audio
+   frames or microseconds. For time seek, microseconds are first transformed
+   to audio frames using sampling rate queried from the previous object. If
+   microsecond position is between two consecutive frames, it is rounded
+   down to the nearest frame. Seek position in frames is then transformed to
+   byte position in the input stream, using number of channels retrieved
+   from the previous object and bytes per sample value based on the input
+   port format. When the byte position in the input stream is calculated,
+   MMM_Seek is called on the input port of the object and hence forwarded
+   to the previous one.
+
+ INPUTS
+   - port - number of port is always 1 (the output port).
+   - type - type of seek. Allowed types are MMM_SEEK_TIME and
+     MMM_SEEK_FRAMES.
+   - position - absolute position in stream in frames or microseconds. This
+     argument is 64-bit, so it is passed via pointer.
+
+ RESULT
+   TRUE if seek succeeded, FALSE in case of error. Error code may be
+   obtained by getting MMA_ErrorCode attribute from the object.
+
+

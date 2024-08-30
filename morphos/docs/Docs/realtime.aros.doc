@@ -1,0 +1,519 @@
+This document was generated from the AROS APL-Licensed source code. The
+information contained in it might be errorneous or inacurate. When in
+doubt, please verify with another documentation set.
+
+TABLE OF CONTENTS
+
+realtime.library/CreatePlayerA
+realtime.library/DeletePlayer
+realtime.library/ExternalSync
+realtime.library/FindConductor
+realtime.library/GetPlayerAttrsA
+realtime.library/LockRealTime
+realtime.library/NextConductor
+realtime.library/SetConductorState
+realtime.library/SetPlayerAttrsA
+realtime.library/UnlockRealTime
+realtime.library/CreatePlayerA
+
+
+   NAME
+    CreatePlayerA -- 
+
+   SYNOPSIS
+    CreatePlayerA(tagList)
+    struct Player * CreatePlayerA(struct TagItem *);
+
+   FUNCTION
+
+    Create a player.
+
+   INPUTS
+
+    tagList  --  pointer to an array of tags describing the player's
+                 attributes or NULL.
+
+    TAGS
+
+    PLAYER_Name (STRPTR)         --  The name of the player; default is no
+                                     name.
+
+    PLAYER_Hook (struct Hook *)  --  Function to call every time the time
+                                     changes; default is none. The hook is
+                     called with
+
+                     a0 -- address of Hook structure
+                     a1 -- message (see <libraries/realtime.h>)
+                     a2 -- address of Player structure
+
+                     Be aware of that the function is not
+                     necessarily called TICK_FREQ times per
+                     second: this is the upper limit of times
+                     it may be called.
+
+    PLAYER_Priority (BYTE)       --  The priority of the player; default is 0.
+
+    PLAYER_Conductor (STRPTR)    --  The name of the conductor to link the
+                                     player to. If the conductor doesn't exist,
+                     it's created automatically. Passing ~0
+                     creates a private conductor.
+
+    PLAYER_Ready (BOOL)          --  Set / clear the ready flag; default is
+                                     TRUE.
+
+    PLAYER_AlarmTime (LONG)      --  Set player's alarm time; implies setting
+                                     the PLAYERF_ALARMSET flag.
+
+    PLAYER_Alarm (BOOL)          --  Set / clear the PLAYERF_ALARMSET flag;
+                                     default is FALSE.
+
+    PLAYER_AlarmSigTask (struct Task *)
+                                 --  The task to signal when the alarm goes
+                     off; default is no task. If no task is
+                     specified PLAYERF_ALARMSET is turned
+                     off.
+
+    PLAYER_AlarmSigBit (BYTE)    --  Signal bit to use for the alarm or -1
+                                     to disable signalling; default is -1.
+
+    PLAYER_Quiet (BOOL)          --  Specify whether this player should be
+                                     ignored or not; default is FALSE.
+                     Generally only used by external sync
+                     applications.
+
+    PLAYER_UserData (VOID *)     --  Set pointer to user specific data;
+                                     default is NULL.
+
+    PLAYER_ID (UWORD)            --  Set the player's ID; default is 0.
+
+    PLAYER_Conducted (BOOL)      --  Set / clear the PLAYERF_CONDUCTED flag;
+                                     default is FALSE.
+
+    PLAYER_ExtSync (BOOL)        --  If TRUE, this player attempts to become
+                                     the external sync source.
+
+    PLAYER_ErrorCode (LONG *)    --  Optional pointer to a LONG that will
+                                     contain an error code if the function
+                     fails. Possible error values are:
+
+                     RTE_NOMEMORY  --  memory allocation failed
+                     RTE_NOTIMER   --  timer allocation failed
+
+   RESULT
+
+    A pointer to a player structure or NULL if failure. In case of a failure
+    additional information may be retreived from the LONG variable pointed
+    to by PLAYER_ErrorCode if you have specified that tag.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DeletePlayer(), GetPlayerAttrs(), SetPlayerAttrs()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/DeletePlayer
+
+
+   NAME
+    DeletePlayer -- 
+
+   SYNOPSIS
+    DeletePlayer(player)
+    VOID DeletePlayer(struct Player *);
+
+   FUNCTION
+
+    Delete a player. If this was the last player of a specific conductor,
+    this conductor is deleted too.
+
+   INPUTS
+
+    player  --  Player to delete; may be NULL in which case this function
+                does nothing.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CreatePlayerA()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/ExternalSync
+
+
+   NAME
+    ExternalSync -- 
+
+   SYNOPSIS
+    ExternalSync(player, minTime, maxTime)
+    BOOL ExternalSync(struct Player *, LONG, LONG);
+
+   FUNCTION
+
+    Constrain conductor time between 'minTime' and 'maxTime' (however, time
+    can never run backwards). If the specified player isn't the current
+    external synchronizing source, this function does nothing.
+
+   INPUTS
+
+    player   --  The player in question
+    minTime  --  Lower time bound
+    maxTime  --  Upper time bound
+
+   RESULT
+
+    A BOOL specifying if the success of this function; FALSE means that the
+    player was not the external source or that no conductor was found for
+    the player.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    27.7.99  SDuvan  implemented
+
+realtime.library/FindConductor
+
+
+   NAME
+    FindConductor -- 
+
+   SYNOPSIS
+    FindConductor(name)
+    struct Conductor * FindConductor(STRPTR);
+
+   FUNCTION
+
+    Get the conductor with name 'name' or NULL if no conductor exists
+    with that name.
+
+   INPUTS
+
+    name   --  The name of the conductor to find.
+
+   RESULT
+
+    A pointer to the conductor you wanted or NULL if it didn't exist.
+
+   NOTES
+
+    You have to lock the conductors with LockRealTime(RT_CONDUCTORS)
+    before calling this function.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    NextConductor(), LockRealTime(), UnlockRealTime()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/GetPlayerAttrsA
+
+
+   NAME
+    GetPlayerAttrsA -- 
+
+   SYNOPSIS
+    GetPlayerAttrsA(player, tagList)
+    BOOL GetPlayerAttrsA(struct Player*, struct TagItem *);
+
+   FUNCTION
+
+    Query the attributes of a player. For each tagitem ti_Tag specifies the
+    attribute and ti_Data a pointer to the IPTR variable in which you want
+    the value to be stored.
+
+   INPUTS
+
+    player   --  The player the attributes of which to set; may be NULL,
+                 in which case the result is 0.
+    tagList  --  Pointer to an array of tags describing the player's
+                 attributes or NULL.
+
+    TAGS
+
+    See CreatePlayerA().
+
+   RESULT
+
+    The number of items successfully filled in.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CreatePlayer(), SetPlayerAttrs()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/LockRealTime
+
+
+   NAME
+    LockRealTime -- 
+
+   SYNOPSIS
+    LockRealTime(lockType)
+    APTR LockRealTime(ULONG);
+
+   FUNCTION
+
+    Lock a RealTime.library internal semaphore.
+
+   INPUTS
+
+    lockType  --  The type of lock to aquire, see <libraries/realtime.h> for
+                  further information.
+
+   RESULT
+
+    A handle to pass to UnlockRealTime() to unlock the semaphore. If 'lockType'
+    is invalid, NULL is returned.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    UnlockRealTime()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/NextConductor
+
+
+   NAME
+    NextConductor -- 
+
+   SYNOPSIS
+    NextConductor(previousConductor)
+    struct Conductor * NextConductor(struct Conductor *);
+
+   FUNCTION
+
+    Return the next conductor on the conductor list. If 'previousConductor'
+    is NULL, return the first conductor in the list; if not, return the
+    conductor following 'previousConductor'. If 'previousConductor' is the
+    last conductor, this function returns NULL.
+
+   INPUTS
+
+    previousConductor  --  The previous conductor or NULL to get the first
+                           conductor.
+
+   RESULT
+
+    A pointer to the next conductor or NULL if there are no more conductors.
+
+   NOTES
+
+    You have to lock the conductors with LockRealTime(RT_CONDUCTORS)
+    before calling this function.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    FindConductor(), LockRealTime(), UnlockRealTime()
+
+   INTERNALS
+
+    Should private conductors be filtered out?
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/SetConductorState
+
+
+   NAME
+    SetConductorState -- 
+
+   SYNOPSIS
+    SetConductorState(player, state, time)
+    LONG SetConductorState(struct Player *, ULONG, LONG);
+
+   FUNCTION
+
+    Changes the state of the conductor connected to a specified player.
+    The possible states are
+
+    CONDSTATE_STOPPED
+    CONDSTATE_PAUSED
+    CONDSTATE_LOCATE
+    CONDSTATE_RUNNING
+
+    other possible "states" are
+
+    CONDSTATE_METRIC   --  Ask the highest priority conducted node to do a
+                           CONDSTATE_LOCATE
+    CONDSTATE_SHUTTLE  --  Inform the players that the clock value is
+                           changing without the clock running
+
+
+   INPUTS
+
+    player   --  The player in question
+    state    --  The new state of the conductor
+    time     --  Start time offset in realtime.library units
+
+   RESULT
+
+    0 if OK, otherwise an error code. For now, these are RTE_PLAYING and
+    RTE_NOCONDUCTOR.
+
+   NOTES
+
+    Going from CONDSTATE_PAUSED to CONDSTATE_RUNNING does not reset the
+    cdt_ClockTime of the conductor.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    27.7.1999  SDuvan  implemented parts
+    27.1.2001  SDuvan  implemented the rest
+
+realtime.library/SetPlayerAttrsA
+
+
+   NAME
+    SetPlayerAttrsA -- 
+
+   SYNOPSIS
+    SetPlayerAttrsA(player, tagList)
+    BOOL SetPlayerAttrsA(struct Player*, struct TagItem *);
+
+   FUNCTION
+
+    Sets the attributes of a player. An attribute not specified in the array
+    of tags is unchanged after this procedure.
+
+   INPUTS
+
+    player   --  The player the attributes of which to set.
+    tagList  --  Pointer to an array of tags describing the player's
+                 attributes or NULL.
+
+    TAGS
+
+    The same tags as for CreatePlayerA().
+
+   RESULT
+
+    Success/failure indicator. If failure, then, in case the PLAYER_ErrorCode
+    is provided, more information can be obtained via that pointer.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DeletePlayer(), GetPlayerAttrs(), SetPlayerAttrs()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan  implemented
+
+realtime.library/UnlockRealTime
+
+
+   NAME
+    UnlockRealTime -- 
+
+   SYNOPSIS
+    UnlockRealTime(lockHandle)
+    VOID UnlockRealTime(APTR);
+
+   FUNCTION
+
+    Unlock a RealTime.library internal semaphore.
+
+   INPUTS
+
+    lockHandle  --  Handle returned by LockRealTime(); may be NULL.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRealTime()
+
+   INTERNALS
+
+   HISTORY
+
+    26.7.99  SDuvan implemented
+
+

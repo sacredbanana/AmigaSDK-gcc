@@ -1,0 +1,18 @@
+Using C++ in a shared library imposes severe limitations, this skeleton will
+just barely get you started...
+
+First of all you should consider not using a C++ API like demonstrated here,
+but rather just expose a plain C API, as you will discover that you have to do
+tedious things like manually mangle names, as well as having trouble with
+exposed classes (see warnings in os-include/libraries/skeletoncpp.h). Please
+note that various compilers (and versions thereof) also have completely
+different internal handling of this, and your library will end up locked to
+your particular compiler/version.
+
+Then you should be aware that any exception-handling will inherently pull in
+calls to abort() which will not work in a library! For this reason you must
+also provide your own new operator. You might get something working if all
+your function interfaces have try {} blocks, but YMMV.
+
+
+- CISC

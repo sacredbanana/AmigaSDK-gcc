@@ -1,0 +1,123 @@
+TABLE OF CONTENTS
+
+audiopcm.encoder/--background--
+audiopcm.encoder/MMM_Pull
+audiopcm.encoder/OM_DISPOSE
+audiopcm.encoder/OM_NEW
+audiopcm.encoder/--background--
+
+ DESCRIPTION
+   The class converts Reggae common formats into various PCM audio formats.
+   On input port it accepts all three Reggae audio formats:
+
+   - MMFC_AUDIO_INT16, integer, 16-bit, signed.
+   - MMFC_AUDIO_INT32, integer, 32-bit, signed.
+   - MMFC_AUDIO_FLOAT32, floating point, 32-bit, normalized to (-1.0; +1.0].
+
+   Audio data may be converted to following formats:
+
+   - MMF_AUDIO_PCM8, integer, 8-bit, signed.
+   - MMF_AUDIO_PCM8U, integer, 8-bit unsigned.
+   - MMF_AUDIO_PCM16BE, integer, 16-bit, signed, big endian.
+   - MMF_AUDIO_PCM16LE, integer, 16-bit, signed, little endian.
+   - MMF_AUDIO_PCM16UBE, integer, 16-bit, unsigned, big endian.
+   - MMF_AUDIO_PCM16ULE, integer, 16-bit, unsigned, little endian.
+   - MMF_AUDIO_PCM24BE, integer, 24-bit, signed, big endian.
+   - MMF_AUDIO_PCM24LE, integer, 24-bit, signed, little endian.
+   - MMF_AUDIO_PCM24UBE, integer, 24-bit, unsigned, big endian.
+   - MMF_AUDIO_PCM24ULE, integer, 24-bit, unsigned, little endian.
+   - MMF_AUDIO_PCM32BE, integer, 32-bit, signed, big endian.
+   - MMF_AUDIO_PCM32LE, integer, 32-bit, signed, little endian.
+   - MMF_AUDIO_PCM32UBE, integer, 32-bit, unsigned, big endian.
+   - MMF_AUDIO_PCM32ULE, integer, 32-bit, unsigned, little endian.
+
+   When conversion is an identity, requests on output port bypass the object
+   and are directly passed to the input, so data stream is not copied. The
+   class operates on audio samples level, so it ignores number of channels
+   and their order. Data is processed in blocks of 32 kB.
+
+   Conversion from MMFC_AUDIO_FLOAT32 is saturating. It means samples out of
+   (-1.0; + 1.0] range are clipped during conversion.
+
+ NEW ATTRIBUTES
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.6  (05.05.2013)
+   - Added all the scalar conversions to unsigned integer PCM formats.
+
+   51.5  (19.04.2013)
+   - Class attribute MMA_SupportedFormats returns output formats (input
+     formats are simply common one).
+
+   51.4  (03.10.2012)
+   - All conversions from FLOAT32 are optimized in assembler and also have
+     AltiVec versions.
+
+   51.3  (02.10.2012)
+   - All conversions from INT16 and INT32 are optimized in assembler and
+     also have AltiVec versions.
+
+   51.2  (23.09.2012)
+   - Added support for signed 24 and 32-bit formats (both endians).
+
+   51.1  (20.08.2012)
+   - Initial release.
+
+audiopcm.encoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Converts block of PCM audio data (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, buffer, bytes);
+
+ FUNCTION
+   Gets audio data in one of Reggae base formats from its input. Converts
+   it, then stores in a buffer specified.
+
+ INPUTS
+   buffer - buffer to store data. It must be aligned for AltiVec
+     (preferrably allocated with MediaAllocVec()).
+   bytes - number of bytes requested on output. It will be rounded down to
+     nearest audio sample boundary.
+
+audiopcm.encoder/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes audiopcm.encoder object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Frees processing buffer, disposes object.
+
+audiopcm.encoder/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new audiopcm.encoder object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "audiopcm.encoder", ...);
+
+ FUNCTION
+   Creates a new object with default settings. The default input format is
+   MMFC_AUDIO_INT16. The default output format is MMF_AUDIO_PCM16BE. Usually
+   input format is later set when object's input is connected to the data
+   source. Output format is either set when object's output is connected to
+   data receiver, or set explicitly by application.
+
+ NOTES
+   Every object of the class allocates 32 kB of memory for processing
+   buffer.
+
+ RESULT
+   Object pointer or NULL when construction fails. MMA_ErrorCode may be used
+   to get reason of failure. The only reason for fail may be out of memory.
+
+

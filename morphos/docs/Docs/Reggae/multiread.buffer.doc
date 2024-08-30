@@ -1,0 +1,196 @@
+TABLE OF CONTENTS
+
+multiread.buffer/MMA_StreamPosBytes
+multiread.buffer/MMM_Peek
+multiread.buffer/MMM_Pull
+multiread.buffer/MMM_Restore
+multiread.buffer/MMM_Seek
+multiread.buffer/__background__
+multiread.buffer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- [GQ], UQUAD. (V51.4)
+
+ FUNCTION
+   The class returns the current value of read pointer.
+
+ NOTES
+   As every 64-bit attribute it is passed via pointer.
+
+multiread.buffer/MMM_Peek
+
+ NAME
+   MMM_Peek -- reads a data block from a port and buffers it internally.
+   (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Peek, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   The method reads a block of data of given length from a port of specified
+   object starting from current peek pointer position. Data may be read from
+   output ports only. It works similarly to MMM_Pull() except of data are
+   also copied to an internal buffer. Peek pointer is advanced, read pointer
+   is not moved.
+
+ INPUTS
+   port - number of port to peek data from, must be 1 (output port).
+   buffer - address of buffer for peeked data.
+   length - number of bytes to peek.
+
+ RESULT
+   Number of bytes read from port. MMA_ErrorCode contains secondary error
+   information:
+     - MMERR_WRONG_ARGUMENTS - buffer is NULL, or port is not 1.
+
+multiread.buffer/MMM_Pull
+
+ NAME
+   MMM_Pull -- reads stream data, removing them from internal buffers. (V50)
+
+ SYNOPSIS
+   void DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   The method reads a block of data of given length from a port of specified
+   object starting from current read pointer position. As the read pointer
+   advances, all data, that have been previously buffered by the object, are
+   removed from buffers. After read pointer reaches peek pointer, following
+   data are read straight from object input, without buffering.
+
+ INPUTS
+   port - number of port to peek data from, must be 1 (output port).
+   buffer - address of buffer for peeked data.
+   length - number of bytes to peek.
+
+ RESULT
+   Number of bytes read from port. MMA_ErrorCode contains secondary error
+   information.
+
+ SEE ALSO
+   MMM_Peek()
+
+multiread.buffer/MMM_Restore
+
+ NAME
+   MMM_Restore -- moves stream peeking position back, without clearing data
+   buffers. (V50)
+
+ SYNOPSIS
+   void DoMethod(Object *obj, MMM_Restore);
+
+ FUNCTION
+   Moves back stream peek pointer to stream read pointer position without
+   discarding peek buffers. Following MMM_Pull() or MMM_Peek() will fetch
+   data from buffers.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   MMM_Peek()
+
+multiread.buffer/MMM_Seek
+
+ NAME
+   MMM_Seek -- moves stream pointer to a specified position. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Seek, ULONG port, ULONG type, UQUAD
+   *position);
+
+ FUNCTION
+   The method performs seek on the previous object in the pipeline first. If
+   previous object seek is OK, all peek buffers are flushed, then both peek
+   and read pointer are set to the new position. This way following peek or
+   read operation will start at specified stream position. If the previous
+   connected object refuses seek operation for any reason, buffers and
+   pointers are not changed. Error code from the previous object is set for
+   this object as well.
+
+ INPUTS
+   port - number of port to seek, must be 1 (output port).
+   type - seek type.
+   position - a pointer to UQUAD variable containing new position.
+
+ RESULT
+   Number of bytes read from port. MMA_ErrorCode contains secondary error
+   information:
+   - MMERR_WRONG_ARGUMENTS - wrong port, unknown type.
+   - MMERR_NOT_SEEKABLE - the previous object refused seeking, because it is
+     not seekable.
+   - MMERR_END_OF_DATA - the previous object refused seeking, because
+     desired position is after stream end.
+   - MMERR_NOT_IMPLEMENTED - the previous object do not understand specified
+     seek type (for example MMM_SEEK_FRAMES on MMF_STREAM).
+
+multiread.buffer/__background__
+
+ DESCRIPTION
+   The class makes it possible to read the same data from a stream multiple
+   times (it is called peeking data). While this functionality is easy to
+   achieve for backward seekable streams, for sequential access streams data
+   buffering is required. The multiread.buffer performs all needed
+   buffering. The four methods related to peeking feature are MMM_Peek,
+   MMM_Restore, MMM_Pull and MMM_Seek. These methods interacts in the
+   following way:
+   1. The stream of data (output port) has associated two data pointers:
+      read pointer and peek pointer. Both are set to 0 at object creation.
+   2. Read pointer can never be greater than peek pointer.
+   3. Advancing peek pointer copies data to the buffer, advancing read
+      pointer throws read data out of the buffer.
+   4. MMM_Peek advances peek pointer and does not touch read pointer.
+   5. MMM_Pull advances read pointer and may advance peek pointer too, to
+      fulfill rule 2. Some internal buffers may be discarded to fulfill rule
+      3.
+   6. MMM_Restore moves peek pointer back to be equal to read pointer, but
+      data buffers are not discarded, so following MMM_Peek or MMM_Pull will
+      read buffered data again.
+   7. MMM_Seek sets both read and peek pointer to the seek position. All
+      buffered data are flushed.
+
+ NEW ATTRIBUTES
+   MMA_StreamPosBytes                        (V51.4)
+
+ NEW METHODS
+   MMM_Peek(port, buffer, length)            (V50)
+   MMM_Restore(port)                         (V50)
+   MMM_Seek(port, type, position)            (V51)
+
+ HISTORY
+   51.7 (13.01.2011)
+   - Proper error forwarding in MMM_Pull() if returned number of bytes is
+     less than expected.
+   - Proper error forwarding in MMM_Peek() if returned number of bytes is
+     less than expected.
+   - Does not allocate buffer in MMM_Peek() if size of pulled data is 0.
+
+   51.6 (18.06.2009)
+   - Proper support of new MMM_PrePull return values MMM_PREPULL_NOT_DONE
+     and MMM_PREPULL_FAILED. Fixes the bug of recursive self-calls in
+     MMM_Pull.
+   - Requires multimedia.class 52.15.
+
+   51.5 (10.06.2009)
+   - Rewritten MMM_Pull and MMM_Seek to use new multimedia.class helper
+     methods.
+
+   51.4 (26.02.2008)
+   - Implemented OM_GET and MMM_GetPort methods with proper
+     MMA_StreamPosBytes support.
+
+   51.3 (12.12.2005)
+   - MMM_Setup() returns TRUE on success (it always returned 0).
+
+   51.2 (25.04.2005)
+   - Removed some no longer needed debug.
+
+   50.1 (01.03.2005)
+   - Initial release.
+
+

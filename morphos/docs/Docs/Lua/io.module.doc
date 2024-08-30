@@ -1,0 +1,497 @@
+TABLE OF CONTENTS
+
+io.module/background
+io.module/close
+io.module/file:__gc
+io.module/file:__tostring
+io.module/file:flush
+io.module/file:lines
+io.module/file:read
+io.module/file:seek
+io.module/file:setvbuf
+io.module/file:write
+io.module/flush
+io.module/input
+io.module/lines
+io.module/open
+io.module/output
+io.module/read
+io.module/tmpfile
+io.module/type
+io.module/write
+io.module/background
+
+ DESCRIPTION
+   The 'io' module in MorphOS Lua port interfaces to dos.library directly,
+   avoiding any U*ix environment emulation. Following consequences have to
+   be observed:
+
+   - Unix fopen() modes behaviour is preserved. See io.open() documentation
+     for details.
+
+   - There is no translation of u*ixlike file paths. Only proper MorphOS
+     paths are accepted.
+
+   - Secondary error codes are dos.library codes from <dos/dos.h> rather
+     than <errno.h> codes (error codes are described as system dependent in
+     the Lua Reference Manual).
+
+   - Default io.stderr is the same handle as io.stdout.
+
+   - io.popen() is not yet implemented.
+
+   - standard input and output (if used) should be provided by hosting
+     application. LuaX command uses its shell if ran from a shell, or opens
+     a console window if ran from Ambient.
+
+ HISTORY
+   v1.8 (18.10.2014)
+   - Fixed: "0.000000" infinite loop bug in "fstrtod.c".
+
+   v1.7 (29.09.2014)
+   - Fixed: luaL_Buffer structure is no more pushed on stack. It is
+     allocated and freed with the Lua state allocator instead. Fixes
+     possible stack overflows and memory trashes.
+
+   v1.6 (18.09.2014)
+   - Fixed: io.write() calls Flush() after each Write() for interactive
+     streams (consoles).
+
+   v1.5 (05.05.2014)
+   - Fixed: io.open() now fails in "r+" mode if the opened file does not
+     exist.
+
+   v1.4 (28.04.2014)
+   - Fixed: files opened with "r" are not writable. Any write fails with
+     ERROR_WRITE_PROTECTED.
+   - Fixed: files opened with "w" or "a" are not readable. Any read fails
+     with ERROR_READ_PROTECTED.
+   - Fixed: writes to files opened with "a" or "a+" are always at the end
+     of file, regardless of read position when "a+". Works also with
+     consoles, pipes, ports etc., no seeking in this case.
+
+   v1.2 (16.01.2014)
+   - Fixed bug in read_line(), lines without LF at end were read wrongly.
+
+io.module/close
+
+ NAME
+   io.close -- closes a file. (V1)
+
+ SYNOPSIS
+   io.close([file])
+
+ FUNCTION
+   Closes a file opened with open(). If no 'file' is specified, it tries to
+   close the default output.
+
+ INPUTS
+   file - a filehandle returned by io.open().
+
+ RESULT
+   None.
+
+io.module/file:__gc
+
+ NAME
+   file:__gc -- garbage collector entry for files. (V1)
+
+ FUNCTION
+   This function is internally called by the Lua garbage collector when
+   disposing files. It closes the file, deletes it if it was created with
+   io.tmpfile() and frees the userdata.
+
+io.module/file:__tostring
+
+ NAME
+   file:__tostring -- internal file to string conversion function. (V1)
+
+ FUNCTION
+   This function is internally called by the Lua interpreter when a file
+   handle is used in string context. For active files it returns "file x"
+   where 'x' is a BPTR dos.library handle of the file. For closed files it
+   returns "file (closed)". These strings are not localized.
+
+io.module/file:flush
+
+ NAME
+   file:flush -- flushes file output buffers. (V1)
+
+ SYNOPSIS
+   file:flush()
+
+ FUNCTION
+   Flushes all buffers for the 'file', writing buffered data to it.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+io.module/file:lines
+
+ NAME
+   file:lines -- creates a line read iterator for a file. (V1)
+
+ SYNOPSIS
+   for line in file:lines() do [...] end
+
+ FUNCTION
+   Creates an iterator function for reading a 'file' line by line, inside a
+   "for-in" loop. Unlike lines(), the iterator does not close the file
+   after reaching end of it.
+
+   For every loop turn, the next line in 'file' is loaded into 'line'
+   variable. After reaching end of file, 'line' contains 'nil'.
+
+ INPUTS
+   file - a filehandle obtained with open().
+
+ RESULT
+   The iterator function.
+
+ SEE ALSO
+   lines()
+
+io.module/file:read
+
+ NAME
+   file:read -- reads numbers and characters from a file (V1)
+
+ SYNOPSIS
+   data[, ...] = file:read(...)
+
+ FUNCTION
+   Reads a file according to format specifiers. Number of specifiers
+   determines number of return values. A single specifier is a two character
+   string, one of:
+
+     "*n" - makes the function to read a number. For floating point numbers
+       both ordinary and scientific notation are supported. Reading is
+       stopped at the first character, which cannot be interpreted as a part
+       of number, or at EOF. Corresponding return value is a number. If the
+       first character read does not represent a number, 'nil' is returned.
+
+     "*l" - makes the function to read characters to the end of line and
+       return them as a string. End of line character is skipped. If the
+       file is at its end, 'nil' is returned.
+
+     "*a" - makes the function to read characters to the end of file and
+       return them as a string. If the file is at its end, 'nil' is
+       returned.
+
+     number - if the format specifier is a number, the function reads no
+       more than the specified number of bytes and returns them as a string.
+       'Nil' is returned when the file is at its end.
+
+   File:read() may be also called without any arguments. Then the function
+   just reads a line.
+
+ INPUTS
+   file - a filehandle returned by open().
+   ... - multiple strings and numbers specifying format of data.
+
+ RESULT
+   Data read from the file, strings, numbers or 'nil' values.
+
+io.module/file:seek
+
+ NAME
+   file:seek -- moves file pointer. (V1)
+
+ SYNOPSIS
+   position = file:seek([type[, offset]])
+
+ FUNCTION
+   Moves the file data pointer to position specified by 'type' and 'offset'.
+   Returns the resulting position measured from the start of file.
+
+ INPUTS
+   type - is a string and may be one of:
+     "set" - offset is relative to the file start,
+     "cur" - offset is relative to the current position,
+     "end" - offset is relative to the file end.
+     The default value of this parameter is "cur".
+   offset - a number specifying seek offset in bytes. The default value of
+     this parameter is 0.
+
+ RESULT
+   Position after seek measured in bytes from the file start. In case of
+   fail the function returns 'nil' and error string.
+
+ EXAMPLE
+   file:seek() returns the current file position without changing it.
+
+ NOTES
+   Pseudofiles like console input and output or pipes are usually not
+   seekable and file:seek() fails on them.
+
+io.module/file:setvbuf
+
+ NAME
+   file:setvbuf -- controls file buffering options. (V1)
+
+ SYNOPSIS
+   file:setvbuf(mode[, size])
+
+ FUNCTION
+   Changes file buffering mode and optionally buffer size.
+
+ INPUTS
+   mode - controls buffering mode. One of following strings:
+     "no" - turns buffering off,
+     "line" - buffer flushed after every EOL character, after filling it up
+       and after manual flush.
+     "full" - buffer flushed after filling it up or after manual flush.
+   size - buffer size to be used. The default size is set by dos.library.
+
+ RESULT
+   None.
+
+ NOTES
+   This function simply calls SetVBuf().
+
+io.module/file:write
+
+ NAME
+   file:write -- writes data to file. (V1)
+
+ SYNOPSIS
+   success = file:write()
+
+ FUNCTION
+   Writes strings and numbers to a file. Numbers are preformatted with
+   "%.14g" template. This template means either plain or scientific floating
+   point notation, depending on the number. Precision is 14 digits after
+   decimal point. Strings are written directly. Other types have to be
+   converted to string with tostring() or format().
+
+ INPUTS
+   Multiple arguments.
+
+ RESULT
+   Boolean value of success.
+
+io.module/flush
+
+ NAME
+   io.flush -- flushes the default output buffers. (V1)
+
+ SYNOPSIS
+   io.flush()
+
+ FUNCTION
+   Flushes all buffers for the current default output, writing buffered data
+   to it.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+io.module/input
+
+ NAME
+   io.input -- sets or gets default input. (V1)
+
+ SYNOPSIS
+   handle = io.input([file])
+
+ FUNCTION
+   When called without parameter, returns the handle of the default input
+   file. When called with a filehandle (a result of io.open()), sets this
+   file as the default input. When called with a string, the string is
+   taken as a path to file, which is opened in "r" mode and then set as the
+   default input.
+
+ INPUTS
+   file - a filehandle returned by io.open(), or path to a file to be
+     opened.
+
+ RESULT
+   Current default input handle.
+
+io.module/lines
+
+ NAME
+   io.lines -- creates a line read iterator for a file. (V1)
+
+ SYNOPSIS
+   for line in io.lines([file]) do [...] end
+
+ FUNCTION
+   Creates an iterator function for reading a 'file' line by line, inside a
+   "for-in" loop. After the last line the file is automatically closed. If
+   used without parameter, the iterator operates on the default input, and
+   this input is not closed after the last line.
+
+   For every loop turn, the next line in 'file' is loaded into 'line'
+   variable. After reaching end of file, 'line' contains 'nil'.
+
+ INPUTS
+   file - path to file (a string).
+
+ RESULT
+   Iterator function.
+
+ SEE ALSO
+   file:lines()
+
+io.module/open
+
+ NAME
+   io.open -- opens a file. (V1)
+
+ SYNOPSIS
+   handle = io.open(filename[, mode])
+
+ FUNCTION
+   Opens a file for given filename. Note that only MorphOS style paths are
+   supported (Unix ones are not), so "SYS:file" will work, while "/sys/file"
+   will not. Mode may be one of "r", "r+", "w", "w+", "a" or "a+".
+
+   "r" modes require an existing file. "a" modes open an existing file or
+   create a new one if a file does not exist. "w" modes always create a new,
+   empty file, old one is discarded if exists.
+
+   The only mode allowing for shared access to a file is "r". Other modes
+   lock the file exclusively, so it can't be opened again until it is
+   closed.
+
+   "a" modes force write operations to always move the file pointer to the
+   end of file before writing.
+
+   Read and write operations can be applied as follows:
+
+          read    write
+   --------------------
+   "r"     yes      no
+   "r+"    yes     yes
+   "w"      no     yes
+   "w+"    yes     yes
+   "a"      no     yes
+   "a+"    yes     yes
+
+   The call obeys MorphOS file attributes R, W and D. R must be set for
+   reading, W for writing and D for replacing with a new file. Newly created
+   files have RWED attributes set.
+
+ INPUTS
+   filename - path to the file to be opened. All MorphOS rules apply.
+   mode - one of specified modes (passed as a string). The default mode
+   is "r".
+
+ RESULT
+   Filehandle or 'nil' in case of failure.
+
+ NOTES
+   "b" letter used in U*ix systems to indicate binary files is ignored, as
+   MorphOS makes no difference between text files and binary files.
+
+io.module/output
+
+ NAME
+   io.output -- sets or gets the default output. (V1)
+
+ SYNOPSIS
+   handle = io.output([file])
+
+ FUNCTION
+   When called without parameter, returns the handle of the default output
+   file. When called with a filehandle (a result of io.open()), sets this
+   file as the default output. When called with a string, the string is
+   taken as a path to file, which is opened in "w" mode and then set as the
+   default output.
+
+ INPUTS
+   file - a filehandle returned by io.open(), or path to a file to be
+     opened.
+
+ RESULT
+   Current default output handle.
+
+io.module/read
+
+ NAME
+   io.read -- reads numbers and characters from the default input. (V1)
+
+ SYNOPSIS
+   data = io.read(...)
+
+ FUNCTION
+   Preforms file:read() method on the default input file.
+
+ INPUTS
+   Variable type input format specifiers.
+
+ RESULT
+   Data read from the default input (may be a string or a number).
+
+ SEE ALSO
+   file:read()
+
+io.module/tmpfile
+
+ NAME
+   io.tmpfile -- creates a temporary file. (V1)
+
+ SYNOPSIS
+   handle = io.tmpfile()
+
+ FUNCTION
+   Creates a temporary file. The file is created in "T:" directory and its
+   name is ensured to be unique. The file is opened with "w+" access mode
+   and is exclusively locked. It means no other process can open it. The
+   file is automatically deleted after closing (or after disposing the Lua
+   state, if not closed explicitly in the script).
+
+ INPUTS
+   None.
+
+ RESULT
+   A filehandle of temporary file.
+
+io.module/type
+
+ NAME
+   io.type -- checks if an object is a file. (V1)
+
+ SYNOPSIS
+   result = io.type(var)
+
+ FUNCTION
+   Checks if passed variable is a file handle. Returns string "file" if it
+   is a handle to active file, "closed file" if it is a closed file or 'nil'
+   if the parameter is not a file handle at all. Returned strings are not
+   localized.
+
+ INPUTS
+   var - a variable to be checked.
+
+ RESULT
+   String or 'nil'.
+
+io.module/write
+
+ NAME
+   io.write -- writes data to the default output. (V1)
+
+ SYNOPSIS
+   success = io.write(...)
+
+ FUNCTION
+   Writes strings and numbers to the default output. Numbers are
+   preformatted with "%.14g" template. This template means either plain or
+   scientific floating point notation, depending on the number. Precision is
+   14 digits after decimal point. Strings are written directly. Other types
+   have to be converted to string with tostring() or format().
+
+ INPUTS
+   Multiple arguments.
+
+ RESULT
+   Boolean value of success.
+
+

@@ -1,0 +1,425 @@
+@database "MUI/MUI_Boopsi"
+@Node Main "MUI/MUI_Boopsi"
+@toc "SDK:Guide/Includes_&_Autodocs/Main"
+TABLE OF CONTENTS
+
+    @{"Boopsi.mui" Link "Boopsi.mui"}
+    @{"MUIA_Boopsi_Class" Link "MUIA_Boopsi_Class"}
+    @{"MUIA_Boopsi_ClassID" Link "MUIA_Boopsi_ClassID"}
+    @{"MUIA_Boopsi_MaxHeight" Link "MUIA_Boopsi_MaxHeight"}
+    @{"MUIA_Boopsi_MaxWidth" Link "MUIA_Boopsi_MaxWidth"}
+    @{"MUIA_Boopsi_MinHeight" Link "MUIA_Boopsi_MinHeight"}
+    @{"MUIA_Boopsi_MinWidth" Link "MUIA_Boopsi_MinWidth"}
+    @{"MUIA_Boopsi_Object" Link "MUIA_Boopsi_Object"}
+    @{"MUIA_Boopsi_Remember" Link "MUIA_Boopsi_Remember"}
+    @{"MUIA_Boopsi_Smart" Link "MUIA_Boopsi_Smart"}
+    @{"MUIA_Boopsi_TagDrawInfo" Link "MUIA_Boopsi_TagDrawInfo"}
+    @{"MUIA_Boopsi_TagScreen" Link "MUIA_Boopsi_TagScreen"}
+    @{"MUIA_Boopsi_TagWindow" Link "MUIA_Boopsi_TagWindow"}
+@EndNode
+@Node Boopsi.mui "MUI/MUI_Boopsi - Boopsi.mui"
+
+
+	MUI's boopsi class provides an interface to standard,
+	system style boopsi gadgets. Since boopsis gadgetclass
+	misses some important features needed for an automatic
+	layout system like MUI, there are several problems with
+	such an interface. MUI tries to solve these problems
+	with some additional attributes.
+
+	Coming with release 3.x of the amiga operating system are
+	some very nice boopsi gadgets such as "colorwheel.gadget"
+	or "gradientslider.gadget". With MUI's boopsi class, you
+	can use these gadgets just as if they were MUI objects.
+
+	You can talk to a MUIized boopsi object as if it was the
+	boopsi object itself. MUI will pass through all attributes
+	and try to be completely transparent. Additionally, if
+	a boopsi object generates notification events via
+	IDCMP_UPDATE, MUI turns them into MUI notification events.
+	Thus, you can e.g. react on the change of @{"WHEEL_Saturation" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 35}
+	in a MUI colorwheel boopsi gadget as on any other MUI
+	attribute.
+
+	An example program "BoopsiDoor.c" is provided to show
+	how this magic works.
+
+   Note: OS 3.0/3.1 colorwheel.gadget can accidently render itself
+         one pixel too big, overwriting other parts of the window.
+         As a workaround, MUI will subtract one from the width/height
+         before passing it on to a colorwheel boopsi object.
+@EndNode
+@Node MUIA_Boopsi_Class "MUI/MUI_Boopsi - MUIA_Boopsi_Class"
+
+
+    NAME
+	MUIA_Boopsi_Class -- (V4 ) [ISG], struct @{"IClass" Link "SDK:Guide/includes/intuition/classes.h/Main" 30} *, 0x80426999
+
+    FUNCTION
+	Pointer to the (private) class you want to create a boopsi
+	object from. Only useful if you previously generated your
+	own boopsi class with @{"MakeClass" Link "SDK:Guide/intuition.aros.guide/MakeClass"}().
+
+	Of course you may not free the class until you're done
+	with your object.
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_ClassID "MUI/MUI_Boopsi - MUIA_Boopsi_ClassID"
+
+
+    NAME
+	MUIA_Boopsi_ClassID -- (V4 ) [ISG], STRPTR, 0x8042bfa3
+
+    FUNCTION
+	MUIA_Boopsi_ClassID specifies the name for the public
+	Boopsi class you want to create an object of. It will
+	only be used when @{"MUIA_Boopsi_Class" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_Class"} is NULL.
+
+	The public class must be in memory before you can create
+	an instance of it, you will have to open the required class
+	library by hand.
+
+	Note the string given to MUIA_Boopsi_ClassID must remain
+	valid until you're done with the object.
+
+    EXAMPLE
+
+	/* Complete example code can be found in BoopsiDoor.c */
+
+	cwbase = @{"OpenLibrary" Link "SDK:Guide/exec.guide/OpenLibrary"}("gadgets/colorwheel.gadget",0);
+
+	Wheel = @{"BoopsiObject" Link "SDK:Guide/includes/libraries/mui.h/Main" 657},  /* MUI and Boopsi tags mixed */
+	 NeXTFrame,
+	 MUIA_Boopsi_ClassID  , "colorwheel.gadget",
+	 @{"MUIA_Boopsi_MinWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinWidth"} , 30, /* boopsi objects don't know */
+	 @{"MUIA_Boopsi_MinHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinHeight"}, 30, /* their sizes, so we help   */
+ 	 @{"MUIA_Boopsi_Remember" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_Remember"} , @{"WHEEL_Saturation" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 35}, /* keep important values */
+	 @{"MUIA_Boopsi_Remember" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_Remember"} , @{"WHEEL_Hue" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 34},        /* during window resize  */
+	 @{"MUIA_Boopsi_TagScreen" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_TagScreen"}, @{"WHEEL_Screen" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 42}, /* this magic fills in */
+	 @{"WHEEL_Screen" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 42}         , NULL,         /* the screen pointer  */
+	 @{"GA_Left" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 21}     , 0,
+	 @{"GA_Top" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 23}      , 0, /* MUI will automatically     */
+	 @{"GA_Width" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 25}    , 0, /* fill in the correct values */
+	 @{"GA_Height" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 27}   , 0,
+	 @{"ICA_TARGET" Link "SDK:Guide/includes/intuition/icclass.h/Main" 21}  , @{"ICTARGET_IDCMP" Link "SDK:Guide/includes/intuition/icclass.h/Main" 26}, /* needed for notification */
+	 @{"End" Link "SDK:Guide/includes/libraries/mui.h/Main" 689};
+
+	...
+
+	@{"MUI_DisposeObject" Link "SDK:Guide/MUI/MUImaster.guide/MUI_DisposeObject"}(wheel);
+	@{"CloseLibrary" Link "SDK:Guide/exec.guide/CloseLibrary"}(cwbase);
+
+    SEE ALSO
+	@{"MUIA_Boopsi_Class" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_Class"}
+@EndNode
+@Node MUIA_Boopsi_MaxHeight "MUI/MUI_Boopsi - MUIA_Boopsi_MaxHeight"
+
+
+    NAME
+	MUIA_Boopsi_MaxHeight -- (V4 ) [ISG], ULONG, 0x8042757f
+
+    FUNCTION
+	For MUI's automatic layout system, it's required that
+	objects know their minimum and maximums sizes. Since boopsi 
+	gadgets don't support this feature, you will have to help
+	MUI and adjust these values by hand.
+
+	Defaults:
+
+	   @{"MUIA_Boopsi_MinWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinWidth"}  - 1 pixel
+	   @{"MUIA_Boopsi_MinHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinHeight"} - 1 pixel
+	   @{"MUIA_Boopsi_MaxWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MaxWidth"}  - unlimited
+	   MUIA_Boopsi_MaxHeight - unlimited
+
+    EXAMPLE
+	see @{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_MaxWidth "MUI/MUI_Boopsi - MUIA_Boopsi_MaxWidth"
+
+
+    NAME
+	MUIA_Boopsi_MaxWidth -- (V4 ) [ISG], ULONG, 0x8042bcb1
+
+    FUNCTION
+	For MUI's automatic layout system, it's required that
+	objects know their minimum and maximums sizes. Since boopsi 
+	gadgets don't support this feature, you will have to help
+	MUI and adjust these values by hand.
+
+	Defaults:
+
+	   @{"MUIA_Boopsi_MinWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinWidth"}  - 1 pixel
+	   @{"MUIA_Boopsi_MinHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinHeight"} - 1 pixel
+	   MUIA_Boopsi_MaxWidth  - unlimited
+	   @{"MUIA_Boopsi_MaxHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MaxHeight"} - unlimited
+
+    EXAMPLE
+	see @{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_MinHeight "MUI/MUI_Boopsi - MUIA_Boopsi_MinHeight"
+
+
+    NAME
+	MUIA_Boopsi_MinHeight -- (V4 ) [ISG], ULONG, 0x80422c93
+
+    FUNCTION
+	For MUI's automatic layout system, it's required that
+	objects know their minimum and maximums sizes. Since boopsi 
+	gadgets don't support this feature, you will have to help
+	MUI and adjust these values by hand.
+
+	Defaults:
+
+	   @{"MUIA_Boopsi_MinWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinWidth"}  - 1 pixel
+	   MUIA_Boopsi_MinHeight - 1 pixel
+	   @{"MUIA_Boopsi_MaxWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MaxWidth"}  - unlimited
+	   @{"MUIA_Boopsi_MaxHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MaxHeight"} - unlimited
+
+    EXAMPLE
+	see @{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_MinWidth "MUI/MUI_Boopsi - MUIA_Boopsi_MinWidth"
+
+
+    NAME
+	MUIA_Boopsi_MinWidth -- (V4 ) [ISG], ULONG, 0x80428fb2
+
+    FUNCTION
+	For MUI's automatic layout system, it's required that
+	objects know their minimum and maximums sizes. Since boopsi 
+	gadgets don't support this feature, you will have to help
+	MUI and adjust these values by hand.
+
+	Defaults:
+
+	   MUIA_Boopsi_MinWidth  - 1 pixel
+	   @{"MUIA_Boopsi_MinHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MinHeight"} - 1 pixel
+	   @{"MUIA_Boopsi_MaxWidth" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MaxWidth"}  - unlimited
+	   @{"MUIA_Boopsi_MaxHeight" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_MaxHeight"} - unlimited
+
+    EXAMPLE
+	see @{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_Object "MUI/MUI_Boopsi - MUIA_Boopsi_Object"
+
+
+    NAME
+	MUIA_Boopsi_Object -- (V4 ) [..G], @{"Boopsiobject" Link "SDK:Guide/includes/intuition/classusr.h/Main" 22} *, 0x80420178
+
+    FUNCTION
+	No input, just an output since this attribute is
+	only getable. What MUI returns when generating a
+	@{"BoopsiObject" Link "SDK:Guide/includes/libraries/mui.h/Main" 657} is a standard MUI object, not a pointer
+	to the Boopsi gadget itself. In case you really need
+	this Boopsi gadget pointer, you can obtain it by getting
+	MUIA_Boopsi_Object from the MUI object.
+
+	Since MUI passes along every unknown attribute to the 
+	boopsi gadget, there should be no need for this tag anyway.
+
+	Note that the boopsi object pointer is only valid when the
+	window is open!
+
+    SEE ALSO
+	@{"MUIA_Boopsi_Class" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_Class"}, @{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_Remember "MUI/MUI_Boopsi - MUIA_Boopsi_Remember"
+
+
+    NAME
+	MUIA_Boopsi_Remember -- (V4 ) [I..], ULONG, 0x8042f4bd
+
+    FUNCTION
+	Most boopsi objects are kind of silly, they don't support
+	automatic resizing or jumping from screen to screen.
+	Therefor, MUI sometimes needs to dispose and regenerate
+	a boopsi object. This will result in loosing the current
+	state of the object, e.g. saturation and hue values
+	in a colorwheel.
+
+	To solve this problem, you can tell MUI what attributes
+	must be remembered during dispose/regeneration. For a
+	colorwheel, this would e.g. be @{"WHEEL_Saturation" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 35} and @{"WHEEL_Hue" Link "SDK:Guide/includes/gadgets/colorwheel.h/Main" 34}.
+
+	Before disposing the boopsi object, the remember tags are
+	read and stored in a private buffer. After regeneration,
+	the contents of this buffer are passed back to the boopsi
+	again.
+
+	Note that you can define up to five MUIA_Boopsi_Remember tags.
+
+    BUGS
+	The remember procedure will not work when the attributes
+	you want to remember are just pointers to data stored
+	somewhere in the boopsi object.
+
+    EXAMPLE
+	see @{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}
+@EndNode
+@Node MUIA_Boopsi_Smart "MUI/MUI_Boopsi - MUIA_Boopsi_Smart"
+
+
+    NAME
+	MUIA_Boopsi_Smart -- (V9 ) [I..], BOOL, 0x8042b8d7
+
+    FUNCTION
+	Specify TRUE for smart BOOPSI gadgets that allow resizing,
+	e.g. the textfield.class. In this case, MUI will not
+	dispose and recreate the object.
+@EndNode
+@Node MUIA_Boopsi_TagDrawInfo "MUI/MUI_Boopsi - MUIA_Boopsi_TagDrawInfo"
+
+
+    NAME
+	MUIA_Boopsi_TagDrawInfo -- (V4 ) [ISG], ULONG, 0x8042bae7
+
+    FUNCTION
+	Unfortunately, most boopsi gadgets need information on
+	the display environment they will reside in at object
+	creation time. Due to MUI's concept, this information
+	is not available that early.
+
+	To solve this problem, MUI doesn't generate the boopsi
+	object instantly, creation is delayed until the window
+	containing the gadget is opened.
+
+	At this time, MUI fills some values about display
+	environment into the boopsi objects creation tag list.
+	You have to tell MUI, what tags are actually needed.
+
+	With MUIA_Boopsi_TagDrawInfo you can tell MUI where
+	to fill in a needed @{"DrawInfo" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 384} structure.
+
+    EXAMPLE
+	If your boopsi gadget needs a pointer to a @{"DrawInfo" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 384}
+	structure supplied with the MYBOOPSI_DrawInfo tag,
+	you would have to specify
+
+	@{"BoopsiObject" Link "SDK:Guide/includes/libraries/mui.h/Main" 657},
+	   RecessedFrame,
+	   ...
+	   MUIA_Boopsi_TagDrawInfo, MYBOOPSI_DrawInfo,
+	   ...
+	   MYBOOPSI_DrawInfo, 0, /* will be filled later by MUI */
+	   ...
+	   @{"GA_Left" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 21}  , 0, /* needs to be there, will */
+	   @{"GA_Top" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 23}   , 0, /* be filled later by MUI  */
+	   @{"GA_Width" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 25} , 0,
+	   @{"GA_Height" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 27}, 0,
+
+	   @{"End" Link "SDK:Guide/includes/libraries/mui.h/Main" 689};
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}, @{"MUIA_Boopsi_TagScreen" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_TagScreen"}, @{"MUIA_Boopsi_TagWindow" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_TagWindow"}
+@EndNode
+@Node MUIA_Boopsi_TagScreen "MUI/MUI_Boopsi - MUIA_Boopsi_TagScreen"
+
+
+    NAME
+	MUIA_Boopsi_TagScreen -- (V4 ) [ISG], ULONG, 0x8042bc71
+
+    FUNCTION
+	Unfortunately, most boopsi gadgets need information on
+	the display environment they will reside in at object
+	creation time. Due to MUI's concept, this information
+	is not available that early.
+
+	To solve this problem, MUI doesn't generate the boopsi
+	object instantly, creation is delayed until the window
+	containing the gadget is opened.
+
+	At this time, MUI fills some values about display
+	environment into the boopsi objects creation tag list.
+	You have to tell MUI, what tags are actually needed.
+
+	With MUIA_Boopsi_TagScreen you can tell MUI where
+	to fill in a needed @{"Screen" Link "SDK:Guide/includes/intuition/screens.h/Main" 106} structure.
+
+    EXAMPLE
+	If your boopsi gadget needs a pointer to a @{"Screen" Link "SDK:Guide/includes/intuition/screens.h/Main" 106}
+	structure supplied with the MYBOOPSI_Screen tag,
+	you would have to specify
+
+	@{"BoopsiObject" Link "SDK:Guide/includes/libraries/mui.h/Main" 657},
+	   RecessedFrame,
+	   ...
+	   MUIA_Boopsi_TagScreen, MYBOOPSI_Screen,
+	   ...
+	   MYBOOPSI_Screen, 0, /* will be filled later by MUI */
+	   ...
+	   @{"GA_Left" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 21}  , 0, /* needs to be there, will */
+	   @{"GA_Top" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 23}   , 0, /* be filled later by MUI  */
+	   @{"GA_Width" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 25} , 0,
+	   @{"GA_Height" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 27}, 0,
+
+	   @{"End" Link "SDK:Guide/includes/libraries/mui.h/Main" 689};
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}, @{"MUIA_Boopsi_TagDrawInfo" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_TagDrawInfo"},
+	@{"MUIA_Boopsi_TagWindow" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_TagWindow"}
+@EndNode
+@Node MUIA_Boopsi_TagWindow "MUI/MUI_Boopsi - MUIA_Boopsi_TagWindow"
+
+
+    NAME
+	MUIA_Boopsi_TagWindow -- (V4 ) [ISG], ULONG, 0x8042e11d
+
+    FUNCTION
+	Unfortunately, most boopsi gadgets need information on
+	the display environment they will reside in at object
+	creation time. Due to MUI's concept, this information
+	is not available that early.
+
+	To solve this problem, MUI doesn't generate the boopsi
+	object instantly, creation is delayed until the window
+	containing the gadget is opened.
+
+	At this time, MUI fills some values about display
+	environment into the boopsi objects creation tag list.
+	You have to tell MUI, what tags are actually needed.
+
+	With MUIA_Boopsi_TagWindow you can tell MUI where
+	to fill in a needed @{"Window" Link "SDK:Guide/includes/intuition/intuition.h/Main" 471} structure.
+
+    EXAMPLE
+	If your boopsi gadget needs a pointer to a @{"Window" Link "SDK:Guide/includes/intuition/intuition.h/Main" 471}
+	structure supplied with the MYBOOPSI_Window tag,
+	you would have to specify
+
+	@{"BoopsiObject" Link "SDK:Guide/includes/libraries/mui.h/Main" 657},
+	   RecessedFrame,
+	   ...
+	   MUIA_Boopsi_TagWindow, MYBOOPSI_Window,
+	   ...
+	   MYBOOPSI_Window, 0, /* will be filled later by MUI */
+	   ...
+	   @{"GA_Left" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 21}  , 0, /* needs to be there, will */
+	   @{"GA_Top" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 23}   , 0, /* be filled later by MUI  */
+	   @{"GA_Width" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 25} , 0,
+	   @{"GA_Height" Link "SDK:Guide/includes/intuition/gadgetclass.h/Main" 27}, 0,
+
+	   @{"End" Link "SDK:Guide/includes/libraries/mui.h/Main" 689};
+
+    SEE ALSO
+	@{"MUIA_Boopsi_ClassID" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_ClassID"}, @{"MUIA_Boopsi_TagDrawInfo" Link "SDK:Guide/MUI/MUI_Boopsi.guide/MUIA_Boopsi_TagDrawInfo"}, 
+	MUIA_Boopsi_TagWindow
+
+@EndNode
+

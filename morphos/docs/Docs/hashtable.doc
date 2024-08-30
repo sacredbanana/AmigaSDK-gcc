@@ -1,0 +1,316 @@
+TABLE OF CONTENTS
+
+hashtable.library/--background--
+hashtable.library/ClearHashTable()
+hashtable.library/CreateHashTableTagList()
+hashtable.library/DeleteHashTable()
+hashtable.library/GetHashDataByKey()
+hashtable.library/GetHashKeyByData()
+hashtable.library/GetHashTableAttribute()
+hashtable.library/InsertHash()
+hashtable.library/IterateHashTable()
+hashtable.library/RemoveHashByData()
+hashtable.library/RemoveHashByKey()
+hashtable.library/ResizeHashTable()
+hashtable.library/--background--
+
+ PURPOSE
+   The hashtable.library provides a mapping from a set of keys to a set of
+   data.
+
+ OVERVIEW
+   Retrieving a data by using its key is very fast and approaches an O(1)
+   operation.
+
+   Adding and removing elements is an O(1) operation. If the capacity is
+   full adding new element becomes an O(n) operation.
+
+hashtable.library/ClearHashTable()
+
+ NAME
+   ClearHashTable -- remove all keys and datas
+
+ SYNOPSIS
+   ClearHashTable(hash);
+
+   void ClearHashTable(CONST_APTR);
+
+ FUNCTION
+  Removes all keys and datas from the hash table. The capacity remains
+  unchanged.
+
+ INPUTS
+   hash - hash table
+
+ RESULT
+
+hashtable.library/CreateHashTableTagList()
+
+ NAME
+   CreateHashTableTagList -- create a hash table
+   CreateHashTableTags -- Varargs stub for CreateHashTableTagList
+
+ SYNOPSIS
+   hash = CreateHashTableTagList(taglist);
+
+   CONST_APTR CreateHashTableTagList(CONST struct TagItem *);
+
+   hash = CreateHashTableTags(Tag1, ...);
+
+   CONST_APTR CreateHashTableTags(ULONG, ...);
+
+ FUNCTION
+   Create a hash table.
+
+ INPUTS
+   taglist    - list of tags for additional parameters. Following tags are
+                recognized:
+
+      HASHTABLE_Capacity        - initial capacity
+
+          Initial capacity of the hash table. The default capacity is
+          7 elements.
+
+
+      HASHTABLE_CompareFunction - optional comparer function (V53)
+
+          Comparer function must return 0 on equality and non-zero when
+          keys are not matching:
+
+          ssize_t (*comparer)(size_t key1, size_t key2, APTR userdata)
+
+
+      HASHTABLE_ThreadSafe      - thread safe hash table
+
+           Initialize the hash table to be thread safe. Defauls to FALSE.
+
+
+      HASHTABLE_UserData        - optional user data (V53)
+
+ RESULT
+   hashtable  - new hash table or NULL (out of memory)
+
+hashtable.library/DeleteHashTable()
+
+ NAME
+   DeleteHashTable -- delete a hash table
+
+ SYNOPSIS
+   DeleteHashTable(hash);
+
+   void DeleteHashTable(CONST_APTR);
+
+ FUNCTION
+   Deallocate a hash table.
+
+ INPUTS
+   hash - hash table to delete, or NULL.
+
+ RESULT
+
+hashtable.library/GetHashDataByKey()
+
+ NAME
+   GetHashDataByKey -- get the element from the hash table
+
+ SYNOPSIS
+   success = GetHashDataByKey(hash, key, dataptr);
+
+   BOOL GetHashDataByKey(CONST_APTR, size_t, CONST_APTR *);
+
+ FUNCTION
+   Retrieve the element with the specified key from the hash table.
+   The cost of retrieval is O(1) amortized.
+
+ INPUTS
+   hash  - hash table to get the element from
+   key   - the key of the element to get
+   data  - pointer to the data storage pointer. If the element was found
+           this will contain the data associated with the key.
+
+ RESULT
+   success - Boolean
+
+hashtable.library/GetHashKeyByData()
+
+ NAME
+   GetHashKeyByData -- get the key from the hash table
+
+ SYNOPSIS
+   success = GetHashKeyByData(hash, data, keyptr);
+
+   BOOL GetHashKeyByData(CONST_APTR, CONST_APTR, size_t *);
+
+ FUNCTION
+   Retreive the element with the specified data from the hash table.
+   Due to linear search the cost of retrieval is O(n).
+
+ INPUTS
+   hash  - hash table to get the element from
+   data  - the element to get
+   key   - pointer to the key storage pointer. If the element was found
+           this will contain the key associated with the data.
+
+ RESULT
+   success - Boolean
+
+hashtable.library/GetHashTableAttribute()
+
+ NAME
+   GetHashTableAttribute -- inquire the hash table attributes
+
+ SYNOPSIS
+   value = GetHashTableAttribyte(hash, attribute);
+
+   size_t GetHashTableAttribute(CONST_APTR, size_t);
+
+ FUNCTION
+   Inquire the value of the specified attribute.
+
+ INPUTS
+   hash       - hash table to inquire attributes from
+   attribute  - the attribute to inquire. Following attributes are recognized:
+
+      HASHTABLE_Capacity        - Capacity of the hash table.
+      HASHTABLE_CompareFunction - Function to compare keys.
+      HASHTABLE_Count           - Number of elements in the hash table.
+      HASHTABLE_MemoryFootprint - Amount of memory allocated.
+      HASHTABLE_ThreadSafe      - Semaphore protection enabled/disabled.
+      HASHTABLE_UserData        - User data.
+
+ RESULT
+   value      - value of the inquired attribute
+
+ NOTE
+   The capacity, count and memory footprint figures may have changed by the
+   time the function returns, especially if there are multiple processes
+   working on the same hash. If you must have exact figures in multithreaded
+   environment you need to use your own locking instead of
+   HASHTABLE_ThreadSafe.
+
+hashtable.library/InsertHash()
+
+ NAME
+   InsertHash -- Insert the specified key and data to the hash table.
+
+ SYNOPSIS
+   success = InsertHash(hash, key, data);
+
+   BOOL InsertHash(CONST_APTR, size_t, CONST_APTR);
+
+ FUNCTION
+   Insert the specified key and data to the hash table.
+
+   Inserting an element is an O(1) operation unless the hash table is full
+   where it becomes an O(n) operation.
+
+   Existing data can be replaced by reinserting key.
+
+ INPUTS
+   hash  - hash table to insert key/data pair to.
+   key   - the key of the data to add
+   data  - the element to add
+
+ RESULT
+   success - Boolean
+
+hashtable.library/IterateHashTable()
+
+ NAME
+   IterateHashTable -- call a function for the elements
+
+ SYNOPSIS
+   elements = IterateHashTable(hash, iteratorfunc, userdata);
+
+   size_t IterateHashTable(CONST_APTR, BOOL (*)(CONST_APTR, size_t, APTR, APTR),
+                           APTR);
+
+ FUNCTION
+   Call an iterator function for the elements in the hash table.
+   The iterator function is called as:
+
+   BOOL func(CONST_APTR hash, size_t key, APTR data, APTR userdata);
+
+   The function returns boolean (TRUE/FALSE) to indicate if iteration should
+   continue to next element.
+
+   Adding or removing elements while iterating is not permitted. If operated in
+   thread safe mode this holds a semaphore to the hash table until iteration is
+   complete.
+
+ INPUTS
+   hash         - table
+   iteratorfunc - function to call for each element
+   userdata     - data pointer passed to the iterator function
+
+ RESULT
+   elements     - number of elements iterated
+
+hashtable.library/RemoveHashByData()
+
+ NAME
+   RemoveHashByData -- remove the element from the hash table
+
+ SYNOPSIS
+   success = RemoveHashByData(hash, data, keyptr);
+
+   BOOL RemoveHashByData(CONST_APTR, CONST_APTR, size_t *);
+
+ FUNCTION
+   Remove the element with the specified data from the hash table.
+   Due to linear search the cost of removal is O(n).
+
+ INPUTS
+   hash  - hash table to remove the element from
+   data  - the element to remove
+   key   - pointer to the key storage pointer. If the element was removed
+           this will contain the key associated with the data.
+
+ RESULT
+   success - Boolean
+
+hashtable.library/RemoveHashByKey()
+
+ NAME
+   RemoveHashByKey -- remove the element from the hash table
+
+ SYNOPSIS
+   success = RemoveHashByKey(hash, key, dataptr);
+
+   BOOL RemoveHashByKey(CONST_APTR, size_t, CONST_APTR *);
+
+ FUNCTION
+   Remove the element with the specified key from the hash table.
+   The cost of removal is O(1) amortized.
+
+ INPUTS
+   hash  - hash table to remove the element from
+   key   - the key of the element to remove
+   data  - pointer to the data storage pointer. If the element was removed
+           this will contain the data associated with the key.
+
+ RESULT
+   success - Boolean
+
+hashtable.library/ResizeHashTable()
+
+ NAME
+   ResizeHashTable -- Resize the hast table to new capacity
+
+ SYNOPSIS
+   size = ResizeHashTable(hash, capacity);
+
+   size_t ResizeHashTable(CONST_APTR, size_t);
+
+ FUNCTION
+   Resize the hash table. The cost of resize operation is O(n) where n is
+   number of elements in the hash table.
+
+ INPUTS
+   hash     - hash table to resize
+   capacity - new capacity
+
+ RESULT
+   size     - size of the hash table after resize
+
+

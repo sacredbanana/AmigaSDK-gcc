@@ -1,0 +1,609 @@
+TABLE OF CONTENTS
+
+charsets.library/ConvertTagList()
+charsets.library/GetByteSize()
+charsets.library/GetCharsetName()
+charsets.library/GetCharsetNumber()
+charsets.library/GetLength()
+charsets.library/GetSystemCharset()
+charsets.library/GetUTF16BE()
+charsets.library/GetUTF16LE()
+charsets.library/UTF16_ToCodePoint()
+charsets.library/charsets.list
+charsets.library/charsets.list:CLSA_Aliases
+charsets.library/charsets.list:CLSA_MimePreferred
+charsets.library/charsets.list:CLSA_NameCount
+charsets.library/charsets.list:CLSA_NameTable
+charsets.library/charsets.list:CLSA_NonStandard
+charsets.library/charsets.list:CLSA_NumberCount
+charsets.library/charsets.list:CLSA_NumberTable
+charsets.library/charsets.list:CLSM_NextCharsetName
+charsets.library/charsets.list:CLSM_NextCharsetNumber
+charsets.library/ConvertTagList()
+
+ NAME
+   ConvertTagList -- (v51) Converts strings between different encodings.
+
+ SYNOPSIS
+   LONG ConvertTagList(APTR src, LONG srcbytes, APTR dst, LONG dstbytes,
+   ULONG srcmib, ULONG dstmib, CONST struct TagItem *taglist);
+
+   LONG ConvertTags(APTR src, LONG srcbytes, APTR dst, LONG dstbytes,
+   ULONG srcmib, ULONG dstmib, ULONG tag1, ...);
+
+ FUNCTION
+   The function may be used for: conversion of strings between different
+   encodings, counting characters in an encoded string, calculating number
+   of bytes needed to store a string in a given encoding. While converting,
+   the function reads source string character by character, according to the
+   specified source encoding. Then the character is converted to destination
+   encoding and stored in destination buffer. As function returns number of
+   converted characters, it may be used to determine character count in a
+   string. A NULL destination pointer may be passed for just counting
+   characters. The function may work with null terminated strings, or
+   strings with specified length. A special value -1 passed as source or
+   destination buffer length means "unlimited" buffer length.
+
+   The destination string is always null-terminated, even if source string
+   is limited before its terminator, or not terminated at all. If
+   converted string does not fit into destination buffer it is cut in a way
+   that leaves space needed for proper termination.
+
+   In counting-only mode (NULL destination) destination buffer limit is
+   still preserved. Then number of destination bytes calculated when
+   specifying CST_GetDestBytes tag is a number of bytes really stored if
+   destination was not NULL.
+
+   Some encodings (especially multibyte ones) allow for illegal sequences
+   in the string. The function detects such sequences and replaces them with
+   question marks ('?') in destination. Particular examples of such
+   sequences are:
+   - Codepoints not representable in given 8-bit codepage.
+   - Cut characters at end of string in UTF-16 and UTF-32 (caused by uneven
+     source length limit).
+   - Cut UTF-8 multibyte sequences at end of string.
+   - Illegal Unicode codepoints.
+   - Overlong UTF-8 sequences.
+
+ INPUTS
+   src - pointer to source string. Passing NULL here is safe, the return
+     value is -1 then.
+   srcbytes - number of valid bytes in the source buffer. The special value
+     -1 means unlimited buffer, source is read up to (and including) the
+     string terminator. Passing 0 here causes function to return immediately
+     with result 0.
+   dst - pointer to destination string. May be NULL, in this case converted
+     characters are not written anywhere, just counted and optionally sized.
+   dstbytes - length of destination buffer in bytes. The special value -1
+     means that there is no buffer limit. It should be used with care to
+     avoid buffer overflow. Usually used with NULL destination pointer.
+   scrmib - IANA number of source string encoding. From v52.2,
+     MIBENUM_SYSTEM special value may be used for the system default
+     encoding, which is obtained internally with GetSystemCharset(). If the
+     source encoding is UTF-16/32 or UCS-2/4 without explicit endianess,
+     the function checks for Byte Order Mark at start of the string. If not
+     found, platform native endian is assumed.
+   dstmib - IANA number of destination encoding. From v52.2, MIBENUM_SYSTEM
+     special value may be used for the system default encoding, which is
+     obtained internally with GetSystemCharset(). If the destination
+     encoding is UTF-16/32 or UCS-2/4 without explicit endianess, platform
+     native endian is assumed.
+   taglist - list of tags for additional parameters. Following tags are
+     recognized:
+     - CST_GetDestBytes - value of this tag is a pointer to LONG variable.
+       Number of bytes to be stored in destination buffer is placed in the
+       variable. This number of bytes includes string terminator.
+     - CST_GetUnterminatedBytes - same as CST_GetDestBytes but excludes the
+       terminator character space, which can be 1-4 bytes depending on the
+       encoding.
+     - CST_DoNotTerminate (v53.6) - if TRUE, string zero terminator is not
+       stored in the destination, also destination buffer size checks do not
+       count bytes needed for the terminator. By default destination string
+       is terminated, so the default value of this tag is FALSE. Note that
+       this tag changes neither the function result nor values obtained via
+       CST_GetDestBytes and CST_GetUnterminatedBytes.
+     - CST_GetDestEncoding (v53.7) - value of this tag is a pointer to
+       LONG variable. This will be the encoding that was used to convert
+       the string to. Makes sense when used with MIBENUM_SYSTEM as dest.
+
+ RESULT
+   Number of converted and stored characters *not* including string
+   terminator (if encountered). Value 0 is returned for either source
+   length or destination length being 0. Empty source string (zero
+   terminator is the first character) yields 0 too. Special value -1 means
+   function fault and may be returned for following reasons:
+   - Unknown encoding (usually happens with 8-bit encoding, where no
+     external codepage file is found).
+   - NULL source pointer.
+   - Source or destination buffer length is negative and not -1.
+   - Destination buffer length is positive, but too low to store string
+     terminator alone (for example 3 bytes for UTF-32).
+
+ BUGS
+   - Byte Order Mark is not stripped, when UTF-16 or UTF-32 is converted to
+     an encoding other than UTF-16 or UTF-32.
+   - Source UCS-2 string is treated as if being UTF-16.
+   - For 'srcbytes' = 0 and 'dstbytes' > size of terminator,
+     CST_GetDestBytes returns 0 instead of size of the terminator.
+
+ SEE ALSO
+   GetSystemCharset()
+
+charsets.library/GetByteSize()
+
+ NAME
+   GetByteSize -- (v51.3) Calculates size of transcoded string in bytes.
+
+ SYNOPSIS
+   LONG GetByteSize(APTR string, LONG bytes, ULONG scrmib, ULONG dstmib);
+
+ FUNCTION
+   The function calculates number of bytes needed to store a string encoded
+   in given source encoding, after translating it to specified destination
+   encoding. Space needed for null terminator in the destination string is
+   included. The function always assumes proper termination of destination
+   string and includes terminator size.
+
+   The function uses ConvertTagList() engine for parsing the string, so all
+   remarks about handling broken strings apply. Question marks replacing
+   broken sequences are added to the size as ordinary characters. It is
+   guarranted by design that number of bytes returned by GetByteSize() and
+   number of bytes written by ConvertTagList() for the same string, limits
+   and encodings are equal.
+
+ INPUTS
+   string - pointer to source string. NULL is safe, the result is -1.
+   srcbytes - number of valid bytes in the buffer. The special value -1 means
+     unlimited buffer, string is read up to the string terminator. Passing 0
+     here causes function to return destination encoding terminator size in
+     bytes.
+   srcmib - IANA number of string encoding. From v52.2 MIBENUM_SYSTEM
+     special value may be used for the system default encoding, which is
+     obtained internally with GetSystemCharset().
+   dstmib - IANA number of destination encoding. From v52.2 MIBENUM_SYSTEM
+     special value may be used for the system default encoding, which is
+     obtained internally with GetSystemCharset().
+
+  RESULT
+    Number of bytes needed to store the string after transcoding, including
+    space for string termination. Value 0 or empty string (zero terminator
+    is the first character) yields the size of terminator in destination
+    encoding. Special value -1 means function fault and may be returned for
+    following reasons:
+    - Unknown encoding(s) (usually happens with 8-bit encoding, where no
+      external codepage file is found).
+    - NULL string pointer.
+    - String buffer length is negative and not -1.
+
+  NOTES
+    If both source character length and destination byte length are needed,
+    calling ConvertTagList() with NULL destination and CST_GetDestBytes tag
+    is faster, than calling GetLength() and GetByteSize().
+
+  BUGS
+    - Byte Order Mark is not ignored for UTF-16 and UTF-32.
+    - UCS-2 string is treated as if being UTF-16.
+
+  SEE ALSO
+    ConvertTagList(), GetLength(), GetSystemCharset()
+
+charsets.library/GetCharsetName()
+
+ NAME
+   GetCharsetName -- (v51) Get name of charset
+
+ SYNOPSIS
+   CONST_STRPTR GetCharsetName(ULONG MIBenum, CONST_STRPTR *mimename, CONST CONST_STRPTR **aliases);
+
+ FUNCTION
+   Finds the official name of a character set.
+
+ INPUTS
+   MIBenum  - IANA charset number
+   mimename - pointer to string to return mime name of charset. May be NULL.
+   aliases  - pointer to string array to return aliases. May be NULL.
+
+ RESULT
+   Name of charset or NULL if not found from a system charset database.
+
+charsets.library/GetCharsetNumber()
+
+ NAME
+   GetCharsetNumber -- (v51) Get IANA MIBenum from charset name
+
+ SYNOPSIS
+   ULONG GetCharsetNumber(CONST_STRPTR name, ULONG type);
+
+ FUNCTION
+   Return IANA MIBenum number for given charset name. Name can be the official
+   IANA charset name, alias or mimename.
+
+ INPUTS
+   name - charset name
+   type - type of charset name database to check.
+
+ RESULT
+   IANA MIB enum number of charset or MIBENUM_INVALID if name was not found.
+
+charsets.library/GetLength()
+
+ NAME
+   GetLength -- (v51.3) Counts characters in a string.
+
+ SYNOPSIS
+   LONG GetLenght(APTR string, LONG bytes, ULONG mib);
+
+ FUNCTION
+   The function returns number of characters in a string encoded with given
+   encoding. Characters are counted either until a null terminator is found,
+   or until specified end of buffer is reached. A special value -1 may be
+   used to indicate no fixed buffer limit.
+
+   The function uses ConvertTagList() engine for parsing the string, so all
+   remarks about handling broken strings apply. Question marks replacing
+   broken sequences are counted as ordinary characters.
+
+   Note that null terminator is NOT counted, the function behaves similarly
+   to strlen(), in fact for 8-bit codepage encodings, it gives the same
+   results as strlen().
+
+ INPUTS
+   string - pointer to source string. NULL is safe, the result is -1.
+   bytes - number of valid bytes in the buffer. The special value -1 means
+     unlimited buffer, string is read up to the string terminator. Passing 0
+     here causes function to return immediately with result 0.
+   mib - IANA number of string encoding. From v52.2, MIBENUM_SYSTEM
+     special value may be used for the system default encoding, which is
+     obtained internally with GetSystemCharset().
+
+  RESULT
+    Number of characters in the string, NOT including string terminator (if
+    encountered). Value 0 is returned for buffer length specified as 0.
+    Empty string (zero terminator is the first character) yields 0 too.
+    Special value -1 means function fault and may be returned for following
+    reasons:
+    - Unknown encoding (usually happens with 8-bit encoding, where no
+      external codepage file is found).
+    - NULL string pointer.
+    - String buffer length is negative and not -1.
+
+  NOTES
+    If both source character length and destination byte length are needed,
+    calling ConvertTagList() with NULL destination and CST_GetDestBytes tag
+    is faster, than calling GetLength() and GetByteSize().
+
+  BUGS
+    - Byte Order Mark is not ignored for UTF-16 and UTF-32.
+    - UCS-2 string is treated as if being UTF-16.
+
+  SEE ALSO
+    ConvertTagList(), GetSystemCharset()
+
+charsets.library/GetSystemCharset()
+
+ NAME
+   GetSystemCharset -- (v52) Get number and name for system default encoding
+
+ SYNOPSIS
+   number = GetSystemCharset(buf, buflen);
+
+   ULONG GetSystemCharset(STRPTR, ULONG);
+
+ FUNCTION
+   Returns IANA number and optionally name for system default encoding.
+   Currently it checks "CODEPAGE" environment variable for the name first.
+   If the variable does not exist, current system keyboard map is queried
+   for the codepage.
+
+ INPUTS
+   buf - buffer to hold the charset name. May be NULL, in this case the name
+     is not stored.
+   buflen - length of buffer. If the name does not fit the buffer, ('buflen'
+     - 1) characters will be copied and then zero terminator will be stored.
+     This argument is ignored, when 'buf' is NULL.
+
+ RESULT
+   IANA number of the system default charset.
+
+ NOTES
+   Checking "CODEPAGE" variable is obsolete and may be removed later as it
+   prohibits dynamic codepage changes by switching keymaps.
+
+charsets.library/GetUTF16BE()
+
+ NAME
+   GetUTF16BE -- (v51) Get next code point from buffer (big endian)
+
+ SYNOPSIS
+   code = GetUTF16BE(buffer, units);
+
+   WCHAR GetUTF16BE(UTF16*, ULONG);
+
+ FUNCTION
+   Read next code unit(s) from supplied buffer and return new UCS-4/UTF-32
+   code point. Input buffer must be in big endian.
+
+   Surrogate pairs are supported.
+
+ INPUTS
+   buffer - pointer to UTF-16 buffer (big endian).
+   units - number of UTF-16 code units left in the buffer.
+
+ RESULT
+   UCS-4/UTF-32 code point in a native byte order. Invalid code units may be
+   converted to a question mark ('?') symbol.
+
+ SEE ALSO
+   GetUTF16LE()
+
+charsets.library/GetUTF16LE()
+
+ NAME
+   GetUTF16LE -- (v51) Get next code point from buffer (little endian)
+
+ SYNOPSIS
+   code = GetUTF16LE(buffer, units);
+
+   WCHAR GetUTF16LE(UTF16*, ULONG);
+
+ FUNCTION
+   Read next code unit(s) from supplied buffer and return new UCS-4/UTF-32
+   code point. Input buffer must be in little endian.
+
+   Surrogate pairs are supported.
+
+ INPUTS
+   buffer - pointer to UTF-16 buffer (little endian).
+   units - number of UTF-16 code units left in the buffer.
+
+ RESULT
+   UCS-4/UTF-32 code point in a native byte order. Invalid code units may be
+   converted to a question mark ('?') symbol.
+
+ SEE ALSO
+   GetUTF16BE()
+
+charsets.library/UTF16_ToCodePoint()
+
+ NAME
+   UTF16_ToCodePoint -- (v51) Converts UTF-16 surrogate pair to Unicode
+
+ SYNOPSIS
+   code = UTF16_ToCodePoint(char1, char2);
+
+   WCHAR UTF16_ToCodePoint(UTF16, UTF16);
+
+ FUNCTION
+   Assumes that two 16-bit characters passed are a UTF-16 surrogate pair,
+   then converts them into UTF-32 code point.
+
+ INPUTS
+   char1 - UTF-16 high surrogate.
+   char2 - UTF-16 low surrogate.
+
+ RESULT
+   UCS-4/UTF-32 code point in a native byte order.
+
+ NOTES
+   The function does not check if arguments form a proper surrogate pair.
+   Passing random chars will return useless result.
+
+ SEE ALSO
+   GetUTF16BE(), GetUTF16LE()
+
+charsets.library/charsets.list
+
+ NAME
+   charsets.list -- provides access to list of supported charsets (V53)
+
+ SYNOPSIS
+   object = NewObject(NULL, "charsets.list", ...)
+
+ FUNCTION
+   "charsets.list" is a public BOOPSI class, created by charsets.library. It
+   provides easy access to lists of supported charsets, either returning
+   them as tables of strings or providing iterator for retrieving names one
+   at a time.
+
+   There are two lists of character encodings. Each of them may be accessed
+   either as a zero-terminated table, or via iterator, one item at a time.
+   The first list contains IANA numbers of supported encodings as 32-bit
+   integers (LONG type). The list is sorted ascending and terminated with
+   item 0. The second list contains names of encodings, every item of the
+   list is a pointer to read only string (CONST_STRPTR type). The list is
+   sorted alphabetically, case insensitive and terminated with NULL pointer.
+   As such, it may be passed directly to some MUI classes, when accessed as
+   a table.
+
+   A tag list may be specified at object creation. Tags define filtering of
+   encodings and their names. The full list of names and aliases contain
+   over 100 entries. Application may filter the list depending on
+   functionality and form of presentation in the user interface. Following
+   filtering tags are available:
+   - charsets.list:CLSA_Aliases,
+   - charsets.list:CLSA_MimePreferred,
+   - charsets.list:CLSA_NonStandard.
+
+   Both of lists may be accessed as zero-terminated tables by getting
+   attributes CLSA_NumberTable and CLSA_NameTable respectively. These
+   tables are allocated per-object, as their contents depends on filtering
+   tags. It should be noted however that strings in NameTable are not
+   copied per-object, so they *must* be treated as read only.
+
+   Alternative form of access is using iterator methods:
+   CLSM_NextCharsetName() and CLSM_NextCharsetNumber(). Both are positioned
+   at the first list item initially and may be called in a loop until they
+   return zero. Number and name iterator are independent, however they share
+   filtering options. Strings returned by CLSM_NextCharsetName() are
+   read-only.
+
+   After use the object should be disposed with DisposeObject(). It should
+   be noted, that any data returned by the class are invalid after disposing
+   object which returned them.
+
+ INPUTS
+   Filtering tags.
+
+ RESULT
+   object - BOOPSI object acting as interface to encoding lists.
+
+charsets.library/charsets.list:CLSA_Aliases
+
+ NAME
+   CLSA_Aliases -- (V53) [I..], BOOL, 0x80000114
+
+ FUNCTION
+   Controls inclusion of encoding alias names to the list of names. Does not
+   affect the list of IANA encoding numbers. Defaults to FALSE (aliases are
+   not included).
+
+charsets.library/charsets.list:CLSA_MimePreferred
+
+ NAME
+   CLSA_MimePreferred -- (V53) [I..], BOOL, 0x80000115
+
+ FUNCTION
+   If this attribute is set to TRUE and an encoding has MIME preferred name
+   except of IANA canonical name, the MIME one is returned instead of
+   canonical. Canonical names for popular encodings are sometimes long and
+   unreadable, for example "ISO_8859-1:1987", while its MIME name is just
+   "ISO-8859-1". That is why the default value of the tag is TRUE. The tag
+   does not affect the list of IANA encoding numbers.
+
+charsets.library/charsets.list:CLSA_NameCount
+
+ NAME
+   CLSA_NameCount -- (V53) [..G], LONG, 0x80000112
+
+ FUNCTION
+   Returns the number of entries in the name table returned by
+   CLSA_NameTable, not counting NULL terminator. It is also equal to number
+   of succesfull iterations of CLSM_NextCharsetName() iterator.
+
+ SEE ALSO
+   charsets.list:CLSA_NameTable, charsets.list:CLSM_NextCharsetName
+
+charsets.library/charsets.list:CLSA_NameTable
+
+ NAME
+   CLSA_NameTable -- (V53) [..G], CONST_STRPTR*, 0x80000110
+
+ FUNCTION
+   This attribute returns a NULL terminated table of pointers to all charset
+   names, filtered according to tags passed at object construction. The
+   table is alphabetically sorted. The table is allocated per-object, so it
+   may be modified. Strings are read-only and cannot be modified. The table
+   stays valid until the object is disposed.
+
+   Returned table may be passed for MUI Cycle or List object if
+   "charsets.list" object is disposed after disposition of MUI object. Note
+   that Cycle object should not be used for unfiltered list, as number of
+   entries exceeds 100. Use filter rejecting most of entries, or use List
+   popup. Number of entries in the table may be checked with CLSA_NameCount
+
+ SEE ALSO
+   charsets.list:CLSA_NameCount, charsets.list:CLSA_NumberTable
+
+charsets.library/charsets.list:CLSA_NonStandard
+
+ NAME
+   CLSA_NonStandard -- (V53) [I..], BOOL, 0x80000116
+
+ FUNCTION
+   Controls inclusion of encodings not enumerated by IANA. Such encodings
+   have their numbers above 5000. As using of them shouldn't be promoted,
+   they are not listed by default (the default value of CLSA_NonStandard
+   is FALSE). This ta affects both the numbers and the names list.
+
+charsets.library/charsets.list:CLSA_NumberCount
+
+ NAME
+   CLSA_NumberCount -- (V53) [..G], LONG, 0x80000113
+
+ FUNCTION
+   Returns the number of entries in the IANA numbers table returned by
+   CLSA_NumberTable, not counting zero terminator. It is also equal to
+   number of succesfull iterations of CLSM_NextCharsetNumber() iterator.
+
+ SEE ALSO
+   charsets.list:CLSA_NumberTable, charsets.list:CLSM_NextCharsetNumber
+
+charsets.library/charsets.list:CLSA_NumberTable
+
+ NAME
+   CLSA_NumberTable -- (V53) [..G], LONG*, 0x80000111
+
+ FUNCTION
+   This attribute returns a zero terminated table of IANA numbers of
+   character encodings, filtered according to tags passed at object
+   construction. The table is sorted ascending. The table is allocated
+   per-object, so it may be modified. The table stays valid until the object
+   is disposed.
+
+   Number of entries in the table may be checked with CLSA_NumberCount.
+
+ SEE ALSO
+   charsets.list:CLSA_NumberCount, charsets.list:CLSA_NumberTable
+
+charsets.library/charsets.list:CLSM_NextCharsetName
+
+ NAME
+   CLSM_NextCharsetName -- (V53) 0x80000100
+
+ SYNOPSIS
+   name = DoMethod(obj, CLSM_NextCharsetName)
+
+ FUNCTION
+   This is an iterator for list of charset names. At every call it returns
+   the next name from the list. Returned names are read only, null
+   terminated strings. When the iterator reaches end of list, it returns
+   NULL.
+
+ INPUTS
+   None.
+
+ RESULT
+   name - read-only string with name of charset ot NULL.
+
+ EXAMPLE
+   Printing all names from the list:
+
+   while (name = (CONST_STRPTR)DoMethod(obj, CLSM_NextCharsetName))
+   {
+     Printf("%s\n", name);
+   }
+
+ SEE ALSO
+   charsets.list:CLSA_NameTable, charsets.list:CLSM_NextCharsetNumber
+
+charsets.library/charsets.list:CLSM_NextCharsetNumber
+
+ NAME
+   CLSM_NextCharsetNumber -- (V53) 0x80000101
+
+ SYNOPSIS
+   number = DoMethod(obj, CLSM_NextCharsetNumber)
+
+ FUNCTION
+   This is an iterator for list of charset IANA numbers. At every call it
+   returns the next number from the list. When the iterator reaches end of
+   list, it returns 0.
+
+ INPUTS
+   None.
+
+ RESULT
+   number - IANA number of charset or 0.
+
+ EXAMPLE
+   Printing all numbers from the list:
+
+   while (number = DoMethod(obj, CLSM_NextCharsetNumber))
+   {
+     Printf("%ld\n", number);
+   }
+
+ SEE ALSO
+   charsets.list:CLSA_NumberTable, charsets.list:CLSM_NextCharsetName
+
+

@@ -1,0 +1,204 @@
+TABLE OF CONTENTS
+
+rawaudio.filter/--background--
+rawaudio.filter/MMA_Sound_BitsPerSample
+rawaudio.filter/MMA_Sound_Channels
+rawaudio.filter/MMA_Sound_FrameCount
+rawaudio.filter/MMA_Sound_SampleRate
+rawaudio.filter/MMA_Sound_Volume
+rawaudio.filter/MMM_Pull
+rawaudio.filter/MMM_Seek
+rawaudio.filter/--background--
+
+ DESCRIPTION
+   This is a Reggae filter used for importing raw audio data in several
+   formats into Reggae. The filter does not process data, it is only used to
+   attach format tag to raw data stream pulled from a stream object. It is
+   also used to specify basic audio parameters like number of channels and
+   sampling rate. The filter accepts MMF_STREAM format on its input, it
+   means that a stream object should be the source of data. It can be for
+   example memory stream to fetch data from a memory buffer, or file.stream
+   to load raw data from disk. The real format of data is specified by
+   setting MMA_Port_Format attribute for the output port. When no format is
+   set, the default one is MMFC_AUDIO_INT16. Then number of channels and
+   sampling rate is set with object's attributes (see below). The output
+   format may be one of the three common audio formats of Reggae, or one of
+   many encoded formats. If it is an encoded format, a decoder is usually
+   connected to the object's output. An rawaudio.filter object will allow
+   for following output formats:
+
+   Common formats:
+   - MMFC_AUDIO_INT16,
+   - MMFC_AUDIO_INT32,
+   - MMFC_AUDIO_FLOAT32,
+
+   Encoded formats:
+   - MMF_AUDIO_PCM8,
+   - MMF_AUDIO_PCM8U,
+   - MMF_AUDIO_PCM16BE,
+   - MMF_AUDIO_PCM16LE,
+   - MMF_AUDIO_PCM16UBE,
+   - MMF_AUDIO_PCM16ULE,
+   - MMF_AUDIO_PCM24BE,
+   - MMF_AUDIO_PCM24LE,
+   - MMF_AUDIO_PCM32BE,
+   - MMF_AUDIO_PCM32LE,
+   - MMF_AUDIO_PCMF32LE,
+   - MMF_AUDIO_MULAW,
+   - MMF_AUDIO_ALAW.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Sound_Channels       (V51)    [I.G.Q], ULONG
+   MMA_Sound_SampleRate     (V51)    [I.G.Q], ULONG
+   MMA_Sound_BitsPerSample  (V51)    [..G.Q], ULONG
+   MMA_Sound_FrameCount     (V51.3)  [..G.Q], UQUAD*
+   MMA_Sound_Volume         (V51.4)  [I.G.Q], ULONG
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+ HISTORY
+   51.6  (04.10.2012)
+   - Fixed broken error forwarding in MMM_Pull().
+
+   51.5  (13.06.2011)
+   - Added MMF_AUDIO_PCM16UBE and MMF_AUDIO_PCM16ULE to the format table.
+   - Uses shared MediaTimeToAudioFrame() in MMM_Seek().
+   - Requires multimedia.class v53.
+
+   51.4  (05.11.2009)
+   - Implemented MMA_Sound_Volume attribute.
+
+   51.3  (22.03.2007)
+   - Implemented MMA_Sound_FrameCount attribute.
+
+   51.2  (19.11.2005)
+   - Added audio common formats to allowed output formats.
+
+   51.1 (07.06.2005)
+   - Initial release.
+
+rawaudio.filter/MMA_Sound_BitsPerSample
+
+ NAME
+   MMA_Sound_BitsPerSample (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Specifies the number of bits per single sound sample (not frame). It
+   depends strictly on the format specified for output port.
+
+rawaudio.filter/MMA_Sound_Channels
+
+ NAME
+   MMA_Sound_Channels (V51) [I.G.Q], ULONG
+
+ FUNCTION
+   Specifies the number of interleaved sound channels in the raw data. The
+   default value for this tag is 1. Reggae supports up to 256 channels.
+
+rawaudio.filter/MMA_Sound_FrameCount
+
+ NAME
+   MMA_Sound_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Specifies the number of sound frames in the raw stream. The calculation
+   is based on stream length as reported by the connected stream class, the
+   output format set on port 1 and specified MMA_Sound_Channels number.
+   That is why, this attribute should be queried only after setting raw
+   sound attributes and connecting port 0 of the object to the source
+   stream.
+
+ NOTES
+   As every 64-bit attribute, it is passed as a pointer to the 64-bit value.
+
+ SEE ALSO
+   MMA_Sound_Channels, miltimedia.class/MMA_Port_Format
+
+rawaudio.filter/MMA_Sound_SampleRate
+
+ NAME
+   MMA_Sound_SampleRate (V51) [I.G.Q], ULONG
+
+ FUNCTION
+   Specifies the sample rate of the raw data in samples per second. The
+   default value for this tag is 8000. Reggae itself will accept any value,
+   but some filters, and especially encoders and audio.output class will
+   limit the choice of sampling rate.
+
+rawaudio.filter/MMA_Sound_Volume
+
+ NAME
+   MMA_Sound_Volume (V51.4) [I.G.Q], ULONG
+
+ FUNCTION
+   Specifies the default sound volume from 0 (silence) to 65536 (full
+   volume). The default is full volume.
+
+rawaudio.filter/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes audio data to specified buffer. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of raw audio data from input. As the object does not
+   process the data in any way, the request is simply forwarded to the
+   previous object.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from port 1 (output).
+   buffer - destination buffer for data.
+   length - amount of data to be pulled in *bytes*.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+rawaudio.filter/MMM_Seek
+
+ NAME
+   MMM_Seek -- Moves stream pointer to a new position. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, ULONG type, UQUAD*
+   position);
+
+ FUNCTION
+   A rawaudio.filter objects does not process data and does not have any
+   internal buffers. It also knows frame size and sample rate, so it only
+   supports frame seek and time seek (byte seek cannot be used). Time seek
+   is converted to frames (with rounding down if neccesary) using
+   MMA_Sound_SampleRate specified. Frame seek is converted to byte seek,
+   based on MMA_Sound_Channels and specified output format. Resulting byte
+   seek is passed to the connected stream.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, seek must be done on port 1 (output).
+   buffer - type of seek, MMM_SEEK_TIME or MMM_SEEK_FRAMES.
+   position - a pointer to an UQUAD variable holding the new position. It is
+     in frames for frame seek and in microseconds for time seek.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+   Seek operation may fail if the connected stream is not seekable.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+

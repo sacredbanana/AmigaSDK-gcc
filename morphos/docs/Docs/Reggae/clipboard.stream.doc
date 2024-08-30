@@ -1,0 +1,204 @@
+TABLE OF CONTENTS
+
+clipboard.stream/--background--
+clipboard.stream/MMA_StreamHandle
+clipboard.stream/MMA_StreamLength
+clipboard.stream/MMA_StreamName
+clipboard.stream/MMA_StreamPosBytes
+clipboard.stream/MMA_StreamSeekable
+clipboard.stream/MMM_Pull
+clipboard.stream/MMM_Seek
+clipboard.stream/OM_DISPOSE
+clipboard.stream/OM_NEW
+clipboard.stream/--background--
+
+ DESCRIPTION
+   The class reads data from the system clipboard. It is designed for simple
+   applications, not using clipboard notifications. The class takes care of
+   reading clip length and also performing the final read past end of clip
+   unlocking the clip for writing.
+
+ NEW ATTRIBUTES
+   MMA_StreamName              (V51)    [I.G.Q], STRPTR
+   MMA_StreamHandle            (V51)    [I.G.Q], LONG
+   MMA_StreamSeekable          (V51)    [..G.Q], BOOL
+   MMA_StreamLength            (V51)    [..G.Q], QUAD
+   MMA_StreamPosBytes          (V51)    [..G.Q], QUAD
+
+ NEW METHODS
+   OM_NEW                      (V51)
+   OM_DISPOSE                  (V51)
+   MMM_Pull                    (V51)
+   MMM_Seek                    (V51)
+
+ HISTORY
+   51.1   (23.11.2012)
+   - Initial release.
+
+clipboard.stream/MMA_StreamHandle
+
+ NAME
+   MMA_StreamHandle (V51) [..G.Q], LONG
+
+ FUNCTION
+   Specifies or returns clipboard unit as a number. For the constructor this
+   attribute has priority over MMA_StreamName. If none of them is specified,
+   clipboard unit defaults to 0.
+
+ NOTES
+   MorphOS clipboard.device supports 2^32 units (full ULONG range).
+
+ SEE ALSO
+   MMA_StreamName
+
+clipboard.stream/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength (V51) [..G.Q], QUAD
+
+ FUNCTION
+   Returns clip length in bytes.
+
+ NOTES
+   This is 64-bit attribute, in spite of clips cannot be bigger than 2 GB.
+
+clipboard.stream/MMA_StreamName
+
+ NAME
+   MMA_StreamName (V51) [..G.Q], STRPTR
+
+ FUNCTION
+   Specifies or returns clipboard unit as a string. The string represents
+   clipboard unit number as decimal string without leading zeros. For the
+   constructor MMA_StreamHandle attribute has priority over this one. If
+   none of them is specified, clipboard unit defaults to 0. When this
+   attribute is read, the string returned must be treated as read-only.
+
+ NOTES
+   The string is converted to number with dos.library/StrToLong().
+
+ BUGS
+   Current version supports only units up to 2 147 483 647 ($7FFFFFFF).
+
+ SEE ALSO
+   MMA_StreamHandle
+
+clipboard.stream/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes (V51) [..G.Q], QUAD
+
+ FUNCTION
+   Returns current read position in the clip in bytes.
+
+ NOTES
+   This is 64-bit attribute, in spite of clips cannot be bigger than 2 GB.
+
+clipboard.stream/MMA_StreamSeekable
+
+ NAME
+   MMA_StreamSeekable (V51) [..G.Q], BOOL
+
+ FUNCTION
+   Returns TRUE always, clipboard streams are seekable.
+
+clipboard.stream/MMM_Pull
+
+ NAME
+   MMM_Pull -- Reads data from clipboard (V51)
+
+ SYNOPSIS
+   int DoMethod(obj, MMM_Pull, int port, char *buffer, int length);
+
+ FUNCTION
+   Reads block of data from clipboard.
+
+ INPUTS
+   port - clipboard.stream object has only one port, port 0.
+   buffer - pointer to the destination data buffer.
+   length - number of requested bytes.
+
+ RESULT
+   Number of bytes really read and stored to the buffer. May be less than
+   requested in case of reaching end of clip (error code MMERR_END_OF_DATA
+   is set), or encountering error (error code MMERR_IO_ERROR).
+
+clipboard.stream/MMM_Seek
+
+ NAME
+   MMM_Seek -- Seeks in a clip to specified absolute position. (V50)
+
+ SYNOPSIS
+   result = DoMethod(obj, MMM_Seek, ULONG port, ULONG type, QUAD
+   *position);
+
+ FUNCTION
+   Seeks in a clip data to specified absolute position. Clipboard.stream
+   understands MMM_SEEK_BYTES type only.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, always 0, as it is the only port in a clipboard.stream object.
+   - type, MMM_SEEK_BYTES.
+   - position, pointer to QUAD variable containing desired position in the
+     clip.
+
+ RESULT
+   Boolean value, TRUE if seek was succesfull. Additional information via
+   MMA_ErrorCode attribute:
+   - MMERR_WRONG_ARGUMENTS - negative position or seek past end of clip.
+
+clipboard.stream/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes clipboard.stream object. (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Performs final read past clip end, unlocking the clip for other
+   applications. Closes clipboard.device unit, disposes request, deletes
+   message port, then disposes object.
+
+ INPUTS
+   obj - object to be disposed
+
+ RESULT
+   None.
+
+ SEE ALSO
+   OM_NEW
+
+clipboard.stream/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new clipboard.stream object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "clipboard.stream", ...);
+
+ FUNCTION
+   Creates a new instance of clipboard.stream. Creates request message port,
+   request, opens clipboard.device unit. Note that the unit is blocked until
+   the object is disposed. This blocks all writes to this unit. Because of
+   this, applications should dispose clipboard.stream objects immediately
+   after reading is finished. Clipboard unit to open may be specified either
+   with MMA_StreamHandle or MMA_StreamName. If none of them is specified,
+   unit 0 is opened. If both are specified, MMA_StreamHandle takes
+   precedence. MMA_ErrorCode tag may be also specified as for any Reggae
+   constructor.
+
+ RESULT
+   Pointer to created object or NULL in case of failure. Additional error
+   code may be stored at pointer passed with MMA_ErrorCode. Possible codes
+   are:
+   - MMERR_OUT_OF_MEMORY, obvious.
+   - MMERR_RESOURCE_MISSING, message port cannot be created, clipboard unit
+     cannot be opened.
+   - MMERR_END_OF_DATA, clipboard unit is empty.
+
+ SEE ALSO
+   MMA_StreamHandle, MMA_StreamName
+
+

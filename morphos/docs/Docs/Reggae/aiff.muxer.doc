@@ -1,0 +1,162 @@
+TABLE OF CONTENTS
+
+aiff.muxer/--background--
+aiff.muxer/MMA_Arguments
+aiff.muxer/MMM_Pull
+aiff.muxer/MMM_Setup
+aiff.muxer/OM_DISPOSE
+aiff.muxer/OM_NEW
+aiff.muxer/--background--
+
+ DESCRIPTION
+   The class is used to save audio data as AIFF file. It cooperates with
+   audiopcm.encoder, which converts audio to choosen PCM format. Then
+   aiff.muxer adds AIFF header. The class currently can save 8, 16, 24 and
+   32-bit AIFF files.
+
+   The class supports argument string and GUI configuration. GUI generator
+   delivers a cycle gadget for selecting number of bits per sample. Reggae
+   saver generator creates aiff.muxer object, audiopcm.encoder object,
+   connects them and sets selected PCM format for the encoder.
+
+ NEW ATTRIBUTES
+   MMA_Arguments
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+   MMM_Setup
+
+ HISTORY
+   51.4 (07.10.2012)
+   - Code adjusted for the new savers API change.
+
+   51.3 (14.09.2012)
+   - General cleanup.
+
+   51.2 (13.09.2012)
+   - Enabled 24 and 32 bit format.
+   - Added support of MMA_DefaultExtension to the class.
+   - Added support of GGRA_FullName to GUI.
+
+   51.1 (20.08.2012)
+   - Initial release.
+
+
+aiff.muxer/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper format to the
+   input port. The template is "BITS/K/N".
+   - BITS - optional numeric argument specifying bits per audio sample.
+     Accepted values are 8, 16, 24 and 32. Defaults to 16.
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When specified for constructor, the string must be valid only until the
+   constructor returns, so may be a local variable.
+
+aiff.muxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Delivers block of AIFF data stream (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   AIFF multiplexer delivers AIFF header and then passes through audio PCM
+   data from audiopcm.decoder. After the header is pulled out, requests are
+   forwarded from output to input without any processing or data copying.
+
+ INPUTS
+   obj - object to pull data from.
+   port - only pull on output port (port 1) is allowed
+   buffer - destination data buffer. Must be AltiVec aligned.
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. In case of error, MMA_ErrorCode is set to a code
+   received from the previous object in chain.
+
+ NOTES
+   As AIFF header length is usually not aligned to 16 bytes, the class cuts
+   the first request at header end, without setting the error code. Then the
+   first pull forwarded to audiopcm.encoder starts again from the start of
+   buffer so is SIMD-aligned. Object connected at output of AIFF multiplexer
+   should continue pulling if it receives less than requested but
+   MMA_ErrorCode is still zero.
+
+aiff.muxer/MMM_Setup
+
+ NAME
+   MMM_Setup -- Receives audio parameters, generates AIFF header (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   When object's input is connected to data source, the method reads audio
+   stream parameters and prepares AIFF header. The data source must provide
+   following stream parameters:
+   - MMA_Sound_Channels
+   - MMA_Sound_SampleRate
+   - MMA_Sound_FrameCount
+   The header prepared contains COMM chunk and start of SSND chunk.
+
+   The method is a no-op for the output port.
+
+ INPUTS
+   port - number of port being connected.
+
+ RESULT
+   Boolean value of success.
+
+ NOTES
+   Data source must be of known length. As the stream length is stored in
+   the AIFF header, free streaming is not supported with this format. This
+   method fails if reported stream length is 0 frames (unknown).
+
+aiff.muxer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes AIFF multiplexer object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Disposes object, frees allocated memory.
+
+aiff.muxer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates Reggae AIFF multiplexer (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "aiff.muxer", ...);
+
+ FUNCTION
+   Creates an AIFF multiplexer object. By default the object is set up to
+   generate 16-bit file.
+
+ INPUTS
+   Following attributes may be specified:
+   - MMA_Arguments - configures input port format and determines number of
+     bits per sample in output. Optional.
+   - MMA_ErrorCode - pointer to LONG variable, where error code (or 0 in
+     case of success) is stored. Optional.
+
+ RESULT
+   Created object, or NULL. In case of failure MMA_ErrorCode specifies
+   reason:
+   - MMERR_OUT_OF_MEMORY, no free memory,
+   - MMERR_WRONG_ARGUMENTS, malformed MMA_Arguments, or unsupported number
+     of bits per sample specified.
+
+

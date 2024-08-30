@@ -1,0 +1,259 @@
+TABLE OF CONTENTS
+
+os.module/clock
+os.module/difftime
+os.module/execute
+os.module/exit
+os.module/getenv
+os.module/remove
+os.module/rename
+os.module/time
+os.module/tmpname
+os.module/clock
+
+ NAME
+   os.clock -- returns CPU time for a process
+
+ SYNOPSIS
+   result = os.clock()
+
+ FUNCTION
+   Returns an approximation of the CPU time utilized by the process
+   executing the Lua script.
+
+   It should be noted, that when the script is launched from a shell (for
+   example with LuaX command), this function returns CPU time consumed by
+   the parent shell process, including all the commands executed in it so
+   far. To get CPU time consumed by the Lua script only, one has to call
+   os.clock() at the start and at the end of the script, then subtract
+   results.
+
+ INPUTS
+   None.
+
+ RESULT
+   CPU time used so far, in seconds.
+
+ NOTES
+   It returns process TASKINFOTYPE_CPUTIME attribute converted to seconds.
+
+os.module/difftime
+
+ NAME
+   os.difftime -- calculates time difference between two timestamps
+
+ SYNOPSIS
+   diff = os.difftime(t2, t1)
+
+ FUNCTION
+   Calculates time difference in seconds between timestamp 't1' and
+   timestamp 't2'. Both timestamps are numbers of seconds counted from the
+   start of MorphOS epoch, which is 01-Jan-1978, 00:00:00. If 't1' is later
+   in time than 't2', the result will be negative.
+
+ INPUTS
+   t1 - the first, usually earlier timestamp
+   t2 - the second, usually later timestamp
+
+ RESULT
+   Time difference in seconds.
+
+ NOTES
+   1. Both timestamps are floating point numbers, so fractions of seconds
+      are accepted.
+   2. On MorphOS, as on most operating systems, this function just subtracts
+      't1' from 't2'. Then, in spite of using different epoch than Unix one,
+      the function is fully compatible with other platforms.
+
+os.module/execute
+
+ NAME
+   os.execute -- executes system command
+
+ SYNOPSIS
+   result = os.execute([command])
+
+ FUNCTION
+   Tries to execute passed string as a system command. When called without
+   arguments, tests system shell availability.
+
+ INPUTS
+   command - command string to execute
+
+ RESULT
+   Integer. -1 if shell is not available, exit code of the executed command
+   otherwise. When called without arguments and shell is available, the
+   result is 1.
+
+ NOTES
+   An alternative way to execute a system command is to use "ipc.module" and
+   address('COMMAND'). Then commands may be executed with rx() function,
+   ARexx like.
+
+os.module/exit
+
+ NAME
+   os.exit -- emergency application halt
+
+ SYNOPSIS
+   os.exit()
+
+ FUNCTION
+   The C library function exit() is never safe in MorphOS. That is why
+   MorphOS implementation does not call it, but freezes the process
+   executing the script and displays an informational requester.
+
+   On MorphOS this function is deprecated, never use it in scripts.
+
+ INPUTS
+   None. The optional exit code is ignored.
+
+ RESULT
+   None. Process frozen.
+*
+os.module/getenv
+
+ NAME
+   os.getenv -- gets local or global environment variable
+
+ SYNOPSIS
+   result = os.getenv(name)
+
+ FUNCTION
+   Gets contents of named local of global environment variable. Local one is
+   checked first, if not found, a global one is attempted.
+
+ INPUTS
+   name - environment variable name
+
+ RESULT
+   Variable contents, or 'nil' if the variable is not found.
+
+os.module/remove
+
+ NAME
+   os.remove -- deletes a file or an empty directory
+
+ SYNOPSIS
+   result = os.remove(path)
+
+ FUNCTION
+   Deletes specified file, or directory. Directory must be empty to be
+   deleted.
+
+ INPUTS
+   path - absolute or relative path to the object to be deleted
+
+ RESULT
+   If deleting was succesfull, the result is boolean 'true'. In case of
+   error, the function returns 3 values:
+   1. A 'nil' value.
+   2. A string containing DOS error message.
+   3. An integer, being the DOS error code.
+
+ NOTES
+   Error code is dos.library error. Error message is in format
+   "<objectname>: <message>.", where message is obtained with
+   dos.library/Fault(), so it is localized.
+
+os.module/rename
+
+ NAME
+   os.rename -- renames a file or directory
+
+ SYNOPSIS
+   result = os.rename(oldname, newname)
+
+ FUNCTION
+   Renames a file or directory specified by 'oldname' to 'newname'. May be
+   also used to move a file to a new location, assuming that source and
+   destination are on the same disk volume.
+
+ INPUTS
+   oldname - absolute or relative path to the object to be renamed.
+   newname - new name and/or new location for the object.
+
+ RESULT
+   If renaming was succesfull, the result is boolean 'true'. In case of
+   error, the function returns 3 values:
+   1. A 'nil' value.
+   2. A string containing DOS error message.
+   3. An integer, being the DOS error code.
+
+ NOTES
+   Error code is dos.library error. Error message is in format
+   "<oldname>: <message>.", where message is obtained with
+   dos.library/Fault(), so it is localized.
+
+os.module/time
+
+ NAME
+   os.time -- calculates system time, current or given by date
+
+ SYNOPSIS
+   time = os.time([datespec])
+
+ FUNCTION
+   When called without argument, returns the current time as number of
+   seconds since 01-Jan-1978 00:00:00. If a table specifying date is
+   provided, returns number of seconds between the above epoch start and
+   this date.
+
+ INPUTS
+   Optional table with following fields:
+   - "year" (must be present)
+   - "month" (must be present)
+   - "day" (must be present)
+   - "hour" (optional, defaults to 12 (noon))
+   - "min" (optional, defaults to 0)
+   - "sec" (optional, defaults to 0)
+   - "isdst" (optional, defaults to 'false'), if true, one hour is
+     subtracted.
+
+   The function works properly for dates from 01-Jan-1978 00:00:00
+   to 07-Feb-2114 06:28:15. Results for dates outside this range are
+   undefined.
+
+ RESULT
+   Time as number of seconds.
+
+ NOTES
+   The system time on MorphOS is usually set to a local timezone, not UTC.
+   Therefore result of this function is for local timezone as well.
+
+   When called without arguments, function has no way to determine if the
+   system clock uses DST or not. No DST is always assumed.
+
+   The function does not take leap seconds into account in any way.
+
+os.module/tmpname
+
+ NAME
+   os.tmpname -- generates unique temporary file name
+
+ SYNOPSIS
+   name = os.tmpname()
+
+ FUNCTION
+   Generates an unique path to a file in T: assign and makes sure file of
+   that name does not exist there. Note that the name is not reserved in
+   any way, so other process may create such file between calling
+   os.tmpname() and opening the file. That is why it is much better to use
+   io.tmpfile(). The Lua Reference Manual states, that on some systems
+   os.tmpname() also creates the file to avoid potential race condition.
+   This is NOT the case for MorphOS.
+
+ INPUTS
+   None.
+
+ RESULT
+   Path to an unique, non-existing file in T:.
+
+ NOTES
+   While generated names are unique, they are easily predictable, as being
+   derived from numbers returned by utility.library/GetUniqueID(). Don't
+   count on any security by obscurity here.
+
+   Names are generated the same way as in io.tmpfile().
+
+

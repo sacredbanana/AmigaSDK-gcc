@@ -1,0 +1,331 @@
+TABLE OF CONTENTS
+
+file.output/--background--
+file.output/MMA_OutputBytes
+file.output/MMA_TaskName
+file.output/MMA_TaskPriority
+file.output/MMM_MessageAtEnd
+file.output/MMM_Pause
+file.output/MMM_Play
+file.output/MMM_SignalAtEnd
+file.output/MMM_Stop
+file.output/OM_DISPOSE
+file.output/OM_NEW
+file.output/--background--
+
+ DESCRIPTION
+   The class is Reggae data output, writing data to a file. An object of
+   this class creates a subprocess fetching chunks of data from object's
+   input port and writing it to a file. In effect all the data processing in
+   the pipe of Reggae objects is done in this subprocess asynchronously,
+   offloading the application. Priority of the subprocess may be adjusted
+   before data writing with MMA_TaskPriority attribute. The default value of
+   -1 is recommended for background processing, so it does not impact system
+   responsivity.
+
+   Access to the output file is sequential. Thanks to this the class may
+   work with DOS pseudofiles like pipes, consoles, and other data handlers.
+   Data is written in 48 kB blocks.
+
+   Data processing is started by MMM_Play(), may be paused with MMM_Pause().
+   File is closed when an object is disposed. Disposing is usually done when
+   object is paused, but disposing a running object is guarranted to be
+   safe. Natural end of processing, caused by end of data stream or error,
+   may be signalled to the calling process with either MMM_SignalAtEnd() or
+   MMM_MessageAtEnd().
+
+   An instance of file.output, has only one port number 0. This port is an
+   input. This input accepts any data format.
+
+   An object of the class may be shared between processes. All operations
+   are protected by object's semaphore. The only exception is that the
+   object must be created and disposed by the same process.
+
+   The class supports dynamic input reconnection. It is usually done when
+   object is paused, but may be also performed on a running object. In this
+   case reconnection is done at end of current data block.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_TaskName             (V51)    [I.G.Q], STRPTR
+   MMA_TaskPriority         (V51)    [I.G.Q], BYTE
+   MMA_OutputBytes          (V52.3)  [..G.Q], QUAD
+
+ NEW METHODS
+   OM_NEW()                 (V51)
+   OM_DISPOSE()             (V51)
+   MMM_MessageAtEnd()       (V51)
+   MMM_Pause()              (V51)
+   MMM_Play()               (V51)
+   MMM_SignalAtEnd()        (V51)
+   MMM_Stop()               (V51)
+
+ HISTORY
+   52.4  (01.04.2013)
+   - Fixed bug in MMA_MessageAtEnd(), wrong command has been set to the
+     worker process.
+
+   52.3  (25.10.2012)
+   - Implemented MMA_OutputBytes.
+
+   52.2  (22.09.2012)
+   - Commands are not sent to player, when player is not running.
+     Multimedia.class calls MMM_Cleanup() method from its OM_DISPOSE(). Then
+     MMM_Cleanup() of this class tries to send a CMD_UPDATE to the player
+     thread. Of course thread is not running already, as it is killed inside
+     this class OM_DISPOSE() before calling superclass OM_DISPOSE(). Because
+     of this SendCommand() checks for d->Player, and skips sending commands
+     if it is NULL. Additionally KillProcess() explicitly sets d->Player to
+     NULL after receiving back player thread startup message.
+
+   52.1  (23.06.2011)
+   - Initial release.
+
+file.output/MMA_OutputBytes
+
+ NAME
+   MMA_OutputBytes (v52.3) [..G.Q], QUAD, 0x8EDA0023
+
+ FUNCTION
+   Return number of bytes written to the output file so far.
+
+ NOTES
+   This is 64-bit attribute.
+
+file.output/MMA_TaskName
+
+ NAME
+   MMA_TaskName (v51) [I.G.Q], STRPTR, 0x8EDA001D
+
+ FUNCTION
+   Specifies the name of object subprocess. The default name is "File Output
+   n", where 'n' is the class subprocesses counter value. The counter is
+   initialized to 0, when the class is loaded to memory (at first open). The
+   string passed must be null-terminated.
+
+ NOTES
+   The passed string is buffered, so it need not to be static.
+
+file.output/MMA_TaskPriority
+
+ NAME
+   MMA_TaskPriority (v51) [I.G.Q], BYTE, 0x8EDA0005
+
+ FUNCTION
+   Sets the priority of object subprocess. All Reggae objects connected to
+   file.output object input port perform data processing in context of the
+   subprocess. The default priority is -1, which is suitable for background
+   non-realtime jobs. Set it to 0 for foreground jobs and higher for saving
+   realtime streams. The allowed priority range is <-128, +9>.
+
+file.output/MMM_MessageAtEnd
+
+ NAME
+   MMM_MessageAtEnd (v51) -- Adds a message to end of stream event.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_MessageAtEnd, struct Message *msg);
+
+ FUNCTION
+   Adds a mesage to be replied at end of stream event. The message is put
+   into an internal message port. If there are more calls to this method,
+   messages passed are queued in the port. When end of stream event occurs,
+   all queued messages are replied to their respective reply ports.
+
+   Unlike MMM_SignalAtEnd(), this is an "one shot" attribute, as a message
+   can be replied once only. Then it has to be reinitialized and sent
+   again with this method. On the other hand only one signal to one process
+   may be sent at end of stream, while number of messages replied is not
+   limited.
+
+ INPUTS
+   - msg, a message to be sent. It must be a properly initialized system
+     message, it means mn_Node.ln_Type, mn_Length and mn_ReplyPort fields
+     must be valid.
+
+ RESULT
+   Boolean value of success. The method can fail for following reasons:
+   - temporary message port used to communicate with the subprocess cannot
+     be created, MMA_ErrorCode is MMERR_RESOURCE_MISSING.
+   - NULL message pointer, MMA_ErrorCode is MMERR_WRONG_ARGUMENTS.
+
+ SEE ALSO
+   MMM_Stop, MMM_Pause, MMM_SignalAtEnd
+
+file.output/MMM_Pause
+
+ NAME
+   MMM_Pause (V51) -- Pauses data writing.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Pause);
+
+ FUNCTION
+   For file.output this method is the same as MMM_Stop().
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   MMM_Play, MMM_Stop
+
+file.output/MMM_Play
+
+ NAME
+   MMM_Play (V51) -- Starts data writing.
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Play);
+
+ FUNCTION
+   The method starts the data processing. Data is being pulled from the
+   object input and written to the output file. The method is asynchronous,
+   so it returns to the caller immediately. Writing is stopped automatically
+   if data pull returns an error (MMERR_END_OF_DATA typically). It can be
+   also stopped at any time with MMM_Stop(),or by just disposing the object.
+   MMM_Play() issued while object is still processing, is ignored.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   MMM_Stop, MMM_Sound_SignalAtEnd, MMM_Sound_ReplyMsgAtEnd, MMA_ErrorCode
+
+file.output/MMM_SignalAtEnd
+
+ NAME
+   MMM_SignalAtEnd (v51) -- Sets a signal for end of stream event.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_SignalAtEnd, *struct Process process, ULONG sigbit);
+
+ FUNCTION
+   As data processing in the class is asynchronous to calling application,
+   there must be a way of signalling the end of stream. This method sets a
+   signal to be sent to a process specified when end of stream event
+   happens. End of stream event happens when processing is stopped for
+   reasons independent of the application:
+
+   - End of data in stream.
+   - Data pull error.
+   - Output file writing error.
+
+   These cases can be distinguished by checking MMA_ErrorCode attribute. It
+   will be MMERR_END_OF_DATA for end of stream, other error code in case of
+   fail. Note that performing MMM_Stop(), MMM_Pause() or disposing the
+   object do not trigger end of stream event.
+
+   The signalling request remains active after end of stream event. The
+   signal is sent at every such event until the object is disposed. To clear
+   the signalling request call this method with NULL process pointer. Only
+   one signal to one process may be sent. If in need of multiple processes
+   signalling, one should use MMM_MessageAtEnd() method, or implement signal
+   retransmission.
+
+ INPUTS
+   - process, the process to be signalled, or NULL to cancel the signalling.
+   - sigbit, the signal number (not mask!) to be used, must be in (0, 31)
+     range, the call will be ignored otherwise and error code set to
+     MMERR_WRONG_ARGUMENTS for the object.
+
+ RESULT
+   Boolean value of success. The method can fail for following reasons:
+   - temporary message port used to communicate with the subprocess cannot
+     be created, MMA_ErrorCode is MMERR_RESOURCE_MISSING.
+   - signal number out of range, MMA_ErrorCode is MMERR_WRONG_ARGUMENTS.
+
+ NOTES
+   When using a private signal (not one of SIGBREAKB_CTRL_(C|D|E|F)), the
+   signal must be allocated by the process to be signalled with
+   AllocSignal().
+
+   Execution of MMM_Stop() or MMM_Pause() does not trigger the end of stream
+   event.
+
+ SEE ALSO
+   MMM_Stop, MMM_Pause, MMM_MessageAtEnd
+
+file.output/MMM_Stop
+
+ NAME
+   MMM_Stop (V51) -- Pauses data writing.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Stop);
+
+ FUNCTION
+   The method stops writing data to the output file, but does not close it.
+   Writing can be resumed with MMM_Play(). Note that this method does not
+   trigger end of stream events.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ NOTES
+   For file.output there is no difference between MMM_Stop() and
+   MMM_Pause().
+
+ SEE ALSO
+   MMM_Play
+
+file.output/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes file.output object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Flushes data from buffer, frees it, closes output file, kills the worker
+   process, disposes the object.
+
+ INPUTS
+   obj - object to dispose
+
+ RESULT
+   None.
+
+file.output/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new file.output object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "file.output", ...);
+
+ FUNCTION
+   Creates a new file.output object. Launches a worker process, the process
+   allocates its data buffer. The process also opens the output file in the
+   DOS MODE_NEWFILE. If the file cannot be opened, constructor fails. No
+   data is written to the file until MMM_Play() is issued.
+
+ INPUTS
+   tags - supported ones are MMA_TaskPriority, MMA_TaskName and
+     MMA_ErrorCode.
+
+ RESULT
+   Object pointer or NULL when construction fails. Optional variable pointed
+   by MMA_ErrorCode may be set to:
+   - MMERR_OUT_OF_MEMORY, obvious.
+   - MMERR_IO_ERROR, when file cannot be opened. DOS error is logged.
+   - MMERR_RESOURCE_MISSING, when worker process cannot open dos.library,
+     intuition.library or multimedia.class. While theoretically possible, it
+     is extremely unlikely to happen.
+
+

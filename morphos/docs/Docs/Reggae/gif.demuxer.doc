@@ -1,0 +1,192 @@
+TABLE OF CONTENTS
+
+gif.demuxer/MMA_DataFormat
+gif.demuxer/MMA_MimeType
+gif.demuxer/MMA_Video_BgColor
+gif.demuxer/MMA_Video_BitsPerPixel
+gif.demuxer/MMA_Video_FrameCount
+gif.demuxer/MMA_Video_Height
+gif.demuxer/MMA_Video_Palette
+gif.demuxer/MMA_Video_Width
+gif.demuxer/MMM_Pull
+gif.demuxer/background
+gif.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V51.3) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns either "GIF87a" or "GIF89a" string.
+
+gif.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType (V51.6) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only NULL-terminated MIME type string. This class returns
+   "image/gif".
+
+gif.demuxer/MMA_Video_BgColor
+
+ NAME
+   MMA_Video_BgColor (V51.3) [..G.Q], ULONG
+
+ FUNCTION
+   This is the background color ARGB32 value as specified in the screen
+   descriptor. If there is no global palette, background color is to be
+   ignored, so $FF000000 (fully transparent black) is returned. The same
+   value is returned if background color index is outside the global
+   palette.
+
+ SEE ALSO
+   MMA_Video_Palette
+
+gif.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Global number of bits used to represent one pixel in the source data.
+   Note that GIF format allows for following images (frames) to have
+   different bits per pixel for every frame. The global value is used when
+   a frame has no local bits per pixel specified.
+
+gif.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   GIF87a: One frame is always assumed. If the image consists of more than
+   one subimage, subimages are composed into single frame.
+
+   GIF89a: Number of anim frames cannot be determined from the header. Zero
+   is returned (means unknown number of frames).
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+gif.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   GIF format makes distinction between so called 'screen size' and image
+   size. A series of images may be placed in screen size rectangle at
+   different positions. For gif.demuxer this attribute returns 'screen
+   height' which also may be called as canvas height. Decoder places images
+   on this canvas (filled before with the background color) according to
+   individual images positions and sizes. Typical GIF file will have one
+   image with canvas size equal to the image size.
+
+gif.demuxer/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [..G.Q], *ULONG
+
+ FUNCTION
+   Specifies global image data palette as a table of 32-bit ARGB entries.
+   Note that GIF format allows for separate local palette for every
+   following image (frame). Global palette is used for frames without local
+   ones. If there is no global palette, a default one is created. The
+   default palette is grayscale starting from black. Number of default
+   palette entries depends on MMA_Video_BitsPerPixel.
+
+gif.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   GIF format makes distinction between so called 'screen size' and image
+   size. A series of images may be placed in screen size rectangle at
+   different positions. For gif.demuxer this attribute returns 'screen
+   width' which also may be called as canvas width. Decoder places images on
+   this canvas (filled before with the background color) according to
+   individual images positions and sizes. Typical GIF file will have one
+   image with canvas size equal to the image size.
+
+gif.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   This class does not process image data, it only strips GIF signature,
+   screen descriptor and global palette (if present). Then pull requests are
+   just forwarded to the connected stream.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+gif.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for GIF images. The class performs
+   following tasks:
+   - GIF signature verification and 87a/89a detection.
+   - Parsing 'screen descriptor'.
+   - Storing global palette (if present).
+   The class does not process image stream data following the screen
+   descriptor. Some fields in the screen descriptor are ignored: reserved
+   bit 3 in byte 5 value and color resolution (as Reggae supports 8 bit per
+   color component as minimum and palette entries in GIF are always scaled
+   to 8 bits). Byte 7 (specified as containing 0) is ignored as well.
+
+   Object of gif.demuxer class has two ports: port 0 is an input and
+   accepts MMF_STREAM format, port 1 is an output and produces
+   MMF_VIDEO_GIF format.
+
+ NEW ATTRIBUTES
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Palette           (V51)    [..G.Q], *ULONG
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_Video_BgColor           (V51.3)  [..G.Q], ULONG
+   MMA_DataFormat              (V51.3)  [..G.Q], STRPTR
+   MMA_MimeType                (V51.6)  [..G.Q], STRPTR
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.6  (28.06.2015)
+   - Added MMA_MimeType attribute.
+
+   51.5  (15.08.2007)
+   - MMA_Video_FrameCount returns 0 for GIF89a files.
+
+   51.4  (23.07.2007)
+   - Both loaded and autogenerated palette have alpha set to 0xFF for all
+        colors.
+
+   51.3  (27.06.2007)
+   - Implemented MMA_Video_BgColor.
+   - Implemented MMA_DataFormat.
+
+   51.2  (13.06.2007)
+   - Fixed bug in the palette loader.
+
+   51.1  (04.02.2007)
+   - Initial revision.
+
+

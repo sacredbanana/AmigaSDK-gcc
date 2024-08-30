@@ -1,0 +1,140 @@
+TABLE OF CONTENTS
+
+targa.demuxer/MMA_DataFormat
+targa.demuxer/MMA_Video_BitsPerPixel
+targa.demuxer/MMA_Video_FrameCount
+targa.demuxer/MMA_Video_Height
+targa.demuxer/MMA_Video_Palette
+targa.demuxer/MMA_Video_PaletteLength
+targa.demuxer/MMA_Video_UseAlpha
+targa.demuxer/MMA_Video_Width
+targa.demuxer/MMM_Pull
+targa.demuxer/background
+targa.demuxer/MMA_DataFormat
+
+   NAME
+       MMA_DataFormat (V50) [..G.Q], STRPTR
+
+   FUNCTION
+       Returns read-only textual NULL-terminated description of decoded
+       format. This class returns "Targa" string.
+
+targa.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Return number of bits used to represent one pixel in the source data.
+
+targa.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Always return 1.
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+targa.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns height of image in pixels.
+
+targa.demuxer/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [..G.Q], *ULONG
+
+ FUNCTION
+   Specifies image data palette as a table of 32-bit ARGB entries.
+
+targa.demuxer/MMA_Video_PaletteLength
+
+ NAME
+   MMA_Video_PaletteLength (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Return number of colors defined in palette or 0 for truecolor images.
+
+targa.demuxer/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Returns TRUE if Targa image data contain alpha channel or image
+   mask (which is merged with alpha channel), FALSE otherwise.
+
+targa.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns width of image in pixels.
+
+targa.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   This class does not process image data, it only strips Targa signature,
+   screen descriptor and palette table (if present). Then pull requests are
+   just forwarded to the connected stream.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+targa.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for TARGA images. The class performs
+   following tasks:
+   - Targa siggnature verification.
+   - Storing palette table
+   The class does not process image stream data.
+
+   Object of targa.demuxer class has two ports: port 0 is an input and
+   accepts MMF_STREAM format, port 1 is an output and produces
+   MMF_VIDEO_TARGA format.
+
+ NEW ATTRIBUTES
+   MMA_DataFormat              (V51)    [..G.Q], STRPTR
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_Video_UseAlpha          (V51)    [..G.Q], ULONG
+   MMA_Video_Palette           (V51)    [..G.Q], *ULONG
+   MMA_Video_PaletteLength     (V51)    [..G.Q], ULONG
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+   51.1  (08.09.2007)
+   - Initial revision.
+    51.2  (19.11.2011)
+   - MMA_Video_PaletteLength support
+
+

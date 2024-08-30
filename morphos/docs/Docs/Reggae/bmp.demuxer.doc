@@ -1,0 +1,168 @@
+TABLE OF CONTENTS
+
+bmp.demuxer/MMA_BlockAlign
+bmp.demuxer/MMA_DataFormat
+bmp.demuxer/MMA_MimeType
+bmp.demuxer/MMA_StreamPosBytes
+bmp.demuxer/MMA_Video_FrameCount
+bmp.demuxer/MMM_Pull
+bmp.demuxer/MMM_Seek
+bmp.demuxer/__background__
+bmp.demuxer/MMA_BlockAlign
+
+ NAME
+   MMA_BlockAlign (V51.6) [..G.Q], ULONG
+
+ FUNCTION
+   This attribute is used internally to pass pixmap data offset from
+   beginning of the stream, as specified in the header. This offset is used
+   by bmp.decoder as a helper for decoding broken images.
+
+bmp.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V51.7) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns "Windows BitMap" string.
+
+bmp.demuxer/MMA_MimeType
+
+ NAME
+   MMA_DataFormat (V51.8) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated MIME type string. This class
+   returns "image/x-bmp" string.
+
+bmp.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes (V51.6) [..G.Q], UQUAD*
+
+ FUNCTION
+   Current position in BMP encoded data in bytes (after stripping 14-byte
+   BMP file header).
+
+ NOTES
+   As every 64-bit attribute, MMA_StreamPosBytes is passed by pointer to a
+   64-bit value.
+
+bmp.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V50) [..G.Q], UQUAD*
+
+ FUNCTION
+   As BMP format does not support multiframe images, this attribute returns
+   1 always.
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+bmp.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes Windows BitMap data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of stream data from input, processes them to extract
+   raw Windows BitMap data and places them in the specified buffer. The
+   demuxer is pass-through for image data (no data copying).
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+bmp.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek -- Seeks in encoded BMP data. (V51.6)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Seek, ULONG port, ULONG type, UQUAD*
+   offset);
+
+ FUNCTION
+   Seeks in encoded BMP stream, as the demuxer does no data conversion it
+   only adds main BMP header size to the offset, and passes the method
+   to the input port (it is then forwarded to the connected stream object).
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   type - seek type, must be MMM_SEEK_BYTES.
+   length - absolute position in BMP encoded data in bytes.
+
+ RESULT
+   Boolean success value.
+
+ NOTES
+   The offset is passed as a pointer to 64-bit unsigned number.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+bmp.demuxer/__background__
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for BMP streams (pictures). It
+   recognizes and decodes basic BMP header, then sends image data to
+   bmp.decoder.
+
+ PORTS
+   - port 0 - input, MMF_STREAM.
+   - port 1 - output, MMF_VIDEO_BMP.
+
+ HISTORY
+   51.10 (01.03.2022)
+   - Fixed MMM_Seek bogus DoSuperMethod call.
+
+   51.8 (27.06.2015)
+   - MMA_DataFormat now falls back to the class definition (requires
+     multimedia.class 55.10+ to work).
+   - Implemented MMA_MimeType (requires multimedia.class 55.10+ to work).
+
+   51.7 (29.06.2007)
+   - Implemented MMA_DataFormat.
+
+   51.6 (29.01.2007)
+   - Added MMA_BlockAlign attribute (stream offset to pixmap data) used by
+     bmp.decoder for workarounds for decoding buggy images.
+   - Added missing OM_GET and MMM_GetPort entries to the dispatcher.
+   - Implemented MMM_Seek().
+   - Added MMA_StreamPosBytes attribute.
+   - Recognition routine: if header filesize does not match filesystem
+     filesize, does not set probability to 0. Allows lot of broken images to
+     be accepted.
+
+   51.5 (08.01.2006)
+   - Fixed Setup(), should return TRUE when called on the output port.
+
+   51.4 (13.06.2005)
+   - Fixed broken recognition routine (peeking into random port).
+
+   51.3 (04.05.2005)
+   - Removed debuglog output.
+
+   51.2 (20.04.2005)
+   - Added debug info in the destructor.
+
+   50.1 (24.10.2004)
+   - Initial revision.
+
+

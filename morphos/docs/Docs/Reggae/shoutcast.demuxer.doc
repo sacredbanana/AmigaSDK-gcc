@@ -1,0 +1,94 @@
+TABLE OF CONTENTS
+
+shoutcast.demuxer/MMA_Shoutcast_DataGap
+shoutcast.demuxer/MMM_Pull
+shoutcast.demuxer/MMM_Seek
+shoutcast.demuxer/background
+shoutcast.demuxer/MMA_Shoutcast_DataGap
+
+ NAME
+   MMA_Shoutcast_DataGap [I.G.Q], LONG,
+
+ FUNCTION
+   Data gap in bytes between two Shoutcast metadata frames in the audio
+   stream. Data gap value is sent by a Shoutcast server in header of its
+   HTTP response. Then application has to get it from http.stream object and
+   specify it in the constructor of shoutcast.demuxer. It should be done in
+   the following sequence:
+     1. Application creates http.stream object, which connects to a
+        Shoutcast server.
+     2. After connection is estabilished and response header received,
+        application gets data gap value with MMM_Http_GetHeaderEntry() using
+        "icy-metaint" entry name and converts it to an integer.
+     3. Application creates shoutcast.demuxer object specifying data gap in
+        NewObject().
+   If there is no "icy-metaint" field in the response header, it means the
+   server sends pure audio stream without metadata. Then shoutcast.demuxer
+   object should not be added to the processing chain, stream objects
+   should be connected to matching audio demuxer directly.
+
+shoutcast.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- pulls block of data from output port. (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, LONG port, APTR buffer, LONG length);
+
+ FUNCTION
+   Delivers a block of audio encoded stream, stripped off Shoutcast metadata
+   frames. Evevy complete Shoutcast frame encountered is parsed and
+   submitted to Reggae metadata engine. Audio data are not processed.
+
+ INPUTS
+   - port - port number.
+   - buffer - buffer for pulled data, allocated with MediaAllocVec().
+   - length - length of requested data block in bytes.
+
+ RESULT
+   Number of bytes stored in the buffer. Additional error information
+   available via MMA_ErrorCode.
+
+shoutcast.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek -- moves read pointer in the buferred stream. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Seek, LONG port, LONG type, QUAD *position);
+
+ FUNCTION
+   Shoutcast protocol does not support seeking, so this method always return
+   FALSE.
+
+ INPUTS
+   - port - port number.
+   - type - only MMM_SEEK_BYTES allowed.
+   - position - new absolute position in stream (pointer to 64-bit variable).
+
+ RESULT
+   Always FALSE.
+
+shoutcast.demuxer/background
+
+ DESCRIPTION
+   The class extracts Shoutcast metadata frames from compressed audio
+   stream. Shoutcast frames are then removed from the stream, which is
+   passed to the output. Extracted metadata are then parsed and submitted
+   to Reggae metadata subsystem.
+
+   Note that shoutcast.demuxer object is not seekable. This is for three
+   reasons:
+   1. Shoutcast protocol has no seek ability, as it is designed for
+      continuous media.
+   2. shoutcast.demuxer usually cooperates with http.stream, which is not
+      seekable as well.
+
+ HISTORY
+   51.2 (13.12.2015)
+   - Parses and submits stream title.
+
+   51.1 (22.02.2012)
+   - The first release.
+
+

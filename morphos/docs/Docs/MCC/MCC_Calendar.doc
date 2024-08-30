@@ -1,0 +1,478 @@
+TABLE OF CONTENTS
+
+Calendar.mcc/MUIA_Calendar_CalendarDate
+Calendar.mcc/MUIA_Calendar_CalendarDateBrowser
+Calendar.mcc/MUIA_Calendar_Changed
+Calendar.mcc/MUIA_Calendar_Compact
+Calendar.mcc/MUIA_Calendar_ContextCalendarDate
+Calendar.mcc/MUIA_Calendar_ContextContentID
+Calendar.mcc/MUIA_Calendar_Database
+Calendar.mcc/MUIA_Calendar_Day
+Calendar.mcc/MUIA_Calendar_DayClick
+Calendar.mcc/MUIA_Calendar_DayDoubleClick
+Calendar.mcc/MUIA_Calendar_Mode
+Calendar.mcc/MUIA_Calendar_Month
+Calendar.mcc/MUIA_Calendar_MonthBrowser
+Calendar.mcc/MUIA_Calendar_PeekOver
+Calendar.mcc/MUIA_Calendar_ShowImages
+Calendar.mcc/MUIA_Calendar_ShowTimelines
+Calendar.mcc/MUIA_Calendar_ShowTitle
+Calendar.mcc/MUIA_Calendar_ShowWeekdays
+Calendar.mcc/MUIA_Calendar_Year
+Calendar.mcc/MUIA_Calendar_YearBrowser
+Calendar.mcc/MUIM_Calendar_GetDaysInMonth
+Calendar.mcc/MUIM_Calendar_Notification
+Calendar.mcc/MUIM_Calendar_ReadSystemDate
+Calendar.mcc/MUIM_Calendar_ValidateDate
+Calendar.mcc/MUIM_Calendar_ValidateDateRange
+Calendar.mcc/MUIA_Calendar_CalendarDate
+
+   NAME
+    MUIA_Calendar_CalendarDate (V22) [ISG-], (struct CalendarDate *)
+
+   FUNCTION
+    Specifies the complete date at once.
+
+    Default is taken from system date/time.
+
+   NOTES
+    Using mui notifications will not work as the
+    structures contents gets copied and not the
+    pointer. If you set this, notifications for
+    day, month and year will be created if a
+    change took place. For all in one notifications
+    use MUIA_Calendar_Changed
+
+   SEE ALSO
+    MUIA_Calendar_Day, MUIA_Calendar_Month, MUIA_Calendar_Year
+    MUIA_Calendar_Changed
+
+Calendar.mcc/MUIA_Calendar_CalendarDateBrowser
+
+   NAME
+    MUIA_Calendar_CalendarDateBrowser (V22) [ISG-], (struct CalendarDate *)
+
+   FUNCTION
+    Makes the calender view jump to the specified month and year.
+
+    Default is taken from system date/time.
+
+   NOTES
+    Using mui notifications will not work as the
+    structures contents gets copied and not the
+    pointer. If you set this, notifications for
+    browsers month and year will be created if a
+    change took place.
+
+   SEE ALSO
+    MUIA_Calendar_MonthBrowser, MUIA_Calendar_YearBrowser
+
+Calendar.mcc/MUIA_Calendar_Changed
+
+   NAME
+    MUIA_Calendar_Changed (V20) [---N], ULONG
+
+   FUNCTION
+    When MUIA_Calendar_Day, MUIA_Calendar_Month,
+    or MUIA_Calendar_Year are modified, this gives
+    a notification.
+
+    There is no default.
+
+   SEE ALSO
+    MUIA_Calendar_Day, MUIA_Calendar_Month, MUIA_Calendar_Year
+
+Calendar.mcc/MUIA_Calendar_Compact
+
+   NAME
+    MUIA_Calendar_Compact (V20) [ISG], BOOL
+
+   FUNCTION
+    If compact is enabled the abbreviation for
+    month and weekday names will be used.
+
+    Default is FALSE.
+
+   NOTES
+    This mode is mutual exclusive to database related
+    features like timeline and image display.
+
+   SEE ALSO
+    MUIA_Calendar_ShowTitle
+
+Calendar.mcc/MUIA_Calendar_ContextCalendarDate
+
+   NAME
+    MUIA_Calendar_ContextCalendarDate (V22) [--G-], ULONG
+
+   FUNCTION
+    Allows to retrieve the specific date the context menu operation was
+    initiated on. If a context menus for timelines is required, then the tag
+    MUIA_Calendar_ContextContentID will return the specific content id
+    if possible.
+
+   NOTES:
+    Only valid when retrieved during MUIM_ContextMenuBuild
+    or MUIM_ContextMenuChoice method.
+
+    There is no default.
+
+   SEE ALSO
+    MUIA_Calendar_ContextContentID
+
+Calendar.mcc/MUIA_Calendar_ContextContentID
+
+   NAME
+    MUIA_Calendar_ContextContentID (V22) [--G-], ULONG
+
+   FUNCTION
+    Allows to retrieve the content id the user opened the context menu on
+    The resulting value may be zero when the mouse wasn't over a time line.
+    In this case MUIA_Calendar_ContextCalendarDate will return the specific
+    date representing this context menu operation.
+
+   NOTES:
+    Only valid when retrieved during MUIM_ContextMenuBuild
+    or MUIM_ContextMenuChoice method.
+
+    There is no default.
+
+   SEE ALSO
+    MUIA_Calendar_ContextCalendarDate
+
+Calendar.mcc/MUIA_Calendar_Database
+
+   NAME
+    MUIA_Calendar_Database (V22) [IS--], STRPTR
+
+   FUNCTION
+    Filename where the database should be created or loaded
+   from. If NULL the database will be closed.
+
+    There is no default.
+
+   SEE ALSO
+
+Calendar.mcc/MUIA_Calendar_Day
+
+   NAME
+    MUIA_Calendar_Day (V20) [ISGN], ULONG
+
+   FUNCTION
+    Specifies the current day of month.
+
+    Default is taken from system date/time.
+   SEE ALSO
+    MUIA_Calendar_Month, MUIA_Calendar_Year, MUIA_Calendar_CalendarDate
+
+Calendar.mcc/MUIA_Calendar_DayClick
+
+   NAME
+    MUIA_Calendar_DayClick (V22) [--GN], ULONG
+
+   FUNCTION
+    Notification if the user presses enter or clicks
+    on the day grid. On get you will get the specific
+    day number.
+
+   NOTES:
+    If MUIA_PeekOver was set to true, numbers can appear
+    twice. e.g. the 31st in last month and the 31st in
+    current month. To address that flags needs to be
+    checked:
+    MUIV_Calendar_DayClick_PreviousMonth and
+    MUIV_Calendar_DayClick_NextMonth are mask values
+    and are only set, when peek over is enabled and
+    the user clicked on a day before or after the current
+    month. To get the day number simply mask against 0xff.
+
+    There is no default.
+
+   SEE ALSO
+    MUIA_Calendar_DayDoubleClick
+
+Calendar.mcc/MUIA_Calendar_DayDoubleClick
+
+   NAME
+    MUIA_Calendar_DayDoubleClick (V22) [--GN], ULONG
+
+   FUNCTION
+    Notification if the user presses enter or clicks
+    on the day grid twice in double click speed. On get
+    you will get the day grid by mouse or keyboard.
+
+   NOTES:
+    If MUIA_PeekOver was set to true, numbers can appear
+    twice. e.g. the 31st in last month and the 31st in
+    current month. To address that a flags needs to be
+    checked:
+    MUIV_Calendar_DayClick_PreviousMonth and
+    MUIV_Calendar_DayClick_NextMonth are mask values
+    and are only set, when peek over is enabled and
+    the user clicked on a day before or after the current
+    month. To get the day number simply mask against 0xff.
+
+    There is no default.
+
+   SEE ALSO
+    MUIA_Calendar_DayClick
+
+Calendar.mcc/MUIA_Calendar_Mode
+
+   NAME
+    MUIA_Calendar_Mode (V20) [ISGN], ULONG
+
+   FUNCTION
+    This option allows to control the way the
+    user can interact with the calendar display.
+
+    Possible values are:
+    MUIV_Calendar_Mode_None : Static display
+    MUIV_Calendar_Mode_Days : Allows to change the day only
+    MUIV_Calendar_Mode_Full : Full day, month year browser
+
+    Default is MUIV_Calendar_Mode_Full.
+
+   SEE ALSO
+    MUIA_Calendar_ShowTitle
+
+Calendar.mcc/MUIA_Calendar_Month
+
+   NAME
+    MUIA_Calendar_Month (V20) [ISGN], ULONG
+
+   FUNCTION
+    The current selected month.
+
+    Default is taken from system date/time.
+   SEE ALSO
+    MUIA_Calendar_Day, MUIA_Calendar_Year, MUIA_Calendar_CalendarDate
+
+Calendar.mcc/MUIA_Calendar_MonthBrowser
+
+   NAME
+    MUIA_Calendar_MonthBrowser (V22) [ISGN], ULONG
+
+   FUNCTION
+    The calendar page will show the specified month.
+
+    Default is taken from system date/time.
+   SEE ALSO
+    MUIA_Calendar_Year, MUIA_Calendar_CalendarDateBrowser
+
+Calendar.mcc/MUIA_Calendar_PeekOver
+
+   NAME
+    MUIA_Calendar_PeekOver (V20) [ISGN], BOOL
+
+   FUNCTION
+    The day pages gets filled with day numbers
+    from previous and next month.
+
+    Default is FALSE.
+
+   SEE ALSO
+
+
+Calendar.mcc/MUIA_Calendar_ShowImages
+
+   NAME
+    MUIA_Calendar_ShowImages (V22) [ISGN], BOOL
+
+   FUNCTION
+    Images are shown next to the day number, when
+    the calendar database is active.
+
+   NOTES
+    Using this feature will turn off compact mode
+    as Timelines need space, which is mutial
+    exclusive with a compact view.
+
+    Default is FALSE.
+
+   SEE ALSO
+    MUIA_Calendar_Database
+
+Calendar.mcc/MUIA_Calendar_ShowTimelines
+
+   NAME
+    MUIA_Calendar_ShowTimelines (V22) [ISGN], BOOL
+
+   FUNCTION
+    Timelines are horizontal bars representing
+    events in a calender. This option is only
+    useful if you turn on the calendars internal
++   database.
+
+   NOTES
+    Using this feature will turn off compact mode
+    as Timelines need space, which is mutial
+    exclusive with a compact view.
+
+    Default is FALSE.
+
+   SEE ALSO
+    MUIA_Calendar_Database
+
+Calendar.mcc/MUIA_Calendar_ShowTitle
+
+   NAME
+    MUIA_Calendar_ShowTitle (V20) [ISG], BOOL
+
+   FUNCTION
+    There is a title shown above the calendar, which
+    also may provide a UI for browsing through the
+   calendar.
+
+    Default is TRUE.
+
+   SEE ALSO
+    MUIA_Calendar_Mode
+
+Calendar.mcc/MUIA_Calendar_ShowWeekdays
+
+   NAME
+    MUIA_Calendar_ShowWeekdays (V22) [ISGN], BOOL
+
+   FUNCTION
+    This option allows to disable the weekday names
+    to gain even more vertical pace, which may be
+    usefull in compact mode.
+
+    Default is TRUE.
+
+   SEE ALSO
+    MUIA_Calendar_Mode
+
+Calendar.mcc/MUIA_Calendar_Year
+
+   NAME
+    MUIA_Calendar_Year (V20) [ISGN], ULONG
+
+   FUNCTION
+    The current selected year.
+
+    Default is taken from system date/time.
+   SEE ALSO
+    MUIA_Calendar_Day, MUIA_Calendar_Month, MUIA_Calendar_CalendarDate
+
+Calendar.mcc/MUIA_Calendar_YearBrowser
+
+   NAME
+    MUIA_Calendar_YearBrowser (V22) [ISGN], ULONG
+
+   FUNCTION
+    The view will flip to the specified year, without
+    changing the displayed month..
+
+    Default is taken from system date/time.
+   SEE ALSO
+    MUIA_Calendar_MonthBrowser, MUIA_Calendar_CalendarDateBrowser
+
+Calendar.mcc/MUIM_Calendar_GetDaysInMonth
+
+   NAME
+    MUIM_Calendar_GetDaysInMonth (V20)
+
+   SYNOPSIS
+    DoMethod(obj, MUIM_Calendar_GetDaysInMonth, IPTR month, IPTR year );
+
+   FUNCTION
+    The calendar will return the number of days for the specific
+    month/year combination.
+
+   SEE ALSO
+
+
+Calendar.mcc/MUIM_Calendar_Notification
+
+   NAME
+    MUIM_Calendar_Notification (V22)
+
+   SYNOPSIS
+    DoMethod(obj, MUIM_Calendar_Notification, IPTR NotificationMode,
+    struct CalendarDate *CalendarDate);
+
+   FUNCTION
+    This notification get called when the user clicks on a calendar
+    day.
+
+   INPUT
+    NotificationMode - delivers MUIV_Calendar_NotifyMode_#? so you
+                       can react on click or doubleclick. Make sure
+                       to check agains the specific values to avoid
+                       troubles when future changes to the API
+                       are made.
+    CalendarDate     - Pointer on CalendarDate related to the
+                       notification. IMPORTANT! This pointer
+                       is only valid during notification.
+
+   RESULT
+
+
+   SEE ALSO
+    MUIM_Calendar_ValidateDate
+
+Calendar.mcc/MUIM_Calendar_ReadSystemDate
+
+   NAME
+    MUIM_Calendar_ReadSystemDate (V20)
+
+   SYNOPSIS
+    DoMethod(obj, MUIM_Calendar_ReadSystemDate);
+
+   FUNCTION
+    The calendar will return to main view and the
+    system date will be shown.
+
+   SEE ALSO
+    MUIA_Calendar_Day, MUIA_Calendar_Month, MUIA_Calendar_Year
+
+Calendar.mcc/MUIM_Calendar_ValidateDate
+
+   NAME
+    MUIM_Calendar_ValidateDate (V22)
+
+   SYNOPSIS
+    DoMethod(obj, MUIM_Calendar_ValidateDate, struct CalendarDate *cd );
+
+   FUNCTION
+    The given CalendarDate structure will be checked to ensure
+    every field is within valid boundaries.
+
+   INPUT
+    Pointer to an initialized struct CalendarDate. If the specfied
+    structure is invalid, corrections will be made.
+
+   RESULT
+    TRUE if at least one correction took place.
+
+   SEE ALSO
+    MUIM_Calendar_ValidateDateRange
+
+Calendar.mcc/MUIM_Calendar_ValidateDateRange
+
+   NAME
+    MUIM_Calendar_ValidateDateRange (V22)
+
+   SYNOPSIS
+    DoMethod(obj, MUIM_Calendar_ValidateDateRange, struct CalendarDate *start,
+    struct CalendarDate *end, IPTR ContentsRepeat );
+
+   FUNCTION
+    The given CalendarDate structures will be checked to ensure
+    every field is within valid boundaries. It will also guaranteed
+    that the start date is before end date.
+
+   INPUT
+    start  - start calendar date
+    end    - end calendar date
+    repeat - MUIV_Calendar_EventRepeat_#?
+
+   RESULT
+    TRUE if at least one correction took place.
+
+   SEE ALSO
+    MUIM_Calendar_ValidateDate
+
+

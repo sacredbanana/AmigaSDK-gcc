@@ -1,0 +1,3035 @@
+TABLE OF CONTENTS
+
+lua.library/LuaArgCheck
+lua.library/LuaArgError
+lua.library/LuaAtPanic
+lua.library/LuaCPCall
+lua.library/LuaCall
+lua.library/LuaCallMeta
+lua.library/LuaCheckAny
+lua.library/LuaCheckInteger
+lua.library/LuaCheckLString
+lua.library/LuaCheckNumber
+lua.library/LuaCheckOption
+lua.library/LuaCheckStack
+lua.library/LuaCheckString
+lua.library/LuaCheckType
+lua.library/LuaCheckUData
+lua.library/LuaClose
+lua.library/LuaConcat
+lua.library/LuaCreateTable
+lua.library/LuaDump
+lua.library/LuaEqual
+lua.library/LuaError
+lua.library/LuaErrorF
+lua.library/LuaGC
+lua.library/LuaGetAllocF
+lua.library/LuaGetFEnv
+lua.library/LuaGetField
+lua.library/LuaGetGlobal
+lua.library/LuaGetHook
+lua.library/LuaGetHookCount
+lua.library/LuaGetHookMask
+lua.library/LuaGetInfo
+lua.library/LuaGetLocal
+lua.library/LuaGetMetaField
+lua.library/LuaGetMetaTable
+lua.library/LuaGetStack
+lua.library/LuaGetTable
+lua.library/LuaGetTop
+lua.library/LuaGetUpValue
+lua.library/LuaInsert
+lua.library/LuaIsBoolean
+lua.library/LuaIsCFunction
+lua.library/LuaIsFunction
+lua.library/LuaIsLightUserData
+lua.library/LuaIsNil
+lua.library/LuaIsNone
+lua.library/LuaIsNoneOrNil
+lua.library/LuaIsNumber
+lua.library/LuaIsString
+lua.library/LuaIsTable
+lua.library/LuaIsThread
+lua.library/LuaIsUserData
+lua.library/LuaLessThan
+lua.library/LuaLoad
+lua.library/LuaNewMetaTable
+lua.library/LuaNewState
+lua.library/LuaNewTable
+lua.library/LuaNewThread
+lua.library/LuaNewUserData
+lua.library/LuaNext
+lua.library/LuaObjLen
+lua.library/LuaOptInteger
+lua.library/LuaOptLString
+lua.library/LuaOptString
+lua.library/LuaPCall
+lua.library/LuaPop
+lua.library/LuaPushBoolean
+lua.library/LuaPushCClosure
+lua.library/LuaPushCFunction
+lua.library/LuaPushFString
+lua.library/LuaPushInteger
+lua.library/LuaPushLString
+lua.library/LuaPushLightUserData
+lua.library/LuaPushLiteral
+lua.library/LuaPushNil
+lua.library/LuaPushNumber
+lua.library/LuaPushString
+lua.library/LuaPushThread
+lua.library/LuaPushVFString
+lua.library/LuaPushValue
+lua.library/LuaRawEqual
+lua.library/LuaRawGet
+lua.library/LuaRawGetI
+lua.library/LuaRawSet
+lua.library/LuaRawSetI
+lua.library/LuaRegister
+lua.library/LuaRegisterModule
+lua.library/LuaRemove
+lua.library/LuaReplace
+lua.library/LuaResume
+lua.library/LuaSetAllocF
+lua.library/LuaSetFEnv
+lua.library/LuaSetField
+lua.library/LuaSetGlobal
+lua.library/LuaSetHook
+lua.library/LuaSetLocal
+lua.library/LuaSetMetaTable
+lua.library/LuaSetTable
+lua.library/LuaSetTop
+lua.library/LuaSetUpValue
+lua.library/LuaStatus
+lua.library/LuaStrLen
+lua.library/LuaToBoolean
+lua.library/LuaToCFunction
+lua.library/LuaToInteger
+lua.library/LuaToLString
+lua.library/LuaToNumber
+lua.library/LuaToPointer
+lua.library/LuaToString
+lua.library/LuaToThread
+lua.library/LuaToUserData
+lua.library/LuaType
+lua.library/LuaTypeName
+lua.library/LuaWhere
+lua.library/LuaXMove
+lua.library/LuaYield
+lua.library/OpenLibs
+lua.library/background
+lua.library/LuaArgCheck
+
+ NAME
+   LuaArgCheck -- function argument checker. (V50)
+
+ SYNOPSIS
+   void LuaArgCheck(LuaState *state, condition, LONG numarg, CONST_STRPTR
+   msg);
+
+ FUNCTION
+   This macro checks condition first. If the condition is false,
+   LuaArgError() function is called with specified argument number and extra
+   message text. The condition is literally inserted into the program code
+   by the preprocessor. This macro depends on the fact that the right side
+   expression of C "||" operator is not evaluated if the left side yields
+   TRUE.
+
+ INPUTS
+   state - the Lua environment.
+   condition - condition code.
+   numarg - argument number to be presented in error message.
+   msg - extra text for error message.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaArgError()
+
+lua.library/LuaArgError
+
+ NAME
+   LuaArgError -- throws argument error exception (V50.3)
+
+ SYNOPSIS
+   LONG LuaArgError(LuaState *state, LONG numarg, const char *msg);
+
+ FUNCTION
+   The function is used for reporting errors in arguments sent from Lua to
+   a binary extension module. It builds an error message using passed
+   argument 'numarg', passed additional information 'msg' and the calling
+   function name taken automatically from the stack. In English the message
+   looks as follows:
+
+   bad argument #[numarg] to function [funcname] ([msg])
+
+   The message may be localized and may be modified if the function is a
+   method of an object.
+
+   Finally a Lua exception is thrown with the message. This function never
+   returns, but is defined as returning LONG to be easily used in a return
+   statement of C function.
+
+ INPUTS
+   state - the Lua environment
+   numarg - argument number
+   msg - additional exception info
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaError(), LuaErrorF()
+
+lua.library/LuaAtPanic
+
+ NAME
+   LuaAtPanic -- sets Lua panic error handler. (V50)
+
+ SYNOPSIS
+   LuaCFunction LuaAtPanic(LuaState *state, LuaCFunction panic);
+
+ FUNCTION
+   Sets a new Lua panic function and returns a pointer to current one. The
+   panic function is called by Lua when it encounters unhandled exception.
+   In this case Lua calls the panic function, then displays exception
+   requester and freezes the process running Lua code. Panic function should
+   have following prototype:
+
+   LONG panic_function(LuaState *state);
+
+   There is no panic function set by default.
+
+ INPUTS
+   state - Lua environment for which panic function is being set.
+   panic - a pointer to the new panic function.
+
+ RESULT
+   Pointer to previous panic function. May be NULL, if it was not set
+   before.
+
+lua.library/LuaCPCall
+
+ NAME
+   LuaCPCall -- calls C function in protected mode. (V50)
+
+ SYNOPSIS
+   LONG LuaCPCall(LuaState *state, LuaCFunction function, APTR userdata);
+
+ FUNCTION
+   Creates a ligth userdata object on the stack containing 'userdata'
+   pointer, then calls 'function' in protected mode. It means all Lua
+   exceptions thrown inside 'function' are catched and reported. In case of
+   error the function returns it and leaves error object on the stack. In
+   case of success zero is returned, the stack is not changed. This function
+   does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   function - a C function to call.
+   userdata - pointer to user data.
+
+ RESULT
+   Zero in case of success, or Lua error code.
+
+lua.library/LuaCall
+
+ NAME
+   LuaCall -- calls Lua function from stack. (V50)
+
+ SYNOPSIS
+   void LuaCall(LuaState *state, LONG numargs, LONG numresults);
+
+ FUNCTION
+   Pops 'numargs' arguments from the stack, then pops the function from the
+   stack. Calls the function with popped arguments. After execution,
+   function results are pushed on the stack. Number of results is adjusted
+   to 'numresults' with discarding superfluous results or adding "nil"
+   values. An exception is setting 'numresults' to LUA_MULTRET, which makes
+   Lua to push all function results to the stack. Any exception in the code
+   causes longjmp() to be called, or if no setjmp() was used, will cause
+   calling process freezing and displaying a death requester.
+
+ INPUTS
+   state - the Lua environment.
+   numargs - number of function arguments.
+   numresults - requested number of results.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaPCall()
+
+lua.library/LuaCallMeta
+
+ NAME
+   LuaCallMeta -- calls an object's metamethod (V50.3)
+
+ SYNOPSIS
+   BOOL LuaCallMeta(LuaState *state, LONG index, const char *method)
+
+ FUNCTION
+   Checks the object on the Lua stack indexed by 'index'. If the object has
+   no metatable, the function returns 0. If the metatable is found, presence
+   of 'method' field is checked. If no method is found, the function returns
+   0. If the method is found, it is called, the result of this call is left
+   on the Lua stack and the function returns 1.
+
+ INPUTS
+   state - the Lua environment.
+   index - position of examined object on the stack.
+   method - name of metamethod to call.
+
+ RESULT
+   Boolean, TRUE if the metamethod has been found and called, FALSE
+   otherwise.
+
+lua.library/LuaCheckAny
+
+ NAME
+   LuaCheckAny -- checks for a required argument of any type (V50.3)
+
+ SYNOPSIS
+   void LuaCheckAny(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if a value on the Lua stack indexed by 'index' is of any non "nil"
+   type. If the indexed value does not exist, a Lua exception is thrown.
+
+   The function is usually used in Lua extensions written in C for taking
+   a required argument of any type from the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined value.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaCheckInteger(), LuaCheckNumber(), LuaCheckLString()
+
+lua.library/LuaCheckInteger
+
+ NAME
+   LuaCheckInteger -- checks for a required integer argument (V50.2)
+
+ SYNOPSIS
+   LONG LuaCheckInteger(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if a value on the Lua stack indexed by 'index' is a number and
+   returns this number converted to an integer. If the indexed value does
+   not exist, or is not a number, Lua exception is thrown.
+
+   The function is usually used in Lua extensions written in C for taking
+   a required integer argument from the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined value.
+
+ RESULT
+   The argument value.
+
+ SEE ALSO
+   LuaToInteger(), LuaOptInteger()
+
+lua.library/LuaCheckLString
+
+ NAME
+   LuaCheckLString -- checks for a required string argument. (V50.2)
+
+ SYNOPSIS
+   CONST_STRPTR LuaCheckLString(LuaState *state, LONG index, LONG *len);
+
+ FUNCTION
+   Takes a value from the Lua stack indexed by 'index'. Checks if the value
+   is a string. If it is, LuaToLString() is called with the passed 'index'
+   and 'len'. If the examined stack element is not a Lua string, the
+   function throws a Lua exception.
+
+   The function is usually used in Lua extensions written in C for taking
+   a required string argument from the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined value.
+   len - pointer to a variable where string length in bytes is stored.
+
+ RESULT
+   The argument string, always NULL-terminated.
+
+ SEE ALSO
+   LuaToLString(), LuaOptLString(), LuaCheckString()
+
+lua.library/LuaCheckNumber
+
+ NAME
+   LuaCheckNumber -- checks for a required float number argument. (V50.2)
+
+ SYNOPSIS
+   DOUBLE LuaCheckNumber(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes a value from the Lua stack indexed by 'index'. Checks if the value
+   is a number. If it is, the function returns it. If not, the function
+   throws a Lua exception.
+
+   The function is usually used in Lua extensions written in C for taking
+   a required floating point numeric argument from the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined value.
+
+ RESULT
+   The argument value.
+
+ SEE ALSO
+   LuaToNumber()
+
+lua.library/LuaCheckOption
+
+ NAME
+   LuaCheckOption -- checks string argument against a list of strings.
+   (V50.3)
+
+ SYNOPSIS
+   LONG LuaCheckOption(LuaState *state, LONG numarg, CONST_STRPTR def,
+   CONST_STRPTR *list);
+
+ FUNCTION
+   Checks if the argument on stack indexed by 'numarg' is a string and takes
+   this string as the option name. If 'numarg' points to <nil> and 'def' is
+   not NULL, 'def' is taken as the option name. Otherwise, an exception is
+   thrown. After getting valid option name, the name is searched in 'list'.
+   'list' is a nullterminated table of pointers to strings. If the option
+   name is found in 'list', its index in 'list' is returned. If the option
+   name is not found, the function throws an exception.
+
+   The function is used to convert a string from a limited set to its
+   ordinal number in the set. Passing options as strings is a common
+   practice in Lua.
+
+ INPUTS
+   state - the Lua environment.
+   numarg - number of argument (stack index).
+   def - default option name.
+   list - list of allowed options.
+
+ RESULT
+   Ordinal number of option.
+
+ EXAMPLE
+   /* Let's assume the first argument is one of three options. */
+   /* The function will return 0 for "start", 1 for "stop" and */
+   /* 2 for "pause".                                           */
+
+   CONST_STRPTR opts[] = {"start", "stop", "pause", NULL};
+   LONG optnum = LuaCheckOption(L, 1, "start", opts);
+
+lua.library/LuaCheckStack
+
+ NAME
+   LuaCheckStack -- extends Lua stack to provide new slots. (V50)
+
+ SYNOPSIS
+   LONG LuaCheckStack(LuaState *state, LONG extra);
+
+ FUNCTION
+   The function checks if there are at least 'extra' free slots on the
+   stack. If there are, nothing is done, if not, stack is extended. This
+   function may throw memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   extra - number of requested free slots.
+
+ RESULT
+   Boolean value of success, FALSE if the stack cannot be extended.
+
+lua.library/LuaCheckString
+
+ NAME
+   LuaCheckString -- checks for required string argument. (V50.2)
+
+ SYNOPSIS
+   CONST_STRPTR LuaCheckString(LuaState *state, LONG index);
+
+ FUNCTION
+   Works exactly the same as LuaCheckLString(), but does not store string
+   length anywhere.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined value.
+
+ RESULT
+   The argument string, always null-terminated.
+
+ NOTES
+   This function is implemented as a macro calling LuaCheckLString().
+
+ SEE ALSO
+   LuaCheckLString(), LuaToString(), LuaOptString()
+
+lua.library/LuaCheckType
+
+ NAME
+   LuaCheckType -- verifies the type of a function argument. (V50.3)
+
+ SYNOPSIS
+   void LuaCheckType(LuaState *state, LONG index, LONG type);
+
+ FUNCTION
+   Checks if a function argument numbered by 'index' is of type 'type'. If
+   not, a Lua exception is thrown.
+
+ INPUTS
+   state - the Lua environment.
+   index - number of argument to be checked.
+   type - requested type of argument.
+
+ RESULT
+   None.
+
+lua.library/LuaCheckUData
+
+ NAME
+   LuaCheckUData -- checks user data type. (V50.4)
+
+ SYNOPSIS
+   APTR LuaCheckUData(LuaState *state, LONG numarg, CONST_STRPTR type);
+
+ FUNCTION
+   Checks if the argument on stack indexed by 'numarg' is a user data object
+   of type 'type'. If not, throws a Lua exception.
+
+ INPUTS
+   state - the Lua environment.
+   numarg - number of argument (stack index).
+   type - userdata type name.
+
+ RESULT
+   Pointer to the userdata or NULL if types do not match.
+
+ SEE ALSO
+   LuaToUserData()
+
+lua.library/LuaClose
+
+ NAME
+   LuaClose -- cleans up and disposes an existing Lua environment. (V50)
+
+ SYNOPSIS
+   void LuaClose(LuaState *state);
+
+ FUNCTION
+   Cleans up passed Lua interpreter environment, frees all allocated
+   resources, then disposes the environment.
+
+ INPUTS
+   state - Lua environment to dispose.
+
+ RESULT
+   None.
+
+lua.library/LuaConcat
+
+ NAME
+   LuaConcat -- concatenates Lua values. (V50)
+
+ SYNOPSIS
+   void LuaConcat(LuaState *state, LONG numvalues);
+
+ FUNCTION
+   Pops 'numvalues' Lua values from the stack, concatenates them according
+   to ".." Lua operator syntax and pushes resulting value on the top of
+   stack. This function may throw an exception.
+
+ INPUTS
+   state - the Lua environment.
+   numvalues - number of Lua values to concatenate.
+
+ RESULT
+   None.
+
+lua.library/LuaCreateTable
+
+ NAME
+   LuaCreateTable -- creates an empty table on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaCreateTable(LuaState *state, LONG arritems, LONG recitems);
+
+ FUNCTION
+   Creates an empty Lua table with preallocated space for 'arritems' array
+   items and 'recitems' record items. Used when number of items is known a
+   priori. When number of items is unknown, LuaNewTable() should be used. The
+   function may throw a memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   arritems - number of array items to be preallocated.
+   recitems - number of record items to be preallocated.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaNewTable()
+
+lua.library/LuaDump
+
+ NAME
+   LuaDump -- saves Lua function as precompiled binary. (V50)
+
+ SYNOPSIS
+   LONG LuaDump(LuaState *state, LuaWriter writer, APTR data);
+
+ FUNCTION
+   Takes a Lua function from the top of stack (but leaves it there) and
+   saves it in a precompiled binary form using passed writer function and
+   data. Such saved function may be later loaded with LuaLoad() and
+   executed.
+
+   The writer function is called by Lua to save parts of binary code. It is
+   defined as follows:
+
+   LONG Writer(LuaState *s, const APTR buf, LONG len, APTR data);
+
+   The writer should save 'len' bytes in 'buf' using 'data' passed from
+   LuaDump() call. In case of success 0 should be returned. Any other value
+   is treated as an error, and Lua does not try to call writer again.
+
+   Lua.library defines two predefined writers. LUA_WRITER_MEMORY stores
+   bytecode in a memory buffer. 'data' in this case points to LuaMemoryData
+   structure:
+
+   struct LuaMemoryData
+   {
+     char *block;
+     LONG length;
+     LONG used;
+   };
+
+   'used' contains number of bytes stored after LuaDump() finishes. If
+   buffer is not big enough, LuaDump() returns LUA_ERRMEM.
+
+   LUA_WRITER_FILE stores bytecode in a file using dos.library. 'data' in
+   this case points to filename, which is passed to dos.library/Open().
+   In case of writer error, DOS error code is returned.
+
+ INPUTS
+   state - the Lua environment.
+   writer - the writer function address or one of special values
+     LUA_WRITER_MEMORY and LUA_WRITER_FILE.
+   data - passed as a parameter to writer.
+
+ RESULT
+   Zero for success, writer error otherwise.
+
+ SEE_ALSO
+   LuaLoad()
+
+lua.library/LuaEqual
+
+ NAME
+   LuaEqual -- compares two values with standard conversions. (V50)
+
+ SYNOPSIS
+   LONG LuaEqual(LuaState *state, LONG index1, LONG index2);
+
+ FUNCTION
+   Compares two values on the Lua stack pointed by indexes passed. It does
+   comparision the same way as Lua "==" operator, so metamethods for type
+   conversion may be called. If any of indexes is invalid, function returns
+   FALSE. The function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index1 - index on the Lua stack of the first value to compare.
+   index2 - index on the Lua stack of the second value to compare.
+
+ RESULT
+   TRUE if values are equal, FALSE if not or if any of indexes is invalid.
+
+ SEE ALSO
+   LuaRawEqual()
+
+lua.library/LuaError
+
+ NAME
+   LuaError -- throws Lua exception. (V50)
+
+ SYNOPSIS
+   LONG LuaError(LuaState *state);
+
+ FUNCTION
+   The function pops Lua error message from the stack and throws an
+   exception for it by calling longjmp(). This function never returns, but
+   passes control to an exception handler, which may be the Lua internal one
+   when the code is called with LuaPCall(), or an external one when the code
+   is called with LuaCall().
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   None as the function never returns.
+
+ SEE ALSO
+   LuaErrorF(), LuaCall(), LuaPCall()
+
+lua.library/LuaErrorF
+
+ NAME
+   LuaErrorF -- throws Lua exception with a formatted message (V50.2)
+
+ SYNOPSIS
+   void LuaErrorF(LuaState *state, CONST_STRPTR fmt, ...);
+
+ FUNCTION
+   The function formats the error message according to the format string and
+   variable arguments, then throws a Lua exception calling longjmp(). This
+   function never returns, but passes control to an exception handler, which
+   may be a Lua internal when the code is called with LuaPCall(), or
+   external one when the code is called with LuaCall().
+
+ INPUTS
+   state - the Lua environment.
+   fmt - formatting string using printf()-like placeholders, supported ones
+     are "%d", "%c", "%f", "%p" and "%s". Do not use size modifiers.
+
+ RESULT
+   None as the function never returns.
+
+ SEE ALSO
+   LuaError(), LuaCall(), LuaPCall()
+
+lua.library/LuaGC
+
+ NAME
+   LuaGC -- controls Lua garbage collector. (V50)
+
+ SYNOPSIS
+   LONG LuaGC(LuaState *state, LONG action, LONG parameter);
+
+ FUNCTION
+   Performs set of operations on Lua garbage collector. Operation is defined
+   by 'action' argument as follows:
+   LUA_GCSTOP - stops the garbage collector.
+   LUA_GCRESTART - restarts the garbage collector.
+   LUA_GCCOLLECT - performs a full garbage collection cycle.
+   LUA_GCCOUNT - returns total amount of memory used by Lua in kB.
+   LUA_GCCOUNTB - returns remainder of dividing total amount of used memory
+     by 1024, so along with the previous action it may be used to get the
+     amount of used memory with one byte resolution.
+   LUA_GCSTEP - performs a single step of garbage collection cycle. Step size
+     is taken from 'parameter', relation between step size and the full
+     collection cycle is unspecified.
+   LUA_GCSETPAUSE - sets a new value of garbage collector pause (see Lua
+     documentation) to 'parameter' and returns old value of pause.
+   LUA_GCSETSTEPMUL - sets a new value of garbage collector step multiplier
+     (see Lua documentation) to 'parameter' and returns old value of step
+     multiplier.
+
+   Unless otherwise stated above, 'parameter' is ignored.
+
+ INPUTS
+   state - the Lua environment.
+   action - operation to be performed.
+   parameter - parameter for some operations.
+
+ RESULT
+   Depends on operation, see above.
+
+lua.library/LuaGetAllocF
+
+ NAME
+   LuaGetAllocF -- returns current memory allocator. (V50)
+
+ SYNOPSIS
+   LuaAlloc LuaGetAllocF(LuaState *state, APTR *data);
+
+ FUNCTION
+   Returns pointer to current memory allocation function for 'state'. This
+   pointer is usually passed to LuaNewState(). If 'data' is not NULL, also
+   memory allocator user data passed to LuaNewState() is stored in place
+   pointed by 'data'.
+
+ INPUTS
+   state - the Lua environment.
+   data - optional storage pointer for allocator user data.
+
+ RESULT
+   Pointer to the allocator function.
+
+ SEE ALSO
+   LuaNewState()
+
+lua.library/LuaGetFEnv
+
+ NAME
+   LuaGetFEnv -- pushes an environment table of Lua object on Lua stack.
+   (V50)
+
+ SYNOPSIS
+   void LuaGetFEnv(LuaState *state, LONG index);
+
+ FUNCTION
+   Gets a Lua object from the stack indexed by 'index'. Then pushes object's
+   environment table on top of the stack. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of queried object.
+
+ RESULT
+   None.
+
+lua.library/LuaGetField
+
+ NAME
+   LuaGetField -- pushes a directly keyed table value on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaGetField(LuaState *state, LONG index, CONST_STRPTR key);
+
+ FUNCTION
+   Gets a table from stack slot indexed by index. Then retrieves an element
+   of this table with passed key. Element value is pushed on the stack. The
+   function may throw an exception.
+
+ INPUTS
+   state - the Lua environment.
+   index - position of the table on stack.
+   key - table key.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaGetTable()
+
+lua.library/LuaGetGlobal
+
+ NAME
+   LuaGetGlobal -- pushes a global variable value on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaGetGlobal(LuaState *state, CONST_STRPTR name);
+
+ FUNCTION
+   Retrieves a named element of the Lua table of global variables. Value of
+   this element is pushed on the stack. The function may throw an exception.
+
+ INPUTS
+   state - the Lua environment.
+   name - name of the global variable to be retrieved.
+
+ RESULT
+   None.
+
+ NOTES
+   This function is implemented as a macro calling LuaGetField() with
+   stack pseudoindex LUA_GLOBALSINDEX and specified name as table key.
+
+ SEE ALSO
+   LuaGetField()
+
+lua.library/LuaGetHook
+
+ NAME
+   LuaGetHook -- returns current debug hook function. (V50)
+
+ SYNOPSIS
+   LuaHook LuaGetHook(LuaState *state);
+
+ FUNCTION
+   Returns the pointer to currently active debug hook function. This
+   function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   Pointer to the hook function.
+
+ SEE ALSO
+   LuaSetHook(), LuaGetHookMask(), LuaGetHookCount()
+
+lua.library/LuaGetHookCount
+
+ NAME
+   LuaGetHookCount -- returns event counter for current debug hook. (V50)
+
+ SYNOPSIS
+   LONG LuaGetHookCount(LuaState *state);
+
+ FUNCTION
+   Returns event counter value for the current debug hook. Makes sense only
+   if hook event mask has LUA_MASKCOUNT bit set.
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   Counter value.
+
+ SEE ALSO
+   LuaSetHook(), LuaGetHook(), LuaGetHookMask()
+
+lua.library/LuaGetHookMask
+
+ NAME
+   LuaGetHookMask -- returns event mask for current debug hook. (V50)
+
+ SYNOPSIS
+   LONG LuaGetHookMask(LuaState *state);
+
+ FUNCTION
+   Returns event mask for currently active debug hook. This function does
+   not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   Hook event mask.
+
+ SEE ALSO
+   LuaSetHook(), LuaGetHook(), LuaGetHookCount()
+
+lua.library/LuaGetInfo
+
+ NAME
+   LuaGetInfo -- gets informations about function. (V50)
+
+ SYNOPSIS
+   LONG LuaGetInfo(LuaState *state, CONST_STRPTR what, struct LuaDebug
+   *debug);
+
+ FUNCTION
+   Analyses a function invocation record and fills it with requested
+   additional debug information.
+
+ INPUTS
+   state - the Lua environment.
+   what - a string containing letters specifying kind of information to be
+     filled in debug structure:
+     - "n", fills name of function and name of the caller.
+     - "S", fills information about function source code.
+     - "l", fills number of the currently executed line.
+     - "u", fills number of function upvalues.
+     - "f", pushes function at given call stack level on the Lua stack.
+     - "L", pushes a table of valid lines (lines on which a breakpoint can
+       be set) of the function source code on the Lua stack.
+   debug - a function invocation record obtained with LuaGetStack() or
+     passed as a parameter to a debug hook.
+
+ RESULT
+   Error code, zero for success.
+
+ SEE ALSO
+   LuaGetStack(), LuaSetHook()
+
+lua.library/LuaGetLocal
+
+ NAME
+   LuaGetLocal -- gets information about local variable. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaGetLocal(LuaState *state, const struct LuaDebug *debug,
+   LONG varnum);
+
+ FUNCTION
+   Returns a name of a local variable and pushes value of the variable on
+   the Lua stack. Local variables are indexed from 1 and also include
+   function parameters. Variables with names in parentheses are temporary
+   ones, loop control variables or local variables of C functions.
+
+ INPUTS
+   state - the Lua environment.
+   debug - a function invocation record obtained with LuaGetStack() or
+     passed as a parameter to debug hook.
+   varnum - index of local variable, starting from 1.
+
+ RESULT
+   Readonly string with the variable name, or NULL if index passed is
+   higher than number of existing local variables in the function.
+
+ SEE ALSO
+   LuaGetStack(), LuaSetHook()
+
+lua.library/LuaGetMetaField
+
+ NAME
+   LuaGetMetaField -- gets a field from object's metatable (V50.3)
+
+ SYNOPSIS
+   BOOL LuaGetMetaField(LuaState *state, LONG index, CONST_STRPTR field);
+
+ FUNCTION
+   Gets a Lua object placed on the stack at 'index'. Checks if the object
+   has a metatable. If the metatable is found, the function gets its
+   'field', pushes it on the stack and returns TRUE. If there is no
+   metatable or no specified field in the metatable, nothing is pushed and
+   function returns FALSE.
+
+ INPUTS
+   state - the Lua environment.
+   index - index of object on the stack.
+   field - metatable field name.
+
+ RESULT
+   Boolean value of success.
+
+lua.library/LuaGetMetaTable
+
+ NAME
+   LuaGetMetaTable -- pushes a metatable of Lua object on Lua stack. (V50)
+
+ SYNOPSIS
+   LONG LuaGetMetaTable(LuaState *state, LONG index);
+
+ FUNCTION
+   Gets an object from the Lua stack indexed by 'index'. Then retrieves its
+   metatable and pushes it on top of stack. In case of invalid index or
+   object not having a metatable, nothing is pushed on the stack and the
+   function returns FALSE. The function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of queried object.
+
+ RESULT
+   TRUE if metatable has been retrieved, FALSE otherwise.
+
+lua.library/LuaGetStack
+
+ NAME
+   LuaGetStack -- gets Lua stack information. (V50)
+
+ SYNOPSIS
+   LONG LuaGetStack(LuaState *state, LONG level, struct LuaDebug *debug);
+
+ FUNCTION
+   Fills passed LuaDebug structure with information obtained from specified
+   level of Lua execution stack. Level 0 is the currently executing
+   function.
+
+ INPUTS
+   state - the Lua environment.
+   level - stack level to get information from.
+   debug - LuaDebug structure to store information into.
+
+ RESULT
+   TRUE if information has been stored, FALSE if stack level was too deep.
+
+ SEE ALSO
+   LuaGetInfo()
+
+lua.library/LuaGetTable
+
+ NAME
+   LuaGetTable -- pushes a table element value on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaGetTable(LuaState *state, LONG index);
+
+ FUNCTION
+   Pops a value from the stack and uses it as a key to Lua table located
+   on the stack at position determined by index. Then pushes on the stack
+   a table value for the key. The function may throw an exception.
+
+ INPUTS
+   state - the Lua environment.
+   index - position of the table on stack.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaGetField()
+
+lua.library/LuaGetTop
+
+ NAME
+   LuaGetTop -- returns the index of the top element on Lua stack. (V50)
+
+ SYNOPSIS
+   LONG LuaGetTop(LuaState *state);
+
+ FUNCTION
+   Returns the index (counted from 1, from the stack bottom) of the top
+   element on the Lua stack. This is equal to number of elements on the
+   stack. The stack itself is unmodified. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   The index of the top Lua stack element.
+
+lua.library/LuaGetUpValue
+
+ NAME
+   LuaGetUpValue -- gets information about Lua upvalue. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaGetUpValue(LuaState *state, LONG funcnum, LONG upvalnum);
+
+ FUNCTION
+   The function gives access to external variables of Lua closures. First it
+   assumes 'funcnum' is an index of the Lua stack indexing a closure. Then
+   it gets external variable (upvalue) of number specified by 'upvalnum'. If
+   the upvalue exists, its value is pushed on the Lua stack and the name is
+   returned as the function result. This function may throw an exception.
+
+ INPUTS
+   state - the Lua environment.
+   funcnum - index in the Lua stack, supposedly pointing to a closure.
+   upvalnum - number of upvalue to access.
+
+ RESULT
+   Readonly upvalue name. NULL (and nothing pushed on the stack) if there is
+   no upvalue of given number. Upvalues of C functions all have name ""
+   (empty string).
+
+lua.library/LuaInsert
+
+ NAME
+   LuaInsert -- inserts a copy of the top element into Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaInsert(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes the top element of the stack, makes a copy of it and inserts the
+   copy at specified index. Element at insert position and all elements
+   above are pulled one stack slot up.
+
+ INPUTS
+   state - the Lua environment.
+   index - insertion position.
+
+ RESULT
+   None.
+
+lua.library/LuaIsBoolean
+
+ NAME
+   LuaIsBoolean -- checks if Lua stack item is a boolean value. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsBoolean(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if an item of the Lua stack at given index is a boolean value.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if the value checked is boolean, FALSE otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TBOOLEAN.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsCFunction
+
+ NAME
+   LuaIsCFunction -- checks if Lua stack item is a C function. (V50)
+
+ SYNOPSIS
+   LONG LuaIsCFunction(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if a value on the Lua stack at specified index represents a C
+   function. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be checked.
+
+ RESULT
+   TRUE if the value represents a C function, FALSE otherwise.
+
+lua.library/LuaIsFunction
+
+ NAME
+   LuaIsFunction -- checks if Lua stack item is a function. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsFunction(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if an item of the Lua stack at given index is a function.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if the value checked is a function, FALSE otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TFUNCTION.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsLightUserData
+
+ NAME
+   LuaIsLightUserData -- checks if Lua stack item is a light userdata. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsLigthUserData(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if an item of the Lua stack at given index is a ligth userdata.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if the value checked is a light userdata, FALSE otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TLIGHTUSERDATA.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsNil
+
+ NAME
+   LuaIsNil -- checks if Lua stack item is a nil value. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsNil(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if an item of the Lua stack at given index is a "nil" value.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if the value checked is "nil", FALSE otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TNIL.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsNone
+
+ NAME
+   LuaIsNone -- checks if an index points to valid Lua stack item. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsNone(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks passed index against Lua stack boundaries. It works with both
+   positive and negative indexes.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if index is outside the stack, FALSE if it is inside.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TNONE.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsNoneOrNil
+
+ NAME
+   LuaIsNoneOrNil -- checks if a Lua stack item is nil, or does not exist.
+   (V50)
+
+ SYNOPSIS
+   BOOL LuaIsNoneOrNil(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if index passed is inside Lua stack, and if it points to "nil"
+   value.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if index is outside the stack or index points to "nil", FALSE
+   otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and checking if the result is
+   either LUA_TNONE or LUA_TNIL.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsNumber
+
+ NAME
+   LuaIsNumber -- checks if a Lua value is a number. (V50)
+
+ SYNOPSIS
+   LONG LuaIsNumber(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if a value on the Lua stack at specified index is a proper Lua
+   number, or a string convertible to a number. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be checked.
+
+ RESULT
+   TRUE if the value is or can be converted to a number, FALSE otherwise.
+
+lua.library/LuaIsString
+
+ NAME
+   LuaIsString -- checks if a Lua value is a string. (V50)
+
+ SYNOPSIS
+   LONG LuaIsString(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if a value on the Lua stack at specified index is a Lua string.
+   This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be checked.
+
+ RESULT
+  TRUE if the value is a string, FALSE otherwise.
+
+lua.library/LuaIsTable
+
+ NAME
+   LuaIsTable -- checks if Lua stack item is a table. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsTable(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if an item of the Lua stack at given index is a table.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if the value checked is a table, FALSE otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TTABLE.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsThread
+
+ NAME
+   LuaIsThread -- checks if Lua stack item is a thread. (V50)
+
+ SYNOPSIS
+   BOOL LuaIsThread(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if an item of the Lua stack at given index is a thread.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be checked.
+
+ RESULT
+   TRUE if the value checked is a thread, FALSE otherwise.
+
+ NOTES
+   Implemented as macro calling LuaType() and comparing the result with
+   LUA_TTHREAD.
+
+ SEE ALSO
+   LuaType()
+
+lua.library/LuaIsUserData
+
+ NAME
+   LuaIsUserData -- checks if Lua stack item represents user data. (V50)
+
+ SYNOPSIS
+   LONG LuaIsUserData(LuaState *state, LONG index);
+
+ FUNCTION
+   Checks if a value on the Lua stack at specified index represents user
+   data. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be checked.
+
+ RESULT
+   TRUE if the value represents user data, FALSE otherwise.
+
+lua.library/LuaLessThan
+
+ NAME
+   LuaLessThan -- checks order of two values. (V50)
+
+ SYNOPSIS
+   LONG LuaLessThan(LuaState *state, LONG index1, LONG index2);
+
+ FUNCTION
+   Compares two values on the Lua stack pointed by indexes passed.
+   Comparision is done the same way as with Lua '<' operator, so metamethods
+   may be called for type conversions. Function returns TRUE if the first
+   value is lower than the second. FALSE is returned otherwise. FALSE is
+   also returned if any of indexes is invalid. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index1 - index on the Lua stack of the first value to compare.
+   index2 - index on the Lua stack of the second value to compare.
+
+ RESULT
+   TRUE if the first value is lower than the second, FALSE otherwise, or in
+   case of invalid index.
+
+lua.library/LuaLoad
+
+ NAME
+   LuaLoad -- loads and compiles Lua program. (V50)
+
+ SYNOPSIS
+   LONG LuaLoad(LuaState *state, LuaReader reader, APTR data,
+   CONST_STRPTR name);
+
+ FUNCTION
+   Reads a Lua code fragment (chunk) using passed reader function and data.
+   Then compiles loaded code to the internal bytecode and pushes compiled
+   program on the stack for execution. This function may be also used to
+   load a precompiled binary, detection is automatic. In case of error the
+   function returns error code and leaves error message on the stack. This
+   function does not throw exceptions.
+
+   The reader function is called by Lua everytime it needs another piece of
+   code. It is defined as follows:
+
+   CONST_STRPTR Reader(LuaState *s, APTR data, LONG *size);
+
+   Reader should load (next) fragment of code from source described by
+   'data' to internally allocated buffer. Size of valid data in this buffer
+   should be stored to a variable pointed by 'size' and address of the data
+   chunk should be returned as result. The buffer allocated must stay valid
+   until the reader is called next time. End of data should be signalled by
+   either returning NULL pointer or storing 0 as size (or both).
+
+   Lua.library delivers two predefined readers. LUA_READER_MEMORY is used to
+   load Lua code from memory. In this case 'data' is a pointer to the
+   following structure:
+
+   struct LuaMemoryData
+   {
+     STRPTR Buffer;  // set to the memory block containing code
+     LONG Length;    // set to the block length in bytes
+   };
+
+   LUA_READER_FILE reads Lua code from a file using dos.library calls. In
+   this case 'data' is a path to the file containing the Lua code to be
+   loaded. If 'data' is NULL or empty string, the function tries to read the
+   code from the standard input of the calling process.
+
+ INPUTS
+   state - the Lua environment.
+   reader - input stream abstraction. A function called by Lua to read
+     program code (see above). It is pointer to a function, or one of two
+     special values LUA_READER_MEMORY and LUA_READER_FILE.
+   data - an abstract data handle passed to reader.
+   name - name for loaded chunk, used for error reporting and debug.
+
+ RESULT
+   Zero for succesfull loading and compilation. LUA_ERRSYNTAX is returned
+   for compilation errors, LUA_ERRMEM in case of no memory for operation.
+
+lua.library/LuaNewMetaTable
+
+ NAME
+   LuaNewMetaTable -- creates a metatable for user defined type. (V50.4)
+
+ SYNOPSIS
+   BOOL LuaNewMetaTable(LuaState *state, CONST_STRPTR type);
+
+ FUNCTION
+   Creates a new table to be used as metatable for userdata type 'type'.
+   Pushes created metatable on the Lua stack. If a metatable for specified
+   'type' already exists, no new table is created, but existing one is
+   pushed on the stack.
+
+ INPUTS
+   state - the Lua environment
+   type - userdata type name
+
+ RESULT
+   TRUE if a new metatable has been created. FALSE if an existing one has
+   been found and pushed on the stack.
+
+lua.library/LuaNewState
+
+ NAME
+   LuaNewState -- creates a new Lua environment. (V50)
+
+ SYNOPSIS
+   LuaState* LuaNewState(LuaAlloc allocator, APTR allocdata);
+
+ FUNCTION
+   Creates a new Lua interpreter environment using specified memory
+   management function. Allocator is responsible for allocation,
+   reallocation and freeing memory.
+   It is declared as follows:
+
+   APTR allocator(APTR udata, APTR ptr, LONG oldsize, LONG newsize);
+
+   Lua passes following values as arguments:
+   udata - copy of 'allocdata' from LuaNewState() call. Allocator may use it
+     for internal operation. For example a pointer to a system memory pool
+     may be passed this way.
+   ptr - NULL in case of allocation, pointer to memory block in case of
+     reallocation or freeing.
+   oldsize - size of old block in bytes (for reallocation and freeing).
+   newsize - size of requested block (for allocation and reallocation).
+   Note that reallocation cannot fail if newsize is not higher than oldsize.
+
+   Unlike standard Lua, lua.library allows to pass NULL as the memory
+   allocator. Then internal one is used, which utilizes MorphOS API
+   directly.
+
+ INPUTS
+   allocator - A function to be used by Lua for all memory allocations in
+     created environment. Usually just NULL for the default allocator.
+   allocdata - This value is just passed to the allocator function
+     unmodified. Ignored for default allocator.
+
+ RESULT
+   An opaque pointer to newly created Lua interpreter environment, used in
+   all other calls to lua.library. May be NULL in case of memory shortage.
+
+ SEE ALSO
+   LuaClose()
+
+lua.library/LuaNewTable
+
+ NAME
+   LuaNewTable -- creates a new Lua table. (V50)
+
+ SYNOPSIS
+   void LuaNewTable(LuaState *state);
+
+ FUNCTION
+   Creates a new, empty Lua table without preallocating any memory for its
+   items.
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   None.
+
+ NOTES
+   This function is defined as a macro calling LuaCreateTable().
+
+ SEE ALSO
+   LuaCreateTable()
+
+lua.library/LuaNewThread
+
+ NAME
+   LuaNewThread -- creates a new thread inside existing Lua environment.
+   (V50)
+
+ SYNOPSIS
+   LuaState* LuaNewThread(LuaState *state);
+
+ FUNCTION
+   The function creates a new thread (with separate execution stack) sharing
+   all global objects with the original environment. Thread object is put on
+   the top of stack. This function may throw memory exception.
+
+ INPUTS
+   state - the original environment.
+
+ RESULT
+   A new Lua environment for the thread. May return NULL in out of memory
+   condition.
+
+ NOTES
+   Environments created with this function should not be disposed manually,
+   threads are disposed automatically by garbage collector.
+
+lua.library/LuaNewUserData
+
+ NAME
+   LuaNewUserData -- creates userdata object and pushes it on Lua stack.
+   (V50)
+
+ SYNOPSIS
+   APTR LuaNewUserData(LuaState *state, LONG size);
+
+ FUNCTION
+   Userdata in Lua is a generic block of memory. This function allocates a
+   block of given size, and pushes it as userdata object on the Lua stack.
+   Memory is freed, when the object is recollected by Lua garbage collector.
+   This function may throw a memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   size - size of userdata in bytes.
+
+ RESULT
+   Address of allocated data block.
+
+lua.library/LuaNext
+
+ NAME
+   LuaNext -- table iterator. (V50)
+
+ SYNOPSIS
+   LONG LuaNext(LuaState *state, LONG index);
+
+ FUNCTION
+   This function is a helper for using Lua tables as lists. It pops a key
+   from the stack top, then gets a table from stack entry indexed by 'index'
+   and gets a next table entry after one with popped key. Key and value of
+   this table entry are pushed on the stack, so after popping the entry
+   value, LuaNext() can be called again to retrieve the next table element.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of the table to traverse.
+
+ RESULT
+   FALSE if there are no more elements in the table, TRUE otherwise.
+
+lua.library/LuaObjLen
+
+ NAME
+   LuaObjLen -- returns value length. (V50)
+
+ SYNOPSIS
+   LONG LuaObjLen(LuaState *state, LONG index);
+
+ FUNCTION
+   Returns the length of a value on the Lua stack pointed by the index
+   passed. For strings returned number is the length of string in bytes. For
+   tables returned number is just a number of elements (the same as returned
+   by "#" Lua operator). For user data it is the size of allocated memory.
+   For other objects it is 0.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be measured.
+
+ RESULT
+   Object length, or zero for types with no length assigned.
+
+lua.library/LuaOptInteger
+
+ NAME
+   LuaOptInteger -- checks for an optional integer argument (V50.2)
+
+ SYNOPSIS
+   LONG LuaOptInteger(LuaState *state, LONG index, LONG default);
+
+ FUNCTION
+   Takes a value from the Lua stack indexed by 'index'. If there is no
+   value, ot the value is of type "nil", the function returns 'default'.
+   For non "nil" value, it is converted to an integer (all conversions
+   apply) and returned. Lua error is thrown if the conversion is not
+   possible.
+
+   The function is usually used in Lua extensions written in C for taking
+   an optional integer argument from the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined argument.
+   default - value returned if the argument is not present.
+
+ RESULT
+   The argument value, or the default value.
+
+lua.library/LuaOptLString
+
+ NAME
+   LuaOptLString -- checks for an optional string argument (V50.3)
+
+ SYNOPSIS
+   CONST_STRPTR LuaOptLString(LuaState *state, LONG index, CONST_STRPTR def,
+   LONG *len);
+
+ FUNCTION
+   Takes a value from the Lua stack indexed by 'index'. If there is no
+   value, or the value is of type "nil", the function returns 'def' string.
+   For non "nil" value, it is converted to a string (all conversions
+   apply) and returned. Lua error is thrown if the conversion is not
+   possible.
+
+   The function is usually used in Lua extensions written in C for taking
+   an optional string argument from the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of examined argument.
+   def - value returned if the argument is not present.
+   len - The (argument or default) string length is stored at this address
+     if not NULL.
+
+ RESULT
+   The argument value or the default value.
+
+lua.library/LuaOptString
+
+ NAME
+   LuaOptString -- checks for an optional null terminated string argument
+   (V50.3)
+
+ SYNOPSIS
+   CONST_STRPTR LuaOptString(LuaState *state, LONG numarg, CONST_STRPTR
+   def);
+
+ FUNCTION
+   Works exactly the same as LuaOptLString(), but does not store string
+   length anywhere. Then it cannot be used for Lua strings with 0x00 byte
+   inside.
+
+ INPUTS
+   state - the Lua environment.
+   numarg - number of function argument on Lua stack.
+   def - default value to use if there is no argument on stack or argument
+   is "nil".
+
+ NOTES
+   Implemented as macro calling LuaOptLString() with NULL pointer to string
+   size storage.
+
+ RESULT
+   The argument value or the default value.
+
+ SEE ALSO
+   LuaOptLString()
+
+lua.library/LuaPCall
+
+ NAME
+   LuaPCall -- calls Lua function from stack in protected mode. (V50)
+
+ SYNOPSIS
+   LONG LuaPCall(LuaState *state, LONG numargs, LONG numresults, LONG
+   errhandler);
+
+ FUNCTION
+   Pops 'numargs' arguments from the stack, then pops the function from the
+   stack. Calls the function with popped arguments. After execution,
+   function results are pushed on the stack. Number of results is adjusted
+   to 'numresults' with discarding superfluous results or adding "nil"
+   values. An exception is setting 'numresults' to LUA_MULTRET, which makes
+   Lua to push all function results to the stack. Any exception in the code
+   is catched internally. If 'errhandler' is 0, an error message is pushed
+   on the stack instead of results. If 'errhandler' is not 0, it is used as
+   an index on the stack, where error handling function is stored. The error
+   handling function gets the error message as its argument.
+
+ INPUTS
+   state - the Lua environment.
+   numargs - number of function arguments.
+   numresults - requested number of results.
+   errhandler - stack index of error handling function.
+
+ RESULT
+   0 - succesfull execution.
+   LUA_ERRRUN - runtime error.
+   LUA_ERRMEM - out of memory, error handler is not called in this case.
+   LUA_ERRERR - error in error handler.
+
+ SEE ALSO
+   LuaCall()
+
+lua.library/LuaPop
+
+ NAME
+   LuaPop -- pops elements from the Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPop(LuaState *state, LONG n);
+
+ FUNCTION
+   Pops 'n' elements from the Lua stack and discards them.
+
+ INPUTS
+   state - the Lua environment.
+   n - number of elements to pop.
+
+ RESULT
+   None.
+
+ NOTES
+   This function is implemented as a macro calling LuaSetTop().
+
+ SEE ALSO
+   LuaSetTop()
+
+lua.library/LuaPushBoolean
+
+ NAME
+   LuaPushBoolean -- pushes an integer as Lua bool value on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushBoolean(LuaState *state, LONG value);
+
+ FUNCTION
+   Takes an integer, converts it to Lua boolean value and pushes on the Lua
+   stack. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   value - value to be pushed.
+
+ RESULT
+   None.
+
+lua.library/LuaPushCClosure
+
+ NAME
+   LuaPushCClosure -- pushes a C function with Lua upvalues on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushCClosure(LuaState *state, LuaCFunction func, LONG upvalnum);
+
+ FUNCTION
+   Lua upvalues are values accessible inside a C function extending Lua.
+   These values should be pushed to the Lua stack first, then this function
+   is called. It pops upvalues from the stack, create a closure of upvalues
+   and function. Then the complete closure is pushed on the stack. This
+   function may throw memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   function - a C function of Lua compatible type.
+   upvalnum - number of upvalues pushed on stack.
+
+ RESULT
+   None.
+
+lua.library/LuaPushCFunction
+
+ NAME
+   LuaPushCFunction -- pushes a C function pointer on the Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushCFunction(LuaState *state, LuaCFunction func);
+
+ FUNCTION
+   The function pushes a pointer of Lua callable C function to the Lua
+   stack. It is a special case of pushing a C closure (a C function and set
+   of Lua variables accessible from C code, called "upvalues") without any
+   upvalue.
+
+ INPUTS
+   state - the Lua environment.
+   func - pointer to the C function.
+
+ RESULT
+   None.
+
+ NOTES
+   This function is implemented as a macro calling LuaPushCClosure().
+
+ SEE ALSO
+   LuaPushCClosure()
+
+lua.library/LuaPushFString
+
+ NAME
+   LuaPushFString -- formats a string and pushes it on Lua stack. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaPushFString(LuaState *state, CONST_STRPTR format, ...);
+
+ FUNCTION
+   This is variable args version of LuaPushVFString().
+
+ INPUTS
+   state - the Lua environment.
+   format - formatting template string.
+   the rest of args - formatting parameters.
+
+ RESULT
+   Pointer to the formatted string. Read only. Valid only while Lua string
+   is still on the stack.
+
+ SEE ALSO
+   LuaPushVFString()
+
+lua.library/LuaPushInteger
+
+ NAME
+   LuaPushInteger -- pushes an integer number on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushInteger(LuaState *state, LONG number);
+
+ FUNCTION
+   Pushes an integer on the top of Lua stack. It is being converted to
+   floating point during this operation, as all numbers in Lua are floats.
+   The stack becomes one slot higher. The function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   number - an integer to be pushed on stack.
+
+ RESULT
+   None.
+
+lua.library/LuaPushLString
+
+ NAME
+   LuaPushLString -- pushes a sized string on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushLString(LuaState *state, CONST_STRPTR string, LONG length);
+
+ FUNCTION
+   Pushes a string as a Lua value on the stack. Resulting string contains
+   exactly 'length' characters, any zero bytes are not considered as string
+   termination, but passed to Lua. Lua makes a copy of the string, so source
+   string may be a temporary variable. The stack becomes one slot higher.
+   The function may throw memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   string - string to push. Needs not to be null terminated.
+   length - number of bytes to push.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaPushString()
+
+lua.library/LuaPushLightUserData
+
+ NAME
+   LuaPushLightUserData -- pushes user defined pointer on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushLightUserData(LuaState *state, APTR ptr);
+
+ FUNCTION
+   Takes a pointer and pushes it on the Lua stack as light user data. This
+   function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   ptr - a pointer to be pushed on the stack.
+
+ RESULT
+   None.
+
+lua.library/LuaPushLiteral
+
+ NAME
+   LuaPushLiteral -- pushes a literal string on the Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushLiteral(LuaState *state, CONST_STRPTR s);
+
+ FUNCTION
+   Pushes a string given as explicit literal on the Lua stack.
+
+ INPUTS
+   state - the Lua environment.
+   s - literal string to be pushed.
+
+ RESULT
+   None.
+
+ NOTES
+   Implemented as macro calling LuaPushLString() and using sizeof()
+   operator. Because of this, the string must be a literal, so its size may
+   be determined at compilation. Use LuaPushString() to push variable size
+   C strings.
+
+ SEE ALSO
+   LuaPushString(), LuaPushLString()
+
+lua.library/LuaPushNil
+
+ NAME
+   LuaPushNil -- pushes a "nil" value on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushNil(LuaState *state);
+
+ FUNCTION
+   Pushes a value of type "nil" on the top of Lua stack. The stack becomes
+   one slot higher. The function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+
+ RESULT
+   None.
+
+lua.library/LuaPushNumber
+
+ NAME
+   LuaPushNumber -- pushes a floating point number on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushNumber(LuaState *state, DOUBLE number);
+
+ FUNCTION
+   Pushes a Lua number value on the top of Lua stack. The stack becomes
+   one slot higher. The function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   number - a double precision floating point number to be pushed on stack.
+
+ RESULT
+   None.
+
+lua.library/LuaPushString
+
+ NAME
+   LuaPushString -- pushes a null-terminated string on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushString(LuaState *state, CONST_STRPTR string);
+
+ FUNCTION
+   Pushes a string as a Lua value on the stack. The string must be
+   null-terminated, so it can't contain zero bytes inside. Lua makes a copy
+   of the string, so source string may be a temporary variable. The stack
+   becomes one slot higher. The function may throw memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   string - null-terminated string to push.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaPushLString()
+
+lua.library/LuaPushThread
+
+ NAME
+   LuaPushThread -- pushes thread on its Lua stack. (V50)
+
+ SYNOPSIS
+   LONG LuaPushThread(LuaState *state);
+
+ FUNCTION
+   Lua state is pushed on its own Lua stack as a thread value. Function
+   returns 1, if the thread is the main thread of state given. The function
+   does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment to be pushed as thread.
+
+ RESULT
+   1 if the pushed thread is the main thread of the Lua state, 0 otherwise.
+
+lua.library/LuaPushVFString
+
+ NAME
+   LuaPushVFString -- formats a string and pushes it on Lua stack. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaPushVFString(LuaState *state, CONST_STRPTR format,
+   va_list args);
+
+ FUNCTION
+   Perfoms a printf()-like string formatting and pushes resulting string to
+   the Lua stack. Formatting arguments are passed as 'va_list' object. Note
+   that formatting options are very limited compared to printf(). List of
+   supported placeholders:
+   %% - inserts a percentage sign.
+   %s - inserts a null-terminated string.
+   %f - inserts a Lua number (floating point one).
+   %p - inserts a pointer as hexadecimal number.
+   %d - inserts an integer as decimal number.
+   %c - inserts an integer as a single character.
+   Options, precision and width specifiers are not allowed. The stack
+   becomes one slot higher. The function may throw memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   format - formatting template string.
+   args - va_args structure of formatting parameters.
+
+ RESULT
+   Pointer to the formatted string. Read only. Valid only while Lua string
+   is still on the stack.
+
+lua.library/LuaPushValue
+
+ NAME
+   LuaPushValue -- push a copy of value on Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaPushValue(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes a value stored on the Lua stack at specified index, copies it and
+   puts the copy on the top of stack. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the stack od the source value.
+
+ RESULT
+   None.
+
+lua.library/LuaRawEqual
+
+ NAME
+   LuaRawEqual -- compares two values without conversions. (V50)
+
+ SYNOPSIS
+   LONG LuaRawEqual(LuaState *state, LONG index1, LONG index2);
+
+ FUNCTION
+   Compares two values on the Lua stack pointed by indexes passed. Values
+   are compared directly without calling any metamethods (type conversions).
+   If any of indexes is invalid, function returns FALSE. The function does
+   not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index1 - index on the Lua stack of the first value to compare.
+   index2 - index on the Lua stack of the second value to compare.
+
+ RESULT
+   TRUE if values are equal, FALSE if not or if any of indexes is invalid.
+
+ SEE ALSO
+   LuaEqual()
+
+lua.library/LuaRawGet
+
+ NAME
+   LuaRawGet -- pushes a table element value on Lua stack without
+   conversions. (V50)
+
+ SYNOPSIS
+   void LuaRawGet(LuaState *state, LONG);
+
+ FUNCTION
+   Works the same as LuaGetTable(), but does not apply metamethods to the
+   table. The function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - position of the table on stack.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaGetTable()
+
+lua.library/LuaRawGetI
+
+ NAME
+   LuaRawGetI -- pushes an integer indexed table element value on Lua
+   stack. (V50)
+
+ SYNOPSIS
+   void LuaRawGetI(LuaState *state, LONG index, LONG intkey);
+
+ FUNCTION
+   Works similarly to LuaRawGet(), but uses direct integer index of the
+   table instead of popping a key from the stack. The function does not
+   throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - position of the table on stack.
+   intkey - integer index of the table element.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaRawGet()
+
+lua.library/LuaRawSet
+
+ NAME
+   LuaRawSet -- sets table element without calling metamethod. (V50)
+
+ SYNOPSIS
+   void LuaRawSet(LuaState *state, LONG index);
+
+ FUNCTION
+   The function first expects that 'index' points at a Lua table object on
+   the stack. Then it pops the stack top and takes it as a value. It pops
+   another stack element from the top and takes it as a table key. Then it
+   sets the value for table element indexed by the key. Metamethods for
+   table indexing operation are not applied. This is the only difference
+   between this function and LuaSetTable(). The function may throw memory
+   exception.
+
+ INPUTS
+   state - the Lua environment.
+   index - index to a Lua table on stack to be modified.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaSetTable(), LuaSetField(), LuaRawSetI()
+
+lua.library/LuaRawSetI
+
+ NAME
+   LuaRawSetI -- sets directly indexed table element without calling
+   metamethod. (V50)
+
+ SYNOPSIS
+   void LuaRawSetI(LuaState *state, LONG index, LONG n);
+
+ FUNCTION
+   The function first expects that 'index' points at a Lua table object on
+   the stack. Then it pops the stack top and takes it as a value. Then it
+   uses 'n' as table index and sets table element value indexed by 'n' to
+   the value popped from the stack. Metamethods for table indexing
+   operation are not applied. The function may throw memory exception.
+
+ INPUTS
+   state - the Lua environment.
+   index - index to a Lua table on stack to be modified.
+   n - number of table element.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaSetTable(), LuaSetField(), LuaRawSet()
+
+lua.library/LuaRegister
+
+ NAME
+   LuaRegister -- registers a C function in the global Lua namespace. (V50)
+
+ SYNOPSIS
+   LuaRegister(LuaState *state, CONST_STRPTR name, LuaCFunction func);
+
+ FUNCTION
+   The function pushes a C function pointer on the Lua stack and then
+   registers it in the global namespace of Lua instance. Of course the
+   prototype of the C function must match Lua call conventions:
+
+   LONG function(LuaState *state);
+
+ INPUTS
+   state - the Lua environment.
+   name - the name under which the function will appear in Lua.
+   func - pointer to the function.
+
+ RESULT
+   None.
+
+ NOTES
+   This function is defined as a macro calling LuaPushCFunction() and
+   LuaSetGlobal() which in turn are both macros themselves.
+
+ SEE ALSO
+   LuaPushCFunction(), LuaSetGlobal()
+
+lua.library/LuaRegisterModule
+
+ NAME
+   LuaRegisterModule -- registers a compiled module. (V50.2)
+
+ SYNOPSIS
+   void LuaRegisterModule(LuaState *state, CONST_STRPTR modname, LuaLibReg
+   *modtable);
+
+ FUNCTION
+   Registers a C module in the specified Lua state. This function may be
+   used in an application using Lua, to add extensions provided by the
+   application. It may be also called from LuaOpen() function of an external
+   module, to register this module. The function creates a Lua table for the
+   module with name specified by 'modname' and then inserts all functions
+   specified in 'modtable'. Every entry in the 'modtable' contains a string,
+   which is the Lua name for function, then a pointer to the function. All
+   the registered functions have to preserve the Lua stack communication
+   protocol. The table is terminated by { NULL, NULL } entry.
+
+ INPUTS
+   state - the Lua environment.
+   modname - the module name.
+   modtable - table of registered C functions.
+
+ RESULT
+   None.
+
+lua.library/LuaRemove
+
+ NAME
+   LuaRemove -- removes a value from the Lua stack. (V50)
+
+ SYNOPSIS
+   void LuaRemove(LuaState *state, LONG index);
+
+ FUNCTION
+   Removes a value from the stack. All values being above the removed one
+   are pushed one slot down, so the stack top lowers by one. This function
+   does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - stack index of an element to remove.
+
+ RESULT
+   None.
+
+lua.library/LuaReplace
+
+ NAME
+   LuaReplace -- replaces stack element value by stack top value. (V50)
+
+ SYNOPSIS
+   void LuaReplace(LuaState *state, LONG index);
+
+ FUNCTION
+   The function pops the top element of out the Lua stack, then replaces the
+   value of element at given index, with the value of popped element. Stack
+   is one element smaller after the operation. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index of element to be replaced by top element.
+
+ RESULT
+   None.
+
+lua.library/LuaResume
+
+ NAME
+   LuaResume -- starts or restarts Lua coroutine. (V50)
+
+ SYNOPSIS
+   LONG LuaResume(LuaState *state, LONG numargs);
+
+ FUNCTION
+   Starts or restarts a Lua coroutine. It expects arguments for coroutine
+   and then the coroutine itself to be on the stack. Call to this function
+   returns when a coroutine either finishes (the result is 0 then), or
+   yields (in this case return value is LUA_YIELD). The result may be also
+   an error code in case coroutine causes an exception.
+
+ INPUTS
+   state - the Lua environment.
+   nargs - number of arguments for coroutine placed on the stack.
+
+ RESULT
+   0 or LUA_YIELD for success or error code.
+
+lua.library/LuaSetAllocF
+
+ NAME
+   LuaSetAllocF -- changes memory allocator. (V50)
+
+ SYNOPSIS
+   void LuaSetAllocF(LuaState *state, LuaAlloc allocator, APTR userdata);
+
+ FUNCTION
+   Changes current memory allocator for Lua state.
+
+ INPUTS
+   state - the Lua environment.
+   allocator - pointer to allocator function, see details in LuaNewState().
+   userdata - this is passed to allocator directly.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaNewState()
+
+lua.library/LuaSetFEnv
+
+ NAME
+   LuaSetFEnv -- sets a new environment for Lua object. (V50)
+
+ SYNOPSIS
+   LONG LuaSetFEnv(LuaState *state, LONG index);
+
+ FUNCTION
+   Pops a value from the Lua stack and tries to set it as an environment
+   table for object on the stack indexed by 'index'. The indexed object
+   must be thread, function or userdata. If it is the case, function returns
+   TRUE, else FALSE. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index of object to be assigned a new environment table.
+
+ RESULT
+   Boolean value of success.
+
+lua.library/LuaSetField
+
+ NAME
+   LuaSetField -- sets directly indexed table element. (V50)
+
+ SYNOPSIS
+   void LuaSetField(LuaState *state, LONG index, CONST_STRPTR key);
+
+ FUNCTION
+   The function first expects that 'index' points at a Lua table object on
+   the stack. Then it pops the stack top and takes it as a value. Then it
+   sets the value for table element indexed by 'key'. Metamethods for table
+   indexing operation are applied if defined. This function may throw
+   exception in case of indexed stack element is not a table.
+
+ INPUTS
+   state - the Lua environment.
+   index - index to a Lua table on stack to be modified.
+   key - table index.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaSetTable(), LuaRawSet(), LuaRawSetI()
+
+lua.library/LuaSetGlobal
+
+ NAME
+   LuaSetGlobal -- sets a global Lua value (V50)
+
+ SYNOPSIS
+   LuaSetGlobal(LuaState *state, const char *name);
+
+ FUNCTION
+   Gets a value from the top of the Lua stack and sets it to a global
+   variable specified by 'name'.
+
+ INPUTS
+   state - the Lua environment
+   name - name of a global variable
+
+ RESULT
+   None.
+
+ NOTES
+   This function is implemented as a macro calling LuaSetField() with
+   LUA_GLOBALSINDEX as stack pseudoindex.
+
+ SEE ALSO
+   LuaSetField()
+
+lua.library/LuaSetHook
+
+ NAME
+   LuaSetHook -- sets debug hook. (V50)
+
+ SYNOPSIS
+   LONG LuaSetHook(LuaState *state, LuaHook hook, LONG eventmask, LONG
+   count);
+
+ FUNCTION
+   Sets debug hook function for Lua environment. The hook will be called
+   at events set in the eventmask.
+
+ INPUTS
+   state - the Lua environment.
+   hook - the hook function matching LuaHook prototype. Setting it to NULL
+     disables current hook.
+   eventmask - bitwise or-ed masks:
+     - LUA_MASKCALL - hook is called just after entering a function.
+     - LUA_MASKRET - hook is called just before exiting a function.
+     - LUA_MASKLINE - hook is called at start of each code line.
+     - LUA_MASKCOUNT - hook is called after every 'count' instructions.
+     Setting mask to zero disables the hook.
+
+ RESULT
+   Always 1.
+
+lua.library/LuaSetLocal
+
+ NAME
+   LuaSetLocal -- sets value of local variable. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaSetLocal(LuaState *state, const struct LuaDebug *debug,
+   LONG varnum);
+
+ FUNCTION
+   Pops a value from the top of the Lua stack and uses it as a new value of
+   a local variable of given number in the passed debug context.
+
+ INPUTS
+   state - the Lua environment.
+   debug - debug context returned by LuaGetStack() or passed to a debug
+     hook.
+   varnum - number of local variable, usually obtained via LuaGetLocal().
+
+ RESULT
+   Name of the variable or NULL, if passed number is higher than number of
+   local variables.
+
+lua.library/LuaSetMetaTable
+
+ NAME
+   LuaSetMetaTable -- sets metatable for Lua object. (V50)
+
+ SYNOPSIS
+   LONG LuaSetMetaTable(LuaState *state, LONG index);
+
+ FUNCTION
+   The function pops a table from the top of Lua stack and assigns it as a
+   metatable for item on the stack indexed by 'index'. This function only
+   succeeds if the top element of the stack is a table, and indexed element
+   may have metatable assigned. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index of object to be assigned a metatable.
+
+ RESULT
+   Boolean value of success.
+
+lua.library/LuaSetTable
+
+ NAME
+   LuaSetTable -- sets table element. (V50)
+
+ SYNOPSIS
+   void LuaSetTable(LuaState *state, LONG index);
+
+ FUNCTION
+   The function first expects that 'index' points at a Lua table object on
+   the stack. Then it pops the stack top and takes it as a value. It pops
+   another stack element from the top and takes it as a table key. Then it
+   sets the value for table element indexed by the key. Metamethods for
+   table indexing operation are applied if defined. This function may throw
+   exception in case of indexed stack element is not a table.
+
+ INPUTS
+   state - the Lua environment.
+   index - index to a Lua table on stack to be modified.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaSetField(), LuaRawSet(), LuaRawSetI()
+
+lua.library/LuaSetTop
+
+ NAME
+   LuaSetTop -- moves Lua stack top by adding or removing elements. (V50)
+
+ SYNOPSIS
+   void LuaSetTop(LuaState *state, LONG new_index);
+
+ FUNCTION
+   Adjusts stack top to the passed index. If the requested top is higher
+   than current one, Lua values of type 'nil' are pushed on the stack. If
+   the requested top is lower, elements are popped from the stack and
+   discarded. If the new top is 0, all elements are discarder and the stack
+   becomes empty. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   new_index - the new Lua stack top index.
+
+ RESULT
+   None.
+
+lua.library/LuaSetUpValue
+
+ NAME
+   LuaSetUpValue -- sets Lua upvalue. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaSetUpValue(LuaState *state, LONG funcnum, LONG upvalnum);
+
+ FUNCTION
+   Pops a value from the top of the Lua stack. Assumes that stack at index
+   'funcnum' contains a closure. Then sets the value to closure variable of
+   specified number. May throw an exception if indexed stack position is not
+   a closure or function.
+
+ INPUTS
+   state - the Lua environment.
+   funcnum - Lua stack index pointing to a closure.
+   upvalnum - number of upvalue (variable of a closure), usually determined
+     with LuaGetUpValue().
+
+ RESULT
+   Readonly name of the upvalue, or NULL if there is no upvalue of passed
+   number.
+
+ SEE ALSO
+   LuaGetUpValue()
+
+lua.library/LuaStatus
+
+ NAME
+   LuaStatus -- returns status of Lua thread. (V50)
+
+ SYNOPSIS
+   LONG LuaStatus(LuaState *state);
+
+ FUNCTION
+   Returns status of a Lua coroutine defined by 'state'. It may be zero for
+   the main thread, LUA_YIELD for suspended coroutine, or error code for
+   aborted one.
+
+ INPUTS
+   state - the Lua environment of examined thread.
+
+ RESULT
+   Thread status.
+
+lua.library/LuaStrLen
+
+ NAME
+   LuaStrLen -- returns string length in bytes. (V50)
+
+ SYNOPSIS
+   LONG LuaStrLen(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes a Lua stack item at specified index, assumes it is a string and
+   returns its length in bytes. Note that it works with Lua strings, so byte
+   0x00 may appear inside a string and does not terminate it.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be sized.
+
+ RESULT
+   String size in bytes.
+
+ NOTES
+   Implemented as macro calling LuaObjLen() with the same parameters. As
+   there is no type checking, it may then return non-zero values also for
+   tables and userdata.
+
+ SEE ALSO
+   LuaObjLen()
+
+lua.library/LuaToBoolean
+
+ NAME
+   LuaToBoolean -- converts Lua value to boolean value. (V50)
+
+ SYNOPSIS
+   LONG LuaToBoolean(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes a Lua value from the stack and converts it to boolean value.
+   According to Lua rules, everything which is not 'nil' or boolean 'false',
+   returns TRUE. Wrong index results in FALSE. This function does not throw
+   exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   FALSE for 'nil', 'false' or wrong index. TRUE otherwise.
+
+lua.library/LuaToCFunction
+
+ NAME
+   LuaToCFunction -- converts Lua value to a C function pointer. (V50)
+
+ SYNOPSIS
+   LuaCFunction LuaToCFunction(LuaState *state, LONG index);
+
+ FUNCTION
+   Converts a Lua value on the stack pointed by index to a pointer to C
+   function. If the value does not represent a C function, the result is
+   NULL. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   Function pointer or NULL.
+
+lua.library/LuaToInteger
+
+ NAME
+   LuaToInteger -- converts Lua value to integer number. (V50)
+
+ SYNOPSIS
+   LONG LuaToInteger(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes a Lua value from the stack and converts it to an integer number.
+   In case there is no conversion for the value, function returns 0. This
+   function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   Integer number, or 0 in case of problems.
+
+ NOTES
+   The way of rounding numbers is unspecified in Lua reference manual. This
+   implementation uses truncation of fractional part towards zero.
+
+ SEE ALSO
+   LuaCheckInteger()
+
+lua.library/LuaToLString
+
+ NAME
+   LuaToLString -- converts Lua value to sized string. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaToLString(LuaState *state, LONG index, LONG *len);
+
+ FUNCTION
+   If a value on the Lua stack pointed by index is a string or number, the
+   function returns it as a null-terminated string. If optional 'len' is not
+   NULL, string length is stored there. The function also converts the stack
+   value to string too, if it was a number. This function does not throw
+   exceptions.
+
+   Returned pointer is only valid until the Lua value stays on stack. When
+   it is removed, the garbage collector may make it invalid at any time.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   A read-only, null-terminated string. As Lua strings may contain zero
+   bytes inside, be prepared that value stored in 'lenstorage' may be higher
+   than strlen() on returned string.
+
+ SEE ALSO
+   LuaCheckLString()
+
+lua.library/LuaToNumber
+
+ NAME
+   LuaToNumber -- converts Lua value to floating point number. (V50)
+
+ SYNOPSIS
+   DOUBLE LuaToNumber(LuaState *state, LONG index);
+
+ FUNCTION
+   Takes a Lua value from the stack and converts it to a double precision
+   floating point number. In case there is no conversion for the value,
+   function returns 0.0. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   Floating point number, 0.0 in case of problems.
+
+ SEE ALSO
+   LuaCheckNumber()
+
+lua.library/LuaToPointer
+
+ NAME
+   LuaToPointer -- converts Lua value to general pointer. (V50)
+
+ SYNOPSIS
+   const APTR LuaToPointer(LuaState *state, LONG index);
+
+ FUNCTION
+   This conversion is only defined for userdata, table, thread and function.
+   For other Lua types function returns NULL. The pointer cannot be
+   converted back to Lua value. This function is used for debugging mainly.
+   This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   C pointer to Lua object or NULL.
+
+lua.library/LuaToString
+
+ NAME
+   LuaToString -- converts Lua value to null terminated string. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaToString(LuaState *state, LONG index);
+
+ FUNCTION
+   Converts value from the Lua stack at given index to a null terminated
+   string. Note that Lua strings may contain byte 0x00 inside, and after
+   conversion with this function, there will be no access to bytes after
+   the zero byte. Use LuaToLString() if zeros inside are expected.
+
+ INPUTS
+   state - the Lua environment.
+   index - Lua stack position to be converted.
+
+ RESULT
+   Readonly, null terminated string.
+
+ NOTES
+   Implemented as a macro calling LuaToLString() with NULL pointer to size
+   storage.
+
+ SEE ALSO
+   LuaToLString()
+
+lua.library/LuaToThread
+
+ NAME
+   LuaToThread -- converts Lua value to Lua thread state. (V50)
+
+ SYNOPSIS
+   LuaState* LuaToThread(LuaState *state, LONG index);
+
+ FUNCTION
+   Converts a Lua value on the stack pointed by index to a pointer to
+   LuaState representing a Lua thread environment. The result is NULL if
+   the value is not a thread. This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   Pointer to thread's LuaState or NULL.
+
+lua.library/LuaToUserData
+
+ NAME
+   LuaToUserData -- converts Lua value to user data pointer. (V50)
+
+ SYNOPSIS
+   APTR LuaToUserData(LuaState *state, LONG);
+
+ FUNCTION
+   Converts a Lua value on the stack pointed by index to a pointer to user
+   data. If the value does not represent a C function, the result is NULL.
+   This function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack of the value to be converted.
+
+ RESULT
+   Pointer to user data or NULL.
+
+lua.library/LuaType
+
+ NAME
+   LuaType -- returns a Lua type identifier of a value. (V50)
+
+ SYNOPSIS
+   LONG LuaType(LuaState *state, LONG index);
+
+ FUNCTION
+   Returns Lua type identifier of a value at the given index on the Lua
+   stack. This identifier is one of LUA_Txxxx defined in <libraries/lua.h>.
+   LUA_TNONE is returned for empty or not existing stack slot. This function
+   does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   index - index on the Lua stack to the value to be tested.
+
+ RESULT
+   One of Lua type identifiers or LUA_TNONE.
+
+lua.library/LuaTypeName
+
+ NAME
+   LuaTypeName -- returns a name of a Lua type. (V50)
+
+ SYNOPSIS
+   CONST_STRPTR LuaTypeName(LuaState *state, LONG type);
+
+ FUNCTION
+   Returns a read-only string with a name of given Lua type identifier. This
+   function does not throw exceptions.
+
+ INPUTS
+   state - the Lua environment.
+   type - Lua type identifier, one of LUA_Txxxx defined in
+     <libraries/lua.h>.
+
+ RESULT
+   A read-only, null-terminated string containing type name.
+
+lua.library/LuaWhere
+
+ NAME
+   LuaWhere -- pushes execution position information on the Lua stack (V50.3)
+
+ SYNOPSIS
+   void LuaWhere(LuaState *state, LONG level);
+
+ FUNCTION
+   Generates a string containing Lua code module name and number of line in
+   code. Pushes this string on the Lua stack. The optional 'level' argument
+   controls which position in the code is reported. Level 0 means current
+   function, level 1 is the caller, level 2 is a caller of the caller etc.
+
+ INPUTS
+   state - the Lua environment
+   level - level of the call traceback
+
+ RESULT
+   None.
+
+lua.library/LuaXMove
+
+ NAME
+   LuaXMove -- exchange values between threads. (V50)
+
+ SYNOPSIS
+   void LuaXMove(LuaState *source, LuaState *dest, LONG number);
+
+ FUNCTION
+   This function may be used to move values from Lua stack of one thread to
+   another. Both threads must belong to the same main environment. Specified
+   number of values is popped out of the source stack and pushed onto the
+   destination stack in the same order. This function does not throw
+   exceptions.
+
+ INPUTS
+   source - the Lua environment. Values will be popped from the stack of
+     this environment.
+   dest - another Lua environment. Values will be pushed on the stack of
+     this environment.
+   number - number of values to move.
+
+ RESULT
+   None.
+
+lua.library/LuaYield
+
+ NAME
+   LuaYield -- yields Lua coroutine from inside of C function. (V50)
+
+ SYNOPSIS
+   LONG LuaYield(LuaState *state, LONG numargs);
+
+ FUNCTION
+   This function yields a Lua coroutine from C code. It may be used as a
+   return expression of a C function like this:
+
+   return LuaYield(state, numargs);
+
+   After returning to Lua code this way, control returns to Lua
+   coroutine.resume which called this C code before.
+
+ INPUTS
+   state - the Lua environment.
+   numargs - number of arguments put on stack to be returned to
+   coroutine.resume().
+
+ RESULT
+   0 in case of success, error code otherwise.
+
+lua.library/OpenLibs
+
+ NAME
+   OpenLibs -- Opens all standard Lua libraries into the given state.
+   (V52)
+
+ SYNOPSIS
+   void OpenLibs(LuaState *);
+
+ FUNCTION
+   Opens all standard Lua libraries into the given state.
+   On MorphOS this is limited to "package" as all the standard modules
+   are implemented as dynamically loaded shared libraries. They are not
+   loaded automatically and must be explicitly opened using 'require'
+   function inside a Lua script.
+
+ INPUTS
+   state - Lua environment to load the libraries into.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   LuaNewState()
+
+lua.library/background
+
+ DESCRIPTION
+   The lua.library is a complete implementation of Lua 5.1.4.
+
+   Note that all the standard modules (except "package") are implemented as
+   dynamically loaded shared libraries. They are not loaded automatically
+   at the interpreter start and must be explicitly opened using 'require'
+   function inside a Lua script.
+
+   This implementation does not support "Unix first line skip", it means the
+   first line starting from "#!" in a script will cause an interpretation
+   error and must be removed manually.
+
+ HISTORY
+   51.2 (29.09.2014)
+   - Fixed: luaL_Buffer structures are no more pushed on the stack, but
+     dynamically allocated with the Lua state allocator. Fixes possible
+     stack overflows.
+
+   50.5 (21.06.2011)
+   - Added creation of global "_G" and "_VERSION", moved from base.module.
+
+

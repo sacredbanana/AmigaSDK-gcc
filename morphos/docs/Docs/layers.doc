@@ -1,0 +1,228 @@
+TABLE OF CONTENTS
+
+layers.library/--backgroud--
+layers.library/IsLayerHitable
+layers.library/IsLayerVisible
+layers.library/IsVisibleInLayer
+layers.library/LockLayerUpdates
+layers.library/RenderLayerInfo
+layers.library/UnlockLayerUpdates
+layers.library/WhichLayerBehindLayer
+layers.library/--backgroud--
+
+ Layers library controls the display and clipping of windows on screens
+ and provides means for clipped offscreen drawing. Since V52 the display
+ of intuition screens can be composited enabling real alpha channel
+ functionalities. This is called the Enhanced Display and is controlled
+ on the intuition level. The main difference is that with composited screens
+ drawing directly to the screen (as done by some legacy applications) can no
+ longer work. This means operations like lasso or dragging cannot be done while
+ having a LockLayers lock on the screen's LayerInfo. Instead, one should just
+ use normal windows for dragging, lasso, etc. Do note that intuition APIs
+ should generally be used for such purposes and therefore some functionalities
+ are not exposed to the programmer in layers.
+
+layers.library/IsLayerHitable
+
+   NAME
+    IsLayerHitable -- Check whether a layer can be found by WhichLayer (V52)
+
+   SYNOPSIS
+    visible = IsLayerHitable( l )
+    BOOL IsLayerHitable( struct Layer * );
+
+   FUNCTION
+   Checks whether the layers hitlevel allows the layer to be found with WhichLayer
+   with its current opacity value. Please see WA_HitLevel for more information.
+
+   RESULT
+    visible - TRUE if the layer can be found
+
+   INPUTS
+    layer - pointer to a Layer
+
+   BUGS
+
+   SEE ALSO
+   WA_Opacity, WA_HitLevel
+
+layers.library/IsLayerVisible
+
+   NAME
+    IsLayerVisible -- Check whether a layer is visible or hidden (V52)
+
+   SYNOPSIS
+    visible = IsLayerVisible( l )
+    BOOL IsLayerVisible( struct Layer * );
+
+   FUNCTION
+   Checks whether a layer is visible, that is: whether it is not hidden or
+   has a non-zero opacity. It does not check whether the layer is totally
+   covered by other layers.
+
+   RESULT
+    visible - TRUE if the layer is visible
+
+   INPUTS
+    layer - pointer to a Layer
+
+   BUGS
+
+   SEE ALSO
+   WA_Opacity
+
+layers.library/IsVisibleInLayer
+
+   NAME
+    IsVisibleInLayer -- Check whether a given rectangle is not fully clipped away (V52)
+
+   SYNOPSIS
+    visible = IsVisibleInLayer( l, x0, y0, x1, y1 )
+    BOOL IsVisibleInLayer( struct Layer *, LONG, LONG, LONG, LONG );
+
+   FUNCTION
+   Checks whether a given rectangle is not fully clipped away using the layer's
+   current clipping rectangle. On Enhanced Display screens this will only check
+   whether the rectangle isn't outside the layer's custom shape clip area.
+
+   RESULT
+    visible - TRUE if any portion of the rectangle is in the visible area
+
+   INPUTS
+    layer - pointer to a Layer
+   x0 - y1 - a rectangle in coordinates relative to the layer
+
+   BUGS
+
+   SEE ALSO
+
+layers.library/LockLayerUpdates
+
+   NAME
+    LockLayerUpdates -- Ensure a flickerless redraw with multiple draw ops (V52)
+
+   SYNOPSIS
+    LockLayerUpdates( l )
+    void LockLayerUpdates( struct Layer * );
+
+   FUNCTION
+   On Enhanced Display screens this call ensures that multiple drawing operations
+   will not cause flicker on screen - that is, the screen contents will not be
+   updated inbetween your drawing calls.
+
+   Do note that this call may need to access multiple layers, therefore you must
+   either not hold any layer locks in the LayerInfo the layer belongs to, or call
+   LockLayerInfo() before using this function.
+
+   Do note that there is no need to call this function when the application has
+   just called BeginRefresh() / BeginUpdate().
+
+   UnlockLayerUpdates MUST be called as many times as LockLayerUpdates was called.
+   Do not hold the lock longer than it is necessary - depending on the
+   implementation it may lock the updates of the whole screen. As with the other
+   layers locking functions, high level system calls are forbidden, especially
+   intutition.library's window operations!
+
+   RESULT
+
+   INPUTS
+    layer - pointer to a Layer
+
+   BUGS
+
+   SEE ALSO
+   UnlockLayerUpdates
+
+layers.library/RenderLayerInfo
+
+   NAME
+   RenderLayerInfo -- Render a portion of a LayerInfo in a buffer (V52)
+
+   SYNOPSIS
+    success = RenderLayerInfoTagList( li, tags )
+   BOOL RenderLayerInfoTagList( struct LayerInfo *, struct TagItem *);
+   BOOL RenderLayerInfoTags( struct LayerInfo *, Tag tag1, ...);
+
+   FUNCTION
+   Renders an Enhanced Display screen LayerInfo's contents in a buffer.
+
+   RESULT
+    success - TRUE if anything was rendered at all
+
+   INPUTS
+    layer - pointer to a Layer
+   tags - pointer to TagItem list
+
+   Currently defined tags are:
+
+       LR_Destination_RastPort
+       LR_Destination_BitMap
+       LR_Destination_Bounds
+       LR_LayerInfo_Bounds
+       LR_Erase
+       LR_RenderList
+       LR_IgnoreList
+
+   Please see the graphics/layers.h include file for their descriptions
+
+   BUGS
+
+   SEE ALSO
+   graphics/layers.h
+
+layers.library/UnlockLayerUpdates
+
+   NAME
+    UnlockLayerUpdates -- Removes the LockLayerUpdates lock (V52)
+
+   SYNOPSIS
+    UnlockLayerUpdates( l )
+    void UnlockLayerUpdates( struct Layer * );
+
+   FUNCTION
+   Unlocks a layer previously locked with LockLayerUpdates.
+
+   RESULT
+
+   INPUTS
+    layer - pointer to a Layer
+
+   BUGS
+
+   SEE ALSO
+   LockLayerUpdates()
+
+layers.library/WhichLayerBehindLayer
+
+   NAME
+    WhichLayerBehindLayer -- Returns a layer from a point, ignoring one layer (V52)
+
+   SYNOPSIS
+    layer = WhichLayerBehindLayer( l, x, y )
+    struct Layer * WhichLayerBehindLayer( struct Layer *, LONG, LONG);
+
+   FUNCTION
+   Scans the LayerInfo of the passed in layer starting from the layer directly
+   below the passed in layer and returns the first layer overlapping the given
+   coordinates.
+
+   Do note that you should call this function inside a LockLayerInfo() or
+   LockLayers() if you wish to use the returned pointer for any other means
+   than simple pointer comparison. In other words, if you wish to peek the
+   returned structure or call any layers functions on it, obtain the lock first.
+
+   This function makes it easy to implement window-based dragging effects.
+
+   RESULT
+    layer - pointer to struct Layer or NULL
+
+   INPUTS
+    layer - pointer to a Layer
+   x, y - LayerInfo relative coordinates
+
+   BUGS
+
+   SEE ALSO
+   WhichLayer()
+
+

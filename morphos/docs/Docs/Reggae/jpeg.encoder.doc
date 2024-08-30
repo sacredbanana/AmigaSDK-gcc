@@ -1,0 +1,76 @@
+TABLE OF CONTENTS
+
+jpeg.encoder/--background--
+jpeg.encoder/MMM_Pull
+jpeg.encoder/OM_DISPOSE
+jpeg.encoder/OM_NEW
+jpeg.encoder/--background--
+
+ DESCRIPTION
+   The class converts Reggae common video formats into JPEG stream.
+   On input port it accepts Reggae video format:
+   - MMF_VIDEO_RGB24, MMF_VIDEO_GRAY8, MMFC_VIDEO_GRAY8
+
+   Video data may be converted to following formats:
+   - MMF_VIDEO_JPEG.
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.1  (12.03.2013)
+   - Initial release
+   52.2  (29.11.2013)
+   - Metadata API support, DPI saving
+
+jpeg.encoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Converts block of PCM video data (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, buffer, bytes);
+
+ FUNCTION
+   Gets video data in one of Reggae base formats from its input. Converts
+   it, then stores in a buffer specified.
+
+ INPUTS
+   buffer - buffer to store data. It must be aligned for AltiVec
+     (preferrably allocated with MediaAllocVec()).
+   bytes - number of bytes requested on output. It will be rounded down to
+     nearest pixel boundary.
+
+jpeg.encoder/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes jpeg.encoder object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Frees processing buffer, disposes object.
+
+jpeg.encoder/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new jpeg.encoder object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "jpeg.encoder", ...);
+
+ FUNCTION
+   Creates a new object with default settings. The default input format is
+   MMFC_VIDEO_ARGB32. The default output format is MMF_VIDEO_jpeg. Usually
+   input format is later set when object's input is connected to the data
+   source. Output format is either set when object's output is connected to
+   data receiver, or set explicitly by application.
+
+ RESULT
+   Object pointer or NULL when construction fails. MMA_ErrorCode may be used
+   to get reason of failure. The only reason for fail may be out of memory.
+
+

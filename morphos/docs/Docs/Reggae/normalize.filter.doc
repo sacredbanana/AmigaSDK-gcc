@@ -1,0 +1,158 @@
+TABLE OF CONTENTS
+
+normalize.filter/MMA_Normalize_Gain
+normalize.filter/MMA_Normalize_Max
+normalize.filter/MMA_Normalize_Min
+normalize.filter/MMM_Pull
+normalize.filter/MMM_Seek
+normalize.filter/background
+normalize.filter/MMA_Normalize_Gain
+
+ NAME
+   MMA_Normalize_Gain (V51) [.SGPQ], *double
+
+ FUNCTION
+   Returns absolute normalization gain for a stream. This attribute should
+   be queried after the first pass is done, so after connecting data source
+   to object's input. If queried before scan, it just returns 1.0.
+
+   Application may override the gain by setting it after the first pass is
+   done, it means after the input port is connected with source. It should
+   be noted however, that overdrive (by increasing gain above the value
+   computed in the first pass) is NOT saturated, so even small overdrive
+   will cause large and hard distortions.
+
+ NOTES
+   This attribute is passed via pointer to floating point double precision
+   number.
+
+normalize.filter/MMA_Normalize_Max
+
+ NAME
+   MMA_Normalize_Max (V51) [..G.Q], *double
+
+ FUNCTION
+   Returns maximum sample value in an audio stream. This attribute should be
+   queried after the first pass is done, so after connecting data source to
+   object's input. Note that in case of integer streams it is the true
+   sample value, not scaled to [-1.0, +1.0] range.
+
+ NOTES
+   This attribute is returned via pointer to floating point double precision
+   number.
+
+normalize.filter/MMA_Normalize_Min
+
+ NAME
+   MMA_Normalize_Min (V51) [..G.Q], *double
+
+ FUNCTION
+   Returns minimum sample value in an audio stream. This attribute should be
+   queried after the first pass is done, so after connecting data source to
+   object's input. Note that in case of integer streams it is the true
+   sample value, not scaled to [-1.0, +1.0] range.
+
+ NOTES
+   This attribute is returned via pointer to floating point double precision
+   number.
+
+normalize.filter/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes normalized audio data to specified buffer. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls requested amount of audio data to destination buffer and then
+   multiplies it by normalization gain calculated during the first
+   normalization pass. As conversion is done in-place, no additional buffers
+   are allocated.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from port 1 (output).
+   buffer - destination buffer for data. Must be aligned for AltiVec,
+     preferrably allocated with MediaAllocVec().
+   length - amount of data to be pulled in *bytes*. Must be an even multiply
+     of sample size. If not, it is rounded down.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+normalize.filter/MMM_Seek
+
+ NAME
+   MMM_Seek -- Moves stream pointer to a new position. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, ULONG type, UQUAD*
+   position);
+
+ FUNCTION
+   Perform seek in audio data stream. A normalize.filter object has no
+   persistent buffers, so it simply forwards the request from output to
+   input.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, seek must be done on port 1 (output).
+   buffer - type of seek, MMM_SEEK_TIME or MMM_SEEK_FRAMES.
+   position - a pointer to an UQUAD variable holding the new position. It is
+     in frames for frame seek and in microseconds for time seek.
+
+ RESULT
+   Boolean. FALSE in case of problems, secondary error information via
+   MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+normalize.filter/background
+
+ DESCRIPTION
+   The filter purpose is to amplify an audio stream to maximize the
+   amplitude of signal without distortion. Normalization is done in two
+   passes. When the data source is connected to normalizer input, it scans
+   the whole stream to find peak values, then rewinds stream. Normalization
+   gain is calculated from peak values. When output of normalizer is
+   connected and MMM_Pull() is performed on the output, the signal is
+   multiplied by gain calculated.
+
+   Because of way of working, normalize.filter object requires that data
+   source is seekable. If application tries to connect a non-seekable data
+   source, MediaConnectTagList() will fail. It should be also noted that
+   application must be prepared for the first pass to take some amount of
+   time. Scanning pass is usually limited by mass storage media speed, but
+   stream decoder may also contribute. Becasuse of that, MediaConnect() call
+   connecting normalize.filter input to data source may take a few (or more)
+   seconds to complete.
+
+   In case when audio stream is multichannel (stereo or more), all channels
+   are normalized together, so balance between them is not changed.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+   MMA_Normalize_Gain [.SGPQ], DOUBLE*
+   MMA_Normalize_Min  [..G.Q], DOUBLE*
+   MMA_Normalize_Max  [..G.Q], DOUBLE*
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+ HISTORY
+   51.1 (15.09.2012)
+   - Initial release.
+
+

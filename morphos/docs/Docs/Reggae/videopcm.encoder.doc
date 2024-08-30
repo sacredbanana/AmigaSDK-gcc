@@ -1,0 +1,130 @@
+TABLE OF CONTENTS
+
+videopcm.encoder/--background--
+videopcm.encoder/MMA_Video_LinePadding
+videopcm.encoder/MMM_Pull
+videopcm.encoder/OM_DISPOSE
+videopcm.encoder/OM_NEW
+videopcm.encoder/--background--
+
+ DESCRIPTION
+   The class converts Reggae common video formats into various PCM formats.
+   On input port it accepts Reggae video format:
+
+   - MMFC_VIDEO_ARGB32
+
+   Video data may be converted to following formats:
+
+   - MMF_VIDEO_RGB24
+   - MMF_VIDEO_BGR24
+   - MMF_VIDEO_ARGB32
+   - MMF_VIDEO_RGBA32
+   - MMF_VIDEO_ABGR32
+   - MMF_VIDEO_BGRA32
+
+   When conversion is an identity, requests on output port bypass the object
+   and are directly passed to the input, so data stream is not copied. The
+   class operates on single pixels level so it ignores video frame
+   dimensions and scan order. Data is processed in blocks of 64 kB.
+
+ NEW ATTRIBUTES
+
+   MMA_Video_LinePadding (v51.2)
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.4  (02.06.2013)
+   - Added BGRA32 output.
+   - Conversion is reselected after setting MMA_Port_Format on any port.
+
+   51.3  (19.04.2013)
+   - Class attribute MMA_SupportedFormats returns table of output, not input
+     formats.
+
+   51.2  (15.09.2012)
+   - Implemented line padding.
+   - AltiVec routine for ARGB32 to RGBA32 conversion.
+   - AltiVec routine for ARGB32 to ABGR32 conversion.
+   - AltiVec routine for ARGB32 to RGB24 conversion.
+   - AltiVec routine for ARGB32 to BGR24 conversion.
+
+   51.1  (31.08.2012)
+   - Initial release.
+
+videopcm.encoder/MMA_Video_LinePadding
+
+ NAME
+   MMA_Video_LinePadding (V50) [.....], ULONG
+
+ FUNCTION
+   This attribute is in fact not an attribute of videopcm.encoder class.
+   Multiplexer classes using videopcm.encoder and needing image lines to be
+   padded, should implement this attribute as gettable on (at least) input
+   port. Object of videopcm.encoder class gets this attribute from object
+   being connected to its output during MMM_Setup().
+
+   Allowed values of this attribute are 2 (pad to 16-bit word) and 4 (pad to
+   32-bit word). Other values are ignored and no padding is assumed. As
+   padding degrades performance, especially with AltiVec accelerated
+   routines, it is applied intelligently. For example 2 bytes padding is
+   applied for 3 bytes per pixel output formats only if image width is odd.
+   Pad bytes always contain zeros.
+
+videopcm.encoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Converts block of PCM video data (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, buffer, bytes);
+
+ FUNCTION
+   Gets video data in one of Reggae base formats from its input. Converts
+   it, then stores in a buffer specified.
+
+ INPUTS
+   buffer - buffer to store data. It must be aligned for AltiVec
+     (preferrably allocated with MediaAllocVec()).
+   bytes - number of bytes requested on output. It will be rounded down to
+     nearest pixel boundary.
+
+videopcm.encoder/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes videopcm.encoder object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Frees processing buffer, disposes object.
+
+videopcm.encoder/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new videopcm.encoder object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "videopcm.encoder", ...);
+
+ FUNCTION
+   Creates a new object with default settings. The default input format is
+   MMFC_VIDEO_ARGB32. The default output format is MMF_VIDEO_ARGB32 (which
+   is the same as input). Usually input format is later set when object's
+   input is connected to the data source. Output format is either set when
+   object's output is connected to data receiver, or set explicitly by
+   application.
+
+ NOTES
+   Every object of the class allocates 64 kB of memory for processing
+   buffer.
+
+ RESULT
+   Object pointer or NULL when construction fails. MMA_ErrorCode may be used
+   to get reason of failure. The only reason for fail may be out of memory.
+
+

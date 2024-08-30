@@ -1,0 +1,170 @@
+TABLE OF CONTENTS
+
+processblock.class/MMM_AddForward
+processblock.class/MMM_IsMember
+processblock.class/OM_ADDMEMBER
+processblock.class/OM_DISPOSE
+processblock.class/OM_NEW
+processblock.class/OM_REMMEMBER
+processblock.class/__background__
+processblock.class/MMM_AddForward
+
+ NAME
+   MMM_AddForward -- adds link from group port to object port. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_AddForward, Object *fwdobject, ULONG
+   fwdport);
+
+ FUNCTION
+   Adds virtual connection from a group port to some port of object inside
+   the group. After that all operations on group port are automatically
+   forwarded to the real port of the group member.
+
+ INPUTS
+   fwdobject - a member of the group, forward will point to it.
+   fwdport - number of port in 'fwdobject', where forward will be directed.
+
+ RESULT
+   Boolean value of success. The method will fail if the destination port
+   does not exist or the forward target object is NULL.
+
+ BUGS
+   The method does not check if the forward target object belongs to the
+   group. The method also does not set MMA_ErrorCode in case of failure.
+
+processblock.class/MMM_IsMember
+
+ NAME
+   MMM_IsMember -- checks if an object belongs to object block. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_IsMember, Object *check)
+
+ FUNCTION
+   The method checks if an object is member of the group.
+
+ INPUTS
+   check - object, which membership is checked.
+
+ RESULT
+   TRUE if checked object belongs to the group, FALSE otherwise.
+
+ SEE ALSO
+   OM_ADDMEMBER(), OM_REMMEMBER()
+
+processblock.class/OM_ADDMEMBER
+
+ NAME
+   OM_ADDMEMBER -- adds object to object block. (V51)
+
+ SYNOPSIS
+   DoMethod(Object *obj, OM_ADDMEMBER, Object *member);
+
+ FUNCTION
+   Adds a Reggae object to the group. This operation does not change port
+   connections of the added object.
+
+ INPUTS
+   member - object to be added.
+
+ RESULT
+   Boolean value of success. The method may fail in low memory conditions.
+
+processblock.class/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- disposes object of processblock.class. (V51)
+
+ SYNOPSIS
+   DisposeObject(Object *obj);
+
+ FUNCTION
+   Disposes all the objects inside the group, then disposes the group
+   itself. All the connections going outside the group are disconnected.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+processblock.class/OM_NEW
+
+ NAME
+   OM_NEW -- creates new object of processblock.class. (V51)
+
+ SYNOPSIS
+   Object* NewObject(NULL, "processblock.class", ..., TAG_END);
+   Object* NewObjectA(NULL, "processblock.class", taglist);
+
+ FUNCTION
+   Creates an empty object group with no ports. Objects may be added to the
+   group with OM_ADDMEMBER(), ports of the group are created with
+   MMM_AddPort(), and connected to ports of object inside the group with
+   MMM_AddForward().
+
+ INPUTS
+   taglist - object attributes. Currently no tags are defined for the class.
+
+ RESULT
+   Empty group object or NULL. Failure may be caused by low memory
+   condition.
+
+ SEE ALSO
+   OM_ADDMEMBER(), MMM_AddPort(), MMM_AddForward()
+
+processblock.class/OM_REMMEMBER
+
+ NAME
+   OM_REMMEMBER -- removes object from object block. (V51)
+
+ SYNOPSIS
+   void DoMethod(Object *obj, OM_REMMEMBER, Object *member);
+
+ FUNCTION
+   Removes Reggae object from object group. This method does not change port
+   connections of removed object.
+
+ INPUTS
+   member - object to be removed. Removing object not belonging to the
+   group is safe, method just does nothing then.
+
+ RESULT
+   None.
+
+ BUGS
+   The method does not clear port forwards of removed object.
+
+ SEE ALSO
+    OM_ADDMEMBER()
+
+processblock.class/__background__
+
+ DESCRIPTION
+   The class is used to group multiple Reggae objects. Then the group may
+   be treated as a single object. Ports of this compound object are
+   forwarded to selected ports of inner objects.
+
+   Objects are grouped automatically by MediaNewObjectTagList(), also
+   applications may group their objects in any way.
+
+   Performing a forwarded method on a port of object group relays the
+   method to the real port of the group member. Following methods are
+   relayed:
+   - MMM_SetPort()
+   - MMM_GetPort()
+   - MMM_SetPortFwd()
+   - MMM_GetPortFwd()
+   - MMM_Pull()
+   - MMM_Seek()
+   - MMM_Setup()
+   - MMM_Cleanup()
+   - MMM_QueryMetaData()
+
+ HISTORY
+   51.7 (11.11.2015)
+   - All the forwarded methods set MMERR_BROKEN_PIPE if specified
+     processblock port does not exist.
+
+

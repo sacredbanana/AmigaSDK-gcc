@@ -1,0 +1,173 @@
+@database "MUI/MUI_Palette"
+@Node Main "MUI/MUI_Palette"
+@toc "SDK:Guide/Includes_&_Autodocs/Main"
+TABLE OF CONTENTS
+
+    @{"Palette.mui" Link "Palette.mui"}
+    @{"MUIA_Palette_Entries" Link "MUIA_Palette_Entries"}
+    @{"MUIA_Palette_Groupable" Link "MUIA_Palette_Groupable"}
+    @{"MUIA_Palette_Names" Link "MUIA_Palette_Names"}
+@EndNode
+@Node Palette.mui "MUI/MUI_Palette - Palette.mui"
+
+
+	OBSOLETE!
+	There are better ways to define colors now. Check out
+	Poppen.mui for example.
+
+	OLD DOCUMENTATION:
+	Palette class generates a (big) group of objects, alltogether
+	making up a powerful palette requester. Due to the new color
+	selection schemes of Kickstart 3.x, you won't get a "traditional"
+	palette requester with 2^n fields to fill in. These things
+	really stop making sense on nice 256 or true color screens.
+
+	Instead, MUI's palette class allows defining a list of colors
+	that the user should be able to adjust. Within a public screen
+	manager, this would e.g. be the @{"DrawInfo" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 384} pens for a specific
+	screen, within a terminal program maybe the eight ANSI colors.
+
+	Palette class uses a listview to let the user choose the
+	desired color, a coloradjust object to adjust this color
+	and a colorfield object that always shows the current color.
+
+	The user will also be able to concatenate several colors
+	in the list, defining a single color for several entries.
+@EndNode
+@Node MUIA_Palette_Entries "MUI/MUI_Palette - MUIA_Palette_Entries"
+
+
+    NAME
+	MUIA_Palette_Entries -- (V6 ) [I.G], struct @{"MUI_Palette_Entry" Link "SDK:Guide/includes/libraries/mui.h/Main" 452} *, 0x8042a3d8
+
+    FUNCTION
+	Specify the colors that the user should be able to adjust
+	with this palette object.
+
+	You supply an array of MUI_Palette_Structures here, each
+	entry defining one color:
+
+	struct MUI_Palette_Entry
+	{
+	   LONG  mpe_ID;
+	   ULONG mpe_Red;
+	   ULONG mpe_Green;
+	   ULONG mpe_Blue;
+	   LONG  mpe_Group;
+	};
+
+	mpe_ID   :  This entry is not used by palette class, you can
+	            put in whatever you want, except the value
+	            @{"MUIV_Palette_Entry_End" Link "SDK:Guide/includes/libraries/mui.h/Main" 460} (==-1),
+	            which terminates the array.
+
+	mpe_Red  :  32-bit red component of the current color. This
+	            field will be changed by palette class whenever
+	            the user edits the color.
+
+	mpe_Green:  32-bit green component of the current color. This
+	            field will be changed by palette class whenever
+	            the user edits the color.
+
+	mpe_Blue :  32-bit blue component of the current color. This
+	            field will be changed by palette class whenever
+	            the user edits the color.
+
+        mpe_Group:  Entries with the same mpe_Group value are
+	            concatenated. Whenever a new color in the
+	            listview is selected, all other colors with
+	            the same mpe_Group get selected as well and
+	            get adjusted all at once.
+	            Entry concatenation can be changed by the user,
+	            as long as you don't disable this feature with 
+	            the @{"MUIA_Palette_Groupable" Link "SDK:Guide/MUI/MUI_Palette.guide/MUIA_Palette_Groupable"} attribute.
+
+    EXAMPLE
+
+	static struct @{"MUI_Palette_Entry" Link "SDK:Guide/includes/libraries/mui.h/Main" 452} SystemDefaultPalette[] =
+	{
+	   { @{"TEXTPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 408}         ,0x00000000,0x00000000,0x00000000,0 },
+	   { @{"SHINEPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 409}        ,0xffffffff,0xffffffff,0xffffffff,1 },
+	   { @{"SHADOWPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 410}       ,0x00000000,0x00000000,0x00000000,0 },
+	   { @{"FILLPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 411}         ,0x66666666,0x88888888,0xbbbbbbbb,2 },
+	   { @{"FILLTEXTPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 412}     ,0xffffffff,0xffffffff,0xffffffff,1 },
+	   { @{"BACKGROUNDPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 413}   ,0xaaaaaaaa,0xaaaaaaaa,0xaaaaaaaa,3 },
+	   { @{"HIGHLIGHTTEXTPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 414},0xffffffff,0xffffffff,0xffffffff,1 },
+	   { @{"BARDETAILPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 415}    ,0x00000000,0x00000000,0x00000000,0 },
+	   { @{"BARBLOCKPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 416}     ,0xffffffff,0xffffffff,0xffffffff,1 },
+	   { @{"BARTRIMPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 417}      ,0x00000000,0x00000000,0x00000000,0 },
+	   { @{"MUIV_Palette_Entry_End" Link "SDK:Guide/includes/libraries/mui.h/Main" 460},0,0,0,0 },
+	};
+
+   SEE ALSO
+	@{"MUIA_Palette_Names" Link "SDK:Guide/MUI/MUI_Palette.guide/MUIA_Palette_Names"}
+@EndNode
+@Node MUIA_Palette_Groupable "MUI/MUI_Palette - MUIA_Palette_Groupable"
+
+
+    NAME
+	MUIA_Palette_Groupable -- (V6 ) [ISG], BOOL, 0x80423e67
+
+    FUNCTION
+	Enables/disables palette color grouping.
+	Defaults to TRUE.
+
+    SEE ALSO
+	@{"MUIA_Palette_Entries" Link "SDK:Guide/MUI/MUI_Palette.guide/MUIA_Palette_Entries"}
+@EndNode
+@Node MUIA_Palette_Names "MUI/MUI_Palette - MUIA_Palette_Names"
+
+
+    NAME
+	MUIA_Palette_Names -- (V6 ) [ISG], STRPTR *, 0x8042c3a2
+
+    FUNCTION
+	Specify the names of a palette objects color entries.
+	Without names, the color listview just displays
+	"Color <n>" for each entry. If you supply an array
+	of names here, they are displayed instead. The
+	names array must have as many entries as the
+	array of @{"MUI_Palette_Entry" Link "SDK:Guide/includes/libraries/mui.h/Main" 452} structures (without
+	its terminator).
+
+    EXAMPLE
+
+	static struct @{"MUI_Palette_Entry" Link "SDK:Guide/includes/libraries/mui.h/Main" 452} ColorEntries[] =
+	{
+	   { @{"TEXTPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 408}         ,0x00000000,0x00000000,0x00000000,2 },
+	   { @{"SHINEPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 409}        ,0xffffffff,0xffffffff,0xffffffff,4 },
+	   { @{"SHADOWPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 410}       ,0x00000000,0x00000000,0x00000000,5 },
+	   { @{"FILLPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 411}         ,0x66666666,0x88888888,0xbbbbbbbb,3 },
+	   { @{"FILLTEXTPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 412}     ,0xffffffff,0xffffffff,0xffffffff,6 },
+	   { @{"BACKGROUNDPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 413}   ,0x00000000,0x00000000,0x00000000,7 },
+	   { @{"HIGHLIGHTTEXTPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 414},0xffffffff,0xffffffff,0xffffffff,8 },
+	   { @{"BARDETAILPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 415}    ,0x00000000,0x00000000,0x00000000,9 },
+	   { @{"BARBLOCKPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 416}     ,0xffffffff,0xffffffff,0xffffffff,1 },
+	   { @{"BARTRIMPEN" Link "SDK:Guide/includes/intuition/iobsolete.h/Main" 417}      ,0x00000000,0x00000000,0x00000000,0 },
+	   { @{"MUIV_Palette_Entry_End" Link "SDK:Guide/includes/libraries/mui.h/Main" 460},0,0,0,0 },
+	};
+
+	static const char *ColorNames[] =
+	{
+	   "Text"                ,
+	   "Bright Edges"        ,
+	   "Dark Edges"          ,
+	   "Active @{"Window" Link "SDK:Guide/includes/intuition/intuition.h/Main" 471} Bars"  ,
+	   "Active @{"Window" Link "SDK:Guide/includes/intuition/intuition.h/Main" 471} Titles",
+	   "Background"          ,
+	   "Important Text"      ,
+	   "@{"Menu" Link "SDK:Guide/includes/intuition/intuition.h/Main" 53} Text"           ,
+	   "@{"Menu" Link "SDK:Guide/includes/intuition/intuition.h/Main" 53} Background"     ,
+	   "@{"Menu" Link "SDK:Guide/includes/intuition/intuition.h/Main" 53} @{"Line" Link "SDK:Guide/includes/datatypes/textclass.h/Main" 38}"
+	};
+
+	po = @{"PaletteObject" Link "SDK:Guide/includes/reaction/reaction_macros.h/Main" 47},
+	   @{"MUIA_Palette_Entries" Link "SDK:Guide/MUI/MUI_Palette.guide/MUIA_Palette_Entries"}, ColorEntries,
+	   MUIA_Palette_Names  , ColorNames,
+	   @{"End" Link "SDK:Guide/includes/libraries/mui.h/Main" 689};
+
+    SEE ALSO
+	@{"MUIA_Palette_Entries" Link "SDK:Guide/MUI/MUI_Palette.guide/MUIA_Palette_Entries"}
+
+@EndNode
+

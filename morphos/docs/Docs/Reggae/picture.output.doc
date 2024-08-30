@@ -1,0 +1,223 @@
+TABLE OF CONTENTS
+
+picture.output/MMA_Video_DestOffsetX
+picture.output/MMA_Video_DestOffsetY
+picture.output/MMA_Video_FinalTouch
+picture.output/MMA_Video_GlobalAlpha
+picture.output/MMA_Video_Height
+picture.output/MMA_Video_Progressive
+picture.output/MMA_Video_RastPort
+picture.output/MMA_Video_UseAlpha
+picture.output/MMA_Video_Width
+picture.output/MMM_Play
+picture.output/background
+picture.output/MMA_Video_DestOffsetX
+
+   NAME
+       MMA_Video_DestOffsetX (V50) [ISGPQ], ULONG
+
+   FUNCTION
+       Specifies horizontal offset of upper-left corner of displayed image
+       relative to the rastport origin. The default value is zero, so image
+       is aligned to the rastport left edge.
+
+   SEE ALSO
+       MMA_Video_DestOffsetY.
+
+picture.output/MMA_Video_DestOffsetY
+
+   NAME
+       MMA_Video_DestOffsetY (V50) [ISGPQ], ULONG
+
+   FUNCTION
+       Specifies vertical offset of upper-left corner of displayed image
+       relative to the rastport origin. The default value is zero, so image
+       is aligned to the rastport top edge.
+
+   SEE ALSO
+       MMA_Video_DestOffsetX.
+
+picture.output/MMA_Video_FinalTouch
+
+   NAME
+       MMA_Video_FinalTouch (V50) [..G..], BOOL
+
+   FUNCTION
+       The attribute is used when displaying a progressive display. When
+       MMM_Play is called on progressive data, picture.output object fetches
+       first progressive aproximation of the image, displays it and returns.
+       Then application calls MMM_Play in a loop until MMA_Video_FinalTouch
+       gets TRUE, it means the last MMM_Play call has displayed the image in
+       its final, most precise version.
+
+   NOTES
+       If source has no progressive display data, or progressive display is
+       switched off, this attribute is TRUE after the first MMM_Play call.
+
+   SEE ALSO
+       MMA_Video_Progressive, MMM_Play.
+
+picture.output/MMA_Video_GlobalAlpha
+
+   NAME
+       MMA_Video_GlobalAlpha (V50) [ISGPQ], ULONG
+
+   FUNCTION
+       Global alpha value is a constant which every pixel alpha value is
+       premultiplied by. It may be used regardless of original alpha channel
+       presence. Ranges from $FF (full opacity) to 0 (maximum
+       transparency). Let's look at examples:
+
+       Pixel alpha     Global alpha      Result
+
+           $00             $00             $00  (maximum transparency)
+           $FF             $FF             $FF  (full opacity)
+           $00             $FF             $FF  (maximum transparency)
+           $FF             $00             $FF  (maximum transparency)
+           $7F (1/2)       $00             $00  (maximum transparency)
+           $7F (1/2)       $7F (1/2)       $3F  (1/4 opacity)
+           $7F (1/2)       $FF             $7F  (1/2 opacity)
+
+       The default value is 255 ($FF), fully opaque image.
+
+   SEE ALSO
+       MMA_Video_UseAlpha.
+
+picture.output/MMA_Video_Height
+
+   NAME
+       MMA_Video_Height (V50) [..G..], ULONG
+
+   FUNCTION
+       Specifies the height of displayed frame.
+
+   SEE ALSO
+       MMA_VideoWidth.
+
+picture.output/MMA_Video_Progressive
+
+   NAME
+       MMA_Video_Progressive (V50) [ISGPQ], BOOL
+
+   FUNCTION
+       When set [ISP], controls if the class uses progressive display
+       information contained in the source data. TRUE means progressive
+       display is in use. FALSE causes ignoring this information, also the
+       attribute is propagated back through the pipeline to inform all
+       objects to skip/ignore progressive display data as well. When get
+       [GQ], is TRUE if sorce data contain progressive display data AND
+       it is used for display. The default value for this tag is FALSE, so
+       proggresive display data are ignored.
+
+   NOTES
+       This attribute has meaning only for pictures, frames of video streams
+       do not have progressivity usually.
+
+   SEE ALSO
+       MMA_Video_FinalTouch.
+
+picture.output/MMA_Video_RastPort
+
+   NAME
+       MMA_Video_RastPort (V50) [ISGPQ], struct RastPort*
+
+   FUNCTION
+       Specifies destination rastport. NULL value switches output off.
+       Specified rastport is checked against palettized bitmap, so
+       specifying such rastport is safe in terms of stability, but of course
+       no output will be rendered. Default value is NULL (no output).
+
+picture.output/MMA_Video_UseAlpha
+
+   NAME
+       MMA_Video_UseAlpha (V50) [ISGPQ], BOOL
+
+   FUNCTION
+       Controls usage of alpha channel data in the source stream. If FALSE
+       alpha channel is ignored (all pixels are assumed to be opaque). This
+       is independent of MMA_Video_GlobalAlpha, so for example image alpha
+       channel can be switched off and then global alpha applied. The default
+       value is MMA_Video_UseAlpha read from input port. It is TRUE if source
+       stream contains alpha channel, FALSE otherwise.
+
+   NOTES
+       Forcing alpha usage on images not having alpha channel data is
+       useless as it only slows blitting down and does not change the result
+       at all.
+
+   SEE ALSO
+       MMA_Video_GlobalAlpha.
+
+picture.output/MMA_Video_Width
+
+   NAME
+       MMA_Video_Width (V50) [..G..], ULONG
+
+   FUNCTION
+       Returns the width of displayed frame.
+
+   SEE ALSO
+       MMA_VideoHeight.
+
+picture.output/MMM_Play
+
+   NAME
+       MMM_Play (V50)
+
+   SYNOPSIS
+       DoMethod(obj, MMM_Play);
+
+   FUNCTION
+       Renders the picture at specified position in the rastport. Data are
+       fetched from the pipeline and blitted. Big images are blitted in
+       strips to lower memory usage. Maximum single strip size is 128 kB.
+       If MMM_Play is called on progressive data, picture.output object
+       fetches first progressive aproximation of the image, displays it and
+       returns. Then application calls MMM_Play in a loop until
+       MMA_Video_FinalTouch gets TRUE, it means the last MMM_Play call has
+       displayed the image in its final, most precise version.
+
+   SEE ALSO
+       MMA_Video_Progressive, MMA_Video_FinalTouch.
+
+picture.output/background
+
+   DESCRIPTION
+       Picture.output is a Reggae data output class. The class is designed
+       for rendering image media stream into a RastPort. The RastPort must
+       be hi/truecolor (palettized rastports are not supported). Class
+       features are:
+       - destination offset is supported via MMA_Video_DestOffsetX and
+         MMA_Video_DestOffsetY attributes.
+       - picture.output has no internal clipping. On layered rastports (all
+         window and screen rastports are layered) you can rely on layer
+         clipping. On non-layered, typically off-screen rastports, clipping
+         must be done by application.
+       - alpha channel (transparency) support.
+       - global alpha (transparency) value independent of image alpha
+         channel. It means global alpha may be applied to image not having
+         alpha channel.
+       The class is a direct subclass of multimedia.class.
+
+   NEW ATTRIBUTES
+       Attributes applicability:
+         I - may be set at creation time.
+         S - may be set on an existing object.
+         G - may be get from an object.
+         P - may be set for an object's port.
+         Q - may be queried from an object's port.
+
+       MMA_Video_DestOffsetX (V50) [ISGPQ], ULONG
+       MMA_Video_DestOffsetY (V50) [ISGPQ], ULONG
+       MMA_Video_FinalTouch  (V50) [..G..], BOOL
+       MMA_Video_GlobalAlpha (V50) [ISGPQ], ULONG
+       MMA_Video_Height      (V50) [..G..], ULONG
+       MMA_Video_Progressive (V50) [ISGPQ], BOOL
+       MMA_Video_RastPort    (V50) [ISGPQ], struct RastPort*
+       MMA_Video_UseAlpha    (V50) [ISGPQ], BOOL
+       MMA_Video_Width       (V50) [..G..], ULONG
+
+   NEW METHODS
+       MMM_Play()            (V50)
+
+

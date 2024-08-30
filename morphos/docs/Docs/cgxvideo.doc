@@ -1,0 +1,568 @@
+TABLE OF CONTENTS
+
+cgxvideo.library/--background--
+cgxvideo.library/AttachVLayerTagList
+cgxvideo.library/CreateVLayerHandleTagList
+cgxvideo.library/DeleteVLayerHandle
+cgxvideo.library/DetachVLayer
+cgxvideo.library/GetVLayerAttr
+cgxvideo.library/LockVLayer
+cgxvideo.library/QueryVLayerAttr
+cgxvideo.library/SetVLayerAttrTagList
+cgxvideo.library/SwapVLayerBuffer
+cgxvideo.library/UnLockVLayer
+cgxvideo.library/WriteSPLine
+cgxvideo.library/--background--
+
+   PURPOSE
+        cgxvideo.library allows you to use gfx card's video overlay features
+        in your applications. This library is part of the CyberGraphX V3/V4
+        package and part of MorphOS graphics system.
+
+    No calls have been added for the V4 (v42) release. You can open v42
+    of cgxvideo.library to be sure that you open on a v4 CyberGraphX
+    system but v41 is required to allow your application to run with
+    CyberGraphX V3 also.
+
+   SUPPORTED FORMATS
+
+    Currently, cgxvideo.library supports 4 different color space formats,
+    which all use 2 bytes per pixel. The data can be passed through
+    unscaled or scaled up horizontally and vertically by an arbitrary
+    amount. YCbCr/YUV data is color space converted and all data is
+    converted to RGB-24 (8.8.8) format.
+
+        SRCFMT_YUV16
+
+    This format displays data that is in YUV-16 (4.2.2) video data format.
+    Input range is 0-255 for every component. Every pixel data word
+    contains at least one Y value in the highbyte, followed by one U value
+    in the lowbyte for each even and one V value in the lowbyte for each
+    odd data word. Since the SRCFMT_YCbCr16 format is more common on
+    various graphics cards, it is recommended to avoid this format and use
+    SRCFMT_YCbCr16 instead.
+
+            Pixel 0           Pixel 1
+        YYYYYYYYUUUUUUUU YYYYYYYYVVVVVVVV ........
+        7654321076543210 7654321076543210
+
+        SRCFMT_YCbCr16
+
+    This format displays data that is in YCbCr-16 (4.2.2) video format.
+        The Y-, U, and V-data are in the range specified by CCIR-601-2.
+        Y ranges from 16 (black) to 235 (white). U and V range from 16
+        to 240 (128 means 0 or no color, so the range is -112 to 112
+    actually).
+
+            Pixel 0           Pixel 1
+        YYYYYYYYUUUUUUUU YYYYYYYYVVVVVVVV ........
+        7654321076543210 7654321076543210
+
+        SRCFMT_RGB15PC
+
+    Source data uses 2 bytes/pixel (5.5.5). Each component uses 5 Bits,
+    the most significant bit is unused. For historical reasons, this format
+    is byte swapped.
+
+            Pixel 0           Pixel 1
+        GGGBBBBB0RRRRRGG GGGBBBBB0RRRRRGG ........
+        21043210-4321043 21043210-4321043
+
+        SRCFMT_RGB16PC
+
+    Source data uses 2 bytes/pixel (5.6.5). red and blue component uses
+    5 Bits, green component uses 6bits. For historical reasons, this format
+    is byte swapped.
+
+            Pixel 0           Pixel 1
+        GGGBBBBBRRRRRGGG GGGBBBBBRRRRRGGG ........
+        2104321043210543 2104321043210543
+   EXAMPLE
+
+    {
+      APTR VLHandle;
+
+        // init code goes here ......
+            .
+            .
+            .
+
+      if(VLHandle = CreateVLayerHandleTags(screen, VOA_SrcType,SRCFMT_YUV,
+                                       VOA_SrcWidth, 160,
+                               VOA_SrcHeight, 120,
+                               TAG_DONE))
+      {
+
+       if(!AttachVLayerTags(VLHandle, window, TAG_DONE))
+       {
+        if(LockVLayer(VLHandle))
+        {
+         UWORD *srcdata;
+
+         srcdata = GetVLayerAttr(VLHandle, VOA_BaseAddress);
+
+         // modify source data here
+        .
+        .
+        .
+
+         UnlockVLayer(VLHandle);
+        }
+        else
+        {
+        // Unable to lock VLayer
+        }
+        DetachVLayer(VLHandle);
+       }
+           else
+       {
+        // Unable to attach vlayer to window
+       }
+
+       DeleteVLayerHandle(VLHandle);
+      }
+    }
+
+cgxvideo.library/AttachVLayerTagList
+
+   NAME
+        AttachVLayerTagList -- attach a created video layer to a given window
+        AttachVLayerTags -- varargs stub for AttachVLayerTagList
+
+   SYNOPSIS
+
+        result = AttachVLayerTagList( VLayerHandle, Window, TagItems)
+        D0                              A0           A1      A2
+
+        ULONG AttachVLayerTagList(struct VLayerHandle *,struct Window *,
+                                  struct TagItem *)
+
+        result = AttachVLayerTags(VLayerHandle, Window,
+                                  Tag1, ... );
+
+        ULONG AttachVLayerTags(struct VLayerHandle *,struct Window *,Tag Tag1,
+                               ...);
+   FUNCTION
+        Attaches the previously created videolayer handle to a given window.
+        As a result, the video overlay should now be linked to the window.
+        If the window is moved or resized, the overlay is moved or resized,
+        too.
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+        Window - pointer to a window that the videolayer should be attached to
+
+        TagItems - pointer to an optional tag list
+
+   TAGS
+        Tags available are:
+
+        VOA_LeftIndent (ULONG) - additional offset from the left window border
+
+        VOA_RightIndent (ULONG) - additional offset from the right window border
+
+        VOA_TopIndent (ULONG) - additional offset from the top window border
+
+        VOA_BottomIndent (ULONG) - additional offset from the bottom window border
+
+        VOA_ColorKeyFill (BOOL) - may be used to disable ColorKeyFill of the window
+                                  VLayer area if color keying is used. Defaults to TRUE
+
+   RESULT
+        result - 0 if videolayer could be attached to the window
+
+   SEE ALSO
+        DetachVLayer()
+
+cgxvideo.library/CreateVLayerHandleTagList
+
+   NAME
+        CreateVLayerHandleTagList -- create a video layer handle
+        CreateVLayerHandleTags -- varargs stub for CreateVLayerHandleTagList
+
+   SYNOPSIS
+
+        VLayerHandle = CreateVLayerHandleTagList( Screen, TagItems)
+        D0                                           A0     A1
+
+        struct VLayerHandle *CreateVLayerHandleTagList(struct Screen *,
+                                                       struct TagItem *)
+
+        VLayerHandle = CreateVLayerHandleTags(Screen, Tag1, ... );
+
+        struct VLayerHandle *CreateVLayerHandleTags(struct Screen *,Tag Tag1,
+                               ...);
+
+   FUNCTION
+        Creates a video layer handle for the given screen ?
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+        Window - pointer to a window that the videolayer should be attached to
+
+        TagItems - pointer to an optional tag list
+
+   TAGS
+        Tags available are:
+
+        VOA_SrcType (ULONG) - specifies source type that is used for video
+                              overlay data
+
+                Currently supported formats:
+
+                        SRCFMT_YUV16
+                        SRCFMT_YCbCr16
+                        SRCFMT_RGB15
+                        SRCFMT_RGB16
+
+        VOA_SrcWidth (ULONG) - source width in pixel units
+
+        VOA_SrcHeight (ULONG) -  source height in pixel units
+
+        VOA_Error (ULONG *) - If you specify VOA_Error with ti_Data pointing
+                              to an ULONG, you will get more detailed information
+                              if the creation of the video layer handle fails
+
+        VOA_UseColorKey (BOOL) - If you specify VOA_UseColorKey as TRUE, color
+                                 keying is enabled for the video layer. A
+                                 certain color key is generated then and the
+                                 stream data is only visible where this color
+                                 could be found.
+
+        VOA_UseBackFill (BOOL) - If you specify VOA_UseBackFill as TRUE automatic
+                                 backfilling for the videolayer is enabled. This
+                                 option is only available if color keying is
+                                 enabled.
+
+        VOA_UseFilter (BOOL) - If you specify VOA_UseBilinear as FALSE,
+                               bilinear scaling is disabled for the
+                               videolayer. Default is TRUE.
+        VOA_DoubleBuffer
+
+        VOA_InterLaced
+
+        VOA_CaptureMode
+
+        VOA_MultiBuffer
+
+        VOA_SubPicture (v50)
+
+        VOA_SrcWidthSP (v50)
+
+        VOA_SrcHeightSP (v50)
+
+
+   RESULT
+        VLayerHandle - pointer to the created videolayer handle or 0
+
+   SEE ALSO
+        DeleteVLayerHandle()
+
+cgxvideo.library/DeleteVLayerHandle
+
+   NAME
+        DeleteVLayerHandle -- delete a created video layer handle
+
+   SYNOPSIS
+
+        DeleteVLayerHandle( VLayerHandle )
+                                A0
+
+        void DeleteVLayerHandle(struct VLayerHandle *)
+
+   FUNCTION
+        Deletes a created video layer handle
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+   RESULT
+        none
+
+   SEE ALSO
+        CreateVLayerHandle()
+
+cgxvideo.library/DetachVLayer
+
+   NAME
+        DetachVLayer -- detach a video layer from a window
+
+   SYNOPSIS
+
+        result = DetachVLayer( VLayerHandle)
+        D0                          A0
+
+        ULONG DetachVLayer(struct VLayerHandle *)
+
+        result = DetachVLayer(VLayerHandle);
+
+   FUNCTION
+        Detaches a videolayer from a given window. As a result, the video
+        overlay should now be unlinked from the window and the original
+        contents of the window are visible now.
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+   RESULT
+        result - 0 if videolayer could be detached from the window
+
+   SEE ALSO
+        AttachVLayerTagList()
+
+cgxvideo.library/GetVLayerAttr
+
+   NAME
+        GetVLayerAttr -- get a certain attribute from a video layer
+
+   SYNOPSIS
+
+        value = GetVLayerAttr( VLayerHandle, AttrNum)
+         D0                       A0           D0
+
+        ULONG GetVLayerAttr(struct VLayerHandle *, ULONG AttrNum)
+
+   FUNCTION
+
+        Gets a certain attribute from a given video layer. You have to call
+        LockVLayer() to make sure that the result is valid !
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+        AttrNum - attribute that you want to get
+
+   ATTRIBUTES
+
+        Attributes available are:
+
+        VOA_BaseAddress - if this attribute is specified the base address for
+                          the source data is returned
+
+        VOA_ColorKeyPen - returns the pen number used for color keying. If color
+                          keying is not enabled, -1 is returned
+
+        VOA_ColorKey -    returns the 24 bit color value used for color keying.
+                          If color keying is not enabled, -1 is returned.
+
+        VOA_BaseOffset
+
+        VOA_FrameBase0
+        VOA_FrameBase1
+        VOA_FrameType
+        VOA_FrameIndex (v50)
+        VOA_Width - input width
+        VOA_Height - input height
+        VOA_BaseOffset0 (v50)
+        VOA_BaseOffset1 (v50)
+        VOA_BaseOffset2 (v50)
+        VOA_BaseOffset3 (v50)
+        VOA_BaseOffset4 (v50)
+        VOA_BaseOffset5 (v50)
+        VOA_Identifier
+
+   RESULT
+        value - the value for the given attribute
+
+   SEE ALSO
+        SetVLayerAttr()
+
+cgxvideo.library/LockVLayer
+
+   NAME
+        LockVLayer -- locks the specified video layer to allow access to
+                      source data
+
+   SYNOPSIS
+
+        result = LockVLayer( VLayerHandle )
+         D0                      A0
+
+        ULONG LockVLayer(struct VLayerHandle *)
+
+   FUNCTION
+
+        Locks the specified video layer to allow access to source data. Make
+        sure that you don't keep that lock for too long. It is only allowed
+        to keep it for a short time.
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+   RESULT
+        result - TRUE if video layer could be locked, FALSE otherwise
+
+   SEE ALSO
+        UnlockVLayer()
+
+cgxvideo.library/QueryVLayerAttr
+
+   NAME
+
+   SYNOPSIS
+
+   FUNCTION
+
+   INPUTS
+        screen
+        QueryAttrID - VSQ_SupportedFeatures
+                        - VSQ_SupportedFormats
+                        - VSQ_MaxWidth
+
+   RESULT
+        none
+
+   SEE ALSO
+
+cgxvideo.library/SetVLayerAttrTagList
+
+   NAME
+        SetVLayerAttrTagList -- set certain attributes for a video layer
+        SetVLayerAttrTags -- varargs stub for SetVLayerAttrTagList
+
+   SYNOPSIS
+
+        SetVLayerAttrTagList( VLayerHandle, TagItems)
+                                 A0           A1
+
+        void SetVLayerAttrTagList(struct VLayerHandle *, struct TagItem *)
+
+        SetVLayerAttrTags(VLayerHandle, Tag1, ... );
+
+        void SetVLayerAttrTags(struct VLayerHandle *,,Tag Tag1, ...);
+
+   FUNCTION
+
+        Sets certain attributes for a given video layer
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+        TagItems - pointer to a tag list which contains attributes to be
+                   modified
+
+   TAGS
+        Tags available are:
+
+        VOA_LeftIndent (ULONG) - additional offset from the left window
+                                 border
+
+        VOA_RightIndent (ULONG) - additional offset from the right window
+                                  border
+
+        VOA_TopIndent (ULONG) - additional offset from the top window border
+
+        VOA_BottomIndent (ULONG) - additional offset from the bottom window
+                                   border
+        VOA_SrcWidth
+
+        VOA_UseFilter
+
+        VOA_ZoomRect
+
+        VOA_Color0SP
+        VOA_Color1SP
+        VOA_Color2SP
+        VOA_Color3SP
+        VOA_Color4SP
+        VOA_Color5SP
+        VOA_Color6SP
+        VOA_Color7SP
+        VOA_Color8SP
+        VOA_Color9SP
+        VOA_Color10SP
+        VOA_Color11SP
+        VOA_Color12SP
+        VOA_Color13SP
+        VOA_Color14SP
+        VOA_Color15SP
+
+        VOA_StreamRectSP
+        VOA_HLRectSP
+        VOA_EnableSP
+        VOA_HLEnableSP
+        VOA_ColConSP
+        VOA_HLColConSP
+        VOA_SrcWidthSP
+        VOA_SrcHeightSP
+
+   RESULT
+        none
+
+   SEE ALSO
+        GetVLayerAttr()
+
+cgxvideo.library/SwapVLayerBuffer
+
+   NAME
+        SwapVLayerBuffer -- Swaps the displayed buffer for a doublebuffered
+                            video layer.
+
+   SYNOPSIS
+
+        SwapVLayerBuffer(VLayerHandle)
+                              A0
+
+        void SwapVLayerBuffer(struct VLayerHandle *)
+
+   FUNCTION
+
+        Swaps the currently displayed and the rendering buffer for a
+        doublebuffered video layer.
+
+        The swap will happen at the next vertical blank, and the next
+        LockVLayer() call may stall till the vertical blank occurs.
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+   RESULT
+        none
+
+   SEE ALSO
+        CreateVLayerHandle()
+
+cgxvideo.library/UnLockVLayer
+
+   NAME
+        UnLockVLayer -- Unlocks a previously locked video layer
+
+   SYNOPSIS
+
+        UnLockVLayer( VLayerHandle )
+                           A0
+
+        void LockVLayer(struct VLayerHandle *)
+
+   FUNCTION
+
+        Unlocks a previouly locked video layer
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+   RESULT
+        none
+
+   SEE ALSO
+        LockVLayer()
+
+cgxvideo.library/WriteSPLine
+
+   NAME
+
+   SYNOPSIS
+
+   FUNCTION
+
+   INPUTS
+        VLayerHandle - pointer to a previously created videolayer handle
+
+   RESULT
+        none
+
+   SEE ALSO
+
+

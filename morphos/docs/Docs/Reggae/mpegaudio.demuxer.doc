@@ -1,0 +1,362 @@
+TABLE OF CONTENTS
+
+mpegaudio.demuxer/MMA_DataFormat
+mpegaudio.demuxer/MMA_MediaType
+mpegaudio.demuxer/MMA_MetaData
+mpegaudio.demuxer/MMA_MimeType
+mpegaudio.demuxer/MMA_Sound_Channels
+mpegaudio.demuxer/MMA_Sound_FrameCount
+mpegaudio.demuxer/MMA_Sound_FrameScan
+mpegaudio.demuxer/MMA_Sound_FrameScanHook
+mpegaudio.demuxer/MMA_Sound_SampleRate
+mpegaudio.demuxer/MMA_Sound_Volume
+mpegaudio.demuxer/MMA_StreamPosBytes
+mpegaudio.demuxer/MMM_Pull
+mpegaudio.demuxer/MMM_Seek
+mpegaudio.demuxer/background
+mpegaudio.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- (v51), [..G.Q], char*, 0x8EDA000B
+
+ FUNCTION
+   Textual description of data format. This class returns different strings
+   depending on compression used:
+   - "MPEG-1/II" for MPEG-1 layer 2.
+   - "MPEG-1/III" for MPEG-1 layer 3 (popular MP3) streams.
+   - "MPEG-2/II" for MPEG-2 layer 2.
+   - "MPEG-2/III" for MPEG-2 layer 3.
+   - "MPEG-2.5/II" for unofficial MPEG-2.5 layer 2.
+   - "MPEG-2.5/III" for unofficial MPEG-2.5 layer 3.
+
+mpegaudio.demuxer/MMA_MediaType
+
+ NAME
+   MMA_MediaType -- (v51), [..G.Q], LONG, 0x8EDA0001
+
+ FUNCTION
+   Identifier of media type. This class returns MMT_SOUND.
+
+mpegaudio.demuxer/MMA_MetaData
+
+ NAME
+   MMA_MetaData -- (V51) [....Q], struct MetaItem*, 0x8EDA0020
+
+ FUNCTION
+   Returns additional description of stream. Following metadata tags are
+   returned:
+   - MMETA_Bitrate - audio stream bitrate in bits per seconds. For VBR
+     streams average value is returned. When VBR stream has no Xing tag,
+     returned value will be the bitrate of the first frame.
+
+ NOTES
+   Metadata added by this class are merged into one table with metadata from
+   previous objects in the pipeline, usually id3tag.demuxer object.
+
+   This attribute is only gettable from the output port, not from object.
+
+mpegaudio.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType -- (v51), [..G.Q], char*, 0x8EDA000A
+
+ FUNCTION
+   Returns MIME type string for the object. This class returns
+   "audio/mpeg" string.
+
+mpegaudio.demuxer/MMA_Sound_Channels
+
+ NAME
+   MMA_Sound_Channels -- (v51), [..G.Q], LONG, 0x8EDA012C
+
+ FUNCTION
+   Returns number of audio channels in the stream. This class returns 1 for
+   mono files, 2 for stereo ones.
+
+mpegaudio.demuxer/MMA_Sound_FrameCount
+
+ NAME
+   MMA_Sound_FrameCount -- (v51), [..G.Q], QUAD*, 0x8EDA012E
+
+ FUNCTION
+   Returns number of sample frames (time points) in the stream. This
+   information comes from two sources. One of them is optional Xing/Info tag
+   located inside the first MPEG frame. This tag is mostly found in variable
+   bitrate (VBR) streams, but is not mandatory. The second source of
+   information is frame scan performed over the whole stream. The scan is
+   not automatic, it depends on MMA_Sound_FrameScan attribute. Frame scan
+   also requires that the source stream is seekable (memory.stream and
+   file.stream are seekable, http.stream is not).
+
+   The class first tries to get audio frame count from the Xing/Info tag. If
+   it is not found, or if frame scanning is forced, it attempts scanning. If
+   both sources fail, the number of frames is set to 0 (unknown).
+
+ NOTES
+   This is a 64-bit attribute and is passed as a pointer to 64-bit number.
+
+ SEE ALSO
+   MMA_Sound_FrameScan
+
+mpegaudio.demuxer/MMA_Sound_FrameScan
+
+ NAME
+   MMA_Sound_FrameScan -- (v51.5), [I....], LONG, 0x8EDA0133
+
+ FUNCTION
+   Counting all MPEG frames inside a stream is the only method for
+   calculating length of audio, which always work. That is why
+   mpegaudio.demuxer provides a frame scanner. Scanning is performed at
+   MMM_Setup(), right after the demuxer is connected to a data source. Frame
+   scanning is not computationally heavy process, but it is I/O intensive
+   and also requires that the data source is seekable. That is why the scan
+   is not performed always, but is controlled by this attribute. It has
+   three special values:
+   - MMV_Sound_FrameScan_Never: the scan is never attempted. This is the
+     default value.
+   - MMV_Sound_FrameScan_IfNeeded: the scan is attempted when the MPEG
+     stream has no Xing/Info tag in the first frame. It usually happens for
+     constant bitrate (CBR) streams. It will be also triggered if the tag
+     does not contain audio length information (very rare case). Streams
+     having the proper Xing/Info tag are not scanned.
+   - MMV_Sound_FrameScan_Always: stream is scanned regardless of Xing/Info
+     tag presence. Audio length calculated by the scanner overwrites length
+     stored in the tag.
+
+ NOTES
+   The scan may take several seconds, for example when MP3 file is accessed
+   via USB 1.1 (typical 5 MB file will be scanned 7 seconds or more). It is
+   recommended that scanning is done as non-blocking, for example on a
+   separate process.
+
+ SEE ALSO
+   MMA_Sound_FrameCount, MMA_Sound_FrameScanHook
+
+mpegaudio.demuxer/MMA_Sound_FrameScanHook
+
+ NAME
+   MMA_Sound_FrameScanHook -- (v51.7), [I....], struct Hook*, 0x8EDA0134
+
+ FUNCTION
+   Provides a callback hook for frame scanning process. Using the callback
+   hook, scanning can be aborted, also progress information may be
+   displayed. The hook is called after every MPEG frame found. Value of this
+   tag should be a pointer to properly filled Hook structure.
+
+   The hook receives arguments as usual via virtual M68k registers:
+     REG_A0 - contains the pointer to the Hook structure
+     REG_A1 - contains progress data, as a pointer to FrameScanHookMsg
+       structure, defined as follows:
+
+       struct FrameScanHookMsg
+       {
+         QUAD BytesTotal;     // total length of the scanned stream in bytes
+         QUAD BytesScanned;   // number of bytes scanned so far
+         QUAD FramesFound;    // number of compressed (MPEG) frames detected
+         QUAD AudioFound;     // number of so far scanned PCM audio frames
+         LONG FrameBitrate;   // bitrate of the last scanned frame (kbps)
+       };
+
+       These data are valid only inside the hook.
+     REG_A2 - contains pointer to the mpegaudio.demuxer object
+
+   The returned result of the hook controls scanning. If TRUE is returned,
+   scanning process is continued. FALSE as the hook result aborts scanning
+   and MMA_Sound_FrameCount is set to 0 (unknown) for the object.
+
+   The default value of the hook is NULL, which means no hook is called.
+   NULL is also valid value when passed explicitly.
+
+ NOTES
+
+ SEE ALSO
+   MMA_Sound_FrameScan
+
+mpegaudio.demuxer/MMA_Sound_SampleRate
+
+ NAME
+   MMA_Sound_SampleRate -- (v51), [..G.Q], LONG, 0x8EDA012D
+
+ FUNCTION
+   Returns sampling rate of the sound in Hz. Possible rates are:
+   - 32000, 44100 and 48000 for MPEG-1.
+   - 16000, 22050 and 24000 for MPEG-2.
+   - 8000, 11025 and 12000 for MPEG-2.5.
+
+mpegaudio.demuxer/MMA_Sound_Volume
+
+ NAME
+   MMA_Sound_Volume -- (v51), [..G.Q], LONG, 0x8EDA012F
+
+ FUNCTION
+   Returns default sound volume stored in the stream. In case of MPEG files
+   it always returns full volume 65536. Note that replay gain is returned
+   via metadata API.
+
+mpegaudio.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- (v51), [..G.Q], QUAD*, 0x8EDA0012
+
+ FUNCTION
+   Returns current byte position in (undecoded) audio data. This is position
+   after stripping Xing frame.
+
+ NOTES
+   This is a 64-bit attribute and is passed as a pointer to 64-bit number.
+
+mpegaudio.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- (v51), pulls undecoded MPEG data.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Pull, LONG port, APTR buffer, LONG length);
+
+ FUNCTION
+   Pulls and stores requested number of bytes of undecoded MPEG stream after
+   stripping Xing/Info tag. As there is no processing involved, data are not
+   copied, but request is simply forwarded to a previous object.
+
+ INPUTS
+   obj - an instance of mpegaudio.demuxer class.
+   port - this method may be only invoked on output port (port 1).
+   buffer - pointer to destination buffer. Must be aligned to 16 bytes,
+     preferrably allocated with MediaAllocVec().
+   length - number of bytes to store in buffer.
+
+  RESULT
+    Number of bytes stored. Zero means end of data, -1 means error. Error
+    code may be obtained by getting MMA_ErrorCode attribute on the object.
+
+ SEE ALSO
+   multimedia.class/MediaAllocVec(), multimedia.class/MMA_ErrorCode
+
+mpegaudio.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek -- (v51), seeks in undecoded MPEG audio data
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Seek, LONG port, LONG type, QUAD *position);
+
+ FUNCTION
+   Seeks in undecoded MPEG stream. This is byte seek, the class does not
+   care about frame boundaries, it is up to the decoder. Basically the class
+   just adds Xing/Info frame length to the position, forwards the request to
+   a previous object and updates counters in case of success.
+
+ INPUTS
+   obj - an instance of mpegaudio.demuxer class.
+   port - this method may be only invoked on output port (port 1).
+   type - type of seek, only MMM_SEEK_BYTES allowed here.
+   position - requested position in data, relative to the beginning of
+     output.
+
+ RESULT
+   Boolean, TRUE for success. If FALSE, error code may be obtained by
+   getting MMA_ErrorCode attribute.
+
+ NOTES
+   Backward seek will fail if data source is not seekable. Forward seek in
+   this case is safe, but may be slow for large offsets.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+mpegaudio.demuxer/background
+
+ DESCRIPTION
+   The class is a demultiplexer for MPEG audio audio streams. Note that it
+   does not decode MPEG, this is done with mpegaudio.decoder. Demultiplexer
+   task is to extract basic informations about the stream. To do this the
+   class analyses first few frames and parses optional Xing/Info tag. ID3
+   tags are parsed and stripped earlier by id3tag.demuxer.
+
+   An object of this class has one input (port 0), which accepts MMF_STREAM
+   data type. It has also one output (port 1), which has MMF_AUDIO_MPEG
+   type. The next object in the pipeline is mpegaudio.decoder.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_DataFormat           (V51)   [..G.Q], char*
+   MMA_MediaType            (V51)   [..G.Q], LONG
+   MMA_MimeType             (V51)   [..G.Q], char*
+   MMA_Sound_Channels       (V51)   [..G.Q], LONG
+   MMA_Sound_FrameCount     (V51)   [..G.Q], QUAD*
+   MMA_Sound_FrameScan      (V51.5) [I....], LONG
+   MMA_Sound_FrameScanHook  (V51.7) [I....], struct Hook*
+   MMA_Sound_SampleRate     (V51)   [..G.Q], LONG
+   MMA_Sound_Volume         (V51)   [..G.Q], LONG
+   MMA_StreamPosBytes       (V51)   [..G.Q], QUAD*
+   MMA_MetaData             (V51)   [....Q], struct MetaItem*
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+ HISTORY
+   51.10 (28.10.2015)
+   - Fixed metadata related bug introduced in 51.9.
+
+   51.9   (24.10.2015)
+   - Fix for per-output metadata.
+
+   51.8   (16.04.2013)
+   - Fixed a bug in MPEG frame length calculation. Sampling rates and
+     bitrates were pre-divided by 100. Obviously it introduced additional
+     rounding error for 22050 Hz and 11025 Hz sampling rates and resulted in
+     wrong frame size calculation. Then files using these rates were wrongly
+     rejected as invalid streams. Now sampling rates are pre-divided by 25
+     and to compesate it bitrates read from table are shifted 2 bits right.
+
+   51.7   (14.02.2012)
+   - Fixed a bug in MemorySet() causing frame scanner to crash when the last
+     scanning buffer was not full and had to be zeroed by less than 4 bytes.
+   - Fixed a minor bug in FrameScan(). Seek back after scanning should be
+     done on the output port, not input, to clear the recognition buffer.
+     The bug was hearable as repeating some music (a fraction of a second)
+     at the start of playback.
+   - Implemented MMA_Sound_FrameScanHook.
+
+   51.6   (23.12.2011)
+   - The demuxer itself now uses the same stream sync-in criteria as the
+     recognition routine, it means 6 kB buffer and 4 consecutive valid MPEG
+     frames with the same norm, layer and sample rate.
+   - If the valid stream sync-in happens some bytes after the stream start,
+     these bytes are discarded from the output, to not confuse the decoder.
+
+   51.5   (31.10.2011)
+   - Implemented MMA_Sound_FrameScan.
+
+   51.4   (23.06.2010)
+   - More changes in recognition routine: 4 valid frames requested, 6 kB
+     search buffer, fixed exiting sync search loop after the first false
+     sync, added fast rejection of encrypted MorphOS executables and VBCC
+     68k objects.
+
+   51.3   (17.06.2010)
+   - After extensive tests it turned out, that recognition routine still
+     gives false positives. Three changes have been applied to make it more
+     strict:
+     1. Files starting with [$7F]'ELF' are explicitly rejected. This rules
+     out executables and object files.
+     2. Five valid syncs are required instead of two.
+     3. MPEG norm, layer and sampling rate must be the same for all five
+     tested frame headers.
+
+   51.2   (03.06.2010)
+   - Recognition routine is now more strict and requires two valid,
+     consecutive frames in the first 3 kB of stream. Fixes some false
+     positives.
+
+   51.1   (25.08.2009)
+   - The first release.
+
+

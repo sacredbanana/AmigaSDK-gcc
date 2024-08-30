@@ -1,0 +1,206 @@
+TABLE OF CONTENTS
+
+videopcm.decoder/--background--
+videopcm.decoder/MMA_Video_Height
+videopcm.decoder/MMA_Video_Palette
+videopcm.decoder/MMA_Video_ToGray
+videopcm.decoder/MMA_Video_Width
+videopcm.decoder/MMM_Pull
+videopcm.decoder/MMM_Seek
+videopcm.decoder/--background--
+
+ DESCRIPTION
+   The class is designed to convert some formats of uncompressed pixmaps to
+   one of Reggae common formats. Supported input formats are:
+
+   MMFC_VIDEO_GRAY8 - grayscale bitmap, 8 bits per pixel.
+   MMF_VIDEO_GRAY8 - alias for MMFC_VIDEO_GRAY8.
+   MMF_VIDEO_RGB24 - packed RGB format, 8 bits per component in red, green,
+     blue. Every pixel occupies 3 bytes, there is no alpha channel.
+   MMF_VIDEO_BGR24 - the same as above, but reversed order of components.
+   MMFC_VIDEO_ARGB32 - RGB with alpha, 8 bits per alpha, red, green, blue
+     component.
+   MMF_VIDEO_ARGB32 - alias for MMFC_VIDEO_ARGB32.
+   MMF_VIDEO_RGBA32 - very similar to previous one, but alpha channel stored
+     in the last byte of pixel.
+   MMF_VIDEO_ABGR32 - another flavor of ARGB32 with changed component order.
+   MMF_VIDEO_LUT8 - palette based, 256 colors, 8 bits per pixel, palette may
+     contain alpha channel (palette entries are in ARGB32 format).
+
+   Output formats are common ones:
+
+   MMFC_VIDEO_GRAY8
+   MMFC_VIDEO_ARGB32
+
+   It is assumed that none of the formats uses line padding. Conversion is
+   not dependent on pixel scanning order so it is irrelevant for the class.
+
+   Source alpha channel is simply discarded when destination format has no
+   alpha channel. When source has no alpha and destination has alpha,
+   destination alpha is set to 0 (full opacity).
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_Height         (V51)    [..G.Q], ULONG
+   MMA_Video_Width          (V51)    [..G.Q], ULONG
+   MMA_Video_ToGray         (V51)    [ISGPQ], BOOL
+   MMA_Video_Palette        (V51.3)  [ISGPQ], ULONG*
+
+ NEW METHODS
+   MMM_Pull()               (V51)
+   MMM_Seek()               (V51)
+
+ HISTORY
+   51.5 (22.11.2012)
+   - Added support for MMF_VIDEO_RGBA_32.
+   - Fixed LUT8->ARGB32 conversion.
+   - Added support for source data 16-bit line padding.
+
+   51.4 (?)
+   - Complete rewrite. Removed MMF_VIDEO_LUT8 support, added MMFC_VIDEO_GRAY8.
+
+   51.3 (29.04.2007)
+   - Added support for MMF_VIDEO_LUT8.
+
+   51.2 (02.02.2007)
+   - Added support for MMF_VIDEO_RGB24.
+
+   51.1 (29.10.2006)
+   - Full support for MMF_VIDEO_GRAY8.
+
+videopcm.decoder/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Forwarded to an object connected on input, as this class does not change
+   the height of video.
+
+videopcm.decoder/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51.3) [ISPGQ], ULONG
+
+ FUNCTION
+   This attribute has relevance only for palette based formats
+   (MMF_VIDEO_LUT8 currently) and specifes an ARGB palette which is used to
+   LUT->ARGB conversion. The object queries the previous one of the palette
+   when its input is being connected (in MMM_Setup()). After setup, palette
+   may be explicitly set by application. The result of changing palette is
+   immediate. If done between two MMM_Pull() calls, the second pull will use
+   the new palette right away, from the first pixel pulled.
+
+   The default palette is NULL. If neither previous object nor application
+   set any palette, the default is used, which is a linear gradient from
+   black to white.
+
+   When the source format is not palette based, MMA_Video_Palette may be set
+   and get freely. Conversion routines will just ignore it.
+
+ NOTES
+   When this attribute is get [GQ], returned palette must be considered read
+   only. When this attribute is set [ISP], passed palette must be aligned to
+   16-byte boundary (allocated by MediaAllocVec() preferrably).
+
+ SEE ALSO
+   multimedia.class/MediaAllocVec()
+
+videopcm.decoder/MMA_Video_ToGray
+
+ NAME
+   MMA_Video_ToGray (V51) [ISGPQ], LONG
+
+ FUNCTION
+   Controls RGB to grayscale conversion. Four modes are available:
+   - MMV_Video_ToGray_Mean - pixel is calculated as a mean value of color
+     components: gray = (r + g + b) / 3.
+   - MMV_Video_ToGray_Luma - pixel value i proportional to the luminance,
+     color components are weighted: gray = (0.30 * r + 0.59 * g + 0.11 * b).
+   - MMV_Video_ToGray_Min - pixel value is the lowest of RGB components.
+   - MMV_Video_ToGray_Max - pixel value is the highest of RGB components.
+
+   The default for this attribute is MMV_Video_ToGray_Luma (luminance based
+   conversion), as it is the usual case, the rest are used for special
+   purposes. The attribute is ignored if either input format is grayscale,
+   or destination format is color. Other tag values than the four above, are
+   ignored (tag is not counted as valid).
+
+ NOTES
+   The attribute application is immediate, so the next MMM_Pull() will use
+   the new conversion algorithm, even inside a single video frame.
+
+videopcm.decoder/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Forwarded to an object connected on input, as this class does not change
+   the width of video.
+
+videopcm.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Converts pixel data to a common format. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   The method pulls pixel data from input and converts them to desired
+   output format. Output pixels are placed in the destination buffer.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from output, so 1.
+   buffer - destination buffer for common format image data. This buffer
+     must be allocated with MediaAllocVec().
+   length - amount of data to be pulled in bytes. It should be evenly
+     divisible by number of bytes per pixel for the output format (4 for
+     MMFC_VIDEO_ARGB32), if not, it is rounded down, and the rest of
+     bytes are undefined.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+videopcm.decoder/MMM_Seek
+
+ NAME
+   MMM_Seek -- Seeks in video stream. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Seek, ULONG port, ULONG type, QUAD*
+   position);
+
+ FUNCTION
+   As the class has no persistent (valid outside a single MMM_Pull())
+   buffers, seeking on the output is just no-op, and is forwarded to the
+   input. Seek on input is automatically forwarded to an output of a
+   previous object as usual.
+
+ INPUTS
+   obj - object to perform method on.
+   port - either 0 (input) or 1 (output).
+   type - either MMM_SEEK_FRAMES or MMM_SEEK_TIME.
+   position - absolute position in the stream (video frames or
+     microseconds).
+
+ RESULT
+   Boolean value of success. Operation may fail if some previous object
+   (especially source data stream) is not seekable.
+
+ NOTES
+   'position' argument is 64-bit and as such is passed via pointer.
+
+

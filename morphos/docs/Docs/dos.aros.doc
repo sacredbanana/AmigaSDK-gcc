@@ -1,0 +1,3021 @@
+This document was generated from the AROS APL-Licensed source code. The
+information contained in it might be errorneous or inacurate. When in
+doubt, please verify with another documentation set.
+
+TABLE OF CONTENTS
+
+dos.library/AddPart
+dos.library/AddSegment
+dos.library/AssignAdd
+dos.library/AssignLate
+dos.library/AssignLock
+dos.library/AssignPath
+dos.library/Cli
+dos.library/CompareDates
+dos.library/CreateProc
+dos.library/CurrentDir
+dos.library/DateStamp
+dos.library/DateToStr
+dos.library/Delay
+dos.library/DeleteVar
+dos.library/Execute
+dos.library/FGets
+dos.library/FPuts
+dos.library/FRead
+dos.library/FWrite
+dos.library/Fault
+dos.library/FilePart
+dos.library/FindArg
+dos.library/FindVar
+dos.library/FreeArgs
+dos.library/FreeDeviceProc
+dos.library/FreeDosEntry
+dos.library/GetArgStr
+dos.library/GetConsoleTask
+dos.library/GetCurrentDirName
+dos.library/GetFileSysTask
+dos.library/GetProgramDir
+dos.library/GetProgramName
+dos.library/GetPrompt
+dos.library/Input
+dos.library/InternalLoadSeg
+dos.library/InternalUnLoadSeg
+dos.library/IoErr
+dos.library/LoadSeg
+dos.library/LockRecords
+dos.library/MakeDosEntry
+dos.library/MatchEnd
+dos.library/MatchFirst
+dos.library/MatchNext
+dos.library/MatchPattern
+dos.library/MatchPatternNoCase
+dos.library/NewLoadSeg
+dos.library/Output
+dos.library/ParsePattern
+dos.library/ParsePatternNoCase
+dos.library/PathPart
+dos.library/PrintFault
+dos.library/PutStr
+dos.library/ReadArgs
+dos.library/RemAssignList
+dos.library/RemSegment
+dos.library/SelectInput
+dos.library/SelectOutput
+dos.library/SetArgStr
+dos.library/SetConsoleTask
+dos.library/SetCurrentDirName
+dos.library/SetFileSysTask
+dos.library/SetIoErr
+dos.library/SetProgramDir
+dos.library/SetProgramName
+dos.library/SetPrompt
+dos.library/StrToDate
+dos.library/StrToLong
+dos.library/SystemTagList
+dos.library/UnLoadSeg
+dos.library/UnLockRecords
+dos.library/VFPrintf
+dos.library/VFWritef
+dos.library/VPrintf
+dos.library/WriteChars
+dos.library/AddPart
+
+   NAME
+    AddPart -- 
+
+   SYNOPSIS
+    AddPart(dirname, , size)
+    LONG AddPart(STRPTR, CONST, ULONG);
+
+   FUNCTION
+    AddPart() will add a file, directory or other path name to a
+    directory path. It will take into account any pre-existing
+    separator characters (':','/').
+
+    If filename is a fully qualified path, then it will replace
+    the current value of dirname.
+
+   INPUTS
+    dirname     -   the path to add the new path to
+    filename    -   the path you wish added
+    size        -   The size of the dirname buffer, must NOT be 0
+
+   RESULT
+    non-zero if everything succeed, FALSE if the buffer would have
+    overflowed.
+
+    If the buffer would have overflowed, then dirname will not have
+    been changed.
+
+   NOTES
+
+   EXAMPLE
+    UBYTE buffer[128];
+    buffer[0]='\0';
+    AddPart(buffer, "Work:", 80);
+    AddPart(buffer, "Programming/Include/exec", 80);
+
+    FPuts(Output(), buffer);
+    --> Work:Programming/Include/exec
+
+    AddPart(buffer, "/graphics", 80);
+
+    FPuts(Output(), buffer);
+    --> Work:Programming/Include/graphics
+
+    AddPart(buffer, "gfxmacros.h", 80);
+    FPuts(Output(), buffer);
+    --> Work:Programming/Include/graphics/gfxmacros.h
+
+   BUGS
+
+   SEE ALSO
+    FilePart(), PathPart()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AddSegment
+
+   NAME
+    AddSegment -- 
+
+   SYNOPSIS
+    AddSegment(, seg, type)
+    LONG AddSegment(CONST, BPTR, LONG);
+
+   FUNCTION
+    Adds a program segment to the system resident list. You can later
+    use these segments to run programs.
+
+    The name field should refer to a NULL terminated strings, which
+    will be copied. The type field determines the type of resident
+    program. Normal programs should have type >= 0, system segments
+    should have type == CMD_SYSTEM.
+
+    Note that all other values of type are reserved.
+
+   INPUTS
+    name        - Name of the segment. This is used by FindSegment().
+    seg     - Segment to add.
+    type        - What type of segment (initial use count).
+
+   RESULT
+    Segment will have been added to the DOS resident list.
+
+    != 0    success
+    == 0    failure
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    Uses Forbid() based locking.
+
+   SEE ALSO
+    FindSegment(), RemSegment()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AssignAdd
+
+   NAME
+    AssignAdd -- 
+
+   SYNOPSIS
+    AssignAdd(, lock)
+    LONG AssignAdd(CONST, BPTR);
+
+   FUNCTION
+    Create a multi-directory assign, or adds to it if it already was one.
+    Do not use or free the lock after calling this function - it becomes
+    the assign and will be freed by the system when the assign is removed.
+
+   INPUTS
+    name - NULL terminated name of the assign.
+    lock - Lock on the assigned directory.
+
+   RESULT
+    != 0 success, 0 on failure. IoErr() gives additional information
+    in that case. The lock is not freed on failure.
+
+   NOTES
+    This will only work with an assign created with AssignLock() or
+    a resolved AssignLate() assign.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Lock(), AssignLock(), AssignPath(), AssignLate(), DupLock(),
+    RemAssignList()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AssignLate
+
+   NAME
+    AssignLate -- 
+
+   SYNOPSIS
+    AssignLate(, )
+    LONG AssignLate(CONST, CONST);
+
+   FUNCTION
+    Create an assign for the given name, which will be resolved upon the
+    first reference to it. If this succeeds (i.e. the path exists and
+    can be locked) it will be turned into an AssignLock() type assign.
+    This way you can create assigns to unmounted volumes which will only
+    be requested when accessed.
+
+   INPUTS
+    name  --  NULL terminated name of the assign.
+    path  --  NULL terminated path to be resolved on the first reference.
+
+   RESULT
+    != 0 success, 0 on failure. IoErr() gives additional information
+    in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Lock(), AssignAdd(), AssignPath(), AssignLock()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AssignLock
+
+   NAME
+    AssignLock -- 
+
+   SYNOPSIS
+    AssignLock(, lock)
+    LONG AssignLock(CONST, BPTR);
+
+   FUNCTION
+    Create an assign from a given name to a lock. Replaces any older
+    assignments from that name, 0 cancels the assign completely. Do not
+    use or free the lock after calling this function - it becomes
+    the assign and will be freed by the system if the assign is removed.
+
+   INPUTS
+    name - NUL terminated name of the assign.
+    lock - Lock to assigned directory.
+
+   RESULT
+    !=0 success, 0 on failure. IoErr() gives additional information
+    in that case. The lock is not freed on failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AssignPath
+
+   NAME
+    AssignPath -- 
+
+   SYNOPSIS
+    AssignPath(, )
+    LONG AssignPath(CONST, CONST);
+
+   FUNCTION
+    Create an assign for the given name, which will be resolved upon
+    each reference to it. There will be no permanent lock kept on the
+    specified path. This way you can create assigns to unmounted volumes
+    which will only be requested when accessed. Also, using AssignPath()
+    to assign C: to df0:c would make references go to to df0:c even if
+    you change the disk.
+
+   INPUTS
+    name  -- NULL terminated name of the assign.
+    path  -- NULL terminated path to be resolved on each reference.
+
+   RESULT
+    != 0 in case of success, 0 on failure. IoErr() gives additional
+    information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AssignAdd(), AssignLock(), AssignLate(), Open()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Cli
+
+
+   FUNCTION
+    Returns a pointer to the CLI structure of the current process.
+
+   INPUTS
+
+   RESULT
+    Pointer to CLI structure.
+
+   NOTES
+    Do not use this function to test if the process was started from
+    the shell. Check pr_CLI instead.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/CompareDates
+
+   NAME
+    CompareDates -- 
+
+   SYNOPSIS
+    CompareDates(date, date)
+    LONG CompareDates(const struct DateStamp *, const struct DateStamp *);
+
+   FUNCTION
+    Compares two dates.
+
+   INPUTS
+    date1, date2 - The two dates to compare.
+
+   RESULT
+    < 0 if date1 is later than date2, == 0 if they are equal or > 0
+    if date2 is later than date1.
+
+   NOTES
+    This is NOT the same ordering as strcmp() !
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/CreateProc
+
+   NAME
+    CreateProc -- 
+
+   SYNOPSIS
+    CreateProc(, pri, segList, stackSize)
+    struct MsgPort * CreateProc(CONST, LONG, BPTR, LONG);
+
+   FUNCTION
+    CreateProc() will create a new process (a process is a superset
+    of an exec Task), with the name 'name' and the priority 'pri'.
+
+    You should pass a segList as returned by LoadSeg() (or similar)
+    in the 'segList' parameter, and specify the stack size in
+    'stackSize'.
+
+    You should really use CreateNewProc() rather than this function
+    as it is much more flexible.
+
+   INPUTS
+    name        -   Name of the new process.
+    pri         -   Starting priority.
+    segList     -   BCPL pointer to a seglist.
+    stackSize   -   The size of the initial process stack.
+
+   RESULT
+    Pointer to the pr_MsgPort in the Process structure. Will
+    return NULL on failure.
+
+   NOTES
+    This will not free the seglist when the process finishes.
+
+    This does not return a pointer to the Process structure, but
+    rather the MsgPort structure contained within it. You can
+    get the real Process structure by:
+
+    struct Process *pr;
+    struct MsgPort *mp;
+
+    mp = CreateProc(...);
+    pr = (struct Process *)((struct Task *)mp - 1);
+
+    // Shouldn't use mp after this point
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CreateNewProc(), LoadSeg(), UnLoadSeg()
+
+   INTERNALS
+    Basically passes this call to CreateNewProc().
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/CurrentDir
+
+   NAME
+    CurrentDir -- 
+
+   SYNOPSIS
+    CurrentDir(lock)
+    BPTR CurrentDir(BPTR);
+
+   FUNCTION
+    Sets a new directory as the current directory. Returns the old one.
+    0 is valid in both cases and represents the boot filesystem.
+
+   INPUTS
+    lock - Lock for the new current directory.
+
+   RESULT
+    Old current directory.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DateStamp
+
+   NAME
+    DateStamp -- 
+
+   SYNOPSIS
+    DateStamp(date)
+    struct DateStamp * DateStamp(struct DateStamp *);
+
+   FUNCTION
+    Fills the structure with the current time. Time is measured from
+    Jan 1, 1978.
+
+   INPUTS
+    date - The structure to fill.
+
+   RESULT
+    date->ds_Days is filled with the days from Jan 1, 1978.
+    date->ds_Minute is filled with the number of minutes elapsed in the
+    day. date->ds_Tick is the number of ticks elapsed in the current
+    minute. A tick happens 50 times a second. DateStamp() ensures that
+    the day and minute are consistent. All three elements are zero if
+    the date is unset.
+
+   NOTES
+    The original function could only return even multiples of 50 ticks.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/DateToStr
+
+   NAME
+    DateToStr -- 
+
+   SYNOPSIS
+    DateToStr(datetime)
+    LONG DateToStr(struct DateTime *);
+
+   FUNCTION
+    DateToStr converts an AmigaDOS DateStamp to a human
+    readable ASCII string as requested by your settings in the
+    DateTime structure.
+
+   INPUTS
+    DateTime - a pointer to an initialized DateTime structure. The
+        DateTime structure should be initialized as follows:
+
+        \begin{description}
+        \item{dat_Stamp} The datestamp to convert to ascii
+
+        \item{dat_Format} How to convert the datestamp into
+            dat_StrDate. Can be any of the following:
+
+            \begin{description}
+            \item{FORMAT_DOS} AmigaDOS format (dd-mmm-yy). This
+                is the default if you specify something other
+                than any entry in this list.
+
+            \item{FORMAT_INT} International format (yy-mmm-dd).
+
+            \item{FORMAT_USA} American format (mm-dd-yy).
+
+            \item{FORMAT_CDN} Canadian format (dd-mm-yy).
+
+            \item{FORMAT_DEF} default format for locale.
+
+            \end{description}
+
+        \item{dat_Flags} Modifies dat_Format. The only flag
+            used by this function is DTF_SUBST. If set, then
+            a string like "Today" or "Monday" is generated
+            instead of the normal format if possible.
+
+        \item{dat_StrDay} Pointer to a buffer to receive the day of
+            the week string. (Monday, Tuesday, etc.). If null,
+            this string will not be generated.
+
+        \item{dat_StrDate} Pointer to a buffer to receive the date
+            string, in the format requested by dat_Format,
+            subject to possible modifications by DTF_SUBST. If
+            null, this string will not be generated.
+
+        \item{dat_StrTime} Pointer to a buffer to receive the time
+            of day string. If NULL, this will not be generated.
+
+        \end{description}
+
+   RESULT
+    A zero return indicates that the DateStamp was invalid, and could
+    not be converted.  Non-zero indicates that the call succeeded.
+
+   NOTES
+
+   EXAMPLE
+    See below.
+
+   BUGS
+
+   SEE ALSO
+    DateStamp(), StrtoDate()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Delay
+
+   NAME
+    Delay -- 
+
+   SYNOPSIS
+    Delay(timeout)
+    void Delay(ULONG);
+
+   FUNCTION
+        Waits for at least the time specified as timeout.
+
+   INPUTS
+        timeout - the minimum time to wait in ticks (1/50 seconds)
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DeleteVar
+
+   NAME
+    DeleteVar -- 
+
+   SYNOPSIS
+    DeleteVar(, flags)
+    LONG DeleteVar(CONST, ULONG);
+
+   FUNCTION
+        Deletes a local or environment variable.
+
+        The default is to delete a local variable if one was found,
+        or to delete a global environmental variable otherwise.
+
+        A global environmental variable will only be deleted for the
+        type LV_VAR.
+
+   INPUTS
+        name    -   the name of the variable to delete. Note that variable
+                    names follow the same syntax and semantics as filesystem
+                    names.
+
+        flags   -   A combination of the type of variable (low 8 bits), and
+                    flags to control the behaviour of this routine.
+                    Currently defined flags:
+
+                    GVF_LOCAL_ONLY  - delete a local variable.
+                    GVF_GLOBAL_ONLY - delete a global environmental variable.
+
+
+   RESULT
+        If non-zero, the variable was deleted successfully,
+        DOSFALSE otherwise.
+
+   NOTES
+        When the GVF_SAVE_VAR flag is set, and only one of the global
+        variable pair could be deleted (either the in memory or on disk
+        variable), DOSFALSE will be returned.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+        XXX: Find out whether GVF_SAVE_VAR does actually effect this function.
+
+   HISTORY
+        27-11-96    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/Execute
+
+   NAME
+    Execute -- 
+
+   SYNOPSIS
+    Execute(string, input, output)
+    LONG Execute(STRPTR, BPTR, BPTR);
+
+   FUNCTION
+
+    Execute a CLI command specified in 'string'. This string may contain
+    features you may use on the shell commandline like redirection using >,
+    < or >>. Execute() doesn't return until the command(s) that should be
+    executed are finished.
+        If 'input' is not NULL, more commands will be read from this stream
+    until end of file is reached. 'output' will be used as the output stream
+    of the commands (if output is not redirected). If 'output' is NULL the
+    current window is used for output -- note that programs run from the
+    Workbench doesn't normally have a current window.
+
+   INPUTS
+
+    string  --  pointer to a NULL-terminated string with commands
+                (may be NULL)
+    input   --  stream to use as input (may be NULL)
+    output  --  stream to use as output (may be NULL)
+
+   RESULT
+
+    Boolean tellning whether Execute() could find and start the specified
+    command(s). (This is NOT the return code of the command(s).)
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    SystemTagList()
+
+   INTERNALS
+
+    To get the right result, the function ExecCommand() (used by both Execute()
+    and SystemTagList()) uses NP_Synchronous to wait for the commands to
+    finish. This is not the way AmigaOS does it as NP_Synchronous is not
+    implemented (but defined).
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+    2x-12-99    SDuvan  implemented
+
+dos.library/FGets
+
+   NAME
+    FGets -- 
+
+   SYNOPSIS
+    FGets(fh, buf, buflen)
+    STRPTR FGets(BPTR, STRPTR, ULONG);
+
+   FUNCTION
+    Read until NEWLINE (\n), EOF is encountered or buflen-1
+    characters have been read. If a NEWLINE is read, it will
+    be the last character in the buffer. The buffer will always
+    be \0-terminated.
+
+   INPUTS
+    fh - Read buffered from this filehandle
+    buf - Put read chars in this buffer
+    buflen - The size of the buffer
+
+   RESULT
+    buf or NULL if the first thing read is EOF.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FPuts
+
+   NAME
+    FPuts -- 
+
+   SYNOPSIS
+    FPuts(file, string)
+    LONG FPuts(BPTR, STRPTR);
+
+   FUNCTION
+
+   INPUTS
+    file   - Filehandle to write to.
+    string - String to write.
+
+   RESULT
+    0 if all went well or EOF in case of an error.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FGetC(), IoErr()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FRead
+
+   NAME
+    FRead -- 
+
+   SYNOPSIS
+    FRead(fh, block, blocklen, number)
+    LONG FRead(BPTR, APTR, ULONG, ULONG);
+
+   FUNCTION
+    Read a number of blocks from a file.
+
+   INPUTS
+    fh - Read from this file
+    block - The data is put here
+    blocklen - This is the size of a single block
+    number - The number of blocks
+
+   RESULT
+    The number of blocks read from the file or 0 on EOF.
+    This function may return less than the requested number of blocks
+    IoErr() gives additional information in case of an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Open(), FWrite(), FPutc(), Close()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FWrite
+
+   NAME
+    FWrite -- 
+
+   SYNOPSIS
+    FWrite(fh, block, blocklen, number)
+    LONG FWrite(BPTR, APTR, ULONG, ULONG);
+
+   FUNCTION
+    Write a number of blocks to a file.
+
+   INPUTS
+    fh - Write to this file
+    block - The data begins here
+    blocklen - This is the size of a single block
+    number - The number of blocks
+
+   RESULT
+    The number of blocks written to the file or EOF on error. IoErr()
+    gives additional information in case of an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Open(), FRead(), FPutc(), Close()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Fault
+
+   NAME
+    Fault -- 
+
+   SYNOPSIS
+    Fault(code, header, buffer, len)
+    LONG Fault(LONG, STRPTR, STRPTR, LONG);
+
+   FUNCTION
+    Fault will obtain the error message string for the given error
+    code. First the header string is copied to the buffer, followed
+    by a ":" (colon), then the NULL terminated string for the error
+    message into the buffer.
+
+    By convention, error messages are ALWAYS less than 80 (plus 1 for
+    NULL termination), and ideally less than 60 characters.
+
+    If the error code is not know, then the string "Unknown error"
+    followed by the error number will be added to the string.
+
+   INPUTS
+    code    -   The error code.
+    header  -   The string to prepend to the buffer before the error
+            text. This may be NULL in which case nothing is prepended.
+    buffer  -   The destination buffer.
+    len -   Length of the buffer.
+
+   RESULT
+    Number of characters placed in the buffer, may be 0.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FilePart
+
+   NAME
+    FilePart -- 
+
+   SYNOPSIS
+    FilePart(path)
+    STRPTR FilePart(STRPTR);
+
+   FUNCTION
+    Get a pointer to the last component of a path, which is normally the
+    filename.
+
+   INPUTS
+    path - pointer AmigaDOS path string
+        May be relative to the current directory or the current disk.
+
+   RESULT
+    A pointer to the first char of the filename!
+
+   NOTES
+
+   EXAMPLE
+    FilePart("xxx:yyy/zzz/qqq") returns a pointer to the first 'q'.
+    FilePart("xxx:yyy")         returns a pointer to the first 'y'.
+    FilePart("yyy")             returns a pointer to the first 'y'.
+
+   BUGS
+    None known.
+
+   SEE ALSO
+    PathPart(), AddPart()
+
+   INTERNALS
+    Goes from the last char of the pathname back until it finds a ':',
+    a '/' or until the first char reached.
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+    04-08-96    steigerwald hopefully filled up with something useful
+                ;-), however untested!
+
+    07-08-96    steigerwald reworked code, implented digulla's
+                suggestions, thanks Aaron ;-)
+
+                added some documentation ;-)
+
+                converted all comments in function to
+                c++ style to avoid nested comments
+
+                again untested, cause too much AROS stuff
+                that is not easy to #ifdef out missing
+
+    20-08-96    steigerwald finally added all those #ifndef NO_AROS
+                to get this thing working stand-alone
+                test routine added
+                some bugs fixed
+
+                problem: see while and ifs below ;-(((
+
+                routine seems to work so far, but doesnt
+                check for path consistency so
+                FilePart("dh0:test/exec:now") will give a
+                pointer to "now" ;-)
+
+dos.library/FindArg
+
+   NAME
+    FindArg -- 
+
+   SYNOPSIS
+    FindArg(template, keyword)
+    LONG FindArg(STRPTR, STRPTR);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FindVar
+
+   NAME
+    FindVar -- 
+
+   SYNOPSIS
+    FindVar(, type)
+    struct LocalVar * FindVar(CONST, ULONG);
+
+   FUNCTION
+        Finds a local variable structure.
+
+   INPUTS
+        name    -   the name of the variable you wish to find. Note that
+                    variable names follow the same syntax and semantics
+                    as filesystem names.
+        type    -   The type of variable to be found (see <dos/var.h>).
+            Actually, only the lower 8 bits of "type" are used
+            by FindVar().
+
+   RESULT
+        A pointer to the LocalVar structure for that variable if it was
+        found. If the variable wasn't found, or was of the wrong type,
+        NULL will be returned.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        DeleteVar(), GetVar(), SetVar()
+
+   INTERNALS
+        For every local variable, a structure of type LocalVar exists:
+    struct LocalVar {
+        struct Node lv_Node;
+        UWORD       lv_Flags;
+        UBYTE      *lv_Value;
+        ULONG       lv_Len;
+    };
+
+    lv_Node.ln_Type
+    holds the variable type, either LV_VAR for regular local environment
+    variables or LV_ALIAS for shell aliases. dos/var.h also defines
+    LVF_IGNORE (for private usage by the shell)
+
+    lv_Node.ln_Name
+    holds the variable name (NUL terminated string)
+
+    lv_Flags
+    stores GVF_BINARY_VAR and GVF_DONT_NULL_TERM if given as flags to
+    SetVar(). It is only used by GetVar().
+
+    lv_Value
+    holds the variable's value
+
+    lv_Len
+    is the length of lv_Value
+
+   HISTORY
+        27-11-96    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/FreeArgs
+
+   NAME
+    FreeArgs -- 
+
+   SYNOPSIS
+    FreeArgs(args)
+    void FreeArgs(struct RDArgs *);
+
+   FUNCTION
+    FreeArgs() will clean up after a call to ReadArgs(). If the
+    RDArgs structure was allocated by the system in a call to
+    ReadArgs(), then it will be freed. If however, you allocated
+    the RDArgs structure with AllocDosObject(), then you will
+    have to free it yourself with FreeDosObject().
+
+   INPUTS
+    args        - The data used by ReadArgs(). May be NULL,
+              in which case, FreeArgs() does nothing.
+
+   RESULT
+    Some memory will have been returned to the system.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ReadArgs()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FreeDeviceProc
+
+   NAME
+    FreeDeviceProc -- 
+
+   SYNOPSIS
+    FreeDeviceProc(dp)
+    void FreeDeviceProc(struct DevProc *);
+
+   FUNCTION
+    FreeDeviceProc() will clean up after a call to GetDeviceProc().
+
+   INPUTS
+    dp      - DevProc structure as returned by GetDeviceProc().
+
+   RESULT
+    Some memory and other resources returned to the system.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetDeviceProc()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FreeDosEntry
+
+   NAME
+    FreeDosEntry -- 
+
+   SYNOPSIS
+    FreeDosEntry(dlist)
+    void FreeDosEntry(struct DosList *);
+
+   FUNCTION
+    Frees a dos list entry created with MakeDosEntry().
+
+   INPUTS
+    dlist - pointer to dos list entry. May be NULL.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetArgStr
+
+
+   FUNCTION
+    Returns a pointer to the argument string passed to the current
+    process at startup.
+
+   INPUTS
+
+   RESULT
+    Pointer to argument string.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetConsoleTask
+       void
+
+
+   FUNCTION
+    Return the console handler for the current Process. The return
+    type depends upon whether AROS is running binary compatible.
+
+   INPUTS
+    None.
+
+   RESULT
+    The address of the console handler, or NULL if none is set.
+
+   NOTES
+    You will only get NULL from this call if you call it on a Task,
+    or when the Process is not attached to a console.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SetConsoleTask()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetCurrentDirName
+
+   NAME
+    GetCurrentDirName -- 
+
+   SYNOPSIS
+    GetCurrentDirName(buf, len)
+    LONG GetCurrentDirName(STRPTR, LONG);
+
+   FUNCTION
+    Copies the name of the current directory from the CLI structure
+    into the buffer. If the buffer is too small the name is truncated,
+    and a failure is returned. If the current process doesn't have
+    a CLI structure, a 0 length string is put into the buffer and a
+    failure is returned.
+
+   INPUTS
+    buf - Buffer for the name.
+    len - Size of the buffer in bytes.
+
+   RESULT
+    !=0 on success, 0 on failure. IoErr() gives additional information
+    in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SetCurrentDirName()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+    29-09-97    turrican implemented
+
+dos.library/GetFileSysTask
+       void
+
+
+   FUNCTION
+    Return the default filesystem handler for this process.
+
+   INPUTS
+    None.
+
+   RESULT
+    The default filesystem handler for this process.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SetFileSysTask()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetProgramDir
+       void
+
+
+   FUNCTION
+    This function will return the shared lock on the directory that
+    the current process was loaded from. You can use this to help
+    you find data files which were supplied with your program.
+
+    A NULL return is possible, which means that you may be running
+    from the Resident list.
+
+    You should NOT under any circumstance UnLock() this lock.
+
+   INPUTS
+
+   RESULT
+    A shared lock on the directory the program was started from.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-1996  digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+    17-02-1997  iaint   Implemented. Required for locale.
+
+dos.library/GetProgramName
+
+   NAME
+    GetProgramName -- 
+
+   SYNOPSIS
+    GetProgramName(buf, len)
+    LONG GetProgramName(STRPTR, LONG);
+
+   FUNCTION
+    Copies the name of the current program from the CLI structure
+    into the buffer. If the buffer is too small the name is truncated,
+    and a failure is returned. If the current process doesn't have
+    a CLI structure, a 0 length string is put into the buffer and a
+    failure is returned.
+
+   INPUTS
+    buf - Buffer for the name.
+    len - Size of the buffer in bytes.
+
+   RESULT
+    !=0 on success, 0 on failure. IoErr() gives additional information
+    in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SetProgramName()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetPrompt
+
+   NAME
+    GetPrompt -- 
+
+   SYNOPSIS
+    GetPrompt(buf, len)
+    LONG GetPrompt(STRPTR, LONG);
+
+   FUNCTION
+    Copies the prompt from the CLI structure into the buffer. If the
+    buffer is too small the name is truncated, and a failure is returned.
+    If the current process doesn't have a CLI structure, a 0 length string
+    is put into the buffer and a failure is returned.
+
+   INPUTS
+    buf - Buffer for the prompt.
+    len - Size of the buffer in bytes.
+
+   RESULT
+    !=0 on success, 0 on failure. IoErr() gives additional information
+    in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SetPrompt()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Input
+
+
+   FUNCTION
+    Returns the current input stream or 0 if there is no current
+    input stream.
+
+   INPUTS
+
+   RESULT
+    Input stream handle.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/InternalLoadSeg
+
+   NAME
+    InternalLoadSeg -- 
+
+   SYNOPSIS
+    InternalLoadSeg(fh, table, , stack)
+    BPTR InternalLoadSeg(BPTR, BPTR, LONG, LONG *);
+
+   FUNCTION
+        Loads from fh.
+        Functionarray is a pointer to an array of functions. See below.
+
+        This function really only tries to load the different file
+        formats aos, elf and aout.
+
+   INPUTS
+        fh            : Filehandle to load from
+        table         : ignored
+        functionarray : Array of function to be used fro read, alloc and free
+           FuncTable[0] -> bytes  = ReadFunc(readhandle, buffer, length),DOSBase
+                           D0                D1          A0      D0      A6
+           FuncTable[1] -> Memory = AllocFunc(size,flags), ExecBase
+                           D0                 D0   D1      A6
+           FuncTable[2] -> FreeFunc(memory, size), ExecBase
+                                    A1       D0    A6
+        stack         : pointer to storage (ULONG) for stacksize.
+                        (currently ignored)
+
+   RESULT
+        seglist  - pointer to loaded Seglist or NULL in case of failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+       Use of table and stack are not implemented, yet!
+
+   SEE ALSO
+        UnLoadSeg()
+
+   INTERNALS
+
+   HISTORY
+        29-10-95    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/InternalUnLoadSeg
+
+   NAME
+    InternalUnLoadSeg -- 
+
+   SYNOPSIS
+    InternalUnLoadSeg(seglist, )
+    LONG InternalUnLoadSeg(BPTR, VOID);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+        27-11-96    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/IoErr
+
+
+   FUNCTION
+    Get the dos error code for the current process.
+
+   INPUTS
+
+   RESULT
+    Error code.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/LoadSeg
+
+   NAME
+    LoadSeg -- 
+
+   SYNOPSIS
+    LoadSeg(name, table, fh)
+    BPTR LoadSeg(STRPTR, BPTR, BPTR);
+
+   FUNCTION
+        Loads an executable file into memory. Each hunk of the loadfile
+        is loaded into his own memory section and a handle on all of them
+        is returned. The segments can be freed with UnLoadSeg().
+
+   INPUTS
+        name - NUL terminated name of the file.
+
+   RESULT
+        Handle to the loaded executable or 0 if the load failed.
+        IoErr() gives additional information in that case.
+
+   NOTES
+        This function is built on top of InternalLoadSeg()
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        UnLoadSeg()
+
+   INTERNALS
+
+   HISTORY
+        29-10-95    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/LockRecords
+
+   NAME
+    LockRecords -- 
+
+   SYNOPSIS
+    LockRecords(recArray, timeout)
+    LONG LockRecords(struct RecordLock *, ULONG);
+
+   FUNCTION
+
+    Lock several records at the same time. The timeout specified is applied
+    to each lock to attempt. The array of RecordLock:s is terminated with
+    an entry where rec_FH is equal to NULL.
+
+   INPUTS
+
+    recArray  --  array of records to lock
+    timeout   --  maximum number of ticks to wait for a lock to be ready
+
+   RESULT
+
+    Success/failure indication. In case of a success, all the record locks
+    are locked. In case of failure, no record locks are locked.
+
+   NOTES
+
+    A set of records should always be locked in the same order so as to
+    reduce possiblities of deadlock.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    UnLockRecords()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/MakeDosEntry
+
+   NAME
+    MakeDosEntry -- 
+
+   SYNOPSIS
+    MakeDosEntry(, type)
+    struct DosList * MakeDosEntry(CONST, LONG);
+
+   FUNCTION
+    Create an entry for the dos list. Depending on the type this may
+    be a device a volume or an assign node.
+
+   INPUTS
+    name - pointer to name
+    type - type of list entry to create
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/MatchEnd
+
+   NAME
+    MatchEnd -- 
+
+   SYNOPSIS
+    MatchEnd(AP)
+    void MatchEnd(struct AnchorPath *);
+
+   FUNCTION
+    Free the memory that was allocated by calls to MatchFirst() and
+    MatchNext()
+
+   INPUTS
+    AP  - pointer to Anchor Path structure which had been passed to
+              MatchFirst() before.
+
+   RESULT
+    Allocated memory is returned and filelocks are freed.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-04-97    bergers, initial revision
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/MatchFirst
+
+   NAME
+    MatchFirst -- 
+
+   SYNOPSIS
+    MatchFirst(pat, AP)
+    LONG MatchFirst(STRPTR, struct AnchorPath *);
+
+   FUNCTION
+
+    Searches for the first file or directory that matches a given pattern.
+    MatchFirst() initializes the AnchorPath structure for you but you
+    must initilize the following fields: ap_Flags, ap_Strlen, ap_BreakBits
+    and ap_FoundBreak. The first call to MatchFirst() also passes you
+    the first matching file which you can examine in ap_Info and the directory
+    the files is in in ap_Current->an_Lock. After the first call to
+        MatchFirst() call MatchNext().
+    The search begins whereever the current directory is set to. See
+    CurrentDir();
+    For more info on patterns see ParsePattern().
+
+   INPUTS
+        pat  - pattern to search for
+    AP   - pointer to (initilized) AnchorPath structure
+
+   RESULT
+    0     = success
+    other = DOS error code
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    MatchNext(), MatchEnd(), ParsePattern(), Examine(), CurrentDir()
+    <dos/dosasl.h>
+
+   INTERNALS
+
+   HISTORY
+        09-11-2000  stegerg, rewritten from scratch.
+    29-04-97    bergers, initial revision
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/MatchNext
+
+   NAME
+    MatchNext -- 
+
+   SYNOPSIS
+    MatchNext(AP)
+    LONG MatchNext(struct AnchorPath *);
+
+   FUNCTION
+    Find next file or directory that matches a given pattern.
+    See <dos/dosasl.h> for more docs and how to control MatchNext().
+
+
+   INPUTS
+    AP  - pointer to Anchor Path structure which had been passed to
+              MatchFirst() before.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    MatchFirst() MatchEnd() CurrentDir() Examine() ExNext()
+    ParsePattern() <dos/dosasl.h>
+
+   INTERNALS
+
+   HISTORY
+        09-11-2000  stegerg, rewritten from scratch.
+    29-04-97    bergers, initial revision
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/MatchPattern
+
+   NAME
+    MatchPattern -- 
+
+   SYNOPSIS
+    MatchPattern(pat, str)
+    LONG MatchPattern(STRPTR, STRPTR);
+
+   FUNCTION
+
+    Check if a string matches a pattern. The pattern must be a pattern as
+    output by ParsePattern(). Note that this routine is case sensitive.
+
+   INPUTS
+
+    pat   --   Pattern string (as returned by ParsePattern())
+    str   --   The string to match against the pattern 'pat'
+
+   RESULT
+
+    Boolean telling whether the string matched the pattern.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ParsePattern(), MatchPatternNoCase(), MatchFirst(), MatchNext()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/MatchPatternNoCase
+
+   NAME
+    MatchPatternNoCase -- 
+
+   SYNOPSIS
+    MatchPatternNoCase(pat, str)
+    LONG MatchPatternNoCase(STRPTR, STRPTR);
+
+   FUNCTION
+
+    Similar to MatchPattern(), only case insensitive (see there for
+    more information). For use with ParsePatternNoCase().
+
+   INPUTS
+
+    pat  --  Pattern as returned by ParsePatternNoCase()
+    str  --  String to match against the pattern 'pat'
+
+   RESULT
+
+    Boolean telling whether the match was successful or not.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    MatchPattern(), ParsePatternNoCase().
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/NewLoadSeg
+
+   NAME
+    NewLoadSeg -- 
+
+   SYNOPSIS
+    NewLoadSeg(file, tags)
+    BPTR NewLoadSeg(STRPTR, struct TagItem *);
+
+   FUNCTION
+        Loads an executable file into memory via LoadSeg() and takes
+        additional actions based upon the supplied tags.
+
+   INPUTS
+        file - NULL terminated name of the file
+        tags - pointer to the tagitems
+
+   RESULT
+        Handle to the loaded executable or 0 if the load failed.
+        IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+        As there are no tags currently defined all this function does is
+        call LoadSeg()
+
+   SEE ALSO
+        LoadSeg(), UnLoadSeg(), InternalLoadSeg(), InternalUnloadSeg()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Output
+
+
+   FUNCTION
+    Returns the current output stream or 0 if there is no current
+    output stream.
+
+   INPUTS
+
+   RESULT
+    Output stream handle.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ParsePattern
+
+   NAME
+    ParsePattern -- 
+
+   SYNOPSIS
+    ParsePattern(Source, Dest, DestLength)
+    LONG ParsePattern(STRPTR, STRPTR, LONG);
+
+   FUNCTION
+    Takes a pattern containing wildcards and transforms it into some
+    intermediate representation for use with the MatchPattern() function.
+    The intermediate representation is longer but generally a buffer
+    size of 2*(strlen(Source)+1) is enough. Nevertheless you should check
+    the returncode to be sure that everything went fine.
+
+   INPUTS
+    Source     - Pattern describing the kind of strings that match.
+             Possible tokens are:
+             #x     - The following character or item is repeaded 0 or
+                      more times.
+             ?      - Item matching a single non-NUL character.
+             a|b|c  - Matches one of multiple strings.
+             ~x     - This item matches if the item x doesn't match.
+             (a)    - Parens
+             [a-z]  - Matches a single character out of the set.
+             [~a-z] - Matches a single non-NUL character not in the set.
+             'c     - Escapes the following character.
+             %      - Matches 0 characters always (useful in "(foo|bar|%)").
+             *      - Same as #?, but optional.
+    Dest       - Buffer for the destination.
+    DestLength - Size of the buffer.
+
+   RESULT
+     1 - There are wildcards in the pattern (it might match more than
+         one string).
+     0 - No wildcards in it, all went fine.
+    -1 - An error happened. IoErr() gives additional information in
+         that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ParsePatternNoCase
+
+   NAME
+    ParsePatternNoCase -- 
+
+   SYNOPSIS
+    ParsePatternNoCase(Source, Dest, DestLength)
+    LONG ParsePatternNoCase(STRPTR, STRPTR, LONG);
+
+   FUNCTION
+    Similar to ParsePattern(), only case insensitive (see there
+    for more information). For use with MatchPatternNoCase().
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ParsePattern(), MatchPatternNoCase().
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/PathPart
+
+   NAME
+    PathPart -- 
+
+   SYNOPSIS
+    PathPart(path)
+    STRPTR PathPart(STRPTR);
+
+   FUNCTION
+    Returns a pointer to the character after the last
+    directory in path (see examples).
+
+   INPUTS
+    path - Search this path.
+
+   RESULT
+    A pointer to a character in path.
+
+   NOTES
+
+   EXAMPLE
+    PathPart("xxx:yyy/zzz/qqq") would return a pointer to the last '/'.
+    PathPart("xxx:yyy") would return a pointer to the first 'y').
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/PrintFault
+
+   NAME
+    PrintFault -- 
+
+   SYNOPSIS
+    PrintFault(code, header)
+    LONG PrintFault(LONG, STRPTR);
+
+   FUNCTION
+    Prints the header and the text associated with the error code to
+    the console (buffered), then sets the value returned by IoErr() to
+    the error code given.
+
+   INPUTS
+    code   - Error code.
+    header - Text to print before the error message. This may be NULL
+                 in which case only the error message is printed.
+
+   RESULT
+    !=0 if all went well. 0 on failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Fault()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/PutStr
+
+   NAME
+    PutStr -- 
+
+   SYNOPSIS
+    PutStr(string)
+    LONG PutStr(STRPTR);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FGetC(), IoErr()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ReadArgs
+
+   NAME
+    ReadArgs -- 
+
+   SYNOPSIS
+    ReadArgs(template, array, rdargs)
+    struct RDArgs * ReadArgs(STRPTR, IPTR *, struct RDArgs *);
+
+   FUNCTION
+    Parses the commandline, a given string or Input() and fills
+    an argument array according to the options template given.
+    The array must be initialized to the wanted defaults before
+    each call to ReadArgs(). If the rdargs argument is NULL
+    ReadArgs() tries to parse the commandline and continues
+    on the input channel if it just consists of a single '?',
+    prompting the user for input.
+
+   INPUTS
+    template - Template string. The template string is given as
+           a number of options separated by ',' and modified
+           by '/' modifiers, e.g. 'NAME,WIDTH/N,HEIGHT/N'
+           means get a name string and two numbers (width and
+           height). The possible modifiers are:
+           /S Option is a switch. It may be either set or
+              left out.
+           /T Option is a boolean value. Requires an argument
+              which may be "ON", "YES" (setting the respective
+              argument to 1), "OFF" or "NO" (setting the
+              respective argument to 0).
+           /N Option is a number. Strings are not allowed.
+              If the option is optional, a pointer to the
+              actual number is returned. This is how you know
+              if it was really given.
+           /A Argument is required. If it is left out ReadArgs()
+              fails.
+           /K The keyword must be given when filling the option.
+              Normally it's skipped.
+           /M Multiple strings. The result is returned as a string
+              pointer array terminated with NULL. /M eats all strings
+              that don't fit into any other option. If there are
+              unfilled /A arguments after parsing they steal strings
+              from /M. This makes it possible to e.g. write a COPY
+              template like 'FROM/A/M,TO/A'. There may be only one
+              /M option in a template.
+           /F Eats the rest of the line even if there are option
+              keywords in it.
+    array    - Array to be filled with the result values. The array must
+           be intialized to the default values before calling
+           ReadArgs().
+    rdargs   - An optional RDArgs structure determinating the type of
+           input to process.
+
+   RESULT
+    A handle for the memory allocated by ReadArgs(). Must be freed
+    with FreeArgs() later.
+
+   NOTES
+
+   EXAMPLE
+    See below.
+
+   SEE ALSO
+    FreeArgs(), Input()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/RemAssignList
+
+   NAME
+    RemAssignList -- 
+
+   SYNOPSIS
+    RemAssignList(name, lock)
+    LONG RemAssignList(STRPTR, BPTR);
+
+   FUNCTION
+    Remove an entry from a multi-dir assign. The entry removed will be
+    the first one that the SameLock() function called on the 'lock'
+    parameter returns that they belong to the same object.
+
+    The entry for this lock will be remove from the lock, and the
+    lock for the entry in the list will be unlocked.
+
+   INPUTS
+    name    -   Name of the device to remove lock from. This should
+            not contain the trailing ':'.
+    lock    -   Lock on the object to remove from the list.
+
+   RESULT
+    success -   Have we actually succeeded
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    If this is the first lock in a list, this will not set
+    dol_Device/dol_Unit correctly. This will be fixed shortly.
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/RemSegment
+
+   NAME
+    RemSegment -- 
+
+   SYNOPSIS
+    RemSegment(seg)
+    LONG RemSegment(struct Segment *);
+
+   FUNCTION
+    Remove the segment seg from the DOS resident command list.
+
+    The segment to be removed should be in the list, and should
+    have a usercount of 0. System or internal segment cannot be
+    removed (although they can be replaced).
+
+    New: the same seglist can now appear several times in the
+    list with different names. If this occurs, the Segment is
+    freed but the seglist is not unloaded.
+
+   INPUTS
+    seg     - Segment to remove.
+
+   RESULT
+    != 0    Segment was removed
+    == 0    Segment was not removed (not in list, or not free).
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AddSegment(), FindSegment()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SelectInput
+
+   NAME
+    SelectInput -- 
+
+   SYNOPSIS
+    SelectInput(fh)
+    BPTR SelectInput(BPTR);
+
+   FUNCTION
+    Sets the current input stream returned by Input() to a new
+    value. Returns the old input stream.
+
+   INPUTS
+    fh - New input stream.
+
+   RESULT
+    Old input stream handle.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SelectOutput
+
+   NAME
+    SelectOutput -- 
+
+   SYNOPSIS
+    SelectOutput(fh)
+    BPTR SelectOutput(BPTR);
+
+   FUNCTION
+    Sets the current output stream returned by Output() to a new
+    value. Returns the old output stream.
+
+   INPUTS
+    fh - New output stream.
+
+   RESULT
+    Old output stream handle.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetArgStr
+
+   NAME
+    SetArgStr -- 
+
+   SYNOPSIS
+    SetArgStr(string)
+    STRPTR SetArgStr(STRPTR);
+
+   FUNCTION
+    Sets the arguments to the current process. The arguments must be
+    reset to the original value before process exit.
+
+   INPUTS
+    string  -   The new argument string. (A C string).
+
+   RESULT
+    The address of the previous argument string. May be NULL.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetArgStr(), RunCommand()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetConsoleTask
+
+   NAME
+    SetConsoleTask -- 
+
+   SYNOPSIS
+    SetConsoleTask(handler)
+    struct MsgPort * SetConsoleTask(struct MsgPort *);
+
+   FUNCTION
+    Set the console handler for the current process, and return the
+    old handler.
+
+   INPUTS
+    handler     - The new console handler for the process.
+
+   RESULT
+    The address of the old handler.
+
+   NOTES
+    The use of Task in the name is because historically filesystem
+    handlers were tasks (instead of Devices).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetConsoleTask()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetCurrentDirName
+
+   NAME
+    SetCurrentDirName -- 
+
+   SYNOPSIS
+    SetCurrentDirName(name)
+    LONG SetCurrentDirName(STRPTR);
+
+   FUNCTION
+    Sets the name of the current directory in the CLI structure.
+    If the name doesn't fit the old name is kept and a failure
+    returned. If the current process doesn't have a CLI structure
+    this function does nothing.
+
+   INPUTS
+    name - Name for the current directory.
+
+   RESULT
+    !=0 on success, 0 on failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetCurrentDirName()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetFileSysTask
+
+   NAME
+    SetFileSysTask -- 
+
+   SYNOPSIS
+    SetFileSysTask(task)
+    struct MsgPort * SetFileSysTask(struct MsgPort *);
+
+   FUNCTION
+    Set the default filesystem handler for the current process,
+    the old filesystem handler will be returned.
+
+   INPUTS
+    task        - The new filesystem handler.
+
+   RESULT
+    The old filesystem handler.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetFileSysTask()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetIoErr
+
+   NAME
+    SetIoErr -- 
+
+   SYNOPSIS
+    SetIoErr(result)
+    LONG SetIoErr(LONG);
+
+   FUNCTION
+    Sets to dos error code for the current process.
+
+   INPUTS
+    result -- new error code
+
+   RESULT
+    Old error code.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetProgramDir
+
+   NAME
+    SetProgramDir -- 
+
+   SYNOPSIS
+    SetProgramDir(lock)
+    BPTR SetProgramDir(BPTR);
+
+   FUNCTION
+    This function will set a shared lock on the directory that the
+    current program was loaded from. This can be accessed through
+    the path PROGDIR:. The use of this path is to allow the program
+    to easily access files which are supplied with the program.
+
+   INPUTS
+    lock    -   The lock to set as the new program directory. NULL
+            is a valid value.
+
+   RESULT
+    This function will return the old program directory lock.
+
+   NOTES
+    This function will not duplicate the lock, so you should not
+    free the lock.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetProgramDir()
+
+   INTERNALS
+
+   HISTORY
+    27-11-1996  digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+    17-02-1997  iaint   Implemented. Need it for locale.
+
+dos.library/SetProgramName
+
+   NAME
+    SetProgramName -- 
+
+   SYNOPSIS
+    SetProgramName(name)
+    LONG SetProgramName(STRPTR);
+
+   FUNCTION
+    Sets the name for the current program in the CLI structure. If the
+    name doesn't fit the old name is kept and a failure is returned.
+    If the current process doesn't have a CLI structure this function
+    does nothing.
+
+   INPUTS
+    name  --  Name for the current program.
+
+   RESULT
+    != 0 on success, 0 on failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetProgramName()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetPrompt
+
+   NAME
+    SetPrompt -- 
+
+   SYNOPSIS
+    SetPrompt(name)
+    LONG SetPrompt(STRPTR);
+
+   FUNCTION
+    Sets the prompt in the current CLI structure. If the name doesn't
+    fit the old name is kept and a failure is returned. If the current
+    process doesn't have a CLI structure this function does nothing.
+
+   INPUTS
+    name - The prompt to be set.
+
+   RESULT
+    !=0 on success, 0 on failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetPrompt()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/StrToDate
+
+   NAME
+    StrToDate -- 
+
+   SYNOPSIS
+    StrToDate(datetime)
+    LONG StrToDate(struct DateTime *);
+
+   FUNCTION
+    Converts a human readable ASCII string into an AmigaDOS
+    DateStamp.
+
+   INPUTS
+    DateTime - a pointer to an initialized DateTime structure.
+        The structure should be initialized as follows:
+
+        \begin{description}
+        \item{dat_Stamp} The converted date will be written here
+
+        \item{dat_Format} How to convert the datestamp into
+            dat_StrDate. Can be any of the following:
+
+            \begin{description}
+            \item{FORMAT_DOS} AmigaDOS format (dd-mmm-yy). This
+                is the default if you specify something other
+                than any entry in this list.
+
+            \item{FORMAT_INT} International format (yy-mmm-dd).
+
+            \item{FORMAT_USA} American format (mm-dd-yy).
+
+            \item{FORMAT_CDN} Canadian format (dd-mm-yy).
+
+            \item{FORMAT_DEF} default format for locale.
+
+            \end{description}
+
+        \item{dat_Flags} Modifies dat_Format. The only flag
+            used by this function is DTF_FUTURE. If set, then
+            a string like "Monday" refers to the next monday.
+            Otherwise it refers to the last monday.
+
+        \item{dat_StrDay} Ignored.
+
+        \item{dat_StrDate} Pointer to valid string representing the
+            date. This can be a "DTF_SUBST" style string such
+            as "Today" "Tomorrow" "Monday", or it may be a
+            string as specified by the dat_Format byte. This
+            will be converted to the ds_Days portion of the
+            DateStamp. If this pointer is NULL,
+            DateStamp->ds_Days will not be affected.
+
+        \item{dat_StrTime} Pointer to a buffer which contains the
+            time in the ASCII format hh:mm:ss. This will be
+            converted to the ds_Minutes and ds_Ticks portions
+            of the DateStamp.  If this pointer is NULL,
+            ds_Minutes and ds_Ticks will be unchanged.
+
+        \end{description}
+
+   RESULT
+    A zero return indicates that a conversion could not be performed. A
+    non-zero return indicates that the DateTime.dat_Stamp variable
+    contains the converted values.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    DateStamp(), DateToStr()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/StrToLong
+
+   NAME
+    StrToLong -- 
+
+   SYNOPSIS
+    StrToLong(string, value)
+    LONG StrToLong(STRPTR, LONG *);
+
+   FUNCTION
+    Convert a string to a long number.
+
+   INPUTS
+    string - The value to convert
+    value - The result is returned here
+
+   RESULT
+    How many characters in the string were considered when it was
+    converted or -1 if no valid number could be found.
+
+   NOTES
+    The routine doesn't check if the number if too large.
+
+   EXAMPLE
+    // Valid number are: 5, -1, +3, +0007, $feed, -0xBEEF, etc.
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+        04-07-02    Added ability to read hex-strings.
+
+dos.library/SystemTagList
+
+   NAME
+    SystemTagList -- 
+
+   SYNOPSIS
+    SystemTagList(command, tags)
+    LONG SystemTagList(STRPTR, struct TagItem *);
+
+   FUNCTION
+
+    Execute a command via a shell. As defaults, the process will use the
+    current Input() and Output(), and the current directory as well as the
+    path will be inherited from your process. If no path is specified, this
+    path will be used to find the command.
+        Normally, the boot shell is used but other shells may be specified
+    via tags. The tags are passed through to CreateNewProc() except those
+    who conflict with SystemTagList(). Currently, these are
+
+        NP_Seglist
+    NP_FreeSeglist
+    NP_Entry
+    NP_Input
+    NP_Output
+    NP_CloseInput
+    NP_CloseOutput
+    NP_HomeDir
+    NP_Cli
+
+   INPUTS
+
+    command  --  program and arguments as a string
+    tags     --  see <dos/dostags.h>. Note that both SystemTagList() tags and
+                 tags for CreateNewProc() may be passed.
+
+   RESULT
+
+    The return code of the command executed or -1 or if the command could
+    not run because the shell couldn't be created. If the command is not
+    found, the shell will return an error code, usually RETURN_ERROR.
+
+   NOTES
+
+    You must close the input and output filehandles yourself (if needed)
+    after System() returns if they were specified via SYS_Input or
+    SYS_Output (also, see below).
+        You may NOT use the same filehandle for both SYS_Input and SYS_Output.
+    If you want them to be the same CON: window, set SYS_Input to a filehandle
+    on the CON: window and set SYS_Output to NULL. Then the shell will
+    automatically set the output by opening CONSOLE: on that handler.
+        If you specified SYS_Asynch, both the input and the output filehandles
+    will be closed when the command is finished (even if this was your Input()
+    and Output().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    Execute(), CreateNewProc(), Input(), Output(), <dos/dostags.h>
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+    9.1.2000    SDuvan  implemented
+
+dos.library/UnLoadSeg
+
+   NAME
+    UnLoadSeg -- 
+
+   SYNOPSIS
+    UnLoadSeg(seglist)
+    LONG UnLoadSeg(BPTR);
+
+   FUNCTION
+        Free a segment list allocated with LoadSeg().
+
+   INPUTS
+        seglist - The segment list.
+
+   RESULT
+        success = returns whether everything went ok. Returns FALSE if
+                  seglist was NULL.
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        LoadSeg()
+
+   INTERNALS
+
+   HISTORY
+        29-10-95    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/UnLockRecords
+
+   NAME
+    UnLockRecords -- 
+
+   SYNOPSIS
+    UnLockRecords(recArray)
+    LONG UnLockRecords(struct RecordLock *);
+
+   FUNCTION
+
+    Release an array of record locks obtained with LockRecords().
+
+   INPUTS
+
+    recArray  --  array of record locks (previously locked with LockRecords())
+
+   RESULT
+
+   NOTES
+
+    A array of records may not be modified when records are locked.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRecords()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/VFPrintf
+
+   NAME
+    VFPrintf -- 
+
+   SYNOPSIS
+    VFPrintf(file, , argarray)
+    LONG VFPrintf(BPTR, CONST, IPTR *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/VFWritef
+
+   NAME
+    VFWritef -- 
+
+   SYNOPSIS
+    VFWritef(fh, fmt, argarray)
+    LONG VFWritef(BPTR, STRPTR, IPTR *);
+
+   FUNCTION
+
+    Write a formatted string (with supplied values) to a specified file.
+    The string may be of any length and the routine is buffered.
+    The following format commands may be used (preceded by a '%') a la printf.
+
+        S   --  string (C style)
+    Tx  --  writes a left justified string padding it to be (at least)
+            x bytes long
+    C   --  character
+        Ox  --  octal number; maximum width x characters
+    Xx  --  hexadecimal number; maximum width x characters
+    Ix  --  decimal number; maximum width x chararcters
+    N   --  decimal number; any length
+    Ux  --  unsigned decimal number; maximum width x characters
+    $   --  ignore parameter
+
+    Note: 'x' above is the character value - '0'.
+
+   INPUTS
+
+    fh        --  file to write the output to
+    fmt       --  format string
+    argarray  --  pointer to an array of formatting values
+
+   RESULT
+
+    The number of bytes written or -1 if there was an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    VFPrintf(), FPutC()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+    22.12.99    SDuvan  implemented
+
+dos.library/VPrintf
+
+   NAME
+    VPrintf -- 
+
+   SYNOPSIS
+    VPrintf(format, argarray)
+    LONG VPrintf(STRPTR, IPTR *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/WriteChars
+
+   NAME
+    WriteChars -- 
+
+   SYNOPSIS
+    WriteChars(buf, buflen)
+    LONG WriteChars(STRPTR, ULONG);
+
+   FUNCTION
+    Writes the contents of the buffer to the current output stream.
+    The number of bytes written is returned.
+
+   INPUTS
+    buf - Buffer to be written.
+    buflen - Size of the buffer in bytes.
+
+   RESULT
+    The number of bytes written or EOF on failure. IoErr() gives
+    additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FPuts(), FPutC(), FWrite(), PutStr()
+
+   INTERNALS
+
+   HISTORY
+    5-12-96    turrican automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+

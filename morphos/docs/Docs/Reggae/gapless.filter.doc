@@ -1,0 +1,288 @@
+TABLE OF CONTENTS
+
+gapless.filter/--background--
+gapless.filter/MMM_GetPort
+gapless.filter/MMM_MessageAtEnd
+gapless.filter/MMM_Pull
+gapless.filter/MMM_Seek
+gapless.filter/MMM_SetPort
+gapless.filter/MMM_Setup
+gapless.filter/MMM_SignalAtEnd
+gapless.filter/OM_DISPOSE
+gapless.filter/OM_NEW
+multimedia.class/MMA_Gapless_ActiveInput
+gapless.filter/--background--
+
+ DESCRIPTION
+   Gapless.filter is a class providing gapless playback of multiple audio
+   streams. Unlimited number of streams may be connected alternately to two
+   input ports, consecutive streams are merged into one without any gap.
+   An application may receive a signal or a message when inputs are toggled
+   so it can connect next stream to the inactive port.
+
+   For gapless merge all the streams must have the same number of channels
+   and the same sampling rate. If it is not the case, an object refuses
+   connection to an input port.
+
+   Ports
+
+   Instance of gapless.filter class has 3 ports always:
+   - port 0 is input, accepts any of common audio formats.
+   - port 1 is input, accepts any of common audio formats.
+   - port 2 is output, data format is the same as set for inputs.
+
+   Audio data format on all the three ports must be the same. Therefore the
+   first port connection (no matter which one) forces the format for the
+   other two ports.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Gapless_ActiveInput  (v51)    [..G.Q], LONG
+
+ NEW METHODS
+
+   OM_NEW()                 (v51)
+   OM_DISPOSE()             (v51)
+   MMM_Pull()               (v51)
+   MMM_Seek()               (v51)
+   MMM_Setup()              (v51)
+   MMM_SignalAtEnd()        (v51)
+   MMM_MessageAtEnd()       (v51)
+   MMM_GetPort()            (v51)
+   MMM_SetPort()            (v51)
+
+ HISTORY
+   51.0  (25.03.2013)
+   - Initial release.
+
+gapless.filter/MMM_GetPort
+
+ NAME
+   MMM_GetPort -- Gets port specific attribute. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_GetPort, port, attr, storage);
+
+ FUNCTION
+   As the class is not a typical single input, single output case, rules of
+   queries forwarding are changed. Queries for following attributes:
+   - MMA_Gapless_ActiveInput,
+   are answered in-place, regardless of the port. All other queries are
+   forwarded. Queries on any input port are forwarded to the output. Queries
+   on output are forwarded to the active input.
+
+gapless.filter/MMM_MessageAtEnd
+
+ NAME
+   MMM_MessageAtEnd -- Sets a message to be replied at input switch (V51)
+
+ SYNOPSIS
+   DoMethod(obj, MMM_MessageAtEnd, message);
+
+ FUNCTION
+   The method sets up an "end of stream" event. When input streams are
+   switched, message passed is replied to its mn_ReplyPort. Note that the
+   message must be properly initialized. Its mn_Node.ln_Type must be set to
+   NT_MESSAGE, mn_Length must be set to the complete message size and
+   mn_ReplyPort must point to a valid MsgPort.
+
+   Message event is "one shot", as a message may be replied once only. If an
+   application wants to receive a message for each input stream switch, it
+   has to reintialize the message after receiving it back and then call
+   MMM_MessageAtEnd() again.
+
+   Message events are queued in an object, so multiple messages may be
+   replied to different message ports when audio streams are switched.
+
+ INPUTS
+   obj - gapless.filter class object pointer.
+   messgae - initialized system Message structure.
+
+ RESULT
+   MMA_ErrorCode for the object is set to MMERR_WRONG_ARGUMENTS if the
+   message pointer is NULL.
+
+ SEE ALSO
+   MMM_SignalAtEnd, exec.library/ReplyMsg
+
+gapless.filter/MMM_Pull
+
+ NAME
+   MMM_Pull -- Pull data from gapless.filter output (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   Forwards pull request on the output port to active input port. If inside
+   the request MMERR_END_OF_DATA is encountered, active input is switched
+   and request is continued from the other input. Other errors abort the
+   request.
+
+   If end of active audio stream is not AltiVec aligned, small part of the
+   next stream is pulled into temporary buffer, and then copied to
+   destination. Size of this part is calculated so it contains only complete
+   audio frames, and at the same time it recovers alignment of the
+   destination.
+
+   If the pull request caused an input switch, end of stream events are
+   executed before it returns. Note however that object is locked with
+   its semaphore until the request is completed, so other processes will
+   access the object after request completion.
+
+ INPUTS
+   obj - object
+   port - number of port, applications may only use port 2 (the output).
+   buffer - destination audio buffer, must be AltiVec aligned, preferrably
+     allocated with MediaAllocVec().
+   length - number of bytes to be pulled and stored in the buffer. Must be
+     even multiply of an audio frame size, it is silently truncated
+     otherwise.
+
+ RESULT
+   Number of valid bytes stored in the destination. Additionally
+   MMA_ErrorCode attribute contains 0 for success, or error code.
+
+gapless.filter/MMM_Seek
+
+ NAME
+   MMM_Seek -- Seek in currently played stream (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Seek, port, type, position);
+
+ FUNCTION
+   Performs a seek in currently played stream, it means stream connected to
+   the active input. It is done by simply forwarding the method to the
+   active input.
+
+ INPUTS
+   obj - object
+   port - always the output port (port 2)
+   type - only seek in audio frames or time is accepted
+   position - pointer to QUAD number containing absolute position (related
+     to the start of stream connected to the active input), expressed in
+     audio frames or microseconds.
+
+ RESULT
+   Boolean indicator of success. In case of failure MMA_ErrorCode contains
+   more detailed information.
+
+gapless.filter/MMM_SetPort
+
+ NAME
+   MMM_SetPort -- Sets attribute on object's port (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_SetPort, port, attribute, storage);
+
+ FUNCTION
+   As port 2 (output) of gapless.filter object has custom query forwarding
+   it has to be implemented for MMM_SetPort() too. Any query on port 2 is
+   passed to superclass. If not handled there, it is forwarded to the active
+   input.
+
+gapless.filter/MMM_Setup
+
+ NAME
+   MMM_Setup -- Port setup after connection (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   At the first connection to any port fixes the audio data format. At the
+   first connection to one of inputs fixes number of audio channels and
+   sampling rate. At further connections checks if number of channels and
+   sampling rate of newly connected stream match estabilished ones. If not,
+   connection is refused by returning FALSE. Data format does not need an
+   active check here, it is checked in MediaConnectTagList().
+
+ INPUTS
+   obj - object
+   port - number of port
+
+ RESULT
+   Boolean value of success.
+
+ NOTES
+   This method is called automatically when object is connected with
+   MediaConnectTagList(). Must not be called directly.
+
+gapless.filter/MMM_SignalAtEnd
+
+ NAME
+   MMM_SignalAtEnd -- Sets a signal to be sent at input switch (V51)
+
+ SYNOPSIS
+   DoMethod(obj, MMM_SignalAtEnd, task, sigbit);
+
+ FUNCTION
+   The method sets up an "end of stream event". When input streams are
+   switched, a system signal specified by 'sigbit' is sent to a process
+   specified with 'task' pointer. Note that the signal must be allocated by
+   the process, or 'sigbit' has to specify one of system-allocated singals,
+   like one of SIGBREAKB_CTRL_x.
+
+   Signal event stays active until it is cleared or object is disposed. It
+   means each input switch will trigger it. The event may be cleared
+   explicitly by calling the method with NULL process pointer.
+
+   Only one singal event may be set for an object. Calling the method
+   multiple times overwrites previous values. If one needs many events to
+   be triggered, MMM_MessageAtEnd() should be considered.
+
+ INPUTS
+   obj - gapless.filter class object pointer.
+   task - pointer to process to be signalled, for example obtained with
+     FindTask().
+   sigbit - number of signal bit from 0 to 31 including. Note that it is
+     bit number, not singal mask.
+
+ RESULT
+   MMA_ErrorCode for the object is set to MMERR_WRONG_ARGUMENTS if signal
+   bit is out of allowed range.
+
+ SEE ALSO
+   MMM_MessageAtEnd, exec.library/FindTask
+
+gapless.filter/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Destructor of gapless.filter object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Frees small buffer used for AltiVec realignment when switching input
+   streams. Then disposes object.
+
+gapless.filter/OM_NEW
+
+ NAME
+   OM_NEW -- Constructor of gapless.filter object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "gapless.filter", ...);
+
+ FUNCTION
+   Creates a new object of "gapless.filter" class and initializes it.
+   Creates object's ports. Sets port 0 as active input.
+
+multimedia.class/MMA_Gapless_ActiveInput
+
+ NAME
+   MMA_Gapless_ActiveInput [..G.Q], LONG, 0x8EDA03EE
+
+ FUNCTION
+   Returns the number of currently active input port, which data are pulled
+   from. May be 0 or 1.
+
+

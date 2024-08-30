@@ -1,0 +1,3982 @@
+TABLE OF CONTENTS
+
+dos.library/AbortPkt
+dos.library/AddBuffers
+dos.library/AddDosEntry
+dos.library/AddSegmentTagList
+dos.library/AllocDosObject
+dos.library/AttemptLockDosList
+dos.library/ChangeMode
+dos.library/CheckSignal
+dos.library/CliInitNewcli
+dos.library/CliInitRun
+dos.library/Close
+dos.library/CreateDir
+dos.library/CreateNewProc
+dos.library/DeleteFile
+dos.library/DeviceProc
+dos.library/DoPkt
+dos.library/DupLock
+dos.library/DupLockFromFH
+dos.library/EndNotify
+dos.library/ErrorReport
+dos.library/ExAll
+dos.library/ExAllEnd
+dos.library/ExNext
+dos.library/ExNext64
+dos.library/Examine
+dos.library/Examine64
+dos.library/ExamineFH
+dos.library/ExamineFH64
+dos.library/FGetC
+dos.library/FPutC
+dos.library/FRead
+dos.library/FWrite
+dos.library/Fault
+dos.library/FindCliProc
+dos.library/FindDosEntry
+dos.library/FindSegment
+dos.library/FindSegmentTagList
+dos.library/Flush
+dos.library/Format
+dos.library/FreeDosObject
+dos.library/GetDeviceProc
+dos.library/GetFileSysAttr
+dos.library/GetSegListAttrTagList
+dos.library/GetVar
+dos.library/Info
+dos.library/Inhibit
+dos.library/InternalLoadSeg
+dos.library/InternalUnLoadSeg
+dos.library/IsFileSystem
+dos.library/IsInteractive
+dos.library/LoadSegNoreq
+dos.library/Lock
+dos.library/LockDosList
+dos.library/LockRecord
+dos.library/LockRecord64
+dos.library/LockRecords64
+dos.library/MakeLink
+dos.library/MaxCli
+dos.library/NameFromFH
+dos.library/NameFromLock
+dos.library/NewReadLink
+dos.library/NextDosEntry
+dos.library/Open
+dos.library/OpenFromLock
+dos.library/ParentDir
+dos.library/ParentOfFH
+dos.library/Read
+dos.library/ReadItem
+dos.library/ReadLink
+dos.library/Relabel
+dos.library/RemDosEntry
+dos.library/Rename
+dos.library/ReplyPkt
+dos.library/RunCommand
+dos.library/SameDevice
+dos.library/SameLock
+dos.library/Seek
+dos.library/Seek64
+dos.library/SendPkt
+dos.library/SetComment
+dos.library/SetFileDate
+dos.library/SetFileSize
+dos.library/SetFileSize64
+dos.library/SetMode
+dos.library/SetOwner
+dos.library/SetProtection
+dos.library/SetVBuf
+dos.library/SetVar
+dos.library/SplitName
+dos.library/StartNotify
+dos.library/StartSystem
+dos.library/UnGetC
+dos.library/UnLock
+dos.library/UnLockDosList
+dos.library/UnLockRecord
+dos.library/UnLockRecord64
+dos.library/UnLockRecords64
+dos.library/VFPrintf
+dos.library/VPrintf
+dos.library/WaitForChar
+dos.library/WaitPkt
+dos.library/Write
+dos.library/AbortPkt
+
+   NAME
+    AbortPkt -- 
+
+   SYNOPSIS
+    AbortPkt(port, pkt)
+    void AbortPkt(struct MsgPort *, struct DosPacket *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AddBuffers
+
+   NAME
+    AddBuffers -- 
+
+   SYNOPSIS
+    AddBuffers(, numbuffers)
+    LONG AddBuffers(CONST, LONG);
+
+   FUNCTION
+    Add or remove cache memory from a filesystem.
+
+   INPUTS
+    devicename  --  NUL terminated dos device name.
+    numbuffers  --  Number of buffers to add. May be negative.
+
+   RESULT
+    != 0 on success (IoErr() gives the actual number of buffers),
+    0 else (IoErr() gives the error code).
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+    The error value in case of a filesystem error will be reported in
+    the io_MORE_CACHE.io_NumBuffers field.
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AddDosEntry
+
+   NAME
+    AddDosEntry -- 
+
+   SYNOPSIS
+    AddDosEntry(dlist)
+    LONG AddDosEntry(struct DosList *);
+
+   FUNCTION
+    Adds a given dos list entry to the dos list. Automatically
+    locks the list for writing. There may be not more than one device
+    or assign node of the same name. There are no restrictions on
+    volume nodes.
+
+   INPUTS
+    dlist - pointer to dos list entry.
+
+   RESULT
+    != 0 if all went well, 0 otherwise.
+
+   NOTES
+    Since anybody who wants to use a device or volume node in the
+    dos list has to lock the list, filesystems may be called with
+    the dos list locked. So if you want to add a dos list entry
+    out of a filesystem don't just wait on the lock but serve all
+    incoming requests until the dos list is free instead.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AddSegmentTagList
+
+   NAME
+    AddSegmentTagList -- 
+
+   SYNOPSIS
+    AddSegmentTagList(tags)
+    LONG AddSegmentTagList(struct TagItem *);
+
+   FUNCTION
+    Adds a program segment to the system resident list. You can later
+    use these segments to run programs.
+
+    Available tags:
+
+    ADDS_Name   (CONST_STRPTR, required)
+    ADDS_Seglist    (BPTR)
+    ADDS_Filename   (CONST_STRPTR, required if no seglist is given)
+    ADDS_Type   (LONG, defaults to 0)
+
+    The name field should refer to a NULL terminated strings, which
+    will be copied. The type field determines the type of resident
+    program. Normal programs should have type >= 0, system segments
+    should have type == CMD_SYSTEM. The file name is only used if
+    no seglist is given. It is the name of the file that will be
+    loaded when someone tries to access this segment.
+
+    Note that all other values of type are reserved.
+
+   INPUTS
+
+   RESULT
+    Segment will have been added to the DOS resident list.
+
+    != 0    success
+    == 0    failure
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    Uses Forbid() based locking.
+
+   SEE ALSO
+    FindSegment(), RemSegment()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AllocDosObject
+
+   NAME
+    AllocDosObject -- 
+
+   SYNOPSIS
+    AllocDosObject(type, tags)
+    APTR AllocDosObject(ULONG, struct TagItem *);
+
+   FUNCTION
+    Creates a new dos object of a given type. This memory has to be
+    freed with FreeDosObject().
+
+   INPUTS
+    type - Object type.
+    tags - Pointer to taglist array with additional information. See
+           <dos/dostags.h> for a list of all supported tags.
+
+   RESULT
+    Pointer to new object or NULL, to indicate an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/AttemptLockDosList
+
+   NAME
+    AttemptLockDosList -- 
+
+   SYNOPSIS
+    AttemptLockDosList(flags)
+    struct DosList * AttemptLockDosList(ULONG);
+
+   FUNCTION
+    Tries to get a lock on some of the dos lists. If all went
+    well a handle is returned that can be used for FindDosEntry().
+    Don't try to busy wait until the lock can be granted - use
+    LockDosList() instead.
+
+   INPUTS
+    flags  --  what lists to lock
+
+   RESULT
+    Handle to the dos list or NULL. This is not a direct pointer
+    to the first list element but to a pseudo element instead.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ChangeMode
+
+   NAME
+    ChangeMode -- 
+
+   SYNOPSIS
+    ChangeMode(type, object, newmode)
+    LONG ChangeMode(ULONG, BPTR, ULONG);
+
+   FUNCTION
+    Try to change the mode used by a lock or filehandle.
+
+   INPUTS
+    type    - CHANGE_FH or CHANGE_LOCK.
+    object  - Filehandle or lock.
+    newmode - New mode (see <dos/dos.h>).
+
+   RESULT
+    != 0 if all went well, otherwise 0. IoErr() gives additional
+    information in the latter case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/CheckSignal
+
+   NAME
+    CheckSignal -- 
+
+   SYNOPSIS
+    CheckSignal(mask)
+    LONG CheckSignal(LONG);
+
+   FUNCTION
+    Checks the current task to see if any of the signals specified in
+    the mask have been set. The mask of all signals which were set is
+    returned. The signals specified in the mask will be cleared.
+
+   INPUTS
+    mask - The signal mask to check.
+
+   RESULT
+    The mask of all signals which were set.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/CliInitNewcli
+
+   NAME
+    CliInitNewcli -- 
+
+   SYNOPSIS
+    CliInitNewcli(dp)
+    IPTR CliInitNewcli(struct DosPacket *);
+
+   FUNCTION
+
+    Set up a process to be a shell using a startup packet.
+
+   INPUTS
+
+    packet  --  startup arguments passed as a packet
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CliInitRun()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/CliInitRun
+
+   NAME
+    CliInitRun -- 
+
+   SYNOPSIS
+    CliInitRun(dp)
+    IPTR CliInitRun(struct DosPacket *);
+
+   FUNCTION
+
+    Set up a process to be a shell.
+
+   INPUTS
+
+    dp  --  startup arguments specified as a packet
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CliInitNewCli()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Close
+
+   NAME
+    Close -- 
+
+   SYNOPSIS
+    Close(file)
+    LONG Close(BPTR);
+
+   FUNCTION
+    Close a filehandle opened with Open(). If the file was used
+    with buffered I/O the final write may fail and thus Close()
+    return an error. The file is closed in any case.
+
+   INPUTS
+    file  --  filehandle
+
+   RESULT
+    0 if there was an error. != 0 on success.
+
+   NOTES
+    This function is identical to UnLock().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/CreateDir
+
+   NAME
+    CreateDir -- 
+
+   SYNOPSIS
+    CreateDir()
+    BPTR CreateDir(CONST);
+
+   FUNCTION
+    Creates a new directory under the given name. If all went an
+    exclusive lock on the new diretory is returned.
+
+   INPUTS
+    name  -- NUL terminated name.
+
+   RESULT
+    Exclusive lock to the new directory or 0 if couldn't be created.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/CreateNewProc
+
+   NAME
+    CreateNewProc -- 
+
+   SYNOPSIS
+    CreateNewProc(tags)
+    struct Process * CreateNewProc(struct TagItem *);
+
+   FUNCTION
+    Create a new process using the tagitem array.
+
+   INPUTS
+    tags - information on the new process.
+
+   RESULT
+    Pointer to the new process or NULL on error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DeleteFile
+
+   NAME
+    DeleteFile -- 
+
+   SYNOPSIS
+    DeleteFile()
+    LONG DeleteFile(CONST);
+
+   FUNCTION
+    Tries to delete a file or directory by a given name.
+    May fail if the file is in use or protected from deletion.
+
+   INPUTS
+    name       - NUL terminated name.
+
+   RESULT
+    != 0 if the file is gone, 0 if is still there.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DeviceProc
+
+   NAME
+    DeviceProc -- 
+
+   SYNOPSIS
+    DeviceProc()
+    struct MsgPort * DeviceProc(CONST);
+
+   FUNCTION
+    DeviceProc() is an obsolete function that returns the Process
+    responsible for a DOS device.
+
+   INPUTS
+    name - The name of the DOS device, without the ':'.
+
+   RESULT
+    Either a pointer to the Device structure, or NULL.
+
+   NOTES
+    You should really use GetDeviceProc() as this function caters
+    for all possible device types.
+
+   EXAMPLE
+
+   BUGS
+    Does not support late- and non-bound assigns, or multiple
+    path assigns very well.
+
+   SEE ALSO
+    GetDeviceProc(), FreeDeviceProc().
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DoPkt
+
+   NAME
+    DoPkt -- 
+
+   SYNOPSIS
+    DoPkt(port, action, arg, arg, arg, arg, arg)
+    LONG DoPkt(struct MsgPort *, LONG, LONG, LONG, LONG, LONG, LONG);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DupLock
+
+   NAME
+    DupLock -- 
+
+   SYNOPSIS
+    DupLock(lock)
+    BPTR DupLock(BPTR);
+
+   FUNCTION
+    Clone a lock on a file or directory. This will only work on shared
+    locks.
+
+   INPUTS
+    lock - Old lock.
+
+   RESULT
+    The new lock or NULL in case of an error. IoErr() will give additional
+    information in that case.
+
+   NOTES
+    This function is identical to DupLockFromFH().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/DupLockFromFH
+
+   NAME
+    DupLockFromFH -- 
+
+   SYNOPSIS
+    DupLockFromFH(fh)
+    BPTR DupLockFromFH(BPTR);
+
+   FUNCTION
+    Try to get a lock on the object selected by the filehandle.
+
+   INPUTS
+    fh - filehandle.
+
+   RESULT
+    The new lock or 0 in case of an error. IoErr() will give additional
+    information in that case.
+
+   NOTES
+    This function is identical to DupLock().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/EndNotify
+
+   NAME
+    EndNotify -- 
+
+   SYNOPSIS
+    EndNotify(notify)
+    void EndNotify(struct NotifyRequest *);
+
+   FUNCTION
+
+    End a notification (quit notifying for a request previously sent with
+    StartNotify()).
+
+   INPUTS
+
+    notify  --  NotifyRequest used with StartNotify()
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    StartNotify()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/ErrorReport
+
+   NAME
+    ErrorReport -- 
+
+   SYNOPSIS
+    ErrorReport(code, type, arg, device)
+    LONG ErrorReport(LONG, LONG, ULONG, struct MsgPort *);
+
+   FUNCTION
+
+   INPUTS
+
+    code    --  The error to put up the requester for
+    type    --  Type of request
+
+        REPORT_LOCK    --  arg1 is a lock (BPTR).
+        REPORT_FH      --  arg1 is a filehandle (BPTR).
+        REPORT_VOLUME  --  arg1 is a volumenode (C pointer).
+        REPORT_INSERT  --  arg1 is the string for the volumename
+
+    arg1    --  Argument according to type (see above)
+    device  --  Optional handler task address (obsolete!)
+
+   RESULT
+
+   NOTES
+
+    Locks and filehandles are the same in AROS so there is redundancy in
+    the parameters. Furthermore, the 'device' argument is not cared about
+    as AROS don't build filesystems via handlers.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    23.10.99  --  SDuvan  implemented
+
+dos.library/ExAll
+
+   NAME
+    ExAll -- 
+
+   SYNOPSIS
+    ExAll(lock, buffer, size, type, control)
+    LONG ExAll(BPTR, struct ExAllData *, LONG, LONG, struct ExAllControl *);
+
+   FUNCTION
+
+    Examine an entire directory.
+
+   INPUTS
+
+    lock     --  lock on the directory to be examined
+    buffer   --  buffer for the data that is returned (must be aligned)
+                 which is filled with (partial) ExAllData structures
+         (see NOTES)
+    size     --  size of 'buffer' in bytes
+    type     --  type of the data to be returned
+    control  --  a control structure allocated by AllocDosObject()
+
+   RESULT
+
+    An indicator of if ExAll() is done. If FALSE is returned, either ExAll()
+    has completed in which case IoErr() is ERROR_NO_MORE_ENTRIES or an
+    error occurred. If a non-zero value is returned ExAll() must be called
+    again until it returns FALSE.
+
+   NOTES
+
+    The following information is essential information on the ExAllData
+    structure:
+
+    ead_type :
+
+    ED_NAME        --  filename
+    ED_TYPE        --  type
+    ED_SIZE        --  size in bytes
+    ED_PROTECTION  --  protection bits
+    ED_DATE        --  date information (3 longwords)
+    ED_COMMENT     --  file comment (NULL if no comment exists)
+    ED_OWNER       --  owner user and group id
+    ED_SIZE64      --  64bit size in bytes
+
+    This is an incremental list meaning that if you specify ED_SIZE64 you
+    will get ALL attributes!
+
+
+    Filesystems that support ExAll() must support at least up to ED_COMMENT.
+    If a filesystem doesn't support a particular type, ERROR_BAD_NUMBER must
+    be returned. In such case you probably want to retry with smaller type
+    number. Filesystems supporting 64bit files *MUST* support ExAll() and
+    ED_SIZE64.
+
+    ead_Next : pointer to the next entry in the buffer. The last entry
+               has a NULL value for ead_Next.
+
+
+    The control structure have the following fields.
+
+    eac_Entries : the number of entries in the buffer after a call to ExAll().
+                  Make sure that your code handles the case when eac_Entries
+                  is 0 and ExAll() returns TRUE.
+
+    eac_LastKey : must be initialized to 0 before calling ExAll() for the
+                  first time.
+
+    eac_MatchString : if NULL then information on all files will be returned.
+                      If non-NULL it's interpreted as a pointer to a string
+                      used for pattern matching which files to return
+              information on. This string must have been parsed by
+              ParsePatternNoCase()!
+
+    eac_MatchFunc : pointer to a hook that will be called to decide if an
+                    entry should be included in the buffer. If NULL, no
+            matching function will be called. The hook is called as
+            follows
+
+            BOOL = MatchFunc(hook, data, typeptr)
+
+   EXAMPLE
+
+   SEE ALSO
+
+    Examine(), ExNext(), MatchPatternNoCase(), ParsePatternNoCase(),
+    AllocDosObject(), ExAllEnd()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ExAllEnd
+
+   NAME
+    ExAllEnd -- 
+
+   SYNOPSIS
+    ExAllEnd(lock, buffer, size, data, control)
+    void ExAllEnd(BPTR, struct ExAllData *, LONG, LONG, struct ExAllControl *);
+
+   FUNCTION
+
+    Stop an ExAll() operation before returning ERROR_NO_MORE_ENTRIES.
+
+   INPUTS
+
+    The inputs should correspond to the inputs for the ExAll() function.
+
+    lock     --  lock on the directory that is being examined
+    buffer   --  buffer for data returned
+    size     --  size of 'buffer' in bytes
+    type     --  type of data to be returned
+    control  --  control data structure
+
+   RESULT
+
+   NOTES
+
+    The control data structure must have been allocated with AllocDosObject().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ExAll(), AllocDosObject()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+        dos_lib.fd and clib/dos_protos.h
+
+dos.library/ExNext
+
+   NAME
+    ExNext -- 
+
+   SYNOPSIS
+    ExNext(lock, fib)
+    LONG ExNext(BPTR, struct FileInfoBlock *);
+
+   FUNCTION
+
+    Examine the next entry in a directory.
+
+   INPUTS
+
+    lock  --  lock on the direcory the contents of which to examine
+    fib   --  a FileInfoBlock previously initialized by Examine()
+              (or used before with ExNext())
+
+   RESULT
+
+    success  --  a boolean telling whether the operation was successful
+                 or not. A failure occurs also if there is no "next" entry in
+         the directory. Then IoErr() equals ERROR_NO_MORE_ENTRIES.
+
+   NOTES
+
+    If scanning a filesystem tree recursively, you'll need to allocated a
+    new FilInfoBlock for each directory level.
+
+   EXAMPLE
+
+    To examine a directory, do the following:
+
+    1.  Pass a lock on the directory and a FileInfoBlock (allocated by
+        AllocDosObject()) to Examine().
+    2.  Pass the same parameters to ExNext().
+    3.  Do something with the FileInfoBlock returned.
+    4.  Call ExNext() repeatedly until it returns FALSE and use the
+        information you are provided. When ExNext returns FALSE, check IoErr()
+    to make sure that there was no real failure (ERROR_NO_MORE_ENTRIES).
+
+   BUGS
+
+   SEE ALSO
+
+    Examine(), IoErr(), AllocDosObject(), ExAll()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ExNext64/*  AROS_LHx(LONG, ExNext64, */
+
+    LONG ExNext64(BPTR lock,
+                  struct FileInfoBlock *fib,
+                  struct TagItem *tags)
+
+
+   FUNCTION
+
+    Examine the next entry in a directory.
+
+   INPUTS
+
+    lock  --  lock on the direcory the contents of which to examine
+    fib   --  a FileInfoBlock previously initialized by Examine()
+              (or used before with ExNext64()), fib_Size64 contains
+              the size of the file. fib_NumBlocks64 contains the number
+              of blocks for the file.
+    tags  --  tags, no tags defined for now
+
+   RESULT
+
+    success  --  a boolean telling whether the operation was successful
+                 or not. A failure occurs also if there is no "next" entry in
+         the directory. Then IoErr() equals ERROR_NO_MORE_ENTRIES.
+
+   NOTES
+
+    If scanning a filesystem tree recursively, you'll need to allocated a
+    new FilInfoBlock for each directory level.
+
+   EXAMPLE
+
+    To examine a directory, do the following:
+
+    1.  Pass a lock on the directory and a FileInfoBlock (allocated by
+        AllocDosObject()) to Examine64().
+    2.  Pass the same parameters to ExNext64().
+    3.  Do something with the FileInfoBlock returned.
+    4.  Call ExNext64() repeatedly until it returns FALSE and use the
+        information you are provided. When ExNext64 returns FALSE, check IoErr()
+    to make sure that there was no real failure (ERROR_NO_MORE_ENTRIES).
+
+   BUGS
+
+   SEE ALSO
+
+    Examine64(), IoErr(), AllocDosObject(), ExAll()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Examine
+
+   NAME
+    Examine -- 
+
+   SYNOPSIS
+    Examine(lock, fib)
+    LONG Examine(BPTR, struct FileInfoBlock *);
+
+   FUNCTION
+
+    Fill in a FileInfoBlock structure concerning a file or directory
+    associated with a particular lock.
+
+   INPUTS
+
+    lock  --  lock to examine
+    fib   --  FileInfoBlock where the result of the examination is stored
+
+   RESULT
+
+    A boolean telling whether the operation was successful or not.
+
+   NOTES
+
+    FileInfoBlocks should be allocated with AllocDosObject(). You may make
+    a copy of the FileInfoBlock but, however, this copy may NOT be passed
+    to ExNext()!
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    Lock(), UnLock(), ExNext(), AllocDosObject(), ExAll(), <dos/dos.h>
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Examine64/*  AROS_LHx(LONG, Examine64, */
+
+    LONG Examine64(BPTR lock,
+                   struct FileInfoBlock *fib,
+                   struct TagItem *tags)
+
+
+   FUNCTION
+
+    Fill in a FileInfoBlock structure concerning a file or directory
+    associated with a particular lock.
+
+   INPUTS
+
+    lock  --  lock to examine
+    fib   --  FileInfoBlock where the result of the examination is stored,
+              fib_Size64 containing the size of the file. fib_NumBlocks64
+              contains the number of blocks for the file.
+    tags  --  tags, no tags defined for now
+
+   RESULT
+
+    A boolean telling whether the operation was successful or not.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ExNext64(), ExamineFH64(), ExAll(), <dos/dos.h>
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/ExamineFH
+
+   NAME
+    ExamineFH -- 
+
+   SYNOPSIS
+    ExamineFH(fh, fib)
+    LONG ExamineFH(BPTR, struct FileInfoBlock *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ExamineFH64/*  AROS_LHx(LONG, ExamineFH64, */
+
+    LONG ExamineFH64(BPTR fh,
+                     struct FileInfoBlock *fib,
+                     struct TagItem *tags)
+
+
+   FUNCTION
+
+    Fill in a FileInfoBlock structure concerning a file associated with
+    a particular filehandle.
+
+   INPUTS
+
+    fh    --  filehandle to examine
+    fib   --  FileInfoBlock where the result of the examination is stored,
+              fib_Size64 containing the size of the file. fib_NumBlocks64
+              contains the number of blocks for the file.
+    tags  --  tags, no tags defined for now
+
+   RESULT
+
+    A boolean telling whether the operation was successful or not.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    Examine64(), <dos/dos.h>
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/FGetC
+
+   NAME
+    FGetC -- 
+
+   SYNOPSIS
+    FGetC(file)
+    LONG FGetC(BPTR);
+
+   FUNCTION
+    Get a character from a buffered file. Buffered I/O is more efficient
+    for small amounts of data but less for big chunks. You have to
+    use Flush() between buffered and non-buffered I/O or you'll
+    clutter your I/O stream.
+
+   INPUTS
+    file   - filehandle
+
+   RESULT
+    The character read or EOF if the file ended or an error happened.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    IoErr(), Flush()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FPutC
+
+   NAME
+    FPutC -- 
+
+   SYNOPSIS
+    FPutC(file, character)
+    LONG FPutC(BPTR, LONG);
+
+   FUNCTION
+
+   INPUTS
+    file      - Filehandle to write to.
+    character - Character to write.
+
+   RESULT
+    The character written or EOF in case of an error.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FGetC(), IoErr()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FRead
+
+   NAME
+    FRead -- 
+
+   SYNOPSIS
+    FRead(file, block, blocklen, number)
+    LONG FRead(BPTR, APTR, ULONG, ULONG);
+
+   FUNCTION
+    Read a number of blocks from a file.
+
+   INPUTS
+    file - Read from this file
+    block - The data is put here
+    blocklen - This is the size of a single block
+    number - The number of blocks
+
+   RESULT
+    The number of blocks read from the file or 0 on EOF.
+    This function may return less than the requested number of blocks
+    IoErr() gives additional information in case of an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Open(), FWrite(), FPutc(), Close()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FWrite
+
+   NAME
+    FWrite -- 
+
+   SYNOPSIS
+    FWrite(file, block, blocklen, number)
+    LONG FWrite(BPTR, APTR, ULONG, ULONG);
+
+   FUNCTION
+    Write a number of blocks to a file.
+
+   INPUTS
+    file - Write to this file
+    block - The data begins here
+    blocklen - This is the size of a single block
+    number - The number of blocks
+
+   RESULT
+    The number of blocks written to the file or EOF on error. IoErr()
+    gives additional information in case of an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Open(), FRead(), FPutc(), Close()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Fault
+
+   NAME
+    Fault -- 
+
+   SYNOPSIS
+    Fault(code, header, buffer, len)
+    LONG Fault(LONG, STRPTR, STRPTR, LONG);
+
+   FUNCTION
+    Fault will obtain the error message string for the given error
+    code. First the header string is copied to the buffer, followed
+    by a ":" (colon), then the NULL terminated string for the error
+    message into the buffer.
+
+    By convention, error messages are ALWAYS less than 80 (plus 1 for
+    NULL termination), and ideally less than 60 characters.
+
+    If the error code is not know, then the string "Unknown error"
+    followed by the error number will be added to the string.
+
+   INPUTS
+    code    -   The error code.
+    header  -   The string to prepend to the buffer before the error
+            text. This may be NULL in which case nothing is prepended.
+    buffer  -   The destination buffer.
+    len -   Length of the buffer.
+
+   RESULT
+    Number of characters placed in the buffer, may be 0.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/FindCliProc
+
+   NAME
+    FindCliProc -- 
+
+   SYNOPSIS
+    FindCliProc(num)
+    struct Process * FindCliProc(ULONG);
+
+   FUNCTION
+    Find a CLI process by its task number. The number must be greater
+    than 0.
+
+   INPUTS
+    num - The task number of the CLI to find.
+
+   RESULT
+    Pointer to the process if found, NULL otherwise.
+
+   NOTES
+
+    The process calling this function doesn't need to do any locking.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Cli(), MaxCli()
+
+   INTERNALS
+
+   HISTORY
+
+    02.12.2000  SDuvan  --  rewrote to use rootnode rn_TaskArray instead of
+                            hacking the process lists
+
+dos.library/FindDosEntry
+
+   NAME
+    FindDosEntry -- 
+
+   SYNOPSIS
+    FindDosEntry(dlist, , flags)
+    struct DosList * FindDosEntry(struct DosList *, CONST, ULONG);
+
+   FUNCTION
+    Looks for the next dos list entry with the right name. The list
+    must be locked for this. There may be not more than one device
+    or assign node of the same name. There are no restrictions on
+    volume nodes.
+
+   INPUTS
+    dlist - the value given by LockDosList() or the last call to
+            FindDosEntry().
+    name  - logical device name without colon. Case insensitive.
+    flags - the same flags as given to LockDosList() or a subset
+            of them.
+
+   RESULT
+    Pointer to dos list entry found or NULL if the are no more entries.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FindSegment
+
+   NAME
+    FindSegment -- 
+
+   SYNOPSIS
+    FindSegment(name, seg, system)
+    struct Segment * FindSegment(STRPTR, struct Segment *, LONG);
+
+   FUNCTION
+    Search for a resident segment by name and type. FindSegment() will
+    return the first segment that exactly matches the name and type.
+
+    You can continue searching by specifying the last returned segment
+    as the seg argument.
+
+   INPUTS
+    name        - Name of the segment to search for.
+    seg     - Start search from this point.
+    system      - Search for a system segment.
+
+   RESULT
+    Will return the segment structure if a match is found, otherwise
+    will return NULL.
+
+   NOTES
+    FindSegment() does no locking of the segment list. You should
+    lock yourself. FindSegment() also does not increment the value
+    of the seg_UC field. If the value of seg_UC > 0, you MUST
+    perform user counting in order to prevent the segment from being
+    unloaded.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AddSegment(), RemSegment()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FindSegmentTagList
+
+   NAME
+    FindSegmentTagList -- 
+
+   SYNOPSIS
+    FindSegmentTagList(tags)
+    struct Segment * FindSegmentTagList(struct TagItem *);
+
+   FUNCTION
+    Search for a resident segment by name and type. FindSegment() will
+    return the first segment that exactly matches the name and type.
+
+    You can continue searching by specifying the last returned segment
+    as the seg argument.
+
+   INPUTS
+
+   RESULT
+    Will return the segment structure if a match is found, otherwise
+    will return NULL.
+
+   NOTES
+    FindSegmentTags() does no locking of the segment list. You should
+    lock yourself. FindSegmentTags() also does not increment the value
+    of the seg_UC field. If the value of seg_UC > 0, you MUST
+    perform user counting in order to prevent the segment from being
+    unloaded.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AddSegment(), RemSegment(), FindSegment()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Flush
+
+   NAME
+    Flush -- 
+
+   SYNOPSIS
+    Flush(file)
+    LONG Flush(BPTR);
+
+   FUNCTION
+    Flushes any pending writes on the file. If the file was used
+    for input and there is still some data to read it tries to
+    seek back to the expected position.
+
+   INPUTS
+    file - filehandle
+
+   RESULT
+    != 0 on success, 0 on error. IoErr() gives additional information
+    in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Format
+
+   NAME
+    Format -- 
+
+   SYNOPSIS
+    Format(devicename, volumename, dostype)
+    LONG Format(STRPTR, STRPTR, ULONG);
+
+   FUNCTION
+    Initialise a filesystem for use by the system. This instructs
+    a filesystem to write out the data that it uses to describe the
+    device.
+
+    The device should already have been formatted.
+
+   INPUTS
+    devicename  - Name of the device to format.
+    volumename  - The name you wish the volume to be called.
+    dostype     - The DOS type you wish on the disk.
+
+   RESULT
+    != 0 if the format was successful, 0 otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/FreeDosObject
+
+   NAME
+    FreeDosObject -- 
+
+   SYNOPSIS
+    FreeDosObject(type, ptr)
+    ULONG FreeDosObject(ULONG, APTR);
+
+   FUNCTION
+    Frees an object allocated with AllocDosObject.
+
+   INPUTS
+    type - object type. The same parameter as given to AllocDosObject().
+    ptr  - Pointer to object.
+
+   RESULT
+    0 if all went well, !=0 otherwise. (Only for DOS_FSCONTEXT)
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetDeviceProc
+
+   NAME
+    GetDeviceProc -- 
+
+   SYNOPSIS
+    GetDeviceProc(name, dp)
+    struct DevProc * GetDeviceProc(STRPTR, struct DevProc *);
+
+   FUNCTION
+    GetDeviceProc() will search for the filesystem handler which
+    you should send a command to for a specific path.
+
+    By calling GetDeviceProc() multiple times, the caller will
+    be able to handle multi-assign paths.
+
+    The first call to GetDeviceProc() should have the |dp| parameter
+    as NULL.
+
+   INPUTS
+    name        - Name of the object to find.
+    dp      - Previous result of GetDeviceProc() or NULL.
+
+   RESULT
+    A pointer to a DevProc structure containing the information
+    required to send a command to a filesystem.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    Currently doesn't return dvp_DevNode for locks which are
+    relative to "PROGDIR:", ":", or the current directory.
+
+    I'm working on it though...
+
+   SEE ALSO
+    FreeDeviceProc()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/GetFileSysAttr/*  AROS_LHx(LONG, GetFileSysAttr, */
+
+    LONG GetFileSysAttr(CONST_STRPTR devicename,
+                        LONG attr,
+                        APTR storage,
+                        LONG storage_size)
+
+
+   FUNCTION
+
+    Query filesystem for attributes, such as maximum filename length,
+    or maximum file size.
+
+   INPUTS
+
+    devicename   --  name of the filesystem to get attributes from
+    attr         --  attribute to get information about
+    storage      --  storage to hold the result
+    storage_size --  size of the storage
+
+   RESULT
+
+    Success/failure indication. In case of a failure, IoErr() gives
+    more information about the failure:
+
+    ERROR_ACTION_NOT_KNOWN -- the packet is not supported
+    ERROR_BAD_NUMBER       -- the attribute is not known
+    ERROR_LINE_TOO_LONG    -- the result doesn't fit the provided
+                              storage_size.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    dos/dosextens.h
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/GetSegListAttrTagList/*  AROS_LHx(LONG, GetSegListAttrTagList, */
+
+    LONG GetSegListAttr(BPTR seglist,
+                        LONG attr,
+                        APTR storage,
+                        LONG storage_size,
+                        struct TagItem *tags)
+
+
+   FUNCTION
+
+    Query seglist for attributes, such as the ObjData ptr.
+
+   INPUTS
+
+    seglist      --  SegList BPTR
+    attr         --  attribute to get information about
+    storage      --  storage to hold the result
+    storage_size --  size of the storage
+    tags         --  taglist pointer
+
+   RESULT
+
+    Success/failure indication. In case of a failure, IoErr() gives
+    more information about the failure:
+
+    ERROR_ACTION_NOT_KNOWN -- the packet is not supported
+    ERROR_BAD_NUMBER       -- the attribute is not known
+    ERROR_LINE_TOO_LONG    -- the result doesn't fit the provided
+                              storage_size.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    dos/dosextens.h
+    dos/dostags.h
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/GetVar
+
+   NAME
+    GetVar -- 
+
+   SYNOPSIS
+    GetVar(name, buffer, size, flags)
+    LONG GetVar(STRPTR, STRPTR, LONG, LONG);
+
+   FUNCTION
+        Gets the value of a local or environment variable, or an alias. It
+        is advised to only use ASCII strings inside variables/aliases, but
+        this is not required.
+
+        Variable/alias names are case insensitive.
+
+        This function stops putting characters into the destination buffer
+        when a newline character (\n) is met, unless if GVF_BINARY_VAR flag
+        is specified. The newline character itself is not stored in the
+        buffer.
+
+        This function can be used to access aliases aswell, by specifying
+        type of LV_ALIAS. GVF_GLOBAL_ONLY must not be specified in this
+        case, as aliases are always shell local.
+
+   INPUTS
+        name    -   pointer to name of the variable/alias.
+        buffer  -   user allocated buffer to store the variable/alias
+                    contents to.
+        size    -   length of the user buffer in bytes.
+        flags   -   A combination of the type of variable to get (lower
+                    8 bits: LV_VAR or LV_ALIAS) and flags that control the
+                    operation of this function. Currently defined flags are:
+
+                    GVF_GLOBAL_ONLY    - only tries to get a global variable.
+                    GVF_LOCAL_ONLY     - only tries to get a local variable.
+                    GVF_BINARY_VAR     - do not stop at a newline character.
+                    GVF_DONT_NULL_TERM - no null (\0) termination. Only valid
+                                         for GVF_BINARY_VAR.
+
+   RESULT
+        The return value is the number of characters put in the buffer, or -1
+        if the variable/alias is not defined. The newline ('\n') character if
+        it exists will not be placed in the buffer.
+
+        If the variable/alias content would overflow the provided user buffer,
+        then the number of bytes copied into the buffer will be returned and
+        the buffer is truncated. The buffer will be null (\0) terminated
+        unless if GVF_DONT_NULL_TERM is set.
+
+        IoErr() will be:
+          a) ERROR_BAD_NUMBER
+              if the size of the user buffer is 0.
+          b) ERROR_OBJECT_NOT_FOUND
+              if the variable/alias is not defined.
+          c) the total length of the variable (may be larger than the return
+             value if the result was truncated)
+
+   BUGS
+
+   SEE ALSO
+        DeleteVar(), FindVar(), SetVar()
+
+dos.library/Info
+
+   NAME
+    Info -- 
+
+   SYNOPSIS
+    Info(lock, parameterBlock)
+    LONG Info(BPTR, struct InfoData *);
+
+   FUNCTION
+
+    Get information about a volume in the system.
+
+   INPUTS
+
+    lock            --  a lock on any file on the volume for which information
+                        should be supplied
+    parameterBlock  --  pointer to an InfoData structure
+
+   RESULT
+
+    Boolean indicating success or failure. If TRUE (success) the
+    'parameterBlock' is filled with information on the volume.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    <dos/dos.h>
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Inhibit
+
+   NAME
+    Inhibit -- 
+
+   SYNOPSIS
+    Inhibit(name, onoff)
+    LONG Inhibit(STRPTR, LONG);
+
+   FUNCTION
+
+    Stop a filesystem from being used.
+
+   INPUTS
+
+    name   --  Name of the device to inhibit (including a ':')
+    onoff  --  Specify whether to inhinit (DOSTRUE) or uninhibit (DOSFALSE)
+               the device
+
+   RESULT
+
+    A boolean telling whether the action was carried out.
+
+   NOTES
+
+    After uninhibiting a device anything might have happened like the disk
+    in the drive was removed.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    26.03.2000  --  SDuvan  implemented
+
+dos.library/InternalLoadSeg
+
+   NAME
+    InternalLoadSeg -- 
+
+   SYNOPSIS
+    InternalLoadSeg(fh, table, , stack)
+    BPTR InternalLoadSeg(BPTR, BPTR, LONG, LONG *);
+
+   FUNCTION
+        Loads from fh.
+        Functionarray is a pointer to an array of functions. See below.
+
+   INPUTS
+        fh            : Filehandle to load from
+        table         : When loading an overlay, otherwise ignored.
+        functionarray : Array of function to be used fro read, alloc and free
+           FuncTable[0] -> bytes  = ReadFunc(readhandle, buffer, length),DOSBase
+                           D0                D1          A0      D0      A6
+           FuncTable[1] -> Memory = AllocFunc(size,flags), ExecBase
+                           D0                 D0   D1      A6
+           FuncTable[2] -> FreeFunc(memory, size), ExecBase
+                                    A1       D0    A6
+        stack         : pointer to storage (ULONG) for stacksize.
+                        (currently ignored)
+
+   RESULT
+        seglist  - pointer to loaded Seglist or NULL in case of failure.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+       Use of stack are not implemented, yet!
+
+   SEE ALSO
+        UnLoadSeg()
+
+   INTERNALS
+
+   HISTORY
+        29-10-95    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/InternalUnLoadSeg
+
+   NAME
+    InternalUnLoadSeg -- 
+
+   SYNOPSIS
+    InternalUnLoadSeg(seglist, )
+    LONG InternalUnLoadSeg(BPTR, VOID);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+        27-11-96    digulla automatically created from
+                            dos_lib.fd and clib/dos_protos.h
+
+dos.library/IsFileSystem
+
+   NAME
+    IsFileSystem -- 
+
+   SYNOPSIS
+    IsFileSystem(devicename)
+    LONG IsFileSystem(STRPTR);
+
+   FUNCTION
+    Query the device whether it is a filesystem.
+
+   INPUTS
+    devicename  - Name of the device to query.
+
+   RESULT
+    TRUE if the device is a filesystem, FALSE otherwise.
+
+   NOTES
+    DF0:, HD0:, ... are filesystems.
+    CON:, PIPE:, AUX:, ... are not
+
+        In AmigaOS if devicename contains no ":" then result
+    is always TRUE. Also volume and assign names return
+    TRUE.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/IsInteractive
+
+   NAME
+    IsInteractive -- 
+
+   SYNOPSIS
+    IsInteractive(file)
+    LONG IsInteractive(BPTR);
+
+   FUNCTION
+    Check if file is bound to an interactive device such as a console
+    or shell window.
+
+   INPUTS
+    file   - filehandle
+
+   RESULT
+    != 0 if the file is interactive, 0 if it is not.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/LoadSegNoreq
+
+   NAME
+    LoadSegNoreq -- 
+
+   SYNOPSIS
+    LoadSegNoreq(name)
+    BPTR LoadSegNoreq(STRPTR);
+
+   FUNCTION
+    Like LoadSeg, except that it inhibits requesters.
+    This is dosPrivate2.
+
+   INPUTS
+        name - NUL terminated name of the file.
+
+   RESULT
+        Handle to the loaded executable or 0 if the load failed.
+        IoErr() gives additional information in that case.
+
+   NOTES
+        This function is built on top of InternalLoadSeg()
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    LoadSeg()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Lock
+
+   NAME
+    Lock -- 
+
+   SYNOPSIS
+    Lock(name, accessMode)
+    BPTR Lock(STRPTR, LONG);
+
+   FUNCTION
+    Gets a lock on a file or directory. There may be more than one
+    shared lock on a file but only one if it is an exclusive one.
+    Locked files or directories may not be deleted.
+
+   INPUTS
+    name       - NUL terminated name of the file or directory.
+    accessMode - One of SHARED_LOCK
+                EXCLUSIVE_LOCK
+
+   RESULT
+    Handle to the file or directory or 0 if the object couldn't be locked.
+    IoErr() gives additional information in that case.
+
+   NOTES
+    The lock structure returned by this function is different
+    from that of AmigaOS (in fact it is identical to a filehandle).
+    Do not try to read any internal fields.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/LockDosList
+
+   NAME
+    LockDosList -- 
+
+   SYNOPSIS
+    LockDosList(flags)
+    struct DosList * LockDosList(ULONG);
+
+   FUNCTION
+    Waits until the desired dos lists are free then gets a lock on them.
+    A handle is returned that can be used for FindDosEntry().
+    Calls to this function nest, i.e. you must call UnLockDosList()
+    as often as you called LockDosList(). Always lock all lists
+    at once - do not try to get a lock on one of them then on another.
+
+   INPUTS
+    flags - what lists to lock
+
+   RESULT
+    Handle to the dos list. This is not a direct pointer
+    to the first list element but to a pseudo element instead.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/LockRecord
+
+   NAME
+    LockRecord -- 
+
+   SYNOPSIS
+    LockRecord(fh, offset, length, mode, timeout)
+    LONG LockRecord(BPTR, ULONG, ULONG, ULONG, ULONG);
+
+   FUNCTION
+
+    Lock a portion of a file for exclusive access. A timeout may be specified
+    which is the maximum amount of time to wait for the record to be available.
+
+   INPUTS
+
+    fh       --  file handle for the file to lock a record of
+    offset   --  starting position of the lock
+    length   --  length of the record in bytes
+    mode     --  lock type
+    timeout  --  timeout interval measured in ticks (may be 0)
+
+   RESULT
+
+    Success/failure indicator.
+
+   NOTES
+
+    Record locks are cooperative, meaning that they only affect other calls
+    to LockRecord().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRecords(), UnLockRecord()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/LockRecord64/*  AROS_LHx(LONG, LockRecord64, */
+
+    LONG LockRecord64(BPTR fh,
+                      UQUAD offset,
+                      UQUAD length,
+                      ULONG mode,
+                      ULONG timeout)
+
+
+   FUNCTION
+
+    Lock a portion of a file for exclusive access. A timeout may be specified
+    which is the maximum amount of time to wait for the record to be available.
+
+   INPUTS
+
+    fh       --  file handle for the file to lock a record of
+    offset   --  starting position of the lock
+    length   --  length of the record in bytes
+    mode     --  lock type
+    timeout  --  timeout interval measured in ticks (may be 0)
+
+   RESULT
+
+    Success/failure indicator.
+
+   NOTES
+
+    Record locks are cooperative, meaning that they only affect other calls
+    to LockRecord().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRecords64(), UnLockRecord64()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/LockRecords64/*  AROS_LHx(LONG, LockRecords64, */
+
+    LONG LockRecords64(struct RecordLock64 *recArray,
+                       ULONG timeout)
+
+
+   FUNCTION
+
+    Lock several records at the same time. The timeout specified is applied
+    to each lock to attempt. The array of RecordLock:s is terminated with
+    an entry where rec_FH is equal to NULL.
+
+   INPUTS
+
+    recArray  --  array of records to lock
+    timeout   --  maximum number of ticks to wait for a lock to be ready
+
+   RESULT
+
+    Success/failure indication. In case of a success, all the record locks
+    are locked. In case of failure, no record locks are locked.
+
+   NOTES
+
+    A set of records should always be locked in the same order so as to
+    reduce possiblities of deadlock.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    UnLockRecords64()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/MakeLink
+
+   NAME
+    MakeLink -- 
+
+   SYNOPSIS
+    MakeLink(name, dest, soft)
+    LONG MakeLink(STRPTR, APTR, LONG);
+
+   FUNCTION
+        MakeLink() will create a link between two files or directories.
+        A link is a filesystem object that refers to another file.
+
+        A soft link refers to another file by name, and is resolved by
+        the filesystem and the caller. Soft links are not restricted to
+        the same volume. The |dest| argument is a NUL terminated pathname
+        to the pre-existing object. Soft links can be used on directories.
+
+        A hard link refers to another file by the location on a disk, and
+        is resolved by the filesystem. Hard links are restricted to files
+        on the same volume. The |dest| argument is a lock on another file.
+
+   INPUTS
+    name - The name of the link to create
+    dest - If 'soft' is TRUE this must be a filename, if it is FALSE a BPTR
+           pointing to the file to be hard-linked must be provided
+    soft - TRUE, if a soft-link is to be created, FALSE for an hard-link
+
+   RESULT
+    boolean - DOSTRUE or DOSFALSE. On error, IoErr() will contain more
+    information.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+        Soft links were not working in the ROM filesystem before version
+        37.
+
+   SEE ALSO
+        ReadLink()
+
+   INTERNALS
+    This function calls either FSA_CREATE_HARDLINK or FSA_CREATE_SOFTLINK
+    on the filesystem of 'name'.
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/MaxCli
+
+
+   FUNCTION
+    Returns the highest Cli number currently in use. Since processes
+    may be added and removed at any time the returned value may already
+    be wrong.
+
+   INPUTS
+
+   RESULT
+    Maximum Cli number (_not_ the number of Clis).
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/NameFromFH
+
+   NAME
+    NameFromFH -- 
+
+   SYNOPSIS
+    NameFromFH(fh, buffer, len)
+    LONG NameFromFH(BPTR, STRPTR, LONG);
+
+   FUNCTION
+    Get the full path name associated with file-handle into a
+    user supplied buffer.
+
+   INPUTS
+    fh     - File-handle to file or directory.
+    buffer - Buffer to fill. Contains a NUL terminated string if
+         all went well.
+    length - Size of the buffer in bytes.
+
+   RESULT
+    !=0 if all went well, 0 in case of an error. IoErr() will
+    give additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/NameFromLock
+
+   NAME
+    NameFromLock -- 
+
+   SYNOPSIS
+    NameFromLock(lock, buffer, length)
+    LONG NameFromLock(BPTR, STRPTR, LONG);
+
+   FUNCTION
+    Get the full path name associated with a lock to a file or
+    directory into a user supplied buffer.
+
+   INPUTS
+    lock   - Lock to file or directory.
+    buffer - Buffer to fill. Contains a NUL terminated string if
+         all went well.
+    length - Size of the buffer in bytes.
+
+   RESULT
+    !=0 if all went well, 0 in case of an error. IoErr() will
+    give additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/NewReadLink/*  AROS_LHx(LONG, NewReadLink, */
+
+    LONG NewReadLink(struct MsgPort *port,
+                     BPTR lock,
+                     CONST_STRPTR path,
+                     UBYTE *buffer,
+                     LONG buffer_size)
+
+
+   FUNCTION
+    Read the filename referred to by the soft-linked object contained
+    in |path| (relative to the lock |lock|) into the buffer |buffer|.
+    The variable |path| should contain the name of the object that
+    caused the original OBJECT_IS_SOFT_LINK error. Unlike original
+    ReadLink, NewReadLink works on hardlinks aswell as softlinks.
+
+   INPUTS
+    port        - The handler to send the request to.
+    lock        - Object that |path| is relative to.
+    path        - Name of the object that caused the error.
+    buffer      - Buffer to fill with resolved filename.
+    size        - Length of the buffer.
+
+   RESULT
+    > 0 success, actual length of the returned string.
+    0       failure, probably ERROR_NOT_IMPLEMENTED.
+    -1  failure, see IoErr() for more information.
+    -2  failure, not enough space in the buffer.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    Before dos 51.41 the filesystems not implementing this
+    functionality would result in IoErr() not being set.
+    This was fixed in dos 51.41 which now consistently sets
+    IoErr() to ERROR_NOT_IMPLMENTED in this case.
+
+   SEE ALSO
+    ReadLink()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/NextDosEntry
+
+   NAME
+    NextDosEntry -- 
+
+   SYNOPSIS
+    NextDosEntry(dlist, flags)
+    struct DosList * NextDosEntry(struct DosList *, ULONG);
+
+   FUNCTION
+    Looks for the next dos list entry with the right type. The list
+    must be locked for this.
+
+   INPUTS
+    dlist - the value given by LockDosList() or the last call to
+        FindDosEntry().
+    flags - the same flags as given to LockDosList() or a subset
+        of them.
+
+   RESULT
+    Pointer to dos list entry found or NULL if the are no more entries.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Open
+
+   NAME
+    Open -- 
+
+   SYNOPSIS
+    Open(, accessMode)
+    BPTR Open(CONST, LONG);
+
+   FUNCTION
+    Opens a file for read and/or write depending on the accessmode given.
+
+   INPUTS
+    name       - NUL terminated name of the file.
+    accessMode - One of MODE_OLDFILE   - open existing file
+                MODE_NEWFILE   - delete old, create new file
+                         exclusive lock
+                MODE_READWRITE - open new one if it doesn't exist
+
+   RESULT
+    Handle to the file or 0 if the file couldn't be opened.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/OpenFromLock
+
+   NAME
+    OpenFromLock -- 
+
+   SYNOPSIS
+    OpenFromLock(lock)
+    BPTR OpenFromLock(BPTR);
+
+   FUNCTION
+    Convert a lock into a filehandle. If all went well the lock
+    will be gone. In case of an error it must still be freed.
+
+   INPUTS
+    lock - Lock to convert.
+
+   RESULT
+    New filehandle or 0 in case of an error. IoErr() will give
+    additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ParentDir
+
+   NAME
+    ParentDir -- 
+
+   SYNOPSIS
+    ParentDir(lock)
+    BPTR ParentDir(BPTR);
+
+   FUNCTION
+    Returns a lock to the parent directory of the supplied lock.
+
+   INPUTS
+    lock - Lock to get parent directory of.
+
+   RESULT
+    Returns a lock to the parent directory or NULL, in which case the
+    supplied lock has no parent directory (because it is the root
+    directory) or an error occured. IoErr() returns 0 in the former case
+    and a different value on error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    Locks get via ParentDir() are currently never unlocked! Use this
+    function with care.
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ParentOfFH
+
+   NAME
+    ParentOfFH -- 
+
+   SYNOPSIS
+    ParentOfFH(fh)
+    BPTR ParentOfFH(BPTR);
+
+   FUNCTION
+    Lock the directory a file is located in.
+
+   INPUTS
+    fh  - Filhandle of which you want to obtain the parent
+
+   RESULT
+    lock - Lock on the parent directory of the filehandle or
+           NULL for failure.
+
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    Lock(), UnLock(), Parent()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Read
+
+   NAME
+    Read -- 
+
+   SYNOPSIS
+    Read(file, buffer, length)
+    LONG Read(BPTR, APTR, LONG);
+
+   FUNCTION
+    Read some data from a given file. The request is directly
+    given to the filesystem - no buffering is involved. For
+    small amounts of data it's probably better to use the
+    buffered I/O routines.
+
+   INPUTS
+    file   - filehandle
+    buffer - pointer to buffer for the data
+    length - number of bytes to read. The filesystem is
+         advised to try to fulfill the request as good
+         as possible.
+
+   RESULT
+    The number of bytes actually read, 0 if the end of the
+    file was reached, -1 if an error happened. IoErr() will
+    give additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ReadItem
+
+   NAME
+    ReadItem -- 
+
+   SYNOPSIS
+    ReadItem(buffer, maxchars, input)
+    LONG ReadItem(STRPTR, LONG, struct CSource *);
+
+   FUNCTION
+
+        Reads a "word" from CSource. The word can be unquoted or
+        "double quoted" (with **, *", *E and *N special handling). The
+        words are delimited by either whitespace or a '=' or an EOF.
+
+        If CSource is NULL then standard input is used to fetch the
+        input.
+
+   INPUTS
+        buffer   - buffer to store the word in.
+        maxchars - size of the buffer.
+        input    - CSource input or NULL (use standard input)
+
+   RESULT
+        One of ITEM_UNQUOTED - normal unquotes word
+               ITEM_QUOTED   - doublequoted string
+               ITEM_NOTHING  - EOF reached, nothing returned.
+               ITEM_EQUAL    - '=' was met, nothing returned.
+               ITEM_ERROR    - an error occured.
+
+   BUGS
+        There are numerous undocumented side-effects resulting from the
+        use of this function. While ReadItem() was originally documented
+        to always always unread the last thing read (UnGetC(fh,-1)), in
+        reality this might not always be the case.
+
+   SEE ALSO
+        ReadArgs(), <dos/dos.h>, <dos/rdargs.h>
+
+dos.library/ReadLink
+
+   NAME
+    ReadLink -- 
+
+   SYNOPSIS
+    ReadLink(port, lock, path, buffer, size)
+    LONG ReadLink(struct MsgPort *, BPTR, STRPTR, STRPTR, ULONG);
+
+   FUNCTION
+    Read the filename referred to by the soft-linked object contained
+    in |path| (relative to the lock |lock|) into the buffer |buffer|.
+    The variable |path| should contain the name of the object that
+    caused the original OBJECT_IS_SOFT_LINK error.
+
+   INPUTS
+    port        - The handler to send the request to.
+    lock        - Object that |path| is relative to.
+    path        - Name of the object that caused the error.
+    buffer      - Buffer to fill with resolved filename.
+    size        - Length of the buffer.
+
+   RESULT
+    >= 0    success, actual length of the returned string.
+    -1  failure, see IoErr() for more information.
+    -2  failure, not enough space in the buffer.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+    dos autodoc and GuruBook are wrong about the return value.
+
+   SEE ALSO
+    MakeLink()
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Relabel
+
+   NAME
+    Relabel -- 
+
+   SYNOPSIS
+    Relabel(drive, newname)
+    LONG Relabel(STRPTR, STRPTR);
+
+   FUNCTION
+
+    Change names of a volume.
+
+   INPUTS
+
+    drive    --  The name of the device to rename (including the ':').
+    newname  --  The new name for the device (without the ':').
+
+   RESULT
+
+    A boolean telling whether the name change was successful or not.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    28.04.2000  SDuvan  implemented
+
+dos.library/RemDosEntry
+
+   NAME
+    RemDosEntry -- 
+
+   SYNOPSIS
+    RemDosEntry(dlist)
+    LONG RemDosEntry(struct DosList *);
+
+   FUNCTION
+    Removes a given dos list entry from the dos list. Automatically
+    locks the list for writing.
+
+   INPUTS
+    dlist - pointer to dos list entry.
+
+   RESULT
+    !=0 if all went well, 0 otherwise.
+
+   NOTES
+    Since anybody who wants to use a device or volume node in the
+    dos list has to lock the list, filesystems may be called with
+    the dos list locked. So if you want to add a dos list entry
+    out of a filesystem don't just wait on the lock but serve all
+    incoming requests until the dos list is free instead.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Rename
+
+   NAME
+    Rename -- 
+
+   SYNOPSIS
+    Rename(oldName, newName)
+    LONG Rename(STRPTR, STRPTR);
+
+   FUNCTION
+    Renames a given file. The old name and the new name must point to the
+    same volume.
+
+   INPUTS
+    oldName - Name of the file to rename
+    newName - New name of the file to rename
+
+   RESULT
+    boolean - DOSTRUE or DOSFALSE. IoErr() provides additional information
+    on DOSFALSE.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+    Calls the action FSA_RENAME on the filesystem-handler.
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/ReplyPkt
+
+   NAME
+    ReplyPkt -- 
+
+   SYNOPSIS
+    ReplyPkt(dp, res, res)
+    void ReplyPkt(struct DosPacket *, LONG, LONG);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+      This function is mega-deprecated. Since all AROS drivers
+      use IORequests to perform operations the driver will most
+      probably not ever use or look at a packet. Also there might
+      not even be a packet at all except for if SendPkt was used.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/RunCommand
+
+   NAME
+    RunCommand -- 
+
+   SYNOPSIS
+    RunCommand(segList, stacksize, argptr, argsize)
+    LONG RunCommand(BPTR, ULONG, STRPTR, ULONG);
+
+   FUNCTION
+    RunCommand() will run the command loaded in the |segList| with the
+    arguments specified with a new stack of |stacksize| bytes. Note
+    that the stacksize may be extended if this is required.
+
+    The return code of the command run will be returned.
+
+    This call will not return until the command has completed.
+
+   INPUTS
+    segList     - segment of program to run.
+    stacksize   - size of the stack to use.
+    argptr      - pointer to NULL-terminated arguments.
+    argsize     - size of the arguments string.
+
+   RESULT
+    The return code from the program. See also IoErr().
+
+   NOTES
+    Programs expect the arugment string to end with a newline ('\n')
+    character (ReadArgs() requires it to work properly).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SystemTagList()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SameDevice
+
+   NAME
+    SameDevice -- 
+
+   SYNOPSIS
+    SameDevice(lock, lock)
+    LONG SameDevice(BPTR, BPTR);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SameLock
+
+   NAME
+    SameLock -- 
+
+   SYNOPSIS
+    SameLock(lock, lock)
+    LONG SameLock(BPTR, BPTR);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Seek
+
+   NAME
+    Seek -- 
+
+   SYNOPSIS
+    Seek(file, position, mode)
+    LONG Seek(BPTR, LONG, LONG);
+
+   FUNCTION
+    Changes the current read/write position in a file and/or
+    reads the current position, e.g to get the current position
+    do a Seek(file,0,OFFSET_CURRENT).
+
+    This function may fail (obviously) on certain devices such
+    as pipes or console handlers.
+
+   INPUTS
+    file     - filehandle
+    position - relative offset in bytes (positive, negative or 0).
+    mode     - Where to count from. Either OFFSET_BEGINNING,
+           OFFSET_CURRENT or OFFSET_END.
+
+   RESULT
+    Absolute position in bytes before the Seek(), -1 if an error
+    happened. IoErr() will give additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/Seek64/*  AROS_LHx(QUAD, Seek64, */
+
+    QUAD Seek64(BPTR file,
+                QUAD position,
+                LONG mode)
+
+
+   FUNCTION
+    Changes the current read/write position in a file and/or
+    reads the current position, e.g to get the current position
+    do a Seek64(file,0,OFFSET_CURRENT).
+
+    This function may fail (obviously) on certain devices such
+    as pipes or console handlers.
+
+   INPUTS
+    file     - filehandle
+    position - relative offset in bytes (positive, negative or 0).
+    mode     - Where to count from. Either OFFSET_BEGINNING,
+           OFFSET_CURRENT or OFFSET_END.
+
+   RESULT
+    Absolute position in bytes before the Seek(), -1 if an error
+    happened. IoErr() will give additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/SendPkt
+
+   NAME
+    SendPkt -- 
+
+   SYNOPSIS
+    SendPkt(dp, port, replyport)
+    void SendPkt(struct DosPacket *, struct MsgPort *, struct MsgPort *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetComment
+
+   NAME
+    SetComment -- 
+
+   SYNOPSIS
+    SetComment(name, comment)
+    LONG SetComment(STRPTR, STRPTR);
+
+   FUNCTION
+    Change the comment on a file or directory.
+    The comment may be any NUL terminated string. The supported
+    size varies from filesystem to filesystem.
+
+   INPUTS
+    name    - name of the file
+    comment - new comment for the file or NULL.
+
+   RESULT
+    !=0 if all went well, 0 else. IoErr() gives additional
+    information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetFileDate
+
+   NAME
+    SetFileDate -- 
+
+   SYNOPSIS
+    SetFileDate(name, date)
+    LONG SetFileDate(STRPTR, struct DateStamp *);
+
+   FUNCTION
+    Change the modification time of a file or directory.
+
+   INPUTS
+    name - name of the file
+    date - new file time
+
+   RESULT
+    != 0 if all went well, 0 else. IoErr() gives additional
+    information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetFileSize
+
+   NAME
+    SetFileSize -- 
+
+   SYNOPSIS
+    SetFileSize(file, offset, mode)
+    LONG SetFileSize(BPTR, LONG, LONG);
+
+   FUNCTION
+    Change the size of a file.
+
+   INPUTS
+    file   - filehandle
+    offset - relative size
+    mode   - OFFSET_BEGINNING, OFFSET_CURRENT or OFFSET_END
+
+   RESULT
+    New size of the file or -1 in case of an error.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetFileSize64/*  AROS_LHx(QUAD, SetFileSize64, */
+
+    QUAD SetFileSize64(BPTR file,
+                       QUAD offset,
+                       LONG mode)
+
+
+   FUNCTION
+    Change the size of a file.
+
+   INPUTS
+    file   - filehandle
+    offset - relative size
+    mode   - OFFSET_BEGINNING, OFFSET_CURRENT or OFFSET_END
+
+   RESULT
+    New size of the file or -1 in case of an error.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/SetMode
+
+   NAME
+    SetMode -- 
+
+   SYNOPSIS
+    SetMode(fh, mode)
+    LONG SetMode(BPTR, LONG);
+
+   FUNCTION
+    SetMode() can be used to change a console handler between
+    RAW: mode and CON: mode.
+
+   INPUTS
+    fh      -   The filehandle describing the console.
+    mode    -   The new mode of the console:
+            1   - RAW: mode
+            0   - CON: mode
+
+   RESULT
+    This function will return whether it succeeded:
+
+    == DOSTRUE  console mode changed
+    != DOSTRUE  console mode change failed.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetOwner
+
+   NAME
+    SetOwner -- 
+
+   SYNOPSIS
+    SetOwner(name, owner)
+    LONG SetOwner(STRPTR, ULONG);
+
+   FUNCTION
+
+   INPUTS
+    name        --  name of the file
+    owner_info  --  (UID << 16) + GID
+
+   RESULT
+    != 0 if all went well, 0 else. IoErr() gives additional
+    information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetProtection
+
+   NAME
+    SetProtection -- 
+
+   SYNOPSIS
+    SetProtection(name, protect)
+    LONG SetProtection(STRPTR, ULONG);
+
+   FUNCTION
+
+   INPUTS
+    name    - name of the file
+    protect - new protection bits
+
+   RESULT
+    != 0 if all went well, 0 else. IoErr() gives additional
+    information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetVBuf
+
+   NAME
+    SetVBuf -- 
+
+   SYNOPSIS
+    SetVBuf(fh, buff, type, size)
+    LONG SetVBuf(BPTR, STRPTR, LONG, LONG);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/SetVar
+
+   NAME
+    SetVar -- 
+
+   SYNOPSIS
+    SetVar(, , size, flags)
+    LONG SetVar(CONST, CONST, LONG, LONG);
+
+   FUNCTION
+        This function sets a local or global environmental variable, or an
+        shell alias. It is advised to only use ASCII strings inside
+        variables/aliases, but this is not required.
+
+        Variable/alias names are case insensitive.
+
+        SetVar() for an already existing variable/alias changes its value
+        to buffer content. The 'buffer' pointer can be NULL, in which case
+        the variable/alias is deleted.
+
+    size of -1 means that the buffer is null (\0) terminater string, and
+        the actual size is calculated by SetVar().
+
+        If neither GVF_LOCAL_ONLY or GVF_GLOBAL_ONLY are set the default
+        is to set a local variable.
+
+   INPUTS
+        name    -   the name of the variable/alias to set/delete.
+        buffer  -   pointer to the data to set.
+        size    -   the size of the data in the buffer.
+        flags   -   A combination of the type of variable to get (lower
+                    8 bits: LV_VAR or LV_ALIAS) and flags that control the
+                    operation of this function. Currently defined flags are:
+
+                    GVF_LOCAL_ONLY  - set a local variable only.
+                    GVF_GLOBAL_ONLY - set a global environmental
+                                      variable only.
+                    GVF_SAVE_VAR    - if GVF_LOCAL_ONLY is not set, and type
+                                      is LV_VAR then also store the variable
+                                      to ENVARC: as well as ENV:.
+
+   RESULT
+        success - If non-zero, the variable was sucessfully set, FALSE
+                  indicates failure.
+
+   BUGS
+
+   SEE ALSO
+        DeleteVar(), FindVar(), GetVar(), <dos/var.h>
+
+dos.library/SplitName
+
+   NAME
+    SplitName -- 
+
+   SYNOPSIS
+    SplitName(name, separator, buf, oldpos, size)
+    LONG SplitName(STRPTR, UBYTE, STRPTR, WORD, WORD);
+
+   FUNCTION
+    Split a path into parts at the position of seperator.
+
+   INPUTS
+    name - Split this path
+    seperator - Split it at this seperator
+    buf - Copy the current part into this buffer
+    oldpos - Begin at this place with the search for seperator.
+        If you call this function for the first time, set it
+        to 0.
+    size - The size of the buffer. If the current part of the
+        path is bigger than size-1, only size-1 bytes will
+        be copied.
+
+   RESULT
+    The next position to continue for the next part or -1 if
+    there is no seperator after name+oldpos.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/StartNotify
+
+   NAME
+    StartNotify -- 
+
+   SYNOPSIS
+    StartNotify(notify)
+    LONG StartNotify(struct NotifyRequest *);
+
+   FUNCTION
+
+    Send a notification request to a filesystem. You will then be notified
+    whenever the file (or directory) changes.
+
+   INPUTS
+
+    notify  --  a notification request for the file or directory to monitor
+
+   RESULT
+
+    Success/failure indicator.
+
+   NOTES
+
+    The file or directory connected to a notification request does not have
+    to exist at the time of calling StartNotify().
+    The NotifyRequest used with this function should not be altered while
+    active.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    EndNotify(), <dos/notify.h>
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/StartSystem
+
+   NAME
+    StartSystem -- 
+
+   SYNOPSIS
+    StartSystem(data)
+    ULONG StartSystem(APTR);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/UnGetC
+
+   NAME
+    UnGetC -- 
+
+   SYNOPSIS
+    UnGetC(file, character)
+    LONG UnGetC(BPTR, LONG);
+
+   FUNCTION
+    Push a character back into a read filehandle. If you've read
+    a character from that file you may always push at least 1 character
+    back. UnGetC(file,-1) ungets the last character read. This also
+    works for EOF.
+
+   INPUTS
+    file      - Filehandle you've read from.
+    character - Character to push back or EOF.
+
+   RESULT
+    !=0 if all went well, 0 if the character couldn't be pushed back.
+    IoErr() gives additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FGetC(), IoErr()
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/UnLock
+
+   NAME
+    UnLock -- 
+
+   SYNOPSIS
+    UnLock(lock)
+    void UnLock(BPTR);
+
+   FUNCTION
+    Free a lock created with Lock().
+
+   INPUTS
+    lock -- The lock to free
+
+   RESULT
+
+   NOTES
+    This function is identical to Close() - see there.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/UnLockDosList
+
+   NAME
+    UnLockDosList -- 
+
+   SYNOPSIS
+    UnLockDosList(flags)
+    void UnLockDosList(ULONG);
+
+   FUNCTION
+    Frees a lock on the dos lists given by LockDosList().
+
+   INPUTS
+    flags - the same value as given to LockDosList().
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/UnLockRecord
+
+   NAME
+    UnLockRecord -- 
+
+   SYNOPSIS
+    UnLockRecord(fh, offset, length)
+    LONG UnLockRecord(BPTR, ULONG, ULONG);
+
+   FUNCTION
+
+    Release a lock made with LockRecord().
+
+   INPUTS
+
+    fh      --  filehandle the lock was made on
+    offset  --  starting position of the lock
+    length  --  length of the record in bytes
+
+   RESULT
+
+   NOTES
+
+    The length and offset must match the corresponding LockRecord()
+    call.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRecord(), UnLockRecords()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/UnLockRecord64/*  AROS_LHx(LONG, UnLockRecord64, */
+
+    LONG UnLockRecord64(BPTR fh,
+                        UQUAD offset,
+                        UQUAD length)
+
+
+   FUNCTION
+
+    Release a lock made with LockRecord64().
+
+   INPUTS
+
+    fh      --  filehandle the lock was made on
+    offset  --  starting position of the lock
+    length  --  length of the record in bytes
+
+   RESULT
+
+   NOTES
+
+    The length and offset must match the corresponding LockRecord64()
+    call.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRecord64(), UnLockRecords64()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/UnLockRecords64/*  AROS_LHx(LONG, UnLockRecords64, */
+
+    LONG UnLockRecords64(struct RecordLock64 *recArray)
+
+
+   FUNCTION
+
+    Release an array of record locks obtained with LockRecords64().
+
+   INPUTS
+
+    recArray  --  array of record locks (previously locked with LockRecords64())
+
+   RESULT
+
+   NOTES
+
+    A array of records may not be modified when records are locked.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LockRecords64()
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/VFPrintf
+
+   NAME
+    VFPrintf -- 
+
+   SYNOPSIS
+    VFPrintf(file, , argarray)
+    LONG VFPrintf(BPTR, CONST, IPTR *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/VPrintf
+
+   NAME
+    VPrintf -- 
+
+   SYNOPSIS
+    VPrintf(format, argarray)
+    LONG VPrintf(STRPTR, IPTR *);
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    29-10-95    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/WaitForChar
+
+   NAME
+    WaitForChar -- 
+
+   SYNOPSIS
+    WaitForChar(file, timeout)
+    LONG WaitForChar(BPTR, LONG);
+
+   FUNCTION
+    Wait for a character to arrive at a filehandle. The filehandle
+    can be either a console handle, or a regular file. For a regular
+    file most filesystems will return a character immediately, but
+    sometimes (for example a network handler) the character may not
+    have arrived.
+
+   INPUTS
+    file        - File to wait for a character on.
+    timeout     - Number of microseconds to wait for the character
+              to arrive. A value of 0 says to wait indefinately.
+   RESULT
+    != 0    if a character arrived before the timeout expired
+    == 0    if no character arrived
+
+   NOTES
+    Many filesystems do not implement this function.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+    27-11-96    digulla automatically created from
+                dos_lib.fd and clib/dos_protos.h
+
+dos.library/WaitPkt
+       void
+
+   NAME
+    WaitPkt -- 
+
+   SYNOPSIS
+    WaitPkt(port)
+    struct DosPacket * WaitPkt(struct MsgPort *);
+
+   FUNCTION
+
+    Wait for a packet to arrive at your process' pr_MsgPort. It will call
+    pr_PktWait if such a function is installed.
+
+   INPUTS
+
+   RESULT
+
+    The packet we received.
+
+   NOTES
+
+    The packet will be released from the port.
+
+    This function should NOT be used. It's there only for AmigaOS
+    compatibility.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+dos.library/Write
+
+   NAME
+    Write -- 
+
+   SYNOPSIS
+    Write(file, , length)
+    LONG Write(BPTR, CONST, LONG);
+
+   FUNCTION
+    Write some data to a given file. The request is directly
+    given to the filesystem - no buffering is involved. For
+    small amounts of data it's probably better to use the
+    buffered I/O routines.
+
+   INPUTS
+    file   - filehandle
+    buffer - pointer to data buffer
+    length - number of bytes to write. The filesystem is
+         advised to try to fulfill the request as good
+         as possible.
+
+   RESULT
+    The number of bytes actually written, -1 if an error happened.
+    IoErr() will give additional information in that case.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+

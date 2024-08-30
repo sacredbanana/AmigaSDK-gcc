@@ -1,0 +1,275 @@
+TABLE OF CONTENTS
+
+aiff.demuxer/MMA_DataFormat
+aiff.demuxer/MMA_MediaType
+aiff.demuxer/MMA_MimeType
+aiff.demuxer/MMA_Sound_BitsPerSample
+aiff.demuxer/MMA_Sound_Channels
+aiff.demuxer/MMA_Sound_FrameCount
+aiff.demuxer/MMA_Sound_SampleRate
+aiff.demuxer/MMA_Sound_Volume
+aiff.demuxer/MMA_StreamPosBytes
+aiff.demuxer/MMM_Pull
+aiff.demuxer/MMM_Seek
+aiff.demuxer/__background__
+aiff.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- [GQ], STRPTR. (V50)
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   All the objects of this class return "Audio IFF" string.
+
+aiff.demuxer/MMA_MediaType
+
+ NAME
+   MMA_MediaType -- [GQ], ULONG. (V51)
+
+ FUNCTION
+   Returns media type of object. All objects of this class return MMT_SOUND
+   always.
+
+aiff.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType -- [GQ], STRPTR. (V51.10)
+
+ FUNCTION
+   Returns read-only NULL-terminated MIME type string, which is
+   "audio/aiff".
+
+aiff.demuxer/MMA_Sound_BitsPerSample
+
+ NAME
+   MMA_Sound_BitsPerSample -- [GQ], ULONG. (V50)
+
+ FUNCTION
+   Specifies number of significant bits in a single sound sample as found in
+   the header. Note that it can be any number from 1 to 32 bits, but samples
+   are always padded up to byte boundary.
+
+aiff.demuxer/MMA_Sound_Channels
+
+ NAME
+   MMA_Sound_Channels -- [GQ], ULONG. (V50)
+
+ FUNCTION
+   Specifies number of channels in AIFF stream as found in the header.
+   Reggae can process up to 256 channels (streams with more channels will be
+   rejected).
+
+aiff.demuxer/MMA_Sound_FrameCount
+
+ NAME
+   MMA_Sound_FrameCount -- [GQ], UQUAD*. (V50)
+
+ FUNCTION
+   Returns number of sample frames in the stream as specified in the header.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+aiff.demuxer/MMA_Sound_SampleRate
+
+ NAME
+   MMA_Sound_SampleRate -- [GQ], ULONG. (V50)
+
+ FUNCTION
+   Specifies sampling rate of AIFF stream as found in the header, measured
+   in sample frames per seconds. AIFF format allows for fractional rates (as
+   sample rate is stored as a floating point number). Such fractional rates
+   are rounded down to the nearest integer. Any integer value is accepted,
+   but note that output devices (as well as many filters) may not accept
+   extremely high values.
+
+aiff.demuxer/MMA_Sound_Volume
+
+ NAME
+   MMA_Sound_Volume -- [G], ULONG. (V50)
+
+ FUNCTION
+   Specifies default sound volume relative to the maximum one. Range of this
+   attribute is from 0 (silence) to 65536 including (full volume). As AIFF
+   streams have no volume information, an aiff.demuxer object returns 65536
+   always.
+
+aiff.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- [GQ], UQUAD*. (V51)
+
+ FUNCTION
+   Returns current absolute byte position in undecoded audio data, stripped
+    of AIFF header and SSND chunk pseudoheader.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+aiff.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- gets block of encoded data. (V50)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Loads specified number of bytes of undecoded sound data into the buffer.
+   As the class does not process the data, it does not copy them. The
+   request is passed through to the previous object.
+
+ INPUTS
+   - port - number of port is always 1 (the output port).
+   - buffer - a memory buffer for pulled data, must be aligned to 16-byte
+     boundary (preferrably allocated with MediaAllocVec()).
+   - length - amount of pulled data in bytes.
+
+ RESULT
+   - bytes, number of bytes pulled actually. Zero means end of data or
+     error, error code is available via MMA_ErrorCode attribute.
+
+aiff.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek -- moves read pointer in encoded audio stream. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_Seek, ULONG port, ULONG type, QUAD* pos);
+
+ FUNCTION
+   Performs byte seek inside SSND chunk of AIFF file, excluding 8-byte SSND
+   pseudo-header. Position 0 is the first byte after pseudo-header.
+
+ INPUTS
+   - port - number of port is always 1 (the output port).
+   - type - seek type (MMM_SEEK_BYTES).
+   - position - new, absolute byte position in the stream.
+
+ RESULT
+   TRUE if success, FALSE otherwise. Check MMA_ErrorCode for detailed
+   information.
+
+aiff.demuxer/__background__
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for Audio IFF uncompressed (AIFF)
+   sound files. It extracts header information and passes data to the next
+   processing stage, usually a decoder. The demuxer
+   recognizes following subformats:
+   - Plain AIFF, 1 to 32 bits per sample, up to 256 channels.
+
+ PORTS
+   - port 0 - input, MMF_STREAM.
+   - port 1 - output, one of:
+     * MMF_AUDIO_PCM8
+     * MMF_AUDIO_PCM16BE
+     * MMF_AUDIO_PCM24BE
+     * MMF_AUDIO_PCM32BE
+
+ HISTORY
+   51.10 (28.06.2015)
+   - Added MMA_MimeType.
+
+   51.9  (22.01.2011)
+   - Rewritten almost from scratch with libchunkstream.
+   - Does not accept time/frame seek anymore thanks to fixed audiopcm.decoder.
+   - Fixed overflow bug for sampling rate higher than 65535 Hz.
+
+   51.8  (07.06.2010)
+   - After audiopcm.decoder finally converts frame and time seeks to byte
+     seeks, MMM_Seek() of this class supports only byte seeks. Additionally
+     MMM_Seek uses MMM_PreSeek() and MMM_PostSeek() helpers.
+
+   51.7  (04.08.2008)
+   - Uses chunklib instead of custom code for IFF parsing.
+   - Both recognize routine and header parser are prepared to AIFC handling.
+   - Support for 'sowt' AIFC pseudocodec.
+   - MMA_DataFormat depends on codec used.
+
+   51.6  (08.01.2005)
+   - Fixed seeking bug, current chunk position was not updated in
+     SeekChunk().
+
+   51.5  (15.11.2005)
+   - Fixed error handling in MMM_Pull.
+   - Fix in ReadChunkBytes(), MMM_Pull is not called if data size is 0.
+
+   51.4  (05.06.2005)
+   - Logging cosmetics.
+
+   51.3  (30.05.2005)
+   - Implemented MMA_MediaType.
+   - Deleted duplicated format tables.
+   - Added missing MMM_Seek entry in the dispatcher.
+   - Fixed chunk skipping.
+
+   51.2  (27.04.2005)
+   - Removed some unused code.
+   - Implemented MMA_StreamPosFrames, MMA_StreamPosTime.
+   - Implemented MMM_Seek (frame seek and time seek).
+   - Updated documentation.
+
+   51.1  (26.04.2005)
+   - Recognize(): routine properly gets stream length and reports
+     inconsistence with FORM chunk length, if the stream lenght is known.
+   - GetHeader(): fixed log info about number of frames and sample rate.
+
+   50.14 (28.12.2004)
+   - MMA_StreamPosFrames and MMA_StreamPosTime are gettable now (both OM_GET
+     and MMM_GetPort).
+
+   50.13 (18.12.2004)
+   - New way of MMM_GetPort and MMM_SetPort forwarding.
+
+   50.12 (08.12.2004)
+   - Separate MMM_Setup for input and output.
+
+   50.11 (27.11.2004)
+   - Added data format info (MMA_DataFormat).
+   - Fixed recognition routine for odd number of 8-bit samples.
+
+   50.10 (11.10.2004)
+   - Query tags are readable through library base for indexing.
+
+   50.9  (09.10.2004)
+   - Implemented MMM_Setup method.
+
+   50.8  (05.09.2004)
+   - Bug fixed: Object lock was not unlocked in Pull() if the method was
+     passed to superclass in case of pulling from input port. Could lead to
+     semaphore lockup.
+
+   50.7  (26.08.2004)
+   - Implemented override of MMM_GetPort, if an application gets output port
+     format it is determined from fetched header and set to the port.
+   - MMM_Pull now pulls from source object not assuming its type (it need not
+     to be a stream).
+   - IFF handle is closed and freed in OM_DISPOSE.
+
+   50.6  (20.08.2004)
+   - Connects with MediaPorts.
+
+   50.5  (26.04.2004)
+   - Extended query support (port list).
+   - Errors are handled by multimedia.class now.
+
+   50.4  (23.04.2004)
+   - Implemented MMM_Pull.
+
+   50.3  (18.04.2004)
+   - Fixed class to be multimedia.class subclass (required for automatic
+     removing of streams created by MediaNewObject()).
+
+   50.2  (18.04.2004)
+   - Full implementation of MMM_GetPort.
+   - Full implementation of MMM_SetPort.
+   - Implementation of MMA_ErrorCode in OM_GET.
+
+   50.1  (23.03.2004)
+   - Initial revision.
+
+

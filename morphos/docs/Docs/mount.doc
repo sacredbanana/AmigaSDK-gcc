@@ -1,0 +1,333 @@
+TABLE OF CONTENTS
+
+mount.library/MountCreateNotifyNodeTagList
+mount.library/MountCreateNotifyUnitTagList
+mount.library/MountDeleteNotifyNode
+mount.library/MountDeleteNotifyUnit
+mount.library/MountDisMountTagList
+mount.library/MountFindNotifyNodeTagList
+mount.library/MountGetNotifyUnitAttr
+mount.library/MountMountTagList
+mount.library/MountNotifyAll
+mount.library/MountNotifySet
+mount.library/MountNotifyTask
+mount.library/MountUpdateNotifyUnitConfigTagList
+mount.library/MountCreateNotifyNodeTagList
+
+    NAME
+    MountCreateNotifyNodeTagList -- Create NotifyNode object          (V51)
+
+    SYNOPSIS
+    NotifyNode = MountCreateNotifyNodeTagList(NotifyUnit,Tags)
+
+    void *MountCreateNotifyNodeTagList(void *NotifyUnit,struct TagItem *Tags);
+    void *MountCreateNotifyNodeTags(void *NotifyUnit,...);
+
+    FUNCTION
+    returns a NotifyNode Object which is used to handle removable handling
+    for TD_REMOVE, TD_ADDCHANGEINT.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    Tags    - The Tags you want.
+    o MOUNTATTR_IOREQUEST
+      defines the iorequest for the NotifyNode. As TD_REMOVE has only
+      a connection with the Task it was called from, IORequest must be NULL
+      for this case. (TD_REMOVE was a bad idea anyway)
+    o MOUNTATTR_TASK
+      defines the task for the NotifyNode.
+    o MOUNTATTR_INTERRUPT
+      defines the interrupt callback for the NotifyNode.
+    o MOUNTATTR_CHANGESTATE
+      defines the changestate(0 or -1) for the NotifyNode.
+
+    RESULT
+    NotifyUnit - Object or NULL for failure
+
+    SEE ALSO
+    libraries/mount.h, MountDeleteNotifyUnit(), MountFindNotifyUnitTagList()
+
+mount.library/MountCreateNotifyUnitTagList
+
+    NAME
+    MountCreateNotifyUnitTagList -- Create NotifyUnit object          (V51)
+
+    SYNOPSIS
+    NotifyUnit = MountCreateNotifyUnitTagList(Tags)
+
+    void *MountCreateNotifyUnitTagList(struct TagItem *Tags);
+    void *MountCreateNotifyUnitTags(Tag1,...);
+
+    FUNCTION
+    returns a NotifyUnit Object which is the key structure for the mount.library.
+    The NotifyUnit
+
+    INPUTS
+    tags    - The Tags you want.
+    o MOUNTATTR_DEVICE
+      defines the device structure reference of the unit. Must be specified
+    o MOUNTATTR_UNIT
+      defines the unit structure reference of the unit. Must be specified
+
+    RESULT
+    NotifyUnit - Object or NULL for failure
+
+    SEE ALSO
+    libraries/mount.h, MountDeleteNotifyUnit()
+
+mount.library/MountDeleteNotifyNode
+
+    NAME
+    MountDeleteNotifyNode -- Delete NotifyNode object          (V51)
+
+    SYNOPSIS
+    MountDeleteNotifyNode(NotifyNode)
+
+    void MountDeleteNotifyNode(void *NotifyNode);
+
+    FUNCTION
+    deletes a NotifyNode Object which wasis the key structure for the mount.library.
+    The NotifyNode
+
+    INPUTS
+    NotifyNode  - Object created by MountCreateNotifyNodeTagList()
+
+    RESULT
+    none
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyNodeTagList()
+
+mount.library/MountDeleteNotifyUnit
+
+    NAME
+    MountDeleteNotifyUnit -- Delete NotifyUnit object          (V51)
+
+    SYNOPSIS
+    MountDeleteNotifyUnit(NotifyUnit)
+
+    void MountDeleteNotifyUnit(void *NotifyUnit);
+
+    FUNCTION
+    deletes a NotifyUnit Object which wasis the key structure for the mount.library.
+    The NotifyUnit
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+
+    RESULT
+    none
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyUnitTagList()
+
+mount.library/MountDisMountTagList
+
+    NAME
+    MountDisMountTagList -- Dismount Partitions of a NotifyUnit object (V51)
+
+    SYNOPSIS
+    Status = MountDisMountTagList(NotifyUnit,Tags)
+
+    ULONG MountDisMountTagList(void *NotifyUnit,struct TagItem *Tags);
+    ULONG MountDisMountTags(void *NotifyUnit,...);
+
+    FUNCTION
+    tries to dismount the partitions on the drive defined by NotifyUnit.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    Tags    - The Tags you want.
+
+    RESULT
+    Status - TRUE or FALSE for failure
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyUnitTagList(), MountMountTagList()
+
+mount.library/MountFindNotifyNodeTagList
+
+    NAME
+    MountFindNotifyNodeTagList -- Find NotifyNode object          (V51)
+
+    SYNOPSIS
+    NotifyNode = MountFindNotifyNodeTagList(Tags)
+
+    void *MountFindNotifyNodeTagList(void *NotifyUnit,struct TagItem *Tags);
+    void *MountFindNotifyNodeTags(void *NotifyUnit,...);
+
+    FUNCTION
+    returns a NotifyNode Object which is used to handle removable handling
+    for TD_REMOVE, TD_ADDCHANGEINT.
+
+    INPUTS
+    Tags    - The Tags you want.
+    o MOUNTATTR_IOREQUEST
+      search for a matching IORequest in the NotifyNodes. (TD_ADDCHANGEINT)
+    o MOUNTATTR_TASK
+      search for a matching task in the NotifyNodes. (TD_ADDCHANGEINT)
+
+    RESULT
+    NotifyUnit - Object or NULL for failure
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyUnitTagList(), MountDeleteNotifyUnit()
+
+mount.library/MountGetNotifyUnitAttr
+
+    NAME
+    MountGetNotifyUnitAttr -- Get Query Attributes from a FileSysEntry  (V51)
+
+    SYNOPSIS
+    Status = MountGetNotifyUnitAttr(NotifyUnit,Data,Attr)
+
+    ULONG MountGetNotifyUnitAttr(void *NotifyUnit,APTR Data,ULONG Attr);
+
+    FUNCTION
+    returns info from a NotifyUnit in a format which depends on the attribute.
+
+    INPUTS
+    NotifyUnit - NotifyUnit object
+    Data - Ptr to a Memory location for the result
+    Attr - ID of the information you request which also defines the format of
+           the returned data structure.
+    o MOUNTATTR_DEVICE
+    o MOUNTATTR_UNIT
+    o MOUNTATTR_DRIVEGEOMETRY
+    o MOUNTATTR_CHANGESTATE
+    o MOUNTATTR_PROTSTATE
+
+    RESULT
+    Status - TRUE for success, FALSE for failure
+
+    SEE ALSO
+    libraries/mount.h
+
+mount.library/MountMountTagList
+
+    NAME
+    MountMountTagList -- Scan/Mount Partitions of a NotifyUnit object (V51)
+
+    SYNOPSIS
+    Status = MountMountTagList(NotifyUnit,Tags)
+
+    ULONG MountMountTagList(void *NotifyUnit,struct TagItem *Tags);
+    ULONG MountMountTags(void *NotifyUnit,...);
+
+    FUNCTION
+    scan and mount the partitions on the drive defined by NotifyUnit.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    Tags    - The Tags you want.
+    o MOUNTATTR_UPDATEUNITCONFIG
+      tells the Mount() to update the DriveGeometry,ProtStates through
+      scsidirect cmds before it tries to scan for any partitions.
+
+    RESULT
+    Status - TRUE or FALSE for failure
+
+    SEE ALSO
+    libraries/mount.h, MountDeleteNotifyUnit(), MountFindNotifyUnitTagList()
+
+mount.library/MountNotifyAll
+
+    NAME
+    MountNotifyAll -- Notify all NotifyUnit entries          (V51)
+
+    SYNOPSIS
+    MountNotifyAll(NotifyUnit,ChangeState)
+
+    void MountNotifyAll(void *NotifyUnit,ULONG ChangeState);
+
+    FUNCTION
+    notifies all NotifyNodes connected to the NotifyUnit. That means it
+    sets the ChangeState and sends a Cause() to the NotifyNode's Interrupt.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    ChangeState - 0 (inserted), -1(notinserted)
+
+    RESULT
+    none
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyUnitTagList()
+
+mount.library/MountNotifySet
+
+    NAME
+    MountNotifySet -- Set NotifyUnit entries's ChangeState      (V51)
+
+    SYNOPSIS
+    MountNotifySet(NotifyUnit,ChangeState)
+
+    void MountNotifySet(void *NotifyUnit,ULONG ChangeState);
+
+    FUNCTION
+    sets the ChangeState in all NotifyNodes connected to the NotifyUnit.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    ChangeState - 0 (inserted), -1(notinserted)
+
+    RESULT
+    none
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyUnitTagList()
+
+mount.library/MountNotifyTask
+
+    NAME
+    MountNotifyTask -- Notify Task NotifyUnit entries          (V51)
+
+    SYNOPSIS
+    MountNotifyTask(NotifyUnit,Task,ChangeState)
+
+    void MountNotifyTask(void *NotifyUnit,struct Task *Task,ULONG ChangeState);
+
+    FUNCTION
+    notifies all NotifyNodes connected to the NotifyUnit from a certain Task.
+    That means it sets the ChangeState and sends a Cause() to the NotifyNode's
+    Interrupt.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    Task        - struct Task *
+    ChangeState - 0 (inserted), -1(notinserted)
+
+    RESULT
+    none
+
+    SEE ALSO
+    libraries/mount.h, MountCreateNotifyUnitTagList()
+
+mount.library/MountUpdateNotifyUnitConfigTagList
+
+    NAME
+    MountUpdateNotifyUnitConfigTagList -- Update the NotifyUnit Drive Config (V51)
+
+    SYNOPSIS
+    Status = MountUpdateNotifyUnitConfigTagList(Tags)
+
+    ULONG MountUpdateNotifyUnitConfigTagList(void *NotifyUnit,struct TagItem *Tags);
+    ULONG MountUpdateNotifyUnitConfigTags(void *NotifyUnit,...);
+
+    FUNCTION
+    try to update the NotifyUnit's Drive parameters. In detail it tries to
+    update the DriveGeometry and ProtStatus informations through MMC scsi direct
+    commands. TotalSectors/ProtStatus/Layout and SectorSize can change during a
+    diskchange and this function tries to help here.
+
+    INPUTS
+    NotifyUnit  - Object created by MountCreateNotifyUnitTagList()
+    Tags    - The Tags you want.
+
+    RESULT
+    Status - TRUE or FALSE for failure
+
+    SEE ALSO
+    libraries/mount.h, MountMountTagList()
+
+

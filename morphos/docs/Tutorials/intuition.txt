@@ -1,0 +1,128 @@
+MorphOS Intuition programming style guide
+©2003 by Jacek Piszczek of MorphOS Development Team
+
+
+INDEX
+
+1. V40 API vs v50
+ 1.1 Differences between APIs
+ 1.2 Unsupported v40 features
+ 1.3 What tricks must be avoided, what gui engine to use on MorphOS
+
+2. Windows and screens
+ 2.1 Window refresh and locks
+ 2.2 DrawInfo extensions
+ 2.3 New WA_ tags
+ 2.4 Skins
+ 2.5 Arranging window border gadgetry
+ 2.6 Screens
+
+1.1 Differences between APIs
+
+    MorphOS intuition is basicly compatible with v40 intuition.library. Except few unsupported functions and
+incompatible internal structures v50 version works almost exactly as v40 one. All the new extensions are
+implemented in a way that doesn't cause any conflicts with v40 API.
+
+1.2 Unsupported v40 features
+
+    Calls that aren't supported at the moment are:
+        - DisplayAlert()
+        - TimedDisplayAlert()
+
+1.3 What tricks must be avoided, what gui engine to use on MorphOS
+
+    Basicly the GUI engines supported are MUI, gadtools/gtlayout, triton and wizard.library. We strongly
+recommend to use MUI in every application. MUI is very stable under intuition v50 and uses all new extensions
+of intuition. Other GUIs work or work partially; Gadtools is only a compatibility layer, trition and wizard have
+some known problems due to tricks used in their source.
+
+    v1.3 style coding is generally forbidden. Creating gadget structures by hand, etc works, but such code
+causes way too much problems and might stop working in future. For custom gadgetry you MUST use BOOPSI objects.
+
+
+2.1  Window refresh and locks
+
+    MorphOS intuition has the same type of windows as v40 intuition. However, the v40 documentation doesn't clearly
+state how apps should handle refreshing.
+
+    We strongly recommend to use SIMPLE REFRESH windows everywhere! They are the fastest windows on MorphOS.
+Do NOT use GZZ (WFLG_GIMMEZEROZERO) windows - they are slower than normal windows!
+
+    Every window, no matter if it's a simple or smart refresh window MUST handle IDCMP_REFRESHWINDOW messages!
+The only exception to this are NOCAREFRESH windows. The minimal way to handle refreshing is:
+
+    case IDCMP_REFRESHWINDOW:
+        BeginRefresh(window);
+        EndReferesh(window,TRUE);
+        break;
+
+    Why is this necessary? That's because every layer has a L->DamageList region, no matter if it's
+a smart or simple refresh layer. On some operations (usualy resize) this region gets filled with
+damaged rectangles - using IDCMP_REFRESHWINDOW ensures that it gets properly flushed and makes layers
+work faster.
+
+    Normal applications don't usualy need any locks (LockIBase, layer locks). We strongly recommend that you do
+NOT use any kind of locking other than BeginRefresh or ObtainGIRPort.
+
+2.2 DrawInfo extensions
+
+    V50 DrawInfo structure was extended with new flags & data. Faking DrawInfo strucure is FORBIDDEN as it leads
+to random crashes. Modifying DrawInfo is FORBIDDEN. Reading DrawInfo's private fields is FORBIDDEN. All new
+attributes of DrawInfo can be accessed using GetDrawInfoAttr call. Please refer to autodoc for more details.
+
+2.3  New WA_ tags
+
+    V50 offers few new WA_ tags usable with OpenWindowTags.
+
+    WA_ExtraTitlebarGadgets
+    WA_ExtraGadget_*
+
+    Those tags place standard iconify, menu, snapshot gadgets on window border. This is the ONLY way
+to get system friendly buttons on window border. Do NEVER put custom gadgets on window border! For more information
+see intuition/extensions.h file.
+
+    WA_SkinInfo
+
+    Pass this flag (ti_Data is ignored) if your application doesn't use any positioning tricks. If you need to
+know any window dimension BEFORE you call OpenWindow you MUST use GetSkinInfoAttr instead of performing broken
+calculations relying on struct Screen contents, etc. After you open the window you should read all dimensions from
+struct Window. Using WA_SkinInfo *disables* all intuition hacks to make old apps look nice. It is strongly
+recommended that you use this switch!
+
+    For explanation of WA_TransparentRegion* tags please look into intuition/TransparencyControl autodoc and
+intuition/extensions.h
+
+    WA_UserPort allows you to set own userport when opening the window. Please read the notes in intuition/extensions.h!
+
+2.4 Skins
+
+    V50 Intuition offers a completly new look & feeling when compared to v40. In order to make your apps look nice
+with every skin please respect the guidelines above, especially the ones from point 2.5.
+
+    The most important thing is to read GetSkinInfoAttr autodoc carefully and use it whenever it's possible.
+All skins are based on DrawInfo structure. Please use GetDrawInfoAttr whenever it's possible.
+
+2.5 Arranging window border gadgetry
+
+    Basicly you only have to care about placing scrollbar and arrows in your window - "function" gadgets are
+placed there by intuition. It is FORBIDDEN to place ANY other gadgets on window borders as it destroys the
+border look with skins.
+
+    In order to correctly place a proportional gadget in a window border you should get it's size using
+GetSkinInfoAttr. SI_RightPropWidth and SI_BottomPropHeight will tell you the exact size you should use.
+If you want your gadget to be sticked to, say, bottom border you should use something like:
+
+    GA_RelBottom, - GetSkinInfoAttr(dri,SI_BottomPropHeight, 0) - 1,
+
+    In order to place arrows correctly PLEASE do NOT force own sizes when creating Image objects. Do NOT
+pass the size at all and intuition will set a correct size. Get the size using GetAttr and use it to create
+button objects and layouting. Please note that for best visual result the arrows should be sticked to each other
+and to size gadget (no extra space between them). In order to know how to place arrows correctly next to the size
+gadget, please use GetSkinInfoAttr call with attrs SI_BorderRightSize, SI_BorderBottomSize.
+
+2.6 Screens
+
+    You MUST NOT modify screen's DrawInfo in ANY way. In order to make your application independant from
+screen's palette please take a look at graphics/rpattr.h and use directcolor functions (RPTAG_FgColor, etc).
+This is especially important with public screens - the palette you pass during OpenScreen WILL BE IGNORED
+on such screens.

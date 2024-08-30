@@ -1,0 +1,253 @@
+TABLE OF CONTENTS
+
+query.library/QueryCreatePathNode
+query.library/QueryDeletePathNode
+query.library/QueryGetAttr
+query.library/QueryGetDeviceAttr
+query.library/QueryGetFileSysEntryAttr
+query.library/QueryGetLibraryAttr
+query.library/QueryGetResidentAttr
+query.library/QueryObtainTagList
+query.library/QueryRelease
+query.library/QueryCreatePathNode
+
+    NAME
+    QueryCreatePathNode -- Add a search path           (V51)
+
+    SYNOPSIS
+    PathNode = QueryCreatePathNode(Path,Pattern,Flags)
+
+    void *QueryCreatePathNode(char *Path,char *Pattern,ULONG Flags);
+
+    FUNCTION
+    add a global search path with specific patterns to the query search engine.
+
+    INPUTS
+    Path    - Path of a searchdir. For example libs:
+    Pattern - optional pattern for the searchdir entries.
+    Flags   - Specific flags for the path entry.
+     o QUERYPATHFLAGF_ALL
+       defines the scan to be recursive
+     o QUERYPATHFLAGF_DONTFOLLOWSOFTLINKS
+       defines the scan to not follow soft links
+
+    RESULT
+    PathNode - Path object for QueryDeletePathNode()
+
+    SEE ALSO
+    QueryDeletePathNode(), libraries/query.h
+
+query.library/QueryDeletePathNode
+
+    NAME
+    QueryDeletePathNode -- Remove a search path          (V51)
+
+    SYNOPSIS
+    void QueryDeletePathNode(PathNode)
+
+    void QueryDeletePathNode(void *PathNode);
+
+    FUNCTION
+    remove a global search path.
+
+    INPUTS
+    PathNode - Object which was returned from QueryCreatePathNode()
+
+    SEE ALSO
+    QueryCreatePathNode(), libraries/query.h
+
+query.library/QueryGetAttr
+
+    NAME
+    QueryGetAttr -- Get Query Attributes           (V51)
+
+    SYNOPSIS
+    Status = QueryGetAttr(QueryInfo,Data,Attr)
+
+    ULONG QueryGetAttr(void *QueryInfo,APTR Data,ULONG Attr);
+
+    FUNCTION
+    returns info from a query object in a format which depends on the attribute.
+
+    INPUTS
+    QueryInfo - Ptr to a QueryObject
+    Data - Ptr to a Memory location for the result
+    Attr - ID of the information you request which also defines the format of
+           the returned data structure.
+
+    RESULT
+    Status - TRUE for success, FALSE for failure
+
+    SEE ALSO
+    libraries/query.h
+
+query.library/QueryGetDeviceAttr
+
+    NAME
+    QueryGetDeviceAttr -- Get Query Attributes from a Device   (V51)
+
+    SYNOPSIS
+    Status = QueryGetDeviceAttr(Device,Data,Attr)
+
+    ULONG QueryGetDeviceAttr(struct Device *,APTR Data,ULONG Attr);
+
+    FUNCTION
+    returns info from a Device in a format which depends on the attribute.
+
+    INPUTS
+    Device - Device Ptr
+    Data - Ptr to a Memory location for the result
+    Attr - ID of the information you request which also defines the format of
+           the returned data structure.
+
+    RESULT
+    Status - TRUE for success, FALSE for failure
+
+    SEE ALSO
+    QueryGetAttr(), libraries/query.h
+
+query.library/QueryGetFileSysEntryAttr
+
+    NAME
+    QueryGetFileSysEntryAttr -- Get Query Attributes from a FileSysEntry  (V51)
+
+    SYNOPSIS
+    Status = QueryGetFileSysEntryAttr(FileSysEntry,Data,Attr)
+
+    ULONG QueryGetFileSysEntryAttr(struct FileSysEntry *,APTR Data,ULONG Attr);
+
+    FUNCTION
+    returns info from a FileSysEntry in a format which depends on the attribute.
+
+    INPUTS
+    FileSysEntry - FileSysEntry Ptr
+    Data - Ptr to a Memory location for the result
+    Attr - ID of the information you request which also defines the format of
+           the returned data structure.
+
+    RESULT
+    Status - TRUE for success, FALSE for failure
+
+    SEE ALSO
+    QueryGetAttr(), libraries/query.h, resources/filesysres.h
+
+query.library/QueryGetLibraryAttr
+
+    NAME
+    QueryGetLibraryAttr -- Get Query Attributes from a Library   (V51)
+
+    SYNOPSIS
+    Status = QueryGetLibraryAttr(Library,Data,Attr)
+
+    ULONG QueryGetLibraryAttr(struct Library *,APTR Data,ULONG Attr);
+
+    FUNCTION
+    returns info from a library in a format which depends on the attribute.
+
+    INPUTS
+    Library - Library Ptr
+    Data - Ptr to a Memory location for the result
+    Attr - ID of the information you request which also defines the format of
+           the returned data structure.
+
+    RESULT
+    Status - TRUE for success, FALSE for failure
+
+    SEE ALSO
+    QueryGetAttr(), libraries/query.h
+
+query.library/QueryGetResidentAttr
+
+    NAME
+    QueryGetResidentAttr -- Get Query Attributes from a Resident   (V51)
+
+    SYNOPSIS
+    Status = QueryGetResidentAttr(Resident,Data,Attr)
+
+    ULONG QueryGetResidentAttr(struct Resident *,APTR Data,ULONG Attr);
+
+    FUNCTION
+    returns info from a Resident in a format which depends on the attribute.
+
+    INPUTS
+    Resident - Resident Ptr
+    Data - Ptr to a Memory location for the result
+    Attr - ID of the information you request which also defines the format of
+           the returned data structure.
+
+    RESULT
+    Status - TRUE for success, FALSE for failure
+
+    SEE ALSO
+    QueryGetAttr(), libraries/query.h
+
+query.library/QueryObtainTagList
+
+    NAME
+    QueryObtainTagList -- Obtain a Query Object           (V51)
+
+    SYNOPSIS
+    QueryObject = QueryObtainTagList(QueryInfoData,Tags)
+
+    void *QueryObtainTagList(void *QueryInfo,struct TagList*);
+    void *QueryObtainTags(void *QueryInfo,...);
+
+    FUNCTION
+    is used to obtain a query object by searching them through the provided
+    find patterns.
+
+    INPUTS
+    QueryInfo - Ptr to a previous QueryObject or NULL.
+                You usually pass a valid QueryObject here, when you're scanning
+                through a list of queryobjects. The QueryObject is also released
+            afterwards. You only need to release the last one in a row when
+                you found the entry which interests you and you exit the loop.
+
+    Tags      - Tags which describe the search pattern
+     o QUERYFINDATTR_FILTERHOOK
+       used to install some filter hook so you can do more specific filtering
+       than with attributes
+     o QUERYFINDATTR_PATHTABLE
+       defines a special search pathtable than depend on the global search table.
+     o QUERYFINDATTR_NAME
+       search for queryobjects which match the specified name
+     o QUERYFINDATTR_TYPE
+       search for queryobjects which match the specified type
+     o QUERYFINDATTR_SUBTYPE
+       search for queryobjects which match the specified subtype
+     o QUERYFINDATTR_CLASS
+       search for queryobjects which match the specified class
+     o QUERYFINDATTR_SUBCLASS
+       search for queryobjects which match the specified subclass
+     o QUERYFINDATTR_PCIMATCH
+       search for queryobjects which match the specified pci match structure which
+       the ti_Data points to.
+
+    RESULT
+    QueryInfo - Query Object or NULL.
+
+
+    SEE ALSO
+    libraries/query.h
+
+query.library/QueryRelease
+
+    NAME
+    QueryRelease -- Release a Query Object           (V51)
+
+    SYNOPSIS
+    QueryRelease(QueryInfo)
+
+    void QueryRelease(void *QueryInfo);
+
+    FUNCTION
+    releases a QueryObject, so it can expunged when required.
+    After obtaining a QueryObject you must release it at the end.
+
+    INPUTS
+    QueryInfo - Ptr to a QueryObject
+
+    SEE ALSO
+    libraries/query.h
+
+

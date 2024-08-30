@@ -1,0 +1,670 @@
+This document was generated from the AROS APL-Licensed source code. The
+information contained in it might be errorneous or inacurate. When in
+doubt, please verify with another documentation set.
+
+TABLE OF CONTENTS
+
+gadtools.library/CreateContext
+gadtools.library/CreateGadgetA
+gadtools.library/CreateMenusA
+gadtools.library/DrawBevelBoxA
+gadtools.library/FreeGadgets
+gadtools.library/FreeMenus
+gadtools.library/FreeVisualInfo
+gadtools.library/GT_BeginRefresh
+gadtools.library/GT_EndRefresh
+gadtools.library/GT_FilterIMsg
+gadtools.library/GT_GetGadgetAttrsA
+gadtools.library/GT_GetIMsg
+gadtools.library/GT_PostFilterIMsg
+gadtools.library/GT_RefreshWindow
+gadtools.library/GT_ReplyIMsg
+gadtools.library/GT_SetGadgetAttrsA
+gadtools.library/GetVisualInfoA
+gadtools.library/LayoutMenuItemsA
+gadtools.library/LayoutMenusA
+gadtools.library/CreateContext
+
+   NAME
+    CreateContext -- 
+
+   SYNOPSIS
+    CreateContext(glistpointer)
+    struct Gadget * CreateContext(struct Gadget **);
+
+   FUNCTION
+        Creates a virtual first gadget to which all following gadgets must be
+        linked.
+
+   INPUTS
+        glistpointer - pointer to a pointer to the virtual gadget. Use the
+                       gadget pointer as NewWindow->FirstGadget or in
+                       AddGList(). The gadget pointer must be initialized
+                       to NULL before CreateContext() is called.
+
+   RESULT
+        A point to the first gadget or NULL, if there was an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/CreateGadgetA
+
+   NAME
+    CreateGadgetA -- 
+
+   SYNOPSIS
+    CreateGadgetA(kind, previous, ng, taglist)
+    struct Gadget * CreateGadgetA(ULONG, struct Gadget *, struct NewGadget *, struct TagItem *);
+
+   FUNCTION
+        Creates a gadtools gadget.
+
+   INPUTS
+
+        kind -     Kind of gadget. See <libraries/gadtools.h> for a list of
+                   all possible kinds.
+    previous - Pointer to the previous gadget in gadget-list. Create the
+           first "gadget" with CreateContext(). This may be NULL, in
+           which case CreateGadgetA() fails.
+        ng -       Pointer to struct NewGadget. See <libraries/gadtools.h>.
+        taglist -  Additional tags. See <libraries/gadtools.h>.
+
+   RESULT
+        A pointer to a gadget or NULL to indicate an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        CreateContext(), FreeGadgets(), <libraries/gadtools.h>
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/CreateMenusA
+
+   NAME
+    CreateMenusA -- 
+
+   SYNOPSIS
+    CreateMenusA(newmenu, tagList)
+    struct Menu * CreateMenusA(struct NewMenu *, struct TagItem *);
+
+   FUNCTION
+    CreateMenusA() creates a complete menu or parts of a menu.
+
+   INPUTS
+    newmenu - pointer to struct NewMenu
+    taglist - additional tags
+
+   RESULT
+    A pointer to a menu structure.
+
+   NOTES
+    CreateMenusA() stores no position information in the menu structure.
+    You need to call LayoutMenusA() to retrieve them.
+    The strings supplied for the menu are not copied into a private
+    buffer. Therefore they must be preserved, until FreeMenus() was
+    called.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FreeMenus(), LayoutMenusA()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/DrawBevelBoxA
+
+   NAME
+    DrawBevelBoxA -- 
+
+   SYNOPSIS
+    DrawBevelBoxA(rport, left, top, width, height, taglist)
+    void DrawBevelBoxA(struct RastPort *, WORD, WORD, WORD, WORD, struct TagItem *);
+
+   FUNCTION
+    DrawBevelBoxA() does just that. It draws a bevelled box.
+
+   INPUTS
+    rport   - rastport, in which the box should be drawn
+    left    - left edge of the box
+    top     - top edge of the box
+    width   - width of the box
+    height  - height og the box
+    taglist - additional tags
+
+   RESULT
+
+   NOTES
+    Boxes drawn with DrawBevelBox() aren't refreshed automatically.
+    You have to refresh them yourself.
+    DrawBevelBoxA() might modify the rastport to guarantee fast drawing.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/FreeGadgets
+
+   NAME
+    FreeGadgets -- 
+
+   SYNOPSIS
+    FreeGadgets(glist)
+    VOID FreeGadgets(struct Gadget *);
+
+   FUNCTION
+    Frees all gadtools gadgets in a linked list of gadgets.
+
+   INPUTS
+    glist - pointer to the first gadget to be freed, may be NULL.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CreateGadgetA()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/FreeMenus
+
+   NAME
+    FreeMenus -- 
+
+   SYNOPSIS
+    FreeMenus(menu)
+    VOID FreeMenus(struct Menu *);
+
+   FUNCTION
+    Frees the menus allocated by CreateMenusA().
+
+   INPUTS
+    menu - pointer to the menu (or first MenuItem) to be freed, may be NULL.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CreateMenusA()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/FreeVisualInfo
+
+   NAME
+    FreeVisualInfo -- 
+
+   SYNOPSIS
+    FreeVisualInfo(vi)
+    void FreeVisualInfo(APTR);
+
+   FUNCTION
+    FreeVisualInfo() frees a visual info structure created with
+    GetVisualInfo().
+
+   INPUTS
+    vi - the visual info structure to free, may be NULL.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GetVisualInfo()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_BeginRefresh
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(win)
+    void GT(struct Window *);
+
+   FUNCTION
+    Refreshes the given window. This function must be used instead
+    of BeginRefresh(), if gadtools-gadgets are used. When you are
+    finished with refreshing the window, you must call GT_EndRefresh().
+
+   INPUTS
+    win - window to refresh
+
+   RESULT
+
+   NOTES
+    Due to the internal structure of gadtools, it is not possible
+    to use WFLG_NOCAREREFRESH with windows, which use gadtools-
+    gadgets.
+    You should simple rendering functions between GT_BeginRefresh() and
+    GT_EndRefresh() only. Do not render or change any gadgets.
+
+   EXAMPLE
+    case IDCMP_REFRESHWINDOW:
+        GT_BeginRefresh(mywin);
+        GT_EndRefresh(mywin, TRUE);
+
+   BUGS
+
+   SEE ALSO
+    GT_EndRefresh(), intuition.library/BeginRefresh()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_EndRefresh
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(win, complete)
+    void GT(struct Window *, BOOL);
+
+   FUNCTION
+        GT_EndRefresh() must be called, when a refresh initiated with
+        GT_BeginRefresh() is done.
+
+   INPUTS
+        win      - the refreshed window
+        complete - TRUE, if refreshing is finished
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        GT_BeginRefresh(), intuition.library/EndRefresh()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_FilterIMsg
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(imsg)
+    struct IntuiMessage * GT(struct IntuiMessage *);
+
+   FUNCTION
+    Processes an intuition message. Normally, you should not use this
+    function and call GT_GetIMsg() instead. If this functions returns
+    with a value != NULL, you have to call GT_PostFilterIMsg(), when
+    you are done with processing the message. If it return a NULL
+    pointer, you have to ReplyMsg() the message, you passed to
+    GT_FilterIMsg().
+
+   INPUTS
+    imsg - pointer to the intuition message to process
+
+   RESULT
+    Either a pointer to a processed intuition message or NULL, in which
+    case the message had only meaning to gadtools.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GT_PostFilterIMsg(), GT_GetIMsg(), intuition.library/ReplyMsg()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_GetGadgetAttrsA
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(gad, win, req, taglist)
+    LONG GT(struct Gadget *, struct Window *, struct Requester *, struct TagItem *);
+
+   FUNCTION
+        Get a list of attributes from a specific gadget.
+
+   INPUTS
+        gad -     the gadget from which to get attributes
+    win -     the window, in which the gadget is
+    req -     the requester, in which the gadget is, or NULL
+    taglist - the list of attributes to get. ti_Tag specifies the attribute
+              and ti_Data is a pointer to an IPTR, where the data is to be
+              stored
+
+   RESULT
+    The number of attributes, which were filled correctly.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        GT_SetGadgetAttrsA(), intuition.library/GetAttr()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_GetIMsg
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(intuiport)
+    struct IntuiMessage * GT(struct MsgPort *);
+
+   FUNCTION
+        You must use this function instead of exec.library/GetMsg() to get
+        messages from a window, if you are using gadtools gadgets. After you
+        are done with reading the message, you have to call GT_ReplyIMsg().
+
+   INPUTS
+        intuiport - UserPort of the window
+
+   RESULT
+        A pointer to a message or NULL, if there was no message or the messages
+        had only a meaning to gadtools.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        GT_ReplyIMsg(), exec.library/GetMsg()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_PostFilterIMsg
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(modimsg)
+    struct IntuiMessage * GT(struct IntuiMessage *);
+
+   FUNCTION
+    Restores an intuition message formerly changed with GT_FilterIMsg().
+
+   INPUTS
+    modimsg - The message returned from GT_FilterIMsg(). May be NULL.
+
+   RESULT
+    The original intuition message or NULL, if NULL was passed in.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        GT_FilterIMsg()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_RefreshWindow
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(win, req)
+    void GT(struct Window *, struct Requester *);
+
+   FUNCTION
+    You have to call this function as soon as a window containing
+    gadtools gadgets was opened or after you have performed a
+    RefreshGList().
+
+   INPUTS
+        win - Window to refresh.
+    req - Not used. Provide NULL for now.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_ReplyIMsg
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(imsg)
+    void GT(struct IntuiMessage *);
+
+   FUNCTION
+        Replies a message gotten via GT_GetIMsg().
+
+   INPUTS
+        imsg - The message to reply.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+        GT_GetIMsg(), exec.library/ReplyMsg()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GT_SetGadgetAttrsA
+
+   NAME
+    GT -- 
+
+   SYNOPSIS
+    GT(gad, win, req, tagList)
+    void GT(struct Gadget *, struct Window *, struct Requester *, struct TagItem *);
+
+   FUNCTION
+        Change the attribute of the given gadget according to the
+        attributes chosen in the tag list. If an attribute is not
+        provided in the tag list, its value remains unchanged.
+
+   INPUTS
+    gad -     Gadget, for which the specified attributes should be set for.
+    win -     Window, in which the gadget is.
+    req -     Not used. Specify NULL for now.
+    tagList - List of attributes to set.
+
+   RESULT
+    The gadget may be set to the specified attributes.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GT_GetGadgetAttrsA(), intuition.library/SetGadgetAttrsA()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/GetVisualInfoA
+
+   NAME
+    GetVisualInfoA -- 
+
+   SYNOPSIS
+    GetVisualInfoA(screen, tagList)
+    APTR GetVisualInfoA(struct Screen *, struct TagItem *);
+
+   FUNCTION
+    GetVisualInfoA() creates a visual info structure, which is needed
+    by several gadtools functions. When you're done using it, you have
+    to call FreeVisualInfo().
+
+   INPUTS
+    screen -  pointer to the screen to create a visual info structure for
+              (may be NULL)
+    taglist - additional tags (none defined, yet)
+
+   RESULT
+    A (private) visual info structure. NULL indicates an error.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FreeVisualInfo()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/LayoutMenuItemsA
+
+   NAME
+    LayoutMenuItemsA -- 
+
+   SYNOPSIS
+    LayoutMenuItemsA(menuitem, vi, tagList)
+    BOOL LayoutMenuItemsA(struct MenuItem *, APTR, struct TagItem *);
+
+   FUNCTION
+
+   INPUTS
+    menuitem - Menu item to be layouted.
+    vi -       Visual info to layout the menu item for.
+    tagList  - Additional tags.
+
+   RESULT
+    FALSE, if an error occured.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    LayoutMenusA(), GetVisualInfoA()
+
+   INTERNALS
+
+   HISTORY
+
+gadtools.library/LayoutMenusA
+
+   NAME
+    LayoutMenusA -- 
+
+   SYNOPSIS
+    LayoutMenusA(menu, vi, tagList)
+    BOOL LayoutMenusA(struct Menu *, APTR, struct TagItem *);
+
+   FUNCTION
+
+   INPUTS
+    menu -     Menu to be layouted.
+    vi -       Visual info to layout the menu for.
+    tagList  - Additional tags.
+
+   RESULT
+    FALSE, if an error occured.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+      CreateMenusA() LayoutMenuItemsA() GetVisualInfoA()
+
+   INTERNALS
+
+   HISTORY
+
+

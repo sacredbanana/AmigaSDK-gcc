@@ -1,0 +1,131 @@
+TABLE OF CONTENTS
+
+degas.demuxer/MMA_DataFormat
+degas.demuxer/MMA_Video_BitsPerPixel
+degas.demuxer/MMA_Video_FrameCount
+degas.demuxer/MMA_Video_Height
+degas.demuxer/MMA_Video_Palette
+degas.demuxer/MMA_Video_UseAlpha
+degas.demuxer/MMA_Video_Width
+degas.demuxer/MMM_Pull
+degas.demuxer/background
+degas.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V50) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns "Atari Degas" or "Neochrome" string.
+
+degas.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Return number of bits used to represent one pixel in the source data.
+
+degas.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Always return 1.
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+degas.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns height of image in pixels.
+
+degas.demuxer/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [..G.Q], *ULONG
+
+ FUNCTION
+   Specifies image data palette as a table of 32-bit ARGB entries.
+
+degas.demuxer/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Returns always FALSE
+
+degas.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns width of image in pixels.
+
+degas.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   This class does not process image data, it only strips Degas signature,
+   screen descriptor and palette table (if present). Then pull requests are
+   just forwarded to the connected stream.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+degas.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for Atari Degas images. The class
+   performs following tasks:
+   - Degas signature verification
+   - Storing palette table
+
+   The class does not process Degas image stream data.
+
+   Object of degas.demuxer class has two ports: port 0 is an input and
+   accepts MMF_STREAM format, port 1 is an output and produces
+   MMF_VIDEO_DEGAS format.
+
+ NEW ATTRIBUTES
+   MMA_DataFormat              (V51)     [..G.Q], STRPTR
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_Video_Palette           (V51)    [..G.Q], *ULONG
+   MMA_Video_UseAlpha           (V51)    [..G.Q], ULONG
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+ HISTORY
+   51.2  (08.10.2014)
+   - Query.library support
+   51.1  (10.04.2012)
+   - Initial revision.
+
+

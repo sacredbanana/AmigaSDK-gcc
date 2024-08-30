@@ -1,0 +1,700 @@
+TABLE OF CONTENTS
+
+cryptostorage.library/--overview--
+cryptostorage.library/CryptoStorageChangePassphrase
+cryptostorage.library/CryptoStorageClear
+cryptostorage.library/CryptoStorageClose
+cryptostorage.library/CryptoStorageCommit
+cryptostorage.library/CryptoStorageExport
+cryptostorage.library/CryptoStorageFetch
+cryptostorage.library/CryptoStorageFreeKeyArray
+cryptostorage.library/CryptoStorageImport
+cryptostorage.library/CryptoStorageLock
+cryptostorage.library/CryptoStorageOpen
+cryptostorage.library/CryptoStorageQueryKeyArray
+cryptostorage.library/CryptoStorageStore
+cryptostorage.library/CryptoStorageUnlock
+cryptostorage.library/--overview--
+
+   OVERVIEW
+
+    cryptostorage.library implements a file-backed key-value store with
+    encryption. Key names and key value lengths are not encrypted. The key
+    values are encrypted with AES-256 in GCM (Galois/Counter Mode) mode,
+    providing both confidentiality and integrity.
+
+    Data on disk is always kept encrypted (encryption at rest). Data in
+    memory is kept encrypted until it is needed to be decrypted due to
+    a specific operation performed on it (Fetch or Passphrase change).
+    Internally the library wipes the clear text data from memory as soon
+    as it is no longer needed. Caller is recommended to employ similar
+    tactics.
+
+    The encryption key is derived from caller provided passphrase by
+    employing PBKDF2-HMAC key derivation function with a SHA-256 hash
+    function and caller configurable number of rounds (iterations). The
+    default number of rounds is currently 50000. Alternatively a direct
+    32-byte AES-256 encryption key can be provided by the caller.
+
+    The crypto storage can be locked or unlocked. Unlocked state means
+    that the encryption key is in memory, while locked state means that
+    the key is not available. Some operations are only available on
+    unlocked storages.
+
+    CryptoStorageOpen is used to create or open (and potentially unlock) a
+    crypto storage file.
+
+    The following functions are available for both locked and unlocked
+    storage:
+
+    - CryptoStorageClear
+    - CryptoStorageClose
+    - CryptoStorageCommit
+    - CryptoStorageExport
+    - CryptoStorageFreeKeyArray
+    - CryptoStorageImport (unlocked -> locked transition)
+    - CryptoStorageLock (unlocked -> locked transition)
+    - CryptoStorageQueryKeyArray
+    - CryptoStorageUnlock (locked -> unlocked transition)
+
+    The following functions are only available for unlocked storage:
+
+    - CryptoStorageChangePassphrase (re-encrypts key values)
+    - CryptoStorageFetch
+    - CryptoStorageStore
+
+    There are two strategies for pushing file changes to disk: Manual and
+    automated. Manual method is implemented by calling
+    CryptoStorageCommit() function to push changes to disk. Naturally
+    CryptoStorageClose() will also push the changes to disk, too.
+    The automated commit mode instructs the library commit the changes to
+    disk as they are performed to the internal memory buffers.
+
+    In addition to disk backed storages, it is also possible to have
+    in-memory storages that have no file backing. These (and other)
+    storages can be exported to and imported from a memory buffer at will.
+
+    There are no limits to what kind of data can be stored in the key
+    values. The amount of data that can be stored depends on the amount
+    of free memory only. Key fetch and store are very fast, even with
+    very large number of keys (when manual commit mode is used).
+
+    It is important to understand that MorphOS does not provide memory
+    protection, different user privilege levels or other advanced
+    security concepts. As such it would be unwise so use this library
+    to store any highly confidential information whose security is
+    critical for defence, business, finance, health or similar matters.
+
+cryptostorage.library/CryptoStorageChangePassphrase
+
+   NAME
+    CryptoStorageChangePassphrase -- Change the encryption passphrase
+
+   SYNOPSIS
+    rc = CryptoStorageChangePassphrase(ctx, tags)
+    (sysv)
+
+    LONG CryptoStorageChangePassphrase(APTR, Tag, ...);
+    LONG CryptoStorageChangePassphraseA(APTR, struct TagItem *);
+
+   FUNCTION
+    Changes the passphrase used to protect the crypto storage. The crypto
+    storage must be unlocked to change the passphrase. All content in the
+    crypto storage will be reencrypted with the passphrase provided.
+
+   INPUTS
+    ctx  - Pointer to a valid crypto storage context.
+    tags - Pointer to a taglist, or NULL. The following tags are
+           relevant for CryptoStorageChangePassphrase():
+
+    CST_Passphrase (CONST_STRPTR)
+                   - The new passphrase to use. This passphrase is hashed
+                     with PBKDF2 hashing algorithm to produce the
+                     encryption key, unless if CST_RawHexKey tag is
+                     specified. This tag is required for this call.
+
+    CST_OldPassphrase (CONST_STRPTR) (V51.4 and later)
+                   - If specified the old passphrase is verified to be
+                     correct before the operation is allowed to proceed.
+                     This can be used as a security measure to ensure that
+                     malicious users can't just change the passphrase of
+                     the crypto storage.
+
+    CST_RawHexKey (BOOL)
+                   - If set to non-zero, the string specified in
+                     CST_Passphrase and CST_OldPassphrase is a 64
+                     character raw hex key. In this case no PBKDF2 will be
+                     performed. This way the built-in hashing algorithm
+                     can be replaced with a custom method implemented by
+                     the caller.
+
+    CST_HashRounds (ULONG)
+                   - Specify number of PBKDF2 hashing rounds to be
+                     performed. The default value is currently 50000 but
+                     this may change in future versions. Higher values are
+                     more secure but slower.
+
+   RESULT
+    rc - CSS_OK - Operation was successful.
+         CSS_LOCKED - Storage is locked.
+         CSS_BAD_PASSPHRASE - No new passphrase was provided or the old one
+                              was incorrect.
+         CSS_NOMEM - Not enough memory is available.
+
+   SEE ALSO
+    CryptoStorageOpen
+
+cryptostorage.library/CryptoStorageClear
+
+   NAME
+    CryptoStorageClear -- Clear all keys
+
+   SYNOPSIS
+    rc = CryptoStorageClear(ctx)
+    (sysv)
+
+    LONG CryptoStorageClear(APTR);
+
+   FUNCTION
+    Clear all keys in the crypto storage. This operation is successful
+    even on a locked crypto storage.
+
+   INPUTS
+    ctx - Pointer to a valid crypto storage context.
+
+   RESULT
+    rc - CSS_OK - Operation was successful.
+         CSS_IO_ERROR - I/O error occured when writing to disk. This
+                        can only happen if CST_CommitAtStore is TRUE.
+
+   SEE ALSO
+    CryptoStorageStore
+
+cryptostorage.library/CryptoStorageClose
+
+   NAME
+    CryptoStorageClose -- Commit and free crypto storage context
+
+   SYNOPSIS
+    rc = CryptoStorageClose(ctx)
+    (sysv)
+
+    LONG CryptoStorageClose(APTR);
+
+   FUNCTION
+    Commit any pending changes to disk and release the crypto storage
+    context. If there are any I/O errors writing the pending data, the
+    library will roll back to the previous saved state automatically.
+
+    CryptoStorageOpen() CST_CloseRollback tag can be used to alter this
+    behaviour: When specified as FALSE the CryptoStorageClose() will
+    instead report the I/O error to the caller, and will not release
+    the context. This mode has the disadvantage of that if the I/O error
+    doesn't go away the context can never be released either.
+
+   INPUTS
+    ctx - Pointer to a valid crypto storage context.
+
+   RESULT
+    rc - CSS_OK - Operation was successful.
+         CSS_IO_ERROR - I/O error occured when writing to disk (only
+                        returned if the context was opened with
+                        CST_CloseRollback tag set to FALSE).
+
+   BUGS
+    Earlier a persistent disk error could lead to a situation where it was
+    not possible to release the context at all. If this condition was
+    ignored it would lead to leak of the context and all associated
+    resources. This behaviour was changed in v52.5 where the library will
+    now rather roll back to the previous version of the saved file by
+    default. The old behaviour can be restored by specifying
+    CST_CloseRollback to FALSE.
+
+   SEE ALSO
+    CryptoStorageOpen
+
+cryptostorage.library/CryptoStorageCommit
+
+   NAME
+    CryptoStorageCommit -- Commit pending crypto storage changes to disk
+
+   SYNOPSIS
+    rc = CryptoStorageCommit(ctx)
+    (sysv)
+
+    LONG CryptoStorageCommit(APTR);
+
+   FUNCTION
+    Commit any pending crypto srorage changes to disk. If there are no
+    pending changes, nothing is written and CSS_OK is returned.
+
+   INPUTS
+    ctx - Pointer to a valid crypto storage context.
+
+   RESULT
+    rc - CSS_OK - Operation was successful.
+         CSS_IO_ERROR - I/O error occured when writing to disk. This error
+                        is also returned if commit of memory only store is
+                        attempted.
+
+   SEE ALSO
+    CryptoStorageOpen
+
+cryptostorage.library/CryptoStorageExport
+
+   NAME
+    CryptoStorageExport -- Export crypto storage to a memory buffer
+
+   SYNOPSIS
+    rc = CryptoStorageExport(ctx, buffer, bufsize)
+    (sysv)
+
+    LONG CryptoStorageExport(APTR, APTR, ULONG *);
+
+   FUNCTION
+    Exports the entire crypto storage (in encrypted form) to a memory
+    buffer. Works on both locked and unlocked crypto storage.
+
+   INPUTS
+    ctx     - Pointer to a valid crypto storage context.
+    buffer  - Buffer to store crypto storage to, or NULL to query the
+              total crypto storage size.
+    bufsize - Pointer to size. If 'buffer' is NULL the current size of the
+              crypto storage is stored here. If 'buffer' is non-NULL, then
+              it specifies the size of the available storage pointed by
+              'buffer'. Upon successful export the actual number of
+              bytes exported is stored to 'bufsize'.
+
+   RESULT
+    rc - CSS_OK - Operation was successful. Actual size of the exported
+                  crypto storage is stored to 'bufsize'.
+
+    EXAMPLE
+    ULONG bufsize;
+    LONG rc = CryptoStorageExport(storagectx,
+                                  NULL, &bufsize);
+    if (rc == CSS_OK)
+    {
+            UBYTE *buf = AllocVec(bufsize, MEMF_ANY);
+            rc = CryptoStorageExport(storagectx,
+                                    buf, &bufsize);
+            if (rc == CSS_OK)
+            {
+                    /* ... */
+            }
+            FreeVec(buf);
+    }
+
+   SEE ALSO
+    CryptoStorageImport
+
+cryptostorage.library/CryptoStorageFetch
+
+   NAME
+    CryptoStorageFetch -- Get key value
+
+   SYNOPSIS
+    rc = CryptoStorageFetch(ctx, key, value, valsize)
+    (sysv)
+
+    LONG CryptoStorageStore(APTR, CONST_STRPTR, UBYTE *, ULONG *);
+
+   FUNCTION
+    Get the specified key value. Specifying value as NULL can be used to
+    query the current value size.
+
+   INPUTS
+    ctx     - Pointer to a valid crypto storage context.
+    key     - Key name.
+    value   - Buffer to store value to, or NULL to query the key value
+              size.
+    valsize - Pointer to size. If 'value' is NULL the current size of the
+              key value is stored here. If 'value' is non-NULL, then it
+              specifies the size of the available storage pointed by
+              'value'. Upon successful retrieval the actual number of
+              bytes fetched is stored to 'valsize'.
+
+   RESULT
+    rc - CSS_OK - Operation was successful. Actual size of the key value
+                  is stored to 'valsize'.
+         CSS_LOCKED - Storage is locked.
+         CSS_NOKEY - Key name was not specified or is empty, or key
+                     was not found.
+         CSS_BUFFER_OVERFLOW - Not enough storage was provided for
+                               fetching the data.
+
+    EXAMPLE
+    ULONG valsize;
+    LONG rc = CryptoStorageFetch(storagectx, "mykey",
+                                 NULL, &valsize);
+    if (rc == CSS_OK)
+    {
+            UBYTE *value = AllocVec(valsize, MEMF_ANY);
+            rc = CryptoStorageFetch(storagectx, "mykey",
+                                    value, &valsize);
+            if (rc == CSS_OK)
+            {
+                    /* ... */
+            }
+            FreeVec(value);
+    }
+
+   SEE ALSO
+    CryptoStorageStore
+
+cryptostorage.library/CryptoStorageFreeKeyArray
+
+   NAME
+    CryptoStorageFreeKeyArray -- Free an array of existing keys
+
+   SYNOPSIS
+    CryptoStorageFreeKeyArray(ctx, array)
+    (sysv)
+
+    VOID CryptoStorageFreeKeyArray(APTR, STRPTR *);
+
+   FUNCTION
+    Releases the array returned by previous call to
+    CryptoStorageQueryKeyArray().
+
+   INPUTS
+    ctx   - Pointer to a valid crypto storage context.
+    array - array returned by CryptoStorageQueryKeyArray().
+
+   RESULT
+
+   EXAMPLES
+
+   SEE ALSO
+    CryptoStorageQueryKeyArray
+
+cryptostorage.library/CryptoStorageImport
+
+   NAME
+    CryptoStorageImport -- Import crypto storage from memory buffer
+
+   SYNOPSIS
+    rc = CryptoStorageImport(ctx, buf, bufsize)
+    (sysv)
+
+    LONG CryptoStorageStore(APTR, CONST_APTR, ULONG);
+
+   FUNCTION
+    Imports a crypto storage from a given memory buffer. If successful
+    all old contents of the crypto storage are removed and replaced with
+    the imported content. Afterwards the storage will appear as locked.
+
+   INPUTS
+    ctx     - Pointer to a valid crypto storage context.
+    buf     - Pointer to buffer to import from.
+    bufsize - Size of the buffer to import from.
+
+   RESULT
+    rc - CSS_OK - Operation was successful.
+         CSS_NOMEM - Not enough memory is available.
+         CSS_IO_ERROR - I/O error occured when writing to disk. This
+                        can only happen if CST_CommitAtStore is TRUE.
+
+   SEE ALSO
+    CryptoStorageExport
+
+cryptostorage.library/CryptoStorageLock
+
+   NAME
+    CryptoStorageLock -- Lock the crypto storage
+
+   SYNOPSIS
+    CryptoStorageLock(ctx)
+    (sysv)
+
+    void CryptoStorageLock(APTR);
+
+   FUNCTION
+    Locks the crypto storage by wiping the encryption key in memory.
+
+    At this stage the stored data cannot be accessed again unless if the
+    correct passphrase (and thus encryption key) is provided again.
+
+   INPUTS
+    ctx - Pointer to a valid crypto storage context.
+
+   RESULT
+
+   EXAMPLES
+    CryptoStorageLock(storagectx);
+
+   SEE ALSO
+    CryptoStorageOpen, CryptoStorageUnlock
+
+cryptostorage.library/CryptoStorageOpen
+
+   NAME
+    CryptoStorageOpen -- Open existing or create a new crypto storage
+
+   SYNOPSIS
+    ctx = CryptoStorageOpen(tags)
+    (sysv)
+
+    APTR CryptoStorageOpenA(struct TagItem *);
+    APTR CryptoStorageOpen(Tag, ...);
+
+   FUNCTION
+    Open an existing crypto strorage or create a new one.
+
+   INPUTS
+    tags - Pointer to a taglist, or NULL. The following tags are
+           relevant for CryptoStorageOpen():
+
+    CST_FileName (CONST_STRPTR)
+                   - A string specifying the storage file path. The
+                     storage is saved to this location when committed on
+                     disk. If no file name is provided the store will
+                     remain in memory only.
+
+    CST_Passphrase (CONST_STRPTR)
+                   - A passphrase used to unlock the storage (existing
+                     file) or to encrypt future stored content. This
+                     passphrase is hashed with PBKDF2 hashing algorithm to
+                     produce the encryption key, unless if CST_RawHexKey
+                     tag is specified. Omitting the tag or passing a NULL
+                     value means that the store will remain locked until
+                     opened with CryptoStorageUnlock() call.
+
+    CST_RawHexKey (BOOL)
+                   - If set to non-zero, the string specified in
+                     CST_Passphrase is a 64 character raw hex key. In this
+                     case no PBKDF2 hashing will be performed. This way
+                     the built-in hashing algorithm can be replaced with a
+                     custom method implemented by the caller.
+
+    CST_FailIfMissing (BOOL)
+                   - If set to TRUE the function will return an error if
+                     the storage file doesn't already exist.
+
+    CST_CreateNew (BOOL)
+                   - If set to TRUE wipe the storage empty if it already
+                     exists.
+
+    CST_CommitAtStore (BOOL)
+                   - If set to TRUE the storage file is automatically
+                     written to disk on each CryptoStorageStore() call. If
+                     this tag is omitted or set to FALSE the file is only
+                     written at CryptoStorageCommit() and
+                     CryptoStorageClose().
+
+    CST_HashRounds (ULONG)
+                   - Specify number of PBKDF2 hashing rounds to be
+                     performed. The default value is currently 50000 but
+                     this may change in future versions. Higher values are
+                     more secure but slower. This tag is only applicabple
+                     if a new crypto storage is created, else the number
+                     of rounds is fetched from the existing file.
+
+    CST_CloseRollback. (BOOL) (V52.5 and later)
+                   - If set to TRUE CryptoStorageClose() will quietly roll
+                     back the crypto store if it cannot be written to disk
+                     and no error will be reported. Setting this tag to
+                     FALSE restores the older strategy of returning the
+                     I/O error to the caller and not releasing the context.
+                     Defaults to TRUE.
+
+   RESULT
+    ctx - Pointer to a crypto storage context or NULL if error occurred.
+
+   NOTE
+    This function does not check if the passphrase given in CST_Passphrase
+    (and the resulting encryption key) is a correct one. This checking is
+    only performed when actual decryption operation is performed with
+    CryptoStorageFetch(). If such checking is needed this can be achieved
+    by storing a empty value ("") to some fixed key at storage creation
+    time and attempting to fetch it after unlocking. If this fetch fails
+    with CSS_BAD_PASSPHRASE the provided passphrase was an incorrect one.
+
+    This function can take considerable time to execute due to the
+    passphrase PBKDF2 hashing.
+
+   EXAMPLES
+    APTR storagectx;
+    storagectx = CryptoStorageOpen(CST_FileName, (IPTR) "work:secret.cs",
+                                   CST_Passphrase, (IPTR) pass,
+                                   TAG_DONE);
+    if (storagectx)
+    {
+            UBYTE dummy[1];
+            ULONG dummysize = sizeof(dummy);
+            LONG rc = CryptoStorageFetch(storagectx, "__passcheck__",
+                                         dummy, &dummysize);
+            if (rc == CSS_BAD_PASSPHRASE)
+            {
+                    Printf("Incorrect passphrase was given\n");
+            }
+            else if (rc == CSS_NOKEY)
+            {
+                    /* It's a new store so add the key. */
+                    rc = CryptoStorageStore(storagectx, "__passcheck__",
+                                            "", 0);
+            }
+            if (rc == CSS_OK)
+            {
+                    /* ... */
+            }
+
+            /*
+             * This loop is required for pre-52.5 cryptostorage.library
+             * to avoid leaking resources in case of I/O errors. Newer
+             * library versions default to quiet rollback instead and
+             * CSS_OK is always returned.
+             */
+            while (CryptoStorageClose(storagectx) != CSS_OK))
+            {
+                   Printf("Failed to commit to disk - Retry...\n");
+                   Delay(50);
+            }
+    }
+
+   SEE ALSO
+    CryptoStorageClose, CryptoStorageLock, CryptoStorageUnlock
+
+cryptostorage.library/CryptoStorageQueryKeyArray
+
+   NAME
+    CryptoStorageQueryKeyArray -- Query an array of existing keys
+
+   SYNOPSIS
+    array = CryptoStorageQueryKeyArray(ctx)
+    (sysv)
+
+    STRPTR *CryptoStorageQueryKeyArray(APTR);
+
+   FUNCTION
+    Queries the crypto storage for a list of currently existing keys. The
+    keys are returned in no particular order.
+
+   INPUTS
+    ctx - Pointer to a valid crypto storage context.
+
+   RESULT
+    array - NULL terminated array of string pointers or NULL if out of
+            memory. The returned array must be released with
+            CryptoStorageFreeKeyArray().
+
+   NOTE
+    The returned array and the strings in it must not be modified in any
+    way.
+
+   EXAMPLES
+    STRPTR *array = CryptoStorageQueryKeyArray(storagectx);
+    if (array)
+    {
+            LONG i;
+            for (i = 0; array[i]; i++)
+                    Printf("key[%ld]: %s\n", i, array[i]);
+
+            CryptoStorageFreeKeyArray(array);
+    }
+
+   SEE ALSO
+    CryptoStorageFreeKeyArray
+
+cryptostorage.library/CryptoStorageStore
+
+   NAME
+    CryptoStorageStore -- Set key value
+
+   SYNOPSIS
+    rc = CryptoStorageStore(ctx, key, value, valsize)
+    (sysv)
+
+    LONG CryptoStorageStore(APTR, CONST_STRPTR, CONST_STRPTR, ULONG);
+
+   FUNCTION
+    Set key to specified value. Specifying value as NULL removes the
+    key.
+
+   INPUTS
+    ctx     - Pointer to a valid crypto storage context.
+    key     - Key name. Maximum key name length is about 64KB.
+    value   - Data to store. Can be any data, including binary.
+    valsize - Size of the data to store in bytes. The size is limited by
+              amount of free memory.
+
+   RESULT
+    rc - CSS_OK - Operation was successful.
+         CSS_LOCKED - Storage is locked.
+         CSS_NOKEY - Key name was not specified or is empty, or key
+                     was not found when attempting to remove it with
+                     NULL value.
+         CSS_BUFFER_OVERFLOW - Key name is too long or value size is
+                               too large.
+         CSS_IO_ERROR - I/O error occured when writing to disk. This
+                        can only happen if CST_CommitAtStore is TRUE.
+
+   SEE ALSO
+    CryptoStorageFetch
+
+cryptostorage.library/CryptoStorageUnlock
+
+   NAME
+    CryptoStorageUnlock -- Unlock the crypto storage
+
+   SYNOPSIS
+    rc = CryptoStorageUnlock(ctx, tags)
+    (sysv)
+
+    LONG CryptoStorageUnlockA(APTR, struct TagItem *);
+    LONG CryptoStorageUnlock(APTR, Tag, ...);
+
+   FUNCTION
+    Unlocks the crypto storage with a passphrase or RAW hex key.
+
+   INPUTS
+    ctx  - Pointer to a valid crypto storage context.
+    tags - Pointer to a taglist, or NULL. The following tags are
+           relevant for CryptoStorageUnlock():
+
+    CST_Passphrase (CONST_STRPTR)
+                   - A passphrase used to unlock the storage. This
+                     passphrase is hashed with PBKDF2 hashing algorithm to
+                     produce the encryption key, unless if CST_RawHexKey
+                     tag is specified. Omitting the tag or passing a NULL
+                     value locks the storage instead.
+
+    CST_RawHexKey (BOOL)
+                   - If set to non-zero, the string specified in
+                     CST_Passphrase is a 64 character raw hex key. In this
+                     case no PBKDF2 hashing is performed. This way the
+                     built-in hashing algorithm can be replaced with a
+                     custom method implemented by the caller.
+
+   RESULT
+    rc - CSS_OK - Operation was successful. Note that this does not mean
+                  that the resulting key is necessarily the correct one!
+         CSS_BAD_PASSPHRASE - Invalid hex string was passed when
+                              CST_RawHexKey is used.
+         CSS_NOMEM - Not enough memory is available.
+
+   NOTE
+    This function does not check if the passphrase given in CST_Passphrase
+    (and the resulting encryption key) is a correct one. This checking is
+    only performed when actual decryption operation is performed with
+    CryptoStorageFetch(). If such checking is needed this can be achieved
+    by storing a empty value ("") to some fixed key at storage creation
+    time and attempting to fetch it after unlocking. If this fetch fails
+    with CSS_BAD_PASSPHRASE the provided passphrase was an incorrect one.
+
+    This function can take considerable time to execute due to the
+    passphrase PBKDF2 hashing.
+
+   EXAMPLES
+    LONG rc = CryptoStorageUnlock(storagectx,
+                                  CST_Passphrase, (IPTR) pass,
+                                  TAG_DONE);
+    if (rc == CSS_OK)
+    {
+        /* ... */
+    }
+
+   SEE ALSO
+    CryptoStorageOpen, CryptoStorageLock
+
+

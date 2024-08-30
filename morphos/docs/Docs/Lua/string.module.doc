@@ -1,0 +1,480 @@
+TABLE OF CONTENTS
+
+string.module/__background__
+string.module/byte
+string.module/char
+string.module/dump
+string.module/find
+string.module/format
+string.module/gmatch
+string.module/gsub
+string.module/len
+string.module/lower
+string.module/match
+string.module/rep
+string.module/reverse
+string.module/sub
+string.module/upper
+string.module/__background__
+
+ DESCRIPTION
+   Lua implements its own flavour of pattern matching, which is a mix of
+   regular expressions syntax and scanf() style. Special characters in Lua
+   patterns are: ^$()%.[]*+-? If any of them is used to represent just
+   itself, it must be escaped. Escaping is done with '%' before the escaped
+   character. Percent sign is escaped by itself: '%%'. Non alphanumeric
+   characters not being specials (like comma, colon or semicolon) may be
+   escaped too for improved code readability.
+
+   Character classes are used to define a set of characters for matching a
+   single one. The most obvious class is just a single non-special character
+   matching itself. Its opposite is a dot, which matches any character. Sets
+   of characters are written in square brackets, for example
+   [0123456789ABCDEFabcdef] matches hexadecimal digits. Ranges of
+   consecutive characters may be shortened with '-', so [0-9A-Fa-f] is the
+   equivalent of the previous pattern (they define the same set).
+
+   Some typical character sets have shortened notation with '%' as a
+   sequence introducer:
+     %a defines a set of all letters (upper and lowercase).
+     %c defines a set of all control characters (usually codes 0 to 31, and
+        127 to 159, but it is locale dependent).
+     %d defines a set of decimal digits.
+     %l defines a set of all the lowercase letters.
+     %p defines a set of all the punctuation characters.
+     %s defines a set of all the whitespace characters.
+     %u defines a set of all the uppercase letters.
+     %w defines a set of all the alphanumeric characters.
+     %x defines a set of all the hexadecimal digits.
+     %z defines a set containing the character 0.
+   Using an uppercase letter in the above sequences, negates their meaning,
+   so for example "%D" means "all characters except decimal digits".
+
+   Percent sign classes may be used inside sets. For example a set [%w%,%.]
+   has meaning "all the alphanumeric characters and comma and dot". It is
+   not allowed to use them as a part of a range however, so for example
+   [a-%d] meaning is unpredictable and must be avoided.
+
+   A pattern is built as a series of character classes, with additions of
+   position anchors ("^" and "$") and repetition modifiers ("*", "+", "-",
+   "?", "%n" and "%bxy":
+      . is the base character class. It matches any (single) character.
+      ^ is a beginning position anchor. It may be used only at the start of
+        pattern and means that pattern must match the beginning of string.
+        In other places ^ has no special meaning and just represents itself.
+      $ is an end position anchor. It may be used only at end of pattern and
+        means that pattern must match the end of string. ^ and $ may be used
+        togehter, then the whole string must match the pattern. For example
+        pattern "^Lua$" matches only the string "Lua" and nothing more.
+      * is a repetition operator which matches 0 or more characters from the
+        character class it follows. For example "%d*" means "nothing or any
+        number of digits". It matches the longest possible sequence, so in
+        "42836" "%d*" matches the whole string, not any of substrings.
+      + is a repetition operator which matches 1 or more characters from the
+        character class it follows. For example "%d+" means "one or more
+        digits". The same as "*" it always matches the longest possible
+        sequence.
+      - is a repetition operator which matches 0 or more characters from the
+        character class it follows. It differs to "*" in that it matches
+        always the shortest possible sequence (except of the empty one), so
+        "%d-" in "42836" will just match "4".
+      ? is a repetition operator, which matches 0 or 1 (and not more)
+        character from the character class it follows.
+     %n where "n" is a number from 1 to 9 matches a substring equal to n-th
+        captured string (see below).
+   %bxy where "b" is just a literal "b" and x, y are two different
+        characters (including specials, they need not to be escaped here).
+        The character x is an opening character, the character y is
+        a closing character. This operator matches a substring contained
+        inside a balanced pair of opening and closing character. x and y are
+        usually a pair of parentheses. For example "%b<>" will match
+        a complete HTML tag. When used on "<<b>" it will match "<b>", as the
+        first "<" is unbalanced.
+
+   Captures are fragments of matched string, which may be returned as
+   a result of matching function and also reused as parts of pattern using
+   "%n" operator. By default an implicit capture is the whole matched
+   substring (but this default capture cannot be used in "%n"). A capture is
+   marked with parentheses. For example:
+
+   string.match("see page 19 for details", "page %d+")
+
+   will return the whole match, which is "page 19", but
+
+   string.match("see page 19 for details", page (%d+)")
+
+   will return only the capture, which would be just "19". An example of
+   capture reuse in a pattern is "(%d)%d*%1". It matches all at least two
+   digit numbers, where the last digit is the same as the first. The capture
+   is the first digit, then "%1" reuses it as the last one. Number of
+   captures in a single pattern is limited to 32 (but only the first 9 may
+   be reused).
+
+string.module/byte
+
+ NAME
+   string.byte -- converts fragment of string to character codes. (V1)
+
+ SYNOPSIS
+   ... = string.byte(str [, start] [, end])
+
+ FUNCTION
+   Converts consecutive characters from a string span defined by 'start' and
+   'end' to numeric values of character codes. Both 'start' and 'end' are
+   optional. The default value of 'start' is 1. The default value of 'end'
+   is the value of 'start'.
+
+   Start and end values may be positive, counted up from 1 from the string
+   start, or negative, counted down from -1 from the string end. When length
+   of span is zero or negative, nothing is returned.
+
+   Character codes are taken from the system default codepage.
+
+ INPUTS
+   str - the source string.
+   start - position of the first character in the span.
+   end - position of the last character in the span.
+
+ RESULT
+   Codes of characters in the span.
+
+ EXAMPLE
+   string.byte("ABCD")            => 65  (A)
+   string.byte("ABCD", 3)         => 67  (C)
+   string.byte("ABCD", 2, 3)      => 66, 67  (BC)
+   string.byte("ABCD",, 3)        => 65, 66, 67  (ABC)
+
+string.module/char
+
+ NAME
+   string.char -- creates a string from character codes. (V1)
+
+ SYNOPSIS
+   str = string.char(...)
+
+ FUNCTION
+   Converts numeric arguments into characters, joining them in a string. All
+   arguments must be in <0, 255> range. Numbers are mapped to characters
+   according to the system default codepage.
+
+ INPUTS
+   ... - codes of characters in the string.
+
+ RESULT
+   Resulting string
+
+ EXAMPLE
+   string.char(77, 111, 114, 112, 104, 79, 83)    => "MorphOS"
+
+   string.char(169)   => The result depends on system locale settings. For
+                         languages using ISO-8859-1 (latin1) codepage it
+                         will return a string containing the copyright sign.
+                         On ISO-8859-2 systems it will give "latin capital
+                         letter S with caron".
+
+string.module/dump
+
+ NAME
+   string.dump -- precompiles Lua function to bytecode. (V1)
+
+ SYNOPSIS
+   s = string.dump(f)
+
+ FUNCTION
+   The function precompiles the function 'f' into Lua bytecode. Bytecode of
+   'f' is returned in the string 's'.
+
+ INPUTS
+   f - Lua function.
+
+ RESULT
+   String containing the bytecode of the function 'f'.
+
+string.module/find
+
+ NAME
+   string.find -- finds a substring in a string. (V1)
+
+ SYNOPSIS
+   f, l [, ...] = string.find(s, p [, init [, plain]])
+
+ FUNCTION
+   Finds the first ocurrence of pattern 'p' in string 's'. The search for
+   pattern match starts from the beginning of the string 's'. If the
+   optional parameter 'init' is given, it specifies the start position of
+   matching. If 'init' is negative, it is an offset from the end of the
+   string 's'. The optional boolean parameter 'plain' turns off the pattern
+   matching engine when 'true'  . In the case, 'p' is treated just as a
+   substring to be found. If the pattern is found in the string, find()
+   returns a position of the first and the last character of the pattern
+   found. Additionally if the pattern contains captures, they are returned
+   as following return values. If the pattern is not found, the function
+   returns a single 'nil'.
+
+ INPUTS
+   s - string to be searched.
+   p - pattern to search for.
+   init - search start position.
+   plain - pattern matching engine switch.
+
+ RESULT
+   f - position of the first character of the found pattern or 'nil'.
+   l - position of the last character of the found pattern.
+   ... - captures of the pattern found.
+
+ EXAMPLE
+   string.find("quick brown fox", "cat")       => nil
+   string.find("quick brown fox", "row")       => 8, 10
+   string.find("quick brown fox", "row", 9)    => nil
+   string.find("quick brown fox", "row", -8)   => 8, 10
+   string.find("quick brown fox", "n %a+")     => 11, 15
+   string.find("quick brown fox", "n (%a+)")   => 11, 15, "fox"
+
+ SEE ALSO
+   match(), gmatch()
+
+string.module/format
+
+ NAME
+   string.format -- formats arguments into a string. (v1)
+
+ SYNOPSIS
+   str = string.format(fmt, ...)
+
+ FUNCTION
+   This function works similarly to C function sprintf(). Argument
+   placeholders in the string 'fmt' specify expected arguments types and
+   formatting. Placeholders are the same as for sprintf(). The function
+   accepts "cdeEfgGiouxX" for numbers and "qs" for strings. The "q"
+   placeholder is specific to Lua and adds automatic escaping of character
+   0 (which is allowed inside Lua strings), doublequotes, backslashes and
+   newline characters. The whole string is also doublequoted.
+
+   The function ignores placeholder "p" and "n" as well as argument size
+   modificators ("l", "h", "ll", "L" and similar). Variable precision
+   modificator "*" is ignored too.
+
+ INPUTS
+   fmt - formatting string.
+   ... - arguments to be formatted into result.
+
+ RESULT
+   The formatted string.
+
+string.module/gmatch
+
+ NAME
+   string.gmatch -- generates iterator for exhaustive pattern matching. (V1)
+
+ SYNOPSIS
+   for m in string.gmatch(str, patt) do
+   ...
+   end
+
+ FUNCTION
+   The function generates an iterator function for 'for' loop. The loop is
+   executed for all matches of 'patt' in the string 'str' and every match is
+   placed in 'm'.
+
+ INPUTS
+   str - string to be searched for matches.
+   patt - pattern to match.
+
+ RESULT
+   Iterator function.
+
+ NOTES
+   The generated iterator function ignores initial "^" position anchor.
+
+ SEE ALSO
+   match(), find()
+
+string.module/gsub
+
+ NAME
+   string.gsub -- substitutes substrings with pattern matching. (V1)
+
+ SYNOPSIS
+   result = string.gsub(str, patt, repl [, n])
+
+ FUNCTION
+   The function returns a copy of string 'str', where all (or first 'n', if
+   'n' is given) matches to the pattern 'patt' are replaced in a way
+   specified by 'repl', which can be a string, a table or a function.
+
+   If 'repl' is a string, it is substituted directly. Captures from the
+   pattern may be inserted using the usual "%n" sequence, where n is
+   a number from 1 to 9. "%0" inserts the whole matched phrase. A plain "%"
+   is escaped with "%%".
+
+   If 'repl' is a table, the first capture of the pattern is used as a key
+   for 'repl' and the value of this key is inserted. If the pattern has no
+   captures, the whole matched phrase is used as the key.
+
+   If 'repl' is a function, it is called for every match with the pattern
+   captures as arguments, returned value is inserted. If the pattern has no
+   captures, the whole matched phrase is passed as an argument of 'repl'.
+   The function 'repl' should return a string or a number. If it returns
+   'false' or 'nil', the original match is not substituted in returned
+   'result'.
+
+ INPUTS
+   str - string to be processed.
+   patt - pattern for matching.
+   repl - delivers substituting string(s).
+   n - limits the number of substitutions.
+
+ RESULT
+   A copy of string 'str' with substituted substrings.
+
+string.module/len
+
+ NAME
+   string.len -- returns length of a Lua string. (V1)
+
+ SYNOPSIS
+   length = string.len(string)
+
+ FUNCTION
+   Measures a Lua string and returns its length in bytes. The function
+   takes non-printable characters and zero bytes into account.
+
+ INPUTS
+   string - a string to be measured.
+
+ RESULT
+   Number of bytes in the string.
+
+string.module/lower
+
+ NAME
+   string.lower -- makes a string lowercase. (V1)
+
+ SYNOPSIS
+   result = string.lower(string)
+
+ FUNCTION
+   Makes a string lowercase. Lowercasing is done by calling ConvToLower().
+   It means lowercasing adheres to rules of system language and character
+   encoding.
+
+ INPUTS
+   string - a string to be lowercased.
+
+ RESULT
+   Lowercased string.
+
+string.module/match
+
+ NAME
+   string.match --  matches pattern with string. (V1)
+
+ SYNOPSIS
+   ... = string.match(str, patt [, init])
+
+ FUNCTION
+   Searches the string 'str' for a first match with the pattern 'patt'. If
+   a match is found, all captures from the pattern are returned. If there
+   are no captures in the pattern, the whole match is returned. If there is
+   no match, the function returns 'nil'. Optional numeric parameter 'init'
+   specifies the position of search start. The default value of 'init' is 1.
+   'Init' may be negative, in this case it specifies an offset relative to
+   the end of string.
+
+ INPUTS
+   str - string to be searched.
+   patt - pattern to match.
+   init - search start position.
+
+ RESULT
+   Captures from the matched pattern, or the whole match, or 'nil'.
+
+ EXAMPLE
+   string.match("error 47 in line 26", "%d+.*%d+")       => "47 in line 26"
+   string.match("error 47 in line 26", "(%d+).*(%d+)")   => "47", "26"
+   string.match("error 47 in line 26", "%d+.*%d+", 8)    => "7 in line 26"
+   string.match("error 47 in line 26", "%d+.*%d+", -11)  => nil
+
+string.module/rep
+
+ NAME
+   string.rep -- creates a string from repeated substring. (V1)
+
+ SYNOPSIS
+   result = string.rep(s, r)
+
+ FUNCTION
+   Creates a string consisting of the substring 's' repeated 'r' times. If
+   'r' is less than 1, an empty string is returned.
+
+ INPUTS
+   s - a string to be repeated.
+   r - number of repetitions.
+
+ RESULT
+   A string.
+
+string.module/reverse
+
+ NAME
+   string.reverse -- produces a reversed copy of a string. (V1)
+
+ SYNOPSIS
+   result = string.reverse(s)
+
+ FUNCTION
+   Produces a reversed copy of a string, it means the copy starts from the
+   last character of the original and ends with the first character of the
+   original.
+
+ INPUTS
+   s - the string to be reversed.
+
+ RESULT
+   Reversed string.
+
+string.module/sub
+
+ NAME
+   string.sub -- cuts a substring from a string. (V1)
+
+ SYNOPSIS
+   substring = string.sub(string, start[, end])
+
+ FUNCTION
+   Returns a substring of a given string specified by the start and
+   optionally end positions. If 'end' is ommited, the end of substring is at
+   the end of the main string. Positive positions are from the start of
+   string, counting up from 1. Negative positions are from the end of string,
+   counting down from -1. Positions before the start or after the end, are
+   limited to the start or end respectively. If start is after the end, an
+   empty (zero length) string is returned.
+
+ INPUTS
+   string - the string.
+   start - position of the first character of the substring.
+   end - position of the last character of the substring.
+
+ RESULT
+   Substring cut according to arguments.
+
+string.module/upper
+
+ NAME
+   string.upper -- makes a string uppercase. (V1)
+
+ SYNOPSIS
+   result = string.upper(string)
+
+ FUNCTION
+   Makes a string uppercase. Uppercasing is done by calling ConvToUpper().
+   It means uppercasing adheres to rules of system language and character
+   encoding.
+
+ INPUTS
+   string - a string to be uppercased.
+
+ RESULT
+   Uppercased string.
+
+

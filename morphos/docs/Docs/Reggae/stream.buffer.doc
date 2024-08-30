@@ -1,0 +1,206 @@
+TABLE OF CONTENTS
+
+stream.buffer/--background--
+stream.buffer/MMA_StreamBuffer_Level
+stream.buffer/MMA_StreamPosBytes
+stream.buffer/MMA_TaskName
+stream.buffer/MMA_TaskPriority
+stream.buffer/MMM_Pull
+stream.buffer/MMM_Seek
+stream.buffer/OM_DISPOSE
+stream.buffer/OM_NEW
+stream.buffer/--background--
+
+ DESCRIPTION
+   The class provides a FIFO buffer for buffering data streams. Usually
+   a stream.buffer object is connected to a Reggae stream object. The object
+   starts a worker subprocess. The buffer is filled by the worker. The
+   buffer is organized as a rotating queue of blocks. The current version
+   uses a fixed queue of 8 blocks, 8 kB each.
+
+   An instance of stream.buffer has two ports: port 0 is input and accepts
+   MMF_STREAM data format. Port 1 is output and produces the same format.
+
+   Objects of this class support dynamic input reconnection. When input port
+   is connected to a new source, buffer is not flushed, so sources can be
+   switched gaplessly.
+
+ ATTRIBUTES
+   MMA_TaskPriority         (v51)   [I.G.Q], BYTE
+   MMA_TaskName             (v51)   [I.G.Q], STRPTR
+   MMA_StreamBuffer_Level   (v51)   [..G.Q], LONG
+   MMA_StreamPosBytes       (v51)   [..G.Q], QUAD
+
+ METHODS
+   OM_NEW                   (v51)
+   OM_DISPOSE               (v51)
+   MMM_Pull                 (v51)
+   MMM_Seek                 (v51)
+   MMM_Setup                (v51)
+   MMM_Cleanup              (v51)
+
+ HISTORY
+   51.6 (11.10.2012)
+   - Properly implemented MMA_StreamPosBytes for the output port.
+
+   51.5 (30.09.2012)
+   - Fixed bug of object disposition. When object's input is being
+     disconnected, source change message is sent to the worker process. In
+     case when object is being disposed, the worker process is already
+     killed, so message should not be sent, as it will be never replied.
+
+   51.4 (07.08.2012)
+   - Seek now properly handles a case when new seek position is inside the
+     FIFO. In this case only invalid blocks before the one containing the new
+     position are sent to refill, seek on source is not performed.
+
+   51.3 (11.07.2012)
+   - Uses single message port for both commands and empty blocks. Fixes
+     possible lockup at start.
+   - Worker process priority is limited to <-128, +9> range.
+
+   51.2 (05.07.2012)
+   - MMM_Seek() added.
+
+   51.1 (30.06.2012)
+   - Initial release.
+
+stream.buffer/MMA_StreamBuffer_Level
+
+ NAME
+   MMA_StreamBuffer_Level (v51) [..G.Q], LONG, 0x8EDA05DE
+
+ FUNCTION
+   Returns number of bytes buffered at the moment of query.
+
+stream.buffer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes (v51) [..G.Q], QUAD
+
+ FUNCTION
+   Returns current read position in the stream. The value of this attribute
+   depends on port it is asked for. For input port it returns position
+   including buffered data. For output port not yet pulled data in buffer
+   are not counted. For example if buffer contains 1000 bytes starting from
+   position 8000, and half of the bufffer has been already pulled,
+   MMA_StreamPosBytes on input is 9000, on output 8500. When the attribute
+   is read from the object (with GetAttr()), output value is returned.
+
+ NOTES
+   This is a 64-bit attribute. Storage variable must be QUAD. If using
+   MediaGetPort macros, use MediaGetPort64() one.
+
+stream.buffer/MMA_TaskName
+
+ NAME
+   MMA_TaskName (v51) [I.G.Q], STRPTR, 0x8EDA001D
+
+ FUNCTION
+   Specifies the name of object subprocess. The default name is "Stream
+   Buffer n", where 'n' is the class subprocesses counter value. The counter
+   is initialized to 0, when the class is loaded to memory (at first open).
+   The passed string must be null-terminated.
+
+ NOTES
+   The passed string is not copied, so it must be valid until the object
+   is disposed.
+
+stream.buffer/MMA_TaskPriority
+
+ NAME
+   MMA_TaskPriority (v51) [I.G.Q], BYTE, 0x8EDA0005
+
+ FUNCTION
+   Sets the priority of worker subprocess. All Reggae objects connected to
+   stream.buffer object input port perform data processing in context of the
+   subprocess. The default priority is 0, The priority may be raised when
+   data from a realtime source are buffered. The priority may be lowered for
+   background jobs. The allowed priority range is <-128, +9>. If specified
+   priority is outside the range, it is clipped.
+
+stream.buffer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Pulls data from buffer. (V51)
+
+ SYNOPSIS
+   void DoMethod(Object *obj, MMM_Pull, int port, void *buffer, int length);
+
+ FUNCTION
+   Copies block of data from the FIFO queue to specifed memory area. Fully
+   read blocks are returned to object's worker subprocess for refill.
+
+ INPUTS
+   obj - object to perform method on.
+   port - it must be 1 (the output).
+   buffer - destination data buffer.
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. If less than requested, additional information is
+   available via MMA_ErrorCode. Possible codes are:
+   - MMERR_END_OF_DATA - no more data in stream
+   - MMERR_IO_ERROR - read error in stream
+   - MMERR_BROKEN_PIPE - object's input has been disconnected
+   - MMERR_BUFFER_UNDERRUN - the data queue is empty, but input reported no
+     error. It means that stream delivery is too slow, or (under heavy
+     system load) worker process gets not enough processor time.
+
+stream.buffer/MMM_Seek
+
+ NAME
+   MMM_Seek -- Seeks in data stream. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_Seek, LONG port, LONG type, QUAD
+   *position);
+
+ FUNCTION
+
+ INPUTS
+   obj - object to perform method on.
+   port - it must be 1 (the output).
+   type - seek type, the only supported type here is MMM_SEEK_BYTES.
+   length - new absolute position in the stream (passed as a pointer to
+     64-bit value.
+
+ RESULT
+   Boolean value of success. In case of fail, additional information is
+   available via MMA_ErrorCode attribute.
+
+stream.buffer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes stream.buffer object. (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Disposes an object. Stops the worker process. Discards all buffered data.
+   Disposing a running object is safe.
+
+stream.buffer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new stream.buffer object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "stream.buffer", ...);
+
+ FUNCTION
+   Creates a new stream.buffer instance. Starts a worker subprocess.
+   Allocates FIFO buffer chunks.
+
+ INPUTS
+   The input tag list may contain following tags:
+   - MMA_TaskName - optional
+   - MMA_TaskPriority - optional
+
+ RESULT
+   A pointer to created object, or NULL for failure. Optionally additional
+   error code is stored at place specified with MMA_ErrorCode, also failure
+   reason is logged to MediaLogger.
+
+

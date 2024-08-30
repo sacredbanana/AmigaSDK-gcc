@@ -1,0 +1,128 @@
+TABLE OF CONTENTS
+
+ima-adpcm.decoder/MMA_StreamPosFrames
+ima-adpcm.decoder/MMA_StreamPosTime
+ima-adpcm.decoder/MMM_Pull
+ima-adpcm.decoder/MMM_Seek
+ima-adpcm.decoder/__background__
+ima-adpcm.decoder/MMA_StreamPosFrames
+
+ NAME
+   MMA_StreamPosFrames -- [GQ], UQUAD*. (V51)
+
+ FUNCTION
+   Returns current absolute stream position in sample frames. It is exactly
+   the number of the whole sample frames pulled from object's output.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+ima-adpcm.decoder/MMA_StreamPosTime
+
+ NAME
+   MMA_StreamPosTime -- [GQ], UQUAD*. (V51)
+
+ FUNCTION
+   Returns absolute stream time position in microseconds. This time position
+   is strictly based on stream sampling rate, and reflects only the whole
+   sample frames already pulled from the object output. The exact formula
+   is:
+
+   time_pos = whole_frames_pulled / sample_rate
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+ima-adpcm.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- pulls a block of decoded audio PCM data from object. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Places required amount of decoded PCM data in  specified buffer. Pulls
+   need not to be aligned to the codec output block size, all neccessary
+   buffering is done automatically. Note that requested number of bytes
+   should be a multiply of sample frame size. If it is not, it will be
+   rounded down to the nearest frame boundary, left bytes are undefined.
+
+ INPUTS
+   - port - number of port is always 1 (the output port).
+   - buffer - a memory buffer for pulled data, must be aligned to 16-byte
+     boundary (preferrably allocated with MediaAllocVec()).
+   - length - amount of pulled data in bytes. Will be rounded down to the
+     nearest sample frame boundary.
+
+ RESULT
+   Number of bytes pulled. If less than requested, check MMA_ErrorCode.
+
+ima-adpcm.decoder/MMM_Seek
+
+ NAME
+   MMM_Seek -- moves read position in decoded audio stream. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_Seek, ULONG port, ULONG type, UQUAD *pos);
+
+ FUNCTION
+   The method seeks in the audio stream to the specified absolute position.
+   It automatically handles data block switching as well as buffer flushing
+   and reloading. For frame seeks, position is specified in frames, for time
+   seeks it is specified in microseconds and converted to frames the same
+   way as for MMA_StreamPosTime. Note that time to frame conversion here
+   uses stream defined sampling rate, not playback sampling rate. For time
+   seeks in played streams call this method on audio.output object.
+
+ INPUTS
+   - port - number of port is usually 1 (the output port). Seek on the port
+     0 is immediately forwarded to the previous connected object.
+   - type - the class support MMM_SEEK_FRAMES and MMM_SEEK_TIME. Byte seek
+     is not allowed.
+   - pos - absolute seek position in sample frames or microseconds,
+     depending on seek type. Note this is 64-bit value passed via pointer.
+
+ RESULT
+   Boolean. Secondary error information is available via MMA_ErrorCode. The
+   method can return following errors:
+   - MMERR_WRONG_ARGUMENTS - wrong port, unsupported type.
+   - MMERR_END_OF_DATA - seek past stream end.
+   - MMERR_NOT_SEEKABLE - source stream is not seekable.
+   - MMERR_BROKEN_PIPE - nothing is connected to the input port.
+
+ima-adpcm.decoder/__background__
+
+ DESCRIPTION
+  This class is a Reggae decoder for decoding IMA-ADPCM streams (also known
+  as DVI-ADPCM) found in WAVE subformat 17 files. It is a simple adaptive
+  PCM algorithm using 3 or 4 bits per sample, whit nonlinear delta table and
+  first order predictor. The decoder handles 3- and 4-bit streams with any
+  number of channels up to 256. An ima-adpcm.decoder object has one input
+  (port 0) and one output (port 1). The input accepts following format:
+
+    - MMF_AUDIO_IMA_ADPCM
+
+  On the output an object can produce following formats:
+
+    - MMFC_AUDIO_INT16, 16-bit signed interegs,
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamPosFrames      (V51)     [..G.Q], UQUAD*
+   MMA_StreamPosTime        (V51)     [..G.Q], UQUAD*
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+

@@ -1,0 +1,205 @@
+TABLE OF CONTENTS
+
+xpk.demuxer/MMA_DataFormat
+xpk.demuxer/MMA_MimeType
+xpk.demuxer/MMA_StreamLength
+xpk.demuxer/MMA_StreamPosBytes
+xpk.demuxer/MMM_Pull
+xpk.demuxer/MMM_Seek
+xpk.demuxer/background
+xpk.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- (V51.3) [..G.Q], CONST_STRPTR, 0x8EDA000B
+
+ FUNCTION
+   Returns short, read-only textual description of the format. An object
+   connected to a data stream returns string "XPK xxxx", where "xxxx" is
+   a four-letter XPK packer identifier (for example "XPK BZP2").
+
+   When an object is not connected to a source, or the class is queried
+   with MediaGetClassAttrTags(), the string "XPK" is returned.
+
+ NOTES
+   Usually, when xpk.demuxer is a part of processing pipeline built with
+   MediaNewObject(), this attribute is "shadowed" by demuxer(s) following
+   in the pipeline.
+
+xpk.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType -- (V51.3) [..G.Q], CONST_STRPTR, 0x8EDA000A
+
+ FUNCTION
+   Returns MIME type string of the format. An object connected to a data
+   stream returns string "application/x-xpk; packer=xxxx", where
+   "xxxx" is a four-letter XPK packer identifier (for example "XPK BZP2").
+
+   When an object is not connected to a source, or the class is queried
+   with MediaGetClassAttrTags(), the string "application/x-xpk" is
+   returned.
+
+ NOTES
+   Usually, when xpk.demuxer is a part of processing pipeline built with
+   MediaNewObject(), this attribute is "shadowed" by demuxer(s) following
+   in the pipeline.
+
+xpk.demuxer/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength -- (V51) [..G.Q], QUAD*, 0x8EDA0018
+
+ FUNCTION
+   MMA_StreamLength is the output (uncompressed) stream length in bytes. For
+   xpk.demuxer the length is never 0 (which means unknown length in
+   general), as XPK always knows uncompressed length because it is stored in
+   XPK header. Even if input (compressed) stream length is reported as
+   unknown by stream class, output stream length is known. The attribute is
+   defined as a pointer to 64-bit signed number containing the length. For
+   xpk.demuxer it is limited to 32 bits (signed), because of XPK system
+   limitation.
+
+ NOTES
+   There is one specific case, where stream lenght may cause problems. It
+   happens, when xpk.demuxer is used with uncompressed data and connected
+   stream has unknown length. It will never happen when building processing
+   tree with MediaNewObject(), as Reggae won't include xpk.demuxer object if
+   data are not compressed. It may happen however when processing tree is
+   built manually and uses XPK feature of passing uncompressed data through.
+   At the time of writing, the only stream able to return unknown length is
+   http.stream when using chunked transfer.
+
+xpk.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- (V51) [..G.Q], QUAD*, 0x8EDA0012
+
+ FUNCTION
+   MMA_StreamPosBytes value is the current position in the output
+   (uncompressed) stream. This position is in bytes, and is returned as a
+   pointer to 64-bit signed number. Note however that for xpk.demuxer the
+   position is limited to 32-bit signed, as it is the limitation of XPK
+   system.
+
+xpk.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull (V51) -- Decompresses a block of data into a buffer.
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   Delivers a specified amount of decompressed data to the output buffer.
+   XPK API requires decompressing data in whole chunks. Then the class uses
+   internal buffering and allows pulling data blocks of any size, down to
+   one byte. A pull starts from checking validity of current data buffer.
+   Valid data are copied to the output. If the request is not satisified
+   with buffered data, new data must be fetched via XPK. If the next XPK
+   chunk is shorter or equal the rest of request, it is decompressed
+   directly to the output buffer, bypassing internal one and saving on data
+   copy. If the chunk is bigger, it is buffered, and needed part of it is
+   copied to the output.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be 1 (output).
+   - buffer, a memory buffer for decompressed data, must be aligned to
+     16-byte boundary (preferrably allocated with MediaAllocVec()).
+   - length, amount of pulled data in bytes.
+
+ RESULT
+   Number of bytes pulled actually. In case of error, additional information
+   is available via MMA_ErrorCode attribute.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode, MMM_Seek
+
+xpk.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek (V51) -- Performs seek in decompressed stream.
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Seek, ULONG port, ULONG type, UQUAD*
+   position);
+
+ FUNCTION
+   Moves the data pointer in the decompressed stream. Takes internal buffer
+   into account. Seeks within the current buffer do not cause decompression.
+   A seek outside buffer invalidates it, then calls XpkSeek() and updates
+   position. It does not fetch any data however. Data are fetched in
+   following MMM_Pull when it sees an invalid buffer. Note that seek may
+   fail if XPK sublibrary does not support seeking, it is very rare case
+   however. Seek may also fail in case of non-seekable source data stream,
+   but then only backward seek is problematic, as forward one will be
+   emulated with reads automatically.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be 1 (output).
+   - type, seek type (MMM_SEEK_BYTES only).
+   - position, new, absolute position in the stream in bytes. It is 64-bit
+     parameter passed by a pointer to the value.
+
+ RESULT
+   TRUE if success, FALSE otherwise. Check MMA_ErrorCode for detailed
+   information.
+
+ NOTES
+   Because of XPK limitations, seek position is limited to 32-bit signed
+   range (up to 0x7FFFFFFF including).
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+xpk.demuxer/background
+
+ DESCRIPTION
+   This class allows Reggae to handle data compressed with XPK libraries.
+   In other words it is a wrapper on xpkmaster.library. Using this class
+   Reggae can decompress data from any source stream. The class removes some
+   xpkmaster.library API limitations, for example programmer is not forced
+   to read data in complete chunks.
+
+   Reggae is able to cascade demuxers in case of compound data formats. When
+   MediaNewObject() recognizes a stream, it detects XPK packed files with
+   this class recognition routine. Xpk.demuxer object sets MMF_STREAM data
+   type on its output, which makes Reggae to perform demultiplexer matching
+   recursively, but this time on decompressed data.
+
+   Note that xpk.demuxer is limited to 2 GB. It is the limitation of XPK
+   itself.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamLength                (V51)  ..G.Q  (QUAD*)
+   MMA_StreamPosBytes              (V51)  ..G.Q  (QUAD*)
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+ HISTORY
+
+   51.3   (19.06.2015)
+   - Added per-class and per-object handling of MMA_DataFormat and
+     MMA_MimeType attributes. Both report XPK packer identifier if an
+     object is connected to the source.
+
+   51.2   (26.06.2009)
+   - Reenabled commented out XPK_PassThru tag.
+   - Adjusted Pull() to new PrePull() API.
+   - Removed unneccesary 'SeekableStream' field of object data.
+   - Added check for multimedia.class 52.15+.
+
+   51.1   (08.06.2009)
+   - The first release.
+
+

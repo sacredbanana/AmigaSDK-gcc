@@ -1,0 +1,178 @@
+TABLE OF CONTENTS
+
+id3tag.demuxer/MMA_MetaData
+id3tag.demuxer/MMA_StreamLength
+id3tag.demuxer/MMA_StreamPosBytes
+id3tag.demuxer/MMM_Pull
+id3tag.demuxer/MMM_Seek
+id3tag.demuxer/background
+id3tag.demuxer/MMA_MetaData
+
+ NAME
+   MMA_MetaData -- (V51) [....Q], struct MetaItem*, 0x8EDA0020
+
+ FUNCTION
+   Returns metadata from parsed ID3 headers. These metadata are organized in
+   in a table of MetaItem structures. The table is NULL-terminated, it means
+   the last MetaItem contains zeros in all its fields. The table and data
+   pointed by mi_Data fields are considered read-only. If both ID3v1 and
+   ID3v2 tags are present, ID3v2 data have precedence. The class recognizes
+   following metadata:
+   - MMETA_Title - ID3v2 TIT2 (TT2) frame / ID3v1 song title.
+   - MMETA_Performer - ID3v2 TPE1 (TP1) frame / ID3v1 artist.
+   - MMETA_Album - ID3v2 TALB (TAL) frame / ID3v1 album.
+   - MMETA_Comment - ID3v1 comment.
+   - MMETA_TrackNum - ID3v1.1 track number.
+   - MMETA_PubDate - ID3v1 year.
+
+ NOTES
+   All ID3v1 tag strings are assumed to be ISO-8859-1.
+   This attribute may be only get from output port, not from object.
+   All string type items are returned in UTF-32BE encoding.
+
+ SEE_ALSO
+   multimedia.class/MMA_MetaData
+
+id3tag.demuxer/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength -- (V51) [..G.Q], QUAD*, 0x8EDA0018
+
+ FUNCTION
+   Returns output stream length in bytes (after stripping all ID3 tags).
+
+ NOTES
+   The value is 64-bit, so a pointer to 64-bit variable should be passed to
+   OM_GET or MMM_GetPort.
+
+id3tag.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- (V51) [..G.Q], QUAD*, 0x8EDA0012
+
+ FUNCTION
+   Returns current position in the output stream in bytes.
+
+ NOTES
+   The value is 64-bit, so a pointer to 64-bit variable should be passed to
+   OM_GET or MMM_GetPort.
+
+id3tag.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull (V51) -- Delivers block of ID3 tag stripped data.
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   This methods pulls specified amount of data and stores them in the buffer
+   given. As id3demuxer.class does not process data, the request is just
+   forwarded to the previous object.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be 1 (output).
+   - buffer, a memory buffer for data, must be aligned to 16-byte boundary
+     (preferrably allocated with MediaAllocVec()).
+   - length, amount of pulled data in bytes.
+
+ RESULT
+   Number of bytes pulled actually. Zero means end of stream. Negative value
+   means error, additional information is available via MMA_ErrorCode
+   attribute.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode, MMM_Seek
+
+id3tag.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek (V51) -- Performs seek in ID3 tag stripped stream.
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Seek, ULONG port, ULONG type, UQUAD*
+   position);
+
+ FUNCTION
+   The method checks if the requested position is within the payload (size
+   of ID3v1 tag is substracted, if detected), and translates position in
+   the output stream into a position in the input stream. It is done by
+   adding ID3v2 tag total length to the output position. Then seek is
+   forwarded on input. Note that end-limit test is done only if the stream
+   length is known.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be 1 (output).
+   - type, seek type (MMM_SEEK_BYTES only).
+   - position, new, absolute position in the stream in bytes. It is 64-bit
+     parameter passed by a pointer to the value.
+
+ RESULT
+   TRUE if success, FALSE otherwise. Check MMA_ErrorCode for detailed
+   information.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+id3tag.demuxer/background
+
+ DESCRIPTION
+   The class is used to detect ID3 tags in media files, retrieve metadata
+   and present it via common Reggae metadata sub-API. As ID3 tags can be
+   appended to many different formats, there is a separate demultiplexer
+   for them. After data retrieving ID3 tags are stripped off the stream.
+   The only exception are ID3v1 tags in non-seekable streams, which are
+   neither detected nor stripped (ID3v1 tag is placed at the end of stream).
+   After tag stripping the main stream data are passed through by passing
+   requests, it means id3tag.demuxer does not copy data. If there are no
+   tags in the stream, id3tag.demuxer is transparent. If both tags are
+   present ID3v2 data override ID3v1 data.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamLength                (V51)  ..G.Q  (QUAD*)
+   MMA_StreamPosBytes              (V51)  ..G.Q  (QUAD*)
+   MMA_MetaData                    (V51)  ....Q  (struct MetaItem*)
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+ HISTORY
+   51.8 (28.10.2015)
+   - Fixed: track number from ID3v1 tag was reported incorrectly.
+
+   51.7 (24.10.2015)
+   - Fix for per-port metadata.
+
+   51.6 (14.02.2012)
+   - Added support for ID3v2.4 frame length indicator.
+
+   51.5
+   - Id3v2FrameLengthVerification(): One byte frames are allowed.
+
+   51.4
+   - Implemented ID3v2.2 obsolete standard.
+   - Added frame length check and frame flags check.
+   - Implemented ID3v2 frame resynchronization.
+
+   51.3
+   - Implemented base ID3v2 tag parser.
+   - Implemented subparsing of TPE1, TIT2 and TALB ID3v2 frames.
+
+   51.2 (31.10.2011)
+   - MMM_Pull sets MMERR_END_OF_DATA if the request goes past the tag
+     stripped stream end.
+
+   51.1 (25.06.2009)
+   - The first release.
+
+

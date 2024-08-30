@@ -1,0 +1,124 @@
+TABLE OF CONTENTS
+
+ipc.module/__background__
+ipc.module/address
+ipc.module/checkport
+ipc.module/rx
+ipc.module/waitforport
+ipc.module/__background__
+
+ DESCRIPTION
+   MorphOS specific module providing communication with applications via
+   ARexx ports. Sending shell commands is also supported.
+
+ipc.module/address
+
+ NAME
+   ipc.address -- sets the default ARexx port name for sending commands.
+   (V1)
+
+ SYNOPSIS
+   result = address(port)
+
+ FUNCTION
+   Sets the default ARexx port name, which will be used by following rx()
+   calls. It works similarly to ARexx ADDRESS command. The special port name
+   "COMMAND" will execute following commands sent with rx() as DOS shell
+   commands, the same as in ARexx.
+
+ INPUTS
+   port - port name.
+
+ RESULT
+   None.
+
+ NOTES
+   The function is registered in the global Lua namespace, so is called
+   without "ipc." prefix.
+
+ipc.module/checkport
+
+ NAME
+   ipc.checkport -- checks existence of a public port. (V1)
+
+ SYNOPSIS
+   result = ipc.checkport(name)
+
+ FUNCTION
+   Checks for existence of a specified public message port.
+
+ INPUTS
+   name - name of port to check. Note that port names are CASE SENSITIVE.
+
+ RESULT
+   Boolean 'true' if port has been found, 'false' otherwise.
+
+ipc.module/rx
+
+ NAME
+   ipc.rx -- sends an ARexx command to an application. (V1)
+
+ SYNOPSIS
+   result = rx(command, ...)
+
+ FUNCTION
+   Forms an ARexx command string from arguments, then sends the command to
+   the currently active port set by address(). Arguments are separated with
+   spaces. The execution of the command is synchronous, which means the Lua
+   script is stopped while an application executes the command. Then the
+   global Lua variable 'rc' is set to the RC result of ARexx command.
+   Optional RESULT is returned as the result of this function. If the ARexx
+   command does not provide the RESULT, the function returns 'nil'. Note
+   that result is always received, so there is no "OPTIONS RESULTS"
+   equivalent in Lua.
+
+   When the destination port, set with address() function, is not found
+   while executing rx(), the function throws a Lua exception, terminating
+   the script execution with an error message.
+
+ INPUTS
+   command - name of an ARexx command to execute.
+   ... - arguments of the command, will be added to the command
+     string separated by spaces.
+
+ RESULT
+   The result of this function is what the ARexx command would return as
+   value of RESULT in ARexx. It is usually a text string. The global Lua
+   variable "rc" is set to the error code, returned in ARexx as RC.
+
+ NOTES
+   The function is registered in the global Lua namespace, so it is called
+   without "ipc." prefix.
+
+ EXAMPLE
+   -- Drawing a line in TVPaint.
+
+   address("rexx_TVPaint")
+   rx("tv_line", 100, 100, 200, 200)
+
+ipc.module/waitforport
+
+ NAME
+   ipc.waitforport -- waits for a public port to appear. (V1)
+
+ SYNOPSIS
+   ipc.waitforport(name[, interval])
+
+ FUNCTION
+   Checks for existence of a specified public message port. If the port
+   exists, the function exits immediately. If not, it waits for the port for
+   specified interval of time, looking for it every 200 miliseconds. If the
+   time is out, and port is still not present, the script is aborted
+   with error message.
+
+ INPUTS
+   name - name of port to wait for. Note that port names are CASE SENSITIVE.
+   interval - optional integer argument specifying maximum wait time in
+     seconds. The default interval is 5 seconds. Zero or negative value is
+     allowed, it means the function will abort immediately if the port does
+     not exist.
+
+ RESULT
+   None.
+
+

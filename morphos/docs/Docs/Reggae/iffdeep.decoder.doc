@@ -1,0 +1,111 @@
+TABLE OF CONTENTS
+
+iffdeep.decoder/MMA_Video_BitsPerPixel
+iffdeep.decoder/MMA_Video_Height
+iffdeep.decoder/MMA_Video_UseAlpha
+iffdeep.decoder/MMA_Video_Width
+iffdeep.decoder/MMM_Pull
+iffdeep.decoder/background
+iffdeep.decoder/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Returns image colour depth. Possible values for deep.decoder are 24 or 32
+
+
+iffdeep.decoder/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Returns height of image frame in pixels.
+
+iffdeep.decoder/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Returns TRUE if IFF Deep image data contain alpha channel, FALSE
+   otherwise.
+
+iffdeep.decoder/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Returns width of image frame in pixels.
+
+iffdeep.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes common format image data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of IFF Deep data from input, processes them to
+   get image data in the common format and places them in the specified
+   buffer.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from output, so 1.
+   buffer - destination buffer for common format image data. This buffer
+     must be allocated with MediaAllocMem().
+   length - amount of data to be pulled in bytes. It should be evenly
+     divisible by number of bytes per pixel for the common format (4 for
+     MMFC_VIDEO_ARGB32), if not, it is rounded down, and the rest of bytes
+     are undefined.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+iffdeep.decoder/background
+
+ DESCRIPTION
+   The class decodes IFF DEEP data used in TVPaint (RLE and DELTA
+   compression), Photogenics and XiPaint (not compressed).
+   Supported image depths are 24 and 32 bits per pixel for truecolor images.
+   (32 contains 8-bit alpha channel) .
+   An object of deep.decoder class has two ports: port 0 is an input
+   accepting MMF_VIDEO_IFFDEEP format, port 1 is an output producing
+   MMFC_VIDEO_ARGB32 format. The class is a direct subclass of
+   multimedia.class.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_Width          (V50) [..G.Q], ULONG
+   MMA_Video_Height         (V50) [..G.Q], ULONG
+   MMA_Video_BitsPerPixel   (V50) [..G.Q], ULONG
+   MMA_Video_UseAlpha       (V50) [..G.Q], BOOL
+
+ NEW METHODS
+   MMM_Pull(port,buffer, length)  (V50)
+
+ HISTORY
+   - Query tags are accessible via the class base.
+
+   50.3  (27.04.2012)
+   - Speedupds, bugfixes
+   50.2  (20.06.2011)
+   - Query library support added
+   50.1  (16.08.2007)
+   - Initial revision.
+
+

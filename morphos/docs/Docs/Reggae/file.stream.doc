@@ -1,0 +1,182 @@
+TABLE OF CONTENTS
+
+file.stream/--background--
+file.stream/MMA_StreamLength
+file.stream/MMA_StreamName
+file.stream/MMA_StreamPosBytes
+file.stream/MMA_StreamSeekable
+file.stream/MMM_Pull
+file.stream/MMM_Seek
+file.stream/--background--
+
+ DESCRIPTION
+   The class provides streams API for disk files on local and networked (for
+   example SMBFS) filesystems. A file.stream object can be safely shared
+   between tasks (all operations are semaphore protected) with one important
+   exception: object must be disposed by the task which created it. An
+   object has only one port (number 0), it is output port with MMF_STREAM
+   format.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamLength        (V50)     [..G.Q], UQUAD*
+   MMA_StreamName          (V50)     [I.G.Q], STRPTR, required on init
+   MMA_StreamSeekable      (V50)     [..G.Q], BOOL
+   MMA_StreamPosBytes      (V51)     [..G.Q], UQUAD*
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)      (V50)
+   MMM_Seek(port, type, position)      (V50)
+
+ NOTES
+   MMA_StreamHandle is not supported for file streams.
+
+ HISTORY
+   52.4  (09.08.2012)
+   - Added workaround for broken seek in CD Audio filesystem. If it is
+     detected that opened file is on that filesystem, it is reported as
+     not seekable. Then multimedia.class emulates forward seeks with reads,
+     which is enough, as wave.demuxer never seeks back during recognition.
+
+   52.3  (05.07.2012)
+   - Fixed bug in MMM_Seek(), succesfull seek in 2 - 4 GB range (and also
+     6 - 8 GB and so on) was reported as failed.
+
+   52.2  (14.06.2011)
+   - Fixed bug in MMM_Pull(), partial data load does not cause an error if
+     IoErr() returns 0. It means just end of data in file, so
+     MMERR_END_OF_DATA is set, but MMM_Pull() just returns number of bytes
+     read. This is a behaviour consistent with other streams.
+
+   52.1  (14.06.2010)
+   - No more asyncio.library.
+   - Stream only supports reading.
+   - Supports 64-bit filesystems (experimental).
+
+   51.8  (08.06.2007)
+   - Implemented MMA_TaskName.
+
+   51.7  (04.06.2007)
+   - Bugfix: MMERR_END_OF_DATA was never reported on truncated reads.
+
+   51.6  (19.03.2007)
+   - Bugfix: MMA_StreamSeekable attribute was not gettable via MMM_GetPort
+     method.
+
+   51.5  (15.11.2005)
+   - Fixed error handling in MMM_Pull.
+
+   51.4  (14.06.2005)
+   - Fixed log in MMM_Seek.
+
+   51.3  (20.04.2005)
+   - Bugfix: port format is now set after formats table, not before in the
+     constructor.
+
+   51.2  (04.04.2005)
+   - No more opens not existing stream.class library.
+   - Opens multimedia.class in version 51.
+   - Reports the constructor errors properly.
+   - The port is created in the constructor.
+   - MMA_StreamPosBytes implemented.
+
+file.stream/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength (V50) [..G.Q], UQUAD*, 0x8EDA0018
+
+ FUNCTION
+   Returns current file length in bytes.
+
+file.stream/MMA_StreamName
+
+ NAME
+   MMA_StreamName (V50) [I.G.Q], STRPTR, 0x8EDA0009
+
+ FUNCTION
+   Name of file.stream is just path to a file. The path may be absolute,
+   starting from volume name, or relative to application current dir. The
+   name string is copied, so it may be passed as a local or dynamic
+   variable.
+
+ NOTES
+   Using file.stream on not file oriented DOS devices (like CON: for
+   example) is not recommended. It will probably not work, or give
+   unexpected results.
+
+file.stream/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes (V50) [..G.Q], UQUAD*, 0x8EDA0012
+
+ FUNCTION
+   Returns current stream pointer in bytes.
+
+ NOTES
+   64-bit attribute, in OM_GET pass a pointer to an UQUAD variable, in
+   MMM_GetPort pass pointer to UQUAD as well or use MediaGetPort64() macro.
+
+file.stream/MMA_StreamSeekable
+
+ NAME
+   MMA_StreamSeekable (V50) [..G.Q], BOOL, 0x8EDA0011
+
+ FUNCTION
+   Returns TRUE if the stream is seekable, FALSE otherwise. All file.stream
+   objects return TRUE here.
+
+file.stream/MMM_Pull
+
+ NAME
+   MMM_Pull -- Reads a block of data from stream to a buffer. (V50)
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, LONG length);
+
+ FUNCTION
+   Loads specified number of bytes into a buffer starting from current read
+   pointer.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, must be 0, as it is the only port of a file.stream object.
+   - buffer, a memory buffer for read data, must be allocated with
+     MediaAllocMem().
+   - length, amount of data to be read in bytes.
+
+ RESULT
+   Number of bytes read actually. If it is less than requested, it means
+   either EOF or I/O error. Error code may be obtained by getting
+   MMA_ErrorCode attribute.
+
+file.stream/MMM_Seek
+
+ NAME
+   MMM_Seek -- Seeks in a file to specified absolute position. (V50)
+
+ SYNOPSIS
+   result = DoMethod(obj, MMM_Seek, ULONG port, ULONG type, QUAD
+   *position);
+
+ FUNCTION
+   Seeks in a file to specified absolute position. Seeks past the end of
+   file are truncated, but are succesfull. File.stream understands
+   MMM_SEEK_BYTES type only.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, always 0, as it is the only port in a file.stream object.
+   - type, MMM_SEEK_BYTES.
+   - position, pointer to QUAD variable containing desired position in the
+     file.
+
+ RESULT
+   - result, boolean.
+
+

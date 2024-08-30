@@ -1,0 +1,181 @@
+TABLE OF CONTENTS
+
+spellchecker.library/--background--
+spellchecker.library/CloseDictionary
+spellchecker.library/Learn
+spellchecker.library/ListDictionaries
+spellchecker.library/OpenDictionary
+spellchecker.library/SpellCheck
+spellchecker.library/Suggest
+spellchecker.library/--background--
+
+   spellchecker.library is a MorphOS shared library providing a
+   straighforward API for checking a word against a dictionary.
+
+   The library was rewritten for MorphOS 3.12 to use a hunspell
+   based backend.
+
+spellchecker.library/CloseDictionary
+
+   NAME
+   CloseDictionary -- Releases all allocated resources
+
+   SYNOPSIS
+   CloseDictionary(struct SpellChecker*);
+
+   FUNCTION
+   Releases allocated resources for dictionary.
+
+   INPUTS
+   A pointer to a SpellChecker structure obtained from OpenDictionary.
+
+   RESULT
+   Nothing.
+
+   SEE ALSO
+   OpenDictionary()
+
+spellchecker.library/Learn
+
+   NAME
+   Learn -- Add a word to user dictionary
+
+   SYNOPSIS
+   BOOL Learn(struct SpellChecker *sp, STRPTR word);
+
+   FUNCTION
+   Adds a word to user dictionary described by pointer to SpellChecker structure.
+
+   INPUTS
+   A pointer to a null terminated string to be added to user dictionary.
+   No checking for duplicated word is made. User dictionary must be a list
+   of plain text words separated by new line character. It must not be
+   compressed by any means.
+
+   RESULT
+   If word is added to user dictionary file, returns TRUE otherwise returns
+   FALSE.
+
+   SEE ALSO
+spellchecker.library/ListDictionaries
+
+   NAME
+   LIB_ListDictionaries -- Lists available languages in a displayable format
+
+   SYNOPSIS
+   APTR LIB_ListDictionaries(struct SpellChecker *sp, void *buffer, LONG bufferSize);
+
+   FUNCTION
+   Returns a NULL terminated list of strings containing language names in
+   displayable form. They'll either be encoded in ISO_8859_1 or UTF8. Those names
+   may be passed to OpenDictionary via SCA_Name.
+
+   INPUTS
+   Pointer to a memory block to use to build the output list at.
+
+   TAGS
+   SCA_UTF8 - set to TRUE to return UTF-8 encoded strings
+   SCA_Default - STRPTR *, if non NULL, will be poked an address to a string with the default
+                 dictionary name
+
+   RESULT
+   NULL terminated list of languages
+
+   SEE ALSO
+spellchecker.library/OpenDictionary
+
+   NAME
+   OpenDictionary -- Opens a dictionary
+
+   SYNOPSIS
+   struct SpellChecker* = OpenDictionary(STRPTR filename, struct TagItem* tagitem);
+
+   FUNCTION
+   Opens a dictionary file and returns a private SpellChecker structure
+   that describes the opened dictionary.
+
+   INPUTS
+   filename, string pointer to a dictionary name. dictionary can be loaded
+   from any path. Dictionnaries should be stored in the default system layout:
+   LOCALE:Dictionnaries/<language>.
+   Default dictionary filename is 'base.dic'.
+   If filename argument is NULL, default language dictionary will be loaded from
+   default system dictionary naming scheme: LOCALE:Dictionnaries/<language>/base.dic
+   tagitem argument is a pointer to a null terminated array of tags.
+
+   TAGS
+   SCA_UTF8 (BOOL) - input/output strings of Suggest/SpellCheck/Learn are assumed
+                     to be UTF8 encoded. Defaults to FALSE for legacy compatibility
+                     but you should always set this to TRUE and use UTF8
+   SCA_Name (CONST_STRPTR) - disregard filename and use passed in language name.
+                       Name must have been passed from ListDictionaries
+
+
+   RESULT
+   Returns a private pointer to SpellChecker structure
+
+   If dictionary opening fails, function call returns NULL.
+
+   SEE ALSO
+   Closedictionary
+spellchecker.library/SpellCheck
+
+   NAME
+   SpellCheck -- checks for a word against a dictionary.
+
+   SYNOPSIS
+   BOOL SpellCheck(struct SpellChecker *sp, STRPTR word, struct TagItem *items)
+
+   FUNCTION
+   Checks word argument against the provided dictionary. The string must be
+   encoded in UTF-8 (recommended) or in dictionary's codepage (legacy), depending
+   on how the dictionary was opened.
+
+   INPUTS
+   sp - a pointer to a SpellChecker structure obtained from
+   OpenDictionary.
+   word - a pointer to a null terminated string.
+   items - spell check options as a tag item list.
+
+   TAGS
+   None currently.
+
+   RESULT
+   Returns TRUE if the word is found in dictionary.
+
+   SEE ALSO
+
+spellchecker.library/Suggest
+
+   NAME
+   Suggest -- checks for a word against a dictionary.
+
+   SYNOPSIS
+   APTR Suggest(struct SpellChecker *sp, STRPTR word, struct TagItem *items)
+
+   FUNCTION
+   Checks word argument against the provided dictionary. The string must be
+   encoded in UTF-8 (recommended) or in system's codepage (legacy), depending
+   on how the dictionary was opened.
+
+   INPUTS
+   sp - a pointer to a SpellChecker structure obtained from
+   OpenDictionary.
+   word - a pointer to a null terminated string.
+   items - suggestion options as a tag item list.
+
+   TAGS
+
+   RESULT
+   Suggest returns -1 if the word is found in dictionary.
+   Suggest returns an array of up to 63 suggested words if
+   suitable words has been found. The array is null terminated.
+   If no suitable word has been found, Suggest returns NULL.
+
+   NOTES
+   The call is not thread safe when called with the same dictionary handle!
+
+   SEE ALSO
+   OpenDictionary
+
+

@@ -1,0 +1,66 @@
+TABLE OF CONTENTS
+
+iso639.class/DATAM_FindEntry
+iso639.class/DATAM_NextEntry
+iso639.class/DATAM_FindEntry
+
+ NAME
+   DATAM_FindEntry -- (V52)
+
+ SYNOPSIS
+   entry = DoMethod(obj, DATAM_FindEntry, type, data);
+
+ FUNCTION
+   Searches matching entry for data.
+
+   Possible types are:
+      DATA_EntryType_ISO639_Alpha2   - Search using ISO 639-1 two-letter
+         language code. Examples of two-letter codes are "en", "fi" or "ge".
+
+      DATA_EntryType_ISO639_Alpha3   - Search using ISO 639-2 three-letter
+         language code (bibliographic or terminological).Examples of
+         three-letter codes are "eng", "fin", "ger" and "deu".
+
+      DATA_EntryType_ISO639_Language - Search using ISO 639 language name or
+         alias (for example both "german" and "deutsch" are accepted).
+
+
+ INPUTS
+   Type of data and data string to search for.
+
+ RESULT
+   entry - pointer to iso639_entry or NULL if not found
+
+iso639.class/DATAM_NextEntry
+
+ NAME
+   DATAM_FindEntry -- (V52)
+
+ SYNOPSIS
+   entry = DoMethod(obj, DATAM_NextEntry, previous);
+
+ FUNCTION
+   This is an iterator for list of ISO 639 entries. At every call it returns
+   the next entry from the list. Returned entries are read only. When the
+   iterator reaches end of list, it returns NULL.
+
+ INPUTS
+   Pointer to previous entry or NULL to get first entry.
+
+ RESULT
+   entry - pointer to iso639_entry or NULL if end of list
+
+ EXAMPLE
+   Printing all entries from the list:
+
+   APTR entry = NULL;
+
+   while ((entry = DoMethod(obj, DATAM_NextEntry, entry)))
+   {
+      Printf("Language: %s\n", entry->Language);
+      Printf("Alpha2: %s\n", entry->Alpha2);
+      Printf("Alpha3B: %s\n", entry->Alpha3B);
+      Printf("Alpha3T: %s\n", entry->Alpha3T);
+   }
+
+

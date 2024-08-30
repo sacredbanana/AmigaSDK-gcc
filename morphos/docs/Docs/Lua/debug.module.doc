@@ -1,0 +1,346 @@
+TABLE OF CONTENTS
+
+debug.module/debug
+debug.module/getfenv
+debug.module/gethook
+debug.module/getinfo
+debug.module/getlocal
+debug.module/getmetatable
+debug.module/getregistry
+debug.module/getupvalue
+debug.module/setfevn
+debug.module/sethook
+debug.module/setlocal
+debug.module/setmetatable
+debug.module/setupvalue
+debug.module/traceback
+debug.module/debug
+
+ NAME
+   debug.debug -- enters interactive debug mode. (V1)
+
+ SYNOPSIS
+   debug.debug()
+
+ FUNCTION
+   When program has its own console window, debug() enters a debug prompt in
+   this console. User can interactively execute statements and observe
+   results. Entering "cont" as the only word in a line exits debug mode and
+   debug() returns to the caller.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+debug.module/getfenv
+
+ NAME
+   debug.getfenv -- returns environment table of object. (V1)
+
+ SYNOPSIS
+   t = debug.getfenv(obj)
+
+ FUNCTION
+   Returns an environment table 't' for object 'obj'. Object should be Lua
+   thread, function or userdata. The environment contains all global
+   variables. For the main thread it is usually the "_G" table.
+
+ INPUTS
+   obj - Lua object.
+
+ RESULT
+   Environment table.
+
+debug.module/gethook
+
+ NAME
+   debug.gethook -- returns current debug hook settings for a thread. (V1)
+
+ SYNOPSIS
+   f, m, c = debug.gethook([t])
+
+ FUNCTION
+   Returns debug hook function 'f', hook mask 'm' and hook count 'c' for
+   specified Lua thread 't', or for the main thread if 't' is not specified.
+
+ INPUTS
+   t - Lua thread.
+
+ RESULT
+   f - debug hook function.
+   m - debug hook mask.
+   c - debug hook event count.
+
+ SEE ALSO
+   sethook()
+
+debug.module/getinfo
+
+ NAME
+   debug.getinfo -- returns information about a function. (V1)
+
+ SYNOPSIS
+   i = debug.getinfo([t ,]f[, w])
+
+ FUNCTION
+   Returns a table containing information about function 'f'. The function
+   'f' may be specified directly, or by passing call backtrace level as a
+   number. In the call backtrace 0 is getinfo() itself, 1 is the function
+   calling getinfo() and so on. Lua thread 't' may be optionally provided
+   selecting a thread to debug, the default value is the main thread. The
+   filter 'w' is a string containing up to 5 letters from "flnSu" set,
+   specifying what information about the function 'f' should be provided.
+   The default filter is "flnSu", which means all information available
+   except 'L' (see below). Filter letters fill following entries of the
+   table 'i':
+   - 'S'
+     i.source - full name of the source (file).
+     i.short_src - name of the source shortened to 60 characters.
+     i.linedefined - number of the first line of the function.
+     i.lastlinedefined - number of the last line of the function.
+     i.what - function kind ("Lua" for Lua functions, "C" for C functions).
+   - 'l'
+     i.currentline - number of line where getinfo() has been called.
+   - 'u'
+     i.nups - number of upvalues (for C function).
+   - 'n'
+     i.name - function name
+     i.namewhat - function type (local, global etc.).
+   - 'f'
+     i.func - the function object itself.
+   - 'L'
+     i.activelines - a table of lines contain valid Lua code (in other words
+       lines, which can have a breakpoint set). Indices of the table are
+       line numbers, values are boolean 'true'.
+
+ INPUTS
+   t - Lua thread.
+   f - examined function.
+   w - information filter.
+
+ RESULT
+   Table with information about 'f'.
+
+debug.module/getlocal
+
+ NAME
+   debug.getlocal -- returns information about local variable. (V1)
+
+ SYNOPSIS
+   n, v = debug.getlocal([th ,]lv, lc)
+
+ FUNCTION
+   The function analyses stack level 'lv' of Lua thread 'th'. It takes a
+   local variable of index 'lc' on this stack level, then returns the
+   variable name and value. Stack level of 1 means the function calling
+   getlocal(), 2 means parent function and so on. Local variables indices
+   start from 1, function parameters are local variables too. For out of
+   range variable index the function returns 'nil'. For out of range stack
+   level, function throws an exception (valid stack levels can be obtained
+   with getinfo()).
+
+ INPUTS
+   th - Lua thread. Defaults to the main one.
+   lv - call traceback level.
+   lc - local variable index.
+
+ RESULT
+   n - variable name.
+   v - variable value.
+
+debug.module/getmetatable
+
+ NAME
+   debug.getmetatable -- returns metatable of object. (V1)
+
+ SYNOPSIS
+   m = debug.getmetatable(obj)
+
+ FUNCTION
+   Returns metatable of object 'obj', or 'nil' if the object has no metatable.
+
+ INPUTS
+   obj - Lua object.
+
+ RESULT
+   Metatable of 'obj'.
+
+debug.module/getregistry
+
+ NAME
+   debug.getregistry -- returns global register table. (V1)
+
+ SYNOPSIS
+   r = debug.getregistry()
+
+ FUNCTION
+   Returns global register table. Registers may be used to store Lua values
+   from inside C extensions if some C extension needs to keep a Lua value
+   between calls to its functions.
+
+ INPUTS
+   None.
+
+ RESULT
+   Registry.
+
+debug.module/getupvalue
+
+ NAME
+   debug.getupvalue -- returns upvalue of Lua function. (V1)
+
+ SYNOPSIS
+   n, v = debug.getupvalue(f, u)
+
+ FUNCTION
+   Returns an upvalue of index 'u' of function 'f'. For invalid index 'u'
+   upvalue() returns 'nil'. Upvalues are indexed from 1.
+
+ INPUTS
+   f - Lua function.
+   u - Upvalue index.
+
+ RESULT
+   n - upvalue name.
+   v - upvalue value.
+
+debug.module/setfevn
+
+ NAME
+   debug.setfenv -- sets environment for object. (V1)
+
+ SYNOPSIS
+   r = debug.setfenv(o, t)
+
+ FUNCTION
+   Sets environment for specified object. Returns the object. The object
+   must be thread, function or userdata. If environment cannot be changed,
+   setfenv() throws a Lua exception.
+
+ INPUTS
+   o - object.
+   t - table to be set as environment.
+
+ RESULT
+   Passed object with new environment.
+
+debug.module/sethook
+
+ NAME
+   debug.sethook -- sets or clears debug hook. (V1)
+
+ SYNOPSIS
+   debug.sethook([thr, ]hook, mask[, count])
+
+ FUNCTION
+   Sets or clears debug hook for specified thread. The default thread is the
+   main one. Specified Lua function will be called as debug hook at events
+   defined by mask and instruction counter. When sethook() is called without
+   arguments (or only thread argument) it clears the hook. The hook function
+   receives string describing event type as its first argument, and, for line
+   events, the line number as the second argument.
+
+ INPUTS
+   thr - Lua thread.
+   hook - Lua function to be used as debug hook.
+   mask - a string specifying when to call the hook. It can contain
+     following letters:
+     'c' - hook is called at every function call.
+     'r' - hook is called at every function return.
+     'l' - hook is called at every enter to new line of code.
+   count - if positive, hook is called at every 'count' instructions of the
+     Lua virtual machine.
+
+ RESULT
+   None.
+
+debug.module/setlocal
+
+ NAME
+   debug.setlocal -- sets value of local variable. (V1)
+
+ SYNOPSIS
+   n = debug.setlocal([thr, ]lvl, idx, val)
+
+ FUNCTION
+   Sets new value of local variable. The variable is located by specifying
+   its index (starting from 1) at given stack level of specified Lua thread.
+   The default thread is the main one. In case of success variable name is
+   returned. When variable of given index does not exist, the function
+   returns 'nil'. When stack level is invalid, Lua exception is thrown.
+
+ INPUTS
+   thr - optional Lua thread.
+   lvl - stack level.
+   idx - index of local variable.
+   val - new value for variable.
+
+ RESULT
+   Name of the variable or 'nil'.
+
+debug.module/setmetatable
+
+ NAME
+   debug.setmetatable -- sets or clears metatable for object. (V1)
+
+ SYNOPSIS
+   r = debug.setmetatable(o, t)
+
+ FUNCTION
+   Sets specified table as a metatable for specified object. The table may
+   be 'nil', metatable for an object is then cleared.
+
+ INPUTS
+   o - Lua object.
+   t - table to be set as metatable.
+
+ RESULT
+   Boolean value of success.
+
+debug.module/setupvalue
+
+ NAME
+   debug.setupvalue -- sets upvalue for Lua function. (V1)
+
+ SYNOPSIS
+   n = debug.setupvalue(f, u, v)
+
+ FUNCTION
+   Sets value of upvalue variable for specified Lua function.
+
+ INPUTS
+   f - Lua function.
+   u - upvalue index (starts from 1).
+   v - new value for upvalue.
+
+ RESULT
+   Upvalue name, or 'nil' if upvalue does not exist.
+
+debug.module/traceback
+
+ NAME
+   debug.traceback -- outputs stack traceback as a string. (V1)
+
+ SYNOPSIS
+   r = debug.traceback([thr, ][msg, ][lvl])
+
+ FUNCTION
+   The function returns a multiline string containing the call traceback
+   from specified call level. Each line is for one level, contains source
+   name,  function name and line. Default start level is 1, which means a
+   function which called traceback(). Optional message may be attached at
+   the start of the whole result. If the stack traceback is deeper than
+   22 levels, the function outputs 12 levels up, then "..." then 10 last
+   (most upper) levels.
+
+ INPUTS
+   thr - optional Lua thread.
+   msg - optional message added as a prefix to the string.
+   lvl - optional stack level to start.
+
+ RESULT
+   String with call traceback.
+
+

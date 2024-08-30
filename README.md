@@ -1,5 +1,5 @@
 # AmigaSDK-gcc
-Contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.16 plus extra SDKs fixed to work with the GCC compiler.
+Contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.16, MorphOS 3.18 SDK, plus extra SDKs fixed to work with the GCC compiler.
 
 Please note these are meant to be installed on top of Bebbo's Amiga GCC devkit https://github.com/bebbo/amiga-gcc so install that first if not done already.
 
@@ -22,6 +22,8 @@ The other included SDKs not counting the ones already included which are from Be
 - SDI 1.7
 - Flite Device 53.1 http://aminet.net/package/mus/misc/flite_device
 - json-c 0.17 https://github.com/json-c/json-c
-docke
-2 Dockerfiles are also included for building the AmigaOS 3 & 4 compiler dev environments with everything included.
-The latest images can also be obtained by running `docker pull sacredbanana/amiga-compiler:m68k-amigaos` and `docker pull sacredbanana/amiga-compiler:ppc-amigaos`.
+**MorphOS**
+- json-c 0.17 https://github.com/json-c/json-c
+
+3 Dockerfiles are also included for building the AmigaOS 3/4 and MorphOS compiler dev environments with everything included.
+The latest images can also be obtained by running `docker pull sacredbanana/amiga-compiler:m68k-amigaos`, `docker pull sacredbanana/amiga-compiler:ppc-amigaos` and `docker pull sacredbanana/amiga-compiler:ppc-morphos`.

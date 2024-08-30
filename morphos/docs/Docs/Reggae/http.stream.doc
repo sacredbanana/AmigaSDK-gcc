@@ -1,0 +1,834 @@
+TABLE OF CONTENTS
+
+http.stream/MMA_Http_AutoRedirect
+http.stream/MMA_Http_ExtendedLog
+http.stream/MMA_Http_ExtraHeaderFields
+http.stream/MMA_Http_Header
+http.stream/MMA_Http_HeaderEntries
+http.stream/MMA_Http_NetProcess
+http.stream/MMA_Http_NoFailOnHttpError
+http.stream/MMA_Http_PostData
+http.stream/MMA_Http_ProxyPort
+http.stream/MMA_Http_ProxyServer
+http.stream/MMA_Http_RequestType
+http.stream/MMA_Http_Response
+http.stream/MMA_Http_ResponseCode
+http.stream/MMA_Http_UserAgent
+http.stream/MMA_Http_UserAgentOverride
+http.stream/MMA_StreamLength
+http.stream/MMA_StreamName
+http.stream/MMA_StreamPosBytes
+http.stream/MMA_StreamSeekable
+http.stream/MMA_TaskName
+http.stream/MMA_TaskPriority
+http.stream/MMA_URIStreamName
+http.stream/MMM_Http_GetHeaderEntry
+http.stream/MMM_Pull
+http.stream/background
+http.stream/MMA_Http_AutoRedirect
+
+ NAME
+   MMA_Http_AutoRedirect (V51) [I....], ULONG
+
+ FUNCTION
+   Specifies allowed number of HTTP redirections. A non-zero value instructs
+   the object to automatically follow redirection responses (30x) from the
+   server instead of reporting error and failing in OM_NEW. The tag
+   initializes redirection counter. If the counter is greater than zero, and
+   server responds with 30x code, the header is searched for "Location"
+   field. If this field is found, its contents is used as a new target, the
+   request is resent and the counter decremented. If there is no "Location"
+   for 30x response, or the counter reaches 0, OM_NEW will fail. Default
+   value for this tag is 10.
+
+ NOTES
+   To disable redirections, just set the tag to 0.
+
+   Avoid setting this tag to big values (more than 50), as in case of
+   redirection loop, your thread will stuck in OM_NEW until the loop downs
+   the counter to 0.
+
+http.stream/MMA_Http_ExtendedLog
+
+ NAME
+   MMA_Http_ExtendedLog (V51.4) [I....], BOOL
+
+ FUNCTION
+   The tag controls how many connection details are sent to the log. The
+   default value for this tag is FALSE. It means the only connection details
+   revealed are target host and port number. If it is set to TRUE, the
+   object dumps complete request and response headers.
+
+http.stream/MMA_Http_ExtraHeaderFields
+
+ NAME
+   MMA_Http_ExtraHeaderFields (V51.4) [I....], STRPTR*
+
+ FUNCTION
+   This attribute allows to pass additional fields to the HTTP request
+   header sent. Similarly to MMA_Http_Header, the attribute value is an
+   address of a table containing pointers to NULL-terminated strings. Every
+   even string, starting from 0, contains a keyword, every odd string
+   contains the value. The table is terminated by NULL pointer. Note that
+   the class does not perform any verification of RFC 2616 conformance on
+   strings passed. Keyword string must not contain colon separator or any
+   whitespaces. The value string must not contain CR LF sequence. Additional
+   header fields are appended to the header after standard four: "Host",
+   "Accept-Encoding", "User-Agent" and "Connection". An object creates
+   copies of all the strings in the table, so both the table itself and
+   strings need not to be static.
+
+ EXAMPLE
+   STRPTR MyFields[] = {
+     "If-Modified-Since", "Tue, 8 Apr 2008 00:00:01 GMT"
+     "Range",             "bytes=0-999",
+   NULL };
+
+   /* then somewhere in NewObject()... */
+
+   MMA_Http_ExtraHeaderFields, (ULONG)MyFields,
+
+ SEE ALSO
+   MMA_Http_Header
+
+http.stream/MMA_Http_Header
+
+ NAME
+   MMA_Http_Header (V51) [..G.Q], STRPTR*
+
+ FUNCTION
+   This attribte gives access to the complete HTTP response header. The
+   header is already parsed and returned as keyword-value pairs. The
+   returned value is an address of table of pointers to stings. The first
+   string (index 0) is the first keyword, the second one (index 1) is the
+   value of this keyword. The third element (index 2) is the second keyword
+   and so on. The table is terminated by NULL pointer. The header is parsed
+   according to RFC 2616 including multiline fields (multiline fields are
+   unfolded according to RFC 822 and returned as plain strings).
+
+ NOTES
+   The first line of the response, returned by MMA_Http_Response is not
+   included in the table returned by MMA_Http_Header.
+
+ SEE ALSO
+   MMA_Http_HeaderEntries, MMA_Http_Response
+
+http.stream/MMA_Http_HeaderEntries
+
+ NAME
+   MMA_Http_HeaderEntries (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Number of entries returned by MMA_Http_Header. The first line of header
+   is not counted here, as it is retured separately by MMA_Http_Response.
+   The NULL element placed as the last table entry is not counted as well.
+
+http.stream/MMA_Http_NetProcess
+
+ NAME
+   MMA_Http_NetProcess (V51) [..G.Q], struct Process*
+
+ FUNCTION
+   The attribute returns a pointer to the Process structure of network
+   subprocess of a http.stream object. It can be used to send CTRL-C signal
+   to the process to break network operation. Note that you cannot break
+   network operations in OM_NEW this way, use MMA_TaskName for this.
+
+http.stream/MMA_Http_NoFailOnHttpError
+
+ NAME
+   MMA_Http_NoFailOnHttpError (V51.12) [I....], BOOL
+
+ FUNCTION
+   When set to TRUE at init, will not cause object creation to fail in case
+   of HTTP 4xx or 5xx response code. Object is created normally, an error
+   page returned by server is available at object's output. Returned HTTP
+   header is available via MMA_Http_Header, MMA_Http_Response,
+   MMA_Http_ResponseCode and MMM_Http_GetHeaderEntry(). Defaults to FALSE.
+
+ SEE ALSO
+   MMA_Http_Header, MMA_Http_Response, MMA_Http_ResponseCode,
+   MMM_Http_GetHeaderEntry
+
+http.stream/MMA_Http_PostData
+
+ NAME
+   MMA_Http_PostData (V51.13) [I....], struct TagItem*
+
+ FUNCTION
+   The attribute specifies data to be sent in a POST request. As such it is
+   ignored if MMA_Http_RequestType is set to GET, or not given. Application
+   specifies POST data as "tag stream". Formatting data according to the
+   request type is done by the object. Following tags are recognized inside
+   the tag stream:
+
+   - MMA_Http_PostData_Name - starts a data field (ending the previous one
+     if present) and specifies its name. Tag value should be a NULL-
+     terminated string. This tag is required.
+
+   - MMA_Http_PostData_Charset - specifies text character set for the whole
+     request. Tag value should be IANA number of the encoding
+     (charsets.library can be used to convert between IANA number and
+     charset name). This tag is optional and defaults to the system
+     encoding. Note that system encoding depends on selected locale and may
+     be other than ISO-8859-1. This tag may be placed anywhere in the
+     taglist. If specified multiple times, only the first one is taken into
+     account.
+
+   - TAG_END - ends the tag stream.
+
+   Textual fields
+
+   - MMA_Http_PostData_Value - tag value should be a NULL-terminated string.
+     This tag is required.
+
+   - MMA_Http_PostData_FieldCharset - allows for overriding charset for a
+     single field. It is only possible for multipart posts. Using this tag
+     in an url encoded post will cause the constructor to fail with
+     MMERR_WRONG_DATA error.
+
+   Binary fields
+
+   - MMA_Http_PostData_Binary - The tag value is a pointer to data. This tag
+     is required.
+
+   - MMA_Http_PostData_Length - The tag value is the length of data pointed
+     by MMA_Http_PostData_Binary in bytes. This tag is required.
+
+   - MMA_Http_PostData_MimeType - used for posting binary data. The tag
+     value is a NULL-terminated string specifying MIME type for binary data.
+     The tag is optional and defaults to "application/octet-stream". NULL
+     value is allowed, the default is used in this case.
+
+   - MMA_Http_PostData_FileName - Specifies a local filename. May be a real
+     file name (if data are loaded from file), or some made up name if data
+     are generated. It is passed in "Content-Disposition" field of the part
+     header. The tag is optional. If not specified, it defaults to
+     a randomly generated string of 15 lowercase letters. NULL value is
+     allowed, the randomly generated name is used in this case.
+
+   Binary fields are allowed only if MMA_Http_RequestType is set to
+   MMV_Http_RequestType_PostMulti. For other POST request types the
+   constructor will fail with MMERR_WRONG_ARGUMENTS error.
+
+   A textual field is specified in the following way (triangle brackets are
+   used for required elements, square brackets for optional ones):
+
+     <MMA_Http_PostData_Name, <string>,>
+     <MMA_Http_PostData_Value, <string>,>
+
+   A binary field specification:
+
+     <MMA_Http_PostData_Name, <string>,>
+     <MMA_Http_PostData_Binary, <pointer>,>
+     <MMA_Http_PostData_Length, <number>,>
+     [MMA_Http_PostData_MimeType, <string>]
+     [MMA_Http_PostData_FileName, <string>]
+     [MMA_Http_PostData_FieldCharset, <number>]
+
+   Tag order inside a single field section (it means after
+   MMA_Http_PostData_Name) is not important. Textual tags used for binary
+   field and vice versa are ignored with exception of:
+
+   - Both MMA_Http_PostData_Value and MMA_Http_PostData_Binary in one field
+     section. Constructor fails with MMERR_WRONG_ARGUMENTS error.
+
+   - MMA_Http_PostData_FieldCharset when POST type is URL encoded.
+     Constructor fails with MMERR_WRONG_ARGUMENTS error.
+
+   In the raw post mode (when MMA_Http_RequestType is set to
+   MMV_Http_RequestType_PostDirect), only three tags are recognized, each
+   of them is also required:
+
+   - MMA_Http_PostData_Binary - pointer to raw POST data.
+   - MMA_Http_PostData_Length - length of raw POST data in bytes.
+   - MMA_Http_PostData_MimeType - type of data, it is placed in the HTTP
+     request header as "Content-Type" field. Note that if text data are raw
+     posted and charset specification is required, charset should be
+     specified directly in this attribute, for example "text/plain;
+     charset=utf-8". Charset tags have no effect for raw posts.
+
+   For raw posts, only the first occurence of the above tags is taken into
+   account, duplicates are ignored silently.
+
+ NOTES
+   Ommiting this tag for POST request, passing a NULL value or an empty
+   taglist is allowed and results in a POST request without body. Such a
+   request may be rejected by HTTP server however.
+
+ EXAMPLES
+   Sending a JPEG image with title and author's name:
+
+   UBYTE *imagedata;  /* points to JPEG image data */
+
+   struct TagItem postdata[] = {
+     { MMA_Http_PostData_Name, "author" },
+     { MMA_Http_PostData_Value, "Joe Average" },
+     { MMA_Http_PostData_Name, "title" },
+     { MMA_Http_PostData_Value, "A View From My Window" },
+     { MMA_Http_PostData_Name, "image" },
+     { MMA_Http_PostData_Binary, imagedata },
+     { MMA_Http_PostData_Length, 2377735 },         /* just an example */
+     { MMA_Http_PostData_MimeType, "image/jpeg" },
+     { TAG_END, 0 }
+   };
+
+   stream = NewObject(NULL, "http.stream",
+     /* ... */
+     MMA_Http_RequestType, MMV_Http_RequestType_PostMulti,
+     MMA_Http_PostData, postdata,
+     /* ... */
+   TAG_END);
+
+ SEE ALSO
+   MMA_Http_RequestType
+
+http.stream/MMA_Http_ProxyPort
+
+ NAME
+   MMA_Http_ProxyPort (V51) [I....], ULONG
+
+ FUNCTION
+   Specifies a port, which proxy is connected on. If proxy is not specified,
+   this attribute is ignored. The default value for this tag is 8080 (usual
+   port for HTTP proxies).
+
+ SEE ALSO
+   MMA_Http_ProxyServer
+
+http.stream/MMA_Http_ProxyServer
+
+ NAME
+   MMA_Http_ProxyServer (V51) [I....], STRPTR
+
+ FUNCTION
+   If not NULL, this attribute instructs http.stream object to connect to
+   the destination host not directly, but via specified HTTP proxy. The
+   default value for this tag is NULL (no proxy). The string passed need not
+   to be static, as a copy is created.
+
+ SEE ALSO
+   MMA_Http_ProxyPort
+
+http.stream/MMA_Http_RequestType
+
+ NAME
+   MMA_Http_RequestType (V51.13) [I....], LONG
+
+ FUNCTION
+   Selects the HTTP request type. One of three values is accepted:
+
+   - MMV_Http_RequestType_Get - the default value. Sends a GET request with
+     no data in the request body.
+
+   - MMV_Http_RequestType_PostUrl - sends a POST request with data stored
+     in application/x-www-form-urlencoded format. This request type is
+     recommended for sending short textual data. The http.stream class does
+     not allow sending binary data with this type of request.
+
+   - MMV_Http_RequestType_PostMulti - sends a POST request with data stored
+     in multipart/form-data format. Should be used for sending binary data
+     and large chunks of text. For short text data it is less effective than
+     x-www-form-urlencoded.
+
+   - MMV_Http_RequestType_PostDirect - sends a raw POST request, a single
+     binary block with specified MIME type is sent as request body.
+
+   Any other value causes the constructor to fail with MMERR_WRONG_ARGUMENTS
+   error.
+
+ SEE ALSO
+   MMA_Http_PostData
+
+http.stream/MMA_Http_Response
+
+ NAME
+   MMA_Http_Response (V51) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns a read-only string containing the first line of HTTP response
+   header. This line consists of HTTP version supported by server, three
+   digit result code and textual result description, for example:
+
+   HTTP/1.1 200 OK
+
+   or
+
+   HTTP/1.1 404 Not Found
+
+   An application can analyse this line, inform user and take appropriate
+   action. For list of result codes see HTTP protocol specification (RFC
+   2616).
+
+http.stream/MMA_Http_ResponseCode
+
+ NAME
+   MMA_Http_ResponseCode (V51.8) [I.G.Q], ULONG
+
+ FUNCTION
+   Returns HTTP response code as a number. This attribute can be also
+   specified for OM_NEW. The tag value in this case is a pointer to an ULONG
+   variable, where the response code will be stored (it works similarly to
+   MMA_ErrorCode).
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+http.stream/MMA_Http_UserAgent
+
+ NAME
+   MMA_Http_UserAgent (V51) [I....], STRPTR
+
+ FUNCTION
+   Allows application for identifying itself in HTTP 'User-Agent' header
+   field. Note that string passed does not form the field contents alone. A
+   string "/http.stream x.x (MorphOS x.x)" is appended to the one passed,
+   where 'xx' are replaced by actual version of http.stream class and
+   MorphOS. So for example if an application specifies:
+
+   "SuperNetMumboJumbo 6.2"
+
+   the complete 'User-Agent' field may be:
+
+   "SuperNetMumboJumbo 6.2/http.stream 51.7 (MorphOS 2.0)"
+
+   The default value for this attribute is "unknown". The string passed need
+   not to be static, it is copied internally.
+
+ NOTES
+   Supplied string must conform RFC 2616. It must not contain newlines.
+
+http.stream/MMA_Http_UserAgentOverride
+
+ NAME
+   MMA_Http_UserAgentOverride (V51.4) [I....], STRPTR
+
+ FUNCTION
+   This attribute completely overrides "User-Agent" field contents in the
+   HTTP request header. Using this attribute is not recommended as it allows
+   for breaking RFC 2616 recommendations. The RFC document suggests using
+   the name composed of an application name and a name of library or
+   component responsible for HTTP protocol handling. MMA_Http_UserAgent
+   follows this convention and should be preferred. There are conditions
+   however, when "User-Agent" spoofing cannot be avoided, that is why
+   MMA_Http_UserAgentOverride exists. The attribute takes precedence over
+   MMA_Http_UserAgent if both are specified, unless it is set to NULL. If
+   set to NULL, it is just ignored. An object creates a copy of string
+   passed, so it needs not to be static.
+
+ EXAMPLE
+   /* some browser spoofing (somewhere in NewObject()) */
+
+   MMA_Http_UserAgentOverride, (ULONG)"Mozilla/5.0 (Windows; U; "
+    "Windows NT 5.1; pl; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13",
+
+ SEE_ALSO
+   MMA_Http_UserAgent
+
+http.stream/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength (V50) [I.G.Q], UQUAD*
+
+ FUNCTION
+   Returns stream length in bytes. If "Content-Length" field is found in the
+   response header, it is used as stream length. If not found, zero is
+   returned. It can happen if either server is not HTTP/1.1 compliant, or
+   server uses chunked transfer. Zero means unknown length. When passed to
+   OM_NEW, this attribute specifies "artificial" stream length, which can
+   be used to limit the amount of data fetched. Passing zero value to OM_NEW
+   means no limit, and zero is the default value.
+
+ NOTES
+   64-bit attribute, in OM_GET pass a pointer to an UQUAD variable, in
+   MMM_GetPort pass pointer to UQUAD as well or use MediaGetPort64() macro.
+
+   If the attribute is specified for OM_NEW and is lower than the real
+   stream length (or the real stream length is unknown), the value specified
+   for OM_NEW is returned on query.
+
+http.stream/MMA_StreamName
+
+ NAME
+   MMA_StreamName (V50) [I.G.Q], STRPTR
+
+ FUNCTION
+   Name of http.stream is URL to the resource, but without leading
+   "http://". It is not needed, as http.stream supports only HTTP protocol.
+   Default TCP port is 80. Other ports are supported via "hostname:port"
+   syntax. Note that http.stream DOES NOT perform so called "percent
+   encoding" (see RFC 3986), an application must do it itself if needed.
+
+   New in V51.7: When MMA_Http_AutoRedirect is not zero, and the object is
+   redirected with permanent redirection ("301 Moved permanenty"), the
+   attribute is updated. Then when queried with OM_GET or MMM_GetPort,
+   returns the URL after redirection, not the initial one. This is an easy
+   way for update permanently moved links in an application.
+
+ EXAMPLE
+   A few examples of good HTTP stream names:
+
+   any.host.com/files/pic4.jpg
+   useful.things.net:3000/pub/archive.zip
+   www.morphzone.org
+   localhost/~user7/
+
+http.stream/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes (V50) [..G.Q], UQUAD*
+
+ FUNCTION
+   Returns current stream pointer in bytes.
+
+ NOTES
+   64-bit attribute, in OM_GET pass a pointer to an UQUAD variable, in
+   MMM_GetPort pass pointer to UQUAD as well or use MediaGetPort64() macro.
+
+http.stream/MMA_StreamSeekable
+
+ NAME
+   MMA_StreamSeekable (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Returns FALSE always, as current version of http.stream does not support
+   seeking.
+
+http.stream/MMA_TaskName
+
+ NAME
+   MMA_TaskName (V51.9) [I.G.Q], STRPTR
+
+ FUNCTION
+   This attribute specifies or returns the name of the network subprocess
+   created by an object. The subprocess performs some network operations in
+   OM_NEW, like name resolving, estabilishing a connection and sending
+   request. As an application cannot get MMA_Http_NetProcess attribute until
+   the object is created, there is no way to break mentioned network
+   operations. MMA_TaskName allows application to specify network process
+   name, then the process can be found with FindTask(), and application can
+   send CTRL-C signal while the object is still in OM_NEW. Of course the
+   application must be multithreaded to be able to do this (one thread
+   creates object, another sends signal).
+
+http.stream/MMA_TaskPriority
+
+ NAME
+   MMA_TaskPriority (V50) [I.G.Q], BYTE
+
+ FUNCTION
+   Priority of object's network subtask. Defaults to 0. Allowed range is
+   from -128 to +9 including.
+
+ NOTES
+   Do not change without a reason.
+
+http.stream/MMA_URIStreamName
+
+ NAME
+   MMA_URIStreamName (V52) [I.G.Q], STRPTR
+
+ FUNCTION
+   Name of http.stream is URL to the resource, including the URI scheme.
+   Default http:// port is 80 and https:// port is 443. Other ports are
+   supported via "hostname:port" syntax. Note that http.stream DOES NOT
+   perform so called "percent encoding" (see RFC 3986), an application must
+   do it itself if needed.
+
+   This attribute is similar to MMA_StreamName except that it always
+   includes the scheme.
+
+ EXAMPLE
+   A few examples of good HTTP stream names:
+
+   http://any.host.com/files/pic4.jpg
+   https://useful.things.net:3000/pub/archive.zip
+   https://morph.zone
+   http://localhost/~user7/
+
+http.stream/MMM_Http_GetHeaderEntry
+
+ NAME
+   MMM_Http_GetHeaderEntry -- Returns header value for given keyword. (V50)
+
+ SYNOPSIS
+   value = (STRPTR)DoMethod(obj, MMM_Http_GetHeaderEntry, STRPTR keyword);
+
+ FUNCTION
+   Searches parsed HTTP response header table for given keyword and returns
+   a pointer to its value (read-only string).
+
+ INPUTS
+   - obj, object to perform the method on.
+   - keyword, a string which is matched against header field names.
+
+ RESULT
+   - value, NULL-terminated string containing header field contents, or NULL
+     pointer if the field is not found. Returned string is read-only.
+
+http.stream/MMM_Pull
+
+ NAME
+   MMM_Pull -- Reads a block of data from stream to a buffer. (V50)
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   Loads specified number of bytes into a buffer starting from current read
+   pointer. This method is synchronous, it means an application is in wait
+   state until all required data arrive, or operation is stopped because of
+   error or break signal. MMM_Pull in progress can be stopped by sending
+   CTRL-C signal to the object's network task.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, must be 0, as it is the only port of a http.stream object.
+   - buffer, a memory buffer for read data, must be allocated with
+     MediaAllocMem().
+   - length, amount of data to be read in bytes.
+
+ RESULT
+   - bytes, number of bytes read actually.
+
+   Secondary error information available via MMA_ErrorCode attribute:
+   - MMERR_WRONG_ARGUMENTS - port is not 0, NULL buffer.
+   - MMERR_RESOURCE_MISSING - message to the subtask cannot be sent.
+   - MMERR_IO_ERROR - read operation failed because of network layer error.
+
+http.stream/background
+
+ DESCRIPTION
+   The class provides Reggae API for data accessible on the Internet via
+   HTTP/1.1 protocol. Every object of http.stream class creates a separate
+   task. The task is accessing files using TCP/IP stack with bsdsocket.lib-
+   rary interface. A http.stream object can be safely shared between tasks
+   (all operations are semaphore protected) with one important exception:
+   object must be disposed by the task which created it. An object has only
+   one input port (number 0). Port format is MMF_STREAM.
+
+   The http.stream class handles GET and POST requests. For POST-ing form
+   data ones, both application/x-www-form-urlencoded and multipart/form-data
+   encapsulations are supported. Binary file uploads are supported too, as
+   well as raw posts with choosen MIME type.
+
+   From version 51.14, http.stream class can also handle Shoutcast streams.
+   It sends HTTP request, but accepts ICY responses. Most Shoutcast servers
+   accept plain HTTP requests. Note that Shoutcast specific request header
+   fields may be added by application with MMA_Http_ExtraHeaderFields.
+   Shoutcast specific fields in the response may be examined with
+   MMA_Http_Header and MMM_Http_GetHeaderEntry().
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamLength            (V50)    [I.G.Q], UQUAD*
+   MMA_TaskPriority            (V50)    [I.G.Q], BYTE, optional on init
+   MMA_TaskName                (V51.9)  [I.G.Q], STRPTR, optional on init
+   MMA_StreamName              (V50)    [I.G.Q], STRPTR, it or MMA_URIStreamName required on init
+   MMA_URIStreamName           (V52)    [I.G.Q], STRPTR, it or MMA_StreamName required on init
+   MMA_StreamSeekable          (V50)    [..G.Q], BOOL
+   MMA_ErrorCode               (V51)    [I.G..], ULONG, optional on init
+   MMA_StreamPosBytes          (V51)    [..G.Q], UQUAD*
+   MMA_Http_Response           (V51)    [..G.Q], STRPTR
+   MMA_Http_Header             (V51)    [..G.Q], STRPTR*
+   MMA_Http_HeaderEntries      (V51)    [..G.Q], ULONG
+   MMA_Http_NetProcess         (V51)    [..G.Q], struct Process*
+   MMA_Http_UserAgent          (V51)    [I....], STRPTR, optional on init
+   MMA_Http_ProxyServer        (V51)    [I....], STRPTR, optional on init
+   MMA_Http_ProxyPort          (V51)    [I....], ULONG, optional on init
+   MMA_Http_AutoRedirect       (V51)    [I....], ULONG, optional on init
+   MMA_Http_ExtraHeaderFields  (V51.4)  [I....], STRPTR*, optional on init
+   MMA_Http_UserAgentOverride  (V51.4)  [I....], STRPTR, optional on init
+   MMA_Http_ExtendedLog        (V51.4)  [I....], BOOL, optional on init
+   MMA_Http_ResponseCode       (V51.8)  [I.G.Q], ULONG
+   MMA_Http_NoFailOnHttpError  (V51.12) [I....], BOOL, optional on init
+   MMA_Http_RequestType        (V51.13) [I....], LONG, optional
+   MMA_Http_PostData           (V51.13) [I....], struct TagItem*, optional
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)      (V50)
+   MMM_Seek(port, type, position)      (V50)
+   MMM_Http_GetHeaderEntry(entry)      (V51)
+
+ NOTES
+   MMA_StreamHandle is not supported for HTTP streams.
+
+ HISTORY
+   51.18 (01.05.2014)
+   - Added support for posting raw data with
+     MMV_Http_RequestType_PostDirect.
+
+   51.17 (21.12.2013)
+   - If HTTP redirection is done to a different scheme (like 'https:') the
+     class no more treats it as local URI but reports it to the log and fails
+     to construct an object.
+
+   51.16 (04.06.2013)
+   - Fixed bug of not clearing chunked transfer mode on redirection. If the
+     first, redirection response was chunked, and the redirected response
+     was not, the class still attempted to handle it as chunked.
+
+   51.15 (16.02.2012)
+   - Fixed error reporting for servers using HTTP/1.0 style without chunked
+     transfer. The server does not send "Content-Length" header, but simply
+     closes the socket on its side after sending data. Now the MMM_Pull()
+     method returns number of bytes received and sets MMERR_END_OF_DATA
+     error code.
+
+   51.14 (18.01.2012)
+   - Accepts "ICY xxx" response additionally to "HTTP/1.1 xxx" one to support
+     shoutcast servers.
+
+   51.13 (29.12.2010)
+   - Added: Full support for POST requests.
+
+   51.12 (29.01.2010)
+   - Added: MMA_Http_NoFailOnHttpError attribute.
+
+   51.11 (27.03.2009)
+   - Fixed: PutReadRequest() must not use a message port allocated in OM_NEW()
+     as a reply port, because it fails, when read is performed by other process
+     than the object creator (for example audio.output player process). A
+     dynamically created port is used instead (similarly as in file.stream).
+
+   51.10 (03.09.2008)
+   - Fixed: A read from 0x00000000 was generated when MMA_Http_ExtraHeaderField
+     was not specified.
+
+   51.9  (09.05.2008)
+   - Removed: MMA_Http_NetProcessName duplicated functionality of generic
+     MMA_TaskName.
+
+   51.8  (07.05.2008)
+   - Added: MMA_Http_ResponseCode.
+   - Changed: MMA_StreamName is updated only for permanent redirections.
+   - Fixed: MMA_StreamName has been not initialized if there was no permanent
+     redirection.
+   - Changed: Simplified network thread shutdown. Uses just a ReadMsg with
+     a new CMD_EXIT instead of separate signal.
+
+   51.7  (06.05.2008)
+   - Added MMM_GetPort().
+   - MMA_Http_NetProcessName is now gettable.
+   - MMA_TaskPriority is now gettable.
+   - MMA_StreamName returns redirected URL instead of initial one.
+   - Autodocs fixes and cleanups.
+
+   51.6  (05.05.2008)
+   - HTTP automatic redirection works.
+   - MMA_StreamPosBytes works.
+   - All (let's pray) memory leaks fixed.
+
+   51.5  (30.04.2008)
+   - Changed meaning of MMA_Http_AutoRedirect to number of redirections
+     allowed.
+
+   51.4  (15.04.2008)
+   - Major rewrite. Taglist-based request header processing.
+   - Fixed: sending requests worked by luck until a request was smaller than
+     MTU. Now proper sending loop.
+   - Added: MMA_Http_ExtraHeaderFields.
+   - Added: MMA_Http_UserAgentOverride.
+   - Fixed: When server returned a response with broken header containing a
+     field with no value, all following fields were discarded. Now such
+     broken fields are returned with empty string as the value.
+   - Added: MMA_Http_ExtendedLog.
+   - Fixed: MMA_Http_UserAgent: the string contains operating system tag
+     (with version), also better RFC 2616 conformance.
+
+   51.3  (21.08.2006)
+   - Fixed debug, problems with '%' in URL.
+
+   50.16 (22.11.2004)
+   - Implemented MMA_TaskPriority/DTSA_TaskPriority with 0 as default.
+
+   50.15 (11.10.2004)
+   - Query tags accessible via the class base.
+   - Fixed class description in query tags ("HTTP/1.1").
+
+   50.14 (15.09.2004)
+   - Removed MediaLog() call from FreeResources(), this function may be
+     called with MultimediaBase uninitialized.
+
+   50.13 (13.09.2004)
+   - Fixed possible busylooping with some HTTP/1.0 streams.
+
+   50.12 (08.09.2004)
+   - Fixed bug with servers neither using chunked transfer nor passing
+     Contents-Length field, now these are loaded properly.
+   - Added HTTP proxy support (DTSA_Http_ProxyServer and
+     DTSA_Http_ProxyPort).
+
+   50.11 (05.09.2004)
+   - http.stream objects are now fully thread safe (pointers may be passed
+     and shared between processes system-wide). Note that there is one
+     exception: object must be disposed by the process which created it.
+   - Fixed long standing bug in library init code. If InitResources()
+     failed, but allocated some resources, they were never freed.
+
+   50.10 (04.09.2004)
+   - Added DTSA_Http_NetProcessName attribute (init only). It specifies a
+     name of http.stream network process ("http.stream n", where 'n' is an
+     ordinal number of stream, is the default). Using this tag an
+     application is able to break OM_NEW stalled in network functions (by
+     sending break signal to the process of specified name).
+
+   50.9 (03.09.2004)
+   - Bug fixed: If recv() was terminated by break singal before any data
+     were received, -1 was returned as an amount of data. Now 0 is returned
+     as it should.
+
+   50.8 (29.08.2004)
+   - Modification in header parser, now the class accepts also broken
+     servers using single LF as header field delimiter instead or CRLF.
+
+   50.7 (29.08.2004)
+   - Task counter incrementing protected with ClassBase semaphore. [piru]
+
+   50.6 (26.08.2004)
+   - Network thread now handles CTRL-C signal properly. Subsequent read
+     requests return 0 with STRERR_NO_CONNECTION.
+   - Object returns proper STRERR_TIMEOUT when timeout error occurs on
+     Connect().
+   - Added DTSA_Http_NetProcess attribute. An application can obtain a
+     pointer to created network process. Sending CTRL-C signal to this
+     process is a way for immediate termination of network operations.
+   - Subtask sets its pr_WindowPtr to -1 to avoid Intuition requesters from
+     ramlib, when bsdsocket.library cannot be found.
+
+   50.5 (18.08.2004)
+   - Fixed bug in OM_NEW, if Task() failed, error code from result message
+     could be used after the message has been freed by Task(). In some rare
+     conditions object could be created without Task() running.
+
+   50.4 (19.07.2004)
+   - Implemented DTSA_CurrentSize (gettable) for streams with
+     "Content-Length" specified.
+
+   50.3 (18.07.2004)
+   - Implemented header parser.
+   - Added gettable attributes:
+     DTSA_Http_Response - returns read-only string, the first line of server
+     response, for example "HTTP/1.1 200 OK" or "HTTP/1.1 404 Not Found".
+     DTSA_Http_Header - returns a NULL-terminated table of pointers to
+     strings. Strings are parsed entries of HTTP response header. Strings
+     forms name-value pairs, the first string is header entry name, the
+     second is its value.  Strings are read-only.
+     DTSA_Http_HdrEntries - returns the number of name-value pairs returned
+     by DTSA_Http_Header.
+   - Added "Connection: close" entry to request header, it ensures proper
+     interaction with servers using persistent connections.
+
+   50.2 (17.07.2004)
+   - Fixed "User-Agent" contents to be a single token conforming to RFC2616.
+
+   50.1 (17.07.2004)
+   - Initial release.
+
+

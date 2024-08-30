@@ -1,0 +1,15 @@
+APTR CreateKeyFrame(APTR handle, ULONG position, LONG value);
+BOOL DeleteKeyFrame(APTR handle, APTR key);
+BOOL DeleteKeyFrameHandle(APTR handle);
+APTR CreateKeyFrameHandle(ULONG begin, ULONG end, LONG min, LONG max, LONG defval);
+BOOL SetKeyFrameHandleAttribute(APTR handle, ULONG attribute, ULONG value);
+BOOL SetKeyFrameAttribute(APTR key, ULONG attribute, ULONG value);
+BOOL GetKeyFrameAttribute(APTR key, ULONG attribute, ULONG *storage);
+BOOL GetKeyFrameHandleAttribute(APTR handle, ULONG attribute, ULONG *storage);
+APTR GetNextKeyFrame(APTR handle, APTR key);
+APTR GetPrevKeyFrame(APTR handle, APTR key);
+LONG Interpolate(APTR handle, ULONG position);
+VOID LockKeyFrameHandle(APTR handle);
+VOID UnLockKeyFrameHandle(APTR handle);
+APTR StartKeyFrameNotification(APTR handle, struct Task *task, UBYTE sigbit, ULONG eventmask);
+VOID EndKeyFrameNotification(APTR notify);

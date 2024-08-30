@@ -1,0 +1,180 @@
+TABLE OF CONTENTS
+
+rawaudio.muxer/--background--
+rawaudio.muxer/MMA_Arguments
+rawaudio.muxer/MMA_DefaultExtension
+rawaudio.muxer/MMM_Pull
+rawaudio.muxer/MMM_Setup
+rawaudio.muxer/OM_DISPOSE
+rawaudio.muxer/OM_NEW
+rawaudio.muxer/--background--
+
+ DESCRIPTION
+  The class is a multiplexer for raw integer PCM audio data. It does not
+  perform any data processing, its purpose is to deliver GUI generation and
+  initialization from argstring. Object of the class has two ports. Input
+  port accepts integer PCM audio formats:
+
+  - MMF_AUDIO_PCM8 (8-bit signed),
+  - MMF_AUDIO_PCM8U (8-bit unsigned),
+  - MMF_AUDIO_INT16BE (16-bit, signed, big endian),
+  - MMF_AUDIO_INT16LE (16-bit, signed, little endian),
+  - MMF_AUDIO_INT16UBE (16-bit, unsigned, big endian),
+  - MMF_AUDIO_INT16ULE (16-bit, unsigned, little endian),
+  - MMF_AUDIO_INT24BE (24-bit, signed, big endian),
+  - MMF_AUDIO_INT24LE (24-bit, signed, little endian),
+  - MMF_AUDIO_INT24UBE (24-bit, unsigned, big endian),
+  - MMF_AUDIO_INT24ULE (24-bit, unsigned, little endian),
+  - MMF_AUDIO_INT32BE (32-bit, signed, big endian),
+  - MMF_AUDIO_INT32LE (32-bit, signed, little endian),
+  - MMF_AUDIO_INT32UBE (32-bit, unsigned, big endian),
+  - MMF_AUDIO_INT32ULE (32-bit, unsigned, little endian),
+
+  The output port produces bytestream format (MMF_STREAM). Input format may
+  be set to the port directly, specified using MMA_Arguments, or set
+  automatically with GUI.
+
+  The GUI generator creates a group containing a cycle for selecting bits
+  per sample, a cycle for selecting endianness and a cycle for selecting
+  signedness. The second one is automatically disabled, when 8 bits per
+  sample are selected. Configuration via argument string is supported as
+  well.
+
+  Raw format supports free streaming, so the audio source may report an
+  unknown stream length.
+
+ NEW ATTRIBUTES
+   MMA_Arguments           (v51)      [I.G.Q] (char*)
+   MMA_DefaultExtension    (v51.2)    [..G.Q] (char*)
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+   MMM_Setup
+
+ HISTORY
+   51.5 (05.05.2013)
+   - Added support for unsigned formats (8/16/24/32 bits, both endians).
+
+   51.4 (07.10.2012)
+   - Code adjusted to multimedia.class v55 changes.
+
+   51.3 (23.09.2012)
+   - Enabled 24- and 32-bit formats.
+
+   51.2 (12.09.2012)
+   - Implemented MMA_DefaultExtension.
+   - GUI supports GGRA_FullName.
+
+   51.1 (14.07.2012)
+   - Initial release.*
+
+rawaudio.muxer/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper format to the
+   input port. The template is "BITS/K/N,LITTLEENDIAN=LE/S,UNSIGNED=U/S".
+   - BITS - optional numeric argument specifying bits per audio sample.
+     Accepted values are 8, 16, 24 and 32. Defaults to 16.
+   - LITTLEENDIAN (shortcut LE) - optional switch argument. When specified,
+     data are stored with reversed order of bytes (LSB first). Ignored when
+     BITS = 8.
+   - UNSIGNED (shortcut U) - optional switch argument. When specified, data
+     are stored as unsigned integers.
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When passed for the constructor, the argument string may be a dynamic
+   variable, as it only has to be valid inside the constructor.
+
+rawaudio.muxer/MMA_DefaultExtension
+
+ NAME
+   MMA_DefaultExtension (V51.2) [..G.Q], const char*
+
+ FUNCTION
+   Default file name extension for the format. For rawaudio.muxer default
+   name extension is ".raw".
+
+ NOTES
+   MorphOS and Reggae particularly pay little attention to filename
+   extensions. They may be useful when files are exchanged with other
+   operating systems.
+
+rawaudio.muxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Delivers block of data on output port (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   This class does not process data in any way. Any pull request on the
+   output port is simply forwarded to input.
+
+ INPUTS
+   obj - object on which method is performed.
+   port - must be port 1, the output.
+   buffer - destination data buffer pointer. Must be allocated with
+     MediaAllocVec().
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. Secondary information available via
+   MMA_ErrorCode.
+
+rawaudio.muxer/MMM_Setup
+
+ NAME
+   MMM_Setup -- Performs setup after port connection (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   This class performs no setup on any port, so for both ports TRUE is
+   returned.
+
+rawaudio.muxer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes raw audio multiplexer object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   This class allocates no resources in the constructor, so this function
+   just calls the superclass destructor.
+
+rawaudio.muxer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates raw audio multplexer. (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "rawaudio.muxer", ...);
+
+ FUNCTION
+   Creates an object, creates and initializes ports. No specific resources
+   are allocated. Preconfigures the input port format.
+
+ INPUTS
+   Following tags are recognized:
+   - MMA_Arguments - configures input format. Optional.
+   - MMA_ErrorCode - storage for constructor error code. Optional
+
+ RESULT
+   Created object, or NULL. In case of failure MMA_ErrorCode specifies
+   reason:
+   - MMERR_OUT_OF_MEMORY, no free memory,
+   - MMERR_WRONG_ARGUMENTS, malformed MMA_Arguments, or unsupported
+     combination of bits per sample and endianness.
+
+

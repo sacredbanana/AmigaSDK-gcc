@@ -1,0 +1,197 @@
+TABLE OF CONTENTS
+
+Objectmap.mui/Objectmap.mui
+Objectmap.mui/MUIA_Objectmap_AutoLock
+Objectmap.mui/MUIA_Objectmap_CopyKeys
+Objectmap.mui/MUIA_Objectmap_Pool
+Objectmap.mui/MUIM_Objectmap_Clear
+Objectmap.mui/MUIM_Objectmap_Find
+Objectmap.mui/MUIM_Objectmap_Iterate
+Objectmap.mui/MUIM_Objectmap_IterationKey
+Objectmap.mui/MUIM_Objectmap_Remove
+Objectmap.mui/MUIM_Objectmap_Set
+Objectmap.mui/Objectmap.mui
+
+	The Objectmap class serves as a simple data container, similar to Dataspace.
+	They both inherit from the same superclass, Semaphore. The data is sorted
+	by the string key using btree.library so that the lookups are very fast.
+	
+	Objectmap is designed to store MUI objects. By adding an object using
+	MUIM_Objectmap_Set you relinquish the ownership of the object - it will be
+	disposed when the Objectmap is disposed. This is exactly like the rules of
+	Family.mui subclasses.
+
+Objectmap.mui/MUIA_Objectmap_AutoLock
+
+    NAME
+	MUIA_Objectmap_AutoLock -- (V20) [I..], BOOL, 0x8042e65f
+
+	FUNCTION
+	Ensures the Objectmap methods are called under appropriate locks. Does not
+	guarantee that the returned data will stay valid on return. Does not
+	protect the Iterate methods - in case the object is used by multiple
+	threads, you need to put the whole iteration into an exclusive lock.
+Objectmap.mui/MUIA_Objectmap_CopyKeys
+
+    NAME
+	MUIA_Objectmap_CopyKeys -- (V20) [I..], BOOL, 0x8042b964
+
+	FUNCTION
+	If you specify this tag as FALSE, the key you pass when calling
+	MUIM_Objectmap_Set will not be copied but instead used directly
+	in the tree. It is then your responsibility to ensure the key stays
+	valid as long as its corresponding entry in the tree does.
+	
+	Useful if your app contains the keys as static strings anway.
+Objectmap.mui/MUIA_Objectmap_Pool
+
+    NAME
+	MUIA_Objectmap_Pool -- (V20) [I..], APTR, 0x80422ed3
+
+	FUNCTION
+	If you specify a memory pool from exec.library/CreatePool()
+	here, the Objectmap object will use this pool for all its
+	entries.
+
+	If you omit this tag or pass NULL, the Objectmap object
+	will create its own memory pool instead.
+
+    SEE ALSO
+	MUIM_Objectmap_Set, exec.library/CreatePool
+Objectmap.mui/MUIM_Objectmap_Clear
+
+    NAME
+	MUIM_Objectmap_Clear (V20) 0x80422ee5
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Objectmap_Clear);
+
+	FUNCTION
+	Removes all entries in the Objectmap object. Disposes any stored objects.
+	
+	INPUTS
+	
+	RESULT
+	
+	SEE ALSO
+Objectmap.mui/MUIM_Objectmap_Find
+
+    NAME
+	MUIM_Objectmap_Find (V20) 0x80426506
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Objectmap_Find,CONST_STRPTR key);
+
+	FUNCTION
+	Finds the stored object using the passed in key.
+	
+	INPUTS
+	key - key to find the entry by
+	
+	RESULT
+	Object poitner or NULL.
+	
+	SEE ALSO
+	MUIM_Objectmap_Iterate
+Objectmap.mui/MUIM_Objectmap_Iterate
+
+    NAME
+	MUIM_Objectmap_Iterate (V20) 0x804262bc
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Objectmap_Iterate,IPTR *counter);
+
+	FUNCTION
+	Iterates though all stored objects. It is legal to continue an iteration
+	after removing the current item, but MUIM_Objectmap_Clear would make the
+	iterator invalid.
+	
+	INPUTS
+	counter - ptr to IPTR-sized storage for internal usage, MUST be zeroed 
+	          at the beginning of an iteration process
+	
+	RESULT
+	Pointer to the stored object or NULL after returning the last item
+	
+	SEE ALSO
+	MUIM_Dataspace_Iterate
+Objectmap.mui/MUIM_Objectmap_IterationKey
+
+    NAME
+	MUIM_Objectmap_IterationKey (V20) 0x8042d7ff
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Objectmap_IterationKey,IPTR *counter);
+
+	FUNCTION
+	Returns the key associated with current iteration stage.
+	
+	INPUTS
+	counter - ptr to IPTR storage used for MUIM_Objectmap_Iterate cycle
+	
+	RESULT
+	Pointer to a key or NULL if the counter doesn't contain a valid entry
+	
+	EXAMPLE
+	
+	Object *o = DatamapObject, End;
+	Object *item;
+	IPTR counter;
+	
+	/* insert data to the map */
+	
+	for (counter = 0; (item = DoMethod(o, MUIM_Objectmap_Iterate, &counter)); )
+	{
+		CONST_STRPTR key = DoMethod(o, MUIM_Objectmap_IterationKey, &counter);
+	
+		printf("Key %s - Data %p\n", key, item);
+	}
+	
+	SEE ALSO
+	MUIM_Datamap_Iterate
+Objectmap.mui/MUIM_Objectmap_Remove
+
+    NAME
+	MUIM_Objectmap_Remove (V20) 0x8042f649
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Objectmap_Remove,CONST_STRPTR key);
+
+	FUNCTION
+	Removes and entry corresponding with the passed in key.
+	
+	CAUTION: as with Family or Group, Remove means you now have the ownership
+	of the returned Object and must dispose it on your own.
+	
+	INPUTS
+	key  - the key to lookup the entry by
+	
+	RESULT
+	Pointer to the Object.
+	NULL if the entry was not found.
+	
+	SEE ALSO
+	MUIM_Datamap_Set
+Objectmap.mui/MUIM_Objectmap_Set
+
+    NAME
+	MUIM_Objectmap_Set (V20) 0x80421ec5
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Objectmap_Set,Boopsiobject *o, CONST_STRPTR key);
+
+	FUNCTION
+	This method adds or changes an entry corresponding to the given key. There
+	can only be one unique key in a tree, so calling MUIM_Objectmap_Set multiple
+	times with the same key will dispose the previously stored Object.
+	
+	INPUTS
+	object - an Object * to store in the map
+	key  - the key to index the data by
+	
+	RESULT
+	Returns NULL on failure or a non-NULL value on success.
+	
+	SEE ALSO
+	MUIM_Objectmap_Remove, MUIM_Objectmap_Find, MUIM_Objectmap_Iterate
+

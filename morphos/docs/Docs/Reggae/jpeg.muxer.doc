@@ -1,0 +1,142 @@
+TABLE OF CONTENTS
+
+jpeg.muxer/--background--
+jpeg.muxer/MMA_Arguments
+jpeg.muxer/MMM_Pull
+jpeg.muxer/MMM_Setup
+jpeg.muxer/OM_DISPOSE
+jpeg.muxer/OM_NEW
+jpeg.muxer/--background--
+
+ DESCRIPTION
+   The class is used to save video data as JPEG Interchange Format file.
+   It cooperates  with jpeg.encoder, which converts video to choosen jpeg
+   stream in given color depth.
+
+   The class supports argument string and GUI configuration. GUI generator
+   delivers a slider gadget for selecting compression. Reggae saver
+   generator creates jpeg.muxer object, jpeg.encoder object, connects them
+   and sets selected parameters for the encoder.
+
+ NEW ATTRIBUTES
+   MMA_Arguments
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.1 (13.03.2013)
+   - Initial release.
+
+jpeg.muxer/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper format to the
+   input port. The template is "COMPRESSION/K/N,PROGRESSIVE/S"
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When specified for constructor, the string must be valid only until the
+   constructor returns, so may be a local variable.
+
+jpeg.muxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Delivers block of Portable Network Graphics (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   JPEG multiplexer delivers Portable Network Graphics header and then
+   passes through  image PCM data from videopcm.decoder. After the header
+   is pulled out, requests are forwarded from output to input without any
+   processing or data copying.
+
+ INPUTS
+   obj - object to pull data from.
+   port - only pull on output port (port 1) is allowed
+   buffer - destination data buffer. Must be AltiVec aligned.
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. In case of error, MMA_ErrorCode is set to a code
+   received from the previous object in chain.
+
+ NOTES
+   As JPEG header length is usually not aligned to 16 bytes, the class
+   cuts the first request at header end, without setting the error code.
+   Then the first pull forwarded to audiopcm.encoder starts again from the
+   start of buffer so is SIMD-aligned. Object connected at output of
+   JPEG multiplexer should continue pulling if it receives less than
+   requested but MMA_ErrorCode is still zero.
+
+jpeg.muxer/MMM_Setup
+
+ NAME
+   MMM_Setup -- Receives audio parameters, generates JPEG header (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   When object's input is connected to data source, the method reads audio
+   stream parameters and prepares JPEG header.
+
+   The method is a no-op for the output port.
+
+ INPUTS
+   port - number of port being connected.
+
+ RESULT
+   Boolean value of success.
+
+ NOTES
+   Data source must be of known length. As the stream length is stored in
+   the JPEG header, free streaming is not supported with this
+   format. This method fails if reported stream length is 0.
+
+jpeg.muxer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes Portable Network Graphics multiplexer object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Disposes object, frees allocated memory.
+
+jpeg.muxer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates Reggae JPEG multiplexer (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "jpeg.muxer", ...);
+
+ FUNCTION
+   Creates a JPEG multiplexer object. By default the object is set up to
+   generate 24-bit file.
+
+ INPUTS
+   Following attributes may be specified:
+   - MMA_Arguments - configures input port format and determines number of
+     bits per sample in output. Optional.
+   - MMA_ErrorCode - pointer to LONG variable, where error code (or 0 in
+     case of success) is stored. Optional.
+
+ RESULT
+   Created object, or NULL. In case of failure MMA_ErrorCode specifies
+   reason:
+   - MMERR_OUT_OF_MEMORY, no free memory,
+   - MMERR_WRONG_ARGUMENTS, malformed MMA_Arguments, or unsupported number
+     of bits per sample specified.
+
+

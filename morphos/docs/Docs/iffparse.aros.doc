@@ -1,0 +1,1708 @@
+This document was generated from the AROS APL-Licensed source code. The
+information contained in it might be errorneous or inacurate. When in
+doubt, please verify with another documentation set.
+
+TABLE OF CONTENTS
+
+iffparse.library/AllocIFF
+iffparse.library/AllocLocalItem
+iffparse.library/CloseClipboard
+iffparse.library/CloseIFF
+iffparse.library/CollectionChunk
+iffparse.library/CollectionChunks
+iffparse.library/CurrentChunk
+iffparse.library/EntryHandler
+iffparse.library/ExitHandler
+iffparse.library/FindCollection
+iffparse.library/FindLocalItem
+iffparse.library/FindProp
+iffparse.library/FindPropContext
+iffparse.library/FreeIFF
+iffparse.library/FreeLocalItem
+iffparse.library/GoodID
+iffparse.library/GoodType
+iffparse.library/IDtoStr
+iffparse.library/InitIFF
+iffparse.library/InitIFFasClip
+iffparse.library/InitIFFasDOS
+iffparse.library/LocalItemData
+iffparse.library/OpenClipboard
+iffparse.library/OpenIFF
+iffparse.library/ParentChunk
+iffparse.library/ParseIFF
+iffparse.library/PopChunk
+iffparse.library/PropChunk
+iffparse.library/PropChunks
+iffparse.library/PushChunk
+iffparse.library/ReadChunkBytes
+iffparse.library/ReadChunkRecords
+iffparse.library/SeekChunkBytes
+iffparse.library/SeekChunkRecords
+iffparse.library/SetLocalItemPurge
+iffparse.library/StopChunk
+iffparse.library/StopChunks
+iffparse.library/StopOnExit
+iffparse.library/StoreItemInContext
+iffparse.library/StoreLocalItem
+iffparse.library/WriteChunkBytes
+iffparse.library/WriteChunkRecords
+iffparse.library/AllocIFF
+       void
+
+
+   FUNCTION
+      Allocates an IFFHandle struct.
+
+   INPUTS
+
+
+   RESULT
+    An unitialized IFFHandle structure.
+
+   NOTES
+    The default context-node is created in AllocIFF() and persists until
+    FreeIFF().
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    FreeIFF()
+
+   INTERNALS
+    Since the default contextnode persistes from AllocIFF until FreeIFF, it
+    is built-in into the internal IFFHandle structure
+
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/AllocLocalItem
+
+   NAME
+    AllocLocalItem -- 
+
+   SYNOPSIS
+    AllocLocalItem(type, id, ident, dataSize)
+    struct LocalContextItem * AllocLocalItem(LONG, LONG, LONG, ULONG);
+
+   FUNCTION
+    Allocates and initializes a LocalContextItem structure. It also allocates
+    dataSize user data. User data can be accesseed via LocalItemData function.
+    This is the only way to allocate such a item, since the item contains private
+    fields. Of course programmers should assume NOTHING about this private
+    fields.
+
+
+   INPUTS
+    type, id   - Longword identifications values.
+    ident      - Longword identifier for class of item.
+    dataSize      -  Size of a user data area that will be allocated by this funcyion.
+
+   RESULT
+    item      - A initialized LocalContextItem structure.
+
+   NOTES
+    Changed dataSize parameter to ULONG, negative-sized memory allocations are undefined.
+
+
+   EXAMPLE
+
+   BUGS
+    See notes.
+
+   SEE ALSO
+    FreeLocalItem(), LocalItemData(), StoreLocalItem(), StoreItemInContext(),
+    SetLocalItemPurge()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/CloseClipboard
+
+   NAME
+    CloseClipboard -- 
+
+   SYNOPSIS
+    CloseClipboard(clipHandle)
+    void CloseClipboard(struct ClipboardHandle *);
+
+   FUNCTION
+    Closes the clipboard.device and frees the ClipboardHandle
+
+   INPUTS
+    clip - pointer to a ClipboardHandle struct created with OpenClipboard.
+
+   RESULT
+    None.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    OpenClipboard(), InitIFFAsClip()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/CloseIFF
+
+   NAME
+    CloseIFF -- 
+
+   SYNOPSIS
+    CloseIFF(iff)
+    void CloseIFF(struct IFFHandle *);
+
+   FUNCTION
+    Completes a read or write session by closing the IFF handle.
+    The IFFHandle struct is ready for reuse in another session,
+    it's just to open it again with OpenIFF(). This function
+    also automatically cleans up if a read or write fails halfway through.
+
+   INPUTS
+    iff - Pointer to an IFFhandle struct previously opened with OpenIFF()
+
+   RESULT
+
+   NOTES
+    This function tells the custom stream handler to clean up
+    by sending it a IFFCMD_CLEANUP IFFStreamCmd.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    OpenIFF(), InitIFF()
+
+   INTERNALS
+    This function checks that buffers for buffered streams
+    have been freed. This is not very elegant and should have been
+    done at an earlier stadium. It is not a real bug though.
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/CollectionChunk
+
+   NAME
+    CollectionChunk -- 
+
+   SYNOPSIS
+    CollectionChunk(iff, type, id)
+    LONG CollectionChunk(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Installs an entry handler with the given type and id, so that
+    chunks encountered with the same type and id will be stored.
+    This is quite like PropChunk(), but CollectionChunk() will
+    store the contents of multiple chunks with the same type and id.
+    To retrieve the stored collection of chunks one uses FindCollection().
+    Remember: the collection is only valid inside the current property scope.
+
+   INPUTS
+    iff   - Pointer to IFFHandle struct. (does not need to be open).
+    type  - IFF chunk type declarator for chunk to collect.
+    id    -  IFF chunk id identifier for chunk to collect.
+
+   RESULT
+    error - 0 if successfulle. IFFERR_#? elsewise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CollectionChunks(), FindCollection, PropChunk
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/CollectionChunks
+
+   NAME
+    CollectionChunks -- 
+
+   SYNOPSIS
+    CollectionChunks(iff, propArray, numPairs)
+    LONG CollectionChunks(struct IFFHandle *, LONG *, LONG);
+
+   FUNCTION
+    Does multiple CollectionChunk() calls on the supplied list.
+    An easy way to install several collction chunks.
+
+   INPUTS
+    iff   - pointer to an IFFHandle struct.
+    propArray  - pointer to an array of longword chunk types and identifiers.
+    numPairs  - number of type/id pairs in the propArray.
+
+   RESULT
+    error      - 0 if successfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CollectionChunk()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/CurrentChunk
+
+   NAME
+    CurrentChunk -- 
+
+   SYNOPSIS
+    CurrentChunk(iff)
+    struct ContextNode * CurrentChunk(struct IFFHandle *);
+
+   FUNCTION
+    Returns the top context node for the give IFFHandle struct.
+    The top contexte is the node most recently pushed onto the
+    context stack
+
+   INPUTS
+    iff  - pointer to IFFHandle struct.
+
+   RESULT
+    top - Pointer to top contextnode or NULL if none.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    PushChunk(), PopChunk(), ParseIFF(), ParentChunk()
+
+   INTERNALS
+    " .. or NULL if none" (see RESULT) is truth with slight modifications,
+    since the default context node exists as long as the iffhandle
+    itself. However, the user is never given a pointer to this node.
+
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/EntryHandler
+
+   NAME
+    EntryHandler -- 
+
+   SYNOPSIS
+    EntryHandler(iff, type, id, position, handler, object)
+    LONG EntryHandler(struct IFFHandle *, LONG, LONG, LONG, struct Hook*, APTR);
+
+   FUNCTION
+    Installs an entry handler for a specific chunk type
+    that wil be called whenever a chunk of that type is pushed on the contextstack
+    via ParseIFF().
+
+
+   INPUTS
+    iff     - pointer to an iffhandle struct.
+    type      - type code for the chunk to handle. (ex: "ILBM").
+    id    -  ID code for the chunk to handle. (ex: "CMAP")
+    position  -  position of localcontextitem. See StoreLocalItem for
+            more info.
+    handler    -  an initialised Hook structure for the handler function.
+    object    -  pointer to some kind of object that will be passed to
+            your handler function.
+
+   RESULT
+    error - 0 If successfull, IFFERR_#? elsewise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ExitHandler(), StoreLocalItem(), StoreItemInContext()
+
+
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/ExitHandler
+
+   NAME
+    ExitHandler -- 
+
+   SYNOPSIS
+    ExitHandler(iff, type, id, position, handler, object)
+    LONG ExitHandler(struct IFFHandle *, LONG, LONG, LONG, struct Hook*, APTR);
+
+   FUNCTION
+    Installs an exit handler for a specific chunk type
+    that wil be called whenever a chunk of that type is popped off the contextstack
+    via ParseIFF().
+
+
+   INPUTS
+    iff     - pointer to an iffhandle struct.
+    type      - type code for the chunk to handle. (ex: "ILBM").
+    id    -  ID code for the chunk to handle. (ex: "CMAP")
+    position  -  position of localcontextitem. See StoreLocalItem for
+            more info.
+    handler    -  an initialised Hook structure for the handler function.
+    object    -  pointer to some kind of object that will be passed to
+            your handler function.
+
+   RESULT
+    error - 0 If successfull, IFFERR_#? elsewise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+     EntryHandler(), StoreLocalItem(), StoreItemInContext()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/FindCollection
+
+   NAME
+    FindCollection -- 
+
+   SYNOPSIS
+    FindCollection(iff, type, id)
+    struct CollectionItem * FindCollection(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Returns a pointer to a list of CollectionItems the installed
+    CollectionChunk of that type and ID.
+
+   INPUTS
+    iff   - pointer to an IFFHandle struct.
+    type  - type code to search for.
+    id    -  id code to search for.
+
+
+   RESULT
+    ci - pointer to the last collection chunk encountered
+         with pointers to previous ones.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CollectionChunk(), CollectionChunks()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/FindLocalItem
+
+   NAME
+    FindLocalItem -- 
+
+   SYNOPSIS
+    FindLocalItem(iff, type, id, ident)
+    struct LocalContextItem * FindLocalItem(struct IFFHandle *, LONG, LONG, LONG);
+
+   FUNCTION
+    Goes through the whole context node stack starting at the top
+    searching the contecnodes for attached LocalContextItems with the
+    specified type, id and ident codes.
+
+   INPUTS
+    iff   - pointer to an IFFHandle struct.
+    type  - type code for item to find.
+    id    -  identifier code for item to find.
+    ident - ident code for the class of context item to find.
+
+   RESULT
+    lci   - pointer to a local context item if found, or NULL if
+        none is found.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    StoreLocalItem()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/FindProp
+
+   NAME
+    FindProp -- 
+
+   SYNOPSIS
+    FindProp(iff, type, id)
+    struct StoredProperty * FindProp(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Searches for a StoredProperty that is valid in the given context.
+    Property chunks are automatically stored by ParseIFF() when pre-declared
+    by PropChunk() or PropChunks(). The returned storedproperty contains
+    a pointer to the data in the chunk.
+
+   INPUTS
+    iff    - a pointer to a an IFFHandle struct.
+    type  - type code of property to search for.
+    id    -  id code of property to search for.
+
+   RESULT
+    sp    - pointer to a storedproperty if found, NULL if none are found.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+
+   SEE ALSO
+    PropChunk(), PropChunks()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/FindPropContext
+
+   NAME
+    FindPropContext -- 
+
+   SYNOPSIS
+    FindPropContext(iff)
+    struct ContextNode * FindPropContext(struct IFFHandle *);
+
+   FUNCTION
+    Finds the proper context in which to store a property.
+    If we have installed a property entry handler via PropChunk()
+    and such a property chunk (for example id is "CMAP" and type is "ILBM"
+    inside a form, then the storedproperty will be stored in the enclosing
+    FORM chink. If the chunk was inside a PROP chunk inside a LIST, then
+    the storedproperty would be installed in the LIST context.
+
+   INPUTS
+    iff - pointer to IFFHandle struct.
+
+   RESULT
+    cn  -  pointer to contextnode where the property might be installed, or
+          NULL if no such context exists.
+
+   NOTES
+    This function is most for internal use.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ParentChunk(), CurrentChunk(), StoreItemInContext(), PropChunk()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/FreeIFF
+
+   NAME
+    FreeIFF -- 
+
+   SYNOPSIS
+    FreeIFF(iff)
+    void FreeIFF(struct IFFHandle *);
+
+   FUNCTION
+    Frees an IFFHandle struct previously allocated by AllocIFF.
+
+   INPUTS
+    iff - pointer to an IFFHandle struct.
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AllocIFF(), CloseIFF()
+
+   INTERNALS
+
+   HISTORY
+
+iffparse.library/FreeLocalItem
+
+   NAME
+    FreeLocalItem -- 
+
+   SYNOPSIS
+    FreeLocalItem(localItem)
+    void FreeLocalItem(struct LocalContextItem *);
+
+   FUNCTION
+    Frees a local context item previously allocated by AllocLocalItem.
+    This functioned should always be calles by custom LCI purge hooks.
+
+   INPUTS
+    localItem    -  pointer to LocalContextItem struct.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AllocLocalItem()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/GoodID
+
+   NAME
+    GoodID -- 
+
+   SYNOPSIS
+    GoodID(id)
+    LONG GoodID(LONG);
+
+   FUNCTION
+    Determines whether an ID is valid according to the IFF specification.
+
+   INPUTS
+    id - An IFF chunk ID to be tested.
+
+   RESULT
+    TRUE if valid.
+    FALSE otherwise.
+
+   NOTES
+    Assumes input to be in local byte order.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/GoodType
+
+   NAME
+    GoodType -- 
+
+   SYNOPSIS
+    GoodType(type)
+    LONG GoodType(LONG);
+
+   FUNCTION
+    Determines whether a IFF chunk type is valid according to the IFF specification.
+
+   INPUTS
+    type  - An IFF chunk type to be tested.
+
+   RESULT
+    TRUE  - type is valid.
+    FALSE  -  otherwise.
+
+   NOTES
+    Assumes the input type to be in local byte order.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    GoodID()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/IDtoStr
+
+   NAME
+    IDtoStr -- 
+
+   SYNOPSIS
+    IDtoStr(id, buf)
+    STRPTR IDtoStr(LONG, STRPTR);
+
+   FUNCTION
+
+   INPUTS
+    id  - pointer to an IFF chunk identfication code.
+    buf  -  buffer into which the id will be stored. Should at least be 5 bytes.
+
+   RESULT
+    buf  -  pointer to the supplied buffer.
+
+   NOTES
+    Assumes that the supplied ID is stored in local byte order.
+
+   EXAMPLE
+    // Print the ID of the current contextnode
+
+    UBYTE buf[5];
+    struct ContextNode *cn;
+
+    if (cn = CurrentChunk(iff)
+        printf
+        (
+        "ID of current chunk: %s\n",
+        IDtoStr(cn->cn_ID)
+        );
+
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/InitIFF
+
+   NAME
+    InitIFF -- 
+
+   SYNOPSIS
+    InitIFF(iff, flags, streamHook)
+    void InitIFF(struct IFFHandle *, LONG, struct Hook*);
+
+   FUNCTION
+    Initializes an IFFHandle with a custom stream handler and
+    flags describing seekability of the stream.
+
+   INPUTS
+    iff     - pointer to IFFHandle struct.
+    flags        -  stream I/O flags for the IFFHandle.
+    streamHook  - pointer to a Hook structure initialized with the streamhandler
+              to be called.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    utility/hooks.h
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/InitIFFasClip
+
+   NAME
+    InitIFFasClip -- 
+
+   SYNOPSIS
+    InitIFFasClip(iff)
+    void InitIFFasClip(struct IFFHandle *);
+
+   FUNCTION
+    Initializes the given IFFHandle to be a clipboard stream. It installs a
+    "custom" stream handler (via InitIFF) to handle clipboard streams.
+    The iff_Stream field of the iffhandle will still need
+    to be initializes with a ClipboardHandle struct returned from
+    OpenClipboard().
+
+   INPUTS
+    iff  - pointer to an IFFHandle struct.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    OpenClipboard()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/InitIFFasDOS
+
+   NAME
+    InitIFFasDOS -- 
+
+   SYNOPSIS
+    InitIFFasDOS(iff)
+    void InitIFFasDOS(struct IFFHandle *);
+
+   FUNCTION
+    Initializes the given IFFHandle to be a DOS stream. It installs a
+    "custom" stream handler (via InitIFF) to handle DOS streams.
+    The iff_Stream field of the iffhandle will still need
+    to be initializes with a filehandle struct as returned from
+    dos.library/Open(). The iff_Flags may be changed to
+    change the seekability of the stream after this function is called,
+    but before OpenIFF() is called. Seekability for dos files
+    default to IFFF_RSEEK (random seekable).
+
+
+
+   INPUTS
+    iff  - pointer to an IFFHandle struct.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/LocalItemData
+
+   NAME
+    LocalItemData -- 
+
+   SYNOPSIS
+    LocalItemData(localItem)
+    APTR LocalItemData(struct LocalContextItem *);
+
+   FUNCTION
+    Returns a  pointer to the userdata allocated in AllocLocalItem.
+    This function returns NULL for an input of NULL.
+
+   INPUTS
+    localItem - pointer to a LocalContextItem struct or NULL.
+
+   RESULT
+    data      - pointer to user data or NULL.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AllocLocalItem(), FreeLocalItem()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/OpenClipboard
+
+   NAME
+    OpenClipboard -- 
+
+   SYNOPSIS
+    OpenClipboard(unitNumber)
+    struct ClipboardHandle * OpenClipboard(LONG);
+
+   FUNCTION
+    Opens the clipboard.device with the specified unit.
+    Allocates and initializes a ClipboardHandle struct which should
+    be put into the iff_Stream field of the IFFHandle when the
+    handle is initialized with InitIFFasClip().
+
+
+   INPUTS
+    unitNumber  - a clipboard device unit number (usually PRIMARY_CLIP).
+
+   RESULT
+    ch      -  pointer to ClipboarHandle struct or NULL if unsuccessfull.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    InitIFFasClip(), CloseClipboard()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/OpenIFF
+
+   NAME
+    OpenIFF -- 
+
+   SYNOPSIS
+    OpenIFF(iff, rwMode)
+    LONG OpenIFF(struct IFFHandle *, LONG);
+
+   FUNCTION
+    Initializes an IFFHandle struct for a new session of reading or
+    writing. The direction of the I/O is determined by the rwMode flags
+    supplied (IFFF_READ or IFFF_WRITE).
+
+   INPUTS
+    iff - pointer to IFFHandle struct.
+    ewMode - IFFF_READ or IFFF_WRITE
+
+
+   RESULT
+    error -  0 if successfull, IFFERR_#? elsewise.
+
+   NOTES
+     This function tells the custom stream handler to initialize
+    by sending it a IFFCMD_INIT IFFStreamCmd.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CloseIFF(), InitIFF()
+
+   INTERNALS
+
+   HISTORY
+
+iffparse.library/ParentChunk
+
+   NAME
+    ParentChunk -- 
+
+   SYNOPSIS
+    ParentChunk(contextNode)
+    struct ContextNode * ParentChunk(struct ContextNode *);
+
+   FUNCTION
+    Returns a pointer to the parent context node to the given
+    one on the context node stack. The parent context node
+    represents the chunk enclosing the chunk given.
+    This can be use together with CurrentChunk() to iterate the
+    context node stack top-down.
+
+   INPUTS
+    contextNode  - pointer to a context node.
+
+   RESULT
+    parent      -  pointer to the parent context node or NULL if none.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    CurrentChunk()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/ParseIFF
+
+   NAME
+    ParseIFF -- 
+
+   SYNOPSIS
+    ParseIFF(iff, mode)
+    LONG ParseIFF(struct IFFHandle *, LONG);
+
+   FUNCTION
+    This function is the parser itself. It has three control modes.
+        IFFPARSE_SCAN - the parser will go through the file invoking
+        entry and exit handlers on its way.
+        When it returns it might be for 3 different reasons:
+
+        - It invoked a Stop entry/exit handler ( Installed by StopChunk[s] or
+          StopOnExit )
+
+        - An error occured.
+          (return value will be negative.)
+
+        - The parser reached EOF and returns IFFERR_EOF.
+
+        IFFPARSE_STEP  -  The parser steps through the file, returning to the
+        user each time it enters (returns NULL) and each time it exits
+        (return (IFFERR_EOC) a chunk.
+        It will also invoke entry/exit - handlers.
+
+        IFFPARSE_RAWSTEP - same as IFFPARSE_STEP except that in this mode
+        the parse won't invoke any handlers.
+
+
+   INPUTS
+    iff - pointer to IFFHandle struct.
+    mode - IFFPARSE_SCAN, IFFPARSE_STEP or IFFPARSE_RAWSTEP.
+
+   RESULT
+    0 if successfull or IFFERR_#?
+
+   NOTES
+
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    PushChunk(), PopChunk(), EntryHandler(), ExitHandler(), PropChunk[s](),
+    CollectionChunk[s](), StopChunk[s](), StopOnExit()
+
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/PopChunk
+
+   NAME
+    PopChunk -- 
+
+   SYNOPSIS
+    PopChunk(iff)
+    LONG PopChunk(struct IFFHandle *);
+
+   FUNCTION
+    Pops a context node of the context stack. Usually called
+    in write mode to signal the end of a chunk.
+
+
+   INPUTS
+    iff    - pointer to IFFHandle struct.
+
+   RESULT
+    error  -  0 if successfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    PushChunk()
+
+   INTERNALS
+
+    Frees a contextnode an all its related LCIs and removes it from the stack-list
+    If we are in write mode, we will update the cn_Size in the chunk according
+    t cn_Scan, and we will also insert an align byte if necessary
+
+
+    If the stream was of PushChunked() as IFFSIZE_UNKNOWN, we have to seek backwards
+    and write the correct size.
+    Since non RSEEK streams are automagically buffered by
+    WriteStream, we don't have to fiddle with it here.
+    However if the stream is buffered, we MUST see if we are
+    about to pop the chunk that started the Buffering (in PushChunk)
+
+
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/PropChunk
+
+   NAME
+    PropChunk -- 
+
+   SYNOPSIS
+    PropChunk(iff, type, id)
+    LONG PropChunk(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Installs an entry handler for chunks with the given type and id.
+    When such  chunk is encoutered, the entry handler will insert
+    a StoredProperty in the proper context.
+    A stored property chunk returned by FindProp() will be the valid property
+    for the current context.
+
+   INPUTS
+    iff    - pointer to IFFHandle struct.
+    type  -  type code for chunk to declare.
+    id    -  identifier for chunk to declare.
+
+   RESULT
+    error  - 0 if successfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    PropChunks(), FindProp(), CollectionChunk()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/PropChunks
+
+   NAME
+    PropChunks -- 
+
+   SYNOPSIS
+    PropChunks(iff, propArray, numPairs)
+    LONG PropChunks(struct IFFHandle *, LONG *, LONG);
+
+   FUNCTION
+    Does multiple PropChunk() calls on the supplied list.
+    An easy way to install several prop chunk handlers
+
+
+   INPUTS
+    iff   - pointer to an IFFHandle struct.
+    propArray  - pointer to an array of longword chunk types and identifiers.
+    numPairs  - number of type/id pairs in the propArray.
+
+
+   RESULT
+    error      - 0 if successfull, IFFERR_#? otherwise.
+
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+iffparse.library/PushChunk
+
+   NAME
+    PushChunk -- 
+
+   SYNOPSIS
+    PushChunk(iff, type, id, size)
+    LONG PushChunk(struct IFFHandle *, LONG, LONG, LONG);
+
+   FUNCTION
+    Pushes a new context node onto the context stack. Usually used in write mode.
+    In write mode the contextnode will be pushed with the given parameters.
+    In Read mode the type, id and size will be read from the installed stream.
+    Note that IFFSIZE_UNKNOW can be given for size in write mode. In that case,
+    the size of will not be known until you do a PopChunk(). PopChunk()
+    will then seek back in the stream and write the correct size.
+
+
+   INPUTS
+    iff    - pointer to IFFHandle struct.
+    type  -  chunk type specifier.
+    id    -  chunk identifier.
+    size  -  size of the new chunk. May be IFFSIZE_UNKNOWN.
+
+   RESULT
+    error  -  0 if successfull, IFFERR_#? otherwize.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    PopChunk()
+
+   INTERNALS
+    We do different things for Read and Write streams (obviosly enough ;->)
+
+    Write: Write the supplied id, size and evt type into the stream.
+
+    Read: Get a chunk from disk
+
+
+    For Write mode there are som problems with unknown chunk size and
+    non-random-seekable streams:
+    4. situations:
+
+    SIZE KNOWN && RSEEK - Just write the whole header.
+    SIZE KNOWN && !RSEEK     - Write whole header. No RSEEK does not matter, since
+                  we don't have to seek back to write size in PopChunk
+
+    SIZE UNKNOWN && RSEEK   - Write whole header. Write size too, just to seek pass it,
+                  even if the size value might be meaningless. We will
+                  seek back and insert the correct size later.
+
+    SIZE UNKNOWN && !RSEEK  - Here is where the trouble starts. We can not seek back
+                  and insert the correct size later, which means that we MUST
+                  buffer the contents of the chunk, and don't write ANYTHING to
+                  the stream until we know its size.
+
+                  We preserve the old StreamHandler, and inserts a new one
+                  that buffers all writes into memory.
+
+
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/ReadChunkBytes
+
+   NAME
+    ReadChunkBytes -- 
+
+   SYNOPSIS
+    ReadChunkBytes(iff, buf, numBytes)
+    LONG ReadChunkBytes(struct IFFHandle *, APTR, LONG);
+
+   FUNCTION
+    Read a number of bytes from the current chunk into a buffer.
+    Attempts to read past the end of the chunk will be truncated.
+
+   INPUTS
+    iff  - pointer to IFFHandle struct.
+    buf  -  pointer to a buffer into which the data will be placed.
+    numBtes  - number of bytes to read.
+
+   RESULT
+    actual -   (positive) the actual number of bytes read.
+          (negative) IFFERR_#? error code if not succesfull.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ReadChunkRecords(), ParseIFF(), WriteChunkBytes()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/ReadChunkRecords
+
+   NAME
+    ReadChunkRecords -- 
+
+   SYNOPSIS
+    ReadChunkRecords(iff, buf, bytesPerRecord, numRecords)
+    LONG ReadChunkRecords(struct IFFHandle *, APTR, LONG, LONG);
+
+   FUNCTION
+    Read a number of records with the given size from the current chunk
+    into a buffer. Attempts to read past the end of the chunk will be truncated.
+
+   INPUTS
+     iff          - pointer to IFFHandle struct.
+    buf      -  pointer to a buffer into which the data will be placed.
+    bytesPerRecord  - number of bytes per record.
+    numRecords  -  number of records to read.
+
+   RESULT
+    actual -   (positive) the actual number of whole records read.
+          (negative) IFFERR_#? error code if not succesfull.
+
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ReadChunkBytes(), ParseIFF(), WriteChunkRecords()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/SeekChunkBytes
+
+   NAME
+    SeekChunkBytes -- 
+
+   SYNOPSIS
+    SeekChunkBytes(iff, numBytes, mode)
+    LONG SeekChunkBytes(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Seeks in current chunk. Seeking is only possible in handles opened for
+        reading and only if appropriate flags in IFFHandle allow it (IFFF_FSEEK
+        for forward seek and IFFF_RSEEK for backward seek). Seeking is
+        relative to current position in chunk, to chunk beginning or to chunk
+        end depending on 'mode' parameter. Seeking operation is always
+        truncated to current chunk boundaries. Note well, SeekChunkBytes() will
+        return error if new position in the chunk is lower than old and
+        IFFF_RSEEK flag is not set (no backward seek possible).
+
+   INPUTS
+    iff  - pointer to IFFHandle struct.
+    position - offset counted from the reference point.
+    mode     - reference point, one of:
+          IFFOFFSET_BEGINNING - beginning of the chunk,
+          IFFOFFSET_END       - end of the chunk,
+          IFFOFFSET_CURRENT   - current position in the chunk.
+
+   RESULT
+    error - Zero for success, IFFERR_SEEK error code if not succesfull.
+
+   NOTES
+        Truncated seek is meant to be succesfull - function returns 0.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SeekChunkRecords()
+
+   INTERNALS
+
+   HISTORY
+
+iffparse.library/SeekChunkRecords
+
+   NAME
+    SeekChunkRecords -- 
+
+   SYNOPSIS
+    SeekChunkRecords(iff, bytesPerRecord, numRecords, mode)
+    LONG SeekChunkRecords(struct IFFHandle *, LONG, LONG, LONG);
+
+   FUNCTION
+    Seeks in current chunk. Seeking is only possible in handles opened for
+        reading and only if appropriate flags in IFFHandle allow it (IFFF_FSEEK
+        for forward seek and IFFF_RSEEK for backward seek). Seeking is
+        relative to current position in chunk, to chunk beginning or to chunk
+        end depending on 'mode' parameter. Seeking operation is always
+        truncated to current chunk boundaries and records of given size as
+        well. It means a difference between the reference point and seek
+        destination is always an even multiple of record size. Note well,
+        SeekChunkRecords() will return error if new position in the chunk is
+        lower than old and IFFF_RSEEK flag is not set (no backward seek
+        possible).
+
+   INPUTS
+    iff        - pointer to IFFHandle struct.
+    numRecords     - number of records to seek over.
+        bytesPerRecord - size of record.
+    mode           - reference point, one of:
+          IFFOFFSET_BEGINNING - beginning of the chunk,
+          IFFOFFSET_END       - end of the chunk,
+          IFFOFFSET_CURRENT   - current position in the chunk.
+
+   RESULT
+    error - Zero for success, IFFERR_SEEK error code if not succesfull.
+
+   NOTES
+        Truncated seek is meant to be succesfull - function returns 0.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    SeekChunkBytes(), ReadChunkRecords(), WriteChunkRecords()
+
+   INTERNALS
+
+   HISTORY
+
+iffparse.library/SetLocalItemPurge
+
+   NAME
+    SetLocalItemPurge -- 
+
+   SYNOPSIS
+    SetLocalItemPurge(localItem, purgeHook)
+    void SetLocalItemPurge(struct LocalContextItem *, struct Hook *);
+
+   FUNCTION
+    Inserts a custom purge hook for the given local context item.
+    The purge hook will be freed when the system wants to delete a local
+    context item.
+
+   INPUTS
+    localItem  -  pointer to a local context item.
+    purgeHook  -  pointer to a hook sructure initialized with the purge function.
+
+   RESULT
+
+   NOTES
+    The purgehook must call FreeLocalItem() on the local context item after
+    doing its own resource freeing.
+
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    AllocLocalItem(), FreeLocalItem()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/StopChunk
+
+   NAME
+    StopChunk -- 
+
+   SYNOPSIS
+    StopChunk(iff, type, id)
+    LONG StopChunk(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Inserts an entry handler for the given type and id, that will cause the parser
+    to stop when such a chunk is entered.
+
+   INPUTS
+     iff   - Pointer to IFFHandle struct. (does not need to be open).
+    type  - IFF chunk type declarator for chunk to stop at.
+    id    -  IFF chunk id identifier for chunk to stop at.
+
+   RESULT
+    error  -  0 if successfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    StopChunks(), ParseIFF()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/StopChunks
+
+   NAME
+    StopChunks -- 
+
+   SYNOPSIS
+    StopChunks(iff, propArray, numPairs)
+    LONG StopChunks(struct IFFHandle *, LONG *, LONG);
+
+   FUNCTION
+    Declares multiple stop chunks from th typ/id pairs supplied.
+
+   INPUTS
+      iff   - pointer to an IFFHandle struct.
+    propArray  - pointer to an array of longword chunk types and identifiers.
+    numPairs  - number of type/id pairs in the propArray.
+
+   RESULT
+    error      - 0 if successfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    StopChunk()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/StopOnExit
+
+   NAME
+    StopOnExit -- 
+
+   SYNOPSIS
+    StopOnExit(iff, type, id)
+    LONG StopOnExit(struct IFFHandle *, LONG, LONG);
+
+   FUNCTION
+    Inserts an exit handler for the given type and id, that will cause the parser
+    to stop when such a chunk is left.
+
+   INPUTS
+     iff   - Pointer to IFFHandle struct. (does not need to be open).
+    type  - IFF chunk type declarator for chunk to stop at.
+    id    -  IFF chunk id identifier for chunk to stop at.
+
+   RESULT
+    error  -  0 if successfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    ParseIFF()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/StoreItemInContext
+
+   NAME
+    StoreItemInContext -- 
+
+   SYNOPSIS
+    StoreItemInContext(iff, localItem, contextNode)
+    void StoreItemInContext(struct IFFHandle*, struct LocalContextItem *, struct ContextNode*);
+
+   FUNCTION
+    Stores the given local context item into the given context node.
+    If a LCI with the some id, type and class identifier allready exists
+    in the context node, the old one will be purged, and the new one
+    inserted.
+
+   INPUTS
+    iff     - pointer to IFFHandle struct.
+    localItem    -  pointer to LCI to install.
+    contextNode  -  pointer to the context node in which the LCI will be stored.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    StoreLocalItem()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/StoreLocalItem
+
+   NAME
+    StoreLocalItem -- 
+
+   SYNOPSIS
+    StoreLocalItem(iff, localItem, position)
+    LONG StoreLocalItem(struct IFFHandle*, struct LocalContextItem *, LONG);
+
+   FUNCTION
+    Stores the given local context item in a context node.
+    Which context node this is depends on the value of the position
+    argument:
+        IFFSLI_ROOT - insert into the default contextnode.
+        IFFSLI_PROP  -  insert into the node returned by FindPropContext().
+        IFFSLI_TOP  -  insert item into the current contextnode.
+
+
+   INPUTS
+    iff    - pointer to IFFHandle struct.
+    localItem  -  pointer to local context item.
+    position  -  IFFSLI_ROOT, IFFSLI_PROP or IFFSLI_TOP.
+
+   RESULT
+    error     -  0 if succesfull, IFFERR_#? otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    StoreItemInContext(), FindLocalItem(), EntryHandler(), ExitHandler()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/WriteChunkBytes
+
+   NAME
+    WriteChunkBytes -- 
+
+   SYNOPSIS
+    WriteChunkBytes(iff, buf, numBytes)
+    LONG WriteChunkBytes(struct IFFHandle *, APTR, LONG);
+
+   FUNCTION
+    Writes given number of bytes in the supplied buffer into the
+    current chunk. Attempts to write past the endo of the chunk will
+    be truncated.
+
+   INPUTS
+    iff    - pointer to IFFHandle struct.
+    buf    -  buffer with data to write.
+    numBytes  - number of bytes to write.
+
+   RESULT
+    actual    -  (positive) number of bytes actually written.
+            (negative) IFFERR_#? indicating unsuccesfull write.
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    PushChunk(), PopChunk(), WriteChunkRecords()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+iffparse.library/WriteChunkRecords
+
+   NAME
+    WriteChunkRecords -- 
+
+   SYNOPSIS
+    WriteChunkRecords(iff, buf, bytesPerRecord, numRecords)
+    LONG WriteChunkRecords(struct IFFHandle *, APTR, LONG, LONG);
+
+   FUNCTION
+    Write numRecods records of bytesPerRecord bytes to the current chunk.
+    Attempts to write past the end of the chunk will be truncated.
+
+   INPUTS
+     iff          - pointer to IFFHandle struct.
+    buf      -  pointer to a buffer containig the data to be written.
+    bytesPerRecord  - number of bytes per record.
+    numRecords  -  number of records to write.
+
+   RESULT
+    actual -   (positive) the actual number of whole records written.
+          (negative) IFFERR_#? error code if not succesfull.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+    WriteChunkBytes()
+
+   INTERNALS
+
+   HISTORY
+  27-11-96    digulla automatically created from
+      iffparse_lib.fd and clib/iffparse_protos.h
+
+

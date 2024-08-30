@@ -1,0 +1,602 @@
+TABLE OF CONTENTS
+
+intuition.library/FreeMonitorList
+intuition.library/FreeMonitorModesList
+intuition.library/GetDrawInfoAttr
+intuition.library/GetMonitorList
+intuition.library/GetMonitorMode
+intuition.library/GetMonitorModesList
+intuition.library/GetSkinInfoAttr
+intuition.library/HIDInput
+intuition.library/IKill
+intuition.library/ScreenbarControl
+intuition.library/TransparencyControl
+intuition.library/WindowAction
+intuition.library/FreeMonitorList
+
+   NAME
+    FreeMonitorList -- 
+
+   SYNOPSIS
+    FreeMonitorList(list)
+    void FreeMonitorList(ULONG *);
+
+   FUNCTION
+    Frees the monitor list allocated with GetMonitorList();
+
+   INPUTS
+    list - monitor list.
+
+   RESULT
+
+   NOTES
+
+    OM_RETAIN a monitor object before calling FreeMonitorList to extend
+    its lifetime
+
+   EXAMPLE
+
+    Object *firstmonitor = NULL;
+    Object **list = GetMonitorList(NULL);
+    if (list)
+    {
+        // keep ownership of the first monitor object
+        firstmonitor = DoMethod(list[0], OM_RETAIN);
+
+        // release the monitor list
+        FreeMonitorList();
+    }
+
+    GetAttr(MA_MonitorName, firstmonitor, &name);
+    ...
+
+    // release ownership of the monitor object
+    DoMethod(firstmonitor, OM_RELEASE);
+
+   BUGS
+
+   SEE ALSO
+
+    GetMonitorList()
+
+   INTERNALS
+
+   HISTORY
+
+intuition.library/FreeMonitorModesList
+
+   NAME
+    FreeMonitorModesList -- 
+
+   SYNOPSIS
+    FreeMonitorModesList(list)
+    void FreeMonitorModesList(ULONG *);
+
+   FUNCTION
+    Frees the monitor list modes allocated with GetMonitorModesList();
+
+   INPUTS
+    list - monitor list.
+
+   RESULT
+
+    Releases the associated list memory and calls OM_RELEASE on all mode
+    objects
+
+   NOTES
+
+    OM_RETAIN a mode object before calling FreeMonitorModesList to extend
+    its lifetime
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    GetMonitorModesList() GetMonitorList()
+
+   INTERNALS
+
+   HISTORY
+
+    Available from intuition v60.34
+
+intuition.library/GetDrawInfoAttr
+
+   NAME
+    GetDrawInfoAttr -- 
+
+   SYNOPSIS
+    GetDrawInfoAttr(drawinfo, attr, errorPtr)
+    ULONG GetDrawInfoAttr(struct DrawInfo *, ULONG, IPTR *);
+
+   FUNCTION
+        Gets a specified DrawInfo attribute. This function should be used to access
+        all new fields on DrawInfo as well as old ones.
+
+   INPUTS
+        DInfo = a valid DrawInfo * or NULL to get Intuition defaults.
+        Attribute = one od attributes as defined in intuition/diattr.h.
+        ErrorPtr = storage for an error indicator, may be NULL. This function is
+                   unlikely to fail if you pass a valid Attribute.
+        -----------------------------------------------------------------------------
+        GDIA_Color - ask for XXRRGGBB color value of a system pen. The pen codes
+                     are defined in intuition/diattr.h and are encoded into this
+                     command (see examples below). Returns FAIL if the supplied
+                     DrawInfo doesn't allow directcolor, works with NULL DrawInfo.
+
+        GDIA_Pen   - ask for pen number of a system pen. The pen codes are defined
+                     in intuition/diattr.h and are encoded into this command (see
+                     examples below). Works with NULL DrawInfo.
+
+        GDIA_Version - returns DrawInfo version number.
+
+        GDIA_NumPens - returns number of pens/colors defined in DrawInfo.
+
+        GDIA_DirectColor - returns TRUE if current DrawInfo/Screen supports
+                      directcolor (more than 8 bit depth).
+
+        GDIA_Font    - returns DrawInfo font.
+
+        GDIA_Depth   - returns DrawInfo/Screen depth.
+
+        GDIA_CheckMark - returns default checkmark object. This DrawInfo attribute
+                       is OBSOLETE and should not be used.
+
+        GDIA_MenuKey - returns default menukey object. GDIA_CheckMark notes apply.
+
+        GDIA_ResolutionX
+        GDIA_ResolutionY - returns pixel aspect for DrawInfo/Screen
+
+   RESULT
+        Result - depending on Attribute value.
+
+   EXAMPLE
+        color = GetDrawInfoAttr(dri,GDIA_Color|DRIPEN_DETAIL,0);
+        pen = GetDrawInfoAttr(NULL,GDIA_Pen|DRIPEN_DETAIL,&error);
+
+   NOTES
+
+   BUGS
+        Prior to intuition.library 50.74 GDOA_Depth returned 8 for hi/true screens. Please note
+        that struct DrawInfo * read directly will still have this field set to 8 for compatibility
+        reasons.
+
+   SEE ALSO
+        graphics/rpattr.h
+
+intuition.library/GetMonitorList
+
+   NAME
+    GetMonitorList -- 
+
+   SYNOPSIS
+    GetMonitorList(taglist)
+    ULONG * GetMonitorList(struct TagItem *);
+
+   FUNCTION
+    Returns a NULL terminated array of monitor objects installed in system.
+    Monitors are normal BOOPSI objects, read the monitor class autodoc for
+    details.
+
+   INPUTS
+    taglist - Taglist ptr for possible future extensions
+        GMLA_DisplayID - limit the list to monitors matching the given IDs
+
+   RESULT
+
+    Pointer to NULL terminated montior list.
+
+   NOTES
+
+    There is no notification system when new monitors are added to the OS, but
+    due to current OS internals no new monitors may be added after IPrefs is called.
+    Monitors can NOT be removed from OS once installed - it's safe to use this
+    list all the time once you've obtained it.
+
+   EXAMPLE
+    See the included sources/monitors.c
+
+   BUGS
+
+   SEE ALSO
+
+    FreeMonitorList(), intuition/extensions.h
+
+   INTERNALS
+
+   HISTORY
+
+    51.45, added support for GMLA_DisplayID
+
+intuition.library/GetMonitorMode
+
+   NAME
+    GetMonitorMode -- 
+
+   SYNOPSIS
+    GetMonitorMode(, width, height, depth, taglist)
+    ULONG * GetMonitorMode(CONST, LONG, LONG, LONG, struct TagItem *);
+
+   FUNCTION
+    Returns a Mode object best matching specified parameters
+
+   INPUTS
+    monitorName - pointer to a monitor name (or NULL)
+    width - requested screen width (or -1 to find best width)
+    height - requested screen width (or -1 to find best height)
+    depth - requested screen width (or -1 to find best depth)
+    taglist - Taglist ptr for possible future extensions
+
+   RESULT
+
+    Pointer to a Boopsi mode object. Release the object by calling
+    OM_RELEASE!
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    intuition/monitors.h
+
+   INTERNALS
+
+   HISTORY
+
+    Available from intuition v60.34
+
+intuition.library/GetMonitorModesList
+
+   NAME
+    GetMonitorModesList -- 
+
+   SYNOPSIS
+    GetMonitorModesList(monitor, taglist)
+    ULONG * GetMonitorModesList(Boopsiobject *, struct TagItem *);
+
+   FUNCTION
+    Returns a NULL terminated array of monitor screen mode objects.
+
+   INPUTS
+    monitor - pointer to a monitor object obtained via GetMonitorList
+    taglist - Taglist ptr for possible future extensions
+
+   RESULT
+
+    Pointer to NULL terminated montior modes list.
+
+   NOTES
+
+   EXAMPLE
+    See the included sources/monitors.c
+
+   BUGS
+
+   SEE ALSO
+
+    FreeMonitorModesList(), intuition/monitors.h
+
+   INTERNALS
+
+   HISTORY
+
+    Available from intuition v60.34
+
+intuition.library/GetSkinInfoAttr
+
+   NAME
+    GetSkinInfoAttr -- 
+
+   SYNOPSIS
+    GetSkinInfoAttr(dri, attr, taglist)
+    ULONG GetSkinInfoAttr(struct DrawInfo *, ULONG, struct TagItem *);
+
+   FUNCTION
+        Get GUI elements sizes to layout window contents properly. If you use this
+        function please make sure you open your windows with WA_SkinInfo tag passed.
+        It is strongly recommended that you use this function everywhere in your
+        code!
+
+        The main purpose of this function is to allow proper gadget/other window
+        contents layouting BEFORE opening the window. After the window gets opened
+        you can safely read struct Window dimmensions. You MUST always use this
+        function to read Screen's titlebar height!
+
+   INPUTS
+        DInfo = valid DrawInfo pointer.
+        Attribute = one of attributes as described in intuition/extensions.h
+        TagList = taglist for additional attributes. No tags defined at the moment.
+        -----------------------------------------------------------------------------
+        SI_BorderTop  - returns top border height of windows opened on supplied
+                        DrawInfo/Screen.
+
+        SI_BorderTopTitle - same as SI_BorderTop except that it adds window's title
+                        height into account.
+
+        SI_BorderLeft - returns left border width.
+
+        SI_BorderRight - returns right border width.
+
+        SI_BorderRightSize - returns the width of right border when you use a size
+                        gadget and window is WFLG_SIZEBRIGHT
+
+        SI_BorderBottom - returns bottom border height.
+
+        SI_BorderBottomSize - returns bottom border height when you use a size gadget
+                        and window is WFLG_SIZEBBOTTOM
+
+        SI_ScreenTitlebarHeight - returns the actual screen titlebar height (no need
+                        to add the additional pixel here!). screen->BarHeight doesn't
+                        contain the actual height with disappearing or disabled
+                        titlebar for compatibility reasons.
+
+        SI_RightPropWidth - use this width to place a vertical scroller in right
+                        window border.
+
+        SI_BottomPropHeight - use this height to place a horizontal scroller in
+                        bottom window border.
+
+        SI_RightArrowBox - this is the total height of 2 arrows placed on window
+                        border. Useful when calculating prop gadget RelHeight.
+
+        SI_RightArrowBox - this is the total width of 2 arrows placed on window
+                        border. Useful when calculating prop gadget RelWidth.
+
+   RESULT
+        Result - depending on Attribute, NULL if DrawInfo is NULL or the Attribute is
+                 unknown.
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+        Intuition V50 programming style guide, point 2.3 - 2.5
+        sources/window.c
+
+intuition.library/HIDInput
+
+
+   FUNCTION
+    Resets the blanker on HID input events (joysticks, etc). For stuff that
+    doesn't go through input.device
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+intuition.library/IKill
+
+   NAME
+    IKill -- 
+
+   SYNOPSIS
+    IKill(window)
+    VOID IKill(struct Window *);
+
+   FUNCTION
+    Allows applications to install dynamicly created screenbar plugin classes and
+    control their behaviour.
+
+   INPUTS
+    taglist - input data, may be processed in tag order depending on the type
+    --------------------------------------------------------------------------
+    SBCT_InstallPlugin - installs a MUI class implementing the MUIM_Screenbar_#?
+                         methods. Please note that mcc_Class->cl_ID must contain
+                         a valid name
+
+    SBCT_UninstallPlugin - removes the MUI class previously installed with
+                         SBCT_InstallPlugin
+
+   RESULT
+
+    TRUE on success, may also return a different value depending on the tags passed
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    Example.sbar
+
+   INTERNALS
+
+   HISTORY
+
+intuition.library/TransparencyControl
+
+   NAME
+    TransparencyControl -- 
+
+   SYNOPSIS
+    TransparencyControl(w, method, taglist)
+    BOOL TransparencyControl(struct Window *, ULONG, struct TagItem *);
+
+   FUNCTION
+        Allows control over window transparency. It's possible to install/remove/
+        change/refresh user transparent regions or transparency hook.
+
+   INPUTS
+        Window = the window we are reffering to.
+        Method = one of methods defined in intuition/extensions.h.
+        TagList = optional taglist with data for methods.
+        -----------------------------------------------------------------------------
+        Methods:
+        TRANSPCONTROLMETHOD_INSTALLREGION
+            Installs or removes a transparent region. This region will be added
+            to window's main transparent region using OrRegionRegion. Removing
+            a region causes damage to both smart and simple refresh layers!
+
+            Tags defined for this method are:
+            TRANSPCONTROL_REGION - ti_Data points to struct Region or NULL if
+                you wish to remove current region.
+
+            TRANSPCONTROL_OLDREGION - ti_Data points to an ULONG in which old
+                region pointer will be stored (allowing you to dispose previously
+                used region). Can also be used to read current region.
+
+        TRANSPCONTROLMETHOD_INSTALLREGIONHOOK
+            Installs or removes a transparent region hook. The hook is called
+            whenever window's layer needs updating (usualy after user resizes your
+            window). The hook is called with struct Window * in A2 and struct
+            TransparencyMessage * in A1 register.
+
+            Tags defined for this method are:
+            TRANSPCONTROL_REGIONHOOK - ti_Data points to struct Hook or NULL.
+
+            TRANSPCONTROL_OLDREGIONHOOK - similar to TRANSPCONTROL_OLDREGION.
+
+        TRANSPCONTROLMETHOD_UPDATETRANSPARENCY
+            Calls your transparent region hook so that you could update transparent
+            region without removing the hook.
+
+   RESULT
+        TRUE after a new hook/region was installed poperly, FAIL if something went
+        wrong - usualy out of mem. FAIL if you olny tried to read old values.
+
+   EXAMPLE
+        sources/transparency.c
+
+   NOTES
+        To install transp region/hook on window opening time use:
+        WA_TransparentRegion
+        WA_TransparentRegionHook
+
+        You must NEVER free, modify or remove the provided transparent region while
+        it'sattached to a window. Always remove it to apply changes!
+
+        You can NOT use both a transparent region and a transparency hook in one
+        layer. Installing a new transparent region will clear a previously installed
+        transparency hook and vice-versa.
+
+        In GZZ windows you can only make the inner window layer transparent.
+
+        Be sure to handle IDCMP_REFRESHWINDOW for both smart and simple refresh
+        windows! You will have to refresh SMART refresh layers after removing
+        a transparent region!!!
+
+        Reminder: minimum IDCMP_REFRESHWINDOW handling is
+            case IDCMP_REFRESHWINDOW:
+                BeginRefresh(window);
+                EndRefresh(window,TRUE);
+                break;
+
+        This call is synchronized with intuition's inputhandler. You must not
+        hold any layer/other locks when calling it!
+
+   BUGS
+
+   SEE ALSO
+        intuition/extensions.h
+
+intuition.library/WindowAction
+
+   NAME
+    WindowAction -- 
+
+   SYNOPSIS
+    WindowAction(window, action, tags)
+    void WindowAction(struct Window *, ULONG, struct TagItem *);
+
+   FUNCTION
+        Performs some action on window that doesn't need to be controlled by caller
+        (eg window opened by some other app). Function is safe to call even for
+        windows that are destroyed before or when calling this function.
+
+        WindowAction call is an asynchronous operation. It returns before the action
+        is actually performed.
+
+   INPUTS
+        Window = the window to perform action on.
+        Action = kind of the action to perform.
+        TagList = additional tags for specified Actions.
+        -----------------------------------------------------------------------------
+        Actions:
+        WAC_ACTIVATEWINDOW - like ActivateWindow();
+
+        WAC_CHANGEWINDOWBOX - like ChangeWindowBox();
+
+            Tags defined for this method are:
+            WAT_WINDOWBOXLEFT - future size in pixels
+            WAT_WINDOWBOXTOP
+            WAT_WINDOWBOXWIDTH
+            WAT_WINDOWBOWHEIGHT
+
+        WAC_HIDEWINDOW - like HideWindow();
+
+        WAC_FAMILYTOBACK - Reoders window and the other windows opened by the same
+                           task to back (V51)
+
+        WAC_FAMILYTOFRONT - Reoders window and the other windows opened by the same
+                            task to front (V51)
+
+        WAC_MAXIMIZEWINDOW - Maximizes the window (V51)
+
+        WAC_MINIMIZEWINDOW - Minimizes the window (V51)
+
+        WAC_MOVEWINDOW - like MoveWindow();
+
+            Tags defined for this method are:
+            WAT_MOVEWINDOWX - offset, like in MoveWindow();
+            WAT_MOVEWINDOWY
+
+        WAC_MOVEWINDOWINFRONTOF - like MoveWindowInFrontOf();
+
+            Tags defined for this method are:
+            WAT_MOVEBEHINDWINDOW - move Window behind this one
+
+        WAC_OPENMENU - Opens window's menu (V51)
+
+        WAC_RESTOREINITIALSIZEPOS - Restores window's position/size to the one
+                        it used at open time (V51)
+
+        WAC_SENDIDCMPCLOSE - send an IDCMP_CLOSEWINDOW message if the window accepts
+                         such messages
+
+        WAC_SHOWWINDOW - like ShowWindow();
+
+        WAC_SIZEWINDOW - like SizeWindow();
+
+            Tags defined for this method are:
+            WAT_SIZEWINDOWX - offset, like in SizeWindow();
+            WAT_SIZEWINDOWY
+
+        WAC_WINDOWTOBACK - like WindowToBack();
+
+        WAC_WINDOWTOFRONT - like WindowToFront();
+
+        WAC_ZIPWINDOW - like ZipWindow();
+
+   RESULT
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+

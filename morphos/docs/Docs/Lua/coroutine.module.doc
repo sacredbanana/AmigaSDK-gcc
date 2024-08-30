@@ -1,0 +1,142 @@
+TABLE OF CONTENTS
+
+coroutine.module/create
+coroutine.module/resume
+coroutine.module/running
+coroutine.module/status
+coroutine.module/wrap
+coroutine.module/yield
+coroutine.module/create
+
+ NAME
+   coroutine.create -- creates a new thread. (V1)
+
+ SYNOPSIS
+   t = coroutine.create(f)
+
+ FUNCTION
+   Creates a new Lua thread (coroutine) from passed function 'f'. The thread
+   is initially in suspended state and may be run with resume().
+
+ INPUTS
+   f - Lua function.
+
+ RESULT
+   Newly created coroutine.
+
+coroutine.module/resume
+
+ NAME
+   coroutine.resume -- passes thread control to specified thread. (V1)
+
+ SYNOPSIS
+   r, ... = coroutine.resume(t[, ...])
+
+ FUNCTION
+   Resumes or starts a Lua thread 't'. Additional arguments are passed as
+   arguments of the body function of the thread 't' if resume() is called
+   the first time to start 't'. Alternatively, if 't' is resumed, arguments
+   are passed to 't' as results of yield() call in 't'.
+
+   Resume() returns, when Lua thread 't' finishes its body function or calls
+   yield(). Then, funtcion returns 'true' and either return values of the
+   body function of 't' or arguments of yield(). When 't' generates a Lua
+   exception, resume() returns 'false' and error message.
+
+ INPUTS
+   t - Lua thread to be resumed.
+   ... - additional arguments passed to 't'.
+
+ RESULT
+   r - boolean succes value.
+   ... - results obtained from 't' or error message.
+
+
+coroutine.module/running
+
+ NAME
+   coroutine.running -- returns the running Lua thread. (V1)
+
+ SYNOPSIS
+   t = coroutine.running()
+
+ FUNCTION
+   Returns the handle of Lua thread calling it. For main thread returns
+   'nil'.
+
+ INPUTS
+   None.
+
+ RESULT
+   Lua thread or 'nil'.
+
+coroutine.module/status
+
+ NAME
+   coroutine.status -- returns current status of a thread. (V1)
+
+ SYNOPSIS
+   s = coroutine.status(t)
+
+ FUNCTION
+   Returns a string describing current status of specified Lua thread 't'.
+   It may be one of:
+   - "running", if 't' is the thread, which called status().
+   - "suspended", if 't' has returned control with yield().
+   - "normal", if 't' has passed control with resume().
+   - "dead", if 't' finished or encountered an error.
+
+ INPUTS
+   t - Lua thread (coroutine) to be checked.
+
+ RESULT
+   Status description.
+
+ NOTES
+   Returned status descriptions are not localized.
+
+coroutine.module/wrap
+
+ NAME
+   coroutine.wrap -- creates a Lua thread with resuming function. (V1)
+
+ SYNOPSIS
+   r = coroutine.wrap(f[, ...])
+
+ FUNCTION
+   Given a Lua function 'f' and any following parameters, creates a Lua
+   thread from 'f' and returns a new function 'r'. The function 'r' when
+   called, resumes thread made of 'f' passing all additional parameters of
+   wrap() to resume(). Result of 'r' consists of values returned or yielded
+   from 'f'. If 'f' throws a Lua exception, exception message is augmented
+   with additional informations and returned, then exception is rethrown.
+
+ INPUTS
+   f - a function to be wrapped.
+   ... - addditional arguments for resume().
+
+ RESULT
+   Function for resuming thread made of 'f()'.
+
+ SEE ALSO
+   create(), resume()
+
+coroutine.module/yield
+
+ NAME
+   coroutine.yield -- returns control back to resuming thread. (V1)
+
+ SYNOPSIS
+   e = coroutine.yield(...)
+
+ FUNCTION
+   Suspends Lua thread and returns control to thread which called resume().
+   Arguments of yield() are return values for this resume().
+
+ INPUTS
+   ... - arguments to be returned as results of resume().
+
+ RESULT
+   Zero for success or error code.
+
+

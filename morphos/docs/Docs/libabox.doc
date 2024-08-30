@@ -1,0 +1,1113 @@
+TABLE OF CONTENTS
+
+abox.lib/--background--
+abox.lib/ABOX_LocalToUTF8
+abox.lib/ACrypt
+abox.lib/ArgArrayDone
+abox.lib/ArgArrayInit
+abox.lib/ArgInt
+abox.lib/ArgString
+abox.lib/BeginIO
+abox.lib/CallHook
+abox.lib/CallHookA
+abox.lib/CheckRexxMsg
+abox.lib/CoerceMethod
+abox.lib/CoerceMethodA
+abox.lib/CreateExtIO
+abox.lib/CreatePort
+abox.lib/CreateStdIO
+abox.lib/CreateTask
+abox.lib/DeleteExtIO
+abox.lib/DeletePort
+abox.lib/DeleteStdIO
+abox.lib/DeleteTask
+abox.lib/DoMethod
+abox.lib/DoMethodA
+abox.lib/DoSuperMethod
+abox.lib/DoSuperMethodA
+abox.lib/DoSuperNew
+abox.lib/DoTimer
+abox.lib/FastRand
+abox.lib/FreeIEvents
+abox.lib/GetRexxVar
+abox.lib/HookEntry
+abox.lib/HotKey
+abox.lib/InvertString
+abox.lib/MakeDirAll
+abox.lib/NewList
+abox.lib/OpenMakeDir
+abox.lib/RangeRand
+abox.lib/SetRexxVar
+abox.lib/SetSuperAttrs
+abox.lib/TimeDelay
+abox/ABOX_StrToDouble()
+abox.lib/--background--
+
+abox.lib/ABOX_LocalToUTF8
+
+   NAME
+        ABOX_LocalToUTF8 -- Convert string from the local character encoding to UTF-8.
+
+   SYNOPSIS
+        ABOX_LocalToUTF8(local, buffer, buflen, keymap);
+
+        ULONG ABOX_LocalToUTF8(CONST_STRPTR, STRPTR, LONG, CONST struct KeyMap *);
+
+   FUNCTION
+        Convert local string to UTF-8 string. The length parameter specifies
+        length of destination buffer. If specified as -1 then
+        entire string is converted.
+
+        Conversion always stops on a NULL character which is also converted.
+        The destination string is guaranteed to be NULL terminated.
+
+   INPUTS
+        local      - string to be converted
+        buffer     - the destination for UTF-8 string, or NULL to measure
+                     buffer space
+        buflen     - amount of bytes available in the output buffer
+        keymap     - keymap to use for conversion or NULL to use the current
+                     default keymap
+
+   RESULT
+        Number of bytes written to buffer. If there is insufficient storage
+        for the terminating '\0' character, the buffer will not be '\0'
+        terminated. Caller is responsible for passing adequate buffer.
+
+   NOTE
+        Illegal code points are converted to question marks.
+
+   SEE ALSO
+        locale.library/LocalToUTF8(),
+        locale.library/UTF8_Encode(), locale.library/UTF8_Decode(),
+        locale.library/ConvertUTF8ToUCS4(),
+        keymap.library/MapUCS4(), keymap.library/ToUCS4()
+
+abox.lib/ACrypt
+
+    ACrypt --
+
+   SYNOPSIS
+
+    STRPTR ACrypt( STRPTR buffer, CONST_STRPTR password, CONST_STRPTR username );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/ArgArrayDone
+
+    ArgArrayDone -- free memory allocated by ArgArrayInit()
+
+   SYNOPSIS
+
+    VOID ArgArrayDone( VOID );
+
+   FUNCTION
+
+    This function frees memory and does all cleanup required after
+    ArgArrayInit() has been called.
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    ArgArrayInit()
+
+   BUGS
+
+abox.lib/ArgArrayInit
+
+    ArgArrayInit -- create an array of strings used as ToolType array
+
+   SYNOPSIS
+
+    STRPTR *ArgArrayInit( LONG argc, CONST_STRPTR *argv );
+
+   FUNCTION
+
+    This function creates and returns an array of strings that may be used
+    to call icon.library/FindToolType(). If the program was started from
+    Ambient aka Workbench, this array is the ToolTypes array of the program's
+    icon. It is argv if the program was launched from shell.
+
+   INPUTS
+
+    argc -
+    argv -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    ArgArrayDone
+
+   BUGS
+
+abox.lib/ArgInt
+
+    ArgInt --
+
+   SYNOPSIS
+
+    LONG ArgInt( CONST_STRPTR *tt, CONST_STRPTR entry, LONG defaultval );
+
+   FUNCTION
+
+    This function looks up a particular entry in a ToolType array returned by
+    ArgArrayInit() and returns the integer assigned to that entry. It is
+    possible to supply a default value which will be returned if the supplied
+    entry could not be found in the array.
+
+   INPUTS
+
+    tt -
+    entry -
+    defaultval -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    ArgString()
+
+   BUGS
+
+abox.lib/ArgString
+
+    ArgString --
+
+   SYNOPSIS
+
+    STRPTR ArgString( CONST_STRPTR *tt, CONST_STRPTR entry, CONST_STRPTR defaultstring );
+
+   FUNCTION
+
+    This function looks up a particular entry in a ToolType array returned by
+    ArgArrayInit() and returns the string assigned to that entry. It is
+    possible to supply a default string which will be returned if the
+    supplied entry could not be found in the array.
+
+   INPUTS
+
+    tt -
+    entry -
+    defaultstring -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/BeginIO
+
+    BeginIO --
+
+   SYNOPSIS
+
+    VOID BeginIO( struct IORequest *ioReq );
+
+   FUNCTION
+
+    This function gets an IORequest pointer as input and passes it directly
+    to the related device. It works exactly like exec.library/SendIO() but
+    it does not clear the io_Flags field in advance. It does not wait for
+    the IORequest to complete.
+
+   INPUTS
+
+    ioReq -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CallHook
+
+    CallHook --
+
+   SYNOPSIS
+
+    ULONG CallHook( struct Hook *hookPtr, Object *obj, ... );
+
+   FUNCTION
+
+    This function is used to invoke hooks.
+
+   INPUTS
+
+    hookPtr -
+    obj -
+
+   RESULT
+
+   NOTES
+
+    There is also a function CallHookA() which expects a pointer to the
+    message (the actual parameter packet) as parameter.
+
+   SEE ALSO
+
+    CallHookA() utility.library
+
+   BUGS
+
+abox.lib/CallHookA
+
+    CallHookA --
+
+   SYNOPSIS
+
+    ULONG CallHookA( struct Hook *hookPtr, Object *obj, APTR message );
+
+   FUNCTION
+
+    This function is used to invoke hooks.
+
+   INPUTS
+
+    hookPtr -
+    obj -
+    message -
+
+   RESULT
+
+   NOTES
+
+    There is also a function CallHook() which expects the message (the
+    actual parameter packet) on the stack.
+
+   SEE ALSO
+
+    CallHook()
+
+   BUGS
+
+abox.lib/CheckRexxMsg
+
+    CheckRexxMsg --
+
+   SYNOPSIS
+
+    BOOL CheckRexxMsg( CONST struct RexxMsg *rexxmsg );
+
+   FUNCTION
+
+    This function checks if the supplied RexxMsg is from ARexx directly.
+    Messages used by the Rexx Variable Interface (RVI) routines are required
+    to be from ARexx directly.
+
+   INPUTS
+
+    rexxmsg -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CoerceMethod
+
+    CoerceMethod --
+
+   SYNOPSIS
+
+    ULONG CoerceMethod( struct IClass *cl, Object *obj, ULONG methodID, ... );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CoerceMethodA
+
+    CoerceMethodA --
+
+   SYNOPSIS
+
+    ULONG CoerceMethodA( struct IClass *cl, Object *obj, Msg message );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CreateExtIO
+
+    CreateExtIO --
+
+   SYNOPSIS
+
+    struct IORequest *CreateExtIO( CONST struct MsgPort *port, LONG ioSize );
+
+   FUNCTION
+
+    This function allocates ioSize bytes of memory for a new IORequest and
+    initializes its fields. Make sure that the number of bytes matches the
+    size of the IORequest or you might run into problems.
+
+   INPUTS
+
+    port -
+    ioSize -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CreatePort
+
+    CreatePort --
+
+   SYNOPSIS
+
+    struct MsgPort *CreatePort( CONST_STRPTR name, LONG pri );
+
+   FUNCTION
+
+    This function allocates a new message port and initializes its fields.
+
+   INPUTS
+
+    name -
+    pri -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CreateStdIO
+
+    CreateStdIO --
+
+   SYNOPSIS
+
+    struct IOStdReq *CreateStdIO( CONST struct MsgPort *port );
+
+   FUNCTION
+
+    This function allocates a new IOStdReq structure and initializes its
+    fields.
+
+   INPUTS
+
+    port -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/CreateTask
+
+    CreateTask -- create a subtask with supplied name and priority
+
+   SYNOPSIS
+
+    struct Task *CreateTask( CONST_STRPTR name, LONG pri, CONST APTR initPC, ULONG stackSize );
+
+   FUNCTION
+
+    This function simplifies creation of subtasks by dynamically allocation
+    and initializing all necessary structures and stack space. The task is
+    also added to exec.library's task list with the given name and priority.
+    It also provides a tc_MemEntry list so that all stack and structure
+    memory allocated for it is automatically deallocated when the task is
+    removed.
+
+   INPUTS
+
+    name -
+    pri -
+    initPC -
+    stackSize -
+
+   RESULT
+
+   NOTES
+
+    This function serves as some legacy function. It only works with a 68K
+    code entry and calls exec.library/NewCreateTask() internally with
+    codetype identifier CODETYPE_M68K.
+
+   SEE ALSO
+
+    DeleteTask() exec.library/NewCreateTask()
+
+   BUGS
+
+abox.lib/DeleteExtIO
+
+    DeleteExtIO -- free a previously created IORequest allocated by CreateExtIO
+
+   SYNOPSIS
+
+    VOID DeleteExtIO( struct IORequest *ioReq );
+
+   FUNCTION
+
+   INPUTS
+
+    ioReq -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    abox.lib/CreateExtIO()
+
+   BUGS
+
+abox.lib/DeletePort
+
+    DeletePort -- Delete the port created by CreatePort
+
+   SYNOPSIS
+
+    VOID DeletePort( struct MsgPort *port );
+
+   FUNCTION
+
+    This function deletes the port created by CreatePort(). All messages that
+    are assigned to this port must have been replied before it is called.
+
+   INPUTS
+
+    port -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    CreatePort
+
+   BUGS
+
+abox.lib/DeleteStdIO
+
+    DeleteStdIO --
+
+   SYNOPSIS
+
+    VOID DeleteStdIO( struct IOStdReq *ioReq );
+
+   FUNCTION
+
+    This function frees an IOStdReq previously allocated by CreateStdIO()
+
+   INPUTS
+
+    ioReq -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    CreateStdIO()
+
+   BUGS
+
+abox.lib/DeleteTask
+
+    DeleteTask --
+
+   SYNOPSIS
+
+    VOID DeleteTask( struct Task *task );
+
+   FUNCTION
+
+    Deletes a task that has been previously created by CreateTask().
+
+   INPUTS
+
+    task -
+
+   RESULT
+
+   NOTES
+
+    Before you call this function, make sure that no system code is executed
+    by the task to be deleted. Signaling the task after it's gone might cause
+    unpredictable effects.
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/DoMethod
+
+    DoMethod --
+
+   SYNOPSIS
+
+    ULONG DoMethod( Object *obj, ULONG methodID, ... );
+
+   FUNCTION
+
+    This support function is used to perform a specific message on a supplied
+    intuition BOOPSI (or MUI) object. The message is invoked on the object's
+    assigned class.
+
+   INPUTS
+
+    obj -
+    methodID -
+
+   RESULT
+
+   NOTES
+
+    The message is passed on the stack in the function call opposed to
+    DoMethodA() where it's passed as a pointer.
+
+   SEE ALSO
+
+    DoMethodA()
+
+   BUGS
+
+abox.lib/DoMethodA
+
+    DoMethodA --
+
+   SYNOPSIS
+
+    ULONG DoMethodA( Object *obj, Msg message );
+
+   FUNCTION
+
+    This support function is used to perform a specific message on a supplied
+    intuition BOOPSI (or MUI) object. The message is invoked on the object's
+    assigned class.
+
+   INPUTS
+
+    obj -
+    message -
+
+   RESULT
+
+   NOTES
+
+    The message is passed as a pointer in the function call opposed to
+    DoMethod() where it's passed on the stack.
+
+   SEE ALSO
+
+    DoMethod()
+
+   BUGS
+
+abox.lib/DoSuperMethod
+
+    DoSuperMethod --
+
+   SYNOPSIS
+
+    ULONG DoSuperMethod( struct IClass *cl, Object *obj, ULONG methodID, ... );
+
+   FUNCTION
+
+    This support function is used to perform a specific message on a supplied
+    intuition BOOPSI (or MUI) object as if it was an instance of its
+    superclass.
+
+   INPUTS
+
+    cl -
+    obj -
+    methodID -
+
+   RESULT
+
+   NOTES
+
+    The message is passed on the stack in the function call opposed to
+    DoSuperMethodA() where it's passed as a pointer.
+
+   SEE ALSO
+
+    DoSuperMethodA()
+
+   BUGS
+
+abox.lib/DoSuperMethodA
+
+    DoSuperMethodA --
+
+   SYNOPSIS
+
+    ULONG DoSuperMethodA( struct IClass *cl, Object *obj, Msg message );
+
+   FUNCTION
+
+    This support function is used to perform a specific message on a supplied
+    intuition BOOPSI (or MUI) object as if it was an instance of its
+    superclass.
+
+   INPUTS
+
+    cl -
+    obj -
+    message -
+
+   RESULT
+
+   NOTES
+
+    The message is passed as a pointer in the function call opposed to
+    DoSuperMethod() where it's passed on the stack.
+
+   SEE ALSO
+
+    DoSuperMethod()
+
+   BUGS
+
+abox.lib/DoSuperNew
+
+    DoSuperNew --
+
+   SYNOPSIS
+
+    APTR DoSuperNew( struct IClass *cl, APTR obj, ... );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/DoTimer
+
+    DoTimer --
+
+   SYNOPSIS
+
+    LONG DoTimer( struct timeval *, LONG unit, LONG command );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/FastRand
+
+    FastRand -- Generate a pseudo-random number
+
+   SYNOPSIS
+
+    ULONG FastRand( ULONG seed );
+
+   FUNCTION
+
+    This function generated a pseudo-random number. The seed value is taken
+    from the input parameter, shifted left one position, exclusive-or'ed
+    with the value 0x1D872B41 and returned.
+
+   INPUTS
+
+    seed -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/FreeIEvents
+
+    FreeIEvents --
+
+   SYNOPSIS
+
+    VOID FreeIEvents( struct InputEvent *events );
+
+   FUNCTION
+
+    This function frees the linked list of input events created by
+    InvertString().
+
+   INPUTS
+
+    events -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    InvertString()
+
+   BUGS
+
+abox.lib/GetRexxVar
+
+    GetRexxVar --
+
+   SYNOPSIS
+
+    LONG GetRexxVar( CONST struct RexxMsg *rexxmsg, CONST_STRPTR name, STRPTR *result );
+
+   FUNCTION
+
+    This function tries to extract the value of a variable from a running
+    ARexx script or program.
+
+   INPUTS
+
+    rexxmsg -
+    name -
+    result -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    SetRexxVar() CheckRexxMsg()
+
+   BUGS
+
+abox.lib/HookEntry
+
+    HookEntry --
+
+   SYNOPSIS
+
+    ULONG HookEntry( struct Hook *hookPtr, Object *obj, APTR message );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/HotKey
+
+    HotKey --
+
+   SYNOPSIS
+
+    CxObj *HotKey( CONST_STRPTR description, struct MsgPort *port, LONG id );
+
+   FUNCTION
+
+    This function creates a triplet of commodity objects. It helps to setup
+    all the commodities.library functionality to get a message when the user
+    performs a specific input action.
+
+   INPUTS
+
+    description -
+    port -
+    id -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/InvertString
+
+    InvertString --
+
+   SYNOPSIS
+
+    struct InputEvent *InvertString( CONST_STRPTR str, CONST struct KeyMap *km );
+
+   FUNCTION
+
+    This function returns a linked list of input events which translate into
+    the string by using the supplied keymap. If the supplied KeyMap is NULL, the
+    system default keymap is used.
+    Use FreeIEvents() to free all memory allocated by the input event chain.
+
+   INPUTS
+
+    str -
+    km -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    FreeIEvents()
+
+   BUGS
+
+abox.lib/MakeDirAll
+
+    MakeDirAll --
+
+   SYNOPSIS
+
+    LONG MakeDirAll( CONST_STRPTR path );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/NewList
+
+    NewList --
+
+   SYNOPSIS
+
+    VOID NewList( struct List *list );
+
+   FUNCTION
+
+    This function prepares a List structure to be used. It's initial state
+    is empty.
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/OpenMakeDir
+
+    OpenMakeDir --
+
+   SYNOPSIS
+
+    BPTR OpenMakeDir( CONST_STRPTR path, LONG mode );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/RangeRand
+
+    RangeRand -- Return a 16-bit integer within 1 to maxValue range
+
+   SYNOPSIS
+
+    UWORD RangeRand( ULONG maxValue );
+
+   FUNCTION
+
+    This function gets an input value within 1 to 65535 and returns a value
+    within that 16-bit integer range.
+
+   INPUTS
+
+    maxValue -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/SetRexxVar
+
+    SetRexxVar --
+
+   SYNOPSIS
+
+    LONG SetRexxVar( struct RexxMsg *rexxmsg, CONST_STRPTR name, CONST_STRPTR value, LONG length );
+
+   FUNCTION
+
+    This function tries to set the value of a specified variable in a running
+    ARexx script.
+
+   INPUTS
+
+    rexxmsg -
+    name -
+    value -
+    length -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+    GetRexxVar() CheckRexxMsg()
+
+   BUGS
+
+abox.lib/SetSuperAttrs
+
+    SetSuperAttrs --
+
+   SYNOPSIS
+
+    ULONG SetSuperAttrs( struct IClass *cl, Object *obj, ULONG tag1, ... );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox.lib/TimeDelay
+
+    TimeDelay -- wait a specified amount of time
+
+   SYNOPSIS
+
+    LONG TimeDelay( LONG unit, ULONG secs, ULONG microsecs );
+
+   FUNCTION
+
+    This function waits for the specified amount of time before it returns
+
+   INPUTS
+
+    unit -
+    secs -
+    microsecs -
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+abox/ABOX_StrToDouble()
+
+ NAME
+   ABOX_StrToDouble -- Converts localized string to double
+
+ SYNOPSIS
+   DOUBLE ABOX_StrToDouble(struct Locale *locale, CONST_STRPTR string, STRPTR *endptr);
+
+ FUNCTION
+   Converts localized string into DOUBLE value. Skips leading spaces and tabs
+   but detects localized decimal point.
+
+ INPUTS
+   locale - The locale to use or NULL to use the current default locale.
+   string - Input string.
+   endptr - Reference to STRPTR which is set to the next character in input
+            string after the value. Can be a NULL, in which case it is not
+            used.
+
+ RESULT
+   On success, the function returns the converted floating point number.
+
+ NOTE
+   This function uses locale.library to convert localized decimal strings.
+

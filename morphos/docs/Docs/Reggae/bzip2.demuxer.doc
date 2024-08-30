@@ -1,0 +1,116 @@
+TABLE OF CONTENTS
+
+bzip2.demuxer/MMA_DataFormat
+bzip2.demuxer/MMA_MimeType
+bzip2.demuxer/MMA_StreamLength
+bzip2.demuxer/MMA_StreamPosBytes
+bzip2.demuxer/MMM_Pull
+bzip2.demuxer/background
+bzip2.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- (V51) [..G.Q], CONST_STRPTR, 0x8EDA000B
+
+ FUNCTION
+   Returns short, read-only textual description of the format. An object
+   connected to a data stream returns string "BZip2".
+
+ NOTES
+   Usually, when bzip2.demuxer is a part of processing pipeline built with
+   MediaNewObject(), this attribute is "shadowed" by demuxer(s) following
+   in the pipeline.
+
+bzip2.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType -- (V51) [..G.Q], CONST_STRPTR, 0x8EDA000A
+
+ FUNCTION
+   Returns MIME type string of the format. An object connected to a data
+   stream returns string "application/x-bzip2"
+
+ NOTES
+   Usually, when bzip2.demuxer is a part of processing pipeline built with
+   MediaNewObject(), this attribute is "shadowed" by demuxer(s) following
+   in the pipeline.
+
+bzip2.demuxer/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength -- (V51) [..G.Q], QUAD*, 0x8EDA0018
+
+ FUNCTION
+   MMA_StreamLength is the output (uncompressed) stream length in bytes. For
+   bzip2.demuxer the reported length is always 0.
+
+ NOTE
+   This tag always return 0 (unknown) length.
+
+bzip2.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- (V51) [..G.Q], QUAD*, 0x8EDA0012
+
+ FUNCTION
+   MMA_StreamPosBytes value is the current position in the output
+   (uncompressed) stream. This position is in bytes, and is returned as a
+   pointer to 64-bit signed number.
+
+bzip2.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull (V51) -- Decompresses a block of data into a buffer.
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   Delivers a specified amount of decompressed data to the output buffer.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be 1 (output).
+   - buffer, a memory buffer for decompressed data, must be aligned to
+     16-byte boundary (preferrably allocated with MediaAllocVec()).
+   - length, amount of pulled data in bytes.
+
+ RESULT
+   Number of bytes pulled actually. In case of error, additional information
+   is available via MMA_ErrorCode attribute.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+bzip2.demuxer/background
+
+ DESCRIPTION
+   This class allows Reggae to handle data compressed with BZip2 compressor.
+   In other words it is a wrapper on z.library. Using this class Reggae
+   can decompress data from any BZip2 source stream.
+
+   Reggae is able to cascade demuxers in case of compound data formats. When
+   MediaNewObject() recognizes a stream, it detects BZip2 packed files with
+   this class recognition routine. bzip2.demuxer object sets MMF_STREAM data
+   type on its output, which makes Reggae to perform demultiplexer matching
+   recursively, but this time on decompressed data.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamLength                (V51)  ..G.Q  (QUAD*)
+   MMA_StreamPosBytes              (V51)  ..G.Q  (QUAD*)
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+ HISTORY
+
+   51.1   (17.07.2019)
+   - The first release.
+
+

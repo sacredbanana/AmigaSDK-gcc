@@ -1,0 +1,1263 @@
+TABLE OF CONTENTS
+
+camd.library/--background--
+camd.library/AddMidiLink
+camd.library/CreateMidiA
+camd.library/DeleteMidi
+camd.library/EndClusterNotify
+camd.library/FindCluster
+camd.library/FindMidi
+camd.library/FlushMidi
+camd.library/GetMidi
+camd.library/GetMidiAttrsA
+camd.library/GetMidiErr
+camd.library/GetMidiLinkAttrsA
+camd.library/GetSysEx
+camd.library/LockCAMD
+camd.library/MidiLinkConnected
+camd.library/MidiMsgLen
+camd.library/MidiMsgType
+camd.library/NextCluster
+camd.library/NextClusterLink
+camd.library/NextMidi
+camd.library/NextMidiLink
+camd.library/ParseMidi
+camd.library/PutMidi
+camd.library/PutSysEx
+camd.library/QuerySysEx
+camd.library/RemoveMidiLink
+camd.library/RethinkCAMD
+camd.library/SetMidiAttrsA
+camd.library/SetMidiLinkAttrsA
+camd.library/SkipSysEx
+camd.library/StartClusterNotify
+camd.library/UnlockCAMD
+camd.library/WaitMidi
+camd.library/--background--
+
+ DESCRIPTION
+   CAMD provides a MIDI framework for applications that require exchanging
+   MIDI stream of data.
+
+   This library is compatible with the original CAMD implementation. It also
+   has successfully been tested with many 68k apps.
+
+   The main difference between the original library and this reimplementation
+   is the deprecation of the original custom driver system.
+
+   Only MIDI over USB is supported at the time being thru camdusbmidi.class.
+
+   The following part is taken from the original camd documentation
+   available on Aminet. Most of its parts are still valid and applies to this
+   reimplementation of the library.
+
+   'Interfacing to Hardware' section doesn't apply anymore and has been
+   totally removed from the library.
+
+    -- Begin of original documentation --
+
+   The MIDI System
+   ~~~~~~~~~~~~~~~
+       The MIDI distribution system is based on the idea of "linkages"
+   (called MidiLinks) between applications. Each application or hardware
+   driver can establish linkages to other applications or hardware drivers.
+   Multiple links can be established to a single source, so that more than
+   one application can see the MIDI stream coming out of a hardware port or
+   application output. Similarly, more than one application can send a MIDI
+   stream to a single hardware port or application input. The ability to have
+   one application send data to another allows "pipelining" of the MIDI
+   stream, for example connecting an interactive composing program to a
+   sequencer and running both concurrently.
+       Note that there is no requirement that the data sent actually be valid
+   musical data -- it is possible for a pair of applications to set up a private
+   linkage, and communicate anything they want, as long as it follows the
+   syntactic rules of MIDI. However, it is suggested that such linkages be
+   hidden from the user (using a special bit which makes a linkage private),
+   since the eventually there will be a "patch editor" which will allow the
+   user to manipulate linkages without the application being aware of it.
+
+       Each MIDI application must create a MidiNode. This structure is used
+   as a central dispatch point for incoming and outgoing messages, and holds
+   all of the application-specific information, including:
+     - location and size of input buffers.
+     - the name of the application
+     - the icon to be used for the application in the patch editor.
+     - the address of the task to signal when messages are received, and
+       the signal bit to use.
+
+   MIDI Messages
+   ~~~~~~~~~~~~~
+       Each MIDI message sent or received is contained in a MidiMsg
+   structure. This 8-byte structure contains a timestamp, the actual MIDI
+   bytes (up to 3) and a link number (so that applications which have several
+   input links can determine which one received the message). Note that since
+   the message is so small, the entire message is copied when MIDI data is
+   transferred, rather than passing pointers around.
+
+   How MIDI Data is received
+   ~~~~~~~~~~~~~~~~~~~~~~~~~
+       MIDI applications can be either task-based or callback based. A
+   task-based application uses a signal to wait for incoming MIDI data. Once
+   the signal is received, the application can call GetMidi() to actually
+   look at what was received. All incoming messages are queued, and there is
+   a seperate queue for system exclusive messages (which can be quite long).
+   Each incoming MIDI event is both timestamped and marked with the linkage
+   number (settable by the application) from the link that it came in on.
+       Some people have questioned whether a task can respond fast enough to
+   incoming MIDI data to meet professional standards of timing accuracy. Our
+   experimentation has determined that a high-priority task (say, 30 or so),
+   can meet these reqiuirements, even when the disk drive is running.
+       However, if the application's handling of MIDI is very fast, it may be
+   better to use a callback. The callback occurs in the context of the
+   sender, so it is best to be quick so as not to slow down the sending task.
+   (Note that the sender will always be a task, and not an interrupt, since
+   the actual hardware drivers are serviced via a task) The callback is
+   invoked through a standard Hook structure. Using a callback avoids the
+   overhead of task switching, and can allow improved overall performance.
+
+   How MIDI Data is Sent
+   ~~~~~~~~~~~~~~~~~~~~~
+       Sending MIDI data is very simple, mainly a matter of filling out a
+   MidiMsg structure and calling PutMidi(). Note that if the receive buffer
+   is full, then the function will fail, rather than waiting for the receive
+   buffer to empty.
+
+   System Exclusive
+   ~~~~~~~~~~~~~~~~
+       For those of you not familier with MIDI, system exclusive messages
+   (called SysEx for short) are a kind of escape hatch in the MIDI spec which
+   allows developers to define their own messages. Unlike other MIDI events
+   which are limited to 3 bytes or less, SysEx messages can be any length. In
+   CAMD, SysEx messages are handled by placing the header of the message (the
+   first three bytes) in the regular receive queue as a MidiMsg, and placing
+   the full message in a seperate buffer. The receiver can look at the first
+   three bytes, and decide whether they want to read the rest by calling
+   GetSysEx() or throw it away by calling SkipSysEx();
+       Sending SysEx is done by calling the function PutSysEx().
+
+   Filters
+   ~~~~~~~
+       To reduce the load on the system, MIDI data can be filtered so that
+   only useful data shows up in the application's input buffer. Each MidiLink
+   has a set of filter bits, can allow incoming messages to be ignored (not
+   placed in the receive queue). The first set of filter bits correspond to
+   the 16 MIDI channels. (For those of you unfamilier with MIDI, the low
+   nybble of the first MIDI byte contains the channel number). If the
+   incoming MIDI messages is on a channel which does not correspond to one of
+   the bits set in the filter word. the message is skipped. A second filter
+   is based on the type of the event, of which CAMD breaks up into 14
+   categories:
+
+       - note on/off
+       - program change
+       - pitch bend
+       - controller change MSB
+       - controller change LSB
+       - controller change boolean switch
+       - controller change single byte
+       - controller parameter change
+       - undefined controllers
+       - mode change messages
+       - channel after touch
+       - polyphonic after touch
+       - system real-time messages (MIDI clock, MTC Quarter Frame)
+       - system common messages (Start, Stop, etc)
+       - system exclusive messages
+
+       In addition, there is a special filtering system for SysEx messages
+   which allows them to be filtered based on the first byte or the first
+   three bytes after the SysEx header byte. If the first byte only is used,
+   then three different filters can be specified. If the first three bytes
+   are used, then only one filter can be specified.
+
+   Establishing Links
+   ~~~~~~~~~~~~~~~~~~
+       One of the nice thing about MidiLinks is that they can be established
+   even if the other application or hardware driver hasn't been loaded yet.
+   This is because a MidiLink does not connect directly to the other
+   application, but rather it connects to a "meeting place" or "rendevous
+   point" for MidiLinks called a Cluster. Each cluster is referred to by
+   name. For example, if I establish an output link to the cluster "foo", and
+   someone else establishes an input link to that same cluster, then any data
+   that my application sends to that link will be received by that other
+   application. If a third application creates an input link to "foo", then
+   it will also receive the data, whereas if another application creates an
+   output link to "foo" then it's MIDI data will be merged with mine, and
+   distributed to all the input links.
+       So the rules of clusters are as follows:
+
+       - The first attempt to link to a cluster creates the cluster, and
+         the last link to leave deletes it.
+
+       - Each sender link to a cluster is merged with all the other senders.
+
+       - Each receiver link to a cluster gets a copy of what all the other
+         receivers get.
+
+       In addition, there are some other properties of clusters:
+
+       Participants: The library function MidiLinkConnected() can be used to
+   check a cluster to see if there are any linkages of the opposite type. For
+   example, a sender could check to see if anybody is listening or if they
+   are just talking to vacuum. Similarly, a receiver could check to see if
+   there are any senders. In addition, you can request to be notified (via
+   signal) whenever the participants in a cluster change. This feature is
+   primarily used by the hardware interface in the library itself -- it
+   allows a driver to be shut down (and freeing the hardware resources) when
+   there are no applications using it.
+       Cluster Comments: For purposes of building user interface to select
+   clusters, each link to a cluster can specify a "comment", up to 34
+   characters long, which describes what this cluster actually is. However,
+   since there can only be one comment for a cluster, the comment from the
+   first link is the one used.
+
+       One of the advantages of the cluster model is that applications can be
+   started up in any order and still work. The following are suggestions as
+   to how applications should handle linkages:
+
+       1. An application should allow the user to see a list of existing
+   clusters (which CAMD can provide), or allow the user to type in a new
+   cluster name. [Issue: Should the word "cluster" be used in UI?]
+       2. The application should save the current linkages either in the
+   applications "settings", or embedded in the document or performance file
+   (perhaps using an IFF chunk). When the application is restarted (or that
+   performance loaded or whatever) the application should then automatically
+   establish the links specified.
+
+       If every application does this, then it will be easy for the user to set
+   up the same configuration of linkages as they did last time, even if they
+   launch their applications in a different order. Even if the applications
+   are invoked via a script, the network of applications can come into
+   existence automatically.
+       (Eventually we will want to have a "performance manager" which can
+   "snapshot" a whole network of apps, allowing the user to go back to that
+   "state" later. This might be done using ARexx).
+
+   MIDI Timestamps
+   ~~~~~~~~~~~~~~~
+       Each incoming MIDI message may be timestamped, however, you must
+   supply a source of timing information (the recommended method is to use
+   RealTime.library, however many other timestamp sources are possible).
+    You can tell CAMD to use a particular timig source. The MidiNode
+   contains a pointer (of type LONG *), which may be pointed to the source of
+   timestamps. Whenever a MidiMsg is received, the longword that is pointed
+   to by this pointer is used as the current time, and copied into the
+   MidiMsg. Normally, what you would want to do is point this pointer at a
+   longword that was contually being updated. Note that in this fashion, your
+   application can have timestamps in any format it wants, since CAMD never
+   looks at the timestamp field once it is set.
+       One important point is that the timestamp is set at the time the
+   message is placed into the receiver's buffer. It would have been nice to
+   timestamp the messages at the interrupt time of the first MIDI status
+   byte, however this would have made the cluster model of distribution
+   impossible. Application which desire ultimate accuracy should probably
+   adjust the timestamp to compensate for the length of the MidiMsg.
+
+   Interfacing to Hardware
+   ~~~~~~~~~~~~~~~~~~~~~~~
+       CAMD maintains a list of hardware drivers which are used to access
+   serial ports, DSP boards, or any other hardware interface. A preferences
+   file (ENV:sys/midi.prefs) is used to indicate which hardware drivers
+   should be loaded and which ports should be activated. Note that using file
+   notification, CAMD is capable of changing this setup at any time, even
+   while applications are running.
+       Hardware drivers live in the directory DEVS:midi. They can be created
+   by third-party developers, and are fairly simple.
+       CAMD maintains a task for each input MIDI stream. This task is
+   responsible for reading bytes from the hardware, parsing them into
+   MidiMsgs, and sending them to a cluster. The cluster name is specified in
+   the preferences file, on a per-port basis.
+
+   Credits
+   ~~~~~~~
+       CAMD has a long and convoluted history. It was originally created at
+   Carnegie-Mellon university by Roger B. Dannenberg and Jean-Christophe
+   Dhellemmes. After that is was worked on by Bill Barton, and later by
+   Darius Taghavy, followed by Carolyn Scheppner. The final form of the
+   design was conceived by David Joiner (a.k.a. Talin) and implemented by Joe
+   Pearce.
+
+    -- End of original documentation --
+
+ HISTORY
+
+   50.1 (30.10.2015)
+   - Initial release.
+
+camd.library/AddMidiLink
+
+ NAME
+   AddMidiLinkA -- creates a MidiLink between a MidiNode and a MidiCluster. (V50)
+
+ SYNOPSIS
+   result = AddMidiLinkA(mn, type, tags);
+
+   struct MidiLink* FunctionName(struct MiniNode* mn, LONG type, struct TagItem *tags);
+
+ FUNCTION
+   A MidiLink is created and connected to a MidiNode.
+
+   If a MidiCluster name is provided in the taglist, the MidiLink is also linked
+   to the MidiCluster. The MidiCluster is created if it doesn't exist.
+
+ INPUTS
+       mn - a pointer to a MidiNode
+     type - either MLTYPE_Sender or MLTYPE_Receiver
+      tag - a taglist filled with MLINK_xxxx tags or NULL
+
+ RESULT
+   result - a pointer to a new MidiLink or NULL if allocation failed
+
+ NOTES
+
+ SEE ALSO
+   CreateMidiA(), SetMidiLinkAttrsA()
+
+camd.library/CreateMidiA
+
+ NAME
+   CreateMidiA -- creates a MidiNode structure. (V50)
+
+ SYNOPSIS
+   mn = CreateMidiA(tags);
+
+   struct MidiNode *CreateMidiA(CONST struct TagItem *tags);
+
+ FUNCTION
+
+ INPUTS
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+
+   SetMidiAttrsA(), DeleteMidi(), FindMidi()
+
+camd.library/DeleteMidi
+
+ NAME
+   DeleteMidi -- deletes a MidiNode and its linkage to MidiClusters. (V50)
+
+ SYNOPSIS
+   midinode = DeleteMidi(tags);
+
+   void DeleteMidi(struct MidiNode *mn);
+
+ FUNCTION
+   Deletes a MidiNode and its linkage to MidiClusters. All the allocated
+   resources are freed.
+
+   When deleting a MidiNode and its linkage makes a MidiCluster orphan
+   (ie: the MidiCluster has no MidiLink anymore), the MidiCluster gets
+   also freed.
+
+ INPUTS
+     mn - a pointer to a MidiNode
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   CreateMidiA()
+
+camd.library/EndClusterNotify
+
+ NAME
+   EndClusterNotify -- removes a MidiCluster notification. (V50)
+
+ SYNOPSIS
+   EndClusterNotify(node);
+
+   void EndClusterNotify(struct ClusterNotifyNode *node);
+
+ FUNCTION
+   Removes a MidiCluster notification. The task won't be signaled anymore
+   when a change in MidiCluster occurs.
+
+ INPUTS
+      node - a pointer a MidiClusterNode node
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   StartClusterNotify()
+
+camd.library/FindCluster
+
+ NAME
+   FindCluster -- finds a MidiCluster based on its name. (V50)
+
+ SYNOPSIS
+   midicluster = FindCluster(name);
+
+   struct MidiCluster *FindCluster(CONST_STRPTR name);
+
+ FUNCTION
+   Finds a MidiCluster based on its name.
+
+   The function returns a pointer to a MidiCluster if a cluster is found
+   otherwise returns NULL.
+
+ INPUTS
+          name - a pointer to a string to be searched against
+
+ RESULT
+   midicluster - a pointer to a MidiCluster or NULL
+
+ NOTES
+
+ SEE ALSO
+   FindMidi()
+
+camd.library/FindMidi
+
+ NAME
+   FindMidi -- finds a MidiNode based on its name. (V50)
+
+ SYNOPSIS
+   midinode = FindMidi(name);
+
+   struct MidiNode* FunctionName(CONST_STRPTR name);
+
+ FUNCTION
+   Searches and returns if found a MidiNode based on its name.
+
+   If the MidiNode named 'name' is found, returns a pointer to the
+   MidiNode structure otherwise returns NULL.
+
+ INPUTS
+      name - A string for the MidiNode to search for
+
+ RESULT
+   midinode - a pointer to the found MidiNode or NULL.
+
+ NOTES
+   Searching for a MidiNode must be done between a LockCAMD()/UnlockCAMD()
+   block.
+
+   Modify only the MidiNode owned by your application. Consider all others
+   MidiNode as private structure.
+
+ SEE ALSO
+   CreateMidiA(), NextMidi(), LockCAMD(), UnlockCAMD()
+
+camd.library/FlushMidi
+
+ NAME
+   FlushMidi -- discards MIDI messages queue and SysEx queue. (V50)
+ SYNOPSIS
+   FlushMidi(mn);
+
+   FlushMidi(struct MidiNode *mn);
+
+ FUNCTION
+   MIDI messages queue and SysEx queue are emptied. Error code is
+   also cleared.
+
+ INPUTS
+     mn - a pointer to a MidiNode structure
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   SkipSysEx()
+
+camd.library/GetMidi
+
+ NAME
+   GetMidi -- retrieves a MidiMsg from MidiNode. (V50)
+
+ SYNOPSIS
+   success = GetMidi(mn, msg);
+
+   BOOL GetMidi(struct MidiNode *mn, struct MidiMsg *msg);
+
+ FUNCTION
+   Fetches a MidiMsg from MidiNode mn message queue and copy it to
+   MidiMsg msg. The message is discarded internally and cannot be refetched
+   afterward.
+
+   To receive a MidiMsg, a MidiNode must have an allocated receiving queue.
+   See MIDI_MsgQueue attribute in SetMidiAttrsA().
+
+   It is safe to call this function over a MidiNode that doesn't have an
+   allocated receiving queue.
+
+ INPUTS
+      mn - a pointer to a MidiNode
+     msg - a pointer to a MidiMsg buffer
+
+ RESULT
+   success - TRUE if a MidiMsg has been fetched to the MidiMsg buffer,
+             FALSE otherwise.
+
+ NOTES
+   If a SysEx message is pending or half processed with GetSysEx(), it gets
+   removed when this function is called.
+   If the application requires SysEx message handling, it is advised to check
+   for the presence of a SysEx message before calling any functions that
+   retrieves ordinary MIDI message: WaitMidi() and GetMidi().
+
+ SEE ALSO
+   WaitMidi(), GetSysEx()
+
+camd.library/GetMidiAttrsA
+
+ NAME
+   GetMidiAttrsA -- returns MidiNode attributes. (V50)
+
+ SYNOPSIS
+   value = GetMidiAttrsA(mn, tags);
+
+   ULONG GetMidiAttrsA(struct mn *mn, struct TagItem *tags);
+
+ FUNCTION
+
+ INPUTS
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+
+ SetMidiAttrsA()
+
+camd.library/GetMidiErr
+
+ NAME
+   GetMidiErr -- returns the last error code. (V50)
+
+ SYNOPSIS
+   error = GetMidiErr(mn);
+
+   UBYTE GetMidiErr(struct MidiNode *mn);
+
+ FUNCTION
+   Returns the last registered error code and clean the error code.
+
+   See <libraries/camd.h> for error code values.
+
+ INPUTS
+      mn - a pointer to a MidiNode structure
+
+ RESULT
+   error - the error code
+
+ NOTES
+
+ SEE ALSO
+
+camd.library/GetMidiLinkAttrsA
+
+ NAME
+   GetMidiLinkAttrsA -- returns MidiLink attributes. (V50)
+
+ SYNOPSIS
+   result = GetMidiLinkAttrsA(args);
+
+   type GetMidiLinkAttrsA(type args, ?);
+
+ FUNCTION
+
+ INPUTS
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+
+camd.library/GetSysEx
+
+ NAME
+   GetSysEx -- fills a buffer with a SysEx data stream. (V50)
+
+ SYNOPSIS
+   result = GetSysEx(midinode, buffer, length);
+
+   ULONG GetSysEx(struct MidiNode *mn, UBYTE *buffer, ULONG length);
+
+ FUNCTION
+   GetSysEx fetches a stream of SysEx data from a MidiNode to a provided
+   storage buffer.
+   It fetches up to length bytes to the buffer. If no data has been put
+   in the buffer, this function returns 0.
+
+ INPUTS
+       mn - a pointer to a MidiNode structure
+   buffer - a pointer to a buffer
+   length - length in bytes to be written to the buffer
+
+ RESULT
+   result - the number of bytes written to the buffer.
+
+ NOTES
+   The MidiNode must accept SysEx message for receiving them. See
+   SetMidiAttrsA() and MIDI_SysExSize attribute.
+
+ SEE ALSO
+  QuerySysEx(), PutSysEx(), SkipSysEx()
+
+camd.library/LockCAMD
+
+ NAME
+   LockCAMD -- locks the internal state of the library. (V50)
+
+ SYNOPSIS
+   lock = LockCAMD(locktype);
+
+   APTR LockCAMD(ULONG locktype);
+
+ FUNCTION
+   Locks the internal state of the library. You must call UnlockCAMD with the
+   result of this call.
+
+ INPUTS
+   locktype    - Only CD_Linkages is currently supported.
+
+ RESULT
+   lock        - A pointer to the acquired lock. Must be passed to UnlockCAMD().
+
+ NOTES
+
+ SEE ALSO
+   UnlockCAMD
+
+camd.library/MidiLinkConnected
+
+ NAME
+   MidiLinkConnected -- checks if a MidiLink is connected to a MidiCluster. (V50)
+
+ SYNOPSIS
+   result = MidiLinkConnected(args);
+
+   BOOL MidiLinkConnected(struct MidiLink *ml);
+
+ FUNCTION
+   Returns TRUE if the MidiLink is connected to a MidiCluster otherwise
+   returns false
+
+ INPUTS
+      ml - a pointer to a MidiLink
+
+ RESULT
+  result - TRUE if the MidiLink is connected to a MidiCluster, FALSE otherwise
+
+ NOTES
+
+ SEE ALSO
+
+camd.library/MidiMsgLen
+
+ NAME
+   MidiMsgLen -- returns the length of the Midi message. (V50)
+
+ SYNOPSIS
+   len = MidiMsgLen(status);
+
+   WORD MidiMsgLen(ULONG status);
+
+ FUNCTION
+
+ INPUTS
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+
+camd.library/MidiMsgType
+
+ NAME
+   MidiMsgType -- returns the type of the Midi message. (V50)
+
+ SYNOPSIS
+   type = MidiMsgType(args);
+
+   WORD MidiMsgType(MidiMsg *mgs);
+
+ FUNCTION
+
+ INPUTS
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+
+camd.library/NextCluster
+
+ NAME
+   NextCluster -- returns the next MidiCluster. (V50)
+
+ SYNOPSIS
+   nextmc = NextCluster(mc);
+
+   struct MidiCluster* NextCluster(struct MidiCluster *mc);
+
+ FUNCTION
+   Returns the next MidiCluster from the linked list of MidiClusters.
+
+   If mc is NULL, the first node is returned.
+
+   Function returns a NULL when the last node is passed.
+
+ INPUTS
+       mc - a pointer to a MidiCluster or NULL
+ RESULT
+   nextmc - a pointer to next MidiCluster in linked list or NULL
+
+ NOTES
+
+ SEE ALSO
+   FindCluster()
+
+camd.library/NextClusterLink
+
+ NAME
+   NextClusterLink -- returns the next MidiLink of a MidiCluster. (V50)
+
+ SYNOPSIS
+   ml = NextClusterLink(mc, ml, type);
+
+   struct MidiLink* NextClusterLink(struct MidiCluster *mc, struct MidiLink *ml, LONG type);
+
+ FUNCTION
+   Returns the next MidiLink of a MidiCluster.
+
+   The type must be provided: either MLTYPE_Sender or MLTYPE_Receiver.
+
+   If ml is NULL, the first node is returned.
+
+   The function returns NULL if the passed ml node is the last of the linked list.
+
+ INPUTS
+    mc - a pointer to a MidiCluster
+    ml - a pointer to a MidiLink or NULL
+  type - the type of node to query: either MLTYPE_Sender or MLTYPE_Receiver
+
+ RESULT
+    ml - a pointer to the next MidiLink
+
+ NOTES
+   The function must be called under a pair of LockCAMD() / UnlockCAMD()
+
+ SEE ALSO
+   NextMidiLink(), FindCluster()
+
+camd.library/NextMidi
+
+ NAME
+   NextMidi -- iterates thru MidiNode list. (V50)
+
+ SYNOPSIS
+   mn = NextMidi(mn);
+
+   struct MidiNode* NextMidi(struct MidiNode *node);
+
+ FUNCTION
+   Iterate thru CAMD MidiNode list.
+
+ INPUTS
+   A pointer to a MidiNode or NULL to get the first MidiNode.
+
+ RESULT
+   A pointer to the next MidiNode or NULL for end of list.
+
+ NOTES
+   A lock obtained with LockCAMD() is mandatory before calling this
+   function. The lock must be released with UnlockCAMD().
+
+ SEE ALSO
+   FindMidi(), LockCAMD(), UnlockCAMD(), NextMidiLink()
+
+camd.library/NextMidiLink
+
+ NAME
+   NextMidiLink -- returns the next MidiLink of a MidiNode. (V50)
+
+ SYNOPSIS
+   nml = NextMidiLink(mn, ml, type);
+
+   struct MidiLink *NextMidiLink(struct MidiNode *mn, struct MidiLink *ml, LONG type)
+
+ FUNCTION
+   This function returns the next MidiLink of a MidiNode. The type of the MidiLink
+   either MLTYPE_Sender or MLTYPE_Receiver must be provided.
+
+ INPUTS
+     mn - a pointer to the midinode to query for the MidiLink node
+     ml - a pointer to the MidiNode to get the next one or NULL to get the first MidiLink
+   type - the kind of MidiLink to query, either MLTYPE_Sender or MLTYPE_Receiver
+
+ RESULT
+    nml - a pointer to the next MidiLink or NULL if last one is passed
+
+ NOTES
+   This function must be called under a pair of LockCAMD() / UnlockCAMD().
+
+ SEE ALSO
+   LockCAMD() UnlockCAMD() NextMidi()
+
+camd.library/ParseMidi
+
+ NAME
+   ParseMidi -- parses a large bulk of data at once. (V50)
+
+ SYNOPSIS
+   ParseMidi(ml, buffer, length);
+
+   void ParseMidi(struct MidiLink *ml, UBYTE *buffer, ULONG length);
+
+ FUNCTION
+   ParseMidi parses a stream of Midi messages and send them to MidiCluster.
+
+   The parser takes care of the running status and formats the data stream
+   accordingly to PutMidi() definition.
+
+   Currently, the parser doesn't support embedded SysEx.
+
+ INPUTS
+       ml - a pointer to a MidiLink of type MLTYPE_Sender
+   buffer - a pointer to a stream of data to send
+   length - the length in bytes to process
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   PutMidi(), PutSysEx()
+
+camd.library/PutMidi
+
+ NAME
+   PutMidi -- sends a Midi message to a MidiCluster. (V50)
+
+ SYNOPSIS
+   PutMidi(ml, msgdata);
+
+   VOID PutMidi(struct MidiLink *ml, ULONG msgdata)
+
+ FUNCTION
+   This function sends a Midi message to a MidiCluster. Each MidiNode connected to the
+   MidiCluster thru a MidiLink of type MLTYPE_Receiver will receive a copy of the
+   Midi message.
+
+   Each MidiLink has a filter mechanism that might prevents the delivery of the Midi
+   message. See SetMidiLinkAttrs().
+
+ INPUTS
+        ml - a pointer to a MidiLink node of type MLTYPE_Sender
+   msgdata - an ULONG cointaining the Midi message
+
+ RESULT
+
+ NOTES
+   For large bulk transfer, use ParseMidi() instead.
+   For System Exclusive (SysEx) message, use PutSysEx().
+   PutMidi accepts 1, 2 and 3 bytes long messages including the System Realtime/Common.
+
+   If the application hasn't set a timing source (MIDI_TimeStamp attribute), the mm_Time
+   field is set to the elapsed time in milliseconds since library initialisation.
+   This allows about 49 days of operation before overflow. If this time capacity is not
+   enough, application should implements its own timing source with the help of
+   MIDI_TimeStamp attribute.
+
+ SEE ALSO
+   ParseMidi(), PutSysEx(), SetMidiAttrsA()
+
+camd.library/PutSysEx
+
+ NAME
+   PutSysEx -- sends a SysEx stream. (V50)
+
+ SYNOPSIS
+   void PutSysEx(struct MidiLink *ml, UBYTE *buffer);
+
+ FUNCTION
+   The stream must start with MS_SysEx (0xF0) and end with MS_EOX (0xF7).
+   If an invalid byte is encoutered in the stream, the function will fail
+   without error.
+
+   For receiving SysEx messages, MidiNode must accept SysEx message.
+   See SetMidiAttrs() and MIDI_SysExSize attribute.
+
+   MLINK_SysExFilter and MLINK_SysExFilterX attributes help with manufacturer
+   filtering. See SetMidiLinkAttrs.
+
+   Each MidiNode receiving the SysEx message will be signaled and/or
+   receive hook called.
+
+ INPUTS
+       ml - A MLTYPE_Sender MidiLink to send SysEx to.
+   buffer - A pointer to some valid SysEx data stream.
+
+ RESULT
+   None
+
+ NOTES
+
+ SEE ALSO
+   QuerySysEx(), SkipSysEx(), GetSysEx(), SetMidiAttrsA(), SetMidiLinkAttrsA(), FlushMidi()
+
+camd.library/QuerySysEx
+
+ NAME
+   QuerySysEx -- checks if a SysEx message is pending. (V50)
+
+ SYNOPSIS
+   result = QuerySysEx(mn);
+
+   ULONG QuerySysEx(struct MidiNode *mn)
+
+ FUNCTION
+   Checks if a SysEx message is waiting for processing in the SysEx queue.
+
+   The function returns the amount of data left to be consumed in bytes.
+
+   If there is no SysEx message pending, the function returns 0.
+
+ INPUTS
+       mn - a pointer to a MidiNode
+
+ RESULT
+   result - size in bytes of data left to be consumed by further call to GetSysEx()
+
+ NOTES
+   The MidiNode must accept SysEx message. See SetMidiAttrsA() and MIDI_SysExSize
+   attribute.
+
+ SEE ALSO
+   PutSysEx(), GetSysEx(), SkipSysEx(), SetMidiAttrsA()
+
+camd.library/RemoveMidiLink
+
+ NAME
+   RemoveMidiLink -- removes a linkage between a MidiNode and a MidiCluster. (V50)
+
+ SYNOPSIS
+   RemoveMidiLink(ml);
+
+   void RemoveMidiLink(struct MidiLink *ml);
+
+ FUNCTION
+   Removes a the linkage between a MidiNode and a MidiCluster.
+
+ INPUTS
+       ml - a pointer to a linked MidiLink structure
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   AddMidiLinkA()
+
+camd.library/RethinkCAMD
+
+ NAME
+   RethinkCAMD -- deprecated. (V50)
+
+ SYNOPSIS
+   result = RethinkCAMD();
+
+   int RethinkCAMD(void);
+
+ FUNCTION
+
+ INPUTS
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+
+camd.library/SetMidiAttrsA
+
+ NAME
+   SetMidiAttrsA -- sets MidiNode attributes. (V50)
+
+ SYNOPSIS
+   success = SetMidiAttrsA(mn, tags);
+
+   BOOL SetMidiAttrsA(struct MidiNode *mn, struct TagItem *tags);
+
+ FUNCTION
+   Sets the attribute of a MidiNode using a taglist.
+
+   The taglist must be closed by TAG_END.
+
+ INPUTS
+        mn - a pointer to a MidiNode structure
+      tags - a taglist ended with TAG_END
+
+ TAGS
+      MIDI_ClientType     UWORD - Hint about the nature of the MidiNode.
+                                  Available values are:
+                                      CType_Sequencer
+                                      CType_SampleEditor
+                                      CType_PatchEditor
+                                      CType_Notator
+                                      CType_EventProcessor
+                                      CType_EventFilter
+                                      CType_EventRouter
+                                      CType_ToneGenerator
+                                      CType_EventGenerator
+                                      CType_GraphicAnimator
+
+      MIDI_ErrFilter         UBYTE - Unused currently.
+
+      MIDI_ErrorCode        ULONG* - A pointer to an ULONG. In case of failure, an
+                                     error code might be set.
+
+      MIDI_Image     struct Image* - A pointer to an image structure.
+
+      MIDI_MsgQueue          ULONG - Number of messages of the MIDI queue buffer.
+                                     This attribute is mandatory if the MidiNode
+                                     receives MIDI messages.
+
+      MIDI_Name             STRPTR - Name of the MIDI node. No copy is internally
+                                     done. The pointer must remain valid until the
+                                     MIDI node is freed.
+
+      MIDI_PartHook   struct Hook* - A pointer to a Hook. This hook is called
+                                     when a participant enters/leaves linked
+                                     clusters to the MIDINode.
+
+      MIDI_PartSignal         BYTE - Task set with MIDI_SignalTask will be signaled with
+                                     this signal number when a participant enters/leaves
+                                     linked clusters to the MIDINode.
+
+      MIDI_RecvHook   struct Hook* - A Hook called when a MIDI message is
+                                     delivered to the MIDINode.
+
+      MIDI_RecvSignal         BYTE - Task set with MIDI_SignalTask will be signaled with
+                                     this signal number when a message is delivered
+                                     to the MIDINode.
+
+      MIDI_SignalTask struct Task* - A pointer to the task that should be signaled
+                                     with MIDI_RecvSignal or MIDI_PartSignal signals.
+
+      MIDI_SysExSize         ULONG - This differs from original C= implementation.
+                                     The allocated queue for SysEx message is dynamic.
+                                     Setting this attribute to TRUE will make the MIDINode
+                                     accept SysEx messages.
+
+      MIDI_TimeStamp:       ULONG* - A pointer to an ULONG timing source. Each time
+                                     a MIDI message is delivered to the MIDINode, the
+                                     mm_Time part of the MIDI message will be written
+                                     with the content of the pointer.
+ RESULT
+   Returns TRUE if an attribute has been modified else returns FALSE.
+
+ NOTES
+   Altering the state of other task MIDINode isn't advised at all.
+
+ SEE ALSO
+   CreateMidiA(), GetMidiAttrsA()
+
+camd.library/SetMidiLinkAttrsA
+
+ NAME
+   SetMidiLinkAttrsA -- sets the attribute of a MidiLink. (V50)
+
+ SYNOPSIS
+   result = SetMidiLinkAttrsA(args);
+
+   BOOL SetMidiLinkAttrsA(struct MidiLink *ml, CONST struct TagItem *tags);
+
+ FUNCTION
+   Sets the attribute of a MidiLink using a taglist.
+
+   The taglist must be closed by TAG_END.
+
+ INPUTS
+        ml - a pointer to a MidiLink structure
+      tags - a taglist ended with TAG_END
+
+ TAGS
+      MLINK_ChannelMask      UWORD - defines the listening MIDI channel.
+                                     Defaults to ~0, ie: listening to all
+                                     MIDI channels.
+
+      MLINK_Comment         STRPTR - sets a comment. MidiLink with highest
+                                     priority is copied over MidiCluster
+                                     comment field.
+
+      MLINK_EventMask        UWORD - defines the MIDI event to listen to.
+                                     Detaults to ~0. ie: listening to all
+                                     MIDI events.
+
+      MLINK_ErrorCode       ULONG* - a pointer to an ULONG for storing an
+                                     error code.
+
+      MLINK_Location        STRPTR - defines the MidiCluster name to connect
+                                     to.
+
+      MLINK_Name            STRPTR - defines the node name. The string isn't
+                                     internally copied. The pointer should
+                                     remain valid until the MidiLink is
+                                     deleted.
+
+      MLINK_PortID           UBYTE - this byte is copied in the port part
+                                     of every MidiMsg transiting thru this
+                                     MidiLink.
+
+      MLINK_Private           BOOL - makes the MidiLink private. Application
+                                     displaying linkage should not display
+                                     this linkage.
+
+      MLINK_UserData         ULONG - user definable content. Not used
+                                     internally.
+
+      MLINK_Parse             BOOL - deprecated.
+
+      MLINK_Priority         UBYTE - defines the insert priority of the node
+                                     in the MidiCluster linked list. First node
+                                     will receive data earlier than last node.
+
+      MLINK_SysExFilter      ULONG - 1 byte manufacturer filtering.
+
+      MLINK_SysExFilterX     ULONG - 3 bytes manufacturer filtering.
+
+ RESULT
+   Returns TRUE if an attribute has been changed. If FALSE is returned, an error
+   code might be set if MLINK_ErrorCode has been provided in the taglist.
+
+ NOTES
+   Consider MidiLink of other applications to be private structure. Do not
+   modify them.
+
+ SEE ALSO
+   GetMidiLinkAttrsA(), AddMidiLinkA()
+
+camd.library/SkipSysEx
+
+ NAME
+   SkipSysEx -- discards current SysEx message. (V50)
+
+ SYNOPSIS
+   SkipSysEx(mn);
+
+   void SkipSysEx(struct MidiNode *mn);
+
+ FUNCTION
+   Removes the current SysEx message from the SysEx queue.
+
+ INPUTS
+      mn - a pointer to a MidiNode structure
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   GetSysEx(), QuerySysEx(), PutSysEx()
+
+camd.library/StartClusterNotify
+
+ NAME
+   StartClusterNotify -- sends a notification when a MidiCluster is modified. (V50)
+
+ SYNOPSIS
+   StartClusterNotify(args);
+
+   void StartClusterNotify(struct ClusterNotifyNode *node)
+
+ FUNCTION
+   A task is signaled when a change occurs on a MidiCluster. The notification kicks in
+   when:
+   - a MidiLink is added or removed to a MidiCluster;
+   - an attribute changes in a MidiLink with the help of SetMidiLinkAttrsA();
+   - an attribute changes in a MidiNode with the help of SetMidiAttrsA();
+
+   The provided ClusterNotifyNode must have a properly initialized task pointer
+   and signal number defined.
+
+ INPUTS
+      node - a ClusterNotify Node initialized
+
+ RESULT
+
+ NOTES
+
+ SEE ALSO
+   EndClusterNotify()
+
+camd.library/UnlockCAMD
+
+ NAME
+   UnlockCAMD -- unlocks the internal state of the library. (V50)
+
+ SYNOPSIS
+   UnlockCAMD(APTR lock);
+
+   VOID UnlockCAMD(APTR lock);
+
+ FUNCTION
+   Unlocks the internal states of the library.
+
+ INPUTS
+   lock        - A pointer obtained with LockCAMD()
+
+ RESULT
+
+
+ NOTES
+
+ SEE ALSO
+   LockCAMD()
+
+camd.library/WaitMidi
+
+ NAME
+   WaitMidi -- waits for a MidiMsg and returns it. (V50)
+
+ SYNOPSIS
+   result = WaitMidi(mn, msg);
+
+   BOOL WaitMidi(struct MidiNode *mn, MidiMsg *msg);
+
+ FUNCTION
+   Waits for a MidiMsg to arrive on the supplied MidiNode.
+   Once a MIDI message is received, it is removed and copied to the supplied
+   MidiMsg buffer.
+
+   It is safe to call this function even if the MidiNode has no signal
+   configured. The function will behave like GetMidi() and will return
+   immediatly.
+
+   Also, if an error is pending, the function returns immediatly with FALSE
+   as a return value without trying to fetch a MidiMsg.
+
+   The function will return TRUE if a MidiMsg has been successfully fetched
+   from MidiNode.
+
+ INPUTS
+     mn - a pointer to a MidiNode initialised with a signal
+    msg - a pointer to a MidiMsg buffer
+
+ RESULT
+   TRUE if a MidiMsg has been copied to MidiMsg otherwise FALSE.
+
+ NOTES
+   This function uses GetMidi() internally. It means that all limitations
+   regarding GetMidi() applies also to WaitMidi(), ie: SysEx messages are
+   discarded when a message is fetched with WaitMidi().
+
+ SEE ALSO
+   GetMidi()
+
+

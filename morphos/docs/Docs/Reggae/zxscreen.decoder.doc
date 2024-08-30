@@ -1,0 +1,77 @@
+TABLE OF CONTENTS
+
+zxscreen.decoder/MMA_Video_UseAlpha
+zxscreen.decoder/MMM_Pull
+zxscreen.decoder/background
+zxscreen.decoder/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Returns FALSE always, as ZX Spectrum screen dumps have no transparency.
+
+zxscreen.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes common format image data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   The function decodes amount of scanlines needed to satisfy the request
+   and places decoder ARGB32 data in a specified buffer.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from output, so 1.
+   buffer - destination buffer for common format image data. This buffer
+     must be allocated with MediaAllocMem().
+   length - amount of data to be pulled in bytes. It should be evenly
+     divisible by number of bytes per pixel for the common format (4 for
+     MMFC_VIDEO_ARGB32), if not, it is rounded down, and the rest of bytes
+     are undefined.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+zxscreen.decoder/background
+
+ DESCRIPTION
+   This class is a decoder for ZX Spectrum screen dumps (SCR format). It
+   deinterleaves pixel bitmap, then applies attributes to 8 x 8 squares to
+   get ARGB data using palette delivered by zxscreen.demuxer. The whole
+   source data are buffered (6912 bytes) plus one decoded scanline (1024
+   bytes).
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_UseAlpha       (V50) [..G.Q], BOOL
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.3  (19.06.2009)
+   - Uses MMM_PREPULL_NOT_DONE when checking MMM_PrePull() return value.
+   - Added requirement of multimedia.class 52.15.
+
+   51.2  (27.05.2009)
+   - MMM_Pull() now uses MMM_PrePull() and MMM_PostPull() for simplicity.
+   - Added requirement of multimedia.class 52.13+.
+
+   51.1  (07.08.2007)
+   - Initial revision.
+
+

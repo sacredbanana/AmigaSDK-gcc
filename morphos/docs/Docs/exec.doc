@@ -1,0 +1,5697 @@
+TABLE OF CONTENTS
+
+exec.library/---PermMemTrack---
+exec.library/AbortIO
+exec.library/AddDevice
+exec.library/AddExecNodeA
+exec.library/AddExecNotify
+exec.library/AddExecNotifyType
+exec.library/AddHead
+exec.library/AddIntServer
+exec.library/AddLibrary
+exec.library/AddMemHandler
+exec.library/AddMemList
+exec.library/AddPort
+exec.library/AddResident
+exec.library/AddResource
+exec.library/AddSemaphore
+exec.library/AddTail
+exec.library/AddTask
+exec.library/Alert
+exec.library/AllocAbs
+exec.library/AllocEntry
+exec.library/AllocMem
+exec.library/AllocMemAligned
+exec.library/AllocPooled
+exec.library/AllocPooledAligned
+exec.library/AllocSignal
+exec.library/AllocTaskPooled
+exec.library/AllocTrap
+exec.library/AllocVec
+exec.library/AllocVecAligned
+exec.library/AllocVecDMA
+exec.library/AllocVecPooled
+exec.library/AllocVecTaskPooled
+exec.library/Allocate
+exec.library/AllocateAligned
+exec.library/AttemptSemaphore
+exec.library/AttemptSemaphoreShared
+exec.library/AvailMem
+exec.library/AvailPool
+exec.library/CacheClearE
+exec.library/CacheClearU
+exec.library/CacheControl
+exec.library/CacheFlushDataArea
+exec.library/CacheFlushDataInstArea
+exec.library/CacheInvalidDataArea
+exec.library/CacheInvalidInstArea
+exec.library/CachePostDMA
+exec.library/CachePreDMA
+exec.library/CacheTrashDataArea
+exec.library/Cause
+exec.library/CheckIO
+exec.library/CloseDevice
+exec.library/CloseLibrary
+exec.library/ColdReboot
+exec.library/CopyMem
+exec.library/CopyMemQuick
+exec.library/CreateIORequest
+exec.library/CreateMsgPort
+exec.library/CreatePool
+exec.library/Deallocate
+exec.library/Debug
+exec.library/DeleteIORequest
+exec.library/DeleteMsgPort
+exec.library/DeletePool
+exec.library/Disable
+exec.library/DoIO
+exec.library/Enable
+exec.library/Enqueue
+exec.library/EnqueueSync
+exec.library/FindExecNode
+exec.library/FindName
+exec.library/FindNameSync
+exec.library/FindPort
+exec.library/FindResident
+exec.library/FindSemaphore
+exec.library/FindTask
+exec.library/FindTaskByPID
+exec.library/FlushPool
+exec.library/FlushTaskPool
+exec.library/Forbid
+exec.library/FreeEntry
+exec.library/FreeMem
+exec.library/FreePooled
+exec.library/FreeSignal
+exec.library/FreeTaskPooled
+exec.library/FreeTrap
+exec.library/FreeVec
+exec.library/FreeVecDMA
+exec.library/FreeVecPooled
+exec.library/FreeVecTaskPooled
+exec.library/GetCC
+exec.library/GetMsg
+exec.library/InitCode
+exec.library/InitResident
+exec.library/InitSemaphore
+exec.library/InitStruct
+exec.library/Insert
+exec.library/MMUMapping
+exec.library/MakeFunctions
+exec.library/MakeLibrary
+exec.library/NewCreateLibrary
+exec.library/NewCreateTaskA
+exec.library/NewGetSystemAttrsA
+exec.library/NewGetTaskAttrsA
+exec.library/NewGetTaskPIDAttrsA
+exec.library/NewPPCStackSwap
+exec.library/NewRawDoFmt
+exec.library/NewSetFunction
+exec.library/NewSetSystemAttrsA
+exec.library/NewSetTaskAttrsA
+exec.library/NewSetTaskPIDAttrsA
+exec.library/ObtainQuickVector
+exec.library/ObtainSemaphore
+exec.library/ObtainSemaphoreList
+exec.library/ObtainSemaphoreShared
+exec.library/OldOpenLibrary
+exec.library/OpenDevice
+exec.library/OpenLibrary
+exec.library/OpenResource
+exec.library/Permit
+exec.library/Procure
+exec.library/PutMsg
+exec.library/RawDoFmt
+exec.library/ReleaseSemaphore
+exec.library/ReleaseSemaphoreList
+exec.library/RemDevice
+exec.library/RemExecNotify
+exec.library/RemHead
+exec.library/RemIntServer
+exec.library/RemLibrary
+exec.library/RemMemHandler
+exec.library/RemPort
+exec.library/RemResource
+exec.library/RemSemaphore
+exec.library/RemTail
+exec.library/RemTask
+exec.library/Remove
+exec.library/RemoveSync
+exec.library/ReplyMsg
+exec.library/SendIO
+exec.library/SetExcept
+exec.library/SetFunction
+exec.library/SetIntVector
+exec.library/SetSR
+exec.library/SetSignal
+exec.library/SetTaskPri
+exec.library/Signal
+exec.library/StackSwap
+exec.library/SumKickData
+exec.library/SumLibrary
+exec.library/SuperState
+exec.library/Supervisor
+exec.library/TLSAlloc
+exec.library/TLSCallDestructors
+exec.library/TLSFree
+exec.library/TLSGetValue
+exec.library/TLSSetValue
+exec.library/TypeOfMem
+exec.library/UserState
+exec.library/Vacate
+exec.library/Wait
+exec.library/WaitIO
+exec.library/WaitPort
+exec.library/---PermMemTrack---
+
+   NAME
+        PermMemTrack -- built-in MorphOS exec memory MungWall functionality
+
+   SYNOPSIS
+        EDebugFlags=PermMemTrack
+
+   FUNCTION
+        PermMemTrack functionality enables exec built-in memory debugging,
+        very similar to Wipeout or MungWall debugging tools. The major
+        difference is that being built-in, no akward patching of the operating
+        system is needed. Hence the performance hit is neglible. This
+        makes it practical to daily-drive the system with PermMemTrack
+        enabled.
+
+        To enable the debug functionality, you should add PermMemTrack option
+        to the EDebugFlags boot option.
+
+        Once enabled the debug option cannot be turned off at runtime. To
+        stop debugging you will need to remove the option from the EDebugFlags
+        option and reboot.
+
+        The PermMemTrack has the following features:
+
+        1. memory tail wall
+
+        All memory allocation have a 32 byte tail area with static byte pattern
+        (0xfb). At deallocate the consistency of this tail area is verified. Any
+        inconsistency in the tail will be reported.
+
+        2. memory munging
+
+        All memory that is not allocated MEMF_CLEAR will be filled with static
+        byte pattern:
+
+          0xec  AllocMem()/AllocVec()/AllocPooled()/AllocVecPooled() etc
+          0xed  AllocMemAligned()/AllocPooledAligned() etc
+
+        Currently the only exception is AllocAbs() memory that is not munged.
+        This routine, while supported, should no longer be used in new
+        applications, however.
+
+        All memory deallocatios will wipe the memory with a pattern:
+
+          0xee  FreeMem()/FreeVec()
+          0xef  FreePooled()/FreeVecPooled()
+          0xeb  DeletePool()/FlushPool()
+
+        Memory deallocated while in Forbid() or Disable() state will be wiped
+        as well.
+
+        At system startup all memory is wiped with the FreeMem pattern 0xee.
+
+        In practical terms when you see an illegal memory access to specific
+        pattern you may be able to identify for example use-before-set or
+        use-after-free situations.
+
+        3. suspicious tag reporting
+
+        In addition to memory wall/munging, PermMemTrack also enables
+        utility.library Tag debugging: FindTagItem(), GetTagData() and
+        NextTagItem() will check the ti_Tag for suspicious values. Usually this
+        happens when a taglist is unterminated (missing TAG_END or TAG_DONE) and
+        the tag scanning runs past the supposed end of the taglist. It could also
+        happen if a dangling pointer gets passed in as a taglist. If suspicious
+        value is met, the debug dumps the tag address, ti_Tag and ti_Data values,
+        plus the task dump.
+
+exec.library/AbortIO
+
+    AbortIO --
+
+   SYNOPSIS
+
+    VOID AbortIO( struct IORequest *ioRequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddDevice
+
+    AddDevice --
+
+   SYNOPSIS
+
+    VOID AddDevice( struct Device *device );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddExecNodeA
+
+   NAME
+    AddExecNodeA -- add a unique named execbase node             (V50)
+
+   SYNOPSIS
+    node = AddExecNodeA(innode, TagItems)
+    D0                  A0      A1
+
+    APTR AddExecNodeA(APTR, struct TagItem *);
+
+    node = AddExecNode(innode, Tag1, ... )
+
+    APTR AddExecNode(APTR, ULONG, ... );
+
+   FUNCTION
+    This routine adds named node to exec list safely, with list
+    arbitration. If node with same name already exists, the node
+    is not added and NULL is returned. If node is successfully added,
+    pointer to it is returned.
+
+    If node is NULL, then SAL_Type and SAL_Name are mandatory. New node
+    is created according to SAL_Type (NT_MSGPORT -> CreateMsgPort(),
+    NT_SIGNALSEM -> AllocVec()). The node name is set to SAL_Name
+    pointer. The node priority is set to SAL_Priority or 0 if no tag is
+    present.
+
+    If node is non-NULL and any of SAL_Type, SAL_Priority or SAL_Name
+    are used, the node is modified to those values before adding.
+
+    To free returned port you must first RemPort(), then process any
+    pending messages and finally DeleteMsgPort() (if allocated by
+    AddExecNodeA). To free returned semaphore (NT_SIGNALSEM) you must
+    first RemSemaphore() and finally FreeVec() (again if allocated by
+    AddExecNodeA).
+
+   INPUTS
+    innode   - pointer to node with valid ln_Type, or NULL pointer if
+               node should be created. If MsgPort (NT_MSGPORT) structure
+               is passed, mp_Flags, mp_SigBit and mp_SigTask must have
+               sensible values before the call. mp_MsgList is initialized
+               by the function.
+
+    TagItems - (optional) pointer to (an array of) TagItem
+               structures, terminated by the value TAG_END.
+
+    SAL_Type
+            Type of node to allocate, NT_MSGPORT or NT_SIGNALSEM.
+            NT_MSGPORT will result in CreateMsgPort() call and
+            NT_SIGNALSEM in AllocVec().
+
+    SAL_Priority
+            Priority of the node, put into ln_Pri. Default priority
+            is ln_Pri of innode, or 0 if no innode.
+
+    SAL_Name
+        Name of the node, put into ln_Name. Either innode's ln_Name
+            or this tag must be valid! The string is not copied.
+
+   RESULT
+    node - if node was unique and resources could be allocated,
+           pointer to node, else NULL.
+
+   EXAMPLE
+      struct MsgPort *port;
+
+      port = AddExecNode(NULL,
+                         SAL_Type, NT_MSGPORT,
+                         SAL_Name, "UniquePort",
+                         TAG_DONE);
+      if (port)
+      {
+        /* ...
+        */
+
+
+        RemPort(port);
+
+        /* GetMsg + ReplyMsg all pending messages with *I quit NOW* message
+        */
+
+        DeleteMsgPort(port);
+      }
+      else
+      {
+        Printf("No memory, or port 'UniquePort' already present!\n");
+      }
+
+   EXAMPLE
+      struct SignalSemaphore sema;
+
+      if (AddExecNode(&sema,
+                      SAL_Type,     NT_SIGNALSEM,
+                      SAL_Priority, 10,
+                      SAL_Name,     "UniqueSemaphore",
+                      TAG_DONE))
+      {
+        /* ...
+        */
+
+
+        RemSemaphore(&sema);
+      }
+      else
+      {
+        Printf("Semaphore 'UniqueSemaphore' already present!\n");
+      }
+
+   NOTE
+    This function first appeared in MorphOS 1.x (exec 50.18), it is
+    not available in earlier exec.library versions!
+
+   BUGS
+    Passing MsgPort innode only works for exec 51.17 and later.
+
+   SEE ALSO
+    exec/execbase.h
+
+exec.library/AddExecNotify
+
+   NAME
+    AddExecNotify -- add exec notity hook                       (V50)
+
+   SYNOPSIS
+    AddExecNotify(hook)
+    (sysv)
+
+    void AddExecNotify(struct Hook *);
+
+   FUNCTION
+    This function add exec notify hook to internal list of notify
+    hooks. These hooks are called when adding/removing certain
+    elements inside exec.library. This function is inteded for
+    system monitors and such, and it should not be used in user code.
+
+   INPUTS
+    hook - hook to add. the hook must remain valid until RemExecNotify
+           is called. Note that hook code is called within Forbid() and
+           the hook code may *NOT* break this Forbid()!
+
+    hook call
+    ---------
+    The hook is called using the sysv calling convention:
+
+    func(hook, object, message)
+
+    hook - pointer to hook data structure itself
+
+    object - Hook specific address data ("object"), pointer to item to add/remove
+
+    message - pointer to parameter structure ("message")
+           { ULONG type; ULONG flags; ULONG extra; struct TagItem *extension; }
+
+         type      -- "message" type
+         flags     -- "message" flags
+         extra     -- possible extra argument, for example intNum for EXECLIST_INTERRUPT
+         extension -- currently always NULL
+
+
+    message types
+    -------------
+
+    EXECLIST_DEVICE      struct Device    *object;
+    EXECLIST_INTERRUPT   struct Interrupt *object; extra: intNum from AddIntServer/RemIntSetver
+    EXECLIST_LIBRARY     struct Library   *obkect;
+    EXECLIST_MEMHANDLER  struct Interrupt *object;
+    EXECLIST_MEMHEADER   struct MemHeader *object;
+    EXECLIST_PORT        struct MsgPort   *object;
+    EXECLIST_RESOURCE    struct Resource  *object;
+    EXECLIST_SEMAPHORE   struct SignalSemaphore *object;
+    EXECLIST_TASK        struct Task      *object;
+
+    Unknown types MUST be ignored!
+
+
+    message flags
+    -------------
+
+    EXECNOTIFYF_REMOVE   clear, this is Add operation (AddTask, AddPort).
+                         set, this is Remove/Rem operation (RemTask, RemPort).
+    EXECNOTIFYF_POST     clear, this is the call before the actual operation.
+                         set, this is the call after the operation was done.
+
+    Other flags MUST be ignored!
+
+   RESULT
+
+   EXAMPLE
+
+   NOTE
+    Please note that you might get called with EXECNOTIFYF_POST clear and
+    never get called with EXECNOTIFYF_POST set. In this case, the operation
+    wasn't successful for some reason (probably lack of resources).
+
+    System monitors will process EXECNOTIFYF_POST events to gain knowledge
+    of the added and removed elements in system lists.
+
+    It is deliberately left undefined whether the hook call with both
+    EXECNOTIFYF_REMOVE and EXECNOTIFYF_POST clear (that is call before
+    adding the object), is allowed to modify the object (for example
+    AddTask()'s tcb).
+
+    Be aware that some EXECNOTIFYF_REMOVE|EXECNOTIFYF_POST notify calls
+    have the actual object already disposed when the hook is called (such
+    as RemLibrary(), RemDevice(), RemTask() etc). In these cases you can
+    only compare the pointer while within the same Forbid(), not actually
+    access the memory pointed.
+
+   BUGS
+    Due to some braindamage, this interface was broken before exec V50.46
+    (MorphOS 1.4).
+
+   SEE ALSO
+    AddExecNotifyType, RemExecNotify
+
+exec.library/AddExecNotifyType
+
+   NAME
+    AddExecNotifyType -- add exec notity hook by type           (V50)
+
+   SYNOPSIS
+    AddExecNotifyType(hook, type)
+    (sysv)
+
+    void AddExecNotifyType(struct Hook *, ULONG);
+
+   FUNCTION
+    This function add exec notify hook to internal list of notify
+    hooks for this specific type. These hooks are called when adding/
+    removing this type elements inside exec.library. This function is
+    intended for system monitors and such, and it should not be used in
+    user code.
+
+   INPUTS
+    hook - hook to add. the hook must remain valid until RemExecNotify
+           is called. Note that hook code is called within Forbid() and
+           the hook code may *NOT* break this Forbid()!
+
+    type - type of object to get hook called for. One of EXECLIST_#?.
+           Unknown types won't get the hook called at all.
+
+    hook call
+    ---------
+    The hook is called using the sysv calling convention:
+
+    func(hook, object, message)
+
+    hook - pointer to hook data structure itself
+
+    object - Hook specific address data ("object"), pointer to item to add/remove
+
+    message - pointer to parameter structure ("message")
+           { ULONG type; ULONG flags; ULONG extra; struct TagItem *extension; }
+
+         type      -- "message" type, always the same as the type passed in
+         flags     -- "message" flags
+         extra     -- possible extra argument, for example intNum for EXECLIST_INTERRUPT
+         extension -- currently always NULL
+
+
+    message types
+    -------------
+
+    EXECLIST_DEVICE      struct Device    *object;
+    EXECLIST_INTERRUPT   struct Interrupt *object; extra: intNum from AddIntServer/RemIntSetver
+    EXECLIST_LIBRARY     struct Library   *obkect;
+    EXECLIST_MEMHANDLER  struct Interrupt *object;
+    EXECLIST_MEMHEADER   struct MemHeader *object;
+    EXECLIST_PORT        struct MsgPort   *object;
+    EXECLIST_RESOURCE    struct Resource  *object;
+    EXECLIST_SEMAPHORE   struct SignalSemaphore *object;
+    EXECLIST_TASK        struct Task      *object;
+
+
+    message flags
+    -------------
+
+    EXECNOTIFYF_REMOVE   clear, this is Add operation (AddTask, AddPort).
+                         set, this is Remove/Rem operation (RemTask, RemPort).
+    EXECNOTIFYF_POST     clear, this is the call before the actual operation.
+                         set, this is the call after the operation was done.
+
+    Other flags MUST be ignored!
+
+   RESULT
+
+   EXAMPLE
+
+   NOTE
+    See AddExecNotify notes.
+
+    This function appeared in exec V50.59 (MorphOS 1.5).
+
+   SEE ALSO
+    AddExecNotify, RemExecNotify
+
+exec.library/AddHead
+
+    AddHead --
+
+   SYNOPSIS
+
+    VOID AddHead( struct List *list, struct Node *node );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddIntServer
+
+    AddIntServer --
+
+   SYNOPSIS
+
+    VOID AddIntServer( LONG intNumber, struct Interrupt *interrupt );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddLibrary
+
+    AddLibrary --
+
+   SYNOPSIS
+
+    VOID AddLibrary( struct Library *library );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddMemHandler
+
+    AddMemHandler --
+
+   SYNOPSIS
+
+    VOID AddMemHandler( struct Interrupt *memhand );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddMemList
+
+    AddMemList --
+
+   SYNOPSIS
+
+    VOID AddMemList( ULONG size, ULONG attributes, LONG pri, APTR base, CONST_STRPTR name );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddPort
+
+    AddPort --
+
+   SYNOPSIS
+
+    VOID AddPort( struct MsgPort *port );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddResident
+
+    NAME
+    AddResident -- add resident structure to ResModules list (V50)
+
+    SYNOPSIS
+    success = AddResident(resident)
+    (sysv)
+
+    LONG AddResident(struct Resident *);
+
+    FUNCTION
+    This function link the given resident structure to exec ResModules
+    list. No checking of duplicate entries is made. If no memory is
+    available this function return FALSE.
+
+   INPUT
+    resident - pointer to resident structure to add
+
+   RESULT
+    success - nonzero if succesful, zero if failed
+
+   NOTES
+    This function first appeared in MorphOS 1.x (exec 50.35), it is
+    not available in earlier exec.library versions!
+
+   SEE ALSO
+
+exec.library/AddResource
+
+    AddResource --
+
+   SYNOPSIS
+
+    VOID AddResource( APTR resource );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddSemaphore
+
+    AddSemaphore --
+
+   SYNOPSIS
+
+    VOID AddSemaphore( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddTail
+
+    AddTail --
+
+   SYNOPSIS
+
+    VOID AddTail( struct List *list, struct Node *node );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AddTask
+
+    AddTask --
+
+   SYNOPSIS
+
+    APTR AddTask( struct Task *task, CONST APTR initPC, CONST APTR finalPC );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Alert
+
+    Alert --
+
+   SYNOPSIS
+
+    VOID Alert( ULONG alertNum );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocAbs
+
+    AllocAbs --
+
+   SYNOPSIS
+
+    APTR AllocAbs( ULONG byteSize, APTR location );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocEntry
+
+    AllocEntry --
+
+   SYNOPSIS
+
+    struct MemList *AllocEntry( struct MemList *entry );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocMem
+
+    AllocMem --
+
+   SYNOPSIS
+
+    APTR AllocMem( ULONG byteSize, ULONG requirements );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocMemAligned
+
+   NAME
+    AllocMemAligned -- allocate aligned memory given certain requirements (V50)
+
+   SYNOPSIS
+    memoryBlock = AllocMemAligned(byteSize, attributes, alignSize, alignOffset)
+    (sysv)
+
+    void *AllocMemAligned(ULONG, ULONG, ULONG, ULONG);
+
+   FUNCTION
+    This function is the same as AllocMem, only with the addition of
+    a custom alignment.
+
+   INPUTS
+    byteSize - the size of the desired block in bytes.
+
+    attributes - line in AllocMem()
+
+    alignSize - alignment size of the block, power of 2. must be at
+            least MEM_BLOCKSIZE.
+
+    alignOffset - bytes to reserve before the aligment border. must be
+            multiple of MEM_BLOCKSIZE. note that this is not added to
+            byteSize, caller must handle this.
+
+   RESULT
+    memoryBlock - a pointer to the newly allocated memory block or NULL.
+
+   WARNING
+    The result of any memory allocation MUST be checked, and a viable
+    error handling path taken. ANY allocation may fail if memory has
+    been filled.
+
+   EXAMPLES
+    AllocMemAligned(64, MEMF_ANY, 32, 0) - Allocate 64 bytes of any memory,
+                                 aligned to 32
+    AllocMemAligned(size, MEMF_CHIP | MEMF_PUBLIC | MEMF_CLEAR |
+                          MEMF_REVERSE, 64, 0)
+                               - Allocate cleared, public, chip memory,
+                                 reversed, aligned to 64.
+    AllocMemAligned(size + 32, MEMF_PUBLIC, 4096, 32)
+                               - Allocate public memory, aligned to 4096,
+                                 having 32 extra bytes before the aligned
+                                 position.
+
+   NOTE
+    If the free list is corrupt, the system will panic with alert
+    AN_MemCorrupt, $01000005.
+
+    This function may not be called from interrupts.
+
+    A DOS process will have its pr_Result2 field set to
+    ERROR_NO_FREE_STORE if the memory allocation fails.
+
+    This function first appeared in MorphOS 1.x (exec 50.31), it is
+    not available in earlier exec.library versions!
+
+   SEE ALSO
+    AllocMem, FreeMem, exec/memory.h
+
+exec.library/AllocPooled
+
+    AllocPooled --
+
+   SYNOPSIS
+
+    APTR AllocPooled( APTR poolHeader, ULONG memSize );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocPooledAligned
+
+    NAME
+    AllocPooledAligned -- Allocate aligned memory with the pool manager (V50)
+
+    SYNOPSIS
+    memory = AllocPooledAligned(poolHeader, memSize, alignSize, alignOffset)
+    (sysv)
+
+    void *AllocPooledAligned(void *, ULONG, ULONG, ULONG);
+
+    FUNCTION
+    This function is the same as AllocPooled, only with the addition
+    of a custom alignment.
+
+    INPUTS
+    poolHeader - a specific private pool header.
+
+    memSize - the number of bytes to allocate
+
+    alignSize - alignment size of the block, power of 2. must be at
+            least MEM_BLOCKSIZE.
+
+    alignOffset - bytes to reserve before the aligment border. must be
+            multiple of MEM_BLOCKSIZE. note that this is not added to
+            memSize, caller must handle this.
+
+    RESULT
+    A pointer to the memory, or NULL.
+
+    NOTES
+    Notes to original AllocPooled apply to this function.
+
+    This function first appeared in MorphOS 1.4 (exec 50.xx), it is
+    not available in earlier exec.library versions!
+
+    SEE ALSO
+    AllocPooled(), AllocMemAligned()
+
+exec.library/AllocSignal
+
+    AllocSignal --
+
+   SYNOPSIS
+
+    BYTE AllocSignal( LONG signalNum );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocTaskPooled
+
+   NAME
+    AllocTaskPooled -- allocate Task Pool memory                          (V50)
+
+   SYNOPSIS
+    memoryBlock = AllocTaskPooled(byteSize)
+    D0                               D0
+
+    void *AllocTaskPooled(ULONG);
+
+   FUNCTION
+    This function works identically to AllocPooled() but uses
+    the task's memory pool.
+
+   SEE ALSO
+    FreeTaskPooled()
+
+exec.library/AllocTrap
+
+    AllocTrap --
+
+   SYNOPSIS
+
+    LONG AllocTrap( LONG trapNum );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocVec
+
+   NAME
+        AllocVec -- allocate memory
+
+   SYNOPSIS
+        memoryBlock = AllocVec(byteSize, attributes)
+        D0                     D0        D1
+
+        void *AllocVec(ULONG, ULONG);
+
+   FUNCTION
+        Allocates memory and keeps track of the size of the allocation.
+
+        Memory allocated with AllocVec() must be freed using FreeVec(),
+        otherwise this function works the same as AllocMem().
+
+   SEE ALSO
+        AllocMem, FreeVec
+
+exec.library/AllocVecAligned
+
+   NAME
+        AllocVecAligned -- allocate memory given certain alignment requirements (V50)
+
+   SYNOPSIS
+        memoryBlock = AllocVecAligned(byteSize, attributes, alignSize, alignOffset)
+        (sysv)
+
+        void *AllocVecAligned(ULONG, ULONG, ULONG, ULONG);
+
+   FUNCTION
+        This function is the same as AllocVec, only with the addition of
+        a custom alignment.
+
+   INPUTS
+        byteSize - the size of the desired block in bytes. (The operating
+                   system will automatically round this number to the
+                   alignment)
+
+        attributes - like in AllocMem()
+
+        alignSize  - alignment size of the block, power of 2. must be at
+                     least MEM_BLOCKSIZE.
+
+        alignOffset - bytes to reserve before the aligment border. must be
+                      multiple of MEM_BLOCKSIZE. note that alignOffset is
+                      added to byteSize by this function, unlike
+                      AllocateAligned and AllocMemAligned.
+
+   RESULT
+        memoryBlock - a pointer to the newly allocated memory block or NULL.
+
+   WARNING
+        The memory layout of the memoryBlock is not similar to AllocVec. It
+        is:
+        {allocsize, 0xffffffff, ...}
+                                ^...... memoryBlock
+
+        FreeVec handles this internally.
+
+   EXAMPLES
+        AllocVecAligned(64,0,32,0) - Allocate 64 bytes from the best
+                                     available memory aligned to 32byte
+                                     blocks.
+   NOTE
+        This function first appeared in MorphOS 1.x (exec 50.31), it is
+        not available in earlier exec.library versions!
+
+   SEE ALSO
+        FreeVec
+
+exec.library/AllocVecDMA
+
+   NAME
+    AllocVecDMA -- alloc a DMA friendly memory (V50)
+
+   SYNOPSIS
+    memoryBlock = AllocVecDMA(byteSize, attributes)
+    D0                        D0        D1
+
+    void *AllocVecDMA(ULONG, ULONG);
+
+   FUNCTION
+    This function allocates DMA friendly memory.
+
+   INPUTS
+    byteSize - the size of the desired block in bytes.  (The operating
+            system will automatically round this number to the alignment)
+
+    attributes - line in AllocMem()
+
+   RESULT
+    memoryBlock - a pointer to the newly allocated memory block or NULL.
+
+   WARNING
+    The result of any memory allocation MUST be checked, and a viable
+    error handling path taken. ANY allocation may fail if memory has
+    been filled.
+
+   NOTE
+    This function may not be called from interrupts.
+
+    A DOS process will have its pr_Result2 field set to
+    ERROR_NO_FREE_STORE if the memory allocation fails.
+
+   SEE ALSO
+    AllocVecMem, FreeVecDMA, exec/memory.h
+
+exec.library/AllocVecPooled
+
+   NAME
+    AllocVecPooled -- allocate Pool memory and keep track of the size
+
+   SYNOPSIS
+    memoryBlock = AllocVecPooled(Pool,byteSize)
+    D0                              A0   D0
+
+    void *AllocVecPooled(void*, ULONG);
+
+   FUNCTION
+    This function works identically to AllocPooled(), but tracks
+    the size of the allocation.
+
+    See the AllocPooled() documentation for details.
+
+   SEE ALSO
+    FreeVecPooled()
+
+exec.library/AllocVecTaskPooled
+
+   NAME
+    AllocVecTaskPooled -- allocate Task Pool memory and keep track of the size  (V50)
+
+   SYNOPSIS
+    memoryBlock = AllocVecTaskPooled(byteSize)
+    D0                               D0
+
+    void *AllocVecTaskPooled(ULONG);
+
+   FUNCTION
+    This function works identically to AllocVecPooled() but uses
+    the task's memory pool.
+
+   SEE ALSO
+    FreeVecTaskPooled()
+
+exec.library/Allocate
+
+    Allocate --
+
+   SYNOPSIS
+
+    APTR Allocate( struct MemHeader *freeList, ULONG byteSize );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AllocateAligned
+
+   NAME
+    AllocateAligned -- allocate a aligned block of memory           (V50)
+
+   SYNOPSIS
+    memoryBlock=AllocateAligned(memHeader, byteSize, alignSize, alignOffset)
+    (sysv)
+
+    void *AllocateAligned(struct MemHeader *, ULONG, ULONG, ULONG);
+
+   FUNCTION
+    This function is the same as Allocate, only with the addition of
+    a custom alignment.
+
+   INPUTS
+    memHeader   - points to the local memory list header.
+
+    byteSize    - the size of the desired block in bytes.
+
+    alignSize   - alignment size of the block, power of 2. must be at
+            least MEM_BLOCKSIZE.
+
+    alignOffset - bytes to reserve before the aligment border. must be
+            multiple of MEM_BLOCKSIZE. note that this is not added to
+            byteSize, caller must handle this.
+
+   RESULT
+    memoryBlock - a pointer to the just allocated free block.
+           If there are no free regions large enough to satisfy the
+           request, return NULL.
+
+   EXAMPLE
+
+    /* To allocate 16384 bytes aligned by 4096: */
+    struct MemHeader *mh; /* assumed initalized, see exec.doc/Allocate */
+    APTR mem;
+
+    mem = AllocateAligned(mh, 16384, 4096, 0);
+    if (mem)
+        Deallocate(mh, mem, 16384);
+
+    /* To allocate 300 bytes aligned by 4096, having 32 bytes pad
+       before the align border: */
+    struct MemHeader *mh; /* assumed initalized, see exec.doc/Allocate */
+    APTR mem;
+
+    mem = AllocateAligned(mh, 300 + 32, 4096, 32);
+    if (mem)
+        Deallocate(mh, mem, 300 + 32);
+
+
+   NOTE
+    If the free list is corrupt, the system will panic with alert
+    AN_MemCorrupt, $01000005.
+
+    This function first appeared in MorphOS 1.x (exec 50.31), it is
+    not available in earlier exec.library versions!
+
+   SEE ALSO
+    Allocate, Deallocate, exec/memory.h
+
+exec.library/AttemptSemaphore
+
+    AttemptSemaphore --
+
+   SYNOPSIS
+
+    ULONG AttemptSemaphore( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AttemptSemaphoreShared
+
+    AttemptSemaphoreShared --
+
+   SYNOPSIS
+
+    ULONG AttemptSemaphoreShared( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AvailMem
+
+    AvailMem --
+
+   SYNOPSIS
+
+    ULONG AvailMem( ULONG requirements );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/AvailPool
+
+    NAME
+    AvailPool -- Query available/largest/total pool memory
+
+    SYNOPSIS
+    size = AvailPool(poolHeader, flags)
+    (sysv)
+
+    ULONG AvailPool(void *, ULONG);
+
+    FUNCTION
+    This function is the same as AvailMem, except that it scan
+    the memory particular pool itself.
+
+    WARNING
+    Unless if the pool is MEMF_SEM_PROTECTED, this function does not
+    arbitrate for access to the pool.
+
+    INPUTS
+    poolHeader - a specific private pool header.
+
+    flags - flags to determine what to scan. Only 0, MEMF_LARGEST and
+            MEMF_TOTAL are valid. MEMF_TOTAL returns the total memory
+            allocated for the memory pool. MEMF_LARGEST return the
+            size of the largest available memory block, while 0
+            return available free memory without expanding the
+            memory pool with new puddle.
+
+    RESULT
+    size - total free space remaining, the largest free block or
+           total memory used by the memory pool.
+
+    NOTES
+    This function first appeared in MorphOS 1.5 (exec 50.xx), it is
+    not available in earlier exec.library versions!
+
+    SEE ALSO
+    AvailMem()
+
+exec.library/CacheClearE
+
+   NAME
+        CacheClearE -- Flush cached emulated 68k code
+
+   SYNOPSIS
+        CacheClearE(address, size, caches)
+                    A0       D0    D1
+
+        void CacheClearE(APTR, ULONG, ULONG);
+
+   FUNCTION
+        If any translated code caches exist for emulated 68k code in the
+        given memory range then they are flushed, otherwise nothing happens.
+
+   INPUTS
+        address - The first address for which emulation cache should be
+                  flushed.
+
+        size    - The size of the memory area for which emulation cache
+                - should be flushed.
+
+        caches  - A bit field of one or more of the following:
+                      CACRF_ClearI - Must be set.
+                      CACRF_ClearD - Ignored.
+
+   WARNING
+        This function only applies to emulated 68k code.
+
+   SEE ALSO
+        CacheClearU, CacheFlushDataArea, CacheFlushDataInstArea,
+        CacheInvalidDataArea, CacheInvalidInstArea, CacheTrashDataArea
+
+exec.library/CacheClearU
+
+    CacheClearU --
+
+   SYNOPSIS
+
+    VOID CacheClearU( VOID );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CacheControl
+
+    CacheControl --
+
+   SYNOPSIS
+
+    ULONG CacheControl( ULONG cacheBits, ULONG cacheMask );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CacheFlushDataArea
+
+   NAME
+    CacheFlushDataArea - flush the Data Cache           (V50)
+
+   SYNOPSIS
+    CacheFlushDataArea(address,length)
+                       a0      d0
+
+    void CacheFlushDataArea(APTR,ULONG);
+
+   FUNCTION
+    This function flushes the data cache for the specified area.
+    This means that the dirty data content is written back to the
+    main memory and then any content is removed from the cache.
+    This may not have any effect on the instruction cache so
+    if you also have need the instruction cache be invalidated
+    you must use CacheFlushDataInstArea().
+
+   INPUTS
+    address - Address to start the operation.  This may be rounded
+          due to hardware granularity.
+    length  - Length of area to be cleared, or $FFFFFFFF to indicate all
+          addresses should be cleared.
+exec.library/CacheFlushDataInstArea
+
+   NAME
+    CacheFlushDataInstArea - flush the Data and invalidate Inst Cache           (V50)
+
+   SYNOPSIS
+    CacheFlushDataInstArea(address,length)
+                           a0      d0
+
+    void CacheFlushDataInstArea(APTR,ULONG);
+
+   FUNCTION
+    This function flushes the data cache and invalidates the inst
+    cache for the specified area.
+    This means that the dirty data content is written back to the
+    main memory and then any content is removed from the cache.
+
+   INPUTS
+    address - Address to start the operation.  This may be rounded
+          due to hardware granularity.
+    length  - Length of area to be cleared, or $FFFFFFFF to indicate all
+          addresses should be cleared.
+exec.library/CacheInvalidDataArea
+
+   NAME
+    CacheInvalidDataArea - Invalidate the Data Cache           (V50)
+
+   SYNOPSIS
+    CacheInvalidDataArea(address,length)
+                         a0      d0
+
+    void CacheInvalidDataArea(APTR,ULONG);
+
+   FUNCTION
+    This function invalidates the data cache for the specified area.
+    This means that the cache is cleared and no dirty data is written
+    back so you should know what you're doing it.
+    Because of the cache alignment you MUST specify a cache line
+    aligned area or it may happen that a dirty cache content isn't
+    written back which is outside of your area but invalidated
+    because of the granularity of the operation.
+
+
+   INPUTS
+    address - Address to start the operation.
+              This address is ALIGNED due to cache line granularity.
+    length  - Length of area to be cleared, or $FFFFFFFF to indicate all
+          addresses should be cleared.
+              The length is ALIGNED due to cache line granularity.
+
+exec.library/CacheInvalidInstArea
+
+   NAME
+    CacheInvalidInstArea - Invalidate the Inst Cache           (V50)
+
+   SYNOPSIS
+    CacheInvalidInstArea(address,length)
+                         a0      d0
+
+    void CacheInvalidInstArea(APTR,ULONG);
+
+   FUNCTION
+    This function invalidated the instruction cache for the specified area.
+    This may not have any effect on the data cache so
+    if you also have need the data cache be flushed
+    you must use CacheFlushDataInstArea().
+
+   INPUTS
+    address - Address to start the operation.  This may be rounded
+          due to hardware granularity.
+    length  - Length of area to be cleared, or $FFFFFFFF to indicate all
+          addresses should be cleared.
+exec.library/CachePostDMA
+
+    CachePostDMA --
+
+   SYNOPSIS
+
+    VOID CachePostDMA( CONST APTR address, ULONG *length, ULONG flags );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CachePreDMA
+
+    CachePreDMA --
+
+   SYNOPSIS
+
+    APTR CachePreDMA( CONST APTR address, ULONG *length, ULONG flags );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CacheTrashDataArea
+
+   NAME
+    CacheTrashDataArea - Trash the DataCache           (V50)
+
+   SYNOPSIS
+    CacheTrashDataArea(address,length)
+                       a0      d0
+
+    void CacheTrashDataArea(APTR,ULONG);
+
+   FUNCTION
+    This function invalidates the data cache for the specified area.
+    This means that the cache is cleared and no dirty data is written
+    back so you should know what you're doing it.
+    But instead of the CacheInvalidDataArea() function it uses a flush
+    in the granularity areas if necessary to avoid data loss.
+    This function is only meant as the most effect *safe* way to clear
+    the cache for an area.
+
+   INPUTS
+    address - Address to start the operation.  This may be rounded
+          due to hardware granularity.
+
+    length  - Length of area to be Invalided.
+
+exec.library/Cause
+
+    NAME
+    Cause -- Cause a software Interrupt (V50 Change)
+
+    SYNOPSIS
+    Cause(Interrupt)
+        A1
+
+    void    Cause(struct Interrupt*);
+
+    FUNCTION
+    calls the interrupt function depending on the MorphOS implementation
+    which may be different from the 68k function implementation.
+    The design of this function roots in the 68k interrupt level
+    design and its usage is mostly not that sophisticated that it really
+    needs this.
+    Therefore it seems to be acceptable to change the implementation
+    for the different systems.
+
+    o Commodore Systems with a PPC like PowerUP cards have the same
+      functionality as the old 68k Cause() function.
+
+      Here the function causes a software interrupt. It will add the job
+      into one of the 5 softint queues with the priorities(-32,-16,0,16,32)
+      and then set the soft interrupt state. Priorities inside this area
+      are adjusted but priorities beyond are not allowed.
+      Depending on the current interrupt state of the cpu it will not
+      execute the softint states until all higher priority interrupts
+      were processed. If the function is called inside usermode it will
+      cause the softinterrupt directly which dispatches the current task.
+
+    o New Hardware Systems like CHRP systems
+
+      Here we simplified it. The interrupt is called under Forbid() like
+      a subroutine. People should use Signal() and higher priority tasks
+      if they need a sophisticated event management.
+      If the latency of a task switch under a ppc system is not enough
+      we are open for suggestions.
+
+    NOTE
+    You may set the node type to NT_INTERRUPT but you must never set it
+    to NT_SOFTINT as this field is used to identify if the interrupt
+    is already processed or not.
+
+
+    INPUTS
+    Interrupt - valid Interrupt structure by interrupt convention
+
+    SEE ALSO
+
+exec.library/CheckIO
+
+    CheckIO --
+
+   SYNOPSIS
+
+    struct IORequest *CheckIO( struct IORequest *ioRequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CloseDevice
+
+    CloseDevice --
+
+   SYNOPSIS
+
+    VOID CloseDevice( struct IORequest *ioRequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CloseLibrary
+
+    CloseLibrary --
+
+   SYNOPSIS
+
+    VOID CloseLibrary( struct Library *library );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/ColdReboot
+
+    ColdReboot --
+
+   SYNOPSIS
+
+    VOID ColdReboot( VOID );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CopyMem
+
+    CopyMem --
+
+   SYNOPSIS
+
+    VOID CopyMem( CONST APTR source, APTR dest, ULONG size );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CopyMemQuick
+
+    CopyMemQuick --
+
+   SYNOPSIS
+
+    VOID CopyMemQuick( CONST APTR source, APTR dest, ULONG size );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CreateIORequest
+
+    CreateIORequest --
+
+   SYNOPSIS
+
+    APTR CreateIORequest( CONST struct MsgPort *port, ULONG size );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CreateMsgPort
+
+    CreateMsgPort --
+
+   SYNOPSIS
+
+    struct MsgPort *CreateMsgPort( VOID );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/CreatePool
+
+    CreatePool --
+
+   SYNOPSIS
+
+    APTR CreatePool( ULONG requirements, ULONG puddleSize, ULONG threshSize );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Deallocate
+
+    Deallocate --
+
+   SYNOPSIS
+
+    VOID Deallocate( struct MemHeader *freeList, APTR memoryBlock, ULONG byteSize );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Debug
+
+    Debug --
+
+   SYNOPSIS
+
+    VOID Debug( ULONG flags );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/DeleteIORequest
+
+    DeleteIORequest --
+
+   SYNOPSIS
+
+    VOID DeleteIORequest( APTR iorequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/DeleteMsgPort
+
+    DeleteMsgPort --
+
+   SYNOPSIS
+
+    VOID DeleteMsgPort( struct MsgPort *port );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/DeletePool
+
+    DeletePool --
+
+   SYNOPSIS
+
+    VOID DeletePool( APTR poolHeader );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Disable
+
+    NAME
+        Disable -- Disable interrupts
+
+    SYNOPSIS
+        Disable()
+
+        void Disable(void);
+
+    FUNCTION
+        Stops the system from processing hardware interrupts. Enable()
+        reverses the effect of a Disable() call.
+
+    NOTE
+        Multiple calls to Disable() nest, so you must call Enable() as many
+        times as you have called Disable().
+
+        Any call to Wait(), directly or indirectly, will break the effect of
+        Disable() until the next time the calling task is scheduled again.
+
+        Disabling hardware interrupts also prevents the system from
+        scheduling other tasks unless Wait() is explicitly called as noted
+        above.
+
+    SEE ALSO
+        Enable
+
+exec.library/DoIO
+
+    DoIO --
+
+   SYNOPSIS
+
+    BYTE DoIO( struct IORequest *ioRequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Enable
+
+    NAME
+        Enable -- Enable task scheduling
+
+    SYNOPSIS
+        Enable()
+
+        void Enable(void);
+
+    FUNCTION
+        Reverses the effect of Disable(), allowing the system to process
+        hardware interrupts again.
+
+    NOTE
+        Multiple calls to Disable() nest, so you must call Enable() as many
+        times as you have called Disable().
+
+    SEE ALSO
+        Disable
+
+exec.library/Enqueue
+
+    Enqueue --
+
+   SYNOPSIS
+
+    VOID Enqueue( struct List *list, struct Node *node );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/EnqueueSync
+
+   NAME
+    EnqueueSync -- insert or append node to a queue with arbitration
+
+   SYNOPSIS
+    EnqueueSync(list, node)
+            A0    A1
+
+    void EnqueueSync(struct List *, struct Node *);
+
+   FUNCTION
+    Insert or append a node into a system queue.  The insert is
+    performed based on the node priority -- it will keep the list
+    properly sorted.  New nodes will be inserted in front of the first
+    node with a lower priority.   Hence a FIFO queue for nodes of equal
+    priority. This function arbitrates for the list so it safe to use it
+    for shared lists.
+
+   INPUTS
+    list - a pointer to the system queue header
+    node - the node to enqueue.  This must be a full featured node
+           with type, priority and name fields.
+
+   SEE ALSO
+    RemoveSync, AddHead, AddTail, Insert, Remove, RemHead, RemTail
+
+exec.library/FindExecNode
+
+   NAME
+    FindExecNode -- find named execbase node           (V50)
+
+   SYNOPSIS
+    node = FindExecNode(type, name)
+    D0                  D0    A0
+
+    struct Node *FindExecNode(ULONG, CONST_STRPTR);
+
+   FUNCTION
+    This function will scan specified execbase list for named node.
+
+   INPUTS
+    type - list type. one of:
+
+        EXECLIST_DEVICE         device list
+        EXECLIST_INTERRUPT      interrupts (both server and vector)
+        EXECLIST_LIBRARY        library list
+        EXECLIST_MEMHANDLER     lowmemhandler list
+        EXECLIST_MEMHEADER      memory list
+        EXECLIST_PORT           port list
+        EXECLIST_RESOURCE       resource list
+        EXECLIST_SEMAPHORE      public semaphore list
+        EXECLIST_TASK           task list
+
+        Other values are reserved for future use, and will return
+        NULL for now.
+
+    name - a pointer to a name string terminated with zero
+
+   RESULT
+    node - a pointer to the node with the same name else
+        NULL to indicate that the named node was not found.
+
+   EXAMPLE
+    struct Interrupt *is = (struct Interrupt *)
+                           FindExecNode(EXECLIST_MEMHANDLER, "ramlib");
+
+                       - find ramlib lowmemhandler interrupt node.
+
+   NOTES
+    Note that if you intend to actually examine the returned pointer
+    you *MUST* Forbid() before the call, and Permit() once you've
+    done.
+
+    This function first appeared in MorphOS 1.x (exec 50.18), it is
+    not available in earlier exec.library versions!
+
+   BUGS
+    EXECLIST_INTERRUPT was broken before MorphOS 1.4 (exec 50.48).
+
+   SEE ALSO
+    FindName, FindTask, exec/execbase.h
+
+exec.library/FindName
+
+    FindName --
+
+   SYNOPSIS
+
+    struct Node *FindName( struct List *list, CONST_STRPTR name );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FindNameSync
+
+   NAME
+    FindNameSync -- find a system list node with a given name with arbitration
+
+   SYNOPSIS
+    node = FindNameSync(start, name)
+    D0          A0     A1
+
+    struct Node *FindNameSync(struct List *, STRPTR);
+
+   FUNCTION
+    Traverse a system list until a node with the given name is found.
+    To find multiple occurrences of a string, this function may be
+    called with a node starting point.
+    This function arbitrates for the list so it safe to use it
+    for shared lists.
+
+   INPUTS
+    start - a list header or a list node to start the search
+        (if node, this one is skipped)
+    name - a pointer to a name string terminated with NULL
+
+   RESULTS
+    node - a pointer to the node with the same name else
+        zero to indicate that the string was not found.
+
+exec.library/FindPort
+
+    FindPort --
+
+   SYNOPSIS
+
+    struct MsgPort *FindPort( CONST_STRPTR name );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FindResident
+
+    FindResident --
+
+   SYNOPSIS
+
+    struct Resident *FindResident( CONST_STRPTR name );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FindSemaphore
+
+    FindSemaphore --
+
+   SYNOPSIS
+
+    struct SignalSemaphore *FindSemaphore( STRPTR name );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FindTask
+
+    FindTask --
+
+   SYNOPSIS
+
+    struct Task *FindTask( CONST_STRPTR name );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FindTaskByPID
+
+    NAME
+    FindTaskByPID -- find a task with the given PID (V50)
+
+    SYNOPSIS
+    task = FindTaskByPID(processID)
+    (sysv)
+
+    struct Task *FindTaskByPID(ULONG);
+
+    FUNCTION
+    This function will check all task queues for a task with the given
+    processID or CLI number, and return a pointer to its task control
+    block. If a 0 processID is given a pointer to the current task will
+    be returned.
+
+    If no task with given processID is found, return NULL.
+
+    Since a task may remove itself at any time, a Forbid()/Permit()
+    is required to actually access the returned pointer if you're not
+    controlling the task.
+
+   INPUT
+    processID - process ID or CLI number of the task to find
+
+   RESULT
+    task - pointer to the task (or Process) or NULL
+
+   NOTES
+    This function first appeared in MorphOS 1.4 (exec 50.45), it is
+    not available in earlier exec.library versions!
+
+    Be careful to use TASKINFOTYPE_PID and not TASKINFOTYPE_PID_CLI
+    if you want to be sure you always get the specific task. The task
+    returned by PID_CLI can change at any time due to CLI terminating
+    and one replacing the old.
+
+   SEE ALSO
+    exec.doc/FindTask
+
+exec.library/FlushPool
+
+    NAME
+    FlushPool --  Clear an entire memory pool (V50)
+
+    SYNOPSIS
+    FlushPool(poolHeader)
+          a0
+
+    void FlushPool(void *);
+
+    FUNCTION
+    Frees all memory in all pudles of the specified pool header, but
+    keeps the pool header.
+
+    INPUTS
+    poolHeader - as returned by CreatePool().
+
+    SEE ALSO
+    CreatePool(), AllocPooled(), FreePooled(), AllocVecPooled(), FreeVecPooled()
+
+exec.library/FlushTaskPool
+
+    NAME
+    FlushTaskPool --  Clear the task's entire memory pool (V50)
+
+    SYNOPSIS
+    FlushTaskPool()
+
+    void FlushTaskPool(void);
+
+    FUNCTION
+    Frees all memory in all pudles of the current task's pool header, but
+    keeps the pool header.
+
+    SEE ALSO
+    AllocTaskPooled(), FreeTaskPooled(), AllocVecTaskPooled(),
+    FreeVecTaskPooled()
+
+exec.library/Forbid
+
+    NAME
+        Forbid -- Forbid task scheduling
+
+    SYNOPSIS
+        Forbid()
+
+        void Forbid(void);
+
+    FUNCTION
+        Prevents the system from scheduling other tasks. Permit() reverses
+        the effect of a Forbid() call.
+
+    NOTE
+        Multiple calls to Forbid() nest, so you must call Permit() as many
+        times as you have called Forbid().
+
+        Any call to Wait(), directly or indirectly, will break the effect of
+        Forbid() until the next time the calling task is scheduled again.
+
+    SEE ALSO
+        Permit
+
+exec.library/FreeEntry
+
+    FreeEntry --
+
+   SYNOPSIS
+
+    VOID FreeEntry( struct MemList *entry );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FreeMem
+
+    FreeMem --
+
+   SYNOPSIS
+
+    VOID FreeMem( APTR memoryBlock, ULONG byteSize );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FreePooled
+
+    FreePooled --
+
+   SYNOPSIS
+
+    VOID FreePooled( APTR poolHeader, APTR memory, ULONG memSize );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FreeSignal
+
+    FreeSignal --
+
+   SYNOPSIS
+
+    VOID FreeSignal( LONG signalNum );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FreeTaskPooled
+
+   NAME
+    FreeTaskPooled -- return AllocTaskPooled() memory to the system       (V50)
+
+   SYNOPSIS
+    FreeTaskPooled(memoryBlock, memSize)
+               A1           D0
+
+    void FreeTaskPooled(void*,ULONG);
+
+   FUNCTION
+    Free an allocation made by the AllocTaskPooled() call.  The memory will
+    be returned to the system pool from which it came.
+
+   INPUTS
+    memoryBlock - pointer to the memory block to free, or NULL.
+
+   SEE ALSO
+    AllocTaskPooled()
+
+exec.library/FreeTrap
+
+    FreeTrap --
+
+   SYNOPSIS
+
+    VOID FreeTrap( LONG trapNum );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FreeVec
+
+    FreeVec --
+
+   SYNOPSIS
+
+    VOID FreeVec( APTR memoryBlock );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/FreeVecDMA
+
+   NAME
+    FreeVecDMA -- free AllocVecDMA memory (V50)
+
+   SYNOPSIS
+    FreeVecDMA(memoryBlock)
+               a1
+
+    void FreeVecDMA(void*);
+
+   FUNCTION
+    This function frees AllocVecDMA memory.
+
+   INPUTS
+    memoryBlock - a pointer to the AllocVecDMA memoryblock to free, or NULL.
+
+   SEE ALSO
+    AllocVecDMA, FreeVec, exec/memory.h
+
+exec.library/FreeVecPooled
+
+   NAME
+    FreeVecPooled -- return AllocVecPooled() memory to the system
+
+   SYNOPSIS
+    FreeVecPooled(Pool, memoryBlock)
+             A0   A1
+
+    void FreeVecPooled(void *, void *);
+
+   FUNCTION
+    Free an allocation made by the AllocVecPooled() call.  The memory will
+    be returned to the system pool from which it came.
+
+   INPUTS
+    memoryBlock - pointer to the memory block to free, or NULL.
+
+   SEE ALSO
+    AllocVecPooled()
+
+exec.library/FreeVecTaskPooled
+
+   NAME
+    FreeVecTaskPooled -- return AllocVecTaskPooled() memory to the system       (V50)
+
+   SYNOPSIS
+    FreeVecPooled(memoryBlock)
+              A1
+
+    void FreeVecTaskPooled(void*);
+
+   FUNCTION
+    Free an allocation made by the AllocVecTaskPooled() call.  The memory will
+    be returned to the system pool from which it came.
+
+   INPUTS
+    memoryBlock - pointer to the memory block to free, or NULL.
+
+   SEE ALSO
+    AllocVecTaskPooled()
+
+exec.library/GetCC
+
+    GetCC --
+
+   SYNOPSIS
+
+    ULONG GetCC( VOID );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/GetMsg
+
+    GetMsg --
+
+   SYNOPSIS
+
+    struct Message *GetMsg( struct MsgPort *port );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/InitCode
+
+    InitCode --
+
+   SYNOPSIS
+
+    VOID InitCode( ULONG startClass, ULONG version );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/InitResident
+
+    InitResident --
+
+   SYNOPSIS
+
+    APTR InitResident( CONST struct Resident *resident, ULONG segList );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/InitSemaphore
+
+    InitSemaphore --
+
+   SYNOPSIS
+
+    VOID InitSemaphore( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/InitStruct
+
+    InitStruct --
+
+   SYNOPSIS
+
+    VOID InitStruct( CONST APTR initTable, APTR memory, ULONG size );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Insert
+
+    Insert --
+
+   SYNOPSIS
+
+    VOID Insert( struct List *list, struct Node *node, struct Node *pred );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/MMUMapping
+
+   NAME
+    MMUMapping - Handle mmu virtual/physical actions (V50)
+
+   SYNOPSIS
+    MappedEntries = MMUMapping(vaddress,length,table,tableentries,tags)
+                               a0       d0     a1    d1           a2
+
+    ULONG   MMUMapping(APTR,ULONG,struct MMUMapEntry,ULONG,struct TagItem*);
+
+   FUNCTION
+   INPUTS
+    vaddress    - Virtual area address start
+    length      - area size
+    table       - Table to the MMUMapEntry Table or NULL.
+                      If you use NULL no Table is filled but
+                      the operations specified through the tags
+                      are still executed if it makes sense.
+    tableentries    - Number of entries in the table.
+    tags        - Ptr to a tagstream which defines what to do
+                      with the specified area.
+
+                      Tags:
+
+                      o QMMUTAG_LINEAR
+                        only return linear areas. That way you will
+                        only get one mapentry.
+
+                      o QMMUTAG_LOCK
+                        lock the area so its physical mapping can't
+                        be changed by a potential swapper.
+
+                      o QMMUTAG_UNLOCK
+                        unlock the area so its physical mapping can
+                        be changed by a potential swapper again.
+
+                      o QMMUTAG_DMAMODE
+                        if you plan a dma specify the read/write mode.
+                        This is necessary for systems where there's
+                        no dma cache coherence protocoll.
+
+   NOTES
+
+
+   SEE ALSO
+    exec/execbase.h
+
+exec.library/MakeFunctions
+
+    MakeFunctions --
+
+   SYNOPSIS
+
+    VOID MakeFunctions( APTR target, CONST APTR functionArray, CONST APTR funcDispBase );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/MakeLibrary
+
+    MakeLibrary --
+
+   SYNOPSIS
+
+    struct Library *MakeLibrary( CONST APTR funcInit, CONST APTR structInit, ULONG (*CONST libInit)(VOID), ULONG dataSize, ULONG segList );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/NewCreateLibrary
+
+   NAME
+    NewCreateLibrary -- construct a library           (V50)
+
+   SYNOPSIS
+    library = NewCreateLibrary(TagItems)
+    D0                 A0
+
+    void* NewCreateLibrary(struct TagItem   *Tags)
+
+   FUNCTION
+    This function is used for constructing a library functiontable and
+    base from the system memory pool.
+    This function contains the MakeLibrary() functionality and
+    the needed API extensions for PPC.
+
+   INPUTS
+    TagItems - pointer to an array of Tagitems which contain all
+               the necessary informations to create a Library.
+
+      LIBTAG_FUNCTIONINIT - A ptr to the array which defines the FuncTable.
+                            The Functable layout is also extended compared
+                            to the old exec.
+
+       FuncTable Types:
+
+        o No special type
+          Then it's an 68k 32Bit function.
+
+        o FUNCARRAY_16BIT_OLD
+          defines a 16bit ptr for old 68k libraries. It's actually a
+          redefinition of the old 0xffff 16bit key word.
+
+        o FUNCARRAY_32BIT_QUICK_NATIVE
+          PPC Quick functions which must *always* comply to the emulation's
+          register layout which is defined inside the emul/emulregs.h.
+          The result of the function in r3 is written to REG_D0.
+          It's basicly an emulation subroutine.
+          It's highly discouraged to use this function as the register layout
+          has important limitations on the style you program in C or asm.
+
+        o FUNCARRAY_32BIT_QUICKNR_NATIVE
+          The same as FUNCARRAY_32BIT_QUICK_NATIVE but without a result.
+
+        o FUNCARRAY_32BIT_NATIVE
+          PPC functions which library register parameters are passed
+          in the EmulHandle's register fields.
+          The result of the function in r3 is written to REG_D0.
+
+        o FUNCARRAY_32BIT_NR_NATIVE
+          The same as FUNCARRAY_32BIT_NATIVE but without a result.
+
+        o FUNCARRAY_32BIT_SR_NATIVE
+          PPC functions which library register parameters are passed
+          in the EmulHandle's register fields. The sr field in
+          the EmulHandle is stored to the emulation's REG_SR.
+          The result of the function in r3 is written to REG_D0.
+          Very specifc function...not useful for general code.
+
+        o FUNCARRAY_32BIT_SRNR_NATIVE
+          The same as FUNCARRAY_32BIT_SR_NATIVE but without a result.
+
+        o FUNCARRAY_32BIT_D0D1_NATIVE
+          The same as FUNCARRAY_32BIT_NR_NATIVE but the d0 and d1
+          fields in the emulhandle are written to REG_D0 and REG_D1
+          by the emulation after it returns.
+
+        o FUNCARRAY_32BIT_RESTORE_NATIVE
+          The same as FUNCARRAY_32BIT_NR_NATIVE but then it restores
+          the whole EmulHandle values back into the emulation registers.
+
+        o FUNCARRAY_32BIT_SYSTEMV
+          This declares a function entry which doesn't comply with the
+          amigaos 68k ABI anymore. Therefore it's not callable by 68k code or
+          be able to replace 68k functions.
+          The function uses the SystemV calling convention which means you
+          can directly call it like C functions without any limits of
+          arguments.
+
+        o FUNCTIONARRAY_BEGIN
+          Pseudo function define which opens a new block. That way you are able
+          to define function tables with different function types.
+
+          BASE:
+           FUNCTIONARRAY_BEGIN
+            FUNCARRAY_32BIT_NATIVE
+             FUNC0
+             FUNC1
+             .
+             FUNCn
+             0xffffffff
+            FUNCn+1  (No ID->32Bit 68k)
+             FUNCn+2
+             .
+             FUNCm
+             0xffffffff
+            FUNCARRAY_16BIT_OLD
+             FUNCm+1-BASE
+             FUNCm+2-BASE
+             .
+             FUNCo-BASE
+             0xffff
+           FUNCTIONARRAY_END
+
+        o FUNCTIONARRAY_END
+          Pseudo function define which closes the current block.
+
+
+      LIBTAG_STRUCTINIT   - LibBase structure init script ptr.
+
+      LIBTAG_LIBRARYINIT  - Library Init function which is called differently
+                            depending on the machine type you specified.
+
+      LIBTAG_BASESIZE     - defines the size of the LibBase
+
+      LIBTAG_SEGLIST      - defines the seglist for the LIB_Init call
+
+      LIBTAG_MACHINE      - define the code type of the library init.
+
+        MACHINE_PPC
+
+         struct Library* LIB_Init(struct Library *MyBase,
+                                  BPTR MySegList,
+                                  struct ExecBase *SysBase);
+
+        MACHINE_68K
+
+         struct Library* ASM LIB_Init(REG_D0 struct Library *MyBase,
+                                      REG_A0 BPTR MySegList,
+                                      REG_A6 struct ExecBase *SysBase);
+
+      LIBTAG_TYPE         - define the type of the library.
+                            Here you can specify if you want to create a
+                            NT_LIBRARY, NT_DEVICE, NT_RESOURCE, CUSTOM.
+                            Custom libraries aren't public.
+
+      LIBTAG_NAME         - name of the library
+      LIBTAG_FLAGS        - flags of the library
+      LIBTAG_VERSION      - version of the library
+      LIBTAG_REVISION     - revision of the library
+      LIBTAG_IDSTRING     - id string of the library
+      LIBTAG_PUBLIC       - to tell the function to add the library
+                            to the appropriate system list.
+                            No need anymore for AddLibrary() and others.
+
+   RESULT
+    library - the reference address of the library.  This is
+        the address used in references to the library, not
+        the beginning of the memory area allocated.
+
+   EXAMPLE
+    ULONG   LibFuncTable[]=
+    {
+        FUNCARRAY_32BIT_NATIVE,
+        (ULONG) &LIB_Open,
+        (ULONG) &LIB_Close,
+        (ULONG) &LIB_Expunge,
+        (ULONG) &LIB_Reserved,
+        .
+        .
+        0xffffffff
+    };
+
+   NOTES
+    MakeLibrary maps onto CreateNewLibrary.
+
+   SEE ALSO
+    MakeLibrary
+
+exec.library/NewCreateTaskA
+
+    NAME
+    NewCreateTaskA -- Create a PowerPC Task           (V50)
+    NewCreateTask  -- Varargs Stub for NewCreateTask()
+
+    SYNOPSIS
+    newTask = NewCreateTaskA(Tags)
+    D0                       A0
+
+    struct Task *NewCreateTaskA(TagItem *);
+    struct Task *NewCreateTask(...);
+
+    FUNCTION
+    Creates PowerPC or 68k Tasks with a more elegant interface.
+
+    INPUTS
+    Tags -
+      o TASKTAG_ERROR,ULONG*
+        Ptr to an ULONG Errorfield to store additional error
+        informations.
+
+      o TASKTAG_CODETYPE,ULONG
+        define the Code type of the Task Init function. The following
+        types are support by now.
+        o CODETYPE_M68K
+        o CODETYPE_PPC
+
+      o TASKTAG_PC,void*
+        define the Code start.
+
+      o TASKTAG_FINALPC,void*
+        define the Code End PC. The code must be of the defined
+        TASKTAG_CODETYPE type. You should always call RemTask()
+        when you're done with your routine to free the task resources.
+
+      o TASKTAG_STACKSIZE,void*
+        define the current machine's cpu stacksize. In case of MorphOS
+        you define the PowerPC stacksize here.
+
+      o TASKTAG_STACKSIZE_M68K,ULONG
+        define the 68k emulation stacksize. Default is 2048 Bytes.
+
+      o TASKTAG_POOLPUDDLE
+      o TASKTAG_POOLTHRESH
+        define task mempool puddlesize and threshold.
+
+      o TASKTAG_NAME,char*
+        define the name of the task. Make no assumption about the way
+        it is allocated.
+
+      o TASKTAG_USERDATA,void*
+        define the task's userdata.
+
+      o TASKTAG_PRI
+        define task's initial priority.
+
+      o TASKTAG_FLAGS
+        define task's initial tc_Flags.
+
+      o TASKTAG_PPC_ARG1,void*
+      o TASKTAG_PPC_ARG2,void*
+      o TASKTAG_PPC_ARG3,void*
+      o TASKTAG_PPC_ARG4,void*
+      o TASKTAG_PPC_ARG5,void*
+      o TASKTAG_PPC_ARG6,void*
+      o TASKTAG_PPC_ARG7,void*
+      o TASKTAG_PPC_ARG8,void*
+        define startup parameters for a powerpc task which follow the SystemV
+        ABI std. That means you can use the arguments by a simple proto like
+        TaskInit(void *Arg1,void *Arg2,void *Arg3,void *Arg4,void *Arg5,
+             void *Arg6,void *Arg7,void *Arg8);
+
+      o TASKTAG_STARTUPMSG,struct Message *
+        startup message to be passed to task/process, ReplyMsg'd at
+        RemTask(). To get the pointer to this message use
+        NewGetTaskAttrs() TASKINFOTYPE_STARTUPMSG.
+
+      o TASKTAG_TASKMSGPORT,struct MsgPort **
+         create internal MsgPort for task/process, deleted at RemTask().
+         ti_Data: struct MsgPort **, can be NULL, in which case no local
+         pointer is saved. Use NULL if you don't need the MsgPort pointer
+         in the parent task/process. To get pointer to this MsgPort, use
+         NewGetTaskAttrs() TASKINFOTYPE_TASKMSGPORT.
+
+   RESULT
+    newTask - a pointer to a newly created task or NULL for failure. If
+        successful TASKTAG_ERRORPTR pointer longword will be
+        TASKERROR_OK, if out of memory it will be TASKERROR_NOMEMORY.
+
+   SEE ALSO
+    exec.doc/AddTask, exec.doc/RemTask
+
+exec.library/NewGetSystemAttrsA
+
+    NAME
+    NewGetSystemAttrsA -- Get Exec Info           (V50)
+    NewGetSystemAttrs -- Varargs Stub for NewGetSystemAttrsA()
+
+    SYNOPSIS
+    Result NewGetSystemAttrsA(Data,DataSize,Type,Tags )
+    D0                    A0   D0       D1   A1
+
+    ULONG NewGetSystemAttrsA(void*,ULONG,ULONG,struct TagItem*);
+    ULONG NewGetSystemAttrs(void*,ULONG,ULONG,...);
+
+    FUNCTION
+    Allows you to get informations about the system like cpu type,
+    caches and so on.
+
+    INPUTS
+    Data     - Ptr to a buffer
+    DataSize - size of the buffer
+    Type     - Information Type
+    Tags     - Additional argument buffer for the type
+
+    o SYSTEMINFOTYPE_SYSTEM
+      returns the System family.
+      Tags: none
+      Data: String[DataSize]
+
+    o SYSTEMINFOTYPE_VENDOR
+      returns the System Vendor.
+      Tags: none
+      Data: String[DataSize]
+
+    o SYSTEMINFOTYPE_REVISION
+      returns the System revision *string*. Sorry, this is Openfirmware
+      heritage.
+      Tags: none
+      Data: String[DataSize]
+
+    o SYSTEMINFOTYPE_MAGIC1
+      returns the Magic1 field in ExecBase.
+      Tags: none
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_MAGIC2
+      returns the Magic2 field in ExecBase.
+      Tags: none
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_MACHINE
+      returns the CPU family. Currently only PowerPC
+      Tags: none
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_CPUCOUNT
+      returns the number of CPUs in the system.
+      Tags: none
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PAGESIZE
+      returns the mmu page size which is needed for mmu related routines.
+      Can return 0 if no mmu is there in some embedded systems.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CPUVERSION
+      returns the CPU type.  Depends on CPU family.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CPUREVISION
+      returns the CPU revision. Depends on CPU family.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CPUCLOCK
+      returns the CPU clock.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_PPC_BUSCLOCK
+      returns the CPU bus clock.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_PPC_CACHEL1TYPE
+      returns the CPU L1 Type.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CACHEL1FLAGS
+      returns the CPU L1 Flags.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL1SIZE
+      returns the CPU L1 instruction cache size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL1LINES
+      returns the CPU L1 instruction cache line count.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL1LINESIZE
+      returns the CPU L1 instruction cache line size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL1SIZE
+      returns the CPU L1 data cache size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL1LINES
+      returns the CPU L1 data cache line count.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL1LINESIZE
+      returns the CPU L1 data cache line size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CACHEL2TYPE
+      returns the CPU L2 Type.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CACHEL2FLAGS
+      returns the CPU L2 Flags.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL2SIZE
+      returns the CPU L2 instruction cache size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL2LINES
+      returns the CPU L2 instruction cache line count.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL2LINESIZE
+      returns the CPU L2 instruction cache line size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL2SIZE
+      returns the CPU L2 data cache size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL2LINES
+      returns the CPU L2 data cache line count.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL2LINESIZE
+      returns the CPU L2 data cache line size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CACHEL3TYPE
+      returns the CPU L3 Type.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CACHEL3FLAGS
+      returns the CPU L3 Flags.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL3SIZE
+      returns the CPU L3 instruction cache size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL3LINES
+      returns the CPU L3 instruction cache line count.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ICACHEL3LINESIZE
+      returns the CPU L3 instruction cache line size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL3SIZE
+      returns the CPU L3 data cache size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL3LINES
+      returns the CPU L3 data cache line count.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DCACHEL3LINESIZE
+      returns the CPU L3 data cache line size.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_TLBENTRIES
+      returns the CPU number of TLB cache entries per set.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_TLBSETS
+      returns the CPU number of TLB cache sets.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_FPU
+      returns >0 if the CPU supports FPU instructions.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_ALTIVEC
+      returns >0 if the CPU supports Altivec instructions.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_PERFMONITOR
+      returns 1 if the CPU supports the Performance Monitor Unit.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DATASTREAM
+      returns 1 if the CPU supports datastream instructions.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_RESERVATIONSIZE
+      returns the alignment size of the reservation instructions like lwarx.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_BUSTICKS
+      returns the bus ticks the cpu needs to increase the timer.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CPUTEMP
+      returns the cpu temperature in 8.24 fixedpoint celcius degrees.
+      might not be implemented for all cpu types and MorphOS versions.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_DABR
+      returns 1 if the CPU supports Data Address Breakpoint Register.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TBCLOCKFREQUENCY
+      returns the timebase clock frequency used for system timing.
+      this is the same value as returned by timer.device/ReadCPUClock
+      base.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_UPTIMETICKS
+      returns the total system uptime in timebase ticks.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_LASTSECTICKS
+      returns number of timebase ticks for 'lastsec' measurement.
+      To get accurate measurements, you should Forbid(), read this
+      tag value, read other *LASTSEC* values, Permit(). Then do
+      the math.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_RECENTTICKS
+      returns number of timebase ticks for 'recent' measurement.
+      To get accurate measurements, you should Forbid(), read this
+      tag value, read other *RECENT* values, Permit(). Then do the
+      the math.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_CPUTIME
+      returns the total system cpu usage in timebase ticks for
+      SYSTEMINFOTYPE_UPTIMETICKS time.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_LASTSECCPUTIME
+      returns the system cpu usage in timebase ticks for
+      SYSTEMINFOTYPE_LASTSECTICKS time.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_RECENTCPUTIME
+      returns the decaying average system cpu usage in timebase ticks
+      for SYSTEMINFOTYPE_RECENTTICKS time.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_VOLUNTARYCSW
+      returns the total number of voluntary task context switches
+      (task called Wait(), or RemTask()ed self).
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_INVOLUNTARYCSW
+      returns the total number of involuntary task context switches
+      (task was busy and ran for Quantum slice and other task at the
+      same priority was made running, or higher priority task appeared
+      and was made running).
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_LASTSECVOLUNTARYCSW
+      returns the number of voluntary task context switches for
+      SYSTEMINFOTYPE_LASTSECTICKS time.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_LASTSECINVOLUNTARYCSW
+      returns the number of involuntary task context switches for
+      SYSTEMINFOTYPE_LASTSECTICKS time.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_LOADAVG1
+      returns the average system load for the last minute.
+      The returned value is 10.11 fixedpoint value. To get floating
+      point value use: (load / 2048.0f);
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_LOADAVG2
+      returns the average system load for the last three minutes.
+      The returned value is 10.11 fixedpoint value. To get floating
+      point value use: (load / 2048.0f);
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_LOADAVG3
+      returns the average system load for the last fifteen minutes.
+      The returned value is 10.11 fixedpoint value. To get floating
+      point value use: (load / 2048.0f);
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TASKSCREATED
+      returns the total number of tasks created.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_TASKSFINISHED
+      returns the total number of tasks deleted.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_TASKSRUNNING
+      returns the total number of running tasks.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TASKSSLEEPING
+      returns the total number of waiting tasks.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_LAUNCHTIMETICKS
+      returns the timebase for system (sheduler) startup, starting
+      from 0.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_LAUNCHTIMETICKS1978
+      returns the timebase for system (sheduler) startup, starting
+      from Jan 1st 1978. this is useful for formatting system boottime
+      with dos/DateToStr.
+      Data: u_int64_t
+
+    o SYSTEMINFOTYPE_EMULHANDLESIZE
+      returns the emulhandle's size.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TASKEXITCODE
+      returns the global native task's exitcode.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TASKEXITCODE_M68K
+      returns the global m68k task's exitcode.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_EMULATION_START
+      returns the address of the abox emulation area.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_EMULATION_SIZE
+      returns the size of the abox emulation area.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_MODULE_START
+      returns the address of the module area.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_MODULE_SIZE
+      returns the size of the module area.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_EXCEPTIONMSGPORT
+      returns the native Machine Exception MsgPort
+      Data: struct MsgPort*
+
+    o SYSTEMINFOTYPE_EXCEPTIONMSGPORT_68K
+      returns the 68K Exception MsgPort. This is the msgport the
+      default system 68k traphandler sends its msgs. If the system
+      68k traphandler is replaced msgs to this exception msgport
+      aren't guranteed. Usually the msgport is controlled by the
+      ABox Log Server.
+      Data: struct MsgPort*
+
+    o SYSTEMINFOTYPE_ALERTMSGPORT
+      returns the Alert MsgPort.
+      Usually the msgport is controlled by the ABox Log Server.
+      Data: struct MsgPort*
+
+    o SYSTEMINFOTYPE_MAXHITCOUNT
+      returns the maxhit default for tasks.
+      Data: ULONG
+
+    o SYSTEMINFOTYPE_MAXALERTCOUNT
+      returns the max alerts default for tasks.
+      Data: ULONG
+
+    o SYSTEMINFOTYPE_REGUSER
+      returns the registered user
+      Tags: none
+      Data: String[DataSize]
+
+    o SYSTEMINFOTYPE_FREEBLOCKS
+      returns information about the free memory blocks
+      Tags: SYSTEMINFOTAG_MEMHEADER (optional) to specify single
+            memheader, defaults to all system memory
+            SYSTEMINFOTAG_HOOK (optional) call hook rather than
+            filling array. See exec/system.h
+      Data: struct MemEntry []
+
+    o SYSTEMINFOTYPE_CPUNAME
+      returns the CPU name as a string.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: String[DataSize]
+
+    o SYSTEMINFOTYPE_CPUFAMILYNAME
+      returns the CPU family name as a string.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: String[DataSize]
+
+    o SYSTEMINFOTYPE_NEWSCHEDULER
+      returns non-zero if the system implements a fairer task
+      scheduler.
+      Tags: None
+      Data: ULONG
+
+    RESULT
+    Result is the amount of bytes returned at Data.
+
+exec.library/NewGetTaskAttrsA
+
+    NAME
+    NewGetTaskAttrsA -- Get Exec Task Info           (V50)
+    NewGetTaskAttrs -- Varargs Stub for NewGetTaskAttrsA()
+
+    SYNOPSIS
+    Result NewGetTaskAttrsA(Task,Data,DataSize,Type,Args )
+    D0          A0   A1   D0       D1   A2
+
+    ULONG NewGetTaskAttrsA(struct Task*,void*,ULONG,ULONG,struct TagItem*);
+    ULONG NewGetTaskAttrs(struct Task*,void*,ULONG,ULONG,...);
+
+    FUNCTION
+    Allows you to read infos about a Task or all Tasks. It depends on the
+    tags if you get back values or ptrs to a node or list of entries
+    which describe a task or tasks.
+
+    WARNING
+    This function does not arbitrate for access to Task. If Task
+    is not the calling task, Forbid() protection must be used.
+
+    INPUTS
+    Task - The Task you want infos about or NULL if you mean this task
+    Type       - The current Type
+      o TASKINFOTYPE_ALLTASK
+        means that the TASKINFOTAG_HOOK hook is called for
+        all PPCTasks, and now you can safely retrieve information
+        for all the tasks.
+        You must not specify a TASKINFOTYPE_ALLTASK in such Hook
+        to avoid a deadlock in such Hook function.
+
+        Msg Parameter is NULL for now.
+        Object Parameter is the Task
+
+          HookFunc(Hook, Task, NULL);
+
+        - TASKINFOTAG_HOOK,(struct Hook*)
+          defines the Hook for TASKINFO_ALLTASK
+
+      o TASKINFOTYPE_NAME
+        returns pointer to the name of the Task at the DataPtr address
+        if the DataSize is large enough.
+        WARNING! The pointer returned is only valid while Forbid(), or
+        if you're the owner of the process in question. The pointer
+        can become invalid at RemTask() or when the process terminate).
+        Size = sizeof(char*)
+
+      o TASKINFOTYPE_NAMECOPY
+        returns copy of the name of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = IN: max buffer size, OUT: number of chars copied to buffer, or 0
+
+      o TASKINFOTYPE_USERDATA
+        returns tc_UserData of the task.
+        Size = sizeof(APTR)
+
+      o TASKINFOTYPE_PRI
+        returns the priority of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(LONG)
+
+      o TASKINFOTYPE_TYPE
+        returns the type of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_STATE
+        returns the state of the Task at the DataPtr address
+        if the DataSize is large enough.
+        See exec/task.h TS_* for more informations
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_FLAGS
+        returns the flags of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SIGALLOC
+        returns the signal allocmask of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SIGWAIT
+        returns the signal waitmask of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SIGRECVD
+        returns the signal received mask of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SIGEXCEPT
+        returns the signal exception mask of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_EXCEPTDATA
+        returns the exception data field of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_EXCEPTCODE
+        returns the exception function of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_TRAPDATA
+        returns the trap data field of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_TRAPCODE
+        returns the trap function of a Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_TRAPMSGPORT
+        returns the trap msgport of the Task  at the DataPtr address
+        if the DataSize is large enough.
+        The TrapMsgPort is used to notify about native cpu exceptions.
+        If a task runs into an exception it is disabled until it's
+        retarted again.
+        If the result is NULL the task's cpu exceptions
+        are handled by the global exception server.
+        Size = sizeof(struct MsgPort*)
+
+      o TASKINFOTYPE_STACKSIZE_M68K
+        returns the total M68k stacksize of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_USEDSTACKSIZE_M68K
+        returns the used M68k stacksize of the Task at the DataPtr address
+        if the DataSize is large enough.
+        New in 51.28: If the current stack pointer is outside of the task
+        stack bounds, the call will fail with return code 0, rather than
+        returning invalid value.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_STACKSIZE
+        returns the total native stacksize of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_USEDSTACKSIZE
+        returns the used native stacksize of the Task at the DataPtr address
+        if the DataSize is large enough.
+        This type could return invalid value for ThisTask before exec 50.70.
+        To workaround for exec <= 50.59 ThisTask: read current r1 and substract
+        it from ETask->PPCSPUpper.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SPLOWER
+        returns the start address of the native stack of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SPUPPER
+        returns the end address of the native stack of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SPLOWER_M68k
+        returns the M68k start address of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_SPUPPER_M68K
+        returns the M68k end address of the Task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_STARTUPMSG
+        returns pointer to struct Message passed in with NP_StartupMsg or
+        TASKTAG_STARTUPMSG, NULL if no startup message was specified,
+        at the DataPtr address if the DataSize is large enough.
+        This message is ReplyMsg()'d by the system when task/process exit.
+        Size = sizeof(struct Message*)
+
+      o TASKINFOTYPE_TASKMSGPORT
+        returns pointer to internal struct MsgPort created with NP_TaskMsgPort
+        or TASKTAG_TASKMSGPORT, at the DataPtr address if the DataSize is
+        large enough.
+        If this messageport is not empty at task/process exit, alert is
+        generated.
+        Size = sizeof(struct MsgPort*)
+
+      o TASKINFOTYPE_POOLPTR
+        returns pointer to task's internal memory pool at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(APTR)
+
+      o TASKINFOTYPE_POOLMEMFLAGS
+        returns memory attribute flags of the task's internal memory pool at
+        the DataPtr address if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_POOLPUDDLESIZE
+        returns puddlesize of the task's internal memory pool at the DataPtr
+        address if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_POOLTHRESHSIZE
+        returns threshsize of the task's internal memory pool at the DataPtr
+        address if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_NICE
+        returns the 'niceness' of the task, from -20 to 20.
+        -20 is least nice, that is, get the most cpu time, 20
+        is 'nicest', giving most cpu time for other tasks.
+        Size = sizeof(LONG)
+
+      o TASKINFOTYPE_AGETICKS
+        returns age of the task, in timebase ticks.
+        See SYSTEMINFOTYPE_TBCLOCKFREQUENCY.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_CPUTIME
+        returns total cpu usage of the task, in timebase ticks.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_LASTSECCPUTIME
+        returns cpu usage of the task during the last
+        SYSTEMINFOTYPE_LASTSECTICKS ticks.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_RECENTCPUTIME
+        returns decaying cpu usage average of the task during the
+        last SYSTEMINFOTYPE_RECENTTICKS ticks.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_VOLUNTARYCSW
+        returns total number of the voluntary context switches
+        made by the task. together with TASKINFOTYPE_INVOLUNTARYCSW
+        is the total number of context swithes.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_INVOLUNTARYCSW
+        returns total number of the involuntary context switches
+        made by the task. together with TASKINFOTYPE_VOLUNTARYCSW
+        is the total number of context swithes.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_LASTSECVOLUNTARYCSW
+        returns number of voluntary context switches by the task
+        during the last SYSTEMINFOTYPE_LASTSECTICKS ticks.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_LASTSECINVOLUNTARYCSW
+        returns number of involuntary context switches by the task
+        during the last SYSTEMINFOTYPE_LASTSECTICKS ticks.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_LAUNCHTIMETICKS
+        returns the creation time of the task, counting from timebase
+        clock start.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_LAUNCHTIMETICKS1978
+        returns the creation time of the task, counting from Jan 1st
+        1978. this is useful for formatting task creation time with
+        dos/DateToStr.
+        Size = sizeof(UQUAD)
+
+      o TASKINFOTYPE_PID
+        returns the Process ID of the task. Returns the unique ID
+        assigned to each task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PID_CLI
+        returns the Process ID of the task. For processes with CLI this
+        is the CLI number, else the unique ID assigned to each task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_LASTALERT
+        return the last alert number that occured with the task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_EXCEPTIONCOUNT
+        return the number of exceptions for the task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_HITCOUNT
+        return the number of illegal address hits for the task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_MAXHITCOUNT
+        return the max. number of illegal address hits for the task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_ALERTCOUNT
+        return the number of alerts for the task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_MAXALERTCOUNT
+        return the max. number of alerts for the task.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_SRR0
+        returns the SRR0 of the task at the DataPtr address if
+        the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_SRR1
+        returns the SRR1 of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_LR
+        returns the LR of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_CTR
+        returns the CTR of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_CR
+        returns the CR of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_XER
+        returns the XER of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_FPSCR
+        returns the FPSCR of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(double)
+
+      o TASKINFOTYPE_PPC_VSCR
+        returns the VSCR of the task at the DataPtr address
+        if the DataSize is large enough.
+        Makes only sense if an Altivec unit is there.
+        Size = sizeof(vector128_t)
+
+      o TASKINFOTYPE_PPC_VSAVE
+        returns the VSAVE of the task at the DataPtr address
+        if the DataSize is large enough.
+        Makes only sense if an Altivec unit is there.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_GPR,TASKINFOTAG_REGSTART,RegStart,TASKINFOTAG_REGCOUNT,RegCount
+        returns the GPR[RegStart..RegStart+RegCount] of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = Count * sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_FPR,TASKINFOTAG_REGSTART,RegStart,TASKINFOTAG_REGCOUNT,RegCount
+        returns the FPR[RegStart..RegStart+RegCount] of the task at the DataPtr address
+        if the DataSize is large enough.
+        Size = Count * sizeof(double)
+
+      o TASKINFOTYPE_PPC_VPR,TASKINFOTAG_REGSTART,RegStart,TASKINFOTAG_REGCOUNT,RegCount
+        returns the VMX[RegStart..RegStart+RegCount] of the task at the DataPtr address
+        if the DataSize is large enough.
+        Makes only sense if an Altivec unit is there.
+        Size = Count * sizeof(vector128_t)
+
+      o TASKINFOTYPE_PPC_FRAMESIZE
+        returns the size of the PPCRegFrame in bytes at the DataPtr address
+        if the DataSize is large enough.
+        Size = sizeof(ULONG)
+
+      o TASKINFOTYPE_PPC_FRAME
+        returns the the current PPCRegFrame at the DataPtr address
+        if the DataSize is large enough.
+        Size = Result of NewGetTaskAttrs(..TASKINFOTYPE_PPC_FRAMESIZE)
+
+    RESULT
+    ULONG - size of the copied area to Data. 0 indicates a failure.
+
+    SEE ALSO
+    NewSetTaskAttrsA, exec/tasks.h
+
+exec.library/NewGetTaskPIDAttrsA
+
+    NAME
+    NewGetTaskAttrsA -- Get Exec Task Info           (V50)
+    NewGetTaskAttrs -- Varargs Stub for NewGetTaskPIDAttrsA()
+
+    SYNOPSIS
+    Result NewGetTaskPIDAttrsA(TaskPID,Data,DataSize,Type,Args )
+    D0             D0      A0   D1       D2   A1
+
+    ULONG NewGetTaskPIDAttrsA(ULONG PID,void*,ULONG,ULONG,struct TagItem*);
+    ULONG NewGetTaskPIDAttrs(ULONG PID,void*,ULONG,ULONG,...);
+
+    FUNCTION
+    Allows you to read infos about the task with the specified pid.
+    If the task with the pid isn't found it does nothing and returns 0.
+
+    INPUTS
+    TaskPID - The Task with the pid you want infos about or PID_CURRENT for
+              the current task.
+    Type    - See NewGetTaskAttrsA
+
+    RESULT
+    ULONG - size of the copied area to Data. 0 indicates a failure.
+
+    SEE ALSO
+    NewGetTaskPIDAttrsA, exec/tasks.h
+
+exec.library/NewPPCStackSwap
+
+    NAME
+    NewPPCStackSwap -- Call a PPC Function with a new stack       (V50)
+
+    SYNOPSIS
+    NewPPCStackSwap(StackSwap, Function, Args)
+                    a0         a1        a2
+
+    ULONG NewPPCStackSwap(struct StackSwapStruct*,ULONG (*Func)(void), struct PPCStackSwapArgs *);
+
+    FUNCTION
+    This function sets a new ppc stack and then calls the specified function
+    with the new stack. If you specify Args the function gpr3-gpr11 content
+    are set according to the Args contents which follows the SystemV ABI
+    specs for integer argument parsing.
+    Be aware that the stk_Pointer you specify is NOT directly set to r1,
+    but the function creates a place for a SystemV stackframe first, to
+    avoid any overwrites. Please don't use the stack argument for parsing
+    any data because you think you know the layout.
+
+    INPUTS
+    StackSwap - Ptr to a Stackswap structure
+    Function  - Ptr to the function which should be alled
+    Args      - Ptr to optional function arguments or NULL
+
+    RESULTS
+    Whatever the Function returns.
+
+    EXAMPLE
+    If you specify the Args parameter your function could look like
+    this in C.
+
+    ULONG   Function(ULONG Arg1,ULONG Arg2,ULONG Arg3,ULONG Arg4,
+                     ULONG Arg5,ULONG Arg6,ULONG Arg7,ULONG Arg8);
+
+
+    SEE ALSO
+    exec/tasks.h
+
+exec.library/NewRawDoFmt
+
+   NAME
+    VNewRawDoFmt -- Format data into a character stream (V50).
+    NewRawDoFmt -- Varargs Stub for NewRawDoFmt() (V50).
+
+   SYNOPSIS
+    NextData = VNewRawDoFmt(FormatString, PutChProc, PutChData, ArgList);
+    (sysv)
+
+    NextData = NewRawDoFmt(FormatString, PutChProc, PutChData, ...);
+    (sysv)
+
+    STRPTR VNewRawDoFmt(CONST_STRPTR, APTR (*)(APTR, UBYTE), STRPTR PutChData, va_list);
+
+    STRPTR NewRawDoFmt(CONST_STRPTR, APTR (*)(APTR, UBYTE), STRPTR PutChData, ...);
+
+   FUNCTION
+    Perform formatting of a data stream, outputting the result character
+    at a time.
+
+   INPUTS
+    FormatString - a printf-like NULL terminated format string.
+
+    PutChProc - the procedure to call with each character to be
+         output, called as:
+
+    PutChData = PutChProc(PutChData, Char);
+    (sysv)
+
+        The procedure is called with a NULL char at the end of
+        the format string.
+        This pointer may also be one of the following:
+        - RAWFMTFUNC_STRING: The default routine to put
+        characters to string pointed by PutChData.
+        - RAWFMTFUNC_SERIAL: The characters are written to
+        serial line. This can be used for remote debugging.
+        - RAWFMTFUNC_COUNT: PutChData is pointed to ULONG which
+        will be incremented per character written. It includes
+        the terminating NULL char. The initial value of the
+        variable is not touched, allowing consecutive calls to
+        total the count.
+
+    PutChData - a value that is passed through to the PutChProc
+        procedure. This is untouched by RawDoFmt, and may be
+        modified by the PutChProc.
+
+    ArgList - a stream of data that is interpreted according to
+         the format string.
+
+   RESULT
+    NextData - final value for PutChData.
+
+   NOTES
+    Unlike RawDoFmt, this function defaults to 32bit integers. Here
+    this function is closer to printf than RawDoFmt.
+
+   SEE ALSO
+    RawDoFmt, exec/rawfmt.h, printf
+
+exec.library/NewSetFunction
+
+   NAME
+    NewSetFunction -- change a function vector in a library    (V50)
+
+   SYNOPSIS
+    oldFunc = NewSetFunction(Library, Function, Offset, Tags)
+    D0               A0       A1        D0     D0
+
+    APTR    NewSetFunction(struct Library *,APTR,LONG,struct TagItem*);
+
+   FUNCTION
+    NewSetFunction is a functional way of adding 68k and PPC
+    functions to a library.
+
+   INPUTS
+    Library  - a pointer to the library to be changed
+
+    Function - pointer to the new 68k/ppc function
+
+    Offset   - the offset the function should be put at.
+
+    Tags     - additional information stream
+
+   RESULT
+    Function - Old FuncObject or NULL if something failed.
+
+   EXAMPLES
+    To create a PPC library patch
+
+    struct TagItem MyTags[]=
+    {
+      {SETFUNCTAG_MACHINE, MACHINE_PPC},
+      {SETFUNCTAG_TYPE,    SETFUNCTYPE_NORMAL},
+      {SETFUNCTAG_IDNAME,  "My PPC Patch"},
+      {TAG_END,            0}
+    };
+
+    NewSetFunction(MyLibrary,MyFunction,LVO_MYFUNC,MyTags);
+
+    With the machine type and function type you have the ability
+    for special emulation/ppc interface needs.
+
+   NOTE
+    The new function must be callable before NewSetFunction()
+    returns! If you intend to call the old function in the new
+    one, you must prepare for this by initializing the oldfunc
+    pointer properly before the call.
+
+   SEE ALSO
+    exec/libraries.h, emul/emulinterface.h
+
+exec.library/NewSetSystemAttrsA
+
+    NAME
+    NewSetSystemAttrsA -- Set Exec Attributes           (V50)
+    NewSetSystemAttrs -- Varargs Stub for NewSetSystemAttrsA()
+
+    SYNOPSIS
+    Result NewSetSystemAttrsA(Data,DataSize,Type,Args )
+    D0                    A0   D0       D1   A1
+
+    ULONG NewSetSystemAttrsA(void*,ULONG,ULONG,struct TagItem*);
+    ULONG NewSetSystemAttrs(void*,ULONG,ULONG,...);
+
+    FUNCTION
+    Allows you to set system attributes.
+
+    INPUTS
+    Data     - Ptr to a buffer
+    DataSize - size of the buffer
+    Type     - Information Type
+    Args     - Additional argument buffer for the type
+
+    o SYSTEMINFOTYPE_MAGIC1
+      sets the Magic1 field in ExecBase.
+      Tags: none
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_MAGIC2
+      sets the Magic2 field in ExecBase.
+      Tags: none
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_PPC_CPUTEMP
+      sets the cpu temperature calibration in 8.24 fixedpoint celcius
+      degrees. might not be implemented for all cpu types and MorphOS
+      versions.
+      Tags: SYSTEMINFOTAG_CPUINDEX (optional) for the CPU Number
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TASKEXITCODE
+      sets the global native task's exitcode.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_TASKEXITCODE_M68K
+      sets the global m68k task's exitcode.
+      Data: u_int32_t
+
+    o SYSTEMINFOTYPE_EXCEPTIONMSGPORT
+      sets the native machine's exception msgport
+      Data: struct MsgPort *
+
+    o SYSTEMINFOTYPE_EXCEPTIONMSGPORT_68K
+      sets the 68ks exception msgport. This is the msgport the
+      default system 68k traphandler sends its msgs. If the system
+      68k traphandler is replaced msgs to this exception msgport
+      aren't guranteed. Usually the msgport is controlled by the
+      ABox Log Server.
+      Data: struct MsgPort *
+
+    o SYSTEMINFOTYPE_ALERTMSGPORT
+      sets the Alert msgport. Usually the msgport is controlled by the
+      ABox Log Server.
+      Data: struct MsgPort *
+
+    o SYSTEMINFOTYPE_MAXHITCOUNT
+      sets the max hit count for new tasks. This hit count has only a meaning
+      when the logserver or the abox handles exceptions
+      Data: ULONG
+
+    o SYSTEMINFOTYPE_MAXALERTCOUNT
+      sets the max alert count for new tasks. This alert count has only a meaning
+      when the logserver or the abox handles exceptions
+      Data: ULONG
+
+    RESULT
+    Result is the amount of bytes read from Data.
+
+exec.library/NewSetTaskAttrsA
+
+    NAME
+    NewSetTaskAttrsA -- Set PPC Task Info           (V50)
+    NewSetTaskAttrs -- Varargs Stub for PPCSetTaskAttrsA()
+
+    SYNOPSIS
+    Result NewSetTaskAttrsA(Task,Data,DataSize,Type,Tags )
+    D0          A0   A1   D0       D1   A2
+
+    ULONG NewSetTaskAttrsA(struct Task*,void*,ULONG,ULONG,struct TagItem*);
+    ULONG NewSetTaskAttrs(struct Task*,void*,ULONG,ULONG,...);
+
+    FUNCTION
+    Allows you to change certain task informations.
+
+    WARNING
+    This function does not arbitrate for access to Task. If Task
+    is not the calling task, Forbid() protection must be used.
+
+    INPUTS
+    Task - The Task you want infos about or NULL if you mean this task
+    Type       -
+
+      o TASKINFOTYPE_NAME
+        Data: char*
+        DataSize: sizeof(char*)
+        sets the name of the Task from the data at the DataPtr
+        address.
+
+      o TASKINFOTYPE_USERDATA
+        Data: APTR
+        DataSize: sizeof(APTR)
+        sets tc_UserData of the Task
+
+      o TASKINFOTYPE_PRIORITY
+        Data: LONG
+        DataSize: sizeof(LONG)
+        sets the priority of the Task
+
+      o TASKINFOTYPE_FLAGS
+        Data: LONG
+        DataSize: sizeof(LONG)
+        sets the flags of the Task
+
+      o TASKINFOTYPE_SIGALLOC
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the allocated signal mask of the Task
+
+      o TASKINFOTYPE_SIGRECVD
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the recvd signal mask of the Task
+        At the moment a bit pointless.
+
+      o TASKINFOTYPE_SIGWAIT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the wait signal mask of the Task
+        At the moment a bit pointless.
+
+      o TASKINFOTYPE_SIGEXCEPT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the exception signal mask of the Task
+
+      o TASKINFOTYPE_EXCEPTDATA
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the exception data field of a Task.
+
+      o TASKINFOTYPE_EXCEPTCODE
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the exception function of a Task at the DataPtr address.
+
+      o TASKINFOTYPE_TRAPDATA
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the trap data field of a Task at the DataPtr address.
+
+      o TASKINFOTYPE_TRAPCODE
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the trap function of a Task at the DataPtr address.
+
+      o TASKINFOTYPE_TRAPMSGPORT
+        Data: struct MsgPort*
+        DataSize: sizeof(struct MsgPort*)
+        sets the trap msgport of the Task.
+        The TrapMsgPort is used to notify about native cpu exceptions.
+        If a task runs into an exception it is disabled until it's
+        retarted again.
+        If the TrapMsgPort is NULL the task's cpu exceptions
+        are handled by the global exception server.
+
+      o TASKINFOTYPE_POOLPTR
+        Data: APTR
+        DataSize: sizeof(APTR)
+        sets internal memory pool pointer of the Task.
+
+      o TASKINFOTYPE_NICE
+        Data: LONG
+        DataSize: sizeof(LONG)
+        sets the 'niceness' of the task, from -20 to 20.
+        -20 is least nice, that is, get the most cpu time, 20
+        is 'nicest', giving most cpu time for other tasks.
+
+      o TASKINFOTYPE_LASTALERT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the last alert number that occured with the task.
+
+      o TASKINFOTYPE_EXCEPTIONCOUNT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the the number of exceptions for the task.
+
+      o TASKINFOTYPE_HITCOUNT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the number of illegal address hits for the task.
+
+      o TASKINFOTYPE_MAXHITCOUNT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the max. number of illegal address hits for the task.
+
+      o TASKINFOTYPE_ALERTCOUNT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the number of alerts for the task.
+
+      o TASKINFOTYPE_MAXALERTCOUNT
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the max. number alerts for the task.
+
+      o TASKINFOTYPE_PPC_SRR0
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the SRR0 of the task.
+
+      o TASKINFOTYPE_PPC_SRR1
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the SRR1 of the task.
+
+      o TASKINFOTYPE_PPC_LR
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the LR of the task.
+
+      o TASKINFOTYPE_PPC_CTR
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the CTR of the task.
+
+      o TASKINFOTYPE_PPC_CR
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the CR of the task.
+
+      o TASKINFOTYPE_PPC_XER
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the XER of the task.
+
+      o TASKINFOTYPE_PPC_FPSCR
+        Data: UQUAD
+        DataSize: sizeof(UQUAD)
+        sets the FPSCR of the task.
+
+      o TASKINFOTYPE_PPC_VSCR
+        Data: vector128_t
+        DataSize: sizeof(vector128_t)
+        sets the VSCR of the task.
+        Makes only sense if an Altivec unit is there.
+
+      o TASKINFOTYPE_PPC_VSAVE
+        Data: ULONG
+        DataSize: sizeof(ULONG)
+        sets the VSAVE of the task.
+        Makes only sense if an Altivec unit is there.
+
+      o TASKINFOTYPE_PPC_GPR,RegStart,RegCount
+        Tags: TASKINFOTAG_REGSTART, startindex, TASKINFOTAG_REGCOUNT, count
+        Data: ULONG []
+        DataSize: sizeof(ULONG) * count
+        sets the GPR[RegStart..RegStart+RegCount] of the task at the DataPtr address
+        if the DataSize is large enough.
+
+      o TASKINFOTYPE_PPC_FPR,RegStart,RegCount
+        Tags: TASKINFOTAG_REGSTART, startindex, TASKINFOTAG_REGCOUNT, count
+        Data: float64_t []
+        DataSize: sizeof(float64_t) * count
+        sets the FPR[RegStart..RegStart+RegCount] of the task.
+
+      o TASKINFOTYPE_PPC_VPR,RegStart,RegCount
+        Tags: TASKINFOTAG_REGSTART, startindex, TASKINFOTAG_REGCOUNT, count
+        Data: vector128_t []
+        DataSize: sizeof(vector128_t) * count
+        sets the VMX[RegStart..RegStart+RegCount] of the task.
+        Makes only sense if an Altivec unit is there.
+        Size = Count * sizeof(vector128_t)
+
+      o TASKINFOTYPE_PPC_FRAME
+        Data: struct PPCFrame*
+        DataSize: NewGetTaskAttrs(..TASKINFOTYPE_PPC_FRAMESIZE)
+        sets a new current PPCRegFrame Ptr to the task.
+        It also sets a new tc_SPReg by taking the current stackptr in
+        REG_A7.
+        Must not be used on the current task.
+        AVOID this in application programs.
+
+      o TASKINFOTYPE_68K_NEWFRAME
+        Data: struct TaskFrame68k*
+        DataSize: sizeof(struct TaskFrame68k)
+        creates a new 68k subframe on the task's stack which is the
+        same as a task exception.
+        This is really esoteric stuff which is actually only needed
+        at the moment for the PPC ixemul.library.
+        Must not be used on the current task.
+        AVOID this in application programs.
+
+      o TASKINFOTYPE_PPC_NEWFRAME
+        Data: struct PPCRegFrame*
+        DataSize: sizeof(struct PPCRegFrame)
+        creates a new PPC subframe on its task stack which is the
+        same as a task exception.
+        This is really esoteric stuff which is actually only needed
+        at the moment for the PPC ixemul.library.
+        Must not be used on the current task.
+        AVOID this in application programs.
+
+    RESULT
+    ULONG - size of the copied area to Data. 0 indicates a failure.
+
+    SEE ALSO
+    NewGetTaskAttrsA, exec/tasks.h
+
+exec.library/NewSetTaskPIDAttrsA
+
+    NAME
+    NewSetTaskPIDAttrsA -- Set PPC Task Info           (V50)
+    NewSetTaskPIDAttrs -- Varargs Stub for PPCSetTaskPIDAttrsA()
+
+    SYNOPSIS
+    Result NewSetTaskAttrsA(TaskPID,Data,DataSize,Type,Tags )
+    D0          D0      A0   D1       D2   A1
+
+    ULONG NewSetTaskPIDAttrsA(ULONG PID,void*,ULONG,ULONG,struct TagItem*);
+    ULONG NewSetTaskPIDAttrs(ULONG PID,void*,ULONG,ULONG,...);
+
+    FUNCTION
+    Allows you to change certain task informations through the task pid.
+    If the task with the pid isn't found it does nothing and returns 0.
+
+    INPUTS
+    TaskPID - The Task with the pid you want infos about or PID_CURRENT for
+              the current task.
+    Type    - See NewSetTaskAttrsA
+
+    RESULT
+    ULONG - size of the copied area to Data. 0 indicates a failure.
+
+    SEE ALSO
+    NewGetTaskAttrsA, exec/tasks.h
+
+exec.library/ObtainQuickVector
+
+    ObtainQuickVector --
+
+   SYNOPSIS
+
+    ULONG ObtainQuickVector( APTR interruptCode );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/ObtainSemaphore
+
+    ObtainSemaphore --
+
+   SYNOPSIS
+
+    VOID ObtainSemaphore( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/ObtainSemaphoreList
+
+    ObtainSemaphoreList --
+
+   SYNOPSIS
+
+    VOID ObtainSemaphoreList( struct List *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/ObtainSemaphoreShared
+
+    ObtainSemaphoreShared --
+
+   SYNOPSIS
+
+    VOID ObtainSemaphoreShared( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/OldOpenLibrary
+
+    OldOpenLibrary --
+
+   SYNOPSIS
+
+    struct Library *OldOpenLibrary( CONST_STRPTR libName );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/OpenDevice
+
+    OpenDevice --
+
+   SYNOPSIS
+
+    BYTE OpenDevice( CONST_STRPTR devName, ULONG unit, struct IORequest *ioRequest, ULONG flags );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/OpenLibrary
+
+    OpenLibrary --
+
+   SYNOPSIS
+
+    struct Library *OpenLibrary( CONST_STRPTR libName, ULONG version );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/OpenResource
+
+    OpenResource --
+
+   SYNOPSIS
+
+    APTR OpenResource( CONST_STRPTR resName );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Permit
+
+    NAME
+        Permit -- Permit task scheduling
+
+    SYNOPSIS
+        Permit()
+
+        void Permit(void);
+
+    FUNCTION
+        Reverses the effect of Forbid(), allowing the system to multitask
+        normally again.
+
+    NOTE
+        Multiple calls to Forbid() nest, so you must call Permit() as many
+        times as you have called Forbid().
+
+    SEE ALSO
+        Forbid
+
+exec.library/Procure
+
+    Procure --
+
+   SYNOPSIS
+
+    ULONG Procure( struct SignalSemaphore *sigSem, struct SemaphoreMessage *bidMsg );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/PutMsg
+
+    PutMsg --
+
+   SYNOPSIS
+
+    VOID PutMsg( struct MsgPort *port, struct Message *message );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RawDoFmt
+
+    RawDoFmt --
+
+   SYNOPSIS
+
+    APTR RawDoFmt( CONST_STRPTR formatString, CONST APTR dataStream, VOID (*CONST putChProc)(VOID), APTR putChData );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/ReleaseSemaphore
+
+    ReleaseSemaphore --
+
+   SYNOPSIS
+
+    VOID ReleaseSemaphore( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/ReleaseSemaphoreList
+
+    ReleaseSemaphoreList --
+
+   SYNOPSIS
+
+    VOID ReleaseSemaphoreList( struct List *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemDevice
+
+    RemDevice --
+
+   SYNOPSIS
+
+    VOID RemDevice( struct Device *device );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemExecNotify
+
+   NAME
+    RemExecNotify -- remove exec notity hook                    (V50)
+
+   SYNOPSIS
+    RemExecNotify(hook)
+    (sysv)
+
+    void RemExecNotify(struct Hook *);
+
+   FUNCTION
+    This function removes exec notify hook from internal list of notify
+    hooks. This hook must have been added with AddExecNotify before.
+    This function is intended for system monitors and such, and it
+    should not be used in user code.
+
+   INPUTS
+    hook - hook to remove.
+
+   RESULT
+
+   EXAMPLE
+
+   NOTE
+
+   BUGS
+    Due to some braindamage, this interface was broken before exec V50.46
+    (MorphOS 1.4).
+
+   SEE ALSO
+    AddExecNotify
+
+exec.library/RemHead
+
+    RemHead --
+
+   SYNOPSIS
+
+    struct Node *RemHead( struct List *list );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemIntServer
+
+    RemIntServer --
+
+   SYNOPSIS
+
+    VOID RemIntServer( LONG intNumber, struct Interrupt *interrupt );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemLibrary
+
+    RemLibrary --
+
+   SYNOPSIS
+
+    VOID RemLibrary( struct Library *library );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemMemHandler
+
+    RemMemHandler --
+
+   SYNOPSIS
+
+    VOID RemMemHandler( struct Interrupt *memhand );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemPort
+
+    RemPort --
+
+   SYNOPSIS
+
+    VOID RemPort( struct MsgPort *port );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemResource
+
+    RemResource --
+
+   SYNOPSIS
+
+    VOID RemResource( APTR resource );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemSemaphore
+
+    RemSemaphore --
+
+   SYNOPSIS
+
+    VOID RemSemaphore( struct SignalSemaphore *sigSem );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemTail
+
+    RemTail --
+
+   SYNOPSIS
+
+    struct Node *RemTail( struct List *list );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemTask
+
+    RemTask --
+
+   SYNOPSIS
+
+    VOID RemTask( struct Task *task );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Remove
+
+    Remove --
+
+   SYNOPSIS
+
+    VOID Remove( struct Node *node );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/RemoveSync
+
+   NAME
+    RemoveSync -- remove a node from a list with arbitration
+
+   SYNOPSIS
+    RemoveSync(node)
+               A1
+
+    void RemoveSync(struct Node *);
+
+   FUNCTION
+    Unlink a node from whatever list it is in.  Nodes that are not part
+    of a list must not be passed to this function!
+    This function arbitrates for the list so it safe to use it
+    for shared lists.
+
+   INPUTS
+    node - the node to remove
+
+   SEE ALSO
+    EnqueueSync,AddHead, AddTail, Enqueue, Insert, RemHead, RemTail
+
+exec.library/ReplyMsg
+
+    ReplyMsg --
+
+   SYNOPSIS
+
+    VOID ReplyMsg( struct Message *message );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SendIO
+
+    SendIO --
+
+   SYNOPSIS
+
+    VOID SendIO( struct IORequest *ioRequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SetExcept
+
+    SetExcept --
+
+   SYNOPSIS
+
+    ULONG SetExcept( ULONG newSignals, ULONG signalSet );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SetFunction
+
+    SetFunction --
+
+   SYNOPSIS
+
+    APTR SetFunction( struct Library *library, LONG funcOffset, ULONG (*CONST newFunction)(VOID) );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SetIntVector
+
+    SetIntVector --
+
+   SYNOPSIS
+
+    struct Interrupt *SetIntVector( LONG intNumber, CONST struct Interrupt *interrupt );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SetSR
+
+    SetSR --
+
+   SYNOPSIS
+
+    ULONG SetSR( ULONG newSR, ULONG mask );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SetSignal
+
+    SetSignal --
+
+   SYNOPSIS
+
+    ULONG SetSignal( ULONG newSignals, ULONG signalSet );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SetTaskPri
+
+    SetTaskPri --
+
+   SYNOPSIS
+
+    BYTE SetTaskPri( struct Task *task, LONG priority );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Signal
+
+    Signal --
+
+   SYNOPSIS
+
+    VOID Signal( struct Task *task, ULONG signalSet );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/StackSwap
+
+    StackSwap --
+
+   SYNOPSIS
+
+    VOID StackSwap( struct StackSwapStruct *newStack );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SumKickData
+
+    SumKickData --
+
+   SYNOPSIS
+
+    ULONG SumKickData( VOID );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SumLibrary
+
+    SumLibrary --
+
+   SYNOPSIS
+
+    VOID SumLibrary( struct Library *library );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/SuperState
+
+    SuperState --
+
+   SYNOPSIS
+
+    APTR SuperState( VOID );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Supervisor
+
+    Supervisor --
+
+   SYNOPSIS
+
+    ULONG Supervisor( ULONG (*CONST userFunction)(VOID) );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/TLSAlloc
+
+   NAME
+    TLSAlloc -- allocate Thread-Local Storage index (V51.46)
+
+   SYNOPSIS
+    index = TLSAlloc(tags)
+    (sysv)
+
+    ULONG TLSAlloc(struct TagItem *);
+
+   FUNCTION
+    Allocates a Thread-Local Storage index from the global index pool.
+
+   INPUTS
+    tags - Pointer to a taglist, or NULL. The following tags are
+           specified:
+
+    TLSTAG_DESTRUCTOR - A function to call when TLSCallDestructors()
+                        function is called or when the task/process
+                        terminates.
+                        Default is to call no function. Passing NULL
+                        has the same effect.
+
+    TLSTAG_USERDATA   - Optional userdata to the TLSTAG_DESTRUCTOR
+                        function. The default value is NULL if this
+                        tag is not specified.
+
+    The destructor function is called as:
+
+    VOID func(APTR value, APTR userdata)
+    (sysv)
+
+    The destructor function should not take very long to complete. It
+    is for example unwise to ask for user input or similar. The
+    destructor may call TLSSetValue(index, NULL) for the same index.
+    It is also legal to TLSSetValue some other index to non-NULL value.
+    Refer to TLSCallDestructors documentation for details about this.
+
+    Care must be taken that all accessed resources are valid and
+    accessible during destructor execution. It is also up to the caller
+    to implement any arbitration of resources with for example
+    signalsemaphore, if needed.
+
+    It is the responsiblity of the TLSAlloc caller to ensure that code
+    pointed by TLSTAG_DESTRUCTOR will remain executable for the
+    duration teh index is in use. Specifically the application may not
+    terminate (which unloads the code segment) if there are any other
+    tasks running which may call the destructor.
+
+    If you do not call TLSCallDestructors yourself the destructor will
+    be executed when the process/task is about to terminate. For process
+    this happens before struct Process fields are deallocated.
+
+   RESULT
+    index - a global index to Thread-Local Storage or TLS_INVALID_INDEX
+            if no index was available due to lack of resources.
+
+   WARNING
+    The result of index allocation must be checked for
+    TLS_INVALID_INDEX, and a viable error handling path taken.
+
+   EXAMPLES
+
+    APTR func(APTR value, APTR userdata)
+    {
+        struct ExecBase *SysBase = (struct ExecBase *) userdata;
+        FreeVec(value);
+    }
+
+    ...
+
+    ULONG tlsindex;
+
+    tlsindex = TLSAlloc(TLSTAG_DESTRUCTOR, (IPTR) func,
+                        TLSTAG_USERDATA,   (IPTR) SysBase,
+                        TAG_DONE);
+    if (tlsindex != TLS_INVALID_INDEX)
+    {
+        /* ... more code ... */
+
+        TLSFree(tlsindex);
+    }
+
+   NOTE
+    The destructor function must remain callable for as long as index
+    remains allocated.
+
+    It is illegal to TLSFree an index while it is still being used
+    by TLSGetvalue and/or TLSSetValue by other tasks. The caller is
+    responsible for making sure this does not happen.
+
+   SEE ALSO
+    TLSFree, TLSCallDestructors, TLSGetValue, TLSSetValue
+
+exec.library/TLSCallDestructors
+
+   NAME
+    TLSCallDestructors -- call Thread-Local Storage index destructors
+                          for the given task (V51.46)
+
+   SYNOPSIS
+    TLSCallDestructors(task)
+    (sysv)
+
+    VOID TLSCallDestructors(struct Task *);
+
+   FUNCTION
+    Calls destructors for all Thread-Local Storage indices with non-NULL
+    value. The value is passed to the destructor as the first parameter.
+    The value for the given index is set to NULL before the call.
+
+    If new indices with destructors appear after the destructors have
+    been called this function performs unspecified number of retries
+    until either there are no more destructors to call or the function
+    gives up due to excessive retry attempts.
+
+   INPUTS
+    task - Task to call destructors for. NULL means current task.
+
+   RESULT
+    None
+
+   EXAMPLES
+
+    VOID proc(struct Task *parent, ULONG parentsigmask)
+    {
+
+        /* Much work here... */
+        ...
+
+        /* Call destructors before we do internal cleanup */
+        TLSCallDestructors(NULL);
+
+        /* Some cleanup that we need to do before exit */
+        ...
+
+        Forbid();
+        Signal(parent, parentsigmask);
+    }
+
+    ...
+
+    BYTE sig = AllocSignal(-1);
+    if (sig != -1)
+    {
+        if (CreateNewProc(NP_Entry, (IPTR) proc,
+                          NP_CodeType, CODETYPE_PPC,
+                          NP_PPC_Arg1, (IPTR) FindTask(NULL),
+                          NP_PPC_Arg2, 1UL << sig,
+                          TAG_DONE))
+        {
+            Wait(1UL << sig);
+        }
+        FreeSignal(sig);
+    }
+
+
+   NOTE
+    TLSCallDestructors is mainly meant to be used by someone
+    implementing a custom threading solution. This function can be
+    called after the thread has completed its processing and is
+    about to terminate.
+
+    Calling this function for any other purpose, or before being
+    terminated is illegal.
+
+    Calling this function for other task than self is unwise. The
+    destructor functions might not be called in this case, but could
+    still get deallocated and not called again, ever. Just Don't Do
+    It.
+
+   BUGS
+    MorphOS 3.14 (exec 51.46) had a bug which resulted in the
+    destructors being called out of the expected order. In particular
+    this could cause issues if destructor execution expected
+    destructors getting called once before (potentially) getting called
+    again. This bug was fixed in MorphOS 3.15 (exec 51.48) and later
+    versions. Now all destructors are guaranteed to get called once
+    before getting called again due to non-NULL value appearing during
+    some destructor function execution.
+
+   SEE ALSO
+    TLSAlloc, TLSFree, TLSGetValue, TLSSetValue
+
+exec.library/TLSFree
+
+   NAME
+    TLSFree -- free Thread-Local Storage index (V51.46)
+
+   SYNOPSIS
+    TLSFree(index)
+    (sysv)
+
+    VOID TLSFree(ULONG);
+
+   FUNCTION
+    Deallocates a Thread-Local Storage index and returns it to the global
+    index pool.
+
+   INPUTS
+    index - Index to free. Must have been allocated with TLSAlloc
+            earlier. Passing TLS_INVALID_INDEX is safe and does nothing.
+
+   RESULT
+    none
+
+   NOTE
+    It is illegal to free a Thread-Local Storage index while it is still
+    in use. Unspecified bad things may happen if this is done. The caller
+    is responsible for ensuring that TLSFree is not called prematurely.
+
+   BUGS
+    MorphOS prior version 3.16 (exec 51.51) had a bug where this function
+    would not zero the index values for the currently running tasks. This
+    could lead to a destructor being called with wrong data in certain
+    rare use cases. To avoid this, the functions was changed to clear the
+    values related to this index.
+
+   SEE ALSO
+    TLSAlloc, TLSCallDestructors, TLSGetValue, TLSSetValue
+
+exec.library/TLSGetValue
+
+   NAME
+    TLSGetValue -- get the task specific value associated with a given
+                   Thread-Local Storage index (V51.46)
+
+   SYNOPSIS
+    value = TLSGetValue(index)
+    (sysv)
+
+    APTR TLSGetValue(ULONG);
+
+   FUNCTION
+    Return the task specific value currently associated with the given
+    Thread-Local Storage index. Initial value is NULL if not yet set with
+    TLSSetValue.
+
+   INPUTS
+    index - index to return value for.
+
+   RESULT
+    value - value associated with the current task.
+
+   NOTE
+    This function is safe to abort mid-execution: This means that there
+    are no global locks, nor does any state change during the execution
+    of this function. Typically you don't need to care about such issues
+    but in some specific instances this information is valueable.
+
+    This function is very fast.
+
+   SEE ALSO
+    TLSAlloc, TLSFree, TLSCallDestructors, TLSSetValue
+
+exec.library/TLSSetValue
+
+   NAME
+    TLSSetValue -- set the task specific value associated with a given
+                   Thread-Local Storage index (V51.46)
+
+   SYNOPSIS
+    success = TLSSetValue(index, value)
+    (sysv)
+
+    LONG TLSSetValue(ULONG, APTR);
+
+   FUNCTION
+    Set the task specific value associated with the given Thread-Local
+    Storage index.
+
+   INPUTS
+    index - index to set value for.
+    value - value to set.
+
+   RESULT
+    success - Non-zero if the value could be set, zero if out of
+              resources. Note that setting value to NULL will always
+              succeed.
+
+   WARNING
+    The result of this call must be checked and a viable error handling
+    path taken.
+
+   EXAMPLES
+
+    struct tlsdata
+    {
+        ULONG foo;
+        STRPTR bar;
+        /* ... */
+    };
+
+    extern ULONG tlsindex; /* Set & cleaned up elsewhere */
+
+    struct tlsdata *data = TLSGetValue(tlsindex);
+    if (data == NULL)
+    {
+        data = AllocVec(sizeof(*data), MEMF_CLEAR);
+        if (!data || !TLSSetValue(tlsindex, data))
+        {
+            if (data)
+            {
+                FreeVec(data);
+                data = NULL;
+            }
+        }
+    }
+
+    if (data)
+    {
+        /* Use the thread specific data. */
+        ...
+    }
+
+    ...
+
+    /* Thread specific data is no longer needed, free it. */
+
+    struct tlsdata *data = TLSGetValue(tlsindex);
+    if (data)
+    {
+        FreeVec(data);
+        TLSSetValue(tlsindex, NULL); /* Always succeeds */
+    }
+
+   NOTE
+    If a destructor is associated with the given Thread-Local Storage
+    index, it will be called with the final value of the index if not
+    NULL. If you do not wish the destructor to be called set the value
+    to NULL before terminating.
+
+    This function is very fast.
+
+   SEE ALSO
+    TLSAlloc, TLSFree, TLSCallDestructors, TLSSetValue
+
+exec.library/TypeOfMem
+
+    TypeOfMem --
+
+   SYNOPSIS
+
+    ULONG TypeOfMem( CONST APTR address );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/UserState
+
+    UserState --
+
+   SYNOPSIS
+
+    VOID UserState( APTR sysStack );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Vacate
+
+    Vacate --
+
+   SYNOPSIS
+
+    VOID Vacate( struct SignalSemaphore *sigSem, struct SemaphoreMessage *bidMsg );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/Wait
+
+    Wait --
+
+   SYNOPSIS
+
+    ULONG Wait( ULONG signalSet );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/WaitIO
+
+    WaitIO --
+
+   SYNOPSIS
+
+    BYTE WaitIO( struct IORequest *ioRequest );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+exec.library/WaitPort
+
+    WaitPort --
+
+   SYNOPSIS
+
+    struct Message *WaitPort( struct MsgPort *port );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   SEE ALSO
+
+   BUGS
+
+

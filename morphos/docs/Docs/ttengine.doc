@@ -1,0 +1,1295 @@
+TABLE OF CONTENTS
+
+ttengine.library/TT_AllocRequest
+ttengine.library/TT_CharPositions
+ttengine.library/TT_CloseFont
+ttengine.library/TT_DoneRastPort
+ttengine.library/TT_FreeFamilyList
+ttengine.library/TT_FreePixmap
+ttengine.library/TT_FreeRequest
+ttengine.library/TT_GetAttrsA
+ttengine.library/TT_GetPixmapA
+ttengine.library/TT_ObtainFamilyListA
+ttengine.library/TT_OpenFontA
+ttengine.library/TT_RequestA
+ttengine.library/TT_SetAttrsA
+ttengine.library/TT_SetFont
+ttengine.library/TT_Text
+ttengine.library/TT_TextExtent
+ttengine.library/TT_TextFit
+ttengine.library/TT_TextLength
+ttengine.library/background
+ttengine.library/font_database
+ttengine.library/TT_AllocRequest
+
+   NAME
+       TT_AllocRequest -- Allocates resources for TTEngine font requester.
+         (V6)
+
+   SYNOPSIS
+       requester = TT_AllocRequest ()
+
+       APTR TT_AllocRequest (VOID);
+
+   FUNCTION
+       Allocates resources used by TTEngine font requester. A taglist
+       returned by further TT_RequestA() is allocated here amongst other
+       resources. This call must be followed by TT_FreeRequest() call when
+       the taglist returned by TT_RequestA() is no longer needed.
+
+   INPUTS
+       none
+
+   RESULT
+       requester - pointer to TTEngine internal structure containing all the
+         allocated resources. Private data inside - do not touch please.
+         Returned value should be only used as a parameter to TT_RequestA()
+         and TT_FreeRequest() calls. Function can return NULL if resource
+         allocation fails.
+
+   EXAMPLE
+       see TT_RequestA().
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_RequestA(), TT_FreeRequest()
+
+ttengine.library/TT_CharPositions
+
+   NAME
+       TT_CharPositions -- Gets positons of characters in string in pixels (V4).
+
+   SYNOPSIS
+       length = TT_CharPositions(rastport, string, count, positions)
+                              A1        A0      D0
+
+       ULONG TT_CharPositions (struct RastPort*, APTR, ULONG, FLOAT *);
+
+   FUNCTION
+       Calculates the pixel width of given string written with current font.
+       Takes kerning into account. String will be mapped to Unicode using
+       current encoding. Fills an array of floats with the char positions in the string
+
+   INPUTS
+       rastport - render engine and font settings for this RastPort will be
+           used for calculations.
+       string - the length of this string will be calculated.
+       count - the string length in characters.
+        positions - an array of floats where the char positions will be stored. 32bit aligned
+
+   RESULT
+       length - the length of the string in pixels.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_TextLength(), TT_Text(), TT_OpenFontA()
+
+ttengine.library/TT_CloseFont
+
+   NAME
+       TT_CloseFont -- Closes TrueType font. (V4)
+
+   SYNOPSIS
+       TT_CloseFont (font)
+                     A0
+
+       VOID TT_CloseFont (APTR);
+
+   FUNCTION
+       Closes font opened by TT_OpenFontA()
+
+   INPUTS
+       font - the result of TT_OpenFontA(). Can be NULL, no action is taken
+           in the case.
+
+   RESULT
+       none
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_OpenFontA()
+
+ttengine.library/TT_DoneRastPort
+
+   NAME
+       TT_DoneRastPort -- Releases TTEngine resources associated to a
+         RastPort. (V5)
+
+   SYNOPSIS
+       TT_DoneRastPort (rastport)
+                        A1
+
+       VOID TT_DoneRastPort (struct RastPort*);
+
+   FUNCTION
+       Frees internal TTEngine resources associated with a RastPort.
+       TTEngine creates rendering environment for every RastPort at first
+       call of TT_SetFont() or TT_SetAttrs() for this RastPort. You should
+       free this environment before disposing RastPort (typically before
+       closing a window or screen). Leaving rendering environment not freed
+       has two drawbacks. Firstly it causes memory leak, this memory is
+       recovered however when ttengine.library is expunged. Secondly it is
+       possible that a new RastPort will be created at the same address as
+       disposed one. Then TTEngine will not create new rendering context but
+       use old instead, which can lead to some unexpected behaviour.
+
+   INPUTS
+       rastport - pointer to RastPort. Rendering environment for this
+         RastPort will be disposed. Can be NULL, in the case function does
+         nothing.
+
+   RESULT
+       none
+
+   EXAMPLE
+       font = TT_OpenFont( /* tags */ );
+       window = OpenWindowTags(NULL, /* tags */);
+       TT_SetFont(rport, font);   /* environment is created here */
+       TT_SetAttrs(rport, TT_Window, window, /* ... */);
+
+       /* you can call TT_SetAttrs() and TT_SetFont() as many times */
+       /* as you want */
+
+       TT_DoneRastPort(rport);   /* environment is disposed */
+       CloseWindow(window);      /* RastPort is disposed */
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_SetAttrsA(), TT_SetFont()
+
+ttengine.library/TT_FreeFamilyList
+
+   NAME
+       TT_FreeFamilyList -- Frees family list allocated with
+         TT_ObtainFamilyListA(). (V7)
+
+   SYNOPSIS
+       TT_FreeFamilyList (list)
+                          A0
+
+       VOID TT_FreeFamilyList (STRPTR*);
+
+   FUNCTION
+       Frees family table obtained by TT_ObtainFamilyListA(). You should
+       call this function when family table is no more needed.
+
+   INPUTS
+       list - pointer to family table, it is the result of
+         TT_ObtainFamilyTable() call. It can be NULL, the function just does
+         nothing in the case.
+
+   RESULT
+       none
+
+   EXAMPLE
+       See TT_ObtainFamilyListA().
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_ObtainFamilyListA()
+
+ttengine.library/TT_FreePixmap
+
+   NAME
+       TT_FreePixmap -- Releases grayscale pixmap. (V5)
+
+   SYNOPSIS
+       TT_FreePixmap (pixmap)
+                      A0
+
+       VOID TT_FreePixmap (struct TT_Pixmap*);
+
+   FUNCTION
+       Frees pixmap data and structure allocated by TT_GetPixmap().
+
+   INPUTS
+       pixmap - pointer to TT_Pixmap structure. May be NULL, function does
+         nothing in the case.
+
+   RESULT
+       none
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_GetPixmapA()
+
+ttengine.library/TT_FreeRequest
+
+   NAME
+       TT_FreeRequest -- Frees resources allocated for TTEngine font
+         request. (V6)
+
+   SYNOPSIS
+       TT_FreeRequest (request)
+                       A0
+
+       VOID TT_FreeRequest (APTR);
+
+   FUNCTION
+       Frees internal TTEngine resources allocated for a font request.
+       Taglist returned by TT_AllocRequestA() is also freed by this call,
+       so after it the taglist is no longer valid and must not be used or
+       referenced.
+
+   INPUTS
+       requester - pointer returned by previous call to TT_AllocRequest().
+         NULL is a valid value here, no action will be performed in the
+         case.
+
+   RESULT
+       none
+
+   EXAMPLE
+       See TT_RequestA().
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_AllocRequest(), TT_RequestA()
+
+ttengine.library/TT_GetAttrsA
+
+   NAME
+       TT_GetAttrsA -- Gets current font and render engine attributes (V4).
+
+   SYNOPSIS
+       count = TT_GetAttrsA (rastport, taglist)
+                             A1        A0
+
+       ULONG TT_GetAttrsA (struct RastPort*, struct TagItem*);
+
+       count = TT_GetAttrs (rastport, Tag1, ...)
+
+       ULONG TT_GetAttrs (struct RastPort*, Tag, ...);
+
+   FUNCTION
+       Gets current font or render engine attributes for given RastPort. The
+       value of every attribute is written to an ULONG pointed by ti_Data
+       field of the TagItem. Here is a list of attributes:
+
+       TT_Antialias - Current state of an antialias switch (on, off or
+          auto).
+
+       TT_FontAscender - This is a distance (in pixels) between the baseline
+         and top elements of the font (typically these elements are accents
+         of capital letters). NOTE: many shareware TT fonts have wrong ascen-
+         der value.
+
+       TT_FontDescender - This is a distance (in pixels) between the
+         baseline and bottom elements of the font (typically in letters 'p',
+         'q', 'g' etc.). NOTE: many shareware TT fonts have wrong descender
+         value. Descender value is typically negative (as bottom elements
+         usually are placed below the baseline).
+
+       TT_FontName - full font name as found in the font file. Pointer to a
+         NULL-terminated string is written. This string is localized if the
+         font file contains names in different languages. Language
+         precedence is loaded from "Preferred languages" table of
+         locale.library.
+
+       TT_FamilyName - font family name as found in the font file. Pointer
+         to a NULL-terminated string is written. This string is localized if
+         the font file contains names in different languages. Language
+         precedence is loaded from "Preferred languages" table of
+         locale.library.
+
+       TT_SubfamilyName - font subfamily name (typically describing font
+         variant like "italic" or "bold") as found in the font file. Pointer
+         to a NULL-terminated string is written. This string is localized if
+         the font file contains names in different languages. Language
+         precedence is loaded from "Preferred languages" table of
+         locale.library.
+
+       TT_Transparency - returns actual transparency setting.
+
+       TT_FontRealAscender - returns the height of capital letters in pixels.
+         Precisely it is the distance between the baseline and top of capital
+         letter.
+
+       TT_FontAccentedAscender - returns the height of capital accented
+         letters in pixels including accents (grave, acute, caron etc.).
+         Precisely it is the distance between the baseline and top of
+         accent.
+
+       TT_FontRealDescender - returns a distance between the baseline and
+         lowest pixels of letters like g, j, p, q, y.
+
+       TT_FontMaxTop - returns a distance between the baseline and the
+         topmost element of the whole font face.
+
+       TT_FontMaxBottom - returns a distance between the baseline and the
+         lowest element of the whole font face.
+
+       TT_FontDesignHeight - returns a distance between two baselines of
+         text as stored in the font file. This is the line spacing font is
+         designed for. Design height is usually greater than font size.
+
+       TT_FontBaseline (V6.7) - the same as TT_FontAccentedAscender.
+
+       TT_FontHeight (V6.7) - equal to TT_FontAccentedAscender +
+         TT_FontRealDescender.
+
+       TT_FontWidth (V6.7) - cursor horizontal advance for one character in
+         pixels. For monospaced fonts only, proportional ones return zero.
+
+       TT_FontFixedWidth (V6.7) - returns true if the loaded font is
+               monospaced.
+
+       TT_Gamma (V7.2) - adjustable gamma correction used for antialiasing.
+            After RGB alphablending gamma correction is applied to resulting
+            pixel colour according to x' = x ^ 1/gamma, where x is a RGB
+            component. TT_Gamma is 'gamma' exponent multiplied by 1000 to avoid
+            messing with floating point numbers. Default TT_Gamma is 2500 (2.5)
+            which is typical for CRT display. Default gamma exponent can be set
+            by user in 'ttengine.database' file.
+
+       TT_PrintMode (V10.10) - returns true if print mode is enabled.
+
+       TT_DestAlpha (V10.14) - returns current destination alpha mode.
+
+       NOTE: TT_FontAscender and TT_FontDescender are guarranted to fulfill
+       following formula: ascender - descender = font height.
+
+   INPUTS
+       rastport - attributes associated with this RastPort will be returned.
+       taglist - the list of attributes.
+
+   RESULT
+       counter - the count of recognized tags.
+
+   NOTES
+       Data returned are valid only until TT_CloseFont() call.
+
+   BUGS
+
+   SEE ALSO
+       TT_OpenFontA(), TT_SetAttrsA()
+
+ttengine.library/TT_GetPixmapA
+
+   NAME
+       TT_GetPixmapA -- Renders string to 8-bit grayscale pixel map. (V5)
+
+   SYNOPSIS
+       pixmap = TT_GetPixmapA (font, string, count, taglist)
+                                   A1    A2      D0     A0
+
+       struct TT_Pixmap *TT_GetPixmapA (APTR, APTR, ULONG, struct TagItem*);
+
+       pixmap = TT_GetPixmap (font, string, count, Tag1, ...)
+
+       ULONG TT_GetPixmap (APTR, APTR, ULONG, Tag, ...);
+
+   FUNCTION
+       Renders a string to 8-bit grayscale pixel map. Function may be useful
+       if the string image is additionally manipulated before rendering into
+       RastPort (e.g. in image processing software). Pixel map is a
+       continuous memory area where one byte represents one gray pixel (0 is
+       black, 255 is white). The first byte is the upper left pixmap corner.
+       Pixels are placed left-to-right in rows, rows are placed
+       top-to-bottom. There is no row padding, it means pixmap modulo is
+       always the same as pixmap width and pixmap data size is equal to width
+       * height. The function accepts following tags:
+
+       TT_Antialias - (BOOL) - controls antialiasing (on, off or
+         automatic):
+         TT_Antialias_Off - turns antialias off
+         TT_Antialias_On - turns antialias on
+         TT_Antialias_Auto (default) - antialias state depends on font
+           size. Typically sizes of 9 or less pixels are antialiased, sizes
+           from 10 to 19 pixels are not antialiased, sizes of 20 of more
+           pixels are antialiased. These settings can be changed in the font
+           database separately for every font face.
+
+       TT_Encoding - selects font encoding table to be used:
+         TT_Encoding_Default - loads encoding table from "ENV:ttfcodepage"
+           file, compatible with ttf.library. If no such file is found,
+           ISO-8859-1 encoding (Amiga default) is used.
+         TT_Encoding_ISO8859_x - where 'x' can be one of 1, 2, 3, 4, 5, 6,
+           7, 8, 9, 10, 11, 13, 14, 15, 16. One of 8-bit encodings defined
+           in ISO-8859 normative.
+         TT_Encoding_UTF16_BE - 16-bit Unicode, big endian (68k/PPC style).
+           Endian mark (0xFFFE) is ignored.
+         TT_Encoding_UTF32_BE - 32-bit Unicode, big endian (68k/PPC style).
+           Endian mark (0x0000FFFE) is ignored.
+         TT_Encoding_UTF16_LE - 16-bit Unicode, little endian (x86 style).
+           Endian mark (0xFFFE) is ignored.
+         TT_Encoding_UTF32_LE - 32-bit Unicode, little endian (x86 style).
+           Endian mark (0xFFFE0000) is ignored.
+         TT_Encoding_UTF16 - 16-bit Unicode, with endian determined by
+           endian mark. If no endian mark encountered big endian is assumed.
+         TT_Encoding_UTF32 - 32-bit Unicode, with endian determined by
+           endian mark. If no endian mark encountered big endian is assumed.
+         TT_Encoding_UTF8 - 8-bit Unicode encapsulation (RFC 2279).
+
+       TT_CustomEncoding - select custom 8-bit encoding table. Tag data
+         should point to 256 UWORDs, every containing one 16-bit big endian
+         Unicode character code. 8-bit character is used as an index of the
+         table. This tag overrides TT_Encoding regardless of its position in
+         the taglist if both are specified in the same taglist.
+
+       TT_ScaleX - a floating point (IEEE single precision) horizontal scale
+         factor. Its absolute value will be limited to <0.01, 100> range. It
+         may be negative (it means horizontal mirror around starting pen
+         position, string will be rendered to the left).
+
+       TT_ScaleY - a floating point (IEEE single precision) vertical scale
+         factor. Its absolute value will be limited to <0.01, 100> range. It
+         may be negative (it means vertical mirror around the baseline,
+         string will be rendered mostly under the baseline).
+
+       TT_DiskFontMetrics - changes TTEngine rendering to be diskfont-like.
+         In this mode pixmap area extends vertically between
+         TT_FontAccentedAscender and TT_FontRealDescender and as such is
+         equal to TT_FontHeight. Also if the left bearing of the first
+         glyph or the right bearing of the last glyph is negative, pixmap
+         area is extended to the left or right accordingly. Note however,
+         glyphs higher than TT_FontAccentedAscender or extending
+         below TT_FontRealDescender will be clipped. This mode is useful
+         especially for text-oriented applications using JAM2 draw mode.
+         Defaults to FALSE.
+
+   INPUTS
+       font - font pointer obtained with TT_OpenFont().
+       string - pointer to string to be rendered to a pixmap.
+       count - length of the string in characters (only equal to bytes in
+         pure 8-bit encodings).
+       taglist - list of rendering attributes.
+
+   RESULT
+       pixmap - structure describing a pixmap defined as follows:
+
+       struct TT_Pixmap
+         {
+           ULONG  ttp_Size;
+           ULONG  ttp_Width;
+           ULONG  ttp_Height;
+           UBYTE *ttp_Data;
+         };
+
+       ttp_Size is the size of the structure (not the pixmap) containing
+       useful informations including ttp_Size itself. For V5 pixmaps the size
+       is 16 bytes. ttp_Width is pixmap width (and modulo) in bytes.
+       ttp_Height is a number of pixmap rows. ttp_Data points to actual
+       pixmap data.
+
+       Function returns NULL if pixmap allocation fails.
+
+   NOTES
+       TT_Pixmap structure is READ ONLY.
+
+   BUGS
+
+   SEE ALSO
+       TT_FreePixmap(), TT_OpenFontA(), TT_SetAtrrsA()
+
+ttengine.library/TT_ObtainFamilyListA
+
+   NAME
+       TT_ObtainFamilyListA -- Obtains a list of available font families.
+         (V7)
+
+   SYNOPSIS
+       list = TT_ObtainFamilyListA (taglist)
+                             A0
+
+       STRPTR* TT_ObtainFamilyListA (struct TagItem*);
+
+   FUNCTION
+       Creates a NULL-terminated table of pointers to strings. Every pointer
+       points to a NULL-terminated string being a name of font family. Such
+       a table can be directly passed to MUI cycle or list class. Family
+       table is filtered according to passed tasks. The table is a local
+       copy so can be modified by calling application (but you must not
+       increase the size!).
+
+   INPUTS
+       taglist - a list of filter tags. Currently defined tags are:
+
+         TTRQ_FixedWidthOnly - if TRUE only monospaced families are listed.
+           Defaults to FALSE.
+
+       NULL taglist is valid input and is treated as empty taglist.
+
+   RESULT
+       list - pointer to a NULL-terminated table of pointers to names. The
+         function can return NULL if memory allocation fails or there is no
+         families in the database.
+
+   EXAMPLE
+       Following example prints out all avaliable families to the standard
+       output:
+
+       STRPTR *families;
+
+       if (families = TT_ObtainFamilyListA(NULL))
+       {
+         STRPTR *p = families;
+
+         while (*p) Printf("%s\n", *p++);
+         TT_FreeFamilyList(families);
+       }
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_FreeFamilyList()
+
+ttengine.library/TT_OpenFontA
+
+   NAME
+       TT_OpenFontA -- Opens TrueType font. (V4)
+
+   SYNOPSIS
+       font = TT_OpenFontA (taglist)
+                               A0
+
+       APTR TT_OpenFontA (struct TagItem*);
+
+       font = TT_OpenFont (Tag1, ...)
+
+       APTR TT_OpenFont (Tag, ...);
+
+   FUNCTION
+       Opens a TrueType font preparing it to use with any RastPort. Font may
+       be specified directly as a path to "*.ttf" file, or indirectly via
+       set of attributes, database search will be performed for this set and
+       best matching font will be opened. It is graphics.library OpenFont()
+       counterpart but taglist is used instead TextAttr structure.
+
+   INPUTS
+       taglist - a list of tags containing requested font attributes.
+              Following tags are recognized:
+         TT_FontFile - this tag is a pointer to string containing a full
+              path to TrueType font file to be opened. This tag allows for
+              overriding database search and match. That means
+              TT_FamilyTable, TT_FontStyle and TT_FontWeight are ignored if
+              TT_FontFile is specified. Useful for opening application
+              specific fonts, containing for example musical notes or some
+              other kind of symbols. This tag has no default value.
+         TT_FamilyTable - NULL-terminated table of pointers to font family
+              names from the most desired to the last resort fallback. It is
+              intended for easy implementing things like HTML 'FONT FACE'
+              attribute. You can use real family names here, as well as
+              generic names: 'serif', 'sans-serif', 'monospaced', 'cursive',
+              'fantasy', and 'default', especially useful as a fallbacks.
+              Family names are case insensitive.
+              The default value for the tag is {"default", NULL};
+         TT_FontSize - font size in pixels defined as the distance between
+              baselines of two following text lines. The default value for
+              this tag is 14 pixels.
+         TT_FontStyle - there are three styles defined:
+              TT_FontStyle_Regular (default),
+              TT_FontStyle_Italic,
+         TT_FontWeight - defined with Cascading Style Sheets manner as a
+              number from 0 (the lightest face) to 999 (the heaviest face).
+              You can use TT_FontWeight_Normal (equal to 400) and
+              TT_FontWeight_Bold (equal to 700) shortcuts.
+              TT_FontWeight_Normal is the default value.
+         TT_FixedWidth - function checks if the opened font is
+              monospaced (fixed width). If it isn't, font is closed and
+              TT_OpenFont() returns NULL. Default value for this tag is
+              FALSE. (V6.7)
+
+   RESULT
+       success - font pointer (for use with TT_SetFont() and TT_CloseFont())
+                 if the font has been opened successfully, NULL
+                 otherwise. This function can fail for four reasons:
+                 1. There is no matching face in the database (NOTE: even
+                    'default' can fail if not defined in the database!)
+                 2. File not found or malformed.
+                 3. Zero font size.
+                 4. No memory for requested (too big?) size.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_SetFont(), TT_CloseFont(), font_database
+
+ttengine.library/TT_RequestA
+
+   NAME
+       TT_RequestA -- Opens and handles TTEngine font requester window. (V6)
+
+   SYNOPSIS
+       attrlist = TT_RequestA (requester, taglist)
+                               A0         A1
+
+       struct TagItem* TT_RequestA (APTR, struct TagItem*);
+
+       attrlist = TT_Request (requester, Tag1, ...)
+
+       struct TagItem* TT_Request (APTR, Tag, ...);
+
+   FUNCTION
+
+   INPUTS
+       requester - pointer to requester resources returned by
+         TT_AllocRequest(). Can be NULL, in the case no action is performed
+         and function returns NULL.
+
+       taglist - defines requester properties and gadgets. If NULL, empty
+         taglist is assumed (empty taglist is valid, all tags are optional).
+         Following tags are recognized:
+
+         TTRQ_Window (struct Window*) - Parent window of requester. If no
+           TTRQ_Screen tag is specified, the window structure is used to
+           determine on which screen to open the requesting window.
+
+         TTRQ_PubScreenName (STRPTR) - Name of a public screen to open on.
+           This overrides the screen used by TTRQ_Window.
+
+         TTRQ_Screen (struct Screen*) - Screen on which to open the
+           requester. This overrides the screen used by TTRQ_Window or by
+           TTRQ_PubScreenName.
+
+         TTRQ_TitleText (STRPTR) - Title to use for the requesting window.
+           Engilsh default is "Select TrueType font".
+
+         TTRQ_PositiveText (STRPTR) - Label of the positive gadget in the
+           requester. English default is "OK".
+
+         TTRQ_NegativeText (STRPTR) - Label of the negative gadget in the
+           requester. English default is "Cancel".
+
+         TTRQ_InitialLeftEdge (WORD) - Suggested left edge of requesting
+           window. Default is to center the window on the screen.
+
+         TTRQ_InitialTopEdge (WORD) - Suggested top edge of requesting
+           window. Default is to center the window on the screen.
+
+         TTRQ_InitialWidth (WORD) - Suggested width of requesting window.
+           Default is 200 or 25% of screen width whichever is greater.
+
+         TTRQ_InitialHeight (WORD) - Suggested height of requesting window.
+           Default is 200 or 50% of screen height whichever is greater.
+
+         TTRQ_DoSizes (BOOL) - Controls font size listview and string. If
+           FALSE, size listview is not displayed. Defaults to TRUE to be
+           consistent with ASL font requester.
+
+         TTRQ_DoStyle (BOOL) - Controls font style (regular / italic) cycle
+           gadget. Defaults to FALSE (no style cycle gadget).
+
+         TTRQ_DoWeight (BOOL) - Controls font weight cycle gadgets. TTEngine
+           distincts 9 font weights enumerated as 100, 200, ... 900
+           according to Cascading Style Sheets specification. Of course not
+           every font has all the 9 weights, cycle gadget always show only
+           available ones. Defaults to FALSE (no weight cycle gadget).
+
+         TTRQ_Activate (BOOL) - Specifies if requester window is to be
+           activated after opening. Defaults to TRUE.
+
+         TTRQ_FixedWidthOnly (BOOL) - Requester displays only monospaced
+           fonts. Defaults to FALSE.
+
+   RESULT
+       attrlist - a list of font attributes. You should pass it to
+         TT_OpenFontA() and then to TT_SetAttrsA() to have a font open
+         exactly matching user choice. Taglist is valid until you call
+         TT_FreeRequest().
+
+   EXAMPLE
+       APTR font, request;
+       struct RastPort *rp;    /* initialized elsewhere */
+
+       request = TT_AllocRequest();
+       attrlist = TT_Request(request, TAG_END);
+       if (attrlist)
+         {
+           if (font = TT_OpenFontA(attrlist))
+             {
+                TT_SetAttrsA(rp, attrlist));
+                if (TT_SetFont(rp, font))
+                  {
+                     /* use the font */
+                  }
+                TT_DoneRastPort(rp);
+             }
+           TT_CloseFont(font);
+         }
+       TT_FreeRequest(request);
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_SetAttrsA(), TT_SetFont(), TT_OpenFontA(), TT_SetAttrsA().
+
+ttengine.library/TT_SetAttrsA
+
+   NAME
+       TT_SetAttrsA -- Sets rendering engine and font attributes. (V4)
+
+   SYNOPSIS
+       count = TT_SetAttrsA (rastport, taglist)
+                             A1        A0
+
+       ULONG TT_SetAttrsA (struct RastPort*, struct TagItem*);
+
+       count = TT_SetAttrs (rastport, Tag1, ...)
+
+       ULONG TT_SetAttrs (struct RastPort*, Tag, ...);
+
+   FUNCTION
+       Sets render engine settings for given RastPort. Every following
+       TrueType render and metrics calls for this RastPort will use these
+       settings. Here is a list of attributes:
+
+       TT_ColorMap - (struct ColorMap*) - ColorMap used to convert pen
+         number to RGB color value.
+
+       TT_Screen - (struct Screen*) - useful shortcut for TT_ColorMap,
+         automatically sets screen ColorMap.
+
+       TT_Window - (struct Window*) - useful shortcut for TT_ColorMap,
+         automatically sets window ColorMap.
+
+       TT_Antialias - controls antialiasing (on, off or automatic):
+         TT_Antialias_Off - turns antialias off
+         TT_Antialias_On - turns antialias on
+         TT_Antialias_Auto (default) - antialias state depends on font
+           size. Typically sizes of 9 or less pixels are antialiased, sizes
+           from 10 to 19 pixels are not antialiased, sizes of 20 of more
+           pixels are antialiased. These settings can be changed in the font
+           database separately for every font face.
+
+       TT_Encoding - selects font encoding table to be used:
+         TT_Encoding_Default - loads encoding table from "ENV:ttfcodepage"
+           file, compatible with ttf.library. If no such file is found,
+           ISO-8859-1 encoding (Amiga default) is used.
+         TT_Encoding_ISO8859_x - where 'x' can be one of 1, 2, 3, 4, 5, 6,
+           7, 8, 9, 10, 11, 13, 14, 15, 16. One of 8-bit encodings defined
+           in ISO-8859 normative.
+         TT_Encoding_UTF16_BE - 16-bit Unicode, big endian (68k/PPC style).
+           Endian mark (0xFEFF) is ignored.
+         TT_Encoding_UTF32_BE - 32-bit Unicode, big endian (68k/PPC style).
+           Endian mark (0x0000FEFF) is ignored.
+         TT_Encoding_UTF16_LE - 16-bit Unicode, little endian (x86 style).
+           Endian mark (0xFFFE) is ignored.
+         TT_Encoding_UTF32_LE - 32-bit Unicode, little endian (x86 style).
+           Endian mark (0xFFFE0000) is ignored.
+         TT_Encoding_UTF16 - 16-bit Unicode, with endian determined by
+           endian mark. If no endian mark encountered big endian is assumed.
+         TT_Encoding_UTF32 - 32-bit Unicode, with endian determined by
+           endian mark. If no endian mark encountered big endian is assumed.
+         TT_Encoding_UTF8 - 8-bit Unicode encapsulation (RFC 2279).
+
+       TT_CustomEncoding - select custom 8-bit encoding table. Tag data
+         should point to 256 UWORDs, every containing one 16-bit big endian
+         Unicode character code. 8-bit character is used as an index of the
+         table. This tag overrides TT_Encoding regardless of its position in
+         the taglist if both are specified in the same taglist.
+
+       TT_Transparency - Allows for rendering transparent text (the
+         background shines through the text). 0 value means no transparency
+         (this is the default), 255 is maximum transparency. Since V10.15 a
+         special value of TT_Transparency_UseRastPort can be used. In this
+         case the actual transparency will be picked from the current values
+         set for the rastport.
+
+       TT_ScaleX - a floating point (IEEE single precision) horizontal scale
+         factor. Its absolute value will be limited to <0.01, 100> range. It
+         may be negative (it means horizontal mirror around starting pen
+         position, string will be rendered to the left).
+
+       TT_ScaleY - a floating point (IEEE single precision) vertical scale
+         factor. Its absolute value will be limited to <0.01, 100> range. It
+         may be negative (it means vertical mirror around the baseline,
+         string will be rendered mostly under the baseline).
+
+       TT_SoftStyle - controls software generated font modifications. Any of
+         software styles can be combined (OR-ing the values).
+
+         TT_SoftStyle_None - clears all software styles.
+         TT_SoftStyle_Underlined - boolean tag controlling text underline.
+         TT_SoftStyle_DblUnderlined - boolean tag controlling text double
+           underline. Combining it with TT_Underlined gives one thick line.
+         TT_SoftStyle_Overstriked - boolean tag controlling text overstriked
+           line.
+         TT_SoftStyle_DblOverstriked - boolean tag controlling text
+           overstriked double line. Combining it with TT_Overstriked gives
+           one thick line.
+
+       TT_Foreground - allows for using direct RGB value of foreground color
+         instead of RastPort 'A' pen. On LUT screens this tag will be
+         ignored. Special value TT_Foreground_UseRastPort returns foreground
+         color control back to the RastPort and its 'A' pen.
+
+       TT_Background - allows for using direct RGB value of background color
+         (used in JAM2 drawmode only) instead of RastPort 'B' pen. On LUT
+         screens this tag will be ignored. Special value
+         TT_Background_UseRastPort returns background color control back to
+         the RastPort and its 'B' pen.
+
+       TT_Gamma - adjustable gamma correction used for antialiasing. After
+         RGB alphablending gamma correction is applied to resulting pixel
+         colour according to x' = x ^ 1/gamma, where x is a RGB component.
+         TT_Gamma is 'gamma' exponent multiplied by 1000 to avoid messing
+         with floating point numbers. Default TT_Gamma is 2500 (2.5) which
+         is typical for CRT display. Default gamma exponent can be set by
+         user in 'ttengine.database' file.
+
+       TT_DiskFontMetrics - changes TTEngine rendering to be diskfont-like.
+         In this mode JAM2 filled area extends vertically between
+         TT_FontAccentedAscender and TT_FontRealDescender and as such is
+               equal to TT_FontHeight. Also if the     left bearing of the first
+               glyph or the right bearing of the last glyph is negative, JAM2
+               fill area is extended to the left or right accordingly. Note
+         however, glyphs higher than TT_FontAccentedAscender or extending
+         below TT_FontRealDescender will be clipped. This mode is useful
+         especially for text-oriented applications using JAM2 draw mode.
+         Defaults to FALSE.
+
+       TT_PrintMode (V10.10) - (BOOL) - Ignore visual color correction needed
+         for a display device. When set to TRUE the possibly configured
+         subpixel color correction is not applied. This is useful when
+         generating text suitable for printing for example.
+         FALSE (default) means that subpixel color correction is applied if
+         configured globally.
+
+       TT_DestAlpha (V10.14) - Controls destination alpha value on 32-bit
+         target bitmaps. Has no effect if target bitmap has no alpha channel.
+         One of:
+           TT_DestAlpha_UseRastPort
+                             - Set alpha according to rastport attributes at
+                               the of rendering. (default)
+           TT_DestAlpha_One  - Set all written pixels to 0xff alpha.
+           TT_DestAlpha_Dst  - Keep destination alpha unchanged.
+           TT_DestAlpha_Src  - Use source alpha. For JAM2 this is sets alpha
+                               for all pixels, but JAM1 it is only set it for
+                               the modified pixels.
+           TT_DestAlpha_Mix  - Mix destination alpha with the source.
+         Note that you can query whether this feature is supported or not by
+         checking the return value from TT_GetAttrsA / TT_SetAttrsA: if it
+         is 0 when using this tag alone, the feature is not supported (likely
+         due to old library being used). If your application depends on this
+         feature for correct operation it is good practice to notify the user
+         to upgrade rather than rendering wrong output.
+
+   INPUTS
+       rastport - attributes will be set for this RastPort.
+       taglist - the list of attributes.
+
+   RESULT
+       counter - the count of recognized tags.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_OpenFontA(), TT_Text(), TT_GetAttrs()
+
+ttengine.library/TT_SetFont
+
+   NAME
+       TT_SetFont -- Sets TrueType font for a RastPort. (V4)
+
+   SYNOPSIS
+       TT_SetFont (rastport, font)
+                   A1        A0
+
+       BOOL TT_SetFont (struct RastPort*, APTR);
+
+   FUNCTION
+       Sets a font previously opened with TT_OpenFontA() for use with given
+       RastPort. All further calls of text rendering or metrics function for
+       this RastPort will use font set.
+
+   INPUTS
+       rastport - The font will be set for this RastPort.
+       font - Pointer returned by TT_OpenFontA(). May be NULL, function
+           returns immediately in the case.
+
+   RESULT
+       TRUE if success, false otherwise.
+
+   EXAMPLE
+       /* use two fonts to render in one RastPort */
+
+       APTR times, arial;
+
+       times = TT_OpenFont(
+          TT_FamilyTable, (ULONG){"Times", "serif", "default", NULL},
+          TT_FontSize, 26,
+       TAG_END);
+
+       arial = TT_OpenFont(
+          TT_FamilyTable, (ULONG){"Arial", "sans-serif", "default", NULL},
+          TT_FontSize, 22,
+          TT_FontWeight, TT_FontWeight_Bold,
+       TAG_END);
+
+       if (times && arial)
+         {
+           SetAPen(win->RPort, 1);
+           SetDrMd(win->RPort, JAM1);
+           Move(win->RPort, 100, 100);
+           TT_SetAttrs(win->RPort, TT_Window, win, TAG_END);
+
+           if (TT_SetFont(win->RPort, times))
+             TT_Text(win->RPort, "Times 26 points", 15);
+           if (TT_SetFont(win->RPort, arial))
+             TT_Text(win->RPort, "Arial 22 points", 15);
+         }
+       if (arial) TT_CloseFont(arial);
+       if (times) TT_CloseFont(times);
+
+   NOTES
+     Function can fail returning FALSE if:
+     1. RastPort pointer is NULL.
+     2. Font pointer is NULL.
+     3. Font pointer is not found on opened fonts list (it means the pointer
+        was not obtained as a result of TT_OpenFontA() call).
+     4. Memory allocation during environment creation fails.
+
+   BUGS
+
+   SEE ALSO
+       TT_OpenFontA(), TT_SetAttrsA(), TT_CloseFont()
+
+ttengine.library/TT_Text
+
+   NAME
+       TT_Text -- Renders string into RastPort. (V4)
+
+   SYNOPSIS
+       TT_Text (rastport, string, count)
+                A1        A0      D0
+
+       VOID TT_Text (struct RastPort*, APTR, ULONG);
+
+   FUNCTION
+       Renders the string using current ttengine.library settings, and
+       current RastPort settings (pen, drawmode). String is rendered at
+       current RastPort (x, y) position, where 'y' means position of font
+       baseline. String is converted to Unicode according to
+       current (set by TT_SetAttrs()) encoding table.
+
+   INPUTS
+       rastport - Target RastPort for rendering.
+       string - String to render to (need not to be NULL terminated).
+       count - How many characters to render (note that NULL code will
+           be rendered as well).
+
+   RESULT
+       none
+
+   EXAMPLE
+       /* write a text with pen 1 and transp. background at (100, 100) */
+       /* rendering is done to a system window                         */
+
+       SetAPen(win->RPort, 1);
+       SetDrMd(win->RPort, JAM1);
+       Move(win->RPort, 100, 100);
+       TT_SetAttrs(win->RPort, TT_Window, win, TAG_END);
+       TT_Text(win->RPort, "some text", 9);
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_OpenFontA(), TT_SetAttrsA()
+
+ttengine.library/TT_TextExtent
+
+   NAME
+       TT_TextExtent -- Determine raster extent of text data. (V4)
+
+   SYNOPSIS
+       TT_TextExtent (rastport, text, count, extent)
+                      A1        A0    D0:16  A2
+
+       VOID TT_TextExtent (struct RastPort*, APTR, WORD,
+           struct TextExtent*);
+
+   FUNCTION
+       Computes dimensions and coordinates of smallest rectangle containing
+       on the whole given text rendered with current settings. TextExtent
+       structure fields have following meaning:
+
+       te_Width - Horizontal advance of RastPort pen position. The same as
+           TT_TextLength() call result.
+       te_Height - Just current font height.
+       te_Extent.MinX - The horizontal distance from text start point to the
+           leftmost pixel rendered. May be negative, it means that some
+           pixels will be plotted before the start point.
+       te_Extent.MaxX - The horizontal distance from text start point to the
+           rightmost pixel rendered.
+       te_Extent.MinY - The vertical distance from text start point to the
+           topmost pixel rendered. Always negative, do not neccesarily equal
+           to -TTFA_Ascender.
+       te_Extent.MaxY - The vertical distance from text start point to the
+           lowermost pixel rendered. Typically positive if anything is to be
+           drawn below the baseline.
+
+   INPUTS
+       rastport - this rastport settings (font, size, style etc.) will be
+           used for calculations.
+       text - a string (not neccesarily NULL-terminated) to compute the
+           rectangle for.
+       count - length of the string in characters.
+       extent - pointer to TextExtent structure - it will be filled with
+           data.
+
+   RESULT
+       No retrurn value. TextExtent structure is filled with data.
+
+   NOTES
+       This function is almost identical to graphics.library/TextExtent().
+       It even receives parameters in the same registers.
+
+       Do not assume neither horizontal extents sum up to te_Width, nor
+       vertical ones sum up to font height.
+
+   BUGS
+
+   SEE ALSO
+       TT_OpenFontA(), graphics.library/TextExtent()
+
+ttengine.library/TT_TextFit
+
+   NAME
+       TT_TextFit -- Count characters that will fit in a given extent. (V4)
+
+   SYNOPSIS
+       characters = TT_TextFit (rastport, string, count, extent,
+                                A1        A0      D0:16  A2
+           constr_extent, direction, width, height)
+           A3             D1         D2     D3
+
+       ULONG TT_TextFit (struct RastPort*, APTR, UWORD, struct TextExtent*,
+           struct TextExtent*, WORD, UWORD, UWORD);
+
+   FUNCTION
+       Computes how many characters of given NULL-terminated string rendered
+       with current settings will fit into given extent. Also calculates an
+       extent for this fitting part of the string. Function can fit from the
+       beginning of the string to the right, or from the end of the string
+       to the left. If 'constr_extent' is non NULL, string is fitted only
+       against it, constraining 'width' and 'height' are ignored.
+
+   INPUTS
+       rastport - calculations will be performed using this rastport
+           settings (font, size, styles etc.).
+       string - A string (not neccesarily NULL-terminated) to fit.
+       count - string length in characters.
+       extent - Pointer to TextExtent structure - it will be filled with
+           dimensions of fitted part of the string. May be filled with all
+           zeros if no fit is possible at all (e.g. height is to small).
+       constr_extent - Pointer to already filled TextExtent structure. Part
+           of the string will fit into this extent. It is not modified by
+           function. May be NULL, 'width' and 'height' will be used as
+           constraints.
+       direction - When equal to 1 string will be fitted starting from it's
+           beginning to the rigth. When equal to -1, string will be fitted
+           starting from it's end to the left.
+       width - If 'constr_extent' is NULL, the string width will be compared
+           with this parameter. Ignored otherwise. Note that it is exact
+           pixel width of string, not cursor advance.
+       height - If 'constr_extent' is NULL, the string height will be
+           compared with this parameter. Ignored otherwise. Note that it is
+           exact pixel height, not font height (it is equal to font height
+           if TT_DiskfontMetrics is TRUE).
+
+   RESULT
+       characters - the length of fitting string part. May be zero if no fit
+           found.
+
+   NOTES
+       This function is almost identical to graphics.library/TextFit().
+       It even receives parameters in the same registers.
+
+       Do not assume neither horizontal extents sum up to te_Width, nor
+       vertical ones sum up to font height (in returned extent).
+
+   BUGS
+       Fitting in reverse direction (from end to beginning) does not work
+       yet, the 'direction' parameter is currently ignored and fitting
+       is done from beginning to the end always.
+
+   SEE ALSO
+       TT_OpenFontA(), graphics.library/TextFit()
+
+ttengine.library/TT_TextLength
+
+   NAME
+       TT_TextLength -- Gets string length in pixels (V4).
+
+   SYNOPSIS
+       length = TT_TextLength(rastport, string, count)
+                              A1        A0      D0
+
+       ULONG TT_TextLength (struct RastPort*, APTR, ULONG);
+
+   FUNCTION
+       Calculates the pixel width of given string written with current font.
+       Takes kerning into account. String will be mapped to Unicode using
+       current encoding.
+
+   INPUTS
+       rastport - render engine and font settings for this RastPort will be
+           used for calculations.
+       string - the length of this string will be calculated.
+       count - the string length in characters.
+
+   RESULT
+       length - the length of the string in pixels.
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       TT_Text(), TT_OpenFontA()
+
+ttengine.library/background
+
+
+   PURPOSE
+
+   The library is fast, AmigaOS friendly TrueType render engine. It has
+   nothing to do with Amiga outline font system. This system has a lot of
+   limitations which make it useless for high speed and quality text output.
+   If someone wants an integration of TrueType with AmigaOS bullet.library
+   like outline font system, should consider using ttf.library. This library
+   opens TrueType font by itself and renders high quality glyphs directly
+   into any RastPort.
+
+   FREETYPE2 BASED
+
+   The render engine of the library is based on FreeType2 project
+   (http://www.freetype.org). This version of ttengine.library uses 2.1.3
+   FreeType build.
+
+   REQUIREMENTS
+
+   - OS 3.0+.
+   - 68020 or better processor.
+   - for antialiased output graphics board with at least 15-bit screenmode
+     and RTG system: CyberGraphX 3.x+ or Picasso96 2.x+.
+
+   FEATURES
+
+   The library expands FreeType functionality making usage of TrueType fonts
+   easy and comfortable. Below you can find key features:
+
+   - renders whole strings (not single glyphs) with kerning.
+   - antialiasing to any (not neccesarily uniform color) background.
+   - system compatible output to any (including planar) RastPort.
+   - supports JAM1. JAM2, INVERSVID, COMPLEMENT RastPort modes.
+   - supports 8-bit to Unicode mapping with "ENV:ttfcodepage" table
+     compatible with ttf.library.
+   - allows for direct 16-bit Unicode string rendering.
+   - easy to use, taglist based API almost identical to graphics.library
+     font API.
+   - efficient system-wide glyph cache system.
+
+   CACHE SYSTEM
+
+   The library uses my own (not that experimental FreeType one) cache system
+   speeding up strings rendering alot. The cache is system-wide, it means it
+   is common to every application using ttengine.library. Only used glyphs of
+   given font face are cached. If the library encounters cache miss, missing
+   glyph is loaded and rasterized on the fly. Cache system is totally
+   transparent to the library user, so there are no cache functions in the
+   library API. Cache uses one single Exec memory pool avoiding memory
+   fragmentation.
+
+ttengine.library/font_database
+
+   GENERAL INFORMATION
+
+   'ttengine.database' is a plain text file (placed in 'ENV:' directory)
+   containing informations about TrueType fonts available in the system.
+   The database is generated and edited with TTManager usually, some tweaks
+   can be done by hand however. Every line contains one keyword followed by
+   parameter value. Name and value can be separated by space(s) or equality
+   sign, exactly the same as shell command parameters (to say more -
+   database is parsed by the same ReadArgs() system call as shell command
+   parameters are). Parameter values containing spaces should be quoted.
+   Here are some examples:
+
+   FAMILY Tahoma
+   FAMILY=Times
+   FAMILY = "Times New Roman"
+   FAMILY "Weird Font"
+
+   KEYWORDS
+
+   FAMILY - defines the name used for font opening. All variants of the font
+   (italic, bold, black, heavy, light, demi etc.) will have the same family
+   name. Family names (and aliases described below) are case insensitive.
+
+   ALIAS - defines another name for the same family. It generally has three
+   purposes:
+
+   1. Similar names for the same font, like "Times", "TimesNewRoman" and
+   "Times New Roman".
+
+   2. One replacement font for some very similar ones, for example
+   "Helvetica" and "Switzerland" can be aliased to "Arial".
+
+   3. Generic names like "default", "serif", "sans-serif", "monospaced". An
+   application can request generic name without specific family name, or
+   generic font can be used as a fallback if given name can't be found in
+   the database. For example you can alias "monospaced" to "Courier", and an
+   application (be it CSS compatible HTML viewer) can request
+   'LucidaConsole, monospaced'. If there is no LucidaConsole font in the
+   system, Courier will be used. The same way you can alias any font to any
+   other, for example Times to Arial, this makes not much sense however.
+   'default' font can be used as a last resort.
+
+   FILE - defines single TrueType font file and its attributes, which are:
+     FILE itself - defines a path to the font file. Font files can be placed
+       anywhere in the filesystem(s). There is no default value for the
+       attribute, it must be given explicitly.
+     WEIGHT - defines font weight in Cascading Style Sheets manner, where 0
+       means the lightest and 999 means the heaviest weight. 400 is typical
+       value for normal weight, 700 for bold. Default value is 400 (normal).
+     STYLE - "regular" or "italic" for italic and oblique faces. Default
+       value is "regular".
+     SMOOTHSMALL - controls antialiasing of small sizes. Any sizes smaller or
+       equal to SMOOTHSMALL will be antialiased. Note: can be overriden by
+       application. Default value is 9.
+     SMOOTHBIG - controls antialiasing of big sizes. Any sizes bigger or
+       equal to SMOOTHBIG will be antialiased. Note: can be overriden by
+       application. Default value is 18.
+
+     Every FILE is automatically added to the nearest FAMILY defined above
+     in the database file. Every ALIAS or FILE placed before the first
+     FAMILY is rejected quietly.
+
+   COMMENTS
+
+   You can place any full-line comments in the file starting a line with
+   hash or semicolon. End-line comments are not supported.
+
+

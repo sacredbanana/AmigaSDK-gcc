@@ -1,0 +1,284 @@
+TABLE OF CONTENTS
+
+Slave.mui/Slave.mui
+Slave.mui/MUIA_Slave_Application
+Slave.mui/MUIA_Slave_Class
+Slave.mui/MUIA_Slave_Object
+Slave.mui/MUIM_Slave_Cleanup
+Slave.mui/MUIM_Slave_Dispatch
+Slave.mui/MUIM_Slave_Error
+Slave.mui/MUIM_Slave_Setup
+Slave.mui/MUIM_Slave_SignalsReceived
+Slave.mui/Slave.mui
+
+	The Slave class serves as a convinient way of safely dispatching methods
+	that are to be run asynchronously on a thread as well as a safe way to 
+	call a method from a thread on the main thread. In the simpliest case
+	one just needs to call DoMethod() on the slave instance rather than the 
+	object.
+	
+	A Slave is always bound to a single object it will invoke methods on.
+	Do NOT call MUIC_Process methods directly on the MUIC_Slave instance.
+	It is your responsibility to ensure the related Application object
+	exists as long as the Slave instance once bound with your object.
+	
+	There are several MUIC_Process attrs you may pass during the object
+	creation:
+		MUIA_Process_Name, MUIA_Process_StackSize, MUIA_Process_Priority
+	other tags will be ignored.
+	
+	CAUTION:
+	Automagic dispatching works up to 16 arguments. Should you need to
+	dispatch a method with more arguments, use MUIM_Slave_Dispatch!
+
+	Remember that this is not a remedy for bad threading code. You still need
+	to make sure the instance data, etc you use is accessed in a thread
+	safe manner. Since MUIC_Slave inherits from MUIC_Semaphore, you can
+	use its object to secure the data access too.
+
+	EXAMPLE
+	
+	This is an incomplete example of a class using MUIC_Slave, to give you
+	an overview. It is not meant to be a functional class implementation.
+	
+	METHOD(NEW)
+	{
+		obj = DOSUPERNEW;
+		
+		if (obj)
+		{
+			data->Slave = MUI_NewObject(MUIC_Slave,
+				MUIA_Slave_Object, obj,
+				MUIA_Slave_Class, cl,
+				TAG_DONE);
+		}
+		
+		return obj;
+	}
+	
+	METHOD(Setup)
+	{
+		if (DOSUPER)
+		{
+			/* Please note that unless your object is after MUIM_Setup,
+			** you won't be able to invoke methods on the main thread
+			** from the slave thread!
+			** SEE ALSO MUIA_Slave_Application
+			*/
+		
+			DoMethod(data->Slave, MUIM_MyClass_DispatchedOnAThread, arg1,
+				arg2, arg3..., arg16);
+
+			/*
+			** Assume you need to pass some temporary data
+			*/
+			STRPTR arg1 = AllocVec(strlen(x) + 1);
+
+			strcpy(arg1, x);
+			
+			if (!DoMethod(data->Slave, MUIM_MyClass_DispatchedOnAThread,
+				arg1, ...))
+			{
+				/* the Slave will return a 0 if the dispatch setup has
+				** failed in which case you should free the data here */
+				FreeVec(arg1);
+			}
+		}
+	}
+	
+	METHOD(MyClass_DispatchedOnAThread)
+	{
+		/* This method will be invoked on a subthread ! */
+		
+		/* Try to talk back to our main application thread - this is the
+		** only way to obtain a result from this method on the main thread */
+		DoMethod(data->Slave, MUIM_MyClass_TalkBack, rc);
+
+
+		/* CAUTION: remember that the method is dispatched
+		** asynchronously and do not pass temporary data (created on
+		** stack, etc) as arguments. You should generally dispose
+		** any temporary arguments here */
+		
+		/* Assume arg1 is a string allocated for the purpose of calling
+		** this method */
+		FreeVec(msg->arg1);
+	}
+	
+	METHOD(Slave_Error)
+	{
+		/* In case your method was for some reason not dispatched 
+		** while the invocation returned a success (see Setup above)
+		** this method will be called for each failed dispatch when
+		** the Slave instance is disposed */
+		switch (((Msg)msg->FailedDispatch)->MethodID)
+		{
+			case MUIM_MyClass_DispatchedOnAThread:
+				{
+					/* obtain a pointer to our actual Msg */
+					struct MUIP_MyClass_DispatchedOnAThread *dmsg =
+						msg->FailedDispatch;
+					
+					FreeVec(dmsg->arg1);
+				}
+				break;
+		}
+	}
+	
+	METHOD(MyClass_TalkBack)
+	{
+		/* This method will be invoked on the main thread when dispatched
+		** from the slave thread */
+	}
+Slave.mui/MUIA_Slave_Application
+
+    NAME
+	MUIA_Slave_Application -- (V20) [I..], Boopsiobject *, 0x80427767
+
+	FUNCTION
+	Normally MUIC_Slave will try to figure out the Application object first
+	time you'll try to dispatch a method. However the main object does not 
+	inherit from MUIC_Area or is before MUIM_Setup, that isn't possible.
+	
+	In order to prevent such problems, pass MUIA_Slave_Application in the
+	constructor params.
+Slave.mui/MUIA_Slave_Class
+
+    NAME
+	MUIA_Slave_Class -- (V20) [I..], Boopsiobject *, 0x80420f8c
+
+	FUNCTION
+	If passed, the methods will be dispatched using CoerceMethod rather than
+	DoMethod.
+	
+	SEE ALSO
+	MUIA_Process_SourceClass
+Slave.mui/MUIA_Slave_Object
+
+    NAME
+	MUIA_Slave_Object -- (V20) [I..], Boopsiobject *, 0x804202ab
+
+	FUNCTION
+	Object to dispatch metods on. MUST be passed during object creation.
+
+	SEE ALSO
+	MUIA_Process_SourceObject
+Slave.mui/MUIM_Slave_Cleanup
+
+    NAME
+	MUIM_Slave_Cleanup (V20) 0x80425e72
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Slave_Cleanup);
+
+	FUNCTION
+	Implement this method if you need to have some cleanup code executed before
+	the slave thread exits. Remember this might happen while the main thread
+	is already inside OM_DISPOSE of your object!
+	
+	Useful if you want to handle networking in the slave.
+	
+	INPUTS
+	
+	SEE ALSO
+	MUIM_Slave_Setup
+Slave.mui/MUIM_Slave_Dispatch
+
+    NAME
+	MUIM_Slave_Dispatch (V20) 0x8042361f
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Slave_Dispatch,ULONG flags, LONG count, /* ... */);
+
+	FUNCTION
+	Dispatches a certain method on the thread. If called from the thread, will
+	dispatch the method on the main thread instead. The execution of threaded
+	methods is parallelised and asynchronous. Remember not to pass temporary
+	data in arguments. Use MUIM_Slave_Dispatch if you need to pass more than
+	16 arguments (limit for automagic method forwarding) or want to gain a
+	little speed/reduce memory usage with less arguments.
+	
+	INPUTS
+	flags - set to MUIF_Slave_Delegate_ForceSlave if you want to dispatch
+	        a method to the Slave thread, but are calling DoMethod from an
+	        alien thread (as in, neither Slave thread nor the one with MUI's
+	        main application loop). Also useful when you want to queue
+	        another command to be dispatched on a Slave thread from within
+	        the Slave thread
+	        (available from Slave.mui 20.2 / MorphOS 3.2)
+	        
+	count - number of argumens following, starting with the methodid
+	
+	RESULT
+	Non-0 if dispatch setup succeeded. Otherwise 0, in which case you should
+	free any data allocated for the purpose of dispatching
+	
+	SEE ALSO
+	MUIM_Application_PushMethod, MUIM_Slave_Error
+Slave.mui/MUIM_Slave_Error
+
+    NAME
+	MUIM_Slave_Error (V20) 0x8042e544
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Slave_Error,Msg FailedDispatch, /* ... */);
+
+	FUNCTION
+	Function called on the slave's main object in order to dispose potential
+	arguments allocated when dispatching a method. This could happen if for
+	some reason the method could not be dispatched after being added to the
+	queue.
+	
+	Such a situation may occur if for example you dispose your application
+	before all methods could be handled.
+	
+	INPUTS
+	FailedDispatch - Msg containing the failed methodid and attributes
+	
+	SEE ALSO
+	MUIC_Slave
+Slave.mui/MUIM_Slave_Setup
+
+    NAME
+	MUIM_Slave_Setup (V20) 0x80429faa
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Slave_Setup);
+
+	FUNCTION
+	Implement this method if you need to have some setup code executed before
+	a first method is dispatched on the slave thread.
+	
+	Useful if you want to handle networking in the slave.
+	
+	INPUTS
+	
+	RESULT
+	ULONG - a sigmask containing the signals on which you'd want the
+		MUIM_Slave_SignalsReceived to be triggered (it will be called on the
+		Slave process). 0 if you don't need custom signals.
+		
+	NOTE
+	Please note that all SIGBREAKF_CTRL signals are reserved for
+	Slave's internal usage.
+	
+	SEE ALSO
+	MUIM_Slave_Cleanup, MUIM_Slave_SignalsReceived
+Slave.mui/MUIM_Slave_SignalsReceived
+
+    NAME
+	MUIM_Slave_SignalsReceived (V20) 0x8042d21a
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Slave_SignalsReceived,ULONG sigmask);
+
+	FUNCTION
+	Called on the slave process whenever a signal matching those returned
+	from MUIM_Slave_Setup is received.
+	
+	INPUTS
+	ULONG - received signals mask
+		
+	SEE ALSO
+	MUIM_Slave_Setup
+

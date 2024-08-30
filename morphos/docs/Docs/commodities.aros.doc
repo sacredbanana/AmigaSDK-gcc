@@ -1,0 +1,1299 @@
+This document was generated from the AROS APL-Licensed source code. The
+information contained in it might be errorneous or inacurate. When in
+doubt, please verify with another documentation set.
+
+TABLE OF CONTENTS
+
+commodities.library/ActivateCxObj
+commodities.library/AddIEvents
+commodities.library/AttachCxObj
+commodities.library/ClearCxObjError
+commodities.library/CreateCxObj
+commodities.library/CxBroker
+commodities.library/CxMsgData
+commodities.library/CxMsgID
+commodities.library/CxMsgType
+commodities.library/CxNotify
+commodities.library/CxObjError
+commodities.library/CxObjType
+commodities.library/DeleteCxObj
+commodities.library/DeleteCxObjAll
+commodities.library/DisposeCxMsg
+commodities.library/DivertCxMsg
+commodities.library/EnqueueCxObj
+commodities.library/FindBroker
+commodities.library/FreeBrokerList
+commodities.library/GetBrokerList
+commodities.library/InsertCxObj
+commodities.library/InvertKeyMap
+commodities.library/LockBrokerList
+commodities.library/MatchIX
+commodities.library/ParseIX
+commodities.library/RemoveCxObj
+commodities.library/RouteCxMsg
+commodities.library/SetCxObjPri
+commodities.library/SetFilter
+commodities.library/SetFilterIX
+commodities.library/SetTranslate
+commodities.library/ActivateCxObj
+
+
+   NAME
+    ActivateCxObj -- 
+
+   SYNOPSIS
+    ActivateCxObj(co, true)
+    LONG ActivateCxObj(CxObj *, LONG);
+
+   FUNCTION
+
+    Activates/deactivates a given commodity object. (An inactive object
+    doesn't perform its function on its input - it just passes it on to
+    the next object.) The activation depends on the value of 'true'; if
+    it's TRUE the object is activated, if it's FALSE it's deactivated.
+        All objects are created in the active state except for brokers;
+    remember to activate your broker when you have linked your other
+    objects to it.
+
+   INPUTS
+
+    co   - a pointer to a commodity object
+    true - boolean telling whether the object should be activated or
+           deactivated
+
+   RESULT
+
+    The activation state of the object prior to the operation. (0 is
+    also returned if 'co' was NULL.)
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CxBroker()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/AddIEvents
+
+
+   NAME
+    AddIEvents -- 
+
+   SYNOPSIS
+    AddIEvents(events)
+    VOID AddIEvents(struct InputEvent *);
+
+   FUNCTION
+
+    Send input events though the commodity hierarchy. After the call the
+    list of InputEvents may be disposed.
+
+   INPUTS
+
+    events  --  a NULL-terminated linked list of InputEvents (may be NULL).
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/AttachCxObj
+
+
+   NAME
+    AttachCxObj -- 
+
+   SYNOPSIS
+    AttachCxObj(headObj, co)
+    VOID AttachCxObj(CxObj *, CxObj *);
+
+   FUNCTION
+
+    Add commodity object 'co' last in the list of objects of object
+    'headObj'.
+
+   INPUTS
+
+    headObj - pointer to a list of commodity objects
+    co      - the object to add to the list
+
+
+   RESULT
+
+    If 'headObj' is NULL the entire tree of objects pointed to by 'co'
+    is deleted. If 'co' is NULL, this is recorded in the error field of
+    'headObj'.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CxObjError(), ClearCxObjError()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/ClearCxObjError
+
+
+   NAME
+    ClearCxObjError -- 
+
+   SYNOPSIS
+    ClearCxObjError(co)
+    VOID ClearCxObjError(CxObj *);
+
+   FUNCTION
+
+    Clears the accumulated error of the commodity object 'co'.
+
+   INPUTS
+
+    co  --  the object in question
+
+   RESULT
+
+   NOTES
+
+    An error of type COERR_BADFILTER should not be cleared as this tells
+    commodities that the filter in question is all right, and this is not
+    what you want. Set a correct filter (via SetFilter() or SetFilterIX())
+    or don't change the error value.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CxObjError()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/CreateCxObj
+
+
+   NAME
+    CreateCxObj -- 
+
+   SYNOPSIS
+    CreateCxObj(type, arg, arg)
+    CxObj * CreateCxObj(ULONG, IPTR, IPTR);
+
+   FUNCTION
+
+    Creates a commodity object of type 'type'. This function should never
+    be called directly; instead, use the macros defined in <libraries/
+    commodties.h>. Brokers, however, should be created with the CxBroker()
+    function.
+
+   INPUTS
+
+    type  -  the type of the commodity object to be created. Possible
+             types are defined in <libraries/commodities.h>.
+    arg1  -  depends on the value of 'type' above.
+    arg2  -  depends on the value of 'type' above.
+
+   RESULT
+
+    The commodity object or NULL if it couldn't be created. Not so severe
+    problems in the creation process are recorded in an internal field
+    retrievable with CxObjError(). These errors are defined in <libraries/
+    commodities.h>
+
+   NOTES
+
+    This 'CxObj *' that is returned from this function (and from CxBroker())
+    is the reference to your commodity object. It shall be used whenever
+    dealing with your commodity objects (functions operating on commodity
+    objects and so on).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CxObjError(), CxBroker(), cx_lib/CxSender(), cx_lib/CxSignal(),
+    cx_lib/CxFilter(), cx_lib/CxTranslate() cx_lib/CxCustom(),
+    cx_lib/CxDebug()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/CxBroker
+
+
+   NAME
+    CxBroker -- 
+
+   SYNOPSIS
+    CxBroker(nb, error)
+    CxObj * CxBroker(struct NewBroker *, LONG *);
+
+   FUNCTION
+
+    Create a commodity broker from the specifications found in the structure
+    pointed to by 'nb'. The NewBroker structure is described in <Libraries/
+    Commodities.h>, see this file for more info. After the call, the
+    NewBroker structure isn't needed anymore and may be discarded.
+
+   INPUTS
+
+    nb    --  pointer to an initialized NewBroker structure
+    error --  pointer to a LONG where the possible error of the CxBroker
+              function is stored (may be NULL)
+
+   RESULT
+
+    A pointer to a commodity broker, or NULL upon failure.  If 'error' is
+    NULL, no error information is stored. The possible error types are
+
+    CBERR_OK       --  everything went just fine
+
+    CBERR_SYSERR   --  system problems, typically not enough memory
+
+    CBERR_DUP      --  another broker with the same name already exists
+                       (and your nb_Unique indicates that only one is
+               allowed)
+
+    CBERR_VERSION  --  the version found in nb_Version is unknown to the
+                       library
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    SetCxObjPri(), <libraries/commodities.h>
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/CxMsgData
+
+
+   NAME
+    CxMsgData -- 
+
+   SYNOPSIS
+    CxMsgData(cxm)
+    APTR CxMsgData(CxMsg *);
+
+   FUNCTION
+
+    Get the data of a commodities message. Messages can be sent from
+    both sender object and custom object. In the first case the data is
+    no longer valid after you replied to the message.
+
+   INPUTS
+
+    cxm  -  the message the data of which is to be retrieved (may be NULL).
+
+   RESULT
+
+    A pointer to the message's data or NULL if message was NULL. The type
+    of the data depends on the type of the message.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    cx_lib/CxSender(), cx_lib/CxCustom()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/CxMsgID
+
+
+   NAME
+    CxMsgID -- 
+
+   SYNOPSIS
+    CxMsgID(cxm)
+    LONG CxMsgID(CxMsg *);
+
+   FUNCTION
+
+    Retrieve the ID of a certain CxMsg 'cxm'. (IDs for sender and custom
+    objects are supplied by the user when the objects are created.)
+
+   INPUTS
+
+    cxm     --  the message in question (may NOT be NULL)
+
+   RESULT
+
+    The ID of the message 'cxm'. If not specified by the application the ID
+    is 0.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    cx_lib/CxSender(), cx_lib/CxCustom()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/CxMsgType
+
+
+   NAME
+    CxMsgType -- 
+
+   SYNOPSIS
+    CxMsgType(cxm)
+    ULONG CxMsgType(CxMsg *);
+
+   FUNCTION
+
+    Obtain the type of the commodity message 'cxm'.
+
+   INPUTS
+
+    cxm - The message the type of which is to be determined (may NOT be
+          NULL).
+
+   RESULT
+
+    The type of 'cxm'. The available types of commodity messages is defined
+    in <libraries/commodities.h>.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/CxNotify
+
+
+   NAME
+    CxNotify -- 
+
+   SYNOPSIS
+    CxNotify(name, command)
+    LONG CxNotify(STRPTR, ULONG);
+
+   FUNCTION
+
+    Notify a task connected to a certain broker of a state change.
+
+   INPUTS
+
+    name     --  The name of the broker
+    command  --  What to tell the task
+
+   RESULT
+
+    0 if everything was OK, a negative value otherwise:
+    -1    --   Unknown broker 'name'
+    -2    --   No broker message port
+    -3    --   No memory for operation
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+    Private function which is used by Exchange.
+
+   HISTORY
+
+commodities.library/CxObjError
+
+
+   NAME
+    CxObjError -- 
+
+   SYNOPSIS
+    CxObjError(co)
+    LONG CxObjError(CxObj *);
+
+   FUNCTION
+
+    Obtain the ackumulated error of commodity object 'co'.
+
+   INPUTS
+
+    co  -  the object the error of which to get
+
+   RESULT
+
+    The ackumulated error of the object 'co'. See <libraries/commodities.h>
+    for the possible errors.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ClearCxObjError()
+
+   INTERNALS
+
+    There seems to be some kind of RKRM error here. The RKRM says that
+    COERR_ISNULL is returned if 'co' is NULL. COERR_ISNULL is furthermore
+    defined as 1 in <libraries/commodities.h>. However, in the RESULTS part
+    is says "error - the accumulated error, or 0 if 'co' is NULL". As the
+    commodities.library I have (39.6 I believe) returns 0, I do the same
+    below.
+
+   HISTORY
+
+commodities.library/CxObjType
+
+
+   NAME
+    CxObjType -- 
+
+   SYNOPSIS
+    CxObjType(co)
+    ULONG CxObjType(CxObj *);
+
+   FUNCTION
+
+    Obtain the type of the commodity object 'co'.
+
+   INPUTS
+
+    co  --  the object the type of which to get
+
+   RESULT
+
+    The type of the object 'co'. See <libraries/commodities.h> for the
+    possible types. If 'co' is NULL, CX_INVALID is returned.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CreateCxObj()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/DeleteCxObj
+
+
+   NAME
+    DeleteCxObj -- 
+
+   SYNOPSIS
+    DeleteCxObj(co)
+    VOID DeleteCxObj(CxObj *);
+
+   FUNCTION
+
+    Delete the commodity object 'co'. By deleting, it's meant that the
+    memory used for the object is freed and if the object was in the
+    commodity hierarchy, it's removed.
+
+   INPUTS
+
+    co  --  the object to be deleted (may be NULL)
+
+   RESULT
+
+   NOTES
+
+    After deleting the commodity object, the handle 'co' is no longer valid.
+    Deleteing an object that has other objects attached to it is (that
+    should be deleted too) is easiest accomplished by using the
+    DeleteCxObjAll() function.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DeleteCxObjAll(),
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/DeleteCxObjAll
+
+
+   NAME
+    DeleteCxObjAll -- 
+
+   SYNOPSIS
+    DeleteCxObjAll(co)
+    VOID DeleteCxObjAll(CxObj *);
+
+   FUNCTION
+
+    Delete object and and all objects connected to commodity object 'co'.
+    Handy for instances like when you are shutting down your commodity.
+    To remove your commodity tree, just DeleteCxObjAll(YourBroker).
+
+   INPUTS
+
+    co  --  the object in question (may be NULL)
+
+   RESULT
+
+   NOTES
+
+    The handle 'co' is invalid after the operation.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DeleteCxObj()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/DisposeCxMsg
+
+
+   NAME
+    DisposeCxMsg -- 
+
+   SYNOPSIS
+    DisposeCxMsg(cxm)
+    VOID DisposeCxMsg(CxMsg *);
+
+   FUNCTION
+
+    Delete the commodity message 'cxm'. This function can be used to
+    swallow all InputEvents by disposing every commodity message of type
+    CXM_IEVENT.
+
+   INPUTS
+
+    cxm  -  the commodity message to delete (may NOT be NULL)
+
+   RESULT
+
+   NOTES
+
+    This function can only be used within the context of the input handler,
+    and not from within a commodities' context; that is if you for instance
+    get a CXM_IEVENT CxMsg from a commodity sender object, you must
+    ReplyMsg() it instead of Disposing it.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/DivertCxMsg
+
+
+   NAME
+    DivertCxMsg -- 
+
+   SYNOPSIS
+    DivertCxMsg(cxm, headObj, returnObj)
+    VOID DivertCxMsg(CxMsg *, CxObj *, CxObj *);
+
+   FUNCTION
+
+    Send the commodity message 'cxm' down the list of objects connected to
+    'headObj' and set the destination to 'returnObj'. This means that when
+    the message has travelled through the objects within the 'headObj' tree,
+    the _successor_ of returnObj will receive the message.
+
+   INPUTS
+
+    cxm       -- the message to be diverted.
+    headObj   -- the start object
+    returnObj -- the successor of this object will get the message after
+                 travelling through 'headObj' and friends.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+    When a filter gets a message that matches with its description, it
+    sends the message down its list using:
+
+        DivertCxMsg(msg, filter, filter);
+
+   BUGS
+
+   SEE ALSO
+
+    RouteCxMsg()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/EnqueueCxObj
+
+
+   NAME
+    EnqueueCxObj -- 
+
+   SYNOPSIS
+    EnqueueCxObj(headObj, co)
+    VOID EnqueueCxObj(CxObj *, CxObj *);
+
+   FUNCTION
+
+    Insert commodity object 'co' into the list of objects connected to
+    'headObj' according to the priority of 'co'. (The priority of an object
+    can be set by the function SetCxObjPri().)
+
+   INPUTS
+
+    headObj - the object to which 'co' shall be inserted.
+    co      - a pointer to a commodity object
+
+   RESULT
+
+    If 'headObj' is NULL, the object 'co' and all objects connected to it
+    are deleted. If 'co' is NULL and 'headObj' is a valid object, the
+    latter's accumulated error will be adjusted to incorporate
+    COERR_NULLATTACH.
+
+   NOTES
+
+    For nodes with equal priority, this function inserts object like within
+    a FIFO queue.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    SetCxObjPri(), CxObjError(), ClearCxObjError(),
+    <libraries/commodities.h>
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/FindBroker
+
+
+   NAME
+    FindBroker -- 
+
+   SYNOPSIS
+    FindBroker(name)
+    CxObj* FindBroker(STRPTR);
+
+   FUNCTION
+
+
+   INPUTS
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/FreeBrokerList
+
+
+   NAME
+    FreeBrokerList -- 
+
+   SYNOPSIS
+    FreeBrokerList(brokerList)
+    VOID FreeBrokerList(struct List *);
+
+   FUNCTION
+
+    Free the list of brokers obtained by calling GetBrokerList.
+
+   INPUTS
+
+    brokerList  --  List of commodity brokers (a list of struct BrokerCopy
+                    nodes).
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    cxintern.h
+
+   INTERNALS
+
+    Private function.
+
+   HISTORY
+
+commodities.library/GetBrokerList
+
+
+   NAME
+    GetBrokerList -- 
+
+   SYNOPSIS
+    GetBrokerList(CopyofList)
+    LONG GetBrokerList(struct List *);
+
+   FUNCTION
+
+    Get a copy of the internal list of brokers.
+
+   INPUTS
+
+    CopyofList -- pointer to a list
+
+   RESULT
+
+    The number of brokers in the list. The elements of the input list will
+    be deallocated.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+    Private function.
+
+   HISTORY
+
+commodities.library/InsertCxObj
+
+
+   NAME
+    InsertCxObj -- 
+
+   SYNOPSIS
+    InsertCxObj(headObj, co, pred)
+    VOID InsertCxObj(CxObj *, CxObj *, CxObj *);
+
+   FUNCTION
+
+    Insert commodity object 'co' into the list of object connected to
+    'headObj' after the object 'pred'.
+
+   INPUTS
+
+    headObj  -  poiter to a list of objects to which 'co' shall be inserted
+    co       -  commodity object to be inserted (may be NULL)
+    pred     -  the object 'co' shall be inserted after (may be NULL)
+
+   RESULT
+
+    If 'headObj' is NULL, the object 'co' and all objects connected to it
+    are deleted. If 'co' is NULL and 'headObj' is a valid object, the
+    latter's accumulated error will be adjusted to incorporate
+    COERR_NULLATTACH. If 'pred' is NULL, the object will be inserted first
+    in the list.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CxObjError(), ClearCxObjError()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/InvertKeyMap
+
+
+   NAME
+    InvertKeyMap -- 
+
+   SYNOPSIS
+    InvertKeyMap(ansiCode, event, km)
+    BOOL InvertKeyMap(ULONG, struct InputEvent *, struct KeyMap *);
+
+   FUNCTION
+
+    Translate a given ANSI character code to an InputEvent. The InputEvent
+    pointed to by 'event' is initialized to match the 'ansiCode'. The
+    translation is done using the keymap 'km'. If 'km' is NULL, the default
+    system keymap is used.
+
+   INPUTS
+
+    ansiCode  -  the ANSI character code to be translated
+    event     -  the inputevent that will contain the translation
+    km        -  keymap used for the translation (if 'km' is NULL the system
+                 default keymap is used).
+
+   RESULT
+
+    TRUE if the translation was successful, otherwise FALSE.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+    Only one-deep dead keys are handled, for instance <alt f>e. It doesn't
+    look up the high key map (keycodes with scan codes greater than 0x40).
+
+   SEE ALSO
+
+    cx_lib/InvertString()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/LockBrokerList
+
+
+   FUNCTION
+
+    Get a copy of the internal list of brokers.
+
+   INPUTS
+
+    CopyofList -- pointer to a list
+
+   RESULT
+
+    The number of brokers in the list. The elements of the input list will
+    be deallocated.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+    Private function.
+
+   HISTORY
+
+commodities.library/MatchIX
+
+
+   NAME
+    MatchIX -- 
+
+   SYNOPSIS
+    MatchIX(event, ix)
+    BOOL MatchIX(struct InputEvent *, IX *);
+
+   FUNCTION
+
+    Check if an input event matches an input expression.
+
+   INPUTS
+
+    event  --  the input event to match against the input expression
+    ix     --  the input expression
+
+   RESULT
+
+    TRUE if the input event matches the input expression, FALSE otherwise.
+
+   NOTES
+
+    Applications don't normally need this function as filter objects take
+    care of the event filtering. However, this function is in some cases
+    nice to have.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    <libraries/commodities.h>, ParseIX()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/ParseIX
+
+
+   NAME
+    ParseIX -- 
+
+   SYNOPSIS
+    ParseIX(desc, ix)
+    LONG ParseIX(STRPTR, IX *);
+
+   FUNCTION
+
+    Fill in an InputXpression 'ix' according to the specifications given
+    in the string pointed to by 'desc'.
+
+    The string should be formatted according to:
+
+    [class] {[-] (qualifier|synonym)} [[-] upstroke] [HighMap|ANSICode]
+
+    For more information on this, consult "xxx/CxParse.doc".
+
+   INPUTS
+
+    desc  --  pointer to the string specifying the conditions and codes of
+              the InputXpression.
+    ix    --  pointer to an (uninitialized) InputXpression structure that
+              will be filled according to 'desc'.
+
+   RESULT
+
+    0   --  Everything went OK.
+    -1  --  Tokens after end
+    -2  --  'desc' was NULL
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    MatchIX(), <libraries/commodities.h>
+
+   INTERNALS
+
+   HISTORY
+
+    10.05.97   SDuvan  implemented
+
+commodities.library/RemoveCxObj
+
+
+   NAME
+    RemoveCxObj -- 
+
+   SYNOPSIS
+    RemoveCxObj(co)
+    VOID RemoveCxObj(CxObj *);
+
+   FUNCTION
+
+    Removes 'co' from the lists it's in. The function handles smoothly the
+    cases when 'co' is NULL or haven't been inserted in a list.
+
+   INPUTS
+
+    co  --  the commodity object to remove (may be NULL)
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    AttachCxObj(), EnqueueCxObj(), InsertCxObj()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/RouteCxMsg
+
+
+   NAME
+    RouteCxMsg -- 
+
+   SYNOPSIS
+    RouteCxMsg(cxm, co)
+    VOID RouteCxMsg(CxMsg *, CxObj *);
+
+   FUNCTION
+
+    Set the next destination of a commodity message to be 'co'.
+    ('co' must be a valid commodity object and linked in to the commodities
+    hierarchy.)
+
+   INPUTS
+
+    cxm  -  the commodity message to route (may NOT be NULL)
+    co   -  the commodity object to route the message to (may NOT be NULL)
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DivertCxMsg()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/SetCxObjPri
+
+
+   NAME
+    SetCxObjPri -- 
+
+   SYNOPSIS
+    SetCxObjPri(co, pri)
+    LONG SetCxObjPri(CxObj *, LONG);
+
+   FUNCTION
+
+    Set the priority of the commodity object 'co'.
+
+   INPUTS
+
+    co   --  the commodity object the priority of which to change (may be
+             NULL)
+    pri  --  the new priority to give the object (priorities range from
+             -128 to 127, a value of 0 is normal)
+
+   RESULT
+
+    The old priority, that is the priority of the object prior to this
+    operation.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+    When using this function, the object is NOT repositioned according to
+    the priority given. To achive this, remove the object from the commodity
+    hierarchy using RemoveCxObj(), use SetCxPri() and reinsert it with
+    EnqueueCxObj().
+
+   SEE ALSO
+
+    EnqueueCxObj()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/SetFilter
+
+
+   NAME
+    SetFilter -- 
+
+   SYNOPSIS
+    SetFilter(filter, text)
+    VOID SetFilter(CxObj *, STRPTR);
+
+   FUNCTION
+
+    Make 'filter' match events of the type specified in 'text'.
+
+   INPUTS
+
+    filter  -  the commodity filter the matching conditions of which to set
+    text    -  description telling what to filter
+
+   RESULT
+
+    The internal error field will be updated (COERR_BADFILTER) according to
+    the success or failure of the operation.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    SetFilterIX(), CxObjError()
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/SetFilterIX
+
+
+   NAME
+    SetFilterIX -- 
+
+   SYNOPSIS
+    SetFilterIX(filter, ix)
+    VOID SetFilterIX(CxObj *, IX *);
+
+   FUNCTION
+
+    Set the filter description by supplying an InputXpression.
+
+   INPUTS
+
+    filter  --  the commodity filter object the attributes of which to set
+                (may be NULL)
+    ix      --  InputXpression describing the filter
+
+   RESULT
+
+    The internal error field will be updated (COERR_BADFILTER) depending on
+    whether the function succeeded or failed.
+
+   NOTES
+
+    The first field in the IX structure must be set to IX_VERSION as
+    defined in <libraries/commodities.h>, to indicate which version of
+    the IX structure is used.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    SetFilter(), CxObjError(), <libraries/commodities.h>
+
+   INTERNALS
+
+   HISTORY
+
+commodities.library/SetTranslate
+
+
+   NAME
+    SetTranslate -- 
+
+   SYNOPSIS
+    SetTranslate(translator, events)
+    VOID SetTranslate(CxObj *, struct InputEvent *);
+
+   FUNCTION
+
+    Set translation (a list of input events) for a commodity translator
+    object.
+
+   INPUTS
+
+    translator  --  the commodity translator the translation result of which
+                    to set (may be NULL)
+    events      --  the new input event list
+
+   RESULT
+
+   NOTES
+
+    If events is set to NULL, all commodity messages passed to the object
+    are swallowed. Neither commodities.library nor any other commodities
+    user will change your list of InputEvents; however, it will be used
+    asynchronously to the application program which means you shouldn't
+    in any way corrupt the chain.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    cx_lib/CxTranslate(), <devices/inputevent.h>
+
+   INTERNALS
+
+   HISTORY
+
+

@@ -1,0 +1,598 @@
+TABLE OF CONTENTS
+
+locale.library/ConvertUCS4ToUTF8
+locale.library/ConvertUTF8ToUCS4
+locale.library/IsUnicode
+locale.library/UCS4_ConvToLower
+locale.library/UCS4_ConvToUpper
+locale.library/UCS4_FormatString
+locale.library/UCS4_GetCatalogStr
+locale.library/UCS4_GetLocaleStr
+locale.library/UCS4_IsXXXX
+locale.library/UCS4_Normalize
+locale.library/UCS4_StrnCmp
+locale.library/UTF8_CheckEncoding
+locale.library/UTF8_Decode
+locale.library/UTF8_Encode
+locale.library/UTF8_EncodingLength
+locale.library/VSNPrintf
+locale.library/ConvertUCS4ToUTF8
+        ConvertUCS4ToUTF8 -- convert UCS-4 string to UTF-8 string (V51)
+
+        ConvertUCS4ToUTF8(widestring, string, length);
+
+        VOID ConvertUCS4ToUTF8(CONST_WSTRPTR, STRPTR, LONG);
+
+   FUNCTION
+        Convert UCS-4 string to UTF-8 string. The length parameter specifies
+        how many code points should be converted. If specified as -1 then
+        entire string is converted. Native byte order is assumed.
+
+        Conversion always stops on a NULL character which is also converted.
+        The destination string is guaranteed to be NULL terminated.
+
+   INPUTS
+        widestring - UCS-4 string to be converted
+        string     - the destination for UTF-8 string, or NULL to measure
+                     buffer space
+        length     - number of code points to convert
+
+   RESULT
+        Number of UTF-8 octets without terminating NULL.
+
+   NOTE
+        Illegal code points are converted to question marks.
+
+   SEE ALSO
+        UTF8_Encode(), UTF8_Decode(), ConvertUTF8ToUCS4(),
+        keymap.library/MapUCS4(), keymap.library/ToUCS4()
+
+locale.library/ConvertUTF8ToUCS4
+        ConvertUTF8ToUCS4 -- convert UTF-8 string to UCS-4 string (V51)
+
+        ConvertUTF8ToUCS4(string, widestring, length);
+
+        VOID ConvertUTF8ToUCS4(CONST_STRPTR, WSTRPTR, LONG);
+
+   FUNCTION
+        Convert UTF-8 string to UCS-4 string using native byte order.
+        The length parameter specifies how many code points should be
+        converted. If specified as -1 then entire string is converted.
+
+        Conversion always stops on a NULL character which is also converted.
+        The destination string is guaranteed to be NULL terminated.
+
+   INPUTS
+        string     - UTF-8 string to be converted
+        widestring - the destination for UCS-4 string, or NULL to measure
+                     buffer space
+        length     - number of code points to convert
+
+   RESULT
+        Number of UCS-4 code points without terminating NULL.
+
+   NOTE
+        Illegal UTF-8 sequences are converted to question marks.
+
+   SEE ALSO
+        UTF8_Encode(), UTF8_Decode(), ConvertUCS4ToUTF8(),
+        keymap.library/MapUCS4(), keymap.library/ToUCS4()
+
+locale.library/IsUnicode
+        IsUnicode -- check if buffer containts Unicode (V51)
+
+        IsUnicode(buffer, length);
+
+        ULONG IsUnicode(APTR, ULONG);
+
+   FUNCTION
+        Check if buffer contains Unicode.
+
+   INPUTS
+        buffer     - buffer to examine
+        length     - size of buffer in bytes
+
+   RESULT
+        result - does buffer contain Unicode or not, possible return values are
+                   UNICODE_INVALID - the buffer does not contain Unicode
+                   UNICODE_UTF8    - the buffer is UTF-8 string
+                   UNICODE_16_BE   - the buffer is UCS-2/UTF-16 string in
+                                     big endian byte order
+                   UNICODE_16_LE   - the buffer is UCS-2/UTF-16 string in
+                                     little endian byte order
+                   UNICODE_32_BE   - the buffer is UCS-4/UTF-32 string in
+                                     big endian byte order
+                   UNICODE_32_LE   - the buffer is UCS-4/UTF-32 string in
+                                     little endian byte order
+
+   NOTES
+        While UCS-2 encoding is similar to UTF-16 they are not the same.
+        UCS-2 is a fixed length encoding with 65536 possible code points
+        which is not enough to support all Unicode characters. UTF-16 is
+        fully compatible to UCS-2 but permits full Unicode repertoide by
+        implementing so called surrogate pairs where two 16-bit words are
+        used to encode missing code points.
+
+        Applications which implement 16-bit Unicode should always support
+        UTF-16. UCS-4 and UTF-32, however, are nearly identical.
+
+locale.library/UCS4_ConvToLower
+        UCS4_ConvToLower -- convert a character to lower case (V51)
+
+        state = UCS4_ConvToLower( ucharacter);
+
+        ULONG UCS4_ConvToLower(ULONG);
+
+   FUNCTION
+        This function determine if the character supplied is upper case,
+        and if it is, the character will be converted to lower case.
+        Otherwise, the original character will be returned.
+
+   INPUTS
+        ucharacter - the character to convert to lower case in the native
+                     byter order
+
+   RESULT
+        result - the possibly converted character
+
+   SEE ALSO
+        ConvToLower(), ConvToUpper(), UCS4_ConvToUpper,
+
+locale.library/UCS4_ConvToUpper
+        UCS4_ConvToUpper -- convert a character to upper case (V51)
+
+        state = UCS4_ConvToUpper(ucharacter);
+
+        ULONG UCS4_ConvToUpper(ULONG);
+
+   FUNCTION
+        This function determine if the character supplied is lower case,
+        and if it is, the character will be converted to upper case.
+        Otherwise, the original character will be returned.
+
+   INPUTS
+        ucharacter - the character to convert to upper case in the native
+                     byter order
+
+   RESULT
+        result - the possibly converted character
+
+   SEE ALSO
+        ConvToLower(), ConvToUpper(), UCS4_ConvToLower()
+
+locale.library/UCS4_FormatString
+        UCS4_FormatString -- generate a wide string bsaed on a template (V51)
+
+        next = UCS4_FormatString(locale, fmtTemplate, dataStream, putCharFunc);
+
+        APTR UCS4_FormatString(struct Locale *, CONST_WSTRPTR, APTR, struct Hook *);
+
+   FUNCTION
+        Generate a date string based on a template. The bytes generated are sent
+        to a user specified callback function.
+
+   INPUTS
+        locale        --  the locale to use when formatting the string
+        formatString  --  the formatting template string; this is much like the
+                          printf() formatting style, i.e. a % followed by a
+                          formatting command.
+
+   RESULT
+
+   NOTES
+        This functions supports big and little endian strings with byte
+        order mark. When there is no byte order mark the native byte order
+        is assumed. Output is always in the native byte order.
+
+   SEE ALSO
+        FormatString()
+
+locale.library/UCS4_GetCatalogStr
+        UCS4_GetCatalogStr -- get a localized wide string (V51)
+
+        string = UCS4_GetLocaleStr(catalog, stringNum, defaultString);
+
+        CONST_WSTRPTR UCS4_GetLocaleStr(struct Catalog *, ULONG, CONST_WSTRPTR);
+
+   FUNCTION
+        This function will return the string specified by the
+        stringNum from the given message catalog, or the defaultString
+        if the string could not be found.
+
+        If the catalog == NULL, then the defaultString will also be returned.
+
+   INPUTS
+        catalog       - Message catalog to search. May be NULL.
+        stringNum     - ID of the string to find.
+        defaultString - String to return in case catalog is NULL or string
+                        could not be found.
+
+   RESULT
+        A pointer to a READ ONLY NULL terminated wide string. This string
+        pointer is valid as long as the catalog remains open.
+
+   NOTES
+        In the catalogs strings are always in the native byte order but
+        implementation does not pay attention to the default strings.
+
+   SEE ALSO
+        GetCatalogStr()
+
+locale.library/UCS4_GetLocaleStr
+        UCS4_GetLocaleStr -- get a system standard string from a locale (V51)
+
+        string = UCS4_GetLocaleStr(locale, stringNum);
+
+        CONST_WSTRPTR UCS4_GetLocaleStr(struct Locale *, ULONG);
+
+   FUNCTION
+        This function will return a system standard unicode string from
+        the current Locale.
+
+   INPUTS
+        locale      - The current locale.
+        stringNum   - The number of the string to get a pointer to.
+                      See the include file <libraries/locale.h>
+                      for a list of possible values.
+
+   RESULT
+        A pointer to a NULL-terminated wide string, or NULL if the string
+        requested was unknown. The returned string is READ-ONLY and
+        is valid only as long as the Locale remains open.
+
+        Unicode characters in the returned strings are always in the native
+        byte order.
+
+
+   NOTES
+        If the current locale does not support unicode this function returns
+        English strings.
+
+   SEE ALSO
+        GetLocaleStr()
+
+locale.library/UCS4_IsXXXX
+        UCS4_IsXXXX -- test a unicode character type (V51)
+
+        state = UCS4_IsXXXX(ucharacter);
+
+        BOOL UCS4_IsXXXX(ULONG);
+
+   FUNCTION
+        These functions allow you to find out whether a character
+        matches a certain type according.
+
+        The functions available are:
+        UCS4_IsAlNum()  - is this an alphanumeric character
+        UCS4_IsAlpha()  - is this an alphabet character
+        UCS4_IsCntrl()  - is this a control character
+        UCS4_IsDigit()  - is this a decimal digit character
+        UCS4_IsGraph()  - is this a graphical character
+        UCS4_IsLower()  - is this a lowercase character
+        UCS4_IsPrint()  - is this a printable character
+        UCS4_IsPunct()  - is this a punctuation character
+        UCS4_IsSpace()  - is this a whitespace character
+        UCS4_IsUpper()  - is this an uppercase character
+        UCS4_IsXDigit() - is this a hexadecimal digit
+
+   INPUTS
+        ucharacter - the character to test in the native byte order
+
+   RESULT
+        state - An indication of whether the character matches the type.
+
+   SEE ALSO
+        IsXXXX()
+
+locale.library/UCS4_Normalize
+        UCS4_Normalize -- Normalize Unicode text for easy comparison (V51)
+
+        UCS4_Normalize(string, buffer, length, type);
+
+        VOID Normalize(CONST_WSTRPTR, WSTRPTR, ULONG, ULONG);
+
+   FUNCTION
+        Normalize Unicode string. Two normalization types are supported:
+
+           UCS4_NFD  - Normalization Form Canonical Decomposition
+           UCS4_NFKD - Normalization Form Compatibility Decomposition
+
+   INPUTS
+        string  - Unicode string (UCS-4) to normalize
+        buffer  - buffer to contain normalized Unicode string (UCS-4)
+        length  - buffer length in characters
+        type    - normalization type
+
+locale.library/UCS4_StrnCmp
+
+        UCS4_StrnCmp -- localized wide character string comparison (V51)
+
+
+        result = UCS4_StrnCmp(locale, string1, string2, length, type);
+
+        LONG UCS4_StrnCmp(struct Locale *, CONST_WSTRPTR, CONST_WSTRPTR, LONG, ULONG);
+
+   FUNCTION
+
+        UCS4_StrnCmp() will compare two wide character strings, up to
+        a maximum length of length using a specific kind of collation
+        information according to the locale.
+
+        The result will be less than zero, zero, or greater than zero
+        depending upon whether the string string1 is less than, equal
+        to, or greater than the string pointed to string2.
+
+        Input strings are UCS-4 strings in the native byte order.
+
+   INPUTS
+
+        locale      -   Which locale to use for this comparison.
+        string1     -   NULL terminated UCS-4 string using the native byte order.
+        string2     -   NULL terminated UCS-4 string using the native byte order.
+        length      -   Maximum length of string to compare.
+        type        -   How to compare the strings, must be 0 for time being.
+
+   RESULT
+
+            The relationship between the two strings.
+
+                < 0 means   string1 < string2
+                = 0 means   string1 == string2
+                > 0 means   string1 > string2
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+        OpenLocale(), CloseLocale(), StrnCmp()
+
+locale.library/UTF8_CheckEncoding
+        UTF8_CheckEncoding -- check if string is valid UTF-8 (V51)
+
+        result = UTF8_CheckEncoding(string, length);
+
+        LONG UTF8_CheckEncoding(CONST_STRPTR, length);
+
+   FUNCTION
+        Check if string is valid UTF-8 or not.
+
+   INPUTS
+        string - NULL terminated string
+        length - the maximum number of bytes to examine or -1 to examine all
+                 characters until a NULL is encountered
+
+   RESULT
+        result - is string valid UTF-8 or not
+                 < 0 string is not valid UTF-8
+                 = 0 string is ASCII but also valid UTF-8
+                 > 0 string is valid UTF-8
+
+locale.library/UTF8_Decode
+        UTF8_Decode -- convert UTF-8 sequence to UCS-4 (V51)
+
+        octets = UTF8_Decode(string, ucs4);
+
+        ULONG UTF8_Decode(CONST_STRPTR, WCHAR *);
+
+   FUNCTION
+        Transcode multibyte UTF-8 sequence to UCS-4 code point. Function
+        reads octets from the input string and places corresponding UCS-4
+        code point into the supplied storage space. Function guaranteed to
+        not process data beyond terminating NULL byte.
+
+        If transcoding failed this function places an ASCII question mark
+        into the supplied buffer. This can only occur if the input string
+        did not contain UTF-8 (synchronisation error).
+
+        Transcoding itself is done without boundary checking. Therefore it
+        is under application writer's responsibility to check for overlong
+        forms or code points which are illegal in UCS-4. Illegal code points
+        are for example byte order marks (BOM) and surrogate pairs. Overlong
+        forms, while mostly harmless, can cause premature truncation of your
+        strings. See the second example code below if you wish to protect
+        your code against these errors.
+
+
+   EXAMPLE
+        // Convert UTF-8 string to UCS-4
+        VOID QuickUTF8toUCS4(CONST_STRPTR s, WSTRPTR ucs4)
+        {
+           ULONG octets;
+
+           do
+           {
+              octets = UTF8_Decode(s, ucs4);
+              s += octets;
+              ucs4++;
+           }
+           while (octets);
+        }
+
+        // Convert UTF-8 string to UCS-4 but replace illegal or impossible
+        // code points by replacement character.
+        //
+        VOID CompleteUTF8toUCS4(CONST_STRPTR s, WSTRPTR ucs4)
+        {
+           ULONG octets;
+
+           do
+           {
+              octets = UTF8_Decode(s, ucs4);
+              s += octets;
+
+              switch (octets)
+              {
+                case 0:
+                case 1: // Always OK
+                  break;
+
+                case 2: // Valid range is 0x80...0x7ff
+                  if (*ucs4 < 0x80)
+                    *ucs4 = '?';
+                  break;
+
+                case 3: // Valid range is 0x800...0xffff
+                  if (*ucs4 < 0x800)
+                    *ucs4 = '?';
+
+                  // Code points U+D800 - U+DFFF may never appear in UTF-8
+                  if (*ucs4 >= 0xd800 && *ucs4 <= 0xdfff)
+                    *ucs4 = '?';
+
+                  // Code points U+FFFE and U+FFFF are legal but should be removed
+                  if (*ucs4 == 0xfffe || *ucs4 == 0xffff)
+                    *ucs4 = '?';
+
+                  break;
+
+                case 4: // Valid range is 0x10000...0x10ffff
+                  if (*ucs4 < 0x10000 || *ucs4 > 0x10ffff)
+                    *ucs4 = '?';
+
+                  break;
+              }
+
+              ucs4++;
+           }
+           while (octets);
+        }
+
+   INPUTS
+        string - UTF-8 sequence
+        ucs4   - pointer to a UCS-4 storage space
+
+   RESULT
+        octets - number of octets (bytes) in the current UTF-8 sequence.
+                 This can be used as an offset to the next UTF-8 sequence.
+                 If the return code is 0 then the first byte of the input
+                 string was a NULL byte and U+0000 was placed into the
+                 storage space.
+
+   SEE ALSO
+        UTF8_Encode(), ConvertUTF8ToUCS4(), ConvertUCS4ToUTF8(),
+        keymap.library/MapUCS4(), keymap.library/ToUCS4()
+
+locale.library/UTF8_Encode
+        UTF8_Encode -- convert UCS-4 code point to UTF-8 sequence (V51)
+
+        octets = UTF8_Encode(ucs4, string);
+
+        ULONG UTF8_Encode(WCHAR, STRPTR);
+
+   FUNCTION
+        Convert UCS-4 code point to multibyte UTF-8 sequence. Up to four
+        bytes are produced.
+
+   EXAMPLE
+        VOID UCS4toUTF8(STRPTR s, CONST_WSTRPTR ucs4)
+        {
+           ULONG octets;
+
+           do
+           {
+              octets = UTF8_Encode(*ucs4, s);
+              s += octets;
+              ucs4++;
+           }
+           while (octets);
+        }
+
+   INPUTS
+        ucs4   - UCS-4 code point
+        string - UTF-8 storage space
+
+   RESULT
+        octets - number of octets in the current UTF-8 sequence. Returns
+                 zero on a NULL code point and UTF-8 storage space contains
+                 NULL byte respectively.
+
+   SEE ALSO
+        UTF8_Decode(), ConvertUTF8ToUCS4(), ConvertUCS4ToUTF8(),
+        keymap.library/MapUCS4(), keymap.library/ToUCS4()
+
+locale.library/UTF8_EncodingLength
+        UTF8_EncodingLength -- get UTF-8 encoding length from UCS-4 (V51)
+
+        octets = UTF8_EncodingLength(ucs4);
+
+        ULONG UTF8_EncodingLength(WCHAR);
+
+   FUNCTION
+       Get UTF-8 encoding length for UCS-4 code point.
+
+   INPUTS
+        ucharacter - the UCS-4/UTF-32 character to get encoding length from
+
+   RESULT
+        octets - If not NULL character this is number of octets (bytes) in
+                 the correspoding UTF-8 sequence.
+                 If NULL character this function returns zero.
+
+   SEE ALSO
+        UTF8_Decode()
+
+locale.library/VSNPrintf
+        VSNPrintf -- Localized string formatting (V52)
+
+        length = VSNPrintf(locale, buffer, bufferlength, template, args);
+
+        ssize_t VSNPrintf(struct Locale, STRPTR, ssize_t, CONST_STRPTR, va_list);
+
+        length = SNPrintf(locale, buffer, bufferlength, template, ...);
+
+        ssize_t SNPrintf(struct Locale, STRPTR, ssize_t, CONST_STRPTR, ...);
+
+   FUNCTION
+        Format a string using the locale's formatting conventions.
+
+   INPUTS
+        locale       - the locale to use for the formatting or NULL if the current
+                       locale should be used.
+        buffer       - the buffer to place result into
+        bufferlength - the size of the buffer
+        template     - a C-language-like format string with the following % options:
+
+          %[arg_pos$][flags][width][.limit][length]type
+
+          arg_pos - an optional index to parameter list, starting from 1
+            $     - must follow the arg_pos value, if specified
+          flags   -
+                      - (minus) the output is left justified
+                      + (plus)
+                        (space) a blank should be left before a positive number.
+                      ' (apostrophe) for decimal conversion the output is grouped with grouping
+                        characters using the locale's formatting conventions.
+          width   - a minimum field width
+            .     -
+          limit   - maximum number of characters (%b and %s) or precision (%f)
+          length  - size of input data, defaults to 32-bit decimals, 64-bit float and 8-bit strings
+                       l  - for strings and characters, input is WCHAR or CONST_WSTRPTR, conversion
+                            is to UTF-8
+                      ll  - for decimals 'll' changes size to 64-bit
+          type    - supported types are:
+                      b   - BSTR
+                      d,D - signed decimal
+                      u,U - unsigned decimal
+                      p   - pointer
+                      x   - hexadecimal with hex digits in lowercase
+                      X   - hexadecimal with hex digits in uppercase
+                      s   - string
+                      c   - character
+                      f   - double to decimal notation
+                      F   - double to decimal notation
+
+        args      - arguments for the format string
+
+   RESULT
+        length - Number of characters which would be generated for the given input,
+                 excluding the trailing null.
+
+   WARNING
+        This function is incompatible with old RawDoFmt() and FormatString() but almost
+        compatible with NewRawDoFmt().
+
+   SEE ALSO
+        exec.library/NewRawDoFmt(), snprintf()
+
+

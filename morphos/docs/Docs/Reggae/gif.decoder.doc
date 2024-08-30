@@ -1,0 +1,213 @@
+TABLE OF CONTENTS
+
+gif.decoder/MMA_Video_BitsPerPixel
+gif.decoder/MMA_Video_FpsDenominator
+gif.decoder/MMA_Video_FpsNumerator
+gif.decoder/MMA_Video_Height
+gif.decoder/MMA_Video_UseAlpha
+gif.decoder/MMA_Video_Width
+gif.decoder/MMM_Pull
+gif.decoder/background
+gif.decoder/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Local colour depth of current GIF subimage. If the current subimage has
+   no local palette, the global image colour depth is forwarded from a
+   connected gif.demuxer object.
+
+   GIF89a: This attribute can change its value in every frame.
+
+ NOTES
+   If the attribute is queried before the first frame is pulled, a global
+   value from gif.demuxer is forwarded. Note that it can be zero if the
+   picture has no global palette.
+
+gif.decoder/MMA_Video_FpsDenominator
+
+ NAME
+   MMA_Video_FpsDenominator (V51) [ISGPQ], ULONG
+
+ FUNCTION
+   Video framerate in Reggae is represented as a fraction to maintain high
+   timing precision. This attribute carries the denominator of framerate
+   fraction.
+
+ NOTES
+   The default GIF framerate emulation is 100 fps, so this attribute
+   defaults to 1. The framerate limits specified by numerator/denominator
+   pair are 200 fps upper and 1 fps lower.
+
+ SEE ALSO
+   MMA_Video_FpsNumerator
+
+gif.decoder/MMA_Video_FpsNumerator
+
+ NAME
+   MMA_Video_FpsNumerator (V51) [ISGPQ], ULONG
+
+ FUNCTION
+   Video framerate in Reggae is represented as a fraction to maintain high
+   timing precision. This attribute carries the numerator of framerate
+   fraction.
+
+   As GIF anim has no fixed framerate, the decoder can emulate it, repeating
+   frames as needed. The attribute, together with MMA_Video_FpsDenominator
+   specifies the framerate of this  emulation. For example if framerate is
+   set to 100 and a frame has a delay of 1/10 s, it will be repeated ten
+   times in the data stream pulled from a gif.decoder object.
+
+   The time granularity of GIF animations is 10 miliseconds. Then framerate
+   of 100 fps gives a 100% accurate timing. For other framerates small
+   inaccuracies are possible, as GIF timing is fitted to the specified
+   framerate grid.
+
+   Note that emulated constant framerate is designed for processing
+   mainly (for example mixing an animation into a bigger movie). It is
+   highly ineffective for plain playback, as most of the frames are
+   identical so lot of data copied to the display device is redundant.
+
+ NOTES
+   The default GIF framerate emulation is 100 fps, so this attribute
+   defaults to 100. The framerate limits specified by numerator/denominator
+   pair are 200 fps upper and 1 fps lower.
+
+ SEE ALSO
+   MMA_Video_FpsDenominator
+
+gif.decoder/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Global GIF image canvas height in pixels. This attribute is just
+   forwarded from gif.demuxer.
+
+gif.decoder/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V51) [..G.Q], BOOL
+
+ FUNCTION
+   GIF87a: Always returns FALSE as 87a flavor does not support any
+   transparency.
+
+   GIF89a: Not yet supported.
+
+gif.decoder/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Global GIF image canvas width in pixels. This attribute is just forwarded
+   from gif.demuxer.
+
+gif.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Pulls decoded GIF data. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls a block of decoded ARGB32 data. Every frame has MMA_Video_Width *
+   MMA_Video_Height pixels, and every pixel is a 32-bit word.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from output, so 1.
+   buffer - destination buffer. This buffer must be allocated with
+     MediaAllocMem().
+   length - amount of data to be pulled in bytes. Note that it will be
+     rounded down if not evenly divisible by 4.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+gif.decoder/background
+
+ DESCRIPTION
+   The class decodes GIF image data received from gif.demuxer. The class is
+   responsible of:
+   - Splitting stream into frames and subimages,
+   - Parsing subimages headers,
+   - Loading local palettes,
+   - Decoding LZW compressed pixel stream,
+   - Optional image deinterleaving,
+   - Optional transparency,
+   - Decoding of optional graphics extensions block,
+   - Merging subimages into frames.
+
+   Following GIF format features are intentionally NOT implemented. They
+   are considered obsolete or simply not used:
+   - UserInput flag of Graphics Extension is ignored (assumed 0).
+
+   Ports:
+     0 - input  - MMF_VIDEO_GIF  - accepts compressed GIF data.
+     1 - output - MMFC_VIDEO_ARGB32    - pixel data.
+                  MMFC_VIDEO_ARGB32_MF - video metaformat.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_BitsPerPixel         (V51)   [..G.Q], ULONG
+   MMA_Video_Height               (V51)   [..G.Q], ULONG
+   MMA_Video_Width                (V51)   [..G.Q], ULONG
+   MMA_Video_UseAlpha             (V51)   [..G.Q], ULONG
+   MMA_Video_FpsNumerator         (V51)   [ISGPQ], ULONG
+   MMA_Video_FpsDenominator       (V51)   [ISGPQ], ULONG
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.7  (07.05.2008)
+   - Fixed: Zeropage hit in MMM_Setup(), MMA_DataFormat has been queried
+     with MediaGetPort() instead of MediaGetPortFwd(). As a sideefect, all
+     GIF-s were treated as 87a.
+
+   51.6  (19.08.2007)
+   - MMA_Video_FpsNumerator and MMA_Video_FpsDenominator made gettable.
+   - MMA_Video_UseAlpha returns FALSE for GIF87a.
+   - Metaformat generator sends MMMF_END at end of data.
+
+   51.5  (24.07.2007)
+   - Added transparency support.
+   - Added proper code for skipping unknown extension blocks.
+   - Added frame detection.
+   - Added WAIT metablock generator.
+   - Added proper background generator based on tile coverage.
+   - Added anim fixed framerate emulation.
+
+   51.4  (17.07.2007)
+   - Video metaformat changed.
+   - Support for interlaced images.
+
+   51.3  (27.06.2007)
+   - Video metaformat introduced internally.
+   - Support for tiled images.
+   - Proper background color rendering.
+   - Lots of bugfixes.
+
+   51.2  (25.06.2007)
+   - Proper forwarding of MMA_Video_BitsPerPixel (fixes Multiview displaying
+     bogus bit depth).
+
+   51.1  (29.04.2007)
+   - Initial release.
+
+

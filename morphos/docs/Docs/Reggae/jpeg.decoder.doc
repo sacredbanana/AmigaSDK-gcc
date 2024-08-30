@@ -1,0 +1,192 @@
+TABLE OF CONTENTS
+
+jpeg.decoder/MMA_Video_BitsPerPixel
+jpeg.decoder/MMA_Video_FinalTouch
+jpeg.decoder/MMA_Video_Height
+jpeg.decoder/MMA_Video_Progressive
+jpeg.decoder/MMA_Video_UseAlpha
+jpeg.decoder/MMA_Video_Width
+jpeg.decoder/MMETA_VideoAspectX
+jpeg.decoder/MMETA_VideoAspectY
+jpeg.decoder/MMETA_VideoDpiX
+jpeg.decoder/MMETA_VideoDpiY
+jpeg.decoder/MMM_Pull
+jpeg.decoder/background
+jpeg.decoder/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Returns image colour depth. Possible values for jpeg.decoder are:
+   8  - greyscale jpeg images
+   24 - truecolor images
+
+jpeg.decoder/MMA_Video_FinalTouch
+
+ NAME
+   MMA_Video_FinalTouch (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Always returns TRUE for non-progressive images or when
+   MMA_Video_Progressive is set and decoder has processed all image already.
+
+jpeg.decoder/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Returns height of image frame in pixels.
+
+jpeg.decoder/MMA_Video_Progressive
+
+ NAME
+   MMA_Video_Progressive (V50) [ISG.Q], BOOL
+
+ FUNCTION
+   Returns TRUE for progressive images.
+   Setting this attribute to TRUE turn on progressive output.
+
+jpeg.decoder/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Always returns FALSE.
+
+jpeg.decoder/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Returns width of image frame in pixels.
+
+jpeg.decoder/MMETA_VideoAspectX
+
+ NAME
+   MMETA_VideoDpiY (V50) [..G.Q], DOUBLE
+
+ FUNCTION
+   Returns horizontal aspect value if available.
+
+jpeg.decoder/MMETA_VideoAspectY
+
+ NAME
+   MMETA_VideoDpiY (V50) [..G.Q], DOUBLE
+
+ FUNCTION
+   Returns vertical aspect value if available.
+
+jpeg.decoder/MMETA_VideoDpiX
+
+ NAME
+   MMETA_VideoDpiY (V50) [..G.Q], DOUBLE
+
+ FUNCTION
+   Returns horizontal DPI value if available.
+
+jpeg.decoder/MMETA_VideoDpiY
+
+ NAME
+   MMETA_VideoDpiY (V50) [..G.Q], DOUBLE
+
+ FUNCTION
+   Returns vertical DPI value if available.
+
+jpeg.decoder/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes common format image data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of JPEG data from input, processes them to get
+   image data in the common format and places them in the specified
+   buffer.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from output, so 1.
+   buffer - destination buffer for common format image data. This buffer
+     must be allocated with MediaAllocMem().
+   length - amount of data to be pulled in bytes. It should be evenly
+     divisible by number of bytes per pixel for the common format (4 for
+     MMFC_VIDEO_ARGB32), if not, it is rounded down, and the rest of bytes
+     are undefined.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+jpeg.decoder/background
+
+ DESCRIPTION
+   The class decodes JPEG pictures using jfif.library.
+   An object of jpeg.decoder class has two ports: port 0 is an input
+   accepting MMF_VIDEO_JPEG format, port 1 is an output producing
+   MMFC_VIDEO_ARGB32 (default), MMFC_VIDEO_GRAY8, MMFC_VIDEO_CMYK32 format
+   depending on input data format.
+   The class is a direct subclass of multimedia.class.
+
+ ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_Width          (V50) [..G.Q], ULONG
+   MMA_Video_Height         (V50) [..G.Q], ULONG
+   MMA_Video_BitsPerPixel   (V50) [..G.Q], ULONG
+   MMA_Video_UseAlpha       (V50) [..G.Q], BOOL
+   MMA_Video_FinalTouch     (V50) [..G.Q], BOOL
+   MMA_Video_Progressive    (V50) [ISG.Q], BOOL
+   MMA_UseBestFormat        (V50) [I....], BOOL
+
+ METADATA
+   MMETA_VideoDpiX          (V50) [..G.Q], DOUBLE
+   MMETA_VideoDpiY          (V50) [..G.Q], DOUBLE
+   MMETA_VideoAspectX       (V50) [..G.Q], DOUBLE
+   MMETA_VideoAspectY       (V50) [..G.Q], DOUBLE
+   MMETA_FlashUsed          (V50) [..G.Q], INTEGER
+   MMETA_CameraModel        (V50) [..G.Q], STRING
+   MMETA_CameraVendor       (V50) [..G.Q], STRING
+   MMETA_ExposureTime       (V50) [..G.Q], DOUBLE
+   MMETA_Orientation        (V50) [..G.Q], INTEGER
+   MMETA_GPSLatitude        (V50) [..G.Q], STRING
+   MMETA_GPSAltitude        (V50) [..G.Q], STRING
+   MMETA_GPSLongitude       (V50) [..G.Q], STRING
+   MMETA_PerformanceDate    (V50) [..G.Q], CLOCKDATE
+   MMETA_ColorProfile       (V50) [..G.Q], PORTNUM
+
+ METHODS
+   MMM_Pull(port,buffer, length)  (V50)
+
+ HISTORY
+   50.11 (25.10.2015)
+   - Fix for per-output metadata.
+
+   50.8 (03.11.2014)
+   - More metadata handled (Exif, Colorspace, etc.)
+
+   50.7 (03.10.2011)
+   - Fixes in buffering
+
+   50.6  (15.05.2009)
+   - Progressive parameter support
+   - Use of jfif.library
+   - MMETA_VideoDpiX, MMETA_VideoDpiY tag support
+
+   50.1  (11.12.2007)
+   - Initial revision.
+
+

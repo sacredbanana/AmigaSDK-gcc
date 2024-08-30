@@ -1,0 +1,83 @@
+TABLE OF CONTENTS
+
+scale.filter/--background--
+scale.filter/MMA_Arguments
+scale.filter/MMM_Pull
+scale.filter/--background--
+
+ DESCRIPTION
+   This is a Reggae filter for scaling an input data.
+   The output format is the same as input one.
+   An scale.filter object will allow for following formats:
+
+   Common formats:
+   - MMFC_VIDEO_ARGB32,
+   - MMFC_VIDEO_GRAY8
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+ METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+ HISTORY
+   51.1 (10.03.2016)
+   - Initial release.
+
+scale.filter/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper pixel format
+   to the input port. The template is "WIDTH/K/N,HEIGHT/K/N,MODE/K/N".
+
+   - WIDTH: destination width, accepts size >0
+    - HEIGHT: destination height, accepts size >0
+   - FORMAT:
+      0 - Box
+      1 - Triangle
+      2 - Bell
+      3 - B-Spline
+      4 - Bilinear
+      5 - Lanczos
+      6 - Mitchell
+
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When passed for the constructor, the argument string may be a dynamic
+   variable, as it only has to be valid inside the constructor.
+
+scale.filter/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes scale video data to specified buffer. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of  video data from input and scale it.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from port 1 (output).
+   buffer - destination buffer for data.
+   length - amount of data to be pulled in *bytes*.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+

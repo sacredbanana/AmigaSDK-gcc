@@ -1,0 +1,137 @@
+TABLE OF CONTENTS
+
+zxscreen.demuxer/MMA_DataFormat
+zxscreen.demuxer/MMA_MimeType
+zxscreen.demuxer/MMA_Video_BitsPerPixel
+zxscreen.demuxer/MMA_Video_FrameCount
+zxscreen.demuxer/MMA_Video_Height
+zxscreen.demuxer/MMA_Video_Palette
+zxscreen.demuxer/MMA_Video_Width
+zxscreen.demuxer/MMM_Pull
+zxscreen.demuxer/background
+zxscreen.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V51.3) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns "ZX Spectrum Screen".
+
+zxscreen.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType (V51.4) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only NULL-terminated MIME type string. This class returns
+   "image/x-zxspectrum-screen".
+
+zxscreen.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   ZX Spectrum images have 16 colors, so the effective bit depth is 4.
+
+zxscreen.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   This attribute always returns 1.
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+zxscreen.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Image height, always 192.
+
+zxscreen.demuxer/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [..G.Q], *ULONG
+
+ FUNCTION
+   Returns fixed ARGB palette of ZX Spectrum display.
+
+zxscreen.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Image width, always 256.
+
+zxscreen.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   This class does not process image data (except of stripping a header if
+   present), then pull requests are just forwarded to the connected stream.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+zxscreen.demuxer/background
+
+ DESCRIPTION
+   The class is a demultiplexer for ZX Spectrum screen dumps (SCR format).
+   Its tasks are: format recognition, delivering palette and attributes.
+   Screen data are processed by zxscreen.decoder. The demuxer supports
+   following ZX Spectrum screen dump flavours:
+   - Raw screen dump, 6912 bytes.
+   - ZX Interface 1 dump with 9-byte header, 6921 bytes.
+   - Speculator (ZX82) dump with 12-byte header, 6924 bytes.
+
+ NEW ATTRIBUTES
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Palette           (V51)    [..G.Q], *ULONG
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_DataFormat              (V51.3)  [..G.Q], STRPTR
+   MMA_MimeType                (V51.4)  [..G.Q], STRPTR
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.4  (28.06.2015)
+   - Added MMA_MimeType attribute.
+
+   51.3  (24.04.2009)
+   - Fixed a bug in recognition routine, it blindly assumed that stream
+     has a name, which may be not a case for memory based streams.
+
+   51.2  (06.04.2009)
+   - Added support for ZX Interface 1 dumps (6921 bytes) and ZX82
+     (Speculator) dumps (6924 bytes).
+
+   51.1  (07.08.2007)
+   - Initial revision.
+
+

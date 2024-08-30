@@ -1,0 +1,1380 @@
+This document was generated from the AROS APL-Licensed source code. The
+information contained in it might be errorneous or inacurate. When in
+doubt, please verify with another documentation set.
+
+TABLE OF CONTENTS
+
+datatypes.library/AddDTObject
+datatypes.library/CopyDTMethods
+datatypes.library/CopyDTTriggerMethods
+datatypes.library/DisposeDTObject
+datatypes.library/DoAsyncLayout
+datatypes.library/DoDTDomainA
+datatypes.library/DoDTMethodA
+datatypes.library/DrawBox
+datatypes.library/DrawDTObjectA
+datatypes.library/FindMethod
+datatypes.library/FindToolNodeA
+datatypes.library/FindTriggerMethod
+datatypes.library/FreeDTMethods
+datatypes.library/GetDTAttrsA
+datatypes.library/GetDTMethods
+datatypes.library/GetDTString
+datatypes.library/GetDTTriggerMethodDataFlags
+datatypes.library/GetDTTriggerMethods
+datatypes.library/LaunchToolA
+datatypes.library/LockDataType
+datatypes.library/NewDTObjectA
+datatypes.library/ObtainDTDrawInfoA
+datatypes.library/ObtainDataTypeA
+datatypes.library/PrintDTObjectA
+datatypes.library/RefreshDTObjectA
+datatypes.library/ReleaseDTDrawInfo
+datatypes.library/ReleaseDataType
+datatypes.library/RemoveDTObject
+datatypes.library/SaveDTObjectA
+datatypes.library/SetAttributes
+datatypes.library/SetDTAttrsA
+datatypes.library/StartDragSelect
+datatypes.library/AddDTObject
+
+   NAME
+    AddDTObject -- 
+
+   SYNOPSIS
+    AddDTObject(win, req, obj, pos)
+    LONG AddDTObject(struct Window*, struct Requester *, Object *, LONG);
+
+   FUNCTION
+
+    Add an object to the window 'win' or requester 'req' at the position
+    in the gadget list specified by the 'pos' argument.
+
+   INPUTS
+
+    win  --  window the object should be added to; may be NULL in which case
+             nothing is done
+    req  --  requester the object should be added to
+    obj  --  the object to add; may be NULL in which case nothing is done
+    pos  --  the position of the object in the list
+
+
+   RESULT
+
+    The position where the object was added (may be different from what
+    you asked for).
+
+   NOTES
+
+    The object will receice a GM_LAYOUT message with the gpl_Initial field
+    set to 1 when the object is added.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    RemoveDTObject(), intuition.library/AddGList()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/CopyDTMethods
+
+   NAME
+    CopyDTMethods -- 
+
+   SYNOPSIS
+    CopyDTMethods(methods, include, exclude)
+    ULONG * CopyDTMethods(ULONG *, ULONG *, ULONG *);
+
+   FUNCTION
+
+    Copy and modify an array of methods. This is used by subclass implementors
+    who want to add supported methods to an existing class.
+
+   INPUTS
+
+    methods  --  array of methods; may be NULL
+    include  --  array of methods to include terminated with ~0UL; may be NULL
+    method   --  array of methods to exclude terminated with ~0UL; may be NULL.
+
+   RESULT
+
+    The new array of methods or NULL if something went wrong (like out of
+    memory).
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    FindMethod(), CopyDTTriggerMethods(), FreeDTMethods()
+
+   INTERNALS
+
+    When a method is specified both in the 'include' and the 'exclude',
+    it will be included.
+
+   HISTORY
+
+    2.8.99  SDuvan  implemented
+
+datatypes.library/CopyDTTriggerMethods
+
+   NAME
+    CopyDTTriggerMethods -- 
+
+   SYNOPSIS
+    CopyDTTriggerMethods(methods, include, exclude)
+    struct DTMethod * CopyDTTriggerMethods(struct DTMethod *, struct DTMethod *, struct DTMethod *);
+
+   FUNCTION
+
+    Copy and modify an array of DTMethod:s. This is used by subclass
+    implementors who want to add supported methods to an existing class.
+
+   INPUTS
+
+    methods  --  array of methods; may be NULL
+    include  --  array of methods to include terminated with ~0UL; may be NULL
+    method   --  array of methods to exclude terminated with ~0UL; may be NULL
+                 the dtm_Command and dtm_Method fields may have the options
+         described in the FindTriggerMethod to filter out the given
+         entries
+   RESULT
+
+    The new array of methods or NULL if something went wrong (like out of
+    memory).
+
+   NOTES
+
+    dtm_Label and dtm_Command must be valid as long as the object exists as
+    they are not copied.
+        A subclass that implment DTM_TRIGGER must send unknown trigger
+    methods to its superclass.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    FindTriggerMethod(), CopyDTMethods(), FreeDTMethods()
+
+   INTERNALS
+
+   HISTORY
+
+    2.8.99   SDuvan  implemented
+
+datatypes.library/DisposeDTObject
+
+   NAME
+    DisposeDTObject -- 
+
+   SYNOPSIS
+    DisposeDTObject(o)
+    void DisposeDTObject(Object *);
+
+   FUNCTION
+
+    Dispose a data type object obtained by NewDTObjectA().
+
+   INPUTS
+
+    o   --  The data type object to dispose of; may be NULL.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    NewDTObjectA()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/DoAsyncLayout
+
+   NAME
+    DoAsyncLayout -- 
+
+   SYNOPSIS
+    DoAsyncLayout(object, gpl)
+    ULONG DoAsyncLayout(Object *, struct gpLayout *);
+
+   FUNCTION
+
+    Perform an object's DTM_ASYNCLAYOUT method -- doing it asynchronously
+    off loads the input.device. The method should exit when a SIGBREAK_CTRL_C
+    is received; this signal means that the data is obsolete and the the
+    method will be called again.
+
+   INPUTS
+
+    object  --  pointer to data type object
+    gpl     --  gpLayout message pointer
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/DoDTDomainA
+
+   NAME
+    DoDTDomainA -- 
+
+   SYNOPSIS
+    DoDTDomainA(o, win, req, rport, which, domain, attrs)
+    ULONG DoDTDomainA(Object *, struct Window*, struct Requester *, struct RastPort*, ULONG, struct IBox*, struct TagItem *);
+
+
+   FUNCTION
+
+    Obtain the maximum/minimum/nominal domains of a data type object.
+
+   INPUTS
+
+    o       --  data type object in question
+    win     --  window that the object is attached to
+    req     --  requester the object is attached to
+    rport   --  rastport; used for domain calculations
+    which   --  the domain to obtain (GDOMAIN_, see <intuition/gadgetclass.h>
+    domain  --  the result will be put here
+    attrs   --  additional attributes (subclass specific)
+
+   RESULT
+
+    The return value of GM_DOMAIN or 0 if an error occurred. The 'domain'
+    IBox will be filled with the requested values as a side effect.
+
+   NOTES
+
+    This function requires an object to perform the GM_DOMAIN method. To
+    achieve similar results without an object, you must use CoerceMethodA()
+    manually.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    <intuition/gadgetclass.h>
+
+   INTERNALS
+
+   HISTORY
+
+    7.8.99  SDuvan  implemented
+
+datatypes.library/DoDTMethodA
+
+   NAME
+    DoDTMethodA -- 
+
+   SYNOPSIS
+    DoDTMethodA(o, win, req, msg)
+    ULONG DoDTMethodA(Object *, struct Window*, struct Requester *, Msg);
+
+   FUNCTION
+
+    Perform a specific datatypes methodl.
+
+   INPUTS
+
+    o    --  pointer to data type object
+    win  --  window the object is attached to
+    req  --  requester the object is attached to
+    msg  --  the message to send to the object
+
+   RESULT
+
+    The value returned by the specified method.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    intuition.library/DoGadgetMethod()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/DrawBox
+*
+*   NAME
+*       DrawBox - draw a box for area marking
+*
+*   SYNOPSIS
+*
+*   FUNCTION
+*
+*   INPUTS
+*
+*   RETURNS
+*
+*   EXAMPLE
+*
+*   SEE ALSO
+*
+datatypes.library/DrawDTObjectA
+
+   NAME
+    DrawDTObjectA -- 
+
+   SYNOPSIS
+    DrawDTObjectA(rp, o, x, y, w, h, th, tv, attrs)
+    LONG DrawDTObjectA(struct RastPort *, Object*, LONG, LONG, LONG, LONG, LONG, LONG, struct TagItem*);
+
+   FUNCTION
+
+    Draw a data type object into a RastPort. You must have successfully
+    called ObtainDTDrawInfoA before calling this function; it invokes the
+    object's DTM_DRAW method.
+
+   INPUTS
+
+    rp     --  pointer to the RastPort to draw the object into
+    o      --  pointer to the data type object to draw
+    x      --  left edge of drawing area
+    y      --  top edge of drawing area
+    w      --  width of drawing area
+    h      --  height of drawing area
+    th     --  horizontal top in units
+    tv     --  vertical top in units
+    attrs  --  additional attributes
+
+    TAGS
+
+    ADTA_Frame for animationclass objects (selects the frame that should be
+    drawn.
+
+   RESULT
+
+    TRUE if rendering went OK, FALSE if failure.
+
+   NOTES
+
+    The RastPort in question must support clipping, i.e. have a valid
+    layer structure attached to it; if not, some datatypes can't draw
+    and FALSE will be returned.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ObtainDataTypeA()
+
+   INTERNALS
+
+    The type is stated to be LONG in the original docs even if the return
+    value is really BOOL.
+
+   HISTORY
+
+    29.7.99  SDuvan  implemented
+
+datatypes.library/FindMethod
+
+   NAME
+    FindMethod -- 
+
+   SYNOPSIS
+    FindMethod(methods, searchmethodid)
+    ULONG * FindMethod(ULONG *, ULONG);
+
+   FUNCTION
+
+    Search for a specific method in a array of methods.
+
+   INPUTS
+
+    methods         --  array of methods; may be NULL
+    searchmethodid  --  method to search for
+
+   RESULT
+
+    Pointer to method table entry or NULL if the method wasn't found.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    GetDTMethods(), CopyDTMethods()
+
+   INTERNALS
+
+   HISTORY
+
+    2.8.99  SDuvan  implemented
+
+datatypes.library/FindToolNodeA
+
+   NAME
+    FindToolNodeA -- 
+
+   SYNOPSIS
+    FindToolNodeA(toollist, attrs)
+    struct ToolNode * FindToolNodeA(struct List*, struct TagItem *);
+
+   FUNCTION
+
+    Search for a specific tool in a list of given tool nodes.
+
+   INPUTS
+
+    toollist  --  a list or a struct ToolNode * (which will be skipped) to
+                  search in; may be NULL.
+
+    attrs     --  search tags; if NULL, the result of the function will
+                  simply be the following node.
+
+    TAGS
+
+    TOOLA_Program     --  name of the program to search for
+
+    TOOLA_Which       --  one of the TW_#? types
+
+    TOOLA_LaunchType  --  launch mode: TF_SHELL, TF_WORKBENCH or TF_RX
+
+   RESULT
+
+    A pointer to a ToolNode describing the search result (NULL for failure).
+
+   NOTES
+
+    The entries in dt->dtn_ToolList are valid as long as a lock is kept on
+    the data type 'dt' (ObtainDataTypeA() or LockDataType()).
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    LaunchToolA()
+
+   INTERNALS
+
+   HISTORY
+
+    7.8.99  SDuvan  implemented
+
+datatypes.library/FindTriggerMethod
+
+   NAME
+    FindTriggerMethod -- 
+
+   SYNOPSIS
+    FindTriggerMethod(methods, command, method)
+    struct DTMethod * FindTriggerMethod(struct DTMethod *, STRPTR, ULONG);
+
+   FUNCTION
+
+    Search for a specific trigger method in a array of trigger methods (check
+    if either 'command' or 'method' matches).
+
+   INPUTS
+
+    methods  --  array of trigger methods; may be NULL
+    command  --  name of trigger method (may be NULL; if so, 'command'
+                        is not matched against)
+    method   --  id of trigger method to search for (may be ~0; if so, don't
+                 match against 'method'.
+
+   RESULT
+
+    Pointer to trigger method table entry (struct DTMethod *) or NULL if the
+    method wasn't found.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    GetDTTriggerMethods(), CopyDTTriggerMethods()
+
+   INTERNALS
+
+   HISTORY
+
+    2.8.99  SDuvan  implemented
+
+datatypes.library/FreeDTMethods
+
+   NAME
+    FreeDTMethods -- 
+
+   SYNOPSIS
+    FreeDTMethods(methods)
+    VOID FreeDTMethods(APTR);
+
+   FUNCTION
+
+    Free array obtained from CopyDTMethods() or CopyDTTriggerMethods().
+
+   INPUTS
+
+    methods  --  array of methods; may be NULL
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CopyDTMethods(), CopyDTTriggerMethods()
+
+   INTERNALS
+
+   HISTORY
+
+    2.8.99  SDuvan  implemented
+
+datatypes.library/GetDTAttrsA
+
+   NAME
+    GetDTAttrsA -- 
+
+   SYNOPSIS
+    GetDTAttrsA(o, attrs)
+    ULONG GetDTAttrsA(Object *, struct TagItem *);
+
+   FUNCTION
+
+    Get the attributes of a specific data type object.
+
+   INPUTS
+
+    o      --  pointer to a data type object; may be NULL
+    attrs  --  the attributes to get terminated with TAG_DONE; each Tag's
+               data element should contain the address of the respective
+           storage element; may be NULL
+
+   RESULT
+
+    The number of attributes obtained.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    SetDTAttrsA(), intuition.library/GetAttr()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/GetDTMethods
+
+   NAME
+    GetDTMethods -- 
+
+   SYNOPSIS
+    GetDTMethods(object)
+    ULONG * GetDTMethods(Object *);
+
+   FUNCTION
+
+    Get a list of the methods an object supports.
+
+   INPUTS
+
+    object   --  pointer to a data type object
+
+   RESULT
+
+    Pointer to a ULONG array which is terminated ~0; the array is only
+    valid until the object is disposed of.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    GetDTTriggerMethods()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/GetDTString
+
+   NAME
+    GetDTString -- 
+
+   SYNOPSIS
+    GetDTString(id)
+    STRPTR GetDTString(ULONG);
+
+   FUNCTION
+
+    Get a pointer to a localized datatypes string.
+
+   INPUTS
+
+    id   --  ID of the string to get
+
+   RESULT
+
+    Pointer to a NULL terminated string.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/GetDTTriggerMethodDataFlags
+
+   NAME
+    GetDTTriggerMethodDataFlags -- 
+
+   SYNOPSIS
+    GetDTTriggerMethodDataFlags(method)
+    ULONG GetDTTriggerMethodDataFlags(ULONG);
+
+
+   FUNCTION
+
+    Get the kind of data that may be attached to the stt_Data field in the
+    dtTrigger method body. The data type can be specified by or:ing the
+    method id (within the STMF_METHOD_MASK value) with one of the STMD_
+    identifiers.
+
+    STMD_VOID     --  stt_Data must be NULL
+    STMD_ULONG    --  stt_Data contains an unsigned value
+    STMD_STRPTR   --  stt_Data is a pointer to a string
+    STMD_TAGLIST  --  stt_Data points to an array of struct TagItem terminated
+                      with TAG_DONE
+
+    The trigger methods below STM_USER are explicitly handled as described in
+    <datatypes/datatypesclass.h>.
+
+   INPUTS
+
+    method  --  dtt_Method ID from struct DTMethod
+
+   RESULT
+
+    One of the STMD_ identifiers defined in <datatypes/datatypesclass.h>
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    CopyDTTriggerMethods(), FindTriggerMethod()
+
+   INTERNALS
+
+   HISTORY
+
+    5.8.99   SDuvan  implemented
+
+datatypes.library/GetDTTriggerMethods
+
+   NAME
+    GetDTTriggerMethods -- 
+
+   SYNOPSIS
+    GetDTTriggerMethods(object)
+    struct DTMethods * GetDTTriggerMethods(Object *);
+
+   FUNCTION
+
+    Get a list of the trigger methods an object supports.
+
+   INPUTS
+
+    object  --  pointer to a data type object
+
+   RESULT
+
+    A pointer to a STM_DONE terminated DTMethod list. This list in only valid
+    until the object is disposed of.
+
+   NOTES
+
+    Some trigger methods requires an argument (calling these with a NULL
+    argument is wrong). Use GetDTTriggerMethodDataFlags() to obtain the
+    type of the requested argument.
+
+   EXAMPLE
+
+    To call the specific method, do the following:
+
+    DoMethod(object, DTM_TRIGGER, myMethod);
+
+   BUGS
+
+   SEE ALSO
+
+    GetDTMethods()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/LaunchToolA
+
+   NAME
+    LaunchToolA -- 
+
+   SYNOPSIS
+    LaunchToolA(tool, project, attrs)
+    ULONG LaunchToolA(struct Tool *, STRPTR, struct TagItem *);
+
+   FUNCTION
+
+    Launch an application with a particular project.
+
+   INPUTS
+
+    tool     --  tool to use (may be NULL in which case this function
+                 returns 0)
+    project  --  name of the project to execute or NULL
+    attrs    --  additional attributes
+
+    TAGS
+
+    NP_Priority (BYTE) -- priority of the launched tool (default is the
+                          priority of the currect process except for
+              Workbench applications where the default priority
+              is 0 if not overridden by the TOOLPRI tooltype).
+
+    NP_Synchronous (BOOL) -- don't return until lauched application process
+                             finishes (defaults to FALSE).
+
+   RESULT
+
+    Zero for failure, non-zero otherwise.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    NewDTObjectA()
+
+   INTERNALS
+
+   HISTORY
+
+    SDuvan  17.12.2000  --  basic implementation
+
+datatypes.library/LockDataType
+
+   NAME
+    LockDataType -- 
+
+   SYNOPSIS
+    LockDataType(dt)
+    VOID LockDataType(struct DataType *);
+
+   FUNCTION
+
+    Lock a DataType structure obtained from ObtainDataTypeA() or a data type
+    object (DTA_DataType).
+
+   INPUTS
+
+    dt  --  DataType structure; may be NULL
+
+   RESULT
+
+   NOTES
+
+    Calls to LockDataType() and ObtainDataTypeA() must have a corresponding
+    ReleaseDataType() call or else problems will arise.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ObtainDataTypeA(), ReleaseDataType()
+
+   INTERNALS
+
+   HISTORY
+
+    2.8.99  SDuvan  implemented
+
+datatypes.library/NewDTObjectA
+
+   NAME
+    NewDTObjectA -- 
+
+   SYNOPSIS
+    NewDTObjectA(name, attrs)
+    Object * NewDTObjectA(APTR, struct TagItem *);
+
+   FUNCTION
+
+    Create a data type object from a BOOPSI class.
+
+   INPUTS
+
+    name   --  name of the data source; generally an existing file name
+    attrs  --  pointer to a TagList specifying additional arguments
+
+    TAGS
+
+    DTA_SourceType  --  The type of source data (defaults to DTST_FILE).
+                        If the source is the clipboard the name field
+            contains the numeric clipboard unit. DTST_MEMORY
+            ignores the name field and DTA_Handle.
+            DTA_SourceAddress and DTA_SourceSize specify the
+            data buffer for DTST_MEMORY.
+
+    DTA_Handle      --  Can be used instead of the 'name' field. If the
+                        source is DTST_FILE, this must be a valid FileHandle;
+            must be a valid IFFHandle if source is DTST_CLIPBOARD.
+            Ignored for DTST_MEMORY.
+
+    DTA_DataType    --  The class of the data. Data is a pointer to a valid
+                        DataType; only used when creating a new object that
+            doens't have any source data.
+
+    DTA_GroupID     --  If the object isn't of this type, fail with an IoErr()
+                        of ERROR_OBJECT_WRONG_TYPE.
+
+    GA_Left
+    GA_RelRight
+    GA_Top
+    GA_RelBottom
+    GA_Width
+    GA_RelWidth
+    GA_Height
+    GA_RelHeight    --  Specify the position of the object relative to the
+                        window.
+
+    GA_ID           --  ID of the object.
+
+    GA_UserData     --  Application specific data for the object.
+
+    GA_Previous     --  Previous object / gadget in the list.
+
+   RESULT
+
+    A BOOPSI object. This may be used in different contexts such as a gadget
+    or image. NULL indicates failure -- in that case IoErr() gives more
+    information:
+
+    ERROR_REQUIRED_ARG_MISSING  --  A required attribute wasn't specified.
+
+    ERROR_BAD_NUMBER            --  The group ID specified was invalid.
+
+    ERROR_OBJECT_WRONG_TYPE     --  Object data type doesn't match DTA_GroupID.
+
+   NOTES
+
+    This function invokes the method OM_NEW for the specified class.
+
+    The object should (eventually) be freed by DisposeDTObject() when no
+    longer needed.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    AddDTObject(), DisposeDTObject(), RemoveDTObject(),
+    intuition.library/NewObjectA()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/ObtainDTDrawInfoA
+
+   NAME
+    ObtainDTDrawInfoA -- 
+
+   SYNOPSIS
+    ObtainDTDrawInfoA(o, attrs)
+    APTR ObtainDTDrawInfoA(Object *, struct TagItem *);
+
+   FUNCTION
+
+    Prepare a data type object for drawing into a RastPort; this function
+    will send the DTM_OBTAINDRAWINFO method the object using an opSet
+    message.
+
+   INPUTS
+
+    o      --  pointer to the data type object to obtain the drawinfo for;
+               may be NULL in which case nothing is done
+    attrs  --  additional attributes
+
+   RESULT
+
+    A private handle that must be passed to ReleaseDTDrawInfo when the
+    application is done drawing the object, or NULL if failure.
+
+    TAGS
+
+    PDTA_Screen     --  for pictureclass objects
+    ADTA_Screen     --  for animationclass objects
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DrawDTObjectA(), ReleaseDTDrawInfo()
+
+   INTERNALS
+
+   HISTORY
+
+    29.8.99  SDuvan  implemented
+
+datatypes.library/ObtainDataTypeA
+
+   NAME
+    ObtainDataTypeA -- 
+
+   SYNOPSIS
+    ObtainDataTypeA(type, handle, attrs)
+    struct DataType * ObtainDataTypeA(ULONG, APTR, struct TagItem *);
+
+   FUNCTION
+
+    Examine the data pointed to by 'handle'.
+
+   INPUTS
+
+    type    --  type of 'handle'
+    handle  --  handle to examine
+        o DTST_FILE, 'handle' should be a BPTR lock
+        o DTST_CLIPBOARD, 'handle' should be a struct IFFHandle *).
+        o DTST_RAM, 'handle' should be a STRPTR (DataType name).
+        o DTST_MEMORY, 'handle' is ignored. DTA_SourceAddress and
+          DTA_SourceSize specify the data buffer.
+    attrs   --  additional attributes (currently only for DTST_MEMORY).
+
+   RESULT
+
+    A pointer to a DataType or NULL if failure. IoErr() gives more information
+    in the latter case:
+
+    ERROR_NO_FREE_STORE     --  Not enough memory available
+    ERROR_OBJECT_NOT_FOUND  --  Unable to open the data type object
+    ERROR_NOT_IMPLEMENTED   --  Unknown handle type
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ReleaseDataType()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/PrintDTObjectA
+
+   NAME
+    PrintDTObjectA -- 
+
+   SYNOPSIS
+    PrintDTObjectA(object, window, requester, msg)
+    ULONG PrintDTObjectA(Object *, struct Window*, struct Requester *, struct dtPrint *);
+
+   FUNCTION
+
+    Perform an object's DTM_PRINT method in an asynchronous manner.
+
+   INPUTS
+
+    object     --  pointer to the data type object
+    window     --  pointer to the window the object has been added to
+    requester  --  pointer to the requester the object has been added to
+
+   RESULT
+
+    TRUE on success, FALSE otherwise.
+
+   NOTES
+
+    When an application has called PrintDTObjectA() it must not touch
+    the printerIO union until a IDCMP_IDCMPUPDATE is received which
+    contains the DTA_PrinterStatus tag.
+        To abort a print, send the DTM_ABORTPRINT method to the object.
+    This will signal the print process with a SIGBREAK_CTRL_C.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/RefreshDTObjectA
+
+   NAME
+    RefreshDTObjectA -- 
+
+   SYNOPSIS
+    RefreshDTObjectA(object, window, req, attrs)
+    void RefreshDTObjectA(Object *, struct Window*, struct Requester *, struct TagItem *);
+
+   FUNCTION
+
+    Refresh a specified object sending the GM_RENDER message to the object.
+
+   INPUTS
+
+    object   --  pointer to the data type object to refresh; may be NULL
+    window   --  pointer to the window; may be NULL
+    req      --  must be NULL
+    attrs    --  additional attributes (currently none defined)
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    AddDTObject(), RemoveDTObject(), intuition.library/RefreshGList()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/ReleaseDTDrawInfo
+
+   NAME
+    ReleaseDTDrawInfo -- 
+
+   SYNOPSIS
+    ReleaseDTDrawInfo(o, handle)
+    VOID ReleaseDTDrawInfo(Object *, APTR);
+
+   FUNCTION
+
+    Release the handle obtained from ObtainDTDrawInfoA(); invokes the object's
+    DTM_RELEASEDRAWINFO method sending the dtReleaseDrawInfo message.
+
+   INPUTS
+
+    o       --  pointer to the data type object the drawinfo of which to
+                release; may be NULL
+    handle  --  handle got from ObtainDTDrawInfoA()
+
+   RESULT
+
+    A private handle that must be passed to ReleaseDTDrawInfo when the
+    application is done drawing the object, or NULL if failure.
+
+    TAGS
+
+    PDTA_Screen     --  for pictureclass objects
+    ADTA_Screen     --  for animationclass objects
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    DrawDTObjectA(), ObtainDTDrawInfo()
+
+   INTERNALS
+
+   HISTORY
+
+    29.8.99  SDuvan  implemented
+
+datatypes.library/ReleaseDataType
+
+   NAME
+    ReleaseDataType -- 
+
+   SYNOPSIS
+    ReleaseDataType(dt)
+    VOID ReleaseDataType(struct DataType *);
+
+   FUNCTION
+
+    Release a DataType structure aquired by ObtainDataTypeA().
+
+   INPUTS
+
+    dt  --  DataType structure as returned by ObtainDataTypeA(); NULL is
+            a valid input.
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    ObtainDataTypeA()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/RemoveDTObject
+
+   NAME
+    RemoveDTObject -- 
+
+   SYNOPSIS
+    RemoveDTObject(window, object)
+    LONG RemoveDTObject(struct Window *, Object*);
+
+   FUNCTION
+
+    Remove an object from the specified window's object list; this will wait
+    until the AsyncLayout process is ready. The object will receive a message
+    of type DTM_REMOVEDTOBJECT as a sign of it having been removed.
+
+   INPUTS
+
+    window  --  pointer to the window in question
+    object  --  pointer to the object to remove
+
+   RESULT
+
+    The position of the object in the list before it was removed; if the
+    object wasn't found -1 is returned.
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    AddDTObject(), intuition.library/RemoveGList()
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/SaveDTObjectA
+
+   NAME
+    SaveDTObjectA -- 
+
+   SYNOPSIS
+    SaveDTObjectA(o, win, req, file, mode, saveicon, attrs)
+    ULONG SaveDTObjectA(Object *, struct Window*, struct Requester *, STRPTR, ULONG, BOOL, struct TagItem *);
+
+   FUNCTION
+
+    Save the contents of an object to a file using DTM_WRITE.
+
+   INPUTS
+
+    o         --  data type object to write to a file
+    win       --  window the object is attached to
+    req       --  requester the object is attached to
+    file      --  name of the file to save the object to
+    mode      --  save mode (RAW, IFF etc.), one of the DTWM_ identifiers
+    saveicon  --  should an icon be saved together with the file
+    attrs     --  additional attributes (these are subclass specific)
+
+   RESULT
+
+    The return value of DTM_WRITE.
+
+   NOTES
+
+    If DTM_WRITE returns 0, the file will be deleted.
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    6.8.99   SDuvan  implemented
+
+datatypes.library/SetAttributes
+*
+*   NAME
+*       SetAttributes - set a DTObject's attributes given an opSet structure
+*
+*   SYNOPSIS
+*
+*   FUNCTION
+*
+*   INPUTS
+*
+*   RETURNS
+*
+*   EXAMPLE
+*
+*   SEE ALSO
+*
+datatypes.library/SetDTAttrsA
+
+   NAME
+    SetDTAttrsA -- 
+
+   SYNOPSIS
+    SetDTAttrsA(o, win, req, attrs)
+    ULONG SetDTAttrsA(Object *, struct Window*, struct Requester *, struct TagItem *);
+
+   FUNCTION
+
+    Set the attributes of a data type object.
+
+   INPUTS
+
+    o      --  pointer to the data type object the attributes of which to set
+    win    --  window that the object has been added to
+    attrs  --  attributes to set (terminated with TAG_DONE)
+               tags are specified in <datatypes/datatypesclass.h>
+
+   RESULT
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+    GetDTAttrsA(), intuition.library/SetGadghetAttrsA(),
+    <datatypes/datatypesclass.h>
+
+   INTERNALS
+
+   HISTORY
+
+datatypes.library/StartDragSelect
+
+   NAME
+    StartDragSelect -- 
+
+   SYNOPSIS
+    StartDragSelect(o)
+    ULONG StartDragSelect(Object *);
+
+   FUNCTION
+
+    Start drag-selection by the user; the drag selection will only start
+    if the object in question supports DTM_SELECT, is in a window or
+    requester and no layout-process is working on the object.
+
+   INPUTS
+
+    o   --  data type object in question; may be NULL
+
+   RESULT
+
+    TRUE if all went OK, FALSE otherwise. If FALSE, IoErr() gives further
+    information:
+
+    ERROR_ACTION_NOT_KNOWN   --  the object doesn't support DTM_SELECT
+    ERROR_OBJECT_IN_USE      --  the object is currently occupied
+
+   NOTES
+
+   EXAMPLE
+
+   BUGS
+
+   SEE ALSO
+
+   INTERNALS
+
+   HISTORY
+
+    6.8.99  SDuvan  implemented
+
+

@@ -1,0 +1,146 @@
+TABLE OF CONTENTS
+
+rawvideo.muxer/--background--
+rawvideo.muxer/MMA_Arguments
+rawvideo.muxer/MMM_Pull
+rawvideo.muxer/MMM_Setup
+rawvideo.muxer/OM_DISPOSE
+rawvideo.muxer/OM_NEW
+rawvideo.muxer/--background--
+
+ DESCRIPTION
+  The class is a multiplexer for raw RGB(A) video data. It does not perform
+  any data processing, its purpose is to deliver GUI generation and
+  initialization from argstring. Object of the class has two ports. Input
+  port accepts raw RGB video formats:
+
+  - MMF_VIDEO_RGB24
+  - MMF_VIDEO_BGR24
+  - MMF_VIDEO_ARGB32
+  - MMF_VIDEO_RGBA32
+  - MMF_VIDEO_ABGR32
+  - MMF_VIDEO_BGRA32
+
+  The output port produces bytestream format (MMF_STREAM). Input format may
+  be set to the port directly, specified using MMA_Arguments, or set
+  automatically with GUI.
+
+  The GUI generator creates a group containing a cycle for selecting pixel
+  format and graphical display of pixel structure. Configuration via
+  argument string is supported as well.
+
+  Raw format supports free streaming, so the video source may report an
+  unknown video frame count.
+
+ NEW ATTRIBUTES
+   MMA_Arguments        (v51) [I.G.Q] (char*)
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+   MMM_Setup
+
+ HISTORY
+   51.3 (02.07.2013)
+   - Added support for BGRA32.
+
+   51.2 (07.09.2012)
+   - Added missing object identifier in GUI generator.
+   - Fixed format string generation in Reggae generator.
+
+   51.1 (31.08.2012)
+   - Initial release.
+
+rawvideo.muxer/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper pixel format to
+   the input port. The template is "FORMAT/K".
+
+   - FORMAT - accepts one of "RGB24", "BGR24", "ARGB32", "RGBA32", "ABGR32",
+     "BGRA32" strings, case insensitive. When the attribute is passed to the
+     constructor and format string is none of the above, default "ARGB32" is
+     assumed.
+
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When passed for the constructor, the argument string may be a dynamic
+   variable, as it only has to be valid inside the constructor.
+
+rawvideo.muxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Delivers block of data on output port (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   This class does not process data in any way. Any pull request on the
+   output port is simply forwarded to input.
+
+ INPUTS
+   obj - object on which method is performed.
+   port - must be port 1, the output.
+   buffer - destination data buffer pointer. Must be allocated with
+     MediaAllocVec().
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. Secondary information available via
+   MMA_ErrorCode.
+
+rawvideo.muxer/MMM_Setup
+
+ NAME
+   MMM_Setup -- Performs setup after port connection (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   This class performs no setup on any port, so for both ports TRUE is
+   returned.
+
+rawvideo.muxer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes raw video multiplexer object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   This class allocates no resources in the constructor, so this function
+   just calls the superclass destructor.
+
+rawvideo.muxer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates raw video multplexer. (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "rawvideo.muxer", ...);
+
+ FUNCTION
+   Creates an object, creates and initializes ports. No specific resources
+   are allocated. Preconfigures the input port format.
+
+ INPUTS
+   Following tags are recognized:
+   - MMA_Arguments - configures input format. Optional.
+   - MMA_ErrorCode - storage for constructor error code. Optional
+
+ RESULT
+   Created object, or NULL. In case of failure MMA_ErrorCode specifies
+   reason:
+   - MMERR_OUT_OF_MEMORY, no free memory,
+   - MMERR_WRONG_ARGUMENTS, malformed MMA_Arguments, or unsupported format.
+
+

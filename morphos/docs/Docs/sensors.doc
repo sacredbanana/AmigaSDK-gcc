@@ -1,0 +1,331 @@
+TABLE OF CONTENTS
+
+sensors.library/AddSensor
+sensors.library/EndSensorNotify
+sensors.library/GetSensorAttr
+sensors.library/GetSensorsCount
+sensors.library/NextSensor
+sensors.library/ObtainSensorsList
+sensors.library/ReleaseSensorsList
+sensors.library/RemoveSensor
+sensors.library/SetSensorAttr
+sensors.library/StartSensorNotify
+sensors.library/AddSensor
+
+   NAME
+       AddSensor -- Adds a sensor to the system
+
+   SYNOPSIS
+       AddSensor (taglist)
+
+       APTR AddSensor (struct TagItem*);
+
+   FUNCTION
+       Adds a new sensor to the system. The caller must provide the
+       information about the sensor using the given tags:
+       SENSORS_Type, SENSORS_SensorPlacement
+       as well as the type-specific tags defined in libraries/sensors.h
+
+       SENSORS_Parent in this context need to point to the sensor created
+       with an earlier AddSensor call. You cannot add child sensors to
+       a sensor obtained with ObtainSensorsList, etc.
+
+       When creating a multi-sensor sensor object, you should start by
+       making the parent sensor SENSORS_Private and then switch that to
+       false once all children sensors have been added.
+
+   INPUTS
+       taglist - list of tags describing the sensor, required
+
+   RESULT
+       Abstract pointer to a new sensor or NULL
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+sensors.library/EndSensorNotify
+
+   NAME
+       EndSensorNotify -- Dispose a notification handler created with
+       StartSensorNotify
+
+   SYNOPSIS
+       EndSensorNotify (notify, taglist)
+
+       void EndSensorNotify ( APTR, struct TagItem*);
+
+   FUNCTION
+       Disposes a notification handler created with StartSensorNotify. All
+       notification messages should be replied before calling this function,
+       however it is safe to reverse this order (the actual handler will not
+       be disposed until all messages get replied and processed). It is not
+       legal to continue using the notify pointer after EndSensorNotify even
+       if not all messages were replied yet.
+
+   INPUTS
+       notify - the pointer to a notification handle
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+sensors.library/GetSensorAttr
+
+   NAME
+       GetSensorAttr -- Get the current sensor state & other attributes
+
+   SYNOPSIS
+       GetSensorAttr (sensor, taglist)
+
+       ULONG GetSensorAttr ( APTR, struct TagItem*);
+
+   FUNCTION
+       Returns sensor's state and attributes by writing values into the
+       addresses provided in tag ti_Data fields in the taglist. Tag ti_Data
+       fields must contain pointers to variables depending on the tag.
+       Use ULONG * for booleans. Some tags may expect a pointer to a DOUBLE
+       variable
+
+   INPUTS
+       sensor - pointer to a sensor device obtained with AddSensor, NextSensor,
+           or StartSensorNotify
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       ULONG - the number of known tags
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+sensors.library/GetSensorsCount
+
+   NAME
+       GetSensorsCount - Count installed sensors
+
+   SYNOPSIS
+       GetSensorsCount (taglist)
+
+       ULONG GetSensorsCount ( struct TagItem *);
+
+   FUNCTION
+       Counts the sensors installed in the system. The type of sensors
+       to gather can be determined with the following tags:
+
+       SENSORS_Type - SensorType_Unknown or no tag matches all
+       SENSORS_SensorPlacement - SensorPlacement_Other or no tag matches all
+
+   INPUTS
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       ULONG - count of matched sensors
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+        ObtainSensorsList
+
+sensors.library/NextSensor
+
+   NAME
+       NextSensor -- iterate to the next sensor on the list
+
+   SYNOPSIS
+       NextSensor ( previoussensor, list, taglist)
+
+       APTR NextSensor ( APTR, APTR, struct TagItem*);
+
+   FUNCTION
+        Iterates to the next sensor on a sensors list obtained with
+        ObtainSensorsList
+
+   INPUTS
+       previoussensor - pointer to the previous result of NextSensor call or
+                        NULL to get the first member
+       list    - the list of sensors
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       APTR - pointer to the next sensor or NULL
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+sensors.library/ObtainSensorsList
+
+   NAME
+       ObtainSensorsList -- Get a list of installed sensors
+
+   SYNOPSIS
+       ObtainSensorsList (taglist)
+
+       APTR ObtainSensorsList ( struct TagItem*);
+
+   FUNCTION
+       Returns an abstract pointer to a list of sensors. The type of sensors
+       to gather can be determined with the following tags:
+
+       SENSORS_Class - SensorClass_All or no tag matches all
+       SENSORS_Type - SensorType_Unknown or no tag matches all
+       SENSORS_SensorPlacement - SensorPlacement_Other or no tag matches all
+       SENSORS_Parent - not NULL to obtain a list of child sensors
+
+       Obtaining a list of sensor does not block adding or removing sensors
+       so there is no need to release this list immediately.
+
+   INPUTS
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       APTR - an abstract pointer with a list of matched sensors
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+        NextSensor, ReleaseSensorsList
+
+sensors.library/ReleaseSensorsList
+
+   NAME
+       ReleaseSensorsList -- Free a list of sensors obtained with
+       ObtainSensorsList
+
+   SYNOPSIS
+       ReleaseSensorsList (list, taglist)
+
+       void ReleaseSensorsList ( APTR, struct TagItem*);
+
+   FUNCTION
+        Frees a list of sensors obtained with ObtainSensorsList, making all
+        pointers obtained with NextSensor invalid.
+
+   INPUTS
+       list    - the list to release
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+        ObtainSensorsList
+
+sensors.library/RemoveSensor
+
+   NAME
+       RemoveSensor -- Removes a sensor from the system
+
+   SYNOPSIS
+       RemoveSensor (sensor, taglist)
+
+       void RemoveSensor ( APTR, struct TagItem *);
+
+   FUNCTION
+       Removes a previously added sensor from the system. No tags defined at
+       present.
+
+   INPUTS
+       sensor - pointer returned by AddSensor
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       None
+
+   NOTES
+       The sensor stays valid until it's released by all clients. That also
+       includes all of its child sensors. Even if it exists, it's impossible
+       to find it using ObtainSensorsList anymore.
+
+   BUGS
+
+   SEE ALSO
+
+sensors.library/SetSensorAttr
+
+   NAME
+       SetSensorAttr -- Set the current sensor state & other attributes,
+       triggering notifications on applicable attributes
+
+   SYNOPSIS
+       SetSensorAttr (sensor, taglist)
+
+       ULONG SetSensorAttr ( APTR, struct TagItem*);
+
+   FUNCTION
+       Updates sensor readings and other parameters. Changing certain values
+       may trigger notifications sent to the registered listeners.
+
+   INPUTS
+       sensor - pointer to a sensor device obtained with AddSensor
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       ULONG - the number of known tags
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+sensors.library/StartSensorNotify
+
+   NAME
+       StartSensorNotify -- Set up a notification when a sensor value changes
+
+   SYNOPSIS
+       StartSensorNotify (sensor, taglist)
+
+       APTR StartSensorNotify ( APTR, struct TagItem*);
+
+   FUNCTION
+       The function installs a new notification handler on the given sensor.
+       The change of tags passed in the taglist (see sensors.h for the list
+       of attributes that generate notifications) results in messages sent
+       to the notification handlers containing the changed attributes and
+       their values.
+
+       In addition to the attributes to listen to, one must also pass at
+       least the SENSORS_Notification_Destination tag containing a pointer
+       to a MsgPort to send notifications to.
+
+       The returned value can be used as a pointer to the sensor device and
+       calls like GetSensorAttr. There is no need to keep the list returned
+       by ObtainSensorsList - use the pointer returned by StartSensorNotify
+       instead and release the list.
+
+   INPUTS
+       sensor - pointer to a sensor device obtained with AddSensor
+       taglist - pointer to a taglist or NULL
+
+   RESULT
+       APTR - abstract handle to a notification / sensor
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+       EndSensorNotify
+
+

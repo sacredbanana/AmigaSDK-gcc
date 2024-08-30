@@ -1,0 +1,170 @@
+TABLE OF CONTENTS
+
+pcx.decoder/MMETA_VideoDpiX
+pcx.decoder/MMETA_VideoDpiY
+pcx.demuxer/MMA_DataFormat
+pcx.demuxer/MMA_Video_BitsPerPixel
+pcx.demuxer/MMA_Video_FrameCount
+pcx.demuxer/MMA_Video_Height
+pcx.demuxer/MMA_Video_Palette
+pcx.demuxer/MMA_Video_PaletteLength
+pcx.demuxer/MMA_Video_UseAlpha
+pcx.demuxer/MMA_Video_Width
+pcx.demuxer/MMM_Pull
+pcx.demuxer/background
+pcx.decoder/MMETA_VideoDpiX
+
+ NAME
+   MMETA_VideoDpiY (V50) [..G.Q], DOUBLE
+
+ FUNCTION
+   Returns horizontal DPI value if available.
+
+pcx.decoder/MMETA_VideoDpiY
+
+ NAME
+   MMETA_VideoDpiY (V50) [..G.Q], DOUBLE
+
+ FUNCTION
+   Returns vertical DPI value if available.
+
+pcx.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V50) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns "ZSoft PCX" string.
+
+pcx.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Return number of bits used to represent one pixel in the source data.
+
+pcx.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Always return 1.
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+pcx.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns height of image in pixels.
+
+pcx.demuxer/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [..G.Q], *ULONG
+
+ FUNCTION
+   Specifies image data palette as a table of 32-bit ARGB entries.
+   o 1-8 bit standard palette from file
+   o generated EGA 4-bit palette (if standard palette not available)
+
+pcx.demuxer/MMA_Video_PaletteLength
+
+ NAME
+   MMA_Video_PaletteLength (V50) [..G.Q], ULONG
+
+ FUNCTION
+   Return number of colors defined in palette or 0 for truecolor images.
+
+pcx.demuxer/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V50) [..G.Q], BOOL
+
+ FUNCTION
+   Returns TRUE if PCX image data contains alpha channel or image
+   mask (which is merged with alpha channel), FALSE otherwise.
+
+pcx.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns width of image in pixels.
+
+pcx.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   This class does not process image data, it only strips PCX signature,
+   screen descriptor and palette table (if present). Then pull requests are
+   just forwarded to the connected stream.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+pcx.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for ZSoft PCX images. The class performs
+   following tasks:
+   - PCX signature verification
+   - Storing palette table
+
+   The class does not process PCX image stream data.
+
+   Object of pcx.demuxer class has two ports: port 0 is an input and
+   accepts MMF_STREAM format, port 1 is an output and produces
+   MMF_VIDEO_PCX format.
+
+ ATTRIBUTES
+   MMA_DataFormat              (V51)    [..G.Q], STRPTR
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_Video_Palette           (V51)    [..G.Q], *ULONG
+   MMA_Video_UseAlpha          (V51)    [..G.Q], ULONG
+   MMA_Video_PaletteLength     (V51)    [..G.Q], ULONG
+
+ METADATA
+   MMETA_VideoDpiX             (V51) [..G.Q], DOUBLE
+   MMETA_VideoDpiY             (V51) [..G.Q], DOUBLE
+
+ METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+ HISTORY
+   51.3  (24.10.2015)
+   - Fix for per-port metadata.
+
+   51.2  (16.11.2011)
+   - DPI metadata and MMA_Video_PaletteLength attribute support added.
+
+   51.1  (25.12.2007)
+   - Initial revision.
+
+

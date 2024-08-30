@@ -1,0 +1,2466 @@
+TABLE OF CONTENTS
+
+multimedia.class/--background--
+multimedia.class/MMA_AutoDestruction
+multimedia.class/MMA_Decode
+multimedia.class/MMA_ErrorCode
+multimedia.class/MMA_MetaData
+multimedia.class/MMA_ObjectName
+multimedia.class/MMA_Port_ConnNumber
+multimedia.class/MMA_Port_ConnObject
+multimedia.class/MMA_Port_Format
+multimedia.class/MMA_Port_FormatsTable
+multimedia.class/MMA_Port_Number
+multimedia.class/MMA_Port_Object
+multimedia.class/MMA_Port_Type
+multimedia.class/MMA_Ports
+multimedia.class/MMM_AddMetaItem
+multimedia.class/MMM_AddPort
+multimedia.class/MMM_Cleanup
+multimedia.class/MMM_DisposeMetaData
+multimedia.class/MMM_GetPort
+multimedia.class/MMM_GetPortFwd
+multimedia.class/MMM_IsMember
+multimedia.class/MMM_LockObject
+multimedia.class/MMM_PostPull
+multimedia.class/MMM_PostSeek
+multimedia.class/MMM_PrePull
+multimedia.class/MMM_PreSeek
+multimedia.class/MMM_Pull
+multimedia.class/MMM_QueryMetaData
+multimedia.class/MMM_Seek
+multimedia.class/MMM_SetPort
+multimedia.class/MMM_SetPortFwd
+multimedia.class/MMM_Setup
+multimedia.class/MMM_UnlockObject
+multimedia.class/MediaAllocVec
+multimedia.class/MediaAudioFrameToTime
+multimedia.class/MediaBuildFromArgsTagList
+multimedia.class/MediaBuildFromGuiTagList
+multimedia.class/MediaConnectTagList
+multimedia.class/MediaFault
+multimedia.class/MediaFindClassTagList
+multimedia.class/MediaFreeVec
+multimedia.class/MediaGetArgsFromGui
+multimedia.class/MediaGetClassAttr
+multimedia.class/MediaGetGuiTagList
+multimedia.class/MediaGetPort
+multimedia.class/MediaGetPort64
+multimedia.class/MediaGetPortFwd
+multimedia.class/MediaGetPortFwd64
+multimedia.class/MediaLog
+multimedia.class/MediaNewObjectTagList
+multimedia.class/MediaSetPort
+multimedia.class/MediaSetPort64
+multimedia.class/MediaSetPortFwd
+multimedia.class/MediaSetPortFwd64
+multimedia.class/MediaTimeToAudioFrame
+multimedia.class/--background--
+
+ DESCRIPTION
+   This class is the main class of Reggae system and the one and only having
+   two programmimg interfaces: library interface and BOOPSI interface.
+   BOOPSI interface is used for operations on existing objects, while
+   library one is used for object creation and for functionality not related
+   to objects. Tasks performed by multimedia.class are:
+   - error reporting.
+   - managing object's ports.
+   - connecting ports.
+   - automatically building processing structures.
+   - database of available classes.
+   - stream format recognition.
+   - passing methods along processing structures.
+   Multimedia.class is a direct subclass of rootclass.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Port_Object        (v50)    [....Q], Object*
+   MMA_Port_Number        (v50)    [....Q], ULONG
+   MMA_Port_FormatsTable  (v50)    [...PQ], ULONG*
+   MMA_Port_Format        (v50)    [...PQ], ULONG
+   MMA_Port_ConnObject    (v50)    [...PQ], Object*
+   MMA_Port_ConnNumber    (v50)    [...PQ], ULONG
+   MMA_Port_Type          (v50)    [...PQ], ULONG
+   MMA_Port_Forwarding    (v55.5)  [...PQ], BOOL
+   MMA_Ports              (v50)    [..G..], ULONG
+   MMA_ErrorCode          (v50)    [ISG..], ULONG
+   MMA_ObjectName         (v51)    [ISG..], ULONG
+   MMA_AutoDestruction    (v52)    [I....], BOOL
+   MMA_MetaData           (v52.20) [....Q], struct MetaItem*
+   MMA_DefaultExtension   (v55.3)  [..G.Q], STRPTR
+   MMA_ClassName          (v55.7)  [..G..], STRPTR
+   MMA_ClassDesc          (v55.7)  [..G..], STRPTR
+   MMA_ClassType          (v55.7)  [..G..], ULONG
+   MMA_Decode             (v55.11) [I..PQ], BOOL
+
+ NEW METHODS
+   MMM_LockObject()                                (v50)
+   MMM_UnlockObject()                              (v50)
+   MMM_GetPort(port, attr, storage)                (v50)
+   MMM_SetPort(port, attr, value)                  (v50)
+   MMM_GetPortFwd(port, attr, storage)             (v50)
+   MMM_SetPortFwd(port, attr, value)               (v50)
+   MMM_AddPort(number)                             (v50)
+   MMM_Pull(port, buffer, length)                  (v50)
+   MMM_IsMember(parent)                            (v50)
+   MMM_Seek(port, type, position)                  (v51)
+   MMM_Setup(port)                                 (v51)
+   MMM_DisconnectPort(port)                        (v52)
+   MMM_ConnectPort(port, destobj, destport)        (v52)
+   MMM_PrePull(port, buffer, length)               (v52.13)
+   MMM_PostPull(port, buffer, length)              (v52.13)
+   MMM_PreSeek(port, type, offset, typemask)       (v52.14)
+   MMM_PostSeek(port, type, offset, result)        (v52.14)
+   MMM_AddMetaItem(port, id, type, imp, data, enc) (v52.18)
+   MMM_QueryMetaData(port, items, controls)        (v55.11)
+   MMM_DisposeMetaData(query)                      (v55.11)
+
+ HISTORY
+
+
+ 55.13 (23.04.2017)
+ - Allow to pass direct child object for GUI page group in
+   MediaGetArgsFromGui()
+ - Added tag MGG_Selected to preselect filter/muxer on GUI pagegroup
+
+ 55.12 (03.11.2015)
+ - Added back MMA_MetaData for backwards compatibility, uses
+   MMM_QueryMetaData().
+
+ 55.11 (25.10.2015)
+ - New metadata API: modified MMM_AddMetaItem(), added MMM_QueryMetaData()
+   and MMM_DisposeMetaData, removed MMM_GetMetaItem() and MMA_MetaData.
+ - Fixed bug in port forwarding when adding decoding tree into a
+   processblock. Forwards of ports having MMA_Decode set to FALSE was
+   always made to port 1 of the object.
+
+ 55.10 (27.06.2015)
+ - OM_GET(): Attributes MMA_DataFormat and MMA_MimeType are read from the
+   object's class. Then most demuxers, which do not provide detailed,
+   per-object versions of these attributes, can just pass them to
+   multimedia.class, which fetches them from object's class attribute list
+   located in the recoginition routine.
+
+ 55.9  (02.11.2014)
+ - Metadata of data type MTYPE_PORTNUM now return a MetaPort structure
+   containing both object pointer and port number.
+
+ 55.8  (12.06.2013)
+ - Fixed bug in MediaTimeToAudioFrame(): frame was calculated wrong
+   when the timepoint passed had fractional parts of a second.
+
+ 55.7  (24.04.2013)
+ - Implemented automatic conversions between PCM formats for audio and
+   video.
+ - MMA_ClassName, MMA_ClassType, MMA_ClassDesc are gettable on object.
+
+ 55.6  (10.04.2013)
+ - Implemented MMM_Cleanup() as port existence check.
+ - Fixed autodocs for MMM_Setup(), added for MMM_Cleanup().
+
+ 55.5  (26.03.2013)
+ - Implemented MMA_Port_Forwarding, which allows to disable default
+   forwarding provided by multimedia.class. Defaults to TRUE.
+
+ 55.4  (09.03.2013)
+ - Added automatic conversions between video uncompressed formats for port
+   connection.
+
+ 55.3  (27.12.2012)
+ - Class attribute MMA_DefaultExtension is also available for muxer objects.
+
+ 55.2  (16.11.2012)
+ - MediaNewObject() now accepts MMA_TaskName and MMA_TaskPriority tags.
+   They are used for stream.buffer process if stream buffering is requested.
+
+ 55.1  (07.10.2012)
+ - Splitted process of generating muxer/filter processing chain from GUI
+   into two parts. First an argument string is generated from GUI, then
+   Reggae objects are generated from the argument string. Objects can be
+   also generated directly from argument string.
+ - Added MediaGetArgsFromGui(), it generates argument string from GUI
+   object.
+ - Added MediaBuildFromArgsTagList(), it builds Reggae objects from an
+   argument string.
+
+ 54.8  (24.09.2012)
+ - Fixed bug introduced in v54.6. Due to wrong way of getting class type,
+   metadata were not forwarded at all. Now class type is obtained properly,
+   also added MMCLASS_BASIC to set of types for which metadata are
+   forwarded, so they pass through buffers etc.
+
+ 54.7  (22.09.2012)
+ - Audio converter possibly added as a result of passing MMA_AudioFormat to
+   decoding tree, must not have autodestruction flag set. It is added to
+   processblock, so it was disposed twice.
+
+ 54.6  (19.09.2012)
+ - Limited metadata gathering to streams, demuxers and decoders. Forwarding
+   them further makes little sense and creates problems with multi-input
+   filters. Applications should get metadata at decoders' outputs.
+ - Revised and fixed disconnecting of ports when objects are reconnected or
+   disposed. No more double disconnects. Streamlined log messages.
+
+ 54.5  (15.09.2012)
+ - MediaNewObject(): MMA_AudioFormat and MMA_VideoFormat now explicitly
+   set requested format on output of decoders/converters. Fixes problem when
+   application pulls data from decoder supporting multiple common formats
+   and port format is not defined.
+ - MediaNewObject(): Added automatic conversion of audio format, when
+   decoder does not support requested format directly.
+
+ 54.4  (13.09.2012)
+ - Fixed misleading debug messages in LibMediaConnect() (ports reversed).
+ - MediaGetGuiTagList(): Returned GUI object supports four attributes:
+   GGRA_PageClassName, GGRA_PageShortName, GGRA_PageFullName,
+   GGRA_PageDefExtension. They are gettable, may be used in notifications,
+   so application may do GUI updates when user changes encoders.
+
+ 54.3. (09.09.2012)
+ - Added address alignment test for MMM_Pull(). If AltiVec is detected and
+   pull operation is done with common format, misaligned address is reported
+   and MMM_Pull() method fails with MMERR_WRONG_ARGUMENTS.
+
+ 54.2  (07.09.2012)
+ - Introduced tag controlled quality/speed priority for common media format
+   negotiated in MediaConnect() when both connected sides provide only
+   format tables. Quality degradation may be optionally reported to
+   application.
+
+ 54.1  (20.08.2012)
+ - Implemented savers/filters framework: MediaGetGuiTagList(),
+   MediaBuildFromGuiTagList().
+ - Added MediaFault().
+
+ 53.5  (08.07.2012)
+ - MMM_PrePull() clears object's error code before calling MMM_Pull() on
+   subclass.
+ - MediaNewObject() inserts stream.buffer object right after data source,
+   when either MMA_StreamBuffer_BlockSize or MMA_StreamBuffer_Blocks is
+   specified in the taglist.
+
+ 53.4  (24.06.2012)
+ - Setting MMERR_END_OF_DATA error is now logged at LOG_INFO level instead
+   of LOG_ERRORS.
+ - MMM_Cleanup() method is called on ports before they are disconnected.
+
+ 53.3  (15.11.2011)
+ - Fixed: IMetaDataMerge(), when MetaList containst entries with the same
+   ID-s as in MetaTable from previous object, entries from MetaTable are
+   ignored, so MetaList entries overwrite them effectively.
+
+ 53.2  (02.11.2011)
+ - Fixed: A taglist from MediaNewObject() was not passed to constructors of
+   automatically created decoders and demuxers.
+ - Added: MMA_Decode attribute. When set to FALSE in
+   MediaNewObjectTagList(), it prohibits adding decoders to the decoding
+   tree
+
+ 53.1  (11.01.2011)
+ - Implemented two new library API functions: MediaAudioFrameToTime() and
+   MediaTimeToAudioFrame().
+
+ 52.25 (10.01.2011)
+ - Fixed a bug in MMM_PreSeek(). Seek past end of stream check used byte
+   length regardless of the seek type. Now it uses byte length only for
+   MMM_SEEK_BYTES, audio frames are used for MMM_SEEK_FRAMES. Time seek
+   is not verified, as at some point when travelling back the pipeline, it
+   is converted to frame seek, then check is applied.
+ - Added log entry in OM_DISPOSE (subclasses need not to report dispose
+   anymore).
+
+ 52.24 (07.01.2011)
+ - Implemented optional logging to the system debug (via KPrintF()). It is
+   controlled with REGGAE_SYSDEBUG global environment variable.
+
+ 52.23 (16.10.2010)
+ - Requests for charsets.library v52 (the one with ConvertTags() fix).
+   Continues to work on systems with v51 charsets, just metadata API does
+   nothing.
+
+ 52.22 (09.09.2010)
+ - Made compilable with GCC4 as well (without warnings).
+ - Dropped some internal and stdlib functions in favour of libvstring ones.
+ - Discarded multimedia.class memory pool, as it would need semaphore
+   protection for proper use and gives no advantages anyway.
+ - Private classes (without cl_ID) have "[private class]" string used in the
+   default object name, fixes possible NULL read.
+ - Format table for a port is initialized to NULL in MMM_AddPort(). This
+   avoid crash when some class sets port format before setting the format
+   table. NULL condition is checked in this case, but the field has been
+   left at random value before.
+
+ 52.21 (09.05.2010)
+ - Added support for MTYPE_DOUBLE for metadata.
+
+ 52.20 (03.09.2009)
+ - Added MMA_MetaData attribute to MMM_GetPort().
+ - Made MetaTypes mapping table fixed sized (size is MMETA_MAX_ID + 1).
+ - Added mapping for MMETA_Copyright to MetaTypes[].
+ - Added mapping for MMETA_Bitrate to MetaTypes[].
+ - Removed some useless debug.
+
+ 52.19 (23.08.2009)
+ - Fixed nasty bug in IMetaDataMerge. After MetaTable has been allocated, it
+   hasn't been initialized, so when CopyMetaTable() was not called,
+   AppendMetaData() ran into random memory with its while() loop, then
+   random memory could be trashed when terminating MetaItem has been
+   written. Bug fixed by Piru. As writing termination MetaItem is used in
+   three places now, I [krashan] have moved it to a separate MetaTerminate.
+ - ConvertString(): Allocated place for string copy is freed if
+   ConvertTagList() fails. Change by Piru.
+
+ 52.18 (18.08.2009)
+ - Implemented metadata framework (extended MediaConnect() and added
+   MMM_AddMetaItem()).
+
+ 52.17 (10.07.2009)
+ - Fix in MMM_PreSeek(), seek position equal to the stream length is allowed
+   now, as it means seek to the end of stream.
+ - Fix in EmulateSeekWithRead(), does not fail now when seek delta is 0.
+ - Removed extra debug from EmulateSeekWithRead().
+
+ 52.16 (02.07.2009)
+ - Fixed MMM_PostSeek(), it checks for proper port number, also gets current
+   position using MediaGetPortFwd64() if called on input port, so the log
+   message shows proper position.
+
+ 52.15 (18.06.2009)
+ - Added MMM_PREPULL_NOT_DONE and MMM_PREPULL_FAILED as a special return
+   values for MMM_PrePull().
+ - Adapted MMM_PostPull() to handle the above.
+ - Now MMM_Pull() has signed return value. Zero means end of data, -1 means
+   error, the same as for DOS read functions.
+
+ 52.14 (10.06.2009)
+ - Implemented MMM_PreSeek() and MMM_PostSeek(). These methods simplify and
+   standarize MMM_Seek() implementations in subclasses, also add "seek by
+   read" emulation of forward seeks for non-seekable source streams.
+
+ 52.13 (27.05.2009)
+ - Memory list uses now separate semaphore. It allows for allocating and
+   freeing media memory from inside building decoding tree.
+ - Implemented MMM_PrePull() and MMM_PostPull(). These methods simplify and
+   standarize MMM_Pull() implementations in subclasses.
+
+ 52.12 (06.04.2009)
+ - Added MMM_Peek() automatic forwarding when called on an input port
+   (similar to MMM_Pull()/Push() forwarding).
+
+ 52.11 (22.07.2008)
+ - free_datatypes() uses just RemHead() in a loop instead of pointer magic.
+ - Splitted refresh_classes() beast into smaller functions.
+ - Class scanner scans "MOSSYS:Classes/Multimedia" first, then
+   "SYS:Classes/Multimedia", if any duplicate is found, SYS: entry is
+   skipped.
+ - Added missing ObjDataClose() in case class is not enqueued during class
+   scan.
+
+ 52.10 (17.12.2007)
+ - Fixed a bug in CreateDecodingTree(), which caused MediaNewObject() to
+   fail, when a decoder supported more than one common format on its output
+   and had MMF_UNKNOWN set as the default format (e.g. audiopcm.decoder).
+
+ 52.9  (03.09.2007)
+ - Added automatic video ARGB32_MF to ARGB32 conversion in ConverterNeeded()
+   via metaplayer.filter.
+
+ 52.8  (28.08.2007)
+ - Added support for MMA_AudioFormat and MMA_VideoFormat. These attributes
+    are used in MediaNewObject() to request particular common format on audio
+   and video outputs of the decoding tree. Reggae inserts conversion objects
+   automatically if needed.
+
+ 52.7  (30.07.2007)
+ - When matching media types, type mask returned by demuxer is not compared
+   to filter, but AND-ed. It makes OR-ed filters working.
+
+ 52.5  (22.03.2007)
+ - Changed default object name from "object <hexadecimal address>" to
+   "<class name> <hexadecimal address>", log messages are easier to analyse.
+ - Removed object naming from some tree creation functions, it is not needed
+   because of the default name modification.
+
+ 52.4  (23.02.2007)
+ - Added MMM_DisconnectPort() and MMM_ConnectPort() methods, now all ports
+   are connected and disconnected with these methods. It allows objects to
+   track number of their connected ports.
+ - Added MMA_AutoDestruction attribute and auto destruction mechanism for
+   automatic objects.
+ - Added automatic insertion of audio common format converter object in
+   LibMediaConnect().
+ - Ports are disconnected from previous objects before connection.
+
+ 52.3  (15.01.2007)
+ - Added DisconnectPorts() function. It is now called from LibMediaConnect()
+   if MMM_Setup on any of ports being connected fails.
+ - Added handling of errors returned by MediaConnectTagList() in
+   CreateDecodingTree().
+
+ 52.2  (12.01.2007)
+ - Added proper error reporting in CreateDecodingTree().
+
+ 52.1  (06.01.2007)
+ - Added a new function to the API, it is MediaSetLogLevel(). This function
+   is related to moving log messages filtering from logging application to
+   the multimedia.class. It lowers logging overhead as log messages below
+   filter level are rejected in MediaLog() function and not sent to
+   MediaLogger at all. Log level is set to LOG_NONE by default. MediaLogger
+   sets it to user desired level at start and sets it back to LOG_NONE at
+   exit. Then if MediaLogger is not running, all messages are immediately
+   rejected by MediaLog(), saving on message and message port creation,
+   finding destination port etc. Note that the new function is not
+   protected against more than one application calling it (it is global
+   setting). As MediaLogger is a single-instance application, and there is
+   no other one, it should not be a problem. Note that MediaLogger has been
+   updated too, this version of multimedia.class will work with MediaLogger
+   1.6 or newer.
+
+ 51.10 (31.10.2006)
+ - Fixes in documentation and media log messages.
+
+ 51.8  (06.01.2006)
+ - MediaConnect() fails now if any of MMM_Setup() calls on ports being
+   connected fails.
+ - Default object names for objects created in the decoding tree contain now
+   the object's true class name instead of word "object" (more descriptive
+   debug output).
+ - MMA_ObjectName is settable now.
+ - Default MMM_Setup() implemented for subclasses not needing setup.
+ - MediaConnect() clears MMA_ErrorCode for both objects before connecting.
+
+ 51.7  (15.11.2005)
+ - Fixed MMA_ErrorCode problem in MediaGetPort().
+ - MediaGetPort() and MediaGetPortFwd() do not clear object error to 0.
+
+ 51.6  (12.06.2005)
+ - Fixed bug in MediaAllocVec(), it simply didn't worked under MorphOS 1.4.
+   Also on machines with no AltiVec available alignment requirements are
+   lowered from 16 to 8 bytes.
+
+ 51.5  (04.05.2005)
+ - Fixed bug in TagInArrayWild(), it caused only the first port format in a
+   format list was recognized.
+
+ 51.4  (29.04.2005)
+ - Fixed bug in MediaNewObjectTagList(), it always returned NULL, even if
+   object creation was succesfull.
+ - Fixed bug in MediaNewObjectTagList(), now forward is added for every
+   decoder output.
+
+ 51.3  (21.04.2005)
+ - Removed annoying debug message "Errors cleared for...".
+ - All objects created by MediaNewObjectTagList() are now disposed if the
+   function fails.
+ - CreateDecodingTree() is now called on multiread.buffer object as it
+   should, not on processblock object.
+ - Multiread buffers are now correctly added to the processblock (and then
+   correctly disposed with it).
+
+ 51.2  (20.04.2005)
+ - Implemented MMA_ObjectName.
+ - Added object name output to all debug messages.
+
+ 50.24 (07.03.2005)
+ - Supports MMF_ANY_FORMAT in MediaConnectTagList() as a wildchar.
+
+ 50.23 (19.02.2005)
+ - MMM_AddPort has protection against creating more than one port with the
+   same number.
+ - MMA_ErrorCode support in MediaNewObjectTagList().
+ - MediaConnectTagList() has protection against connecting two ports of the
+   same object.
+
+ 50.22 (18.12.2004)
+ - New forwarding scheme according to the docs, MMM_GetPortFwd and
+   MMM_SetPortFwd removed as not needed.
+ - OM_DISPOSE: every port is disconnected before disposing (it means, its
+   connected peer port gets MMA_ConnPort = MM_NO_PORT and MMA_ConnObject =
+   NULL).
+
+ 50.21 (16.12.2004)
+ - Implemented new methods: MMM_GetPortFwd, MMM_SetPortFwd, MMM_IsMember.
+
+ 50.20 (08.12.2004)
+ - MediaConnect() modified: MMM_Setup method is called on both connected
+   ports.
+
+ 50.19 (06.12.2004)
+ - Fixed bug in MediaFindClass() when searching against MMA_DataFormat
+   value.
+
+ 50.18 (28.11.2004)
+ - Implemented MediaGetClassAttr().
+
+ 50.17 (27.11.2004)
+ - Implemented MediaFindClass().
+
+ 50.16 (18.11.2004)
+ - Recognize routines are now enqueued according to MMA_Priority tag from
+ class data.
+
+ 50.15 (03.11.2004)
+ - Implemented new class identification system.
+ - match_datatype() is semaphore protected.
+
+ 50.14 (31.10.2004)
+ - Media type filter (MMA_MediaType) working in MediaNewObject().
+
+ 50.13 (23.10.2004)
+ - Processblock object is disposed and MediaNewObject() returns NULL, when
+   the pipeline was not created fully (for example missing decoder).
+ - Added missing error log messages.
+
+ 50.12 (01.09.2004)
+ - Fixed bug in MediaConnect(), second port format was set for the first
+   port if both ports had formats tables only.
+
+ 50.11 (25.08.2004)
+ - MediaConnect() full implementation.
+ - Implemented MMM_Pull for pulling from input port (useful for subclasses,
+   they can pull from their inputs), it is passed to connected object.
+ - Added missing MMA_Port_Type in MMM_GetPort.
+ - Added missing MMA_Port_ConnObject and MMA_Port_ConnNumber in MMM_SetPort.
+
+ 50.10 (20.08.2004)
+ - MMM_AddPort initializes connected port number to MM_NO_PORT (invalid
+   number), so wrong port connection can be detected.
+ - Added library interface function MediaConnect() - no-op for now, for
+   testing only.
+
+ 50.9 (19.08.2004)
+ - Fixed stupid bug in initialization of MediaPort list.
+ - MMM_SetPort works with MMA_Port_Type, MMA_Port_Format,
+   MMA_Port_FormatsTable.
+ - MMM_GetPort fully implemented.
+
+ 50.8 (09.04.2004)
+ - Demuxers scan routine uses query.library instead of proprietary code.
+
+ 50.7 (20.02.2004)
+ - Added DTOA_LoadAdvance attribute. It returns current advance in reading
+   source (compressed) stream. Useful when uncompressed data size is unknown
+   (for example mp3.decoder returns 0 for SNDA_FrameCount, because if you
+   want to know number of uncompressed frames, you have to scan the whole
+   file). Note that it only works with source stream of known length
+   (returning non-zero DTSA_CurrentSize). It may be less accurate than
+   calculating advance on decompressed data, since compression ratio may be
+   variable through the stream, also DTOA_LoadAdvance takes stream header
+   into account. Attribute value is percents multiplied by 10 000, so
+   1 000 000 means 100% of source stream has been read.
+ - Fixed bug, OM_GET for all per class attributes (DTOA_ClassName,
+   DTOA_ClassDesc, DTOA_MimeType, DTOA_DataFormat) was broken.
+
+ 50.6 (30.12.2003)
+ - Added: Support for DTOA_ErrorCode in NewMediaObject() and OM_NEW.
+ - Removed: Check for source stream in OM_NEW (it is subclass specific).
+
+ 50.5 (07.12.2003)
+ - Added: DTOA_DataType, DTOA_ClassDesc, DTOA_ClassName, DTOA_MimeType are
+   now gettable.
+
+ 50.4 (29.11.2003)
+ - Change: debug output is now switched by makefile target 'debug'.
+
+ 50.3 (07.11.2003)
+ - Fixes caused by stream API changes.
+
+ 50.2 (22.09.2003)
+ - Added functionality in NewMediaObject(), the function can create object
+   stream itself, if there is no DTOA_SourceStream tag, but
+   DTOA_SrcStreamName and DTOA_SrcStreamType pair instead. The library keeps
+   track of created streams and these are disposed at OM_DISPOSE of object
+   returned by NewMediaObject().
+
+multimedia.class/MMA_AutoDestruction
+
+ NAME
+   MMA_AutoDestruction -- [I], BOOL. (V52.4)
+
+ FUNCTION
+   This attribute causes Reggae to automatically dispose an object when all
+   its ports get disconnected. It is used for objects created automatically
+   by Reggae (for example common format converters). Usage of this attribute
+   in applications is not recommended.
+
+multimedia.class/MMA_Decode
+
+ NAME
+   MMA_Decode -- [IPQ], BOOL. (V53.2)
+
+ FUNCTION
+   This tag may be passed to MediaNewObjectTagList(). When set to FALSE it
+   disables attaching decoder objects to the decoding tree. Then outputs of
+   final demuxers are presented as outputs of a compound object created by
+   MediaNewObjectTagList(). By default value of this tag is TRUE, so
+   decoders are attached.
+
+   Disabling decoders is useful, when application creating a media object
+   is not interested in media data, but only wants to read media attributes
+   and metadata. Decoders usually allocate some resources like memory
+   buffers or even hardware. Skipping this step when it is not really needed
+   increases application speed and effectivenes.
+
+   This attribute may be also applied to any port just after the port is
+   created. Setting it to false (usually inside a constructor of a Reggae
+   class) will stop Reggae to create decoding chain for the port. It is
+   usually done for ports delivering data in some non-standard format.
+
+ SEE ALSO
+   MediaNewObjectTagList()
+
+multimedia.class/MMA_ErrorCode
+
+ NAME
+   MMA_ErrorCode -- [ISG], ULONG(*). (V50)
+
+ FUNCTION
+   Error code of the latest operation performed on the object. Note that
+   error does not accumulate, so every succesful operation clears it to
+   zero. When passed to OM_NEW [I], tag value should be a pointer to ULONG
+   variable where error code will be stored. The same for OM_GET [G]. For
+   OM_SET [S], tag value should be just error code.
+
+ NOTES
+   Applications should not set this attribute, setting it is for subclasses.
+
+multimedia.class/MMA_MetaData
+
+ NAME
+   MMA_MetaData -- [Q], struct MetaItem*. (V55.12)
+
+ FUNCTION
+   Returns a complete set of metadata for given output port. Each metadata
+   item is represented by MetaItem structure, items are arranged into an
+   array terminated with item having 'mi_Id' field set to zero.
+
+   The array itself and all the data pointed by 'mi_Data' fields are valid
+   until the object is disposed, or until the attribute is being get again.
+   The array is regenerated each time, so previous array and all the
+   pointers are invalidated. Also querying metadata of other port of the
+   same object overwrites previous data. Care should be taken of it,
+   especially in multithreaded applications.
+
+   Getting this attribute triggers memory allocations. Be prepared for
+   receiving NULL value.
+
+ NOTES
+   Reading metadata with this attribute is not recommended.
+   MMM_QueryMetaData() is the preferred way, especially for periodic queries
+   of dynamic media streams.
+
+   All the string metadata are encoded in UTF-32, platform native endian.
+
+ SEE ALSO
+   MMM_QueryMetaData()
+
+multimedia.class/MMA_ObjectName
+
+ NAME
+   MMA_ObjectName -- [ISG], STRPTR. (V51)
+
+ FUNCTION
+   Pointer to a meaningful name for an object. It is mainly useful for
+   making MediaLogger output more readable, because if an object has a name,
+   it will be used in logs. Local copy of passed string is created in
+   OM_NEW() and OM_SET(), so the passed string need not to be static.
+   Default value for the name is "classname $XXXXXXXX", where 'classname' is
+   the name of class (the same as the name of class executable file), 'X'-es
+   are replaced by object address as hexadecimal digit. Instances of custom
+   private classes get "[private class]" string as the class name.
+
+ NOTES
+   Subclasses implementors: names are not used automagically, you should get
+   MMA_ObjectName value explicitly (for example using predefined OBJNAME()
+   macro) and pass it to MediaLog(). Multimedia.class always uses names in
+   logs.
+
+ SEE ALSO
+   MediaLog()
+
+multimedia.class/MMA_Port_ConnNumber
+
+ NAME
+   MMA_Port_ConnNumber -- [PQ], ULONG. (V50)
+
+ FUNCTION
+   Returns or sets a number of port connected to the queried one.
+
+ NOTES
+   Ports should not be manipulated directly by setting this attribute. Use
+   MediaConnectTagList() to connect ports togehter.
+
+ SEE ALSO
+   MediaConnectTagList()
+
+multimedia.class/MMA_Port_ConnObject
+
+ NAME
+   MMA_Port_ConnObject -- [PQ], Object*. (V50)
+
+ FUNCTION
+   Returns or sets a pointer to object connected to queried port.
+
+ NOTES
+   Ports should not be manipulated directly by setting this attribute. Use
+   MediaConnectTagList() to connect ports togehter.
+
+ SEE ALSO
+   MediaConnectTagList()
+
+multimedia.class/MMA_Port_Format
+
+ NAME
+   MMA_Port_Format -- [PQ], ULONG. (V50)
+
+ FUNCTION
+   Specifies or returns media format of stream going through the port. When
+   set on a port, the specified format must be found in format table of the
+   port. Format is not set otherwise.
+
+ NOTES
+   For subclasses implementors.
+
+ SEE ALSO
+   MMA_Port_FormatsTable
+
+multimedia.class/MMA_Port_FormatsTable
+
+ NAME
+   MMA_Port_FormatsTable -- [PQ], ULONG*. (V50)
+
+ FUNCTION
+   Specifies or returns a pointer to a zero-terminated table of media
+   formats to be accepted or produced by given port.
+
+ NOTES
+   For subclasses implementors only.
+
+multimedia.class/MMA_Port_Number
+
+ NAME
+   MMA_Port_Number -- [Q], ULONG. (V50)
+
+ FUNCTION
+   Own number of port. Multimedia.class returns just number of port the
+   query is performed on.
+
+ NOTES
+   Processblock.class overrides this attribute to perform port forwarding.
+
+multimedia.class/MMA_Port_Object
+
+ NAME
+   MMA_Port_Object -- [Q], Object*. (V50)
+
+ FUNCTION
+   Pointer to object, where the port belongs. Multimedia.class returns just
+   pointer of object the query is performed on.
+
+ NOTES
+   Processblock.class overrides this attribute to perform port forwarding.
+
+multimedia.class/MMA_Port_Type
+
+ NAME
+   MMA_Port_Type -- [PQ], ULONG. (V50)
+
+ FUNCTION
+   Returns or sets type of queried port. It can be MDP_TYPE_INPUT or
+   MDP_TYPE_OUTPUT. Any other value means the port is not initialized
+   properly.
+
+ NOTES
+   Port type should not be changed by applications. For subclasses
+   implementors.
+
+multimedia.class/MMA_Ports
+
+ NAME
+   MMA_Ports -- [G], ULONG. (V50)
+
+ FUNCTION
+   Returns the number of ports in an object.
+
+multimedia.class/MMM_AddMetaItem
+
+ NAME
+   MMM_AddMetaItem -- registers metadata item on object output. (V52.18)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_AddMetaItem, ULONG port, ULONG id, ULONG
+   importance, APTR data, ULONG encoding);
+
+ FUNCTION
+   The method adds metadata to the object. All things passed as 'data' here
+   are copied, so may be temporary. Multimedia.class handles memory
+   management for metadata and charset transcoding for strings
+   automatically.
+
+   When metadata of the same identifier is submitted multiple times for the
+   same object, every later submission overwrites previous one.
+
+ INPUTS
+   port - number of port to add the metadata (each output port has its own
+     set of metadata). It must be an output port, attempt to set metadata on
+     input port is ignored.
+   id - metadata identifier, one of MMETA_xxxx from <classes/multimedia/
+     metadata.h>. It also determines type of passed data, take care of
+     passing proper type for an id.
+   importance - importance of metadata, one of MIMP_xxxx, from the include
+     file mentioned above.
+   data - pointer to the data. Note that integer data are passed via pointer
+     too.
+   encoding - only used for strings, use IANA encoding number here. For
+     other types may be anything, as is just ignored.
+
+ RESULT
+   Boolean value of success. May fail in low memory conditions.
+
+multimedia.class/MMM_AddPort
+
+ NAME
+   MMM_AddPort -- adds a port to an object. (V50)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_AddPort, ULONG number);
+
+ FUNCTION
+   Adds new port to an object. Port is uninitialized and needs type and
+   format or format table to be set.
+
+ INPUTS
+   number - number of port to be created.
+
+ RESULT
+   TRUE if port was created succesfully. FALSE otherwise. The method may
+   fail for two reasons:
+   1. Out of memory, MMA_ErrorCode is MMERR_OUT_OF_MEMORY.
+   2. Port with specified number already exists, MMA_ErrorCode is
+      MMERR_WRONG_ARGUMENTS.
+
+multimedia.class/MMM_Cleanup
+
+ NAME
+   MMM_Cleanup -- frees port related resources before disconnection. (V55.6)
+
+ SYNOPSIS
+   void DoMethod(Object *obj, MMM_Cleanup, LONG port);
+
+ FUNCTION
+   The method is only important for subclasses implementors.
+
+   It is called on object's port just before it is disconnected.
+   Disconnection may happen either because another port is being connected
+   to the one in question, or because the object is disposed. Typically a
+   subclass frees any resources here, allocated in MMM_Setup().
+
+   Multimedia.class implementation of MMM_Cleanup() checks existence of
+   given port in the object. If port is found it returns TRUE, if not it
+   returns FALSE and emits error message to the media log. Then subclasses
+   implementing MMM_Cleanup() may call DoSuperMethod() first to check the
+   port and do nothing if the superclass returns FALSE.
+
+ INPUTS
+   port - port number.
+
+ RESULT
+   Booolean, this class always returns TRUE, if only the port is found in
+   the object.
+
+ SEE ALSO
+   MMM_Setup()
+
+multimedia.class/MMM_DisposeMetaData
+
+ NAME
+   MMM_DisposeMetaData -- disposes media metadata query results. (V55.11)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_DisposeMetaData, struct TagItem *query);
+
+ FUNCTION
+   The method disposes media metadata query result returned by
+   MMM_QueryMetaData(). All media queries must be disposed after use.
+
+ INPUTS
+   query - pointer to the query to be disposed.
+
+ RESULT
+   None.
+
+ NOTES
+   The method may be performed on any Reggae object, not necessarily on the
+   one which has been queried. Information about allocated memory is stored
+   inside the query.
+
+ SEE ALSO
+   MMM_QueryMetaData()
+
+multimedia.class/MMM_GetPort
+
+ NAME
+   MMM_GetPort -- gets a value of a port dependent attribute. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_GetPort, ULONG port, ULONG attribute,
+   APTR storage);
+
+ FUNCTION
+   Gets the value of an attribute, which is port dependent. It is typically
+   an attribute of the port itself, or an attribute of the data stream going
+   through the port. Usually this method is implemented at subclass level.
+   If it reaches multimedia.class level and queried attribute is not port
+   attribute but data stream one, the method is called on all outputs if
+   comes from an input and called on all inputs if comes from an output.
+   This way a query can travel along the processing structure.
+
+ INPUTS
+   obj - queried object,
+   port - number of queried port,
+   attribute - queried attribute,
+   storage - pointer to a variable, where value will be stored.
+
+ RESULT
+   TRUE if the attribute was recognized and value stored, FALSE otherwise.
+
+ NOTES
+   Two useful macros: MediaGetPort() and MediaGetPort64() defined in
+   <classes/multimedia/multimedia.h> return directly the 32-bit or 64-bit
+   value. May be used if return value of MMM_GetPort() is not needed.
+
+   Query forwarding may be disabled for a port with MMA_Port_Forwarding
+   attribute.
+
+ EXAMPLE
+   UQUAD val64;
+   ULONG val32;
+
+   DoMethod(obj, MMM_GetPort, port, MMA_Any32BitAttr, &val32);
+   /* is equivalent to */
+   val32 = MediaGetPort(obj, port, MMA_Any32BitAttr);
+
+   DoMethod(obj, MMM_GetPort, port, MMA_Any64BitAttr, (ULONG*)&val64);
+   /* is equivalent to */
+   val64 = MediaGetPort64(obj, port, MMA_Any64BitAttr);
+
+ SEE ALSO
+   MMM_GetPortFwd(), MediaGetPort(), MediaGetPort64(), MMA_Port_NoForwarding
+
+multimedia.class/MMM_GetPortFwd
+
+ NAME
+   MMM_GetPortFwd -- gets a value of a port dependent attribute from
+   connected port. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_GetPortFwd, ULONG port, ULONG attribute,
+   APTR storage);
+
+ FUNCTION
+   Gets the value of an attribute, which is port dependent. It is typically
+   an attribute of the port itself, or an attribute of the data stream going
+   through the port. This method gets a port connected to the specified one,
+   and then performs MMM_GetPort() on this connected port. MMM_GetPortFwd()
+   is usually used inside a class, when an object needs to query an
+   attribute from the previous, or the next object in a processing
+   chain. Using MMM_GetPort() in this case will cause forwarding in  wrong
+   direction (query on input will be forwarded to outputs, query on output
+   will be forwarded to inputs). MMM_GetPortFwd() will forward query on
+   input to the previous object's output, and query on output to the next
+   object's input as expected.
+
+ INPUTS
+   port - number of queried port.
+   attribute - queried attribute.
+   storage - pointer to a variable, where value will be stored.
+
+ RESULT
+   TRUE if the attribute was recognized and value stored, FALSE otherwise.
+
+ NOTES
+   Two useful macros: MediaGetPortFwd() and MediaGetPortFwd64() defined in
+   <classes/multimedia/multimedia.h> return directly the 32-bit or 64-bit
+   value. May be used if return value of MMM_GetPortFwd() is not needed.
+
+ EXAMPLE
+   UQUAD val64;
+   ULONG val32;
+
+   DoMethod(obj, MMM_GetPortFwd, port, MMA_Any32BitAttr, (IPTR)&val32);
+   /* is equivalent to */
+   val32 = MediaGetPortFwd(obj, port, MMA_Any32BitAttr);
+
+   DoMethod(obj, MMM_GetPortFwd, port, MMA_Any64BitAttr, (IPTR)&val64);
+   /* is equivalent to */
+   val64 = MediaGetPortFwd64(obj, port, MMA_Any64BitAttr);
+
+ SEE ALSO
+   MMM_GetPort(), MediaGetPortFwd(), MediaGetPortFwd64()
+
+multimedia.class/MMM_IsMember
+
+ NAME
+   MMM_IsMember -- checks if an object is a member of another object. (V50)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_IsMember, Object *parent);
+
+ FUNCTION
+   Returns TRUE if an object is member of parent object. At multimedia.class
+   level this function always returns TRUE, as every object is a member of
+   itself. The method is overloaded by processblock.class.
+
+ INPUTS
+   parent - object expected to have 'obj' as member.
+
+ RESULT
+   Always TRUE on multimedia.class level.
+
+ SEE ALSO
+   processblock.class
+
+multimedia.class/MMM_LockObject
+
+ NAME
+   MMM_LockObject -- locks Reggae object for exclusive use. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_LockObject);
+
+ FUNCTION
+   Locks Reggae object for exclusive use. It is done by obtaining object's
+   own semaphore. Locks can be nested.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ NOTES
+   Not needed in applications usually, as every method is protected with
+   MMM_LockObject()/MMM_UnlockObject() pair. Subclasses implementors should
+   always use it in all methods.
+
+   MMM_Pull() method implemented with MMM_PrePull() and MMM_PostPull()
+   helper methods need not to lock object, as these helper methods lock and
+   unlock it. The same for MMM_Seek() implemented with MMM_PreSeek() and
+   MMM_PostSeek().
+
+ SEE ALSO
+   MMM_UnlockObject()
+
+multimedia.class/MMM_PostPull
+
+ NAME
+   MMM_PostPull -- performs common tasks after pulling data. (V52.13)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_PostPull, ULONG port, APTR data, LONG
+   length);
+
+ FUNCTION
+   This method is for Reggae classes implementors and is designed (together
+   with MMM_PrePull()) for simplifying implementation of MMM_Pull(). This
+   method performs following common tasks of MMM_Pull():
+   - Sends standarized log messages.
+   - Unlocks the object.
+   The class implementor just calls this method at end of own MMM_Pull().
+   See example code in MMM_PrePull() autodoc.
+
+ INPUTS
+   port - number of port.
+   data - pointer to the destination data buffer.
+   lenght - stored data block length in bytes. Zero means end of data. It
+     may be also MMM_PREPULL_FAILED (error).
+
+ RESULT
+   Number of bytes pulled. Zero means error (may be end of data).
+
+ SEE ALSO
+   MMM_Pull(), MMM_PrePull()
+
+multimedia.class/MMM_PostSeek
+
+ NAME
+   MMM_PostSeek -- performs common tasks after seeking the data stream.
+   (V52.14)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_PostSeek, ULONG port, ULONG type, QUAD*
+   position, ULONG result);
+
+ FUNCTION
+   This method is for Reggae classes implementors and is designed (together
+   with MMM_PreSeek()) for simplifying implementation of MMM_Seek(). This
+   method performs following common tasks of MMM_Seek():
+   - Sends standarized log messages.
+   - Unlocks the object.
+   The class implementor just calls this method at end of own MMM_Seek().
+   See example code in MMM_PreSeek() autodoc.
+
+ INPUTS
+   port - number of port.
+   type - seek type, one of predefined MMM_SEEK constants.
+   position - absolute position in stream. It is a 64-bit value passed via
+     pointer.
+   result - one of MMM_PRESEEK constants.
+
+ RESULT
+   Final boolean value of success to be returned as MMM_Seek result.
+
+ SEE ALSO
+   MMM_Seek(), MMM_PreSeek()
+
+multimedia.class/MMM_PrePull
+
+ NAME
+   MMM_PrePull -- performs common tasks before pulling data. (V52.13)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_PrePull, ULONG port, APTR data, LONG
+   length);
+
+ FUNCTION
+   This method is for Reggae classes implementors and is designed (together
+   with MMM_PostPull()) for simplifying implementation of MMM_Pull(). This
+   method performs following common tasks of MMM_Pull():
+   - Checks destination buffer address against NULL.
+   - Checks request length against 0.
+   - Checks port existence.
+   - Locks the object.
+   - Automatically forwards pulls on input ports.
+   - Sends standarized log messages.
+   - Sets standarized error codes.
+   The class implementor just calls this method at start of own MMM_Pull()
+   and examines its result. Positive values (including zero) mean that
+   MMM_PrePull() completed the task of pulling (zero means end of data).
+   This happens when pulling from object's input. MMM_PREPULL_NOT_DONE means
+   that MMM_PrePull() positively verified parameters and MMM_Pull() has been
+   called on output port, so the true class has to perform the task.
+   MMM_PREPULL_FAILED means error (log message has been sent and error value
+   has been set already).
+
+ INPUTS
+   port - number of port.
+   data - pointer to the destination data buffer.
+   lenght - requested data block length in bytes.
+
+ RESULT
+   Number of bytes pulled or error (see above).
+
+ NOTES
+   This method performs all tasks of multimedia.class MMM_Pull(). It means
+   subclasses using MMM_PrePull()/MMM_PostPull() pair, never call MMM_Pull()
+   in multimedia.class.
+
+ EXAMPLE
+   /* A typical MMM_Pull() in a Reggae class. */
+
+   LONG mPull(Class *cl, Object *obj, struct mmopPull *msg)
+   {
+     LONG bytes = DoMethod(obj, MMM_PrePull, msg->Port, msg->Buffer,
+     msg->Length);
+
+     if (bytes == MMM_PREPULL_NOT_DONE)
+     {
+       /* Pull from input, process, store in msg->Buffer. */
+       /* Store number of processed bytes in 'bytes'.     */
+       /* In case of error set 'bytes' to                 */
+       /* MMM_PREPULL_FAILED.                             */
+     }
+
+     return DoMethod(obj, MMM_PostPull, msg->Port, msg->Buffer, bytes);
+   }
+
+ SEE ALSO
+   MMM_Pull(), MMM_PostPull()
+
+multimedia.class/MMM_PreSeek
+
+ NAME
+   MMM_PreSeek -- performs common tasks before seeking in a data stream.
+   (V52.14)
+
+ SYNOPSIS
+   LONG DoMethod(Object* obj, MMM_PreSeek, ULONG port, ULONG type, QUAD*
+   position, ULONG typemask);
+
+ FUNCTION
+   This method is for Reggae classes implementors and is designed (together
+   with MMM_PostSeek()) for simplifying implementation of MMM_Seek(). This
+   method performs following common tasks of MMM_Seek():
+   - Locks the object.
+   - Generates standarized log messages.
+   - Validates port number.
+   - Forwards the seek request to the previous object in case of seek on
+     input port.
+   - Validates seek type.
+   - If stream length is known, checks if seek position is within the
+     stream.
+   - Checks for stream seekability, emulates seek with reads if needed and
+     possible (forward seeks).
+   - Sets standarized error codes.
+   The class implementor just calls this method at start of own MMM_Seek().
+
+ INPUTS
+   port - number of port.
+   type - requested type of seek, MMM_SEEK_BYTES, MMM_SEEK_FRAMES or
+     MMM_SEEK_TIME.
+   position - requested seek absolute position.
+   typemask - allowed types of seek.
+
+ RESULT
+   One of:
+   - MMM_PRESEEK_DONE - request fulfilled, no more action needed.
+   - MMM_PRESEEK_NOT_DONE - validation passed, seek to be performed.
+   - MMM_PRESEEK_FAILED - validation failed, no more action needed.
+
+ NOTES
+   This method performs all tasks of multimedia.class MMM_Seek(). It means
+   subclasses using MMM_PreSeek()/MMM_PostSeek() pair, never call MMM_Seek()
+   in multimedia.class.
+
+ EXAMPLE
+   /* A typical MMM_Seek in a Reggae class. */
+
+   LONG mSeek(Class *cl, Object *obj, struct mmopSeek *msg)
+   {
+     LONG preseek = DoMethod(obj, MMM_PreSeek, msg->Port, msg->Type,
+     msg->Position, MMM_SEEKMASK_FRAMES_AND_TIME);
+
+     if (preseek == MMM_PRESEEK_NOT_DONE)
+     {
+       /* Do your seek on output port here. Change 'preseek' value to
+          MMM_PRESEEK_FAILED in case of error. */
+     }
+
+     return DoMethod(obj, MMM_PostSeek, msg->Port, msg->Type,
+     msg->Position, preseek);
+   }
+
+ SEE ALSO
+   MMM_Seek(), MMM_PostSeek()
+
+multimedia.class/MMM_Pull
+
+ NAME
+   MMM_Pull -- pulls a data block from a port. (V50)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   The method pulls a block of data of given length from a port of specified
+   object. Data may be pulled from output ports only. Usually a pull from
+   object's output causes object to generate following pull from the
+   previous object. In typical conditions MMM_Pull() call does not reach
+   multimedia.class. The one exception is when an object calls MMM_Pull() on
+   its own input. If it is the case, the object should pass this call to the
+   superclass. Then the call reaches multimedia.class. The multimedia.class
+   MMM_Pull() implementation determines output port connected to the passed
+   input and calls MMM_Pull() on this input. The final result is that
+   subclass implementor may safely call MMM_Pull() on own object inputs, if
+   only subclass MMM_Pull() is implemented in a way that MMM_Pull() calls on
+   inputs are passed to superclass, these calls will be automatically
+   forwarded to connected objects.
+
+ INPUTS
+   port - number of port to pull data from.
+   buffer - address of buffer for pulled data.
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled from port. MMA_ErrorCode contains secondary error
+   information.
+
+ NOTES
+   Recommended method of implementing MMM_Pull() in subclasses is to use
+   MMM_PrePull() and MMM_PostPull() helper methods, which perform tasks
+   described here automatically.
+
+ SEE ALSO
+   MMM_PrePull(), MMM_PostPull()
+
+multimedia.class/MMM_QueryMetaData
+
+ NAME
+   MMM_QueryMetaData -- retrieves media metadata information. (V55.11)
+
+ SYNOPSIS
+   DoMethod(Object *obj, MMM_QueryMetaData, ULONG port, ULONG *items,
+   struct TagItem *tags);
+
+ FUNCTION
+   The method queries an output port in media object, and optionally
+   previous objects in the chain, of metadata information.
+
+ INPUTS
+   port - number of port to query. Only output ports are allowed.
+   items - a zero terminated array of requested metadata identifiers. NULL
+     value is a wildcard, requests all metadata items available.
+   taglist - query control parameters, following tags are supported:
+     - MMDQ_Encoding - IANA encoding number (see <libraries/charsets.h>). All
+       the text metadata items will be converted to this encoding. Defaults
+       to MIBENUM_SYSTEM.
+     - MMDQ_Importance - all metadata items with importance below specified
+       will be omitted. Defaults to MIMP_SPAM, so all items pass.
+
+ RESULT
+   The result is a taglist. Tags in this taglist are metadata item
+   identifiers. Data of every tag is a pointer to a sub-taglist being
+   a metadata item descriptor. The descriptor may contain following tags:
+   - MMDI_Data - pointer to item data.
+   - MMDI_Size - size of data in bytes (for strings includes terminator).
+   - MMDI_Type - data type of the item. While the type is clearly determined
+     by the identifier, it is explicitly given here for convenience.
+   - MMDI_Importance - importance level of the item.
+   - MMDI_CharCount - only for strings, number of characters, without
+     terminator.
+   The whole result is an individual copy of metadata, all the pointers are
+   valid until disposed. The result must be disposed with
+   MMM_DisposeMetaData() after use.
+
+   The result may be NULL in case of low memory, or when a query is
+   attempted on an input port. When there are no metadata items, empty
+   taglist will be returned.
+
+ NOTES
+   Requested, but not found items may result in TAG_IGNORE tags in the main
+   taglist. NextTagItem() or other utility.library functions are recommended
+   for reading the taglist, hand-made parsers must handle TAG_IGNORE
+   properly.
+
+ SEE ALSO
+   MMM_DisposeMetaData()
+
+multimedia.class/MMM_Seek
+
+ NAME
+   MMM_Seek -- forwards seek method to the connected object. (V50)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_Seek, ULONG port, ULONG type, UQUAD
+   *position);
+
+ FUNCTION
+   Multimedia.class version of MMM_Seek() is called by a subclass, when an
+   object wants to perform seek on its own input. Applications may call this
+   method on output ports, seeking on input is for subclasses only. Calling
+   on input means seek event backpropagation to the data source, then all
+   objects in the pipeline can adjust their buffers and pointers. This class
+   implementation of MMM_Seek() passes the method to a port connected to the
+   specified one. If this fails, error code from the connected object is
+   passed forward to the calling one.
+
+ INPUTS
+   port - input port to be used.
+   type - seek type, neither interpreted nor checked here.
+   position - a pointer to UQUAD variable containing the new position,
+     neither interpreted, nor checked here.
+
+ RESULT
+   Result of seek on the object connected to the port passed. MMA_ErrorCode
+   is propagated forward in case of failure.
+
+ NOTES
+   Subclasses should be implemented using MMM_PreSeek() and MMM_PostSeek()
+   helpers, which perform described takss automatically.
+
+ SEE ALSO
+   MMM_PreSeek(), MMM_PostSeek()
+
+multimedia.class/MMM_SetPort
+
+ NAME
+   MMM_SetPort -- sets a value of a port dependent attribute. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_SetPort, ULONG port, ULONG attribute,
+   ULONG value);
+
+ FUNCTION
+   Sets the value of an attribute, which is port-dependent. It is typically
+   an attribute of the port itself, or an attribute of the data stream going
+   through the port. Usually this method is implemented at subclass level.
+   If it reaches multimedia.class level and queried attribute is not port
+   attribute but data stream one, the method is called on all outputs if
+   comes from an input and called on all inputs if comes from an output.
+   This way a request can travel along the processing structure.
+
+ INPUTS
+   port - number of port to set attribute on.
+   attribute - attribute.
+   value - value to set. 64-bit numbers and larger structures are passed
+     via pointer.
+
+ RESULT
+   TRUE if the attribute was recognized and value set, FALSE otherwise.
+
+ NOTES
+   Two useful macros: MediaSetPort() and MediaSetPort64() defined in
+   <classes/multimedia/multimedia.h> set directly the 32-bit or 64-bit
+   value.
+
+   Request forwarding may be disabled for a port with MMA_Port_Forwarding
+   attribute.
+
+ EXAMPLE
+   UQUAD val64;
+   ULONG val32;
+
+   result = DoMethod(obj, MMM_SetPort, port, MMA_Any32BitAttr, val32);
+   /* is equivalent to */
+   result = MediaSetPort(obj, port, MMA_Any32BitAttr, val32);
+
+   result = DoMethod(obj, MMM_SetPort, port, MMA_Any64BitAttr,
+     (IPTR)&val64);
+   /* is equivalent to */
+   result = MediaSetPort64(obj, port, MMA_Any64BitAttr, val64);
+
+ SEE ALSO
+   MMM_SetPortFwd, MMA_Port_Forwarding
+
+multimedia.class/MMM_SetPortFwd
+
+ NAME
+   MMM_SetPortFwd -- sets a value of a port dependent attribute on connected
+   port. (V50)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_SetPortFwd, ULONG port, ULONG attribute,
+   IPTR value);
+
+ FUNCTION
+   Sets the value of an attribute, which is port dependent. It is typically
+   an attribute of the port itself, or an attribute of the data stream going
+   through the port. This method gets a port connected to the specified one,
+   and then performs MMM_SetPort() on this connected port. MMM_SetPortFwd()
+   is usually used inside the class, when an object needs to set an
+   attribute of the previous, or the next object in a processing structure.
+   Using MMM_SetPort() in this case will cause forwarding in wrong direction
+   (request on input will be forwarded to outputs, request on output will be
+   forwarded to inputs). MMM_SetPortFwd() will forward request on input to
+   the previous object's output, and request on output to the next object's
+   input as expected.
+
+ INPUTS
+   port - number of port to set attribute on.
+   attribute - attribute.
+   value - value to set. 64-bit numbers and larger structures are passed via
+     pointer.
+
+ RESULT
+   TRUE if the attribute was recognized and value set, FALSE otherwise.
+
+ NOTES
+   Two useful macros: MediaSetPortFwd() and MediaSetPortFwd64() defined in
+   <classes/multimedia/multimedia.h> set directly a 32-bit or 64-bit
+   value. They may be used if the return value of the method is not
+   important.
+
+ EXAMPLE
+   UQUAD val64;
+   ULONG val32;
+
+   result = DoMethod(obj, MMM_SetPortFwd, port, MMA_Any32BitAttr,
+     val32);
+   /* is equivalent to */
+   result = MediaSetPortFwd(obj, port, MMA_Any32BitAttr, val32);
+
+   result = DoMethod(obj, MMM_SetPortFwd, port, MMA_Any64BitAttr,
+     (IPTR)&val64);
+   /* is equivalent to */
+   result = MediaSetPortFwd64(obj, port, MMA_Any64BitAttr, val64);
+
+ SEE ALSO
+   MMM_SetPort(), MediaSetPortFwd(), MediaSetPortFwd64()
+
+multimedia.class/MMM_Setup
+
+ NAME
+   MMM_Setup -- prepares connected port for use. (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(Object *obj, MMM_Setup, LONG port);
+
+ FUNCTION
+   The method is only important for subclasses implementors.
+
+   It is called on object's port just after it is connected to another one
+   with MediaConnectTagList(). An object can do any preparations
+   (calculations, buffer allocation etc.) depending on data stream
+   parameters. Subclass should return TRUE if setup was succesfull
+   (MediaConnectTagList() will fail, if setup on any of connected ports
+   fails).
+
+   Multimedia.class implementation of MMM_Setup() checks existence of given
+   port in the object. If port is found it returns TRUE, if not it returns
+   FALSE and emits error message to the media log. Then subclasses
+   implementing MMM_Setup() may call DoSuperMethod() first to check the
+   port and fail if the superclass returns FALSE.
+
+ INPUTS
+   port - port number.
+
+ RESULT
+   Booolean, this class always returns TRUE, if only the port is found in
+   the object.
+
+ SEE ALSO
+   MMM_Cleanup()
+
+multimedia.class/MMM_UnlockObject
+
+ NAME
+   MMM_UnlockObject -- unlocks previously locked object. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_UnlockObject);
+
+ FUNCTION
+   Unlocks object locked with MMM_LockObject(). It is done by releasing
+   object's own semaphore.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ NOTES
+   Not needed in applications usually, as every method is protected with
+   MMM_LockObject()/MMM_UnlockObject() pair. Subclasses implementors should
+   always use it in all methods.
+
+   MMM_Pull() method implemented with MMM_PrePull() and MMM_PostPull()
+   helper methods need not to lock object, as these helper methods lock and
+   unlock it. The same for MMM_Seek() implemented with MMM_PreSeek() and
+   MMM_PostSeek().
+
+ SEE ALSO
+   MMM_LockObject()
+
+multimedia.class/MediaAllocVec
+
+ NAME
+   MediaAllocVec -- Allocates memory for media buffers. (v50)
+
+ SYNOPSIS
+   APTR MediaAllocVec(ULONG size);
+
+ FUNCTION
+   The function is used for allocating processing buffers for Reggae
+   classes. It should be used in subclasses for all buffers containing
+   stream data. It also should be used by applications for data to be fed
+   into Reggae processing structure and for buffers to be filled with data
+   by Reggae objects as well. Using this function instead of exec functions
+   ensures data are properly aligned for AltiVec unit available in G4/G5
+   processors. AltiVec alignment is enforced only on machines with AltiVec
+   available (to lower memory consumption and usage on low-end 60x and G3
+   systems). Memory allocations via MediaAllocMem() can be tracked for
+   testing and debug purposes.
+
+ INPUTS
+   size - size of memory buffer to be allocated. The function returns NULL
+     if zero size is passed.
+
+ RESULT
+   Pointer to allocated buffer, or NULL for failure.
+
+ NOTES
+   Memory allocated with MediaAllocVec() must be freed with MediaFreeVec().
+
+ SEE ALSO
+   MediaFreeVec().
+
+multimedia.class/MediaAudioFrameToTime
+
+ NAME
+   MediaAudioFrameToTime -- Converts audio frame number to timepoint. (V53)
+
+ SYNOPSIS
+   QUAD MediaAudioFrameToTime(QUAD frame, LONG samplerate);
+
+ FUNCTION
+   The function converts a stream position in audio frames to position in
+   microseconds using a specified sampling rate. The formula is:
+
+   timepoint = frame * 1 000 000 / sampling rate
+
+   The function handles possible range overflows. It uses integer arithmetic
+   so the error of conversion is never higher than one microsecond.
+
+ INPUTS
+   frame - frame number for the timepoint. Allowed range is <0, 2^63 - 1>
+     (both sides including).
+   samplerate - stream sampling rate. Allowed range is <1, 2^31 - 1> (both
+     sides including).
+
+ RESULT
+   Time point in microseconds. If the resulting time point is higher than
+   2^63 - 1 microseconds, or any argument is out of range, the result is -1.
+
+ SEE ALSO
+   MediaTimeToAudioFrame()
+
+multimedia.class/MediaBuildFromArgsTagList
+
+ NAME
+   MediaBuildFromArgsTagList -- Builds processing chain according to
+   argument string (V55).
+
+ SYNOPSIS
+   Object* MediaBuildFromArgsTagList(STRPTR args, Object *source, LONG port,
+   struct TagItem *taglist);
+
+   Object* MediaBuildFromArgsTags(STRPTR args, Object *source, LONG port,
+   Tag tag1, ...);
+
+ FUNCTION
+   Creates a set of Reggae objects to filter media stream, or encode it,
+   according to passed argument string. The string consists of two parts.
+   The first part is codec name. It is exactly the first part of
+   multiplexer class name (case insensitive). For example 'WAVE' makes
+   Reggae to start with "wave.muxer". The rest of string, separated by at
+   least one whitespace, is passed to a constructor of multiplexer object
+   using MMA_Arguments attribute. See autodocs of multiplexers for details.
+
+   The first part may be also the first part of a Reggae filter class name.
+   Similarly the rest of line is passed as argument string to the filter
+   constructor, using MMA_Arguments. Arguments for filters are described in
+   their autodocs.
+
+   In case, when multiplexer class is specified, Reggae creates an instance
+   of it first. Then control is passed to the multiplexer class. It opens an
+   encoder class, creates encoder object, connects it to specified data
+   source, creates multpilexer object and connects it to encoder. In some
+   cases more than one multiplexers may be cascaded, they are created and
+   connected too. All created objects are placed inside a processblock
+   object. Input of returned Reggae object is already connected to the
+   specified data source. Output, which is port 1, is ready to be
+   connected to object of an output Reggae class (typically file.output).
+
+   In case when there are more inputs needed (for example when multiplexed
+   audio and video streams are saved), a map of ports is passed with
+   MGG_PortMap tag in the taglist argument. In this case 'source' argument
+   is ignored and should be set to NULL.
+
+ INPUTS
+   args - argument string.
+   source - Reggae object, (primary) source of data to be processed or
+     saved. If more sources are needed, they are passed via taglist.
+   port - an output port of 'source', acting as data source port.
+   taglist - optional taglist with control tags.
+
+ RESULT
+   A set of Reggae objects contained inside a processblock object. All
+   inputs are already connected to data sources passed, outputs are not
+   connected. In case of failure function returns NULL.
+
+ SEE ALSO
+   MediaGetStringTagList()
+
+ NOTES
+   Support of MGG_PortMap is not yet implemented.
+
+multimedia.class/MediaBuildFromGuiTagList
+
+ NAME
+   MediaBuildFromGuiTagList -- Builds processing chain according to GUI.
+   (V54)
+
+ SYNOPSIS
+   Object* MediaBuildFromGuiTagList(Object *gui, Object *source, LONG port,
+   struct TagItem *taglist);
+
+   Object* MediaBuildFromGuiTags(Object *gui, Object *source, LONG port,
+   Tag tag1, ...);
+
+ FUNCTION
+   Creates a set of Reggae objects to filter media stream, or encode it,
+   according to GUI created with MediaGetGuiTagList() and user settings
+   made.
+
+   When MediaGetGuiTagList() was called with MGG_Type_Muxers, the function
+   determines which multiplexer (output media format) has been selected by
+   user. Then control is passed to the multiplexer class. It opens an
+   encoder class, creates encoder object, connects it to specified data
+   source, creates multpilexer object and connects it to encoder. In some
+   cases more than one multiplexers may be cascaded, they are created and
+   connected too. All created objects are placed inside a processblock
+   object. Input of returned Reggae object is already connected to the
+   specified data source. Output, which is port 1, is ready to be
+   connected to object of an output Reggae class (typically file.output).
+
+   In case when there are more inputs needed (for example when multiplexed
+   audio and video streams are saved), a map of ports is passed with
+   MGG_PortMap tag in the taglist argument. In this case 'source' argument
+   is ignored and should be set to NULL.
+
+ INPUTS
+   gui - MUI object, created with MediaGetGuiTagList().
+   source - Reggae object, (primary) source of data to be processed or
+     saved. If more sources are needed, they are passed via taglist.
+   port - an output port of 'source', acting as data source port.
+   taglist - optional taglist with control tags.
+
+ RESULT
+   A set of Reggae objects contained inside a processblock object. All
+   inputs are already connected to data sources passed, outputs are not
+   connected. In case of failure function returns NULL.
+
+ SEE ALSO
+   MediaGetGuiTagList()
+
+ NOTES
+   Support of MGG_PortMap is not yet implemented.
+
+multimedia.class/MediaConnectTagList
+
+ NAME
+   MediaConnectTagList -- connects two ports of Reggae objects. (V50)
+
+ SYNOPSIS
+   BOOL MediaConnectTagList(Object *obj1, ULONG port1, Object *obj2, ULONG
+   port2, struct TagItem *taglist);
+
+   BOOL MediaConnectTags(Object *obj1, ULONG port1, Object *obj2, ULONG
+   port2, Tag tag1, ...);
+
+ FUNCTION
+   Connects two ports of media objects. The function checks if given ports
+   exist in objects, then checks for matching data formats. There are three
+   possible data format conditions:
+   1. Both ports have format set explicitly. If it is the same format ports
+      are connected, the function fails otherwise. If one of ports has
+      MMF_ANY_FORMAT, its format is set to the other port one before
+      connecting. If both ports have MMF_ANY_FORMAT, they are connected as
+      is.
+   2. One port has format set explicitly, the second one has format table.
+      If the first port format is found in second port format table,
+      ports are connected, the function fails otherwise. Matched format is
+      set on the second port.
+   3. Both ports have format tables. Format, which provides best processing
+      quality is choosen.
+
+   After succesfull connection, MMM_Setup() method is called on both
+   connected ports. This method is not used by Reggae main classes, but may
+   be used by subclasses to perform setup dependent on datastream
+   avaliability or parameters (for example demuxers can read stream header
+   in MMM_Setup(), other classes may create internal buffers etc.).
+
+   Automatic Conversion
+
+   Since version 55.7, multimedia.class provides feature of automatic
+   conversion of PCM audio and video formats when connecting objects. This
+   conversion includes previously provided autoconversion between common
+   formats and extends it to formats supported by following classes:
+   - audiopcm.decoder
+   - audiopcm.encoder
+   - videopcm.decoder
+   - videopcm.decoder
+   In case where output port format is a common one, a decoder class is
+   used. When output port format is not common, but input is common, an
+   encoder class is used. When neither input nor output is common,
+   decoder and encoder are cascaded, so conversion goes through a common
+   format. Of course conversion is possible only if output port format is
+   supported by decoder and input port format is supported by encoder.
+
+ INPUTS
+   obj1 - the first object to be connected.
+   port1 - the number of port in obj1 to be connected.
+   obj2 - the second object to be connected.
+   port2 - the number of port in obj2 to be connected.
+   taglist - for future expansion, no tags defined in v50. NULL taglist is
+     OK and is treated as an empty one.
+
+ RESULT
+   TRUE if ports connected succesfully. FALSE may be returned because of
+   following reasons:
+   - one or both of objects are NULL.
+   - one or both of ports are not found in objects.
+   - application is trying to connect two ports of the same object.
+   - port formats do not match (see case 1. above).
+   - no matching format found in ports format table[s] (see cases 2. and 3.
+     above).
+   - application is trying to connect two inputs or two outputs, or any of
+     ports has wrong (uninitialized?) type.
+   - any of ports has set neither format nor format table (uninitialized?).
+
+multimedia.class/MediaFault
+
+ NAME
+   MediaFault -- returns text description of Reggae error. (V54)
+
+ SYNOPSIS
+   CONST_STRPTR MediaFault(LONG code);
+
+ FUNCTION
+   Returns localized text description for numeric Reggae error code.
+   Returned string is read-only and must not be modified. The string starts
+   from a small letter and is not terminated with any punctuation character.
+
+   This function never fails and cannot return NULL. When locale system is
+   not active for any reason, English strings are returned. When passed
+   error code is outside of the valid range, a localized string with meaning
+   of "undefined error" is returned.
+
+ INPUTS
+   code - Reggae error code. Passing any value is safe.
+
+ RESULT
+   Localized, NULL-terminated text description of Reggae error.
+
+multimedia.class/MediaFindClassTagList
+
+ NAME
+   MediaFindClassTagList -- Finds Reggae classes of given properties.
+   (v50)
+
+ SYNOPSIS
+   STRPTR MediaFindClassTagList(APTR *ptr, struct TagItem *taglist);
+
+   STRPTR MediaFindClassTags(APTR *ptr, Tag tag1, ...);
+
+ FUNCTION
+   The function is used for finding Reggae classes of given properties in
+   the database maintained by multimedia.class. Properties are specified in
+   the passed taglist. On the first call the function returns the first
+   class found matching passed properties. To find all matching classes, the
+   function should be called in a loop until it returns NULL. The value
+   returned is the name of class.
+
+ INPUTS
+   ptr - pointer to APTR pointer used for saving current position in the
+     database. Must be initialized to NULL before the first call.
+   taglist - list of tags specifying properties of classes to be found.
+     Following tags are recognized:
+     - MMA_ClassType, one of MMCLASS_xxx defined in
+       <classes/multimedia/multimedia.h>.
+     - MMA_MediaType, one of three media types (audio, picture, video)
+       defined in <classes/multimedia/multimedia.h> or any OR-ed combination
+       of them.
+     - MMA_DataFormat, the name of media format (like "Audio IFF"), strings
+       are compared.
+
+ RESULT
+   Pointer to read-only, zero-terminated class name string, or NULL if no
+   class found.
+
+ EXAMPLE
+   /* search for all sound demuxers */
+
+   APTR p = NULL;   /* must be initialized to NULL */
+   STRPTR classname;
+
+   while (classname = MediaFindClassTags(&p,
+     MMA_MediaType, MMT_SOUND,
+     MMA_ClassType, MMCLASS_DEMUXER,
+   TAG_END))
+   {
+     /* do something with class name */
+   }
+
+multimedia.class/MediaFreeVec
+
+ NAME
+   MediaFreeVec -- Frees media buffer memory. (v50)
+
+ SYNOPSIS
+   void MediaFreeVec(APTR memory);
+
+ FUNCTION
+   The function frees media buffer memory allocated with MediaAllocVec().
+   The memory tracker can report errors like wrong size or address.
+
+ INPUTS
+   memory - buffer to be freed. The function does nothing if NULL pointer is
+   passed.
+
+ RESULT
+   none
+
+ NOTES
+   Only memory allocated with MediaAllocVec() can be freed with
+   MediaFreeVec().
+
+ SEE ALSO
+   MediaAllocVec().
+
+multimedia.class/MediaGetArgsFromGui
+
+ NAME
+   MediaGetArgsFromGui -- Generates argument string from classes GUI (V55).
+
+ SYNOPSIS
+   STRPTR MediaGetArgsFromGui(Object *gui);
+
+ FUNCTION
+   The function takes a pointer to GUI object generated with
+   MediaGetGuiTagList(). It reads GUI subobjects (active page) and creates
+   an argument string which may be later passed to
+   MediaBuildFromArgsTagList() function to obtain corresponding Reggae
+   processing chain.
+    Direct pointer to one of child of the page group can be passed also.
+
+   The function allocates the argument string returned with
+   AllocVecTaskPooled(). It should be freed by calling process, when no
+   longer needed. Alternatively it will be freed automatically, when the
+   calling process terminates.
+
+ INPUTS
+   gui - GUI object created with MediaGetGuiTagList(). It may be NULL,
+   function just returns with NULL in this case.
+
+ RESULT
+   Generated argument string. It may be NULL when memory allocation for the
+   string fails.
+
+ SEE ALSO
+   MediaGetGuiTagList(), MediaBuildFromArgsTagList()
+
+multimedia.class/MediaGetClassAttr
+
+ NAME
+   MediaGetClassAttr -- Gets an attibute of a Reggae class. (v50)
+
+ SYNOPSIS
+   MediaGetClassAttr(STRPTR classname, ULONG attr, ULONG *storage);
+
+ FUNCTION
+   Gets an attribute of specified Reggae class. If the class is found in the
+   database and the attribute is found in this class attribute list, the
+   attribute value is stored at given pointer.
+
+ INPUTS
+   classname - the name of the class (zero-terminated string).
+   attr - attribute to get. Following attributes are recognized:
+     - MMA_ClassType,
+     - MMA_MediaType,
+     - MMA_SupportedFormats.
+   storage - pointer to a variable where attribute value is to be stored.
+
+ RESULT
+   TRUE if class and attribute found and value stored. FALSE otherwise.
+
+ EXAMPLE
+   /* prints all supported data format identifiers for a class */
+
+   ULONG *formats;
+
+   if (MediaGetClassAttr("foo.class", MMA_SupportedFormats,
+     (ULONG*)&formats))
+   {
+     ULONG *p = formats;
+
+     while (*p) Printf("Format $%08lx.\n", *p++);
+   }
+
+multimedia.class/MediaGetGuiTagList
+
+ NAME
+   MediaGetGuiTagList -- Generates GUI for set of classes. (V54)
+
+ SYNOPSIS
+   Object* MediaGetGuiTagList(struct TagItem *taglist);
+   Object* MediaGetGuiTags(Tag tag1, ...);
+
+ FUNCTION
+   Creates a compound user interface object allowing an user to select
+   processing filter and its parameters, or file format and encoder options.
+   The object is a MUI group and may be embedded into application GUI either
+   statically or dynamically. The function scans classes for multiplexers or
+   filters matching criteria specified with taglist. It creates a page group
+   with one page for each matched class and optional list or cycle object
+   for flipping pages. Then a page generator in each class is called. The
+   page generator returns a MUI object, which is placed on the corresponding
+   page.
+
+   Following tags are supported:
+
+   - MGG_Type, defines the type of classes asked for GUI. Value of this tag
+     may be:
+     - MGG_Type_Muxers, generates a GUI for saving a media file. All
+       multiplexer classes are asked of GUI (multiplexers may in turn ask
+       encoders for sub-GUIs).
+     - MGG_Type_Filters, generates a GUI for media processing. The GUI allows
+       for selecting a filter and then adjusting its parameters.
+     - when class name string is passed, GUI for this single named class is
+       returned, without class selector.
+   Default value for this tag is MGG_Type_Muxers.
+
+   - MGG_Media, specifies kind of media (audio, still images or video) to be
+     saved or processed. May be one of MMT_ constants. These constants may be
+     OR-ed together, but it makes little sense in practice.
+   Default value for this tag is MMT_SOUND.
+
+   - MGG_Selector, specifies kind of MUI gadget used for selecting filters
+     or muxers:
+     - MGG_Selector_List, uses List object for switching pages of group
+       containing GUIs of classes.
+     - MGG_Selector_Cycle, uses Cycle object for switching pages.
+     - MGG_Selector_None, delivers no switching object, just bare MUI
+       pagegroup. Switching pages must be done by application.
+   Default value for this tag is MGG_Selector_List.
+
+   - MGG_Selected, specifies class name selected on the selector
+
+   - MGG_DOSPattern, specifies DOS pattern to filter list of classes
+
+   Returned MUI object supports some additional attributes, which allow
+   application to react on changes of choosen muxer/filter immediately. All
+   these tags are only gettable, may be also used as notification sources:
+   - GGRA_PageClassName - name of class which generated active page of GUI.
+   - GGRA_PageShortName - short name of selected format or filter. This is
+     the name displayed in selector gadget (for example "AIFF").
+   - GGRA_PageFullName - full name of selected format (for example "Audio
+     Interchange File Format").
+   - GGRA_PageDefExtension - default file extension for selected format (for
+     example "aiff"). The extension is without dot. Object with filter
+     selection will return English string "undefined".
+   All the returned strings are read-only and are localized whereever
+   applicable. Note that full names of codecs are usually not translated, to
+   be consistent with short acronyms.
+
+ INPUTS
+   taglist - list of tags controlling creation of GUI.
+
+ RESULT
+   A MUI Group object containing the complete GUI. NULL if object cannot be
+   created.
+
+ SEE ALSO
+   MediaBuildFromGuiTagList()
+
+multimedia.class/MediaGetPort
+
+ NAME
+   MediaGetPort -- gets value of port dependent attribute. (V50)
+
+ SYNOPSIS
+   IPTR MediaGetPort(Object *obj, ULONG port, ULONG attribute);
+
+ FUNCTION
+   Gets value of an attribute from object's port. Implemented as a
+   convenience macro calling MMM_GetPort().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+
+ RESULT
+   Attribute value.
+
+ NOTES
+   If the attribute is not recognized by object's class and superclasses,
+   the function returns 0. To make difference between such a case and valid
+   value 0, use MMM_GetPort() directly.
+
+ SEE ALSO
+   MMM_GetPort()
+
+multimedia.class/MediaGetPort64
+
+ NAME
+   MediaGetPort64 -- gets value of port dependent 64-bit attribute. (V50)
+
+ SYNOPSIS
+   UQUAD MediaGetPort64(Object *obj, ULONG port, ULONG attribute);
+
+ FUNCTION
+   Gets value of a 64-bit attribute from object's port. Implemented as a
+   convenience macro calling MMM_GetPort().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+
+ RESULT
+   Attribute value.
+
+ NOTES
+   If the attribute is not recognized by object's class and superclasses,
+   the function returns 0. To make difference between such a case and valid
+   value 0, use MMM_GetPort() directly.
+
+ SEE ALSO
+   MMM_GetPort()
+
+multimedia.class/MediaGetPortFwd
+
+ NAME
+   MediaGetPortFwd -- gets value of port dependent attribute from other side
+   of connection. (V50)
+
+ SYNOPSIS
+   IPTR MediaGetPortFwd(Object *obj, ULONG port, ULONG attribute);
+
+ FUNCTION
+   Gets value of an attribute from port of other object, connected to the
+   specified one. Implemented as a convenience macro calling
+   MMM_GetPortFwd().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+
+ RESULT
+   Attribute value.
+
+ NOTES
+   If the attribute is not recognized by object's class and superclasses,
+   the function returns 0. To make difference between such a case and valid
+   value 0, use MMM_GetPortFwd() directly.
+
+ SEE ALSO
+   MMM_GetPortFwd()
+
+multimedia.class/MediaGetPortFwd64
+
+ NAME
+   MediaGetPortFwd64 -- gets value of port dependent 64-bit attribute from
+   other side of connection. (V50)
+
+ SYNOPSIS
+   UQUAD MediaGetPortFwd64(Object *obj, ULONG port, ULONG attribute);
+
+ FUNCTION
+   Gets value of a 64-bit attribute from port of other object, connected to
+   the specified one. Implemented as a convenience macro calling
+   MMM_GetPortFwd().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+
+ RESULT
+   Attribute value.
+
+ NOTES
+   If the attribute is not recognized by object's class and superclasses,
+   the function returns 0. To make difference between such a case and valid
+   value 0, use MMM_GetPortFwd() directly.
+
+ SEE ALSO
+   MMM_GetPortFwd()
+
+multimedia.class/MediaLog
+
+ NAME
+   MediaLog -- Sends a debug message to logging application. (v50)
+
+ SYNOPSIS
+   void MediaLog(ULONG level, STRPTR classname, STRPTR functionname, STRPTR
+   msg, ...);
+
+ FUNCTION
+   Sends log packet to an application with open public port named
+   "MediaLogger". Typically it is MediaLogger application included with the
+   Reggae package, but third party loggers are possible. Logger catches all
+   debug messages, filters them, can also write them to a disk file. The
+   function is typically used in subclasses for debug output. Message sent
+   to the logger is of type 'struct MediaError' and is defined in the
+   include file <classes/multimedia/multimedia.h>.
+
+ INPUTS
+   loglevel - importance of the log message, one of LOG_ERRORS, LOG_INFO
+     or LOG_VERBOSE. Used to filter messages in a logger application.
+   classname - name of a class, the message is sent from.
+   functionname - name of a function, the message is sent from.
+   msg - message text. Can contain printf()-style placeholders,
+     NewRawDoFmt() will be called on it with the text, and following
+     variable arguments as parameters.
+   [following arguments] - variable number of arguments to be passed to
+     NewRawDoFmt().
+
+ RESULT
+   None.
+
+ NOTES
+   There are two macros MLOG() and MLOGV() defined in
+   <classes/multimedia/multimedia.h> include file, which automatically use
+   CLASSNAME (should be defined by subclass implementor) and __FUNCTION__
+   GCC automatic macro, to fill 'classname' and 'functionname'. MLOG()
+   should be used when there are no parameters after 'msg' (no
+   placeholders), MLOGV() for one or more parameters after 'msg'. MLOGV()
+   can take QUAD and UQUAD arguments (use "%Ld", "%Lu" or "%Lx"
+   placeholders). MLOG1(), MLOG2() and MLOGQ() macros are obsolete and must
+   not be used.
+
+   v52: Starting from this version, MediaLog() filters out messages, which
+   importance level is lower than log level set by MediaSetLogLevel(). If
+   a message importance is lower than the level set, MediaLog() call
+   returns immediately and does not try to sent the message to the public
+   "MediaLogger" port.
+
+ EXAMPLE
+   /* Assume we are in 'foo.class' code and CLASSNAME is defined as */
+   /* "foo.class".                                                  */
+
+   void AnyFunction(void)
+   {
+     UQUAD value = 6;
+     LONG errcode = 2983;
+
+     MediaLog(LOG_ERRORS, "foo.class", "AnyFunction",
+       "Kernel panic - too many bugs in PSU fan!");
+     /* or the same with MLOG() macro */
+     MLOG(LOG_ERRORS, "Kernel panic - too many bugs in PSU fan!");
+
+     MediaLog(LOG_ERRORS, "foo.class", "AnyFunction",
+       "Unknown error %lu, 64-bit value is $%Lx.", errcode, value);
+     /* or the same with MLOGV() macro */
+     MLOGV(LOG_ERRORS, "Unknown error %lu, 64-bit value is $%Lx.",
+       errcode, value);
+   }
+
+ SEE ALSO
+   exec.library/NewRawDoFmt()
+
+multimedia.class/MediaNewObjectTagList
+
+ NAME
+   MediaNewObjectTagList -- Creates complete decoding structure. (v50)
+
+ SYNOPSIS
+   Object *MediaNewObjectTagList(struct TagItem *taglist);
+
+   Object *MediaNewObjectTags(Tag tag1, ...);
+
+ FUNCTION
+   This high-level function is used to create processing structure for
+   opening and decoding media stream of unknown format. It is very
+   convenient function for application programmers, as it automates common
+   task of recognizing and decoding any media stream. The first step is to
+   obtain source data stream. The stream can be defined in three different
+   ways:
+   1. An application can pass an already created stream object with
+      MMA_Stream tag. The application is responsible for disposing this
+      stream when no longer used.
+   2. Stream can be specified with MMA_StreamName and MMA_StreamType to be
+      opened by MediaNewObject(). Stream will be automatically disposed,
+      when media object is disposed.
+   3. The same as above, but stream is specified by its handle
+      (MMA_StreamHandle) instead of name. May be convenient for some types
+      of streams. Meaning of stream name and handle depends on stream type
+      (see streams documentation).
+   The second stage is format recognition. Multimedia.class registers all
+   available demultiplexers at startup. Every demultiplexer has its own
+   format recognition routine. These routines are all loaded to memory
+   during multimedia.class startup (without loading entire class code). Then
+   MediaNewObjectTagList() calls every recognition routine in turn on stream
+   passed. Every routine returns probability of stream being formatted with
+   the format recognized by it. In a typical situation all routines return
+   probability of 0, except one with probability of 1. If the stream format
+   hasn't well defined and formed header (MP3 stream for example), more than
+   one routine can return non-zero probability. The most probable format is
+   always taken. Application has some control of recognition process. It can
+   limit demultiplexer matching only to specific kind of media: sound,
+   picture, video or any combination of them. It can be done with
+   MMA_MediaType tag. Some media formats are difficult to detect. Detection
+   can take much time, or CPU power. To avoid slowdown when it can't be
+   accepted, recognition has two operation modes: "light" and "heavy" one.
+   In "light" mode recognition is always fast, but may be inaccurate.
+   "Heavy" recognition routines may be slower, but are more precise.
+   Recognition mode is selected with MMA_Recognition tag. To speed
+   recognition up, file formats with well defined headers (like WAVE) are
+   tested before formats harder to recognize (like MP3). It is done by
+   prioritizing registered demultiplexers list. After the stream format is
+   recognized, the function opens matched demultiplexer library and creates
+   new demultiplexer object. This object is fed with source stream. Then
+   demultiplexer output format is checked. Many demultiplexers have only one
+   output format (for example AIFF has big-endian PCM), but some may have
+   more than one output format (WAVE is a good example). That is why
+   demultiplexer output format is determined on demultiplexer object, not
+   class. Then the function scans demultiplexer outputs. If an output is of
+   MMF_STREAM type, the function calls itself recursively on this output. If
+   not, a proper decoder object is created and attached. All created objects
+   are added to a processblock grouping them. Pointer to this processblock
+   object is used as the return value of MediaNewObjectTagList() function.
+
+ INPUTS
+   taglist - list of tags specifying data source and other parameters.
+     Accepted tags:
+     - MMA_ErrorCode - pointer to an ULONG variable.
+     - MMA_StreamName - name of stream to be opened.
+     - MMA_StreamHandle - handle of stream to be opened.
+     - MMA_StreamType - type (class name) of stream to be opened.
+     - MMA_Stream - already created stream object.
+     - MMA_MediaType - type of media, MMT_VIDEO, MMT_SOUND, MMT_PICTURE, may
+       be OR-ed togehter.
+     - MMA_AudioFormat - common format expected on all decoded audio streams,
+       Reggae will add converter object if format is not directly supported
+       by a decoder. Defaults to MMFC_AUDIO_INT16.
+     - MMA_VideoFormat - common format expected on all decoded video streams,
+       Reggae will add converter object if format is not directly supported
+       by a decoder. Defaults to MMFC_VIDEO_ARGB32.
+     - MMA_Decode - controls attaching decoders to the processblock.
+     - MMA_StreamBuffer_Blocks - if this tag is present, the source stream
+       will be buffered with stream.buffer object. Number of blocks in its
+       FIFO queue will be set to specified value. Use 0 or negative number
+       for default queue length.
+     - MMA_StreamBuffer_BlockSize - If this tag is present, the source
+       stream will be buffered with stream.buffer object. Block size of its
+       FIFO queue will be set to specified value. Use 0 or negative number
+       for default block size.
+     - MMA_TaskName - If asynchronous stream buffering is turned on with one
+       of the two above tags, this tag specifies a name for stream.buffer
+       process. Ignored otherwise. When not specified, default stream.buffer
+       name is used.
+     - MMA_TaskPriority - If asynchronous stream buffering is turned on,
+       this tag specifies priority for stream.buffer process. Ignored
+       otherwise. Note that stream.buffer process priority limits apply. The
+       priority must be in [-128, +9] range (both sides including). If not
+       specified, the priority defaults to 0.
+
+ RESULT
+   Created processblock or NULL on failure. Secondary error information is
+   available via MMA_ErrorCode attribute. Possible failure reasons are:
+   - MMERR_NO_STREAM (incomplete stream specification).
+   - MMERR_NO_STREAM_CLASS (stream class specified with MMA_StreamType not
+     found or can't be opened).
+   - MMERR_OUT_OF_MEMORY (as name says...)
+   - MMERR_NOT_RECOGNIZED (no demuxer recognized the stream).
+   - MMERR_NO_DECODER (no decoder for demuxer output format).
+
+multimedia.class/MediaSetPort
+
+ NAME
+   MediaSetPort -- sets value of port dependent attribute. (V50)
+
+ SYNOPSIS
+   BOOL MediaSetPort(Object *obj, ULONG port, ULONG attribute, ULONG value);
+
+ FUNCTION
+   Sets new value of an attribute on object's port. Implemented as a
+   convenience macro calling MMM_SetPort().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+   value - new value of the attribute.
+
+ RESULT
+   TRUE if the attribute has been recognized and set, FALSE otherwise.
+
+ SEE ALSO
+   MMM_SetPort()
+
+multimedia.class/MediaSetPort64
+
+ NAME
+   MediaSetPort64 -- sets value of port dependent 64-bit attribute. (V50)
+
+ SYNOPSIS
+   BOOL MediaSetPort64(Object *obj, ULONG port, ULONG attribute, UQUAD
+   value);
+
+ FUNCTION
+   Sets new value of a 64-bit attribute on object's port. Implemented as a
+   convenience macro calling MMM_SetPort().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+   value - new value of the attribute.
+
+ RESULT
+   TRUE if the attribute has been recognized and set, FALSE otherwise.
+
+ SEE ALSO
+   MMM_SetPort()
+
+multimedia.class/MediaSetPortFwd
+
+ NAME
+   MediaSetPortFwd -- sets value of port dependent attribute to other side
+   of connection. (V50)
+
+ SYNOPSIS
+   BOOL MediaSetPortFwd(Object *obj, ULONG port, ULONG attribute, ULONG
+   value);
+
+ FUNCTION
+   Sets new value of an attribute on port of other object connected to the
+   specified one. Implemented as a convenience macro calling
+   MMM_SetPortFwd().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+   value - new value of the attribute.
+
+ RESULT
+   TRUE if the attribute has been recognized and set, FALSE otherwise.
+
+ SEE ALSO
+   MMM_SetPortFwd()
+
+multimedia.class/MediaSetPortFwd64
+
+ NAME
+   MediaSetPortFwd64 -- sets value of port dependent 64-bit attribute to
+   other side of connection. (V50)
+
+ SYNOPSIS
+   BOOL MediaSetPortFwd64(Object *obj, ULONG port, ULONG attribute, UQUAD
+   value);
+
+ FUNCTION
+   Sets new value of a 64-bit attribute on port of other object connected to
+   the specified one. Implemented as a convenience macro calling
+   MMM_SetPortFwd().
+
+ INPUTS
+   port - number of port in object.
+   attribute - attribute identificator.
+   value - new value of the attribute.
+
+ RESULT
+   TRUE if the attribute has been recognized and set, FALSE otherwise.
+
+ SEE ALSO
+   MMM_SetPortFwd()
+
+multimedia.class/MediaTimeToAudioFrame
+
+ NAME
+   MediaTimeToAudioFrame -- Converts timepoint to audio frame number. (V53)
+
+ SYNOPSIS
+   QUAD MediaTimeToAudioFrame(QUAD time, LONG samplerate);
+
+ FUNCTION
+   The function converts a stream position in microseconds to an audio frame
+   number using a specified sampling rate. The formula is:
+
+   frame = time * sampling rate / 1000000
+
+   The function handles possible range overflows. The conversion is done
+   using integer arithmetic. If the resulting frame position is not integer,
+   the fractional part is discarded (the position is rounded down). The
+   conversion error is never higher than one frame.
+
+ INPUTS
+   time - time position in microseconds. Allowed range is <0, 2^63 - 1>
+     (both sides including).
+   samplerate - stream sampling rate. Allowed range is <1, 2^31 - 1> (both
+     sides including).
+
+ RESULT
+   Frame number for the timepoint. If the resulting frame number is higher
+   than 2^63 - 1, or any argument is out of range, the result is -1.
+
+ SEE ALSO
+   MediaAudioFrameToTime()
+
+

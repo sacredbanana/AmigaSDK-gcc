@@ -1,0 +1,951 @@
+@database "MUI/MUI_Notify"
+@Node Main "MUI/MUI_Notify"
+@toc "SDK:Guide/Includes_&_Autodocs/Main"
+TABLE OF CONTENTS
+
+    @{"Notify.mui" Link "Notify.mui"}
+    @{"MUIA_ApplicationObject" Link "MUIA_ApplicationObject"}
+    @{"MUIA_AppMessage" Link "MUIA_AppMessage"}
+    @{"MUIA_CSSFilePath" Link "MUIA_CSSFilePath"}
+    @{"MUIA_HelpLine" Link "MUIA_HelpLine"}
+    @{"MUIA_HelpNode" Link "MUIA_HelpNode"}
+    @{"MUIA_NoNotify" Link "MUIA_NoNotify"}
+    @{"MUIA_NoNotifyMethod" Link "MUIA_NoNotifyMethod"}
+    @{"MUIA_ObjectID" Link "MUIA_ObjectID"}
+    @{"MUIA_Parent" Link "MUIA_Parent"}
+    @{"MUIA_Revision" Link "MUIA_Revision"}
+    @{"MUIA_UserData" Link "MUIA_UserData"}
+    @{"MUIA_Version" Link "MUIA_Version"}
+    @{"MUIM_CallHook" Link "MUIM_CallHook"}
+    @{"MUIM_Export" Link "MUIM_Export"}
+    @{"MUIM_FindObject" Link "MUIM_FindObject"}
+    @{"MUIM_FindUData" Link "MUIM_FindUData"}
+    @{"MUIM_GetConfigItem" Link "MUIM_GetConfigItem"}
+    @{"MUIM_GetUData" Link "MUIM_GetUData"}
+    @{"MUIM_Import" Link "MUIM_Import"}
+    @{"MUIM_KillNotify" Link "MUIM_KillNotify"}
+    @{"MUIM_KillNotifyObj" Link "MUIM_KillNotifyObj"}
+    @{"MUIM_MultiSet" Link "MUIM_MultiSet"}
+    @{"MUIM_NoNotifySet" Link "MUIM_NoNotifySet"}
+    @{"MUIM_Notify" Link "MUIM_Notify"}
+    @{"MUIM_Set" Link "MUIM_Set"}
+    @{"MUIM_SetAsString" Link "MUIM_SetAsString"}
+    @{"MUIM_SetUData" Link "MUIM_SetUData"}
+    @{"MUIM_SetUDataOnce" Link "MUIM_SetUDataOnce"}
+    @{"MUIM_WriteLong" Link "MUIM_WriteLong"}
+    @{"MUIM_WriteString" Link "MUIM_WriteString"}
+@EndNode
+@Node Notify.mui "MUI/MUI_Notify - Notify.mui"
+
+
+	Notify class is superclass of all other MUI classes.
+	It's main purpose is to handle MUI's notification
+	mechanism, but it also contains some other methods
+	and attributes useful for every object.
+@EndNode
+@Node MUIA_ApplicationObject "MUI/MUI_Notify - MUIA_ApplicationObject"
+
+
+    NAME
+	MUIA_ApplicationObject -- (V4 ) [..G], @{"MUIApplication" Link "SDK:Guide/includes/libraries/mui.h/Main" 707} *, 0x8042d3ee
+
+    FUNCTION
+	You can obtain a pointer to the application object
+	that some gadget belongs to by using this attribute.
+	Useful mainly within callback hooks if you do not want
+	to deal with global variables.
+
+	If your object is not currently attached to an application,
+	you will receive NULL.
+
+    SEE ALSO
+	@{"MUIA_WindowObject" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_WindowObject"}
+@EndNode
+@Node MUIA_AppMessage "MUI/MUI_Notify - MUIA_AppMessage"
+
+
+    NAME
+	MUIA_AppMessage -- (V5 ) [.SG], struct @{"AppMessage" Link "SDK:Guide/includes/workbench/workbench.h/Main" 109} *, 0x80421955
+
+    FUNCTION
+	When your window is an @{"AppWindow" Link "SDK:Guide/includes/workbench/workbench.h/Main" 151}, i.e. you have set the
+	@{"MUIA_Window_AppWindow" Link "SDK:Guide/MUI/MUI_Window.guide/MUIA_Window_AppWindow"} attribute to TRUE, you will be able
+	to get AppMessages by listening to MUIA_AppMessage.
+	Whenever an @{"AppMessage" Link "SDK:Guide/includes/workbench/workbench.h/Main" 109} arrives, this attribute will
+	be set to a pointer to that message.
+
+	MUIA_AppMessage is object specific. You can e.g. set up
+	different notifications for different objects in your window,
+	they will only get exectued when icons are dropped over the
+	specific object.
+
+	If you wait on MUIA_AppMessage with a window object, your
+	notify will always get executed when icons are dropped on
+	the window.
+
+	Notes:
+
+	- You should use the @{"MUIM_CallHook" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_CallHook"} method to call a
+	  hook function when an @{"AppMessage" Link "SDK:Guide/includes/workbench/workbench.h/Main" 109} arrives (see below).
+	  The pointer to the @{"AppMessage" Link "SDK:Guide/includes/workbench/workbench.h/Main" 109} is valid only as long as 
+	  the notification method is executed.
+
+	- AppWindows are only possible on the workench screen.
+
+
+    EXAMPLE
+
+	/* Call the AppMsgHook when an icon is dropped on a listview */
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(lvobj,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},MUIA_AppMessage,@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	         lvobj,3,@{"MUIM_CallHook" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_CallHook"},&AppMsgHook,@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+
+	/* Call the AppMsgHook when an icon is dropped on the window */
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(winobj,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},MUIA_AppMessage,@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	         winobj,3,@{"MUIM_CallHook" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_CallHook"},&AppMsgHook,@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+
+    SEE ALSO
+	@{"MUIA_Window_AppWindow" Link "SDK:Guide/MUI/MUI_Window.guide/MUIA_Window_AppWindow"}, @{"MUIA_Application_DropObject" Link "SDK:Guide/MUI/MUI_Application.guide/MUIA_Application_DropObject"}, @{"MUIM_CallHook" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_CallHook"}
+@EndNode
+@Node MUIA_CSSFilePath "MUI/MUI_Notify - MUIA_CSSFilePath"
+
+
+    NAME
+	MUIA_CSSFilePath -- (V22) [..G], CONST_STRPTR, 0x804225d8
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    BUGS
+
+    SEE ALSO
+
+@EndNode
+@Node MUIA_HelpLine "MUI/MUI_Notify - MUIA_HelpLine"
+
+
+    NAME
+	MUIA_HelpLine -- (V4 ) [ISG], LONG, 0x8042a825
+
+    FUNCTION
+	Define a line in a help file specified with 
+	@{"MUIA_Application_HelpFile" Link "SDK:Guide/MUI/MUI_Application.guide/MUIA_Application_HelpFile"}.
+
+    SEE ALSO
+	@{"MUIA_Application_HelpFile" Link "SDK:Guide/MUI/MUI_Application.guide/MUIA_Application_HelpFile"}, @{"MUIA_HelpNode" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_HelpNode"}
+@EndNode
+@Node MUIA_HelpNode "MUI/MUI_Notify - MUIA_HelpNode"
+
+
+    NAME
+	MUIA_HelpNode -- (V4 ) [ISG], STRPTR, 0x80420b85
+
+    FUNCTION
+	Define a node in a help file specified with
+	@{"MUIA_Application_HelpFile" Link "SDK:Guide/MUI/MUI_Application.guide/MUIA_Application_HelpFile"}.
+
+    SEE ALSO
+	@{"MUIA_Application_HelpFile" Link "SDK:Guide/MUI/MUI_Application.guide/MUIA_Application_HelpFile"}, @{"MUIA_HelpLine" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_HelpLine"}
+@EndNode
+@Node MUIA_NoNotify "MUI/MUI_Notify - MUIA_NoNotify"
+
+
+    NAME
+	MUIA_NoNotify -- (V7 ) [.S.], BOOL, 0x804237f9
+
+    FUNCTION
+	If you set up a notify on an attibute to react on user input,
+	you will also recognize events when you change this attribute
+	under program control with SetAttrs(). Setting MUIA_NoNotify
+	together with your attribute will prevent this notification
+	from being triggered.
+
+    NOTE
+	MUIA_NoNotify is a "one time" attribute. Its only valid during
+	the current SetAttrs() call!
+
+    EXAMPLE
+	SetAttrs(slider,MUIA_NoNotify,TRUE,@{"MUIA_Slider_Level" Link "SDK:Guide/MUI/MUI_Slider.guide/MUIA_Slider_Level"},26,@{"TAG_DONE" Link "SDK:Guide/includes/utility/tagitem.h/Main" 25});
+@EndNode
+@Node MUIA_NoNotifyMethod "MUI/MUI_Notify - MUIA_NoNotifyMethod"
+
+
+    NAME
+	MUIA_NoNotifyMethod -- (V20) [.S.], ULONG, 0x80420a74
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    BUGS
+
+    SEE ALSO
+
+@EndNode
+@Node MUIA_ObjectID "MUI/MUI_Notify - MUIA_ObjectID"
+
+
+    NAME
+	MUIA_ObjectID -- (V11) [ISG], ULONG, 0x8042d76e
+
+    FUNCTION
+	Objects with a non NULL MUIA_ObjectID export their
+	contents during @{"MUIM_Application_Save" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Save"} and import
+	them during @{"MUIM_Application_Load" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Load"}.
+
+	You have to use different ObjectIDs for your objects!
+
+    NOTE
+	This was previously called @{"MUIA_ExportID" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_ExportID"} and was
+	placed in Area.mui (muimaster.library V11 and below).
+
+    SEE ALSO
+	Application.mui/@{"MUIM_Application_Save" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Save"}
+	Application.mui/@{"MUIM_Application_Load" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Load"}
+@EndNode
+@Node MUIA_Parent "MUI/MUI_Notify - MUIA_Parent"
+
+
+    NAME
+	MUIA_Parent -- (V11) [..G], @{"Boopsiobject" Link "SDK:Guide/includes/intuition/classusr.h/Main" 22} *, 0x8042e35f
+
+    FUNCTION
+	Get a pointer to the parent object of the current object.
+	The parent object is always the group/family object which 
+	contains the current object. If an object has no parent
+	group, this attribute will be NULL.
+
+    SEE ALSO
+	group.mui/@{"MUIA_Group_Child" Link "SDK:Guide/MUI/MUI_Group.guide/MUIA_Group_Child"}
+@EndNode
+@Node MUIA_Revision "MUI/MUI_Notify - MUIA_Revision"
+
+
+    NAME
+	MUIA_Revision -- (V4 ) [..G], LONG, 0x80427eaa
+
+    FUNCTION
+	Get the revision number of an objects class. Although
+	MUIA_Revision is documented at notify class, you will
+	of course receive the revision number of the objects true
+	class.
+
+    EXAMPLE
+	strobj = MUI_NewObject(@{"MUIC_String" Link "SDK:Guide/includes/libraries/mui.h/Main" 1992},...,@{"TAG_DONE" Link "SDK:Guide/includes/utility/tagitem.h/Main" 25});
+        ...
+	@{"get" Link "SDK:Guide/includes/libraries/mui.h/Main" 1045}(strobj,@{"MUIA_Version" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_Version"} ,&v);
+	@{"get" Link "SDK:Guide/includes/libraries/mui.h/Main" 1045}(strobj,MUIA_Revision,&r);
+	printf("@{"String" Link "SDK:Guide/includes/reaction/reaction_macros.h/Main" 211} class version %ld.%ld\\n",v,r);
+
+    SEE ALSO
+	@{"MUIA_Version" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_Version"}
+@EndNode
+@Node MUIA_UserData "MUI/MUI_Notify - MUIA_UserData"
+
+
+    NAME
+	MUIA_UserData -- (V4 ) [ISG], ULONG, 0x80420313
+
+    FUNCTION
+	A general purpose value to fill in any kind of information.
+@EndNode
+@Node MUIA_Version "MUI/MUI_Notify - MUIA_Version"
+
+
+    NAME
+	MUIA_Version -- (V4 ) [..G], LONG, 0x80422301
+
+    FUNCTION
+	Get the version number of an objects class. Although
+	MUIA_Version is documented at notify class, you will
+	of course receive the version number of the objects true
+	class.
+
+    EXAMPLE
+	strobj = MUI_NewObject(@{"MUIC_String" Link "SDK:Guide/includes/libraries/mui.h/Main" 1992},...,@{"TAG_DONE" Link "SDK:Guide/includes/utility/tagitem.h/Main" 25});
+        ...
+	@{"get" Link "SDK:Guide/includes/libraries/mui.h/Main" 1045}(strobj,MUIA_Version ,&v);
+	@{"get" Link "SDK:Guide/includes/libraries/mui.h/Main" 1045}(strobj,@{"MUIA_Revision" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_Revision"},&r);
+	printf("@{"String" Link "SDK:Guide/includes/reaction/reaction_macros.h/Main" 211} class version %ld.%ld\\n",v,r);
+
+    SEE ALSO
+	@{"MUIA_Revision" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_Revision"}
+@EndNode
+@Node MUIM_CallHook "MUI/MUI_Notify - MUIM_CallHook"
+
+
+    NAME
+	MUIM_CallHook (V4 ) 0x8042b96b
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_CallHook,struct @{"Hook" Link "SDK:Guide/includes/utility/hooks.h/Main" 24} *@{"Hook" Link "SDK:Guide/includes/utility/hooks.h/Main" 24}, ULONG param1, /* ... */);
+
+    FUNCTION
+	Call a standard amiga callback hook, defined by a @{"Hook" Link "SDK:Guide/includes/utility/hooks.h/Main" 24}
+	structure. Together with @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}, you can easily
+	@{"bind" Link "SDK:Guide/socket.guide/bind"} hooks to buttons, your hook will be called when
+	the button is pressed.
+
+	The hook will be called with a pointer to the hook
+	structure in a0, a pointer to the calling object in a2
+	and a pointer to the first parameter in a1.
+
+    INPUTS
+	@{"Hook" Link "SDK:Guide/includes/utility/hooks.h/Main" 24}       pointer to a struct @{"Hook" Link "SDK:Guide/includes/utility/hooks.h/Main" 24}.
+	param1,... zero or more parameters. The hook function will
+	           receive a pointer to the first parameter in
+	           register a1.
+
+    EXAMPLE
+
+	standalone:
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_CallHook,&hookstruct,13,42,"foobar","barfoo");
+
+	within a notification statement:
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(propobj,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},@{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"},@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	         propobj,3,MUIM_CallHook,&prophook,@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+
+	prophook will be called every time the knob is moving and gets
+	a pointer to the knobs current level in a1.
+@EndNode
+@Node MUIM_Export "MUI/MUI_Notify - MUIM_Export"
+
+
+    NAME
+	MUIM_Export (V12) 0x80420f1c
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_Export,@{"MUIDataspace" Link "SDK:Guide/includes/libraries/mui.h/Main" 709} *dataspace);
+
+    FUNCTION
+	This method is called for each object in the application tree
+	(including menus) during execution of @{"MUIM_Application_Save" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Save"}.
+	It's purpose is to export an objects "contents" to a dataspace
+	object for later saving to an IFF file.
+
+	If you override this method to export your custom data, you
+	are supposed to use your @{"MUIA_ObjectID" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_ObjectID"} as ID for the dataspace
+	entry. Don't export if your @{"MUIA_ObjectID" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_ObjectID"} is 0.
+
+    RESULT
+	Return 0 if you dont want your superclasses to be able to
+	import/export any values themselves. Otherwise
+	return(@{"DoSuperMethodA" Link "SDK:Guide/libabox.guide/DoSuperMethodA"}(cl,obj,msg));
+
+    EXAMPLE
+	ULONG mExport(struct @{"IClass" Link "SDK:Guide/includes/intuition/classes.h/Main" 30} *cl,@{"Object" Link "SDK:Guide/includes/intuition/classusr.h/Main" 25} *obj,struct @{"MUIP_Export" Link "SDK:Guide/includes/libraries/mui.h/Main" 1159} *msg)
+	{
+	   struct Data *mydata = @{"INST_DATA" Link "SDK:Guide/includes/intuition/classes.h/Main" 53}(cl,obj);
+	   ULONG id;
+	   ULONG @{"exp" Link "SDK:Guide/includes/libraries/mathieeesp.h/Main" 41}=0;
+
+	   if (id=(@{"muiNotifyData" Link "SDK:Guide/includes/libraries/mui.h/Main" 4131}(obj)->mnd_ObjectID))
+	   {
+	      @{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(msg->dataspace,@{"MUIM_Dataspace_Add" Link "SDK:Guide/MUI/MUI_Dataspace.guide/MUIM_Dataspace_Add"},
+	               &mydata->myvalue,sizeof(LONG),id);
+	   }
+
+	   return(0);
+	}
+
+    SEE ALSO
+	@{"MUIM_Import" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Import"}, application.mui/@{"MUIM_Application_Load" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Load"},
+	application.mui/@{"MUIM_Application_Save" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Save"}
+@EndNode
+@Node MUIM_FindObject "MUI/MUI_Notify - MUIM_FindObject"
+
+
+    NAME
+	MUIM_FindObject (V13) 0x8042038f
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_FindObject,@{"Boopsiobject" Link "SDK:Guide/includes/intuition/classusr.h/Main" 22} *findme);
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+@EndNode
+@Node MUIM_FindUData "MUI/MUI_Notify - MUIM_FindUData"
+
+
+    NAME
+	MUIM_FindUData (V8 ) 0x8042c196
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_FindUData,ULONG udata);
+
+    FUNCTION
+	This method tests if the @{"MUIA_UserData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_UserData"} of the object
+	contains the given <udata> and returns the object
+	pointer in this case.
+
+	Although this is not very useful for single objects,
+	performing this method on objects that handle children
+	can become very handy. In this case, all the children
+	(any maybe their children) are tested against <udata>
+	and the first matching object is returned.
+
+	This method is especially useful if you created your
+	menu tree with a @{"NewMenu" Link "SDK:Guide/includes/libraries/gadtools.h/Main" 87} structure and you want to
+	find the object pointer for a single menu item.
+
+    INPUTS
+	udata - userdata to look for.
+
+    RESULT
+	A pointer to the first object with the specified user data
+	or NULL if no object is found.
+
+    NOTES
+	If you have many objects in your application, MUIM_FindUData
+	may take quite long. You can limit the amount of time
+	by performing the method not on the application but on the
+	window or even on the group/family your object is placed in.
+
+    SEE ALSO
+	@{"MUIM_GetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_GetUData"}, @{"MUIM_SetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetUData"}
+@EndNode
+@Node MUIM_GetConfigItem "MUI/MUI_Notify - MUIM_GetConfigItem"
+
+
+    NAME
+	MUIM_GetConfigItem (V11) 0x80423edb
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_GetConfigItem,ULONG id, ULONG *storage);
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+@EndNode
+@Node MUIM_GetUData "MUI/MUI_Notify - MUIM_GetUData"
+
+
+    NAME
+	MUIM_GetUData (V8 ) 0x8042ed0c
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_GetUData,ULONG udata, ULONG attr, ULONG *storage);
+
+   FUNCTION
+	This method tests if the @{"MUIA_UserData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_UserData"} of the object
+	contains the given <udata> and gets <attr> to
+	<storage> for itself in this case.
+
+	Although this is not very useful for single objects,
+	performing this method on objects that handle children
+	can become very handy. In this case, all the children
+	(any maybe their children) are searched against <udata>
+	and the first matching object will be asked for the
+	specified attribute.
+
+    INPUTS
+	udata   - userdata to look for.
+	attr    - attribute to get.
+	storage - place to store the attribute.
+
+    NOTES
+	If you have many objects in your application, MUIM_GetUData
+	may take quite long. You can limit the amount of time
+	by performing the method not on the application but on the
+	window or even on the group/family your objects are placed in.
+
+    SEE ALSO
+	@{"MUIM_SetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetUData"}, @{"MUIM_FindUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_FindUData"}
+@EndNode
+@Node MUIM_Import "MUI/MUI_Notify - MUIM_Import"
+
+
+    NAME
+	MUIM_Import (V12) 0x8042d012
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_Import,@{"MUIDataspace" Link "SDK:Guide/includes/libraries/mui.h/Main" 709} *dataspace);
+
+    FUNCTION
+	This method is called for each object in the application tree
+	(including menus) during execution of @{"MUIM_Application_Load" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Load"}.
+	It's purpose is to import an objects "contents" from a dataspace
+	object after loading from an IFF file.
+
+	If you override this method to import your custom data, you
+	are supposed to use your @{"MUIA_ObjectID" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_ObjectID"} as ID for the dataspace
+	entry. Don't import if your @{"MUIA_ObjectID" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_ObjectID"} is 0.
+
+    RESULT
+	Return 0 if you dont want your superclasses to be able to
+	import/export any values themselves. Otherwise
+	return(@{"DoSuperMethodA" Link "SDK:Guide/libabox.guide/DoSuperMethodA"}(cl,obj,msg));
+
+    EXAMPLE
+	ULONG mImport(struct @{"IClass" Link "SDK:Guide/includes/intuition/classes.h/Main" 30} *cl,@{"Object" Link "SDK:Guide/includes/intuition/classusr.h/Main" 25} *obj,struct @{"MUIP_Import" Link "SDK:Guide/includes/libraries/mui.h/Main" 1164} *msg)
+	{
+	   struct Data *mydata = @{"INST_DATA" Link "SDK:Guide/includes/intuition/classes.h/Main" 53}(cl,obj);
+	   ULONG id;
+	   ULONG *data;
+
+	   if (id=(@{"muiNotifyData" Link "SDK:Guide/includes/libraries/mui.h/Main" 4131}(obj)->mnd_ObjectID))
+	   {
+	      if (data = (ULONG *)@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(msg->dataspace,@{"MUIM_Dataspace_Find" Link "SDK:Guide/MUI/MUI_Dataspace.guide/MUIM_Dataspace_Find"},id))
+	      {
+	         mydata->myvalue = *data;
+	      }
+	   }
+
+	   return(0);
+	}
+
+    SEE ALSO
+	MUIM_Import, application.mui/@{"MUIM_Application_Load" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Load"},
+	application.mui/@{"MUIM_Application_Save" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_Save"}
+@EndNode
+@Node MUIM_KillNotify "MUI/MUI_Notify - MUIM_KillNotify"
+
+
+    NAME
+	MUIM_KillNotify (V4 ) 0x8042d240
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_KillNotify,ULONG TrigAttr);
+
+    FUNCTION
+	MUIM_KillNotify kills previously given notifications on specific 
+	attributes.
+
+    INPUTS
+	TrigAttr - Attribute for which the notify was specified. If you
+	           set up more than one notify for an attribute, only
+	           the first one will be killed.
+
+    EXAMPLE
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(button,MUIM_KillNotify,@{"MUIA_Pressed" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_Pressed"});
+
+    SEE ALSO
+	@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}
+@EndNode
+@Node MUIM_KillNotifyObj "MUI/MUI_Notify - MUIM_KillNotifyObj"
+
+
+    NAME
+	MUIM_KillNotifyObj (V16) 0x8042b145
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_KillNotifyObj,ULONG TrigAttr, @{"Boopsiobject" Link "SDK:Guide/includes/intuition/classusr.h/Main" 22} *dest);
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+@EndNode
+@Node MUIM_MultiSet "MUI/MUI_Notify - MUIM_MultiSet"
+
+
+    NAME
+	MUIM_MultiSet (V7 ) 0x8042d356
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_MultiSet,ULONG attr, ULONG val, APTR obj, /* ... */);
+
+    FUNCTION
+	Set an attribute for multiple objects.
+	Receiving an attribute/value pair and a list of objects,
+	this method sets the new value for all the objects in the list.
+	This is especially useful for disabling/enabling lots of
+	objects with one singe function call.
+
+	The object that executes this method isn't affected!
+
+	Note: This method was implemented in version 7 of notify class.
+
+    INPUTS
+	attr     attribute to set.
+	value    new value for the attribute.
+	obj, ... list of MUI objects, terminated with a NULL pointer.
+
+    EXAMPLE
+	/* disable all the address related gadgets... */
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(xxx, MUIM_MultiSet, @{"MUIA_Disabled" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_Disabled"}, TRUE,
+	   ST_Name, ST_Street, ST_City, ST_Country, ST_Phone, NULL);
+
+	/* note that the xxx object doesn't get disabled! */
+
+    SEE ALSO
+	@{"MUIM_Set" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Set"}, @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}
+@EndNode
+@Node MUIM_NoNotifySet "MUI/MUI_Notify - MUIM_NoNotifySet"
+
+
+    NAME
+	MUIM_NoNotifySet (V9 ) 0x8042216f
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_NoNotifySet,ULONG attr, ULONG val, /* ... */);
+
+    FUNCTION
+	Acts like @{"MUIM_Set" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Set"} but doesn't trigger any notification.
+	This can become useful to avoid deadlocks with bi-directional
+	connections.
+
+    INPUTS
+	attr  attribute you want to set.
+	val   value to set the attribute to.
+
+    EXMAPLE
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(editor,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},EDIT_Top,@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	   sbar,3,MUIM_NoNotifySet,@{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"},@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(sbar,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},@{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"},@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	   editor,3,MUIM_NoNotifySet,EDIT_Top,@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+
+    SEE ALSO
+	@{"MUIM_Set" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Set"}
+@EndNode
+@Node MUIM_Notify "MUI/MUI_Notify - MUIM_Notify"
+
+
+    NAME
+	MUIM_Notify (V4 ) 0x8042c9cb
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_Notify,ULONG TrigAttr, ULONG TrigVal, APTR DestObj, ULONG FollowParams, /* ... */);
+
+    FUNCTION
+	Add a notification event handler to an object. Notification
+	is essential for every MUI application.
+
+	A notification statement consists of a source object,
+	an attribute/value pair, a destination object and a
+	notification method. The attribute/value pair belongs
+	to the source object and determines when the notification
+	method will be executed on the destination object.
+
+	Whenever the source object gets the given attribute set to
+	the given value (this can happen because of the user
+	pressing some gadgets or because of your program explicitly
+	setting the attribute with SetAttrs()), the destination
+	object will execute the notification method.
+
+	With some special values, you can trigger the notification
+	every time the attribute is changing. In this case, you
+	can include the triggering attributes value within the
+	notification method. See below.
+
+	One big problem with notification are endless loops.
+	Imagine you have a prop gadget and want to show its
+	state with a gauge object. You @{"connect" Link "SDK:Guide/socket.guide/connect"} @{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"}
+	with @{"MUIA_Gauge_Max" Link "SDK:Guide/MUI/MUI_Gauge.guide/MUIA_Gauge_Max"} and everything is fine, the gauge
+	gets updated when the user drags around the gadget. On
+	the other hand, if your program sets the gauge to a new
+	value, you might want your prop gadget to immediately
+	show this change and @{"connect" Link "SDK:Guide/socket.guide/connect"} @{"MUIA_Gauge_Max" Link "SDK:Guide/MUI/MUI_Gauge.guide/MUIA_Gauge_Max"} width
+	@{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"}. Voila, a perfect endless loop.
+
+	To avoid these conditions, MUI always checks new
+	attribute values against the current state and
+	cancels notification when both values are equal.
+	Thus, setting @{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"} to 42 if the prop
+	gadgets first position is already 42 won't trigger
+	any notification event.
+
+    INPUTS
+	TrigAttr     attribute that triggers the notification.
+
+	TrigValue    value that triggers the notification. The
+	             special value @{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322} makes MUI execute
+	             the notification method every time when
+	             TrigAttr changes. In this case, the special
+	             value @{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320} in the notification
+	             method will be replaced with the value
+	             that TrigAttr has been set to. You can use
+	             @{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320} up to four times in one
+	             notification method. Since version 8 of
+	             muimaster.library, you can also use
+	             @{"MUIV_NotTriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 321} here. In this case,
+	             MUI will replace TRUE values with FALSE
+	             and FALSE values with TRUE. This
+	             can become quite useful when you try to set
+	             "negative" attributes like @{"MUIA_Disabled" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_Disabled"}.
+
+	DestObj      object on which to perform the notification
+	             method. Either supply a valid object pointer or
+	             one of the following special values (V10) which
+	             will be resolved at the time the event occurs:
+	             @{"MUIV_Notify_Self" Link "SDK:Guide/includes/libraries/mui.h/Main" 324}        - notifies the object
+	                                       itself.
+	             @{"MUIV_Notify_Window" Link "SDK:Guide/includes/libraries/mui.h/Main" 325}      - notifies the object's
+	                                       parent window.
+	             @{"MUIV_Notify_Application" Link "SDK:Guide/includes/libraries/mui.h/Main" 326} - notifies the object's
+	                                       application.
+	             @{"MUIV_Notify_Parent" Link "SDK:Guide/includes/libraries/mui.h/Main" 327} (V20)- notifies @{"MUIA_Parent" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_Parent"} of
+	                                       the object.
+
+	FollowParams number of following parameters. If you e.g.
+	             have a notification method with three parts
+	             (maybe @{"MUIM_Set" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Set"},attr,val), you have to set
+	             FollowParams to 3. This allows MUI to copy
+	             the complete notification method into a
+	             private buffer for later use.
+
+	...          following is the notification method.
+
+    EXAMPLE
+
+	/*
+	** Every time when the user releases a button
+	** (and the mouse is still over it), the button object
+	** gets its @{"MUIA_Pressed" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_Pressed"} attribute set to FALSE.
+	** Thats what a program can react on with notification,
+	** e.g. by openening another window.
+	*/
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(buttonobj,MUIM_Notify,
+	   @{"MUIA_Pressed" Link "SDK:Guide/MUI/MUI_Area.guide/MUIA_Pressed"}, FALSE,                /* attribute/value pair */
+	   windowobj,                          /* destination object   */
+	   3,                                  /* 3 following words    */
+	   @{"MUIM_Set" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Set"}, @{"MUIA_Window_Open" Link "SDK:Guide/MUI/MUI_Window.guide/MUIA_Window_Open"}, TRUE);  /* notification method  */
+
+	/*
+	** Lets say we want to show the current value of a
+	** prop gadget somewhere in a text field:
+	*/
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(propobj,MUIM_Notify,      /* notification is triggered   */
+	   @{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"}, @{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},/* every time the attr changes */
+	   textobj,                        /* destination object */
+	   4,                              /* 4 following words  */
+	   @{"MUIM_SetAsString" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetAsString"}, @{"MUIA_Text_Contents" Link "SDK:Guide/MUI/MUI_Text.guide/MUIA_Text_Contents"},
+	   "value is %ld !", @{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+	   /* @{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320} will be replaced with the
+	      current value of @{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"} */
+
+	/*
+	** Inform our application when the user hits return
+	** in a string gadget:
+	*/
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(stringobj,MUIM_Notify,
+	   @{"MUIA_String_Acknowledge" Link "SDK:Guide/MUI/MUI_String.guide/MUIA_String_Acknowledge"}, @{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	   @{"MUIV_Notify_Application" Link "SDK:Guide/includes/libraries/mui.h/Main" 326}, 2, @{"MUIM_Application_ReturnID" Link "SDK:Guide/MUI/MUI_Application.guide/MUIM_Application_ReturnID"}, ID_FOOBAR);
+@EndNode
+@Node MUIM_Set "MUI/MUI_Notify - MUIM_Set"
+
+
+    NAME
+	MUIM_Set (V4 ) 0x8042549a
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_Set,ULONG attr, ULONG val);
+
+    FUNCTION
+	Set an attribute to a value. Normally, you would set
+	attributes with intuition.library SetAttrs() or with
+	the @{"OM_SET" Link "SDK:Guide/includes/intuition/classusr.h/Main" 56} method as with any other boopsi objects.
+	But since these calls need a complete tag list, not
+	just a single attribute/value pair, they are not
+	useful within a @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"} method.
+
+    INPUTS
+	attr  attribute you want to set.
+	val   value to set the attribute to.
+
+    EXMAPLE
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(strobj,MUIM_Set,@{"MUIA_String_Contents" Link "SDK:Guide/MUI/MUI_String.guide/MUIA_String_Contents"},"foobar");
+	and
+	SetAttrs(strobj,@{"MUIA_String_Contents" Link "SDK:Guide/MUI/MUI_String.guide/MUIA_String_Contents"},"foobar",@{"TAG_DONE" Link "SDK:Guide/includes/utility/tagitem.h/Main" 25});
+	are equal.
+
+    SEE ALSO
+	@{"MUIM_SetAsString" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetAsString"}, @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}, @{"MUIM_NoNotifySet" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_NoNotifySet"}
+@EndNode
+@Node MUIM_SetAsString "MUI/MUI_Notify - MUIM_SetAsString"
+
+
+    NAME
+	MUIM_SetAsString (V4 ) 0x80422590
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_SetAsString,ULONG attr, STRPTR format, ULONG val, /* ... */);
+
+    FUNCTION
+	Set a (text kind) attribute to a string. This can be useful
+	if you want to @{"connect" Link "SDK:Guide/socket.guide/connect"} a numeric attribute of an object with
+	a text attribute of another object.
+
+    INPUTS
+	attr    attribute to set.
+	format  C like formatting string, remember to use "%ld" !
+	val,... one or more paremeters for the format string.
+
+    NOTES
+	the resulting string must not exceed 1024 characters.
+	you can pass a maximum of 8 %-arguments. more are ignored.
+
+    EXAMPLE
+
+	stand alone:
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(txobj,MUIM_SetAsString,@{"MUIA_Text_Contents" Link "SDK:Guide/MUI/MUI_Text.guide/MUIA_Text_Contents"},
+	         "My name is %s and I am %ld years old.",name,age);
+
+	within a notification statement:
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(propobj,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},@{"MUIA_Prop_First" Link "SDK:Guide/MUI/MUI_Prop.guide/MUIA_Prop_First"},@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	         txobj,4,MUIM_SetAsString,@{"MUIA_Text_Contents" Link "SDK:Guide/MUI/MUI_Text.guide/MUIA_Text_Contents"},
+	         "prop gadget shows %ld.",@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320});
+
+    SEE ALSO
+	@{"MUIM_Set" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Set"}, @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}
+@EndNode
+@Node MUIM_SetUData "MUI/MUI_Notify - MUIM_SetUData"
+
+
+    NAME
+	MUIM_SetUData (V8 ) 0x8042c920
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_SetUData,ULONG udata, ULONG attr, ULONG val);
+
+   FUNCTION
+	This method tests if the @{"MUIA_UserData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_UserData"} of the object
+	contains the given <udata> and sets <attr> to
+	<val> for itself in this case.
+
+	Altough this is not very useful for single objects,
+	performing this method on objects that handle children
+	can become very handy. In this case, all the children
+	(any maybe their children) are tested against <udata>
+	and all matching objects will get the attribute set.
+
+	If you e.g. want to clear several string gadgets in
+	your applciation at once, you simply give them the
+	same @{"MUIA_UserData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIA_UserData"} and use
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(app,MUIM_SetUData,MyUDATA,@{"MUIA_String_Contents" Link "SDK:Guide/MUI/MUI_String.guide/MUIA_String_Contents"},NULL);
+
+    INPUTS
+	udata - userdata to look for.
+	attr  - attribute to set.
+	val   - value to set attribute to.
+
+    NOTES
+	If you have many objects in your application, MUIM_SetUData
+	may take quite long. You can limit the amount of time
+	by performing the method not on the application but on the
+	window or even on the group your gadgets are place in.
+
+    SEE ALSO
+	@{"MUIM_GetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_GetUData"}, @{"MUIM_FindUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_FindUData"}, @{"MUIM_SetUDataOnce" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetUDataOnce"}
+@EndNode
+@Node MUIM_SetUDataOnce "MUI/MUI_Notify - MUIM_SetUDataOnce"
+
+
+    NAME
+	MUIM_SetUDataOnce (V11) 0x8042ca19
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_SetUDataOnce,ULONG udata, ULONG attr, ULONG val);
+
+    FUNCTION
+	This method performs like @{"MUIM_SetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetUData"}, but stops when it has
+	found an object with the given user data. If you don't have
+	objects with equal user datas and don't rely on setting all
+	of them, MUIM_SetUDataOnce is preferrable because it's more
+	efficient.
+
+    SEE ALSO
+	@{"MUIM_SetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_SetUData"}, @{"MUIM_GetUData" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_GetUData"}
+
+@EndNode
+@Node MUIM_WriteLong "MUI/MUI_Notify - MUIM_WriteLong"
+
+
+    NAME
+	MUIM_WriteLong (V6 ) 0x80428d86
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_WriteLong,ULONG val, ULONG *memory);
+
+    FUNCTION
+	This method simply writes a longword somewhere to memory.
+	Although this seems quite useless, it might become handy
+	if used within a notify statement. For instance, you could
+	easily @{"connect" Link "SDK:Guide/socket.guide/connect"} the current level of a slider with some
+	member of your programs data structures.
+
+    INPUTS
+	val    - value to write
+	memory - location to write the value to
+
+    EXAMPLE
+
+	/* Let the slider automagically write its level to a variable */
+
+	static LONG level;
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(slider,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},@{"MUIA_Slider_Level" Link "SDK:Guide/MUI/MUI_Slider.guide/MUIA_Slider_Level"},@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	   slider,3,MUIM_WriteLong,@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320},&level);
+
+    SEE ALSO
+	@{"MUIM_WriteString" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_WriteString"}, @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}
+@EndNode
+@Node MUIM_WriteString "MUI/MUI_Notify - MUIM_WriteString"
+
+
+    NAME
+	MUIM_WriteString (V6 ) 0x80424bf4
+
+    SYNOPSIS
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(obj,MUIM_WriteString,STRPTR str, STRPTR memory);
+
+    FUNCTION
+	This method simply copies a string somewhere to memory.
+	Although this seems quite useless, it might become handy
+	if used within a notify statement. For instance, you could
+	easily @{"connect" Link "SDK:Guide/socket.guide/connect"} the current contents of a string gadget
+	with some member of your programs data structures.
+
+	Note: The string is copied with strcpy(), you must assure
+              that the destination points to enough memory.
+
+    INPUTS
+	str    - string to copy
+	memory - location to write the value to
+
+    EXAMPLE
+
+	static char buffer[256];
+
+	@{"DoMethod" Link "SDK:Guide/libabox.guide/DoMethod"}(string,@{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"},@{"MUIA_String_Contents" Link "SDK:Guide/MUI/MUI_String.guide/MUIA_String_Contents"},@{"MUIV_EveryTime" Link "SDK:Guide/includes/libraries/mui.h/Main" 322},
+	   string,3,MUIM_WriteString,@{"MUIV_TriggerValue" Link "SDK:Guide/includes/libraries/mui.h/Main" 320},buffer);
+
+    SEE ALSO
+	@{"MUIM_WriteLong" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_WriteLong"}, @{"MUIM_Notify" Link "SDK:Guide/MUI/MUI_Notify.guide/MUIM_Notify"}
+
+@EndNode
+

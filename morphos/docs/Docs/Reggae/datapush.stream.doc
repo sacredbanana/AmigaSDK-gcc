@@ -1,0 +1,114 @@
+TABLE OF CONTENTS
+
+datapush.stream/--background--
+datapush.stream/MMA_DataPush_BufferedBytes
+datapush.stream/MMA_StreamSeekable
+datapush.stream/MMM_DataPush_Push
+datapush.stream/MMM_Pull
+datapush.stream/OM_DISPOSE
+datapush.stream/OM_NEW
+datapush.stream/--background--
+
+ DESCRIPTION
+   The class is designed for interfacing Reggae with code not designed to
+   follow the pull-driven processing, but pushing data. An object of the
+   class receives and copies pushed data, creates a simple FIFO buffer and
+   handles usual data pulls on its output.
+
+ NEW ATTRIBUTES
+   MMA_StreamSeekable          (V51)    [..G.Q], BOOL
+   MMA_DataPush_BufferedBytes  (V51)    [..G.Q], LONG
+
+ NEW METHODS
+   MMM_DataPush_Push           (V51)
+
+ HISTORY
+   51.1   (26.06.2012)
+   - Initial release.
+
+datapush.stream/MMA_DataPush_BufferedBytes
+
+ NAME
+   MMA_DataPush_BufferedBytes (V51) [..G.Q], LONG
+
+ FUNCTION
+   Returns number of bytes currently stored in the object FIFO buffer.
+
+datapush.stream/MMA_StreamSeekable
+
+ NAME
+   MMA_StreamSeekable (V51) [..G.Q], BOOL
+
+ FUNCTION
+   Returns FALSE always, as datapush.stream does not support seeking.
+
+datapush.stream/MMM_DataPush_Push
+
+ NAME
+   MMM_DataPush_Push -- Receives and stores data pushed by application (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_DataPush_Push, void *buffer, int length);
+
+ FUNCTION
+   Receives a chunk of pushed data from application, copies it and places
+   at the end of internal FIFO buffer.
+
+ INPUTS
+   buffer - pointer to pushed data, NULL is safe, it is ignored and raises
+     MMERR_WRONG_ARGUMENTS error.
+   length - length of pushed data in bytes. Zero or negative value is safe.
+     It is ignored and raises MMERR_WRONG_ARGUMENTS error.
+
+ RESULT
+   Boolean value of success. Is FALSE when there is no free memory for
+   data copy, or wrong arguments have been passed. MMA_ErrorCode contains
+   the error code in this case.
+
+ SEE ALSO
+   MMA_ErrorCode
+
+datapush.stream/MMM_Pull
+
+ NAME
+   MMM_Pull -- Retrieves buffered data (V51)
+
+ SYNOPSIS
+   int DoMethod(obj, MMM_Pull, int port, char *buffer, int length);
+
+ FUNCTION
+   Retrieves chunk of data from the internal FIFO buffer. If there is not
+   enough data buffered, the request is padded with zeros.
+
+ INPUTS
+   port - datapush.stream object has only one port, port 0.
+   buffer - pointer to the destination data buffer.
+   length - number of requested bytes.
+
+ RESULT
+   This method cannot fail so it always returns number of requested bytes.
+
+datapush.stream/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes datapush.stream object. (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Discards all chunks of FIFO buffer, then disposes object.
+
+datapush.stream/OM_NEW
+
+ NAME
+   OM_NEW -- Creates new datapush.stream object (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "datapush.stream", ...);
+
+ FUNCTION
+   Creates a new instance of datapush.stream. Initializes FIFO buffer. Note
+   that the buffer is dynamic, so no memory is allocated in the constructor.
+
+

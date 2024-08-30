@@ -1,0 +1,143 @@
+TABLE OF CONTENTS
+
+sunraster.muxer/--background--
+sunraster.muxer/MMA_Arguments
+sunraster.muxer/MMM_Pull
+sunraster.muxer/MMM_Setup
+sunraster.muxer/OM_DISPOSE
+sunraster.muxer/OM_NEW
+sunraster.muxer/--background--
+
+ DESCRIPTION
+   The class is used to save video data as  SunRaster file. It cooperates
+   with videopcm.encoder, which converts video to choosen (A)RGB format.
+   Then sunraster.muxer adds SunRaster header. The class currently can save
+   RGB and ARGB32 files.
+
+   The class supports argument string and GUI configuration. GUI generator
+   delivers a cycle gadget for selecting compression mode. Reggae
+   saver generator creates sunraster.muxer object, videopc.encoder object,
+   connects them and sets selected (A)RGB format for the encoder.
+
+ NEW ATTRIBUTES
+   MMA_Arguments
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.1 (16.09.2012)
+   - Initial release.
+
+sunraster.muxer/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper format to the
+   input port. The template is "BPP/K/N"
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When specified for constructor, the string must be valid only until the
+   constructor returns, so may be a local variable.
+
+sunraster.muxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Delivers block of SunRaster (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   SunRaster multiplexer delivers Sunraster header and then passes through
+   image PCM data from videopcm.decoder. After the header is pulled out,
+   requests are forwarded from output to input without any processing or
+   data copying.
+
+ INPUTS
+   obj - object to pull data from.
+   port - only pull on output port (port 1) is allowed
+   buffer - destination data buffer. Must be AltiVec aligned.
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. In case of error, MMA_ErrorCode is set to a code
+   received from the previous object in chain.
+
+ NOTES
+   As SunRaster header length is usually not aligned to 16 bytes, the class
+   cuts the first request at header end, without setting the error code.
+   Then the first pull forwarded to audiopcm.encoder starts again from the
+   start of buffer so is SIMD-aligned. Object connected at output of
+   SunRaster multiplexer should continue pulling if it receives less than
+   requested but MMA_ErrorCode is still zero.
+
+sunraster.muxer/MMM_Setup
+
+ NAME
+   MMM_Setup -- Receives audio parameters, generates SunRaster header (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   When object's input is connected to data source, the method reads audio
+   stream parameters and prepares SunRaster header.
+
+   The method is a no-op for the output port.
+
+ INPUTS
+   port - number of port being connected.
+
+ RESULT
+   Boolean value of success.
+
+ NOTES
+   Data source must be of known length. As the stream length is stored in
+   the SunRaster header, free streaming is not supported with this
+   format. This method fails if reported stream length is 0.
+
+sunraster.muxer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes SunRaster multiplexer object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Disposes object, frees allocated memory.
+
+sunraster.muxer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates Reggae SunRaster multiplexer (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "sunraster.muxer", ...);
+
+ FUNCTION
+   Creates a SunRaster multiplexer object. By default the object is set up to
+   generate 24-bit file.
+
+ INPUTS
+   Following attributes may be specified:
+   - MMA_Arguments - configures input port format and determines number of
+     bits per sample in output. Optional.
+   - MMA_ErrorCode - pointer to LONG variable, where error code (or 0 in
+     case of success) is stored. Optional.
+
+ RESULT
+   Created object, or NULL. In case of failure MMA_ErrorCode specifies
+   reason:
+   - MMERR_OUT_OF_MEMORY, no free memory,
+   - MMERR_WRONG_ARGUMENTS, malformed MMA_Arguments, or unsupported number
+     of bits per sample specified.
+
+

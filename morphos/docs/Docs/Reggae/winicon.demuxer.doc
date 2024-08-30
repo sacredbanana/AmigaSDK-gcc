@@ -1,0 +1,155 @@
+TABLE OF CONTENTS
+
+winicon.demuxer/MMA_DataFormat
+winicon.demuxer/MMA_MimeType
+winicon.demuxer/MMA_Video_BitsPerPixel
+winicon.demuxer/MMA_Video_FrameCount
+winicon.demuxer/MMA_Video_Height
+winicon.demuxer/MMA_Video_Width
+winicon.demuxer/MMM_Pull
+winicon.demuxer/background
+winicon.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V51.3) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns "Windows Icon" string.
+
+winicon.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType (V51.4) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only NULL-terminated MIME type string. All instances of
+   winicon.demuxer return "image/vnd.microsoft.icon".
+
+winicon.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V50) [....Q], ULONG
+
+ FUNCTION
+   Returns image colour depth. Possible values for winicon.demuxer are 4, 8,
+   24 or 32.
+
+winicon.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V50) [....Q], UQUAD*
+
+ FUNCTION
+   As Windows icon format does not support multiframe images, this attribute
+   returns 1 always.
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+winicon.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V50) [....Q], ULONG
+
+ FUNCTION
+   Returns height of image frame in pixels.
+
+winicon.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V50) [....Q], ULONG
+
+ FUNCTION
+   Returns width of image frame in pixels.
+
+winicon.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes Windows BitMap data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of stream data from input, processes them to extract
+   raw Windows BitMap data and places them in the specified buffer. The
+   demuxer is pass-through for image data (no data copying).
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, (1 to N, where N is the number of images in the
+     stream).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+winicon.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for Windows icon format (*.ico
+   files). The demuxer supports 4 and 8-bit icons with palette and 24-bit
+   and 32-bit truecolor icons. Any size up to 256 x 256 is handled, not
+   neccesarily square. Icon image mask is supported as well as alpha channel
+   in 32-bit icons. The demuxer handles multiple icon images by creating
+   separate output for every image. Then every output can be queried about
+   image size and colour depth, and image data fetched. Number of outputs
+   may be obtained by getting MMA_Ports attribute and substracting one. The
+   object input is port 0 always and accepts MMF_STREAM format. Ports 1 to N
+   (where N is the number of images in the stream) are outputs and produce
+   MMF_VIDEO_BMP format. The class is a direct subclass of multimedia.class.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_Width          (V50)   [....Q], ULONG
+   MMA_Video_Height         (V50)   [....Q], ULONG
+   MMA_Video_BitsPerPixel   (V50)   [....Q], ULONG
+   MMA_Video_FrameCount     (V50)   [....Q], UQUAD*
+   MMA_DataFormat           (V51.3) [..G.Q], STRPTR
+   MMA_MimeType             (V51.4) [..G.Q], STRPTR
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.5 (08.11.2021)
+   - Fixed to handle width/height of 0 as 256.
+   - Fixed a memory leak if image type is not detected.
+   - Build with gcc 9 now.
+
+   51.4 (28.06.2015)
+   - Implemented MMA_MimeType.
+
+   51.3 (02.08.2007)
+   - Implemented OM_GET.
+   - Implemented MMA_DataFormat.
+   - Added 'fake' MMA_BlockAlign (returning 14) for bmp.decoder.
+   - Fixed small bug (variable duplicated) in recognize routine.
+
+   51.2 (08.01.2006)
+   - Fixed Setup(), now returns TRUE when called on any output port.
+   - Bugfix: icon counter was not incremented in LoadDirectory().
+
+   51.1 (13.06.2005)
+   - Updated to the new Reggae API.
+
+   50.2 (11.10.2004)
+   - Query tags are accessible via the class base.
+
+   50.1 (12.09.2004)
+   - Initial revision.
+
+

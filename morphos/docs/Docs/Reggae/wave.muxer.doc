@@ -1,0 +1,159 @@
+TABLE OF CONTENTS
+
+wave.muxer/--background--
+wave.muxer/MMA_Arguments
+wave.muxer/MMM_Pull
+wave.muxer/MMM_Setup
+wave.muxer/OM_DISPOSE
+wave.muxer/OM_NEW
+wave.muxer/--background--
+
+ DESCRIPTION
+   The class is used to save audio data as RIFF WAVE file (integer PCM,
+   encoding type 1). It cooperates with audiopcm.encoder, which converts
+   audio to choosen PCM format. Then wave.muxer adds WAVE header. The class
+   currently can save 8, 16, 24 and 32-bit WAVE files.
+
+   The class supports argument string and GUI configuration. GUI generator
+   delivers a cycle gadget for selecting number of bits per sample. Reggae
+   saver generator creates wave.muxer object, audiopcm.encoder object,
+   connects them and sets selected PCM format for the encoder.
+
+ NEW ATTRIBUTES
+   MMA_Arguments
+
+ NEW METHODS
+   OM_NEW
+   OM_DISPOSE
+   MMM_Pull
+
+ HISTORY
+   51.4. (07.10.2012)
+   - Code adjusted to multimedia.class v55 changes.
+
+   51.3  (23.09.2012)
+   - Enabled 24 and 32 bit subformats.
+   - Fixed version strings.
+
+   51.2  (13.09.2012)
+   - Class supports MMA_DefaultExtension.
+   - GUI supports GGRA_FullName.
+
+   51.1  (26.08.2012)
+   - Initial release.
+
+wave.muxer/MMA_Arguments
+
+ NAME
+   MMA_Arguments (V51) [I.G.Q], const char*
+
+ FUNCTION
+   Specifies configuration of the object, namely sets proper format to the
+   input port. The template is "BITS/K/N".
+   - BITS - optional numeric argument specifying bits per audio sample.
+     Accepted values are 8, 16, 24 and 32. Defaults to 16.
+   This attribute can be also read after the object has been configured in
+   any of ways. In this case returned string is read-only.
+
+ NOTES
+   When specified for constructor, the string must be valid only until the
+   constructor returns, so may be a local variable.
+
+wave.muxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Delivers block of WAVE data stream (V51)
+
+ SYNOPSIS
+   LONG DoMethod(obj, MMM_Pull, port, buffer, length);
+
+ FUNCTION
+   WAVE multiplexer delivers WAVE header and then passes through audio PCM
+   data from audiopcm.decoder. After the header is pulled out, requests are
+   forwarded from output to input without any processing or data copying.
+
+ INPUTS
+   obj - object to pull data from.
+   port - only pull on output port (port 1) is allowed
+   buffer - destination data buffer. Must be AltiVec aligned.
+   length - number of bytes to pull.
+
+ RESULT
+   Number of bytes pulled. In case of error, MMA_ErrorCode is set to a code
+   received from the previous object in chain.
+
+ NOTES
+   As WAVE header length is usually not aligned to 16 bytes, the class cuts
+   the first request at header end, without setting the error code. Then the
+   first pull forwarded to audiopcm.encoder starts again from the start of
+   buffer so is SIMD-aligned. Object connected at output of WAVE multiplexer
+   should continue pulling if it receives less than requested but
+   MMA_ErrorCode is still zero.
+
+wave.muxer/MMM_Setup
+
+ NAME
+   MMM_Setup -- Receives audio parameters, generates WAVE header (V51)
+
+ SYNOPSIS
+   BOOL DoMethod(obj, MMM_Setup, port);
+
+ FUNCTION
+   When object's input is connected to data source, the method reads audio
+   stream parameters and prepares WAVE header. The data source must provide
+   following stream parameters:
+   - MMA_Sound_Channels
+   - MMA_Sound_SampleRate
+   - MMA_Sound_FrameCount
+
+   The method is a no-op for the output port.
+
+ INPUTS
+   port - number of port being connected.
+
+ RESULT
+   Boolean value of success.
+
+ NOTES
+   Data source must be of known length. As the stream length is stored in
+   the WAVE header, free streaming is not supported with this format. This
+   method fails if reported stream length is 0 frames (unknown).
+
+wave.muxer/OM_DISPOSE
+
+ NAME
+   OM_DISPOSE -- Disposes WAVE multiplexer object (V51)
+
+ SYNOPSIS
+   DisposeObject(obj);
+
+ FUNCTION
+   Disposes object, frees allocated memory.
+
+wave.muxer/OM_NEW
+
+ NAME
+   OM_NEW -- Creates Reggae WAVE multiplexer (V51)
+
+ SYNOPSIS
+   obj = NewObject(NULL, "wave.muxer", ...);
+
+ FUNCTION
+   Creates a WAVE multiplexer object. By default the object is set up to
+   generate 16-bit file.
+
+ INPUTS
+   Following attributes may be specified:
+   - MMA_Arguments - configures input port format and determines number of
+     bits per sample in output. Optional.
+   - MMA_ErrorCode - pointer to LONG variable, where error code (or 0 in
+     case of success) is stored. Optional.
+
+ RESULT
+   Created object, or NULL. In case of failure MMA_ErrorCode specifies
+   reason:
+   - MMERR_OUT_OF_MEMORY, no free memory,
+   - MMERR_WRONG_ARGUMENTS, malformed MMA_Arguments, or unsupported number
+     of bits per sample specified.
+
+

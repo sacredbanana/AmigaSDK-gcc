@@ -1,0 +1,200 @@
+TABLE OF CONTENTS
+
+fir.filter/MMA_FirFilter_Table
+fir.filter/MMA_FirFilter_Taps
+fir.filter/MMA_StreamPosFrames
+fir.filter/MMA_StreamPosTime
+fir.filter/MMM_Pull
+fir.filter/background
+fir.filter/MMA_FirFilter_Table
+
+ NAME
+   MMA_FirFilter_Table (V51) [I....], APTR
+
+ FUNCTION
+   Sets a table of tap multipliers for the filter. It is just a table of
+   numbers in the same format as signal format. If signal is normalized
+   floating point, filter table should be single precision IEEE floating
+   point as well, and usually normalized too. Note that this normalization
+   is not required and filter output is neither limited nor rescaled to
+   (-1.0, +1.0) range. For integer formats (16 and 32-bit) table contains
+   signed integer premultiplied by 2^15 or 2^31 to map (-1.0, +1.0) to the
+   entire integer range. The table must have at least MMA_FirFilter_Taps
+   entries. Note that you have to pass the entire table even if the filter
+   is symmetrical (typical case, as symmetrical FIR has linear phase).
+
+ NOTES
+   The table is not copied, so it should be available through the whole
+   object lifetime. The table must be padded with zeros up to the nearest 8
+   samples multiply. The table must be 16-byte aligned, the easiest way to
+   do it is to allocate the table with MediaAllocVec().
+
+ SEE ALSO
+   multimedia.class/MediaAllocVec
+
+fir.filter/MMA_FirFilter_Taps
+
+ NAME
+   MMA_FirFilter_Taps (V51) [I....], ULONG
+
+ FUNCTION
+   Number of filter taps. Filters up to 16384 taps (including) are
+   supported.
+
+fir.filter/MMA_StreamPosFrames
+
+ NAME
+   MMA_StreamPosFrames (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Returns current absolute stream position in sample frames. It is exactly
+   the number of the whole sample frames pulled from object's output.
+
+  NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+fir.filter/MMA_StreamPosTime
+
+ NAME
+   MMA_StreamPosTime (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Returns absolute stream time position in microseconds. This time position
+   is strictly based on MMA_Sound_SampleRate on the output port, and
+   reflects only the whole sample frames already pulled from the object
+   output. The exact formula is:
+
+   time_pos = whole_frames_pulled / MMA_Sound_SampleRate[output]
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+   Returned time is not in any way related to playback time for two reasons:
+   firstly, there can be an unknown number of buffers between the filter and
+   the output, secondly, playback samplerate may be different than those
+   specified in the stream header.
+
+fir.filter/MMM_Pull
+
+ NAME
+   MMM_Pull (V50)
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   This operation performs digital convolution. Input data are convolved
+   with a filter table passed with MMA_FirFilter_Table attribute at object
+   creation time. Note that convolution operation changes data length, when
+   the filter has 'N' taps, you'll get 'N - 1' more frames on output than on
+   input. This is because the input signal is padded with 'N - 1' zeros at
+   the beginning and at the end. Convolution operation is performed
+   according to the following formula:
+
+         N - 1
+          ---
+   y[n] = >   x[n - k] * f[k]
+          ---
+         k = 0
+
+   where 'y' is output, 'x' is input and 'f' is filter table. Note that for
+   even number of taps, filter group delay is not integral in terms of
+   sampling period. Group delay can be calculated from:
+
+   gd = (N - 1) / 2;
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port is always 1 (the output port).
+   - buffer, a memory buffer for pulled data, must be aligned to 16-byte
+     boundary (preferrably allocated with MediaAllocMem()).
+   - length, amount of pulled data in bytes. Will be rounded down to the
+     nearest sample frame boundary.
+
+ RESULT
+   - bytes, number of bytes pulled actually.
+
+fir.filter/background
+
+ DESCRIPTION
+   This Reggae filter is a plain finite impulse response filter. Note that
+   for speed reasons INT16 and INT32 routines are not saturating, so if
+   overdriven the filter will produce strong distortions. To avoid
+   distortions just make sure the frequency response of the filter is below
+   0 dB. Floating point routines have no problem with overflow, but they are
+   not clipping to the normalized (-1.0, +1.0) range. While it avoids
+   distortions, it may affect later processing stages so again avoid filters
+   with frequency response above 0 dB.
+
+   The class uses optimized procedures for mono and stereo streams. There
+   are also AltiVec optimized versions giving major speedup. Note that on
+   MorphOS 1.4.5 AltiVec code is not activated even on G4 machines because
+   AltiVec is not turned on (and supported) by the kernel. Speed results
+   below are given in Mframes (1 000 000 frames) per second, measured on
+   Pegasos II with G4/1.0 GHz. General routine is used for any stream with
+   more than 2 channels (up to 256).
+
+   INT16
+   +----------+-------------------------------------------------------+
+   |          |                  Filter length                        |
+   | routine  +------+------+------+------+------+------+------+------+
+   |          |  16  |  32  |  64  |  128 |  256 |  512 | 1024 | 2048 |
+   +----------+------+------+------+------+------+------+------+------+
+   |mono      | 14.65|  9.45|  5.55|  3.05|  1.62|  0.82|  0.42|  0.21|
+   |mono[AV]  | 52.25| 45.90| 37.45| 27.40| 17.90| 10.45|  5.80|  3.05|
+   |stereo    |  7.25|  4.55|  2.60|  1.40|  0.72|  0.36|  0.19|  0.09|
+   |stereo[AV]| 24.40| 20.60| 16.00| 10.90|  6.70|  3.75|  2.00|  1.05|
+   +----------+------+------+------+------+------+------+------+------+
+
+   FLOAT32
+   +----------+-------------------------------------------------------+
+   |          |                  Filter length                        |
+   | routine  +------+------+------+------+------+------+------+------+
+   |          |  16  |  32  |  64  |  128 |  256 |  512 | 1024 | 2048 |
+   +----------+------+------+------+------+------+------+------+------+
+   |mono      |  7.45|  4.80|  2.82|  1.54|  0.81|  0.41|  0.21|  0.10|
+   |mono[AV]  | 26.05| 22.90| 18.75| 13.75|  8.85|  5.25|  2.85|  1.50|
+   |stereo    |  3.62|  2.28|  1.29|  0.70|  0.36|  0.18|  0.09|  0.04|
+   |stereo[AV]| 11.90| 10.15|  7.85|  5.40|  3.30|  1.85|  1.00|  0.52|
+   +----------+------+------+------+------+------+------+------+------+
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamPosFrames      (V51) [..G.Q], UQUAD*
+   MMA_StreamPosTime        (V51) [..G.Q], UQUAD*
+   MMA_Sound_Channels       (V51) [..G.Q], ULONG
+   MMA_FirFilter_Table      (V51) [I....], APTR
+   MMA_FirFilter_Taps       (V51) [I....], ULONG
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.5  (25.02.2007)
+   - Added plain general INT32 filter routine.
+   - Added mono and stereo single pipe INT32 routines.
+
+   51.4  (05.02.2006)
+   - Added format forwarding in MMM_Setup().
+   - Removed test code silently converting floating point output to 16-bit
+     integers.
+   - 16-pipe Altivec stereo INT16 routine.
+
+   51.3  (22.01.2006)
+   - 16-pipe mono INT16 routine, 5 to 15% faster than 8-pipe one.
+
+   51.2  (21.01.2006)
+   - Optimized 8-pipe AltiVec routine for mono INT16 data.
+
+   51.1  (11.01.2006)
+   - First release.
+
+

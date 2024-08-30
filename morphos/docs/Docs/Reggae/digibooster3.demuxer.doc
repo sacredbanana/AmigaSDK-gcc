@@ -1,0 +1,212 @@
+TABLE OF CONTENTS
+
+digibooster3.demuxer/MMA_DataFormat
+digibooster3.demuxer/MMA_MediaType
+digibooster3.demuxer/MMA_Sound_BitsPerSample
+digibooster3.demuxer/MMA_Sound_Channels
+digibooster3.demuxer/MMA_Sound_FrameCount
+digibooster3.demuxer/MMA_Sound_SampleRate
+digibooster3.demuxer/MMA_Sound_Volume
+digibooster3.demuxer/MMA_StreamPosFrames
+digibooster3.demuxer/MMA_StreamPosTime
+digibooster3.demuxer/MMM_Pull
+digibooster3.demuxer/MMM_Seek
+digibooster3.demuxer/background
+digibooster3.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V51) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   Always "DigiBooster x.y Module", where x.y is version and revision of
+   DigiBooster, on which the module has been created.
+
+digibooster3.demuxer/MMA_MediaType
+
+ NAME
+   MMA_MediaType (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns media type of object. All objects of digibooster3.demuxer class
+   return MMT_SOUND always.
+
+digibooster3.demuxer/MMA_Sound_BitsPerSample
+
+ NAME
+   MMA_Sound_BitsPerSample (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns number of bits per sample. Always 16.
+
+digibooster3.demuxer/MMA_Sound_Channels
+
+ NAME
+   MMA_Sound_Channels (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Returns number of audio channels. Always 2.
+
+digibooster3.demuxer/MMA_Sound_FrameCount
+
+ NAME
+   MMA_Sound_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   As it is impossible to determine number of audio frames in a song before
+   playing it, this attribute has always value 0, meaning unknown number of
+   frames.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+digibooster3.demuxer/MMA_Sound_SampleRate
+
+ NAME
+   MMA_Sound_SampleRate (V51) [I.G.Q], ULONG
+
+ FUNCTION
+   When specified at object creation time, it sets the sampling rate used
+   for replayer engine[s]. When queried, returns this rate. The engine
+   supports any rate from 8000 to 192000 Hz including.
+
+   The default value of this attribute is 44100 Hz.
+
+digibooster3.demuxer/MMA_Sound_Volume
+
+ NAME
+   MMA_Sound_Volume (V50) [IS.PQ], LONG
+
+ FUNCTION
+   At object creation time or when set, sets internal volume boost for a
+   replayer engines. When set on object, affects all existing engines, when
+   set on an output port, affects only engine on this port. Setting on the
+   input is ignored. Getting this attribute is possible only on an output
+   port.
+
+   Volume boost is scaled in decibels. Allowed range is from -84 to +24 dB,
+   both sides including. The default value is 0 dB.
+
+digibooster3.demuxer/MMA_StreamPosFrames
+
+ NAME
+   MMA_StreamPosFrames (V51) [....Q], UQUAD*
+
+ FUNCTION
+   Returns number of audio frames sent to queried output port.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+digibooster3.demuxer/MMA_StreamPosTime
+
+ NAME
+   MMA_StreamPosTime (V51) [....Q], UQUAD*
+
+ FUNCTION
+   Returns time position in microseconds from the start of a song on given
+   port. Based strictly on MMA_StreamPosFrames and MMA_Sound_SampleRate.
+
+ NOTES
+   This is a 64-bit attribute passed by pointer to UQUAD variable, not by
+   value.
+
+digibooster3.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull (V51)
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   Fetches block of synthesized DigiBooster 3 module audio stream. Block
+   length in bytes must be evenly divisible by 4 (size of one stereo 16-bit
+   audio frame).
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be one of outputs.
+   - buffer, a memory buffer for pulled data, must be aligned to 16-byte
+     boundary (preferrably allocated with MediaAllocMem()).
+   - length, amount of pulled data in bytes.
+
+ RESULT
+   - bytes, number of bytes pulled actually. Zero means end of data or
+     error, error code is available via MMA_ErrorCode attribute.
+
+digibooster3.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek -- seeks in audio stream.(V51)
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Seek, ULONG port, ULONG type, QUAD* pos);
+
+ FUNCTION
+   The class does not support seeking.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port.
+   - type, seek type.
+   - position, new, absolute byte position in the stream.
+
+ RESULT
+   FALSE.
+
+digibooster3.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for DigiBooster 3 music modules.
+   Thanks to backward format compatibility it also decodes DigiBooster Pro 2
+   modules. The class bases on the official replayer code.
+
+   The whole module is loaded to memory when object's input is connected to
+   the source data stream. The input port has number 0. By default an object
+   of this class has one output port, port 1. The first song of the module
+   is decoded to this port. If a source module has more songs, additional
+   outputs are created dynamically after the input is connected. As the
+   class decodes the module to MMFC_AUDIO_INT16, no additional decoder
+   objects are needed.
+
+   Module playback engine is created for each song when relevant output port
+   is being connected to something, is destroyed when the port is
+   disconnected. Then typical player applications may connect to one port
+   at a time, so only one replayer engine is running. On the other hand it
+   is perfectly possible to decode multiple songs simultaneously and for
+   example perform crossfading.
+
+   The digibooster3.demuxer class is a direct subclass of multimedia.class.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_DataFormat           (V51) [..G.Q], STRPTR
+   MMA_MediaType            (V51) [..G.Q], ULONG
+   MMA_Sound_BitsPerSample  (V51) [..G.Q], LONG
+   MMA_Sound_Channels       (V51) [..G.Q], LONG
+   MMA_Sound_FrameCount     (V51) [....Q], QUAD*
+   MMA_Sound_SampleRate     (V51) [I.G.Q], LONG
+   MMA_Sound_Volume         (V51) [IS.PQ], LONG
+   MMA_StreamPosFrames      (V51) [....Q], QUAD*
+   MMA_StreamPosTime        (V51) [....Q], QUAD*
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)  seek is not supported
+
+ HISTORY
+   51.1  (11.02.2014)
+   - Initial release, based on libdigibooster3 1.1.
+    51.2  (23.11.2017)
+   - Updated to the latest metadata API changes, massively bugfixed
+
+

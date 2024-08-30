@@ -1,0 +1,489 @@
+MorphOS Software Development Kit for MorphOS 3.18
+Copyright 2011-2023 MorphOS Team, morphos-team.net, devenv@morphos-team.net
+
+Welcome to the MorphOS SDK! This is a full blown MUI-oriented MorphOS
+application development suite. The package includes:
+
+    Developer extensions for Scribble
+
+    GeekGadgets environment with gcc 2.95.3, gcc 5.5.0, gcc 9.5.0,
+    gcc 10.4.0, gcc 11.3.0 and clang 3.8.1
+
+    MorphOS includes, documentation and examples
+
+    Development utilities
+
+1. Installation & customizations
+
+Run the SDK Installer utility and pick the install location.
+
+If you need to add a component to the GG, you should do that in GG:usr. This
+is the only directory that will be preserved after updating the SDK in future.
+When configuring / installing your own packages, make sure they are deployed
+into /usr
+
+2. Porting notes
+
+The SDK comes with prebuilt ssh ixemul binaries, make sure not to use them
+with libnix apps. The same applies do the included libpthread!
+
+When targeting ixemul, do NOT include any os-include includes. Do not use
+system libraries like dos.library or intuition.library. Do NOT use MUI.
+
+3. OpenSSL library considerations
+
+The SDK includes OpenSSL headers and link libraries. The link libraries
+provided make use of the openssl shared library first included in the MorphOS
+3.16 release. When the application is linked against these libraries, it will
+require MorphOS 3.18 or newer to run.
+
+4. Provided documentation
+
+Please note that the documentation provided is partially based on the original
+documentation of the AROS modules incorportated into MorphOS and may be
+incomplete or incorrect in some cases. Even though we've put a huge amount of
+time and work in order to improve it, some parts may still be incorrect. When
+in doubt, please consult the original AOS 3.1 documentation which is the best
+reference for the legacy functionality.
+
+5. GG Environment
+
+The whole GG environment received a big update and comes with refreshed
+packages, namely:
+
+  - autoconf 2.69
+  - automake 1.16.5
+  - binutils 2.38
+  - bison 3.8.1
+  - bzip2 1.0.8
+  - coreutils 9.2
+  - cpio 2.13
+  - cvs 1.12.13
+  - cmake 3.9.6
+  - curl 8.0.1
+  - diffutils 3.8
+  - file 5.42
+  - findutils 4.9.0
+  - flex 2.5.27
+  - gawk 5.2.1
+  - gdb 8.3
+  - git 2.40.1
+  - gperf 3.1
+  - grep 3.10
+  - groff 1.22.4
+  - gzip 1.12
+  - expat 2.4.6
+  - inetutils 2.4 (telnet, tftp, ftp only)
+  - less 551
+  - lua 5.3.2
+  - lz4 1.9.3
+  - lzip 1.22
+  - lzop 1.04
+  - man 1.6g
+  - m4 1.4.18
+  - make 4.4.1
+  - makedepend 1.0.5
+  - nano 7.2
+  - ncurses 6.4
+  - netcat
+  - OpenSSH 9.3p1
+  - openssl 3.1.0
+  - patch 2.7.6
+  - perl 5.36.1
+  - pdksh 5.2.14
+  - sed 4.9
+  - sqlite 3.41.2
+  - tar 1.34
+  - texinfo 7.0.3
+  - unzip 6.00
+  - wget 1.21.3
+  - xxd 1.10
+  - zlib 1.2.12
+  - zstd 1.5.1
+
+6. Changes
+
+     - May 2023 release:
+        - Updated GCC9 to 9.5.0
+        - Updated GCC10 to 10.4.0
+        - Updated GCC11 to 11.3.0
+        - Added netcat
+        - Updated curl to 8.0.1
+        - Updated openssl to 3.1.0
+        - Fixed FlexCat incorrectly using const for catalog array
+        - Updated zlib to 1.2.12
+        - Updated gzip to 1.12
+        - Updated OpenSSH to 9.3p1
+        - Updated perl to 5.36.1
+        - Updated git to 2.40.1
+        - Updated coreutils to 9.2
+        - Updated sqlite to 3.41.2
+        - Updated nano to 7.2
+        - Included Tie/IxHash.pm to fix cvinclude.pl
+        - Updated inetutils to 2.4
+        - Added file 5.42
+        - Updated grep to 3.10
+        - Updated gawk to 5.2.1
+        - Updated make to 4.4.1
+        - Updated sed to 4.9
+        - Updated texinfo to 7.0.3
+        - Updated ncurses to 6.4
+        - Updated groff to 1.22.4
+
+     - March 2022 release:
+        - Added the -pthread switch to GCC5 and newer
+        - Added GCC 11.2.0
+        - Updated GCC9 to 9.4.0
+        - Updated GCC10 to 10.3.0
+        - Removed GCC4, GCC7
+        - Updated bison to 3.8.1
+        - Updated tar to 1.34
+        - Updated inetutils to 2.2
+        - Updated git to 2.35.1
+        - Updated nano to 6.2
+        - Updated openssh to 8.9p1
+        - Updated sqlite to 3.38.0
+        - Updated curl to 7.81.0
+        - Updated perl to 5.34.0
+        - Updated texinfo to 6.8
+        - Added xxd 1.10
+        - Fixed grep -P option (Perl-compatible regular expressions)
+        - Added working daemon mode to ssh-agent:
+          - Add "run >nil: ssh-agent -D" to s:user-startup to launch the agent on system
+            startup.
+        - Updated binutils to 2.38
+        - Updated automake to 1.16.5
+        - Updated diffutils to 3.8
+        - Updated grep to 3.7
+        - Updated gzip to 1.11
+        - Updated wget to 1.21.3
+        - Updated openssl to 3.0.1
+        - Updated coreutils to 9.0
+        - Updated ncurses to 6.3
+        - setjmp()/longjmp() jmp_buf size has grown to accommodate AltiVec state. To avoid
+          issues arising from the change, rebuild the static libraries and your projects to
+          ensure the new size is picked up by all components. Do not mix-and-match static
+          libraries and object files compiled with old and new SDKs.
+        - Due to the setjmp()/longjmp() change, code using shared png.library needs to be
+          adjusted to use setjmp59()/longjmp59() functions when working with png_structp to
+          remain compatible. That is, code doing setjmp(png_jmpbuf(png_ptr)) becomes
+          setjmp59(png_jmpbuf(png_ptr)). Similarly any longjmp(png_jmpbuf(png_ptr)) becomes
+          longjmp59(png_jmpbuf(png_ptr)). Once adjusted, #define PNG_SKIP_SETJMP_CHECK to
+          confirm the change.
+        - Added lz4 1.9.3
+        - Added lzip 1.22
+        - Added lzop 1.04
+        - Added zstd 1.5.1
+        - Wipeout: fixed to dump full available stack trace not just the first address, also
+          including the addresses that might not be found from the SegTracker.
+        - Added openssl 3.0.1 headers, libcrypto_shared.a and libssl_shared.a that refer to
+          the shared openssl library introduced in MorphOS 3.16
+        - Updated findutils to 4.9.0
+        - Updated expat to 2.4.6
+
+     - February 2021 release:
+        - Added Tools/EventProfiler and Tools/Koprofiler; those tools can be used to profile
+          MorphOS applications
+        - Updated wget to 1.21
+        - Updated openssh to 8.4p1:
+          - Now includes port of ssh-agent and ssh-add. You can start a shell session
+            with ssh-agent by using command: ssh-agent sh. Within this shell you can
+            then add your keys to the agent by using ssh-add command.
+        - Updated tar to 1.33
+        - Updated findutils to 4.8.0
+        - Updated nano to 5.5
+        - Updated sqlite to 3.34.1
+        - Updated git to 2.30.0
+        - Updated perl to 5.32.1
+        - Updated curl to 7.75.0
+        - Added source-highlight 3.1.9
+        - Numerous improvements to GDB:
+          - Fixed bugs related to attaching to existing tasks
+          - Allows debugging MorphOS shared objects such as libraries and classes.
+            objects in memory that meet pattern in gg:share/gdb/morphos/whiteshared are
+            automatically loaded
+          - Disabled single stepping into shared libraries for the time being (was bugged).
+            Set a breakpoint inside the shared library to be debugged
+          - Enabled syntax higlighting using source-highlight library
+          - Build using ncurses, which enabled TUI (Text User Interface)
+        - Updated binutils to 2.36.1
+        - Fixed a double ixremove() in realloc()
+
+     - December 2020 release:
+        - Added GCC 10.2.0
+        - GCC7/9:
+          - An unfortunate miscompile meant that the previous SDK's compilers sometimes
+            generated binaries that had broken exception handling
+        - GCC9: Fixed a crash when compiling ObjC-2 style accessors use
+        - Removed GCC8
+        - Updated binutils to 2.35
+        - ixemul.library:
+          - Fixed wcsrtombs() and wcstombs()
+          - Call TLS destructors at cleanup
+          - Implemented flock()
+          - Fixed a spurious SIGINT during network operations
+          - Added missing error checks and fixed leaks in opendir()
+        - libpthread:
+          - pthread.h now avoids including exec/types.h when using ixemul to
+            avoid namespace conflicts
+          - Ensure that key destructors don't get called for the main thread
+        - Added GDB 8.3
+        - cmake: Fixed insecure use of dynload.library
+        - tar: Fixed not to call exit() from vfork()ed child
+        - libnix: Fixed a bug with TLSCallDestructors and other destructor handling
+        - Added sqlite 3.34.0
+        - Added libnix OpenSSL & cURL
+        - Updated git to 2.29.2
+        - Updated gawk to 5.1.0
+        - Updated bison to 3.7.4
+        - Updated openssl to 1.1.1i
+        - Updated perl to 5.32.0
+        - Updated curl to 7.74.0
+        - Updated flex to 2.5.27
+        - Updated OpenSSH to 8.3
+        - Updated grep to 3.6
+        - Updated automake to 1.16.3
+        - Updated m4 to 1.4.18
+        - Wipeout: fixed NOREUSE and REUSE options
+        - Included nano and unzip that were missing from previous release
+
+     - April 2020 release:
+        - GCC 5, GCC 7, GCC 8, GCC 9:
+          - Added libatomic
+          - Fixed baserel LR handling
+          - Fixed not to try stack magic when hosted on non-MorphOS
+          - Disabled weakrefs in libstdc++
+          - Fixed std::call_once not to hang if function raises an exception
+          - Fixed a missing signal unlock if gthread_mutex_unlock is called on mutex
+            owned by another task
+          - Fixed race conditions in mutex and cond routines initializing the semaphore
+          - -g and -g1 default to -feliminate-unused-debug-symbols
+          - Improved TLS support when output binaries are running MorphOS 3.14+
+        - GCC 9: fixed an issue with branch alignment (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=93800)
+        - GCC 5: fixed an issue with SocketBase not being extern in libgcc
+        - Wipeout: fixed tracking of aligned pooled allocations
+        - Removed libpth
+        - libpthread now works with both libnix and ixemul and offers enhanced coverage
+          of pthreads
+        - libnix changes:
+           - Added pathconf()/fpathconf()
+           - Fixed aligned_malloc() to be compatible with free()/realloc()
+           - Added posix basename and fixed basename()/dirname() prototypes
+           - Replaced dirname()/dirname_r()/basename()/basename_r() with versions that work
+             with amiga paths
+           - Fixed atoi()/atol()/atoll() to not touch errno
+           - Implemented thread-local errno, _OSERR and h_errno
+           - Moved select() related headers to sys/select.h
+        - ixemul.library:
+           - Attempt to perform exit() from wrong context results in a requester rather
+             than a crash
+           - Fixed dirname() and basename() to handle volume/device/assign in the path
+           - Fixed mbrlen()/mbrtowc()/wcrtomb() to avoid use of global data
+           - Fixed mbsrtowcs() to work as defined by POSIX
+           - Fixed inconsistent and/or random st_ino
+           - Fixed softlink support in chmod()/chown()/mkdir()/rename()/remove()/rmdir()/
+             setxattr()/lsetxattr()/unlink()/utime()/utimes()
+           - Added pselect(), poll(), ppoll() with respective includes
+           - Implemented thread-local errno and h_errno
+           - Moved select() related headers to sys/select.h
+           - Improved includes for C++
+        - Build complains if system library clib headers are included in ixemul mode
+        - Cleaned up /gg/usr. /gg/usr is purely for user files. Manual cleanup might be
+          needed to remove past SDK artifacts
+        - Updated GCC9 to 9.3.0
+        - Updated GCC8 to 8.4.0
+        - Updated binutils to 2.34
+        - Updated cmake to 3.9.6
+        - Updated perl to 5.30.1
+        - Updated OpenSSL to 1.1.1f
+        - Updated OpenSSH to 8.2
+        - Updated gzip to 1.10
+        - Updated cpio to 2.13
+        - Updated bzip to 1.0.8
+        - Updated git to 2.26.1
+        - Updated grep to 3.4
+        - Updated gawk to 5.1.0
+        - Updated patch to 2.7.6
+        - Updated sed to 4.8
+        - Updated coreutils to 8.32
+        - Updated automake to 1.16.2
+        - Updated texinfo to 6.7
+        - Updated tar to 1.32
+        - Updated ncurses to 6.2
+        - Updated less to 551
+        - Updated make to 4.3
+        - Updated diffutils to 3.7
+        - Updated expat to 2.2.9
+        - Updated findutils to 4.7.0
+        - Updated gperf to 3.1
+        - Updated curl to 7.69.1
+        - Updated inetutils to 1.9.4
+        - Added nano 4.9.6
+        - Changed the TERM default to morphos (nano needs either morphos or amiga-8bit)
+        - Added unzip 6.00
+        - Fixed directory layout of Frameworks
+        - ObjC framework linklibs had a bug that makes apps linked with old linklibs
+          fail when running with newer framework libraries. This is now fixed, but apps
+          must be re-linked with new ob/mui.framework.a.
+
+     - December 2019 release:
+        - GCC 5-9: made -fPIC a no-op since it currently produces broken binaries
+        - GCC 7-9: fixed an issue with SocketBase not being extern in libgcc
+        - Updated GCC7 to 7.5.0
+
+     - November 2019 release:
+        - Implemented basic completion for ObjectiveC instance members
+        - Binutils updated to 2.33.1
+        - Cleaned up gcc installs by removing obsolete files and stripping out
+          some
+        - Removed GCCSelect, 'gcc' now defaults to 9, ppc-morphos-gcc defaults to
+          2.95.3
+        - Updated universal-ctags
+
+     - October 2019 release:
+        - GCC 5 & up switched to the DW2EH model from SJLJ - gives about 30%
+          boost in C++ code compiled with exceptions support
+          (this also enables exceptions in clang!)
+        - GCC 5 & up: cleaned up the compiler default include paths order -
+          this may mean your existing projects might need simple tweaks to fix
+          the build. Previously, /gg/os-include would take precedence before any
+          project includes. The new order is as follows:
+           o Any include paths from compiler invocation ( with -I )
+           o os-includes
+           o gcc-lib built-in includes for c++ and c
+           o /gg/usr/include
+           o gcc-lib fixincludes
+           o /gg/includestd (when compiling for libnix)
+           o /gg/include  
+        - GCC 5 and up: switched threading model to posix, enabling C++ threading
+          support, improved libstdc++ compatibility
+        - Removed GCC 6
+        - Added GCC 7
+        - Added GCC 8
+        - Added GCC 9
+        - Updated clang to 3.8.1 and fixed C++
+        - perl 5.30.0
+        - binutils 2.32.0
+        - grep 3.3
+        - Fixed git installation
+        - Added flowmake
+        - Added libpth (ixemul) and libphtread (libnix)
+        - Added ObjFW linklibs
+        - Moved to universal-ctags for Flow Studio C/C++/ObjC indexing. Mind that
+          indexing works best on Flow Studio projects
+
+    - April 2018 release:
+        - ObjectiveC Frameworks for MUI development
+        - Added clang 3.8
+        - Added cmake 3.8.0
+        - Added GCC 6.4.0
+        - Added makedepend
+        - Added expat library
+        - Added curl library
+        - Added git
+        - Updated GCC 5 to 5.5.0, with a ctors handling bugfix
+        - Updated OpenSSL to 1.0.2o
+        - Updated CVS to 1.12.13 (Debian)
+        - Scribble is now Flow Studio and part of the MorphOS 3.10 install.
+          LogTool is also part of the 3.10 install. Both were removed from
+          the SDK for that reason.
+
+    - June 2016 release:
+        - Fixes in the GCC 5.3.0 compiler
+        - C11 related improvements and cleanups in libnix and base includes
+        - Updates ixemul to 50.17
+        - Other bugfixes
+
+        CAUTION: if you build for ixemul with this SDK release, the resulting
+                 binaries will NOT work with ixemul provided with MorphOS 3.9
+                 or older
+
+    - January 2016 release:
+        - GCC 5.3.0, including baserel support
+        - Added a Lua interpreter
+        - Updates ixemul to 50.16
+        - Updated tar to 1.28 and sed to 4.2.2
+
+        CAUTION: if you build for ixemul with this SDK release, the resulting
+                 binaries will NOT work with ixemul provided with MorphOS 3.9
+                 or older
+
+    - June 2015 release:
+        - Updated wget to 1.16.3, preconfigured to use OWB's certificates file
+          for https connections
+        - Updates system with ixemul/ixnet 50.10, featuring 64bit file
+          functions
+
+        CAUTION: if you build for ixemul with this SDK release, the resulting
+                 binaries will NOT work with ixemul provided with MorphOS 3.7
+                 or older
+
+        - Integrated Scintilla documentation file
+        - BOOPSI now follows a retain/release scheme for all objects
+        - Wipeout: fixed a bug in pool free handling
+        - Updated system includes
+        - Updated OpenSSL and dependencies
+
+    - May 2014 release:
+        - LogTool no longer allows multiple ramdebug sessions running at
+          once
+        - Updated system includes
+        - Improved SDK indexing for Scribble
+        - Updated OpenSSL and dependencies
+
+    - September 2013 release:
+        - Updated includes
+        - Added a few new examples
+        - Misc fixes of the GG packages
+
+    - January 2013 release (2):
+        - Fixed cvs to open message editor with a correct path
+        - Fixed tar to default to the older format (since current xad
+          client, etc does not handle the new one)
+        - Fixed a bug in Scintilla.mcc which caused projectindex to
+          stop its indexing service when autocomplete was used on larger
+          structures
+        - Updated OpenSSL/OpenSSH
+        - Added groff and man packages
+        - Comes with shared png, jpeg6b and z linklibs
+        - The Installer now makes sure not to reset the default compiler
+          when updating
+
+    - January 2013 release:
+        - Updated GG (GNU) packages!
+        - GCC 4.4.5 - fixed a bug in libgcc.a resulting in a memtrash on
+          disposal in C++ apps which MUST be relinked for the problem to
+          disappear
+        - Updated pdksh, solves odd crashes with some complex configure
+          scripts
+        - Improved projectindex.library
+        - Removed Scribble since it's now part of the official MorphOS
+          distribution
+        - Updated includes and documentation
+
+    - September 2011 release:
+        - Added Scribble (replaces MorphED)
+        - Added sdkindex.library and projectindex.library
+        - Improved documentation
+
+    - July 2011 release:
+        - GCC 4.4.5, 2.95.4
+        - Fixed GCC 2.95.3 not to generate AltiVec code in C++ exceptions
+          handling
+
+    - Non-beta release:
+        - MorphED no longer crashes with invzeropage enabled
+        - Minor improvements in documentation
+        - Added an update mode to the installer
+        - More examples
+
+7. Copyrights / Distribution
+
+The MorphOS system includes are (C) MorphOS Team and may not be distributed
+separately in non-modified or modified form without a permission from the
+MorphOS Team. This also applies to the documentation and examples, unless
+stated otherwise in the respective example / doc.
+
+8. Questions, support, etc
+
+You can reach us using the devenv@morphos-team.net email address.

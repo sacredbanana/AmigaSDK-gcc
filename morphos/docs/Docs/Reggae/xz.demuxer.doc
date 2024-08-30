@@ -1,0 +1,121 @@
+TABLE OF CONTENTS
+
+xz.demuxer/MMA_DataFormat
+xz.demuxer/MMA_MimeType
+xz.demuxer/MMA_StreamLength
+xz.demuxer/MMA_StreamPosBytes
+xz.demuxer/MMM_Pull
+xz.demuxer/background
+xz.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- (V51) [..G.Q], CONST_STRPTR, 0x8EDA000B
+
+ FUNCTION
+   Returns short, read-only textual description of the format. An object
+   connected to a data stream returns string "XZ".
+
+ NOTES
+   Usually, when xz.demuxer is a part of processing pipeline built with
+   MediaNewObject(), this attribute is "shadowed" by demuxer(s) following
+   in the pipeline.
+
+xz.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType -- (V51) [..G.Q], CONST_STRPTR, 0x8EDA000A
+
+ FUNCTION
+   Returns MIME type string of the format. An object connected to a data
+   stream returns string "application/x-xz"
+
+ NOTES
+   Usually, when xz.demuxer is a part of processing pipeline built with
+   MediaNewObject(), this attribute is "shadowed" by demuxer(s) following
+   in the pipeline.
+
+xz.demuxer/MMA_StreamLength
+
+ NAME
+   MMA_StreamLength -- (V51) [..G.Q], QUAD*, 0x8EDA0018
+
+ FUNCTION
+   MMA_StreamLength is the output (uncompressed) stream length in bytes. For
+   xz.demuxer the length can be 0 (which means unknown length), as XZ might
+   not always know the uncompressed length. The attribute is defined as a
+   pointer to 64-bit signed number containing the length.
+
+ NOTE
+   Input stream length must be available as well as the input stream must be
+   seekable. If either of these conditions are not met, result will be 0.
+
+xz.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- (V51) [..G.Q], QUAD*, 0x8EDA0012
+
+ FUNCTION
+   MMA_StreamPosBytes value is the current position in the output
+   (uncompressed) stream. This position is in bytes, and is returned as a
+   pointer to 64-bit signed number.
+
+xz.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull (V51) -- Decompresses a block of data into a buffer.
+
+ SYNOPSIS
+   bytes = DoMethod(obj, MMM_Pull, ULONG port, APTR buffer, ULONG length);
+
+ FUNCTION
+   Delivers a specified amount of decompressed data to the output buffer.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port, must be 1 (output).
+   - buffer, a memory buffer for decompressed data, must be aligned to
+     16-byte boundary (preferrably allocated with MediaAllocVec()).
+   - length, amount of pulled data in bytes.
+
+ RESULT
+   Number of bytes pulled actually. In case of error, additional information
+   is available via MMA_ErrorCode attribute.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+xz.demuxer/background
+
+ DESCRIPTION
+   This class allows Reggae to handle data compressed with XZ compressor.
+   In other words it is a wrapper on lzma.library. Using this class Reggae
+   can decompress data from any XZ source stream.
+
+   Reggae is able to cascade demuxers in case of compound data formats. When
+   MediaNewObject() recognizes a stream, it detects XZ packed files with
+   this class recognition routine. Xz.demuxer object sets MMF_STREAM data
+   type on its output, which makes Reggae to perform demultiplexer matching
+   recursively, but this time on decompressed data.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_StreamLength                (V51)  ..G.Q  (QUAD*)
+   MMA_StreamPosBytes              (V51)  ..G.Q  (QUAD*)
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+ HISTORY
+
+   51.1   (17.07.2019)
+   - The first release.
+   51.2   (25.08.2019)
+   - Implemented MMA_StreamLength.
+
+

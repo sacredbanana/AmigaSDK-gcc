@@ -1,0 +1,269 @@
+TABLE OF CONTENTS
+
+Family.mui/Family.mui
+Family.mui/MUIA_Family_Child
+Family.mui/MUIA_Family_ChildCount
+Family.mui/MUIA_Family_List
+Family.mui/MUIM_Family_AddHead
+Family.mui/MUIM_Family_AddTail
+Family.mui/MUIM_Family_DoChildMethods
+Family.mui/MUIM_Family_GetChild
+Family.mui/MUIM_Family_Insert
+Family.mui/MUIM_Family_Remove
+Family.mui/MUIM_Family_Reorder
+Family.mui/MUIM_Family_Sort
+Family.mui/MUIM_Family_Transfer
+Family.mui/Family.mui
+
+	Family class is the base class for objects that are able
+	to handle a list of children. This is e.g. the case for
+	MUIs Menustrip, Menu and Menuitem objects.
+
+	Family class defines methods and attributes to
+	add and remove children, sort children, and transfer
+	children to other Family objects.
+
+	Group class and application class should also be a
+	subclass of Family class, but due to BOOPSI system
+	limitations, this is currently impossible. If the
+	future will allow more logical class trees, things
+	might change, but everything will be done in a
+	compatible manner.
+Family.mui/MUIA_Family_Child
+
+    NAME
+	MUIA_Family_Child -- (V8 ) [I..], Boopsiobject *, 0x8042c696
+
+    FUNCTION
+	You supply a pointer to a previously created MUI object
+	here. This object will be added to family at family
+	creation time.
+
+	Of course you can specify any number of child objects,
+	limited only by available memory.
+
+	Normally, the value for a MUIA_Family_Child tag is
+	a direct call to another MUI_NewObject(), children
+	are generated "on the fly".
+
+	When a family is disposed, all of its children will also
+	get deleted. If you supply a NULL pointer as child,
+	the family object will fail and previously dispose all
+	valid children found in the taglist.
+
+	This behaviour makes it possible to generate a complete
+	family within one single (but long) MUI_NewObject()
+	call. Error checking is not necessary since every error,
+	even if it occurs in a very deep nesting level, will
+	cause the complete call to fail without leaving back
+	any previously created object.
+
+    NOTES
+	As a special case, MUIA_Group_Child is also recognized
+	and treated as MUIA_Family_Child.
+
+    SEE ALSO
+	MUIM_Family_AddTail, MUIM_Family_Insert,
+	MUIM_Family_AddHead, MUIA_Family_Remove
+Family.mui/MUIA_Family_ChildCount
+
+    NAME
+	MUIA_Family_ChildCount -- (V20) [..G], LONG, 0x8042b25a
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    BUGS
+
+    SEE ALSO
+
+Family.mui/MUIA_Family_List
+
+    NAME
+	MUIA_Family_List -- (V8 ) [..G], struct MinList *, 0x80424b9e
+
+    FUNCTION
+	Returns a pointer to a struct MinList which contains the children
+	of a family object. You must parse this list with 
+	intuition.library/NextObject().
+
+    SEE ALSO
+	MUIA_Family_Child
+Family.mui/MUIM_Family_AddHead
+
+    NAME
+	MUIM_Family_AddHead (V8 ) 0x8042e200
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_AddHead,Boopsiobject *obj);
+
+    FUNCTION
+	Add an object as first object to the family.
+	Subclasses of family class usually define which
+	types of objects are possible within their family.
+
+    INPUTS
+	obj - the object to be added.
+
+    SEE ALSO
+	MUIM_Family_AddTail, MUIM_Family_Insert,
+	MUIM_Family_Remove, MUIA_Family_Child
+Family.mui/MUIM_Family_AddTail
+
+    NAME
+	MUIM_Family_AddTail (V8 ) 0x8042d752
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_AddTail,Boopsiobject *obj);
+
+    FUNCTION
+	Add an object as last object to the family.
+	Subclasses of family class usually define which
+	types of objects are possible within their family.
+
+	This method does the same as OM_ADDMEMBER.
+
+    INPUTS
+	obj - the object to be added.
+
+    SEE ALSO
+	MUIM_Family_AddHead, MUIM_Family_Insert,
+	MUIM_Family_Remove, MUIA_Family_Child
+Family.mui/MUIM_Family_DoChildMethods
+
+    NAME
+	MUIM_Family_DoChildMethods (V20) 0x80429a3c
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_DoChildMethods);
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+Family.mui/MUIM_Family_GetChild
+
+    NAME
+	MUIM_Family_GetChild (V20) 0x8042c556
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_GetChild,LONG nr, Boopsiobject *ref);
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    INPUTS
+
+    RESULT
+
+    BUGS
+
+    SEE ALSO
+
+Family.mui/MUIM_Family_Insert
+
+    NAME
+	MUIM_Family_Insert (V8 ) 0x80424d34
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_Insert,Boopsiobject *obj, Boopsiobject *pred);
+
+    FUNCTION
+	Add an object after another object to the family.
+	Subclasses of family class usually define which
+	types of objects are possible within their family.
+
+    INPUTS
+	obj  - the object to be added.
+	pred - the new object is inserted *after* this
+	       object. pred must of course be a member
+	       of the family.
+
+    SEE ALSO
+	MUIM_Family_AddTail, MUIM_Family_AddHead,
+	MUIM_Family_Remove, MUIA_Family_Child
+Family.mui/MUIM_Family_Remove
+
+    NAME
+	MUIM_Family_Remove (V8 ) 0x8042f8a9
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_Remove,Boopsiobject *obj);
+
+    FUNCTION
+	Remove an object from a family.
+
+	This method does the same as OM_REMMEMBER.
+
+    INPUTS
+	obj - the object to be removed.
+
+    SEE ALSO
+	MUIM_Family_AddTail, MUIM_Family_Insert,
+	MUIM_Family_AddHead, MUIA_Family_Child
+Family.mui/MUIM_Family_Reorder
+
+    NAME
+	MUIM_Family_Reorder (V21) 0x80426008
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_Reorder,Boopsiobject *after, Boopsiobject *array[1]);
+
+    FUNCTION
+	Reorder children of a family.
+
+    INPUTS
+	after - the object after objects are reordered, or
+           NULL to insert in front of other objects
+             -1 to insert after other objects
+
+   array - NULL terminated array of objects for ordering
+
+    RESULT
+	The result value is currently undefined.
+
+    EXAMPLE
+		DoMethod(family, MUIM_Family_Reorder, NULL, obj1, obj2, obj3, NULL);
+Family.mui/MUIM_Family_Sort
+
+    NAME
+	MUIM_Family_Sort (V8 ) 0x80421c49
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_Sort,Boopsiobject *obj[1]);
+
+    FUNCTION
+	Sort the children of a family.
+
+    INPUTS
+	child - array that contains *all* the children of the
+	        family in the desired order. The array must be
+	        terminated with a NULL entry.
+
+    SEE ALSO
+	MUIA_Family_Child
+Family.mui/MUIM_Family_Transfer
+
+    NAME
+	MUIM_Family_Transfer (V8 ) 0x8042c14a
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Family_Transfer,Boopsiobject *family);
+
+    FUNCTION
+	All the children of the family are removed and
+	added to another family in the same order.
+
+    INPUTS
+	family - the destination family.
+
+    SEE ALSO
+	MUIA_Family_Child
+

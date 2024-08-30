@@ -1,0 +1,293 @@
+TABLE OF CONTENTS
+
+clipboard.library/--background--
+clipboard.library/FreeClipText
+clipboard.library/GetClipType
+clipboard.library/ReadClipImage
+clipboard.library/ReadClipSound
+clipboard.library/ReadClipText
+clipboard.library/WriteClipImage
+clipboard.library/WriteClipSound
+clipboard.library/WriteClipText
+clipboard.library/--background--
+
+ DESCRIPTION
+    The library simplifies using the system clipboard. Clipboard read and
+    write operation is a single function call. It is much easier than using
+    clipboard.device. However the library does not support clip posting and
+    clipboard notifications.
+
+    The library handles text clip Unicode extension, multi-text clips and
+    rectangular text clips. Rectangular clips have been introduced by CED,
+    they are also supported by Scribble. It also handles audio and image
+    clips using internally Reggae framework.
+
+ HISTORY
+    v51.0 (20.09.2016) - Initial release.
+
+clipboard.library/FreeClipText
+
+ NAME
+   FreeClipText -- frees text read from clipboard. (V52)
+
+ SYNOPSIS
+   VOID FreeClipText(CONST_APTR text);
+
+ FUNCTION
+   Frees a text buffer created with ReadClipText().
+
+ INPUTS
+   buffer - text buffer, NULL is safe.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   ReadClipText()
+
+clipboard.library/GetClipType
+
+ NAME
+   FreeClipText -- checks clip type in a clipboard unit. (V52)
+
+ SYNOPSIS
+   LONG GetClipType(ULONG unit);
+
+ FUNCTION
+   Checks if given clipboard unit contains a clip, then checks the clip type
+   (text, audio or image). The function does not verify clip syntax, it only
+   checks IFF header.
+
+ INPUTS
+   unit - clipboard unit number.
+
+ RESULT
+   One of:
+   - CLIPTYPE_NONE, no clip in the unit, or function failed (out of memory).
+   - CLIPTYPE_TEXT, text clip.
+   - CLIPTYPE_AUDIO, audio clip.
+   - CLIPTYPE_IMAGE, image clip.
+
+clipboard.library/ReadClipImage
+
+ NAME
+   ReadClipImage -- reads image from system clipboard. (V52)
+
+ SYNOPSIS
+   APTR ReadClipImageA(struct TagItem *taglist);
+   APTR ReadClipImage(Tag tag1, ...);
+
+ FUNCTION
+   Reads image from the system clipboard, puts it to allocated buffer  and
+   returns this buffer. The function may be controlled by following tags:
+   - CLP_ClipUnit - clipboard unit to use. Defaults to 0.
+   - CLP_Width - its value should be a pointer to a LONG variable.
+     Image width will be stored to this variable,
+   - CLP_Height - its value should be a pointer to a LONG variable.
+     Image width will be stored to this variable,
+   - CLP_Size - its value should be a pointer to a LONG variable.
+     Total memory size required to get the imagewill be stored to this
+     variable, When CLP_Data tag is also available get only CLP_Size
+      bytes. This allow to avoid situation when clip is changed between
+     querying and getting the data.
+   - CLP_Data - its value should be a pointer to a LONG variable.
+     Image data will be stored into this memory.
+   - CLP_ReadError - its value should be a pointer to a LONG variable.
+     Reggae multimedia.class error code will be stored to this variable,
+     0 will be stored in case of success.
+
+
+ INPUTS
+   taglist - list of tags controlling the function
+
+ RESULT
+   Buffer containing the ARGB32, NULL in case of failure.
+
+   - Tags taking a pointer as their value are NULL-safe.
+
+clipboard.library/ReadClipSound
+
+ NAME
+   ReadClipSound -- reads sound sample from system clipboard. (V52)
+
+ SYNOPSIS
+   APTR ReadClipSoundA(struct TagItem *taglist);
+   APTR ReadClipSound(Tag tag1, ...);
+
+ FUNCTION
+   Reads sound sample from the system clipboard, puts it to allocated buffer
+   with and returns this buffer. The function may be
+   controlled by following tags:
+   - CLP_ClipUnit - clipboard unit to use. Defaults to 0.w
+   - CLP_Size - its value should be a pointer to a LONG variable.
+     Total memory size required to get the imagewill be stored to this
+     variable, When CLP_Data tag is also available get only CLP_Size
+      bytes. This allow to avoid situation when clip is changed between
+     querying and getting the data.
+   - CLP_Data - its value should be a pointer to a LONG variable.
+     Image data will be stored into this memory.
+   - CLP_ReadError - its value should be a pointer to a LONG variable.
+     Reggae multimedia.class error code will be stored to this variable,
+     0 will be stored in case of success.
+
+
+ INPUTS
+   taglist - list of tags controlling the function
+
+ RESULT
+   Buffer containing the ARGB32, NULL in case of failure.
+
+   - Tags taking a pointer as their value are NULL-safe.
+
+clipboard.library/ReadClipText
+
+ NAME
+   ReadClipText -- reads text from system clipboard. (V52)
+
+ SYNOPSIS
+   APTR ReadClipTextA(struct TagItem *taglist);
+   APTR ReadClipText(Tag tag1, ...);
+
+ FUNCTION
+   Reads text from the system clipboard, puts it to allocated buffer with
+   proper zero terminator and returns this buffer. The function
+   automatically merges multiple "CHRS" chunks and/or "UTF8" chunks, also
+   handles character encoding conversion if needed. The function may be
+   controlled by following tags:
+   - CLP_ClipUnit - clipboard unit to use. Defaults to 0.
+   - CLP_Charset - specifies IANA character encoding number for returned
+     string. Any encoding supported by charsets.library may be used,
+     including MIBENUM_SYSTEM, which is the default.
+   - CLP_Rectangular - its value should be a pointer to a LONG variable
+     which will be set to 1 if the clip contains "CYGD" chunk marking the
+     text as rectangular cut. Note that the library does not ensure that
+     each clip line has the same length, it is up to application writing the
+     clip. If there is no "CYGD" chunk, or it does not mark the block as
+     rectangular, the pointed variable is set to 0.
+   - CLP_ReadError - its value should be a pointer to a LONG variable.
+     Iffparse error code will be stored to this variable, 0 will be stored
+     in case of success.
+   - CLP_CharCount - its value should be a pointer to a LONG variable.
+     Number of characters in the clip, excluding the terminator, will be
+     stored in the variable.
+   - CLP_SizeTerminated - its value should be a pointer to a LONG variable.
+     Size of the string in bytes, including terminator will be stored in the
+     variable.
+   - CLP_SizeUnterminated - the same as the above, but without terminator
+     size.
+   - CLP_Format - one of format ID: CLIPTXTFMT_PLAIN (default), CLIPTXTFMT_HTML
+
+ INPUTS
+   taglist - list of tags controlling the function
+
+ RESULT
+   Buffer containing the text, NULL in case of failure. Secondary
+   iffparse.library error may be received with CLP_ReadError tag.
+
+ NOTES
+   - Buffer returned by this function *must* be freed after use with
+     FreeClipText().
+   - Tags taking a pointer as their value are NULL-safe.
+
+ SEE ALSO
+   FreeClipText()
+
+clipboard.library/WriteClipImage
+
+ NAME
+   WriteClipImage -- write image to system clipboard. (V53)
+
+ SYNOPSIS
+   APTR WriteClipImageA(struct TagItem *taglist);
+   APTR WriteClipImage(Tag tag1, ...);
+
+ FUNCTION
+   Write image from allocated buffer to the system clipboard.
+    The function may be controlled by following tags:
+   - CLP_ClipUnit - clipboard unit to use. Defaults to 0.
+   - CLP_Width  - image width (pixels).
+   - CLP_Height - image height (pixels).
+   - CLP_Data   - pointer to image data source.
+   - CLP_Format - one of format ID: CLIPPIXFMT_GRAY8, CLIPPIXFMT_RGB24,
+     CLIPPIXFMT_ARGB32,  CLIPPIXFMT_LUT8. Defaults to CLIPPIXFMT_ARGB32.
+   - CLP_BytesPerRow - for image data with padding, how many bytes in
+     one row of image, not needed for images without padding
+   - CLP_ColorMap - pointer to an array of ARGB32 colors for
+     CLIPPIXFMT_LUT8 format
+
+ INPUTS
+   taglist - list of tags controlling the function
+
+ RESULT
+   Zero for success, Reggae framework error for failure.
+
+   - Tags taking a pointer as their value are NULL-safe.
+
+clipboard.library/WriteClipSound
+
+ NAME
+   WriteClipSound -- write sound sample to the system clipboard. (V52)
+
+ SYNOPSIS
+   LONG WriteClipSoundA(struct TagItem *taglist);
+   LONG WriteClipSound(Tag tag1, ...);
+
+ FUNCTION
+   Write sound sample from allocated buffer to the system clipboard.
+    The function may be controlled by following tags:
+   - CLP_ClipUnit - clipboard unit to use. Defaults to 0.
+   - CLP_Data - its value should be a pointer to image data
+    - CLP_PixelFormat - its value should be a pointer to image data
+
+
+ INPUTS
+   taglist - list of tags controlling the function
+
+ RESULT
+   Zero for success, Reggae framework error for failure.
+
+   - Tags taking a pointer as their value are NULL-safe.
+
+clipboard.library/WriteClipText
+
+ NAME
+   WriteClipText -- writes text to system clipboard. (V52)
+
+ SYNOPSIS
+   error = WriteClipText(buffer, tag1, ...);
+
+   LONG WriteClipTextA(CONST_APTR buffer, struct TagItem *taglist);
+   LONG WriteClipText(CONST_APTR buffer, Tag tag1, ...);
+
+ FUNCTION
+   Writes a text to the system clipboard. Automatically generates "CHRS"
+   and "UTF8" chunks. Supports rectangular blocks.
+   The function may be controlled by following tags:
+   - CLP_ClipUnit - clipboard unit to use. Defaults to 0.
+   - CLP_Charset - specifies IANA character encoding number for source
+     string. Any encoding supported by charsets.library may be used,
+     including MIBENUM_SYSTEM, which is the default. The function does all
+     neccesary conversions, so "CHRS" clipboard chunk is written with system
+     default 8-bit codepage, "UTF8" chunk is written in UTF-8. If any
+     characters of the source text are unrepresentable in the system default
+     codepage, they are stored as "?" in the "CHRS" chunk.
+   - CLP_Rectangular - if set to TRUE, additional "CYGD" chunk is emmitted,
+     which marks the text block as being rectangular. Note that in this case
+     the application is responsible for sending equal length lines and
+     ending each line with LF character. The function does not verify that.
+   - CLP_Format - one of format ID: CLIPTXTFMT_PLAIN (default), CLIPTXTFMT_HTML
+   - CLP_SecondaryData - set to HTML data for CLIPTXTFMT_HTML format
+
+ INPUTS
+   buffer - NULL-terminated text to be written.
+   taglist - list of tags controlling the function.
+
+ RESULT
+   Zero for success, iffparse.library error for failure. When NULL or zero
+   length text is passed, or charsets.library cannot be opened, function
+   returns IFFERR_SYNTAX.
+
+ SEE ALSO
+   ReadClipText()
+
+

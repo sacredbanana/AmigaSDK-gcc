@@ -1,0 +1,1540 @@
+TABLE OF CONTENTS
+
+cybergraphics.library/--background--
+cybergraphics.library/--bitmap--
+cybergraphics.library/AllocCModeListTagList
+cybergraphics.library/BestCModeIDTagList
+cybergraphics.library/BltBitMapAlpha
+cybergraphics.library/BltBitMapRastPortAlpha
+cybergraphics.library/BltTemplateAlpha
+cybergraphics.library/CModeRequestTagList
+cybergraphics.library/CVideoCtrlTagList
+cybergraphics.library/DoCDrawMethodTagList
+cybergraphics.library/ExtractColor
+cybergraphics.library/FillPixelArray
+cybergraphics.library/FreeCModeList
+cybergraphics.library/GetCyberIDAttr
+cybergraphics.library/GetCyberMapAttr
+cybergraphics.library/InvertPixelArray
+cybergraphics.library/IsCyberModeID
+cybergraphics.library/LockBitmapTagList
+cybergraphics.library/MovePixelArray
+cybergraphics.library/ProcessPixelArray
+cybergraphics.library/ReadPixelArray
+cybergraphics.library/ReadRGBPixel
+cybergraphics.library/ScalePixelArray
+cybergraphics.library/ScalePixelArrayAlpha
+cybergraphics.library/UnLockBitMap
+cybergraphics.library/UnLockBitmapTagList
+cybergraphics.library/WriteLUTPixelArray
+cybergraphics.library/WritePixelArray
+cybergraphics.library/WritePixelArrayAlpha
+cybergraphics.library/WriteRGBPixel
+cybergraphics.library/--background--
+
+   PURPOSE
+    cybergraphics.library started as a videoboard extension for the
+   native C= graphics.library. Because C= never completed/released a RTG
+   compliant library (up to and including OS3.1 there was no way to add
+   custom extension boards to the display database in a system friendly
+   way), CyberGraphX patched some of the original graphics functions in
+   order to add custom graphics board support in the system.
+    It also featured some new functions which were not available in the
+   original graphics.library implementation. Due to the patch approach this
+   new functions had to be moved into a new library base, namely
+   cybergraphics.library. Both OS3.0 graphics.library v39 and OS 3.1 v40 were
+   supported with this patch.
+    For the first time, CyberGraphX offered the possibility to open non CLUT
+   screens with more than 256 colours which offered complete intuition level
+   legacy compatibility.
+   Nearly every function could be used on such views except some special
+   blits which relied on planar bitmap graphics targets.
+   This screens featured 8bit backwards compatibility which means that
+   nearly every legacy, standard 8bit application even not aware of truecolour
+   abilities worked on this improved screens.
+   The pen allocation system, formerly used to lock certain colour indexes for
+   shared/exclusive application access, had been fully mapped to this new
+   display targets to allow maximum legacy compatibility.
+    The additional truecolour features could only be used with CyberGraphX
+   aware applications, though. Since there was no similar approach which
+   allowed easy adaption of existing applications, CyberGraphX was widely
+   adopted as the standard interface for truecolour applications at that time.
+    There were attempts to imitate this efforts but those never caught up
+   with the widely accepted CyberGraphX API.
+
+   MorphOS builds upon the above approach and still uses both graphics and
+   cybergraphics library as it's graphics API layer.
+   Additional functions have been added, especially in regard to alpha blending
+   support and other additional eyecandy which is commonly used within MorphOS.
+   Many of this functions are either GPU or AltiVec accelerated starting with
+   Version 2 of MorphOS, dynamically enabled based on the underlying hardware
+   which MorphOS has been started on.
+
+   OVERVIEW
+    This part only describes the extended CyberGraphX part of the actual
+   graphics API, more functions can be found in the related graphics.library
+   documentation.
+
+cybergraphics.library/--bitmap--
+
+ Bitmaps & CyberGraphX
+
+  Before OS 3.x there was no standard method to create bitmaps.  It was up
+ to the application programmer to allocate memory for the bitmap structure
+ and to get the plane pointers by subsequent calls to AllocRaster()/gfx.  A
+ InitBitMap() call was available to initialize various elements in the
+ bitmap structure.
+  Unfortunately some people didn't even use AllocRaster() and InitBitmap()
+ to setup their bitmaps but used AllocMem() and initialized the bitmap
+ structure on their own.
+  Because there was only one certain bitplane format description, it was no
+ problem to directly poke into the allocated planes.  It even was no problem
+ to alter the contents of the bitmap structure because the application had
+ total control over the location and the contents of this structure and
+ related plane pointers.
+
+  Starting with OS 3.x two new graphics calls were added to support bitmap
+ creation and removal:  AllocBitmap()/gfx and FreeBitmap()/gfx.  With this
+ calls the first step was made to allow custom bitmap formats.  Before it
+ was no problem at all to directly render into the planes or to make
+ assumptions about the structure of the bitmap data.  To get more
+ information about the bitmap data an information retrieval call was added:
+ GetBitmapAttr()/gfx.  With this one you could get information on the width,
+ height, depth and certain flags of the bitmap.  This was the first step
+ into the RTG direction.  As soon as GetBitmapAttr(bm,BMA_FLAGS) didn't
+ return BMF_STANDARD, the bitmap was not direct accessable anymore and could
+ only be accessed by attachment to a rastport and subsequent rendering calls
+ or by using blit calls with a standard amiga bitmap as destination.
+  Unfortunately many programs didn't follow these guide lines and didn't
+ check for the BMF_STANDARD flag with OS3.0 and above.  Up to now many
+ programs still use the methods described at the beginning of this chapter.
+ That's one reason why graphics extensions like CyberGraphX still have to
+ fiddle around with planar to chunky conversions, even if the underlying
+ hardware doesn't support planar graphics anymore.  This often leads to
+ dramatic speed losses with certain applications which often could be
+ redundant if standard rendering calls were used.
+  So please use AllocBitmap()/FreeBitmap() whereever possible when running
+ 3.x.  It really gives you a major performance improvement in most cases
+ when used on 3rd party display adapters.  Don't forget to add a friend
+ bitmap pointer whereever possible to allocate compatible bitmap structures.
+  With CyberGraphX you also have to add BMF_MINPLANES in the flags field of
+ AllocBitmap()/gfx.  This is due to bug in the standard picture.datatype
+ which doesn't check for BMF_STANDARD and directly pokes into the bitplanes
+ even if the returned bitmap is non planar ......  Using BMF_MINPLANES in a
+ non CyberGraphX environment remains still compatible and should not lead to
+ any problems, with CyberGraphX a chunky bitmap is returned, if a chunky
+ friendbitmap is supplied.  How to access the bitmap data will be discussed
+ later on.  Don't make assumptions on the bitmap contents before you have
+ called the required CyberGraphX library calls !!
+
+  Besides the AllocBitmap() friend bitmap method, AllocBitmap() has been
+ extended to allow for allocation of certain pixel format bitmaps when using
+ CyberGraphX.  With CyberGraphX, bitmaps aren't limited to planar image maps
+ or 8 bit chunky data (which wasn't even available with the standard
+ chipset/ graphics.library) anymore.  It is also possible now to allocate
+ device dependant pixel format bitmaps and standard 15/16/24/32 bit depth
+ image maps.  Therefore new bits in the 32bit flags field parameter of
+ AllocBitmap() have been added.  If you specify the BMB_SPECIALFMT bit (see
+ includes), the upper 8 bits of the flags longword contain information on
+ the pixel format of the requested bitmap.  The following pixel formats are
+ available:
+   PIXFMT_LUT8,PIXFMT_RGB15,PIXFMT_BGR15,PIXFMT_RGB15PC,PIXFMT_BGR15PC,
+   PIXFMT_RGB16,PIXFMT_BGR16,PIXFMT_RGB16PC,PIXFMT_BGR16PC,PIXFMT_RGB24,
+   PIXFMT_BGR24,PIXFMT_ARGB32,PIXFMT_BGRA32,PIXFMT_RGBA32 Many of this pixel
+ formats are device specific and should not be used, recommended formats are
+ PIXFMT_LUT8, PIXFMT_RGB16, PIXFMT_RGB24 and PIXFMT_ARGB32.
+  Once allocated, you can attach the returned bitmap to a rastport and do
+ rendering calls.  It is NOT possible to attach this bitmap to a screen by
+ supplying it as custom bitmap with OpenScreenTagList() !!
+  You are not allowed to directly poke into the bitmap image data as long as
+ the bitmap isn't locked !.  The location and contents of the image data is
+ subject to change and is only valid when it's locked by using the available
+ locking calls (see autodocs).  LockBitmapTags()/UnLockBitmap() has been
+ added for this purpose.  You HAVE TO supply a taglist with LockBitmapTags()
+ which contains pointers to longwords which are filled with valid data if
+ the call returns with a non-zero value.  Only if a non-zero value is
+ returned you are able to access the bitmap directly !  Check the address
+ you get back with the LBMI_BASEADDRESS tag.  This is the base address you
+ can do your rendering to.  Get the value of the LBMI_PIXFMT ULONG field to
+ get information on the colormodel you have to use for image rendering.  ALL
+ models have to be supported!  The other fields give you information on the
+ layout of the bitmap data.  It should be no problem, to directly render
+ into the bitmap anymore.  Keep in mind that all this values are only valid
+ until a subsequent call to UnLockBitmap().  Afterwards you have to lock the
+ bitmap again.  Don't hold this lock for longer than one frame !  You may
+ use the standard graphics.library bitmap blitting calls to copy the bitmap
+ contents to another bitmap.  Copying truecolour bitmaps into indexed colour
+ chunky bitmaps is not supported by now.
+cybergraphics.library/AllocCModeListTagList
+
+   NAME
+    AllocCModeListTagList -- get an exec list with requested modes.
+    AllocCModeListTags -- Varargs stub for AllocCModeListTagList
+
+   SYNOPSIS
+    result = AllocCModeListTagList( TagItems )
+    D0                               A1
+
+    APTR AllocCModeListTagList( struct TagItem * );
+
+    result = AllocCModeListTags( Tag1, ... )
+
+    APTR AllocCModeListTags( Tag Tag1, ... );
+
+   FUNCTION
+    Allocates a list structure which contains all requested modes (All nodes
+    are of type CyberModeNode). See defines for more information about the
+    structure of this nodes.
+
+   INPUTS
+    TagItems - pointer to an optional tag list which may be used to
+               control the number of returned modes
+
+   TAGS
+    Tags available are:
+
+    CYBRMREQ_MinWidth (ULONG) - The minimum display width to let the user
+            choose. Default is 320.
+
+    CYBRMREQ_MaxWidth (ULONG) - The maximum display width to let the user
+            choose. Default is 1600.
+
+    CYBRMREQ_MinHeight (ULONG) - The minimum display height to let the user
+            choose. Default is 240.
+
+    CYBRMREQ_MaxHeight (ULONG) - The maximum display height to let the user
+            choose. Default is 1200.
+
+    CYBRMREQ_MinDepth (UWORD) - The minimum display depth to let the user
+            choose. Default is 8.
+
+    CYBRMREQ_MaxDepth (UWORD) - The maximum display depth to let the user
+            choose. Default is 32.
+
+    CYBRMREQ_CModelArray (UWORD *) - Array of color models which should be
+                    available for screenmode selection. Currently supported
+                    colormodels are:
+                     PIXFMT_LUT8
+                     PIXFMT_RGB15
+                     PIXFMT_BGR15
+                     PIXFMT_RGB15PC
+                     PIXFMT_BGR15PC
+                     PIXFMT_RGB16
+                     PIXFMT_BGR16
+                     PIXFMT_RGB16PC
+                     PIXFMT_BGR16PC
+                     PIXFMT_RGB24
+                     PIXFMT_BGR24
+                     PIXFMT_ARGB32
+                     PIXFMT_BGRA32
+                     PIXFMT_RGBA32
+                    default is all colormodels available, nothing filtered
+            Make sure the array is terminated with ~0
+
+   RESULT
+    result - 0 if no modes are available, a pointer to a exec list if there
+         are modes which fit your needs.
+
+   NOTES
+    Even though it has always been documented that CYBRMREQ_MaxHeight defaults to
+    1200, all CyberGraphX versions default to 1600, actually
+    Starting with V51.32, CYBRMREQ_MaxWidth defaults to 1920 to avoid filtering
+    of the more common high resolution modes nowadays
+
+   SEE ALSO
+    FreeCModeList()
+
+
+cybergraphics.library/BestCModeIDTagList
+
+   NAME
+    BestCModeIDTagList -- calculate the best ModeID with given parameters
+    BestCModeIDTags -- Varags stub for BestCModeIDTagList
+
+   SYNOPSIS
+    ID = BestCModeIDTagList( TagItems )
+    D0                          A0
+
+        ULONG BestCModeIDTagList( struct TagItem * );
+
+    ID = BestCModeIDTags( Tag1, ...)
+
+        ULONG BestCModeIDTags( Tag, ... );
+
+   FUNCTION
+    To determine the CyberGraphX displaymode id which fits best to the
+    parameters set in the TagList.
+
+   INPUTS
+    TagItems - pointer to an array of TagItems
+
+   TAGS
+        CYBRBIDTG_Depth (ULONG) - depth the returned ModeID must support
+                                  Default is 8
+
+        CYBRBIDTG_NominalWidth (UWORD),
+        CYBRBIDTAG_NominalHeight (UWORD) - desired width and height the ModeID
+                                           should have
+
+        CYBRBIDTG_MonitorID (ULONG) - if multiple graphics boards are
+                                      installed in the system, you can choose
+                                      the desired one with this tag
+
+                Currently supported boards are:
+
+                    CYBERVISION
+                    PICCOLO
+                    PICASSO
+                    SPECTRUM
+                    DOMINO
+                    RETINAZ3
+                    PICCOSD64
+
+   RESULT
+    ID - id of the best mode to use, or INVALID_ID if a match could
+         not be found.
+
+   BUGS
+    Older versions return displaymode ids with wrong depth if the
+    desired color depth is not available.
+
+cybergraphics.library/BltBitMapAlpha
+
+   NAME
+    BltBitMapAlpha -- Blend a rectangular region of pixels in a BitMap. (v51)
+
+   SYNOPSIS
+      BltBitMapAlpha(SrcBitMap, SrcX, SrcY, DstBitMap,
+                      A0         D0:16 D1:16 A1
+        DstX, DstY, SizeX, SizeY, TagList)
+        D2:16 D3:16 D4:16  D5:16  A2
+
+    void BltBitMapAlpha(struct BitMap *, WORD, WORD, struct BitMap *,
+        WORD, WORD, WORD, WORD, struct TagItem *);
+
+   FUNCTION
+
+   INPUTS
+    SrcBitMap, DstBitMap - the BitMap(s) containing the
+                           rectangles
+    SrcX, SrcY - the x and y coordinates of the upper left corner
+                  of the source rectangle.  Valid range is positive
+                  signed integer such that the raster word's offset
+                  0..(32767-Size)
+    DstX, DstY - the x and y coordinates of the upper left
+                  corner of the destination for the rectangle.  Valid
+                  range is as for Src.
+    SizeX, SizeY - the size of the rectangle to be moved.
+
+    TagList - supported tags:
+
+        BLTBMA_DESTALPHAVALUE - Determines what happens to the destination
+                                pixel alpha component.
+
+            DESTALPHAVALUE_UNDEFINED:
+              The destination pixel alpha component value is undefined. The
+              driver chooses the blit method which executes the fastest.
+            DESTALPHAVALUE_ONE:
+              The destniation pixel alpha component value is set to all
+              bits being 1.
+            DESTALPHAVALUE_USESOURCE:
+              The destination pixel alpha component value is set to the
+              alpha component value of the source pixel.
+            DESTALPHAVALUE_USEDEST:
+              The destination pixel alpha component value is left unchanged.
+
+        BLTBMA_MIXLEVEL - Set the global 32bit left-justified alpha mix
+                          level, defaults to 0x80808080 (50%) if source alpha
+                          is not used, otherwise 0xFFFFFFFF (100%)
+
+
+        BLTBMA_USESOURCEALPHA - Use the supplied per pixel source alpha value
+                                if a non-zero data value is passed, disabled
+                                by default
+
+
+   RESULTS
+    NONE
+
+   NOTES
+    -   Uses hardware acceleration on dedicated hardware
+    -   Uses Altivec enabled code if hardware acceleration is not available
+        but an Altivec unit is available
+
+   SEE ALSO
+   graphics.library/ClipBlit()  graphics/library/BltBitMap() graphics/gfx.h
+
+cybergraphics.library/BltBitMapRastPortAlpha
+
+   NAME
+    BltBitMapRastPortAlpha -- Blends from source bitmap to destination
+                              rastport. (v51)
+
+   SYNOPSIS
+    error = BltBitMapRastPortAlpha
+            (srcbm, srcx, srcy, destrp, destX, destY, sizeX, sizeY, taglist)
+     D0      A0     D0    D1    A1      D2     D3     D4     D5     a2
+
+    BOOL BltBitMapRastPortAlpha
+         (struct BitMap *, WORD, WORD, struct RastPort *, WORD, WORD,
+          WORD, WORD, struct TagItem *);
+
+   FUNCTION
+    Blends from source bitmap to position specified in destination rastport
+    using .
+
+   INPUTS
+    srcbm   - a pointer to the source bitmap
+    srcx    - x offset into source bitmap
+    srcy    - y offset into source bitmap
+    destrp  - a pointer to the destination rastport
+    destX   - x offset into dest rastport
+    destY   - y offset into dest rastport
+    sizeX   - width of blit in pixels
+    sizeY   - height of blit in rows
+    taglist - optional taglist, see BltBitMapAlpha() for options and defaults
+
+   RESULT
+    TRUE
+
+   BUGS
+
+   NOTES
+    -   Uses hardware acceleration on dedicated hardware
+    -   Uses Altivec enabled code if hardware acceleration is not available
+        but an Altivec unit is available
+
+   SEE ALSO
+    BltBitMapAlpha() BltMaskBitMapRastPort() graphics/gfx.h graphics/rastport.h
+
+cybergraphics.library/BltTemplateAlpha
+
+   NAME
+    BltTemplateAlpha -- Blends an alpha mask into a rectangular area into the
+                        target RastPort. (v51)
+
+   SYNOPSIS
+    BltTemplateAlpha(SrcTemplate, SrcX, SrcMod, rp,
+                A0           D0:16  D1:16  A1
+        DstX,  DstY, SizeX, SizeY)
+        D2:16  D3:16 D4:16  D5:16
+
+    void BltTemplateAlpha(UBYTE *, WORD, WORD, struct RastPort *,
+         WORD, WORD, WORD, WORD);
+
+   FUNCTION
+    This function blends the alpha image in the template into the
+    RastPort using the current color and drawing mode at the
+    specified position.  The alpha template is assumed not to overlap
+    the destination.
+    If the alpha template falls outside the RastPort boundary, it is
+    truncated to that boundary.
+
+   INPUTS
+    SrcTemplate  - pointer to the alpha 8bit mask array.
+    SrcX         - x offset into the alpha mask
+    SrcMod       - number of bytes per row in alpha mask array.
+    rp           - pointer to destination RastPort.
+    DstX, DstY   - x and y coordinates of the upper left
+                   corner of the destination for the blit.
+    SizeX, SizeY - size of the rectangle to be used as the
+                   template.
+
+   NOTES
+
+   SEE ALSO
+    BltTemplate()  graphics/rastport.h
+
+cybergraphics.library/CModeRequestTagList
+
+   NAME
+    CModeRequestTagList -- get screenmode from user using a requester.
+    CModeRequestTags -- Varargs stub for CModeRequestTagList
+
+   SYNOPSIS
+    result = CModeRequestTagList( Requester, TagItems )
+    D0                                A0        A1
+
+    LONG CModeRequestTagList( APTR, struct TagItem * );
+
+    result = CModeRequestTags( Requester, Tag1, ... )
+
+    LONG CModeRequestTags( APTR, Tag, ...);
+
+   FUNCTION
+    Prompts the user for input by showing all available cybergraphics
+    screenmodes in a requester.
+    If the user cancels or the system aborts the request, FALSE is returned,
+    otherwise the displaymode id of the selected screenmode.
+
+   INPUTS
+    Requester - not used currently. You have to set it to NULL!
+    TagItems - pointer to an optional tag list which may be used to
+               control features of the requester
+
+   TAGS
+    Tags used for the screen mode requester
+
+    CYBRMREQ_Screen (struct Screen *) - Screen on which to open the requester.
+            default locale will be used.
+
+    CYBRMREQ_WinTitle (STRPTR) - Title to use for the requesting window.
+
+    CYBRMREQ_OKText (STRPTR) - Label of the positive gadget in the
+            requester. English default is "OK".
+
+    CYBRMREQ_CancelText (STRPTR) - Label of the negative gadget in the
+            requester. English default is "Cancel".
+
+    CYBRMREQ_MinWidth (ULONG) - The minimum display width to let the user
+            choose. Default is 320.
+
+    CYBRMREQ_MaxWidth (ULONG) - The maximum display width to let the user
+            choose. Default is 1600.
+
+    CYBRMREQ_MinHeight (ULONG) - The minimum display height to let the user
+            choose. Default is 240.
+
+    CYBRMREQ_MaxHeight (ULONG) - The maximum display height to let the user
+            choose. Default is 1200.
+
+    CYBRMREQ_MinDepth (UWORD) - The minimum display depth to let the user
+            choose. Default is 8.
+
+    CYBRMREQ_MaxDepth (UWORD) - The maximum display depth to let the user
+            choose. Default is 32.
+
+    CYBRMREQ_CModelArray (UWORD *) - Array of color models which should
+                    be available for screenmode selection. Currently
+                    supported colormodels are:
+
+            PIXFMT_LUT8
+            PIXFMT_RGB15
+            PIXFMT_BGR15
+            PIXFMT_RGB15PC
+            PIXFMT_BGR15PC
+            PIXFMT_RGB16
+            PIXFMT_BGR16
+            PIXFMT_RGB16PC
+            PIXFMT_BGR16PC
+            PIXFMT_RGB24
+            PIXFMT_BGR24
+            PIXFMT_ARGB32
+            PIXFMT_BGRA32
+            PIXFMT_RGBA32
+
+            default is all colormodels available, nothing filtered
+
+   RESULT
+    result - 0 if the user cancelled the requester or if something
+         prevented the requester from opening. If!= 0 the displaymode
+         id of the selected screenmode is returned.
+
+   BUGS
+    The requester structure is not supported in (v40).
+
+   NOTES
+    You should better use asl.library/AslRequest() instead.
+
+cybergraphics.library/CVideoCtrlTagList
+
+   NAME
+    CVideoCtrlTagList -- Control video output
+    CVideoCtrlTags -- Varargs stub for CVideoCtrlTagList
+
+   SYNOPSIS
+    CVideoCtrlTagList( ViewPort, TagItems )
+                          A0        A1
+
+    void CVideoCtrlTagList( struct ViewPort *, struct TagItem * );
+
+    CVideoCtrlTags( ViewPort, Tag1, ... )
+
+    void CVideoCtrlTags( struct ViewPort *, Tag tag1, ... );
+
+   FUNCTION
+    This function controls the video output of the gfx board to which the
+    specified ViewPort belongs to.
+
+   INPUTS
+    ViewPort - pointer to a ViewPort of a CyberGraphX screen
+    TagItems - taglist to control operation
+
+   TAGS
+
+    SETVC_DPMSLevel (ULONG)  Set the DPMS level for the specified viewport
+        Supported levels are:
+         DPMS_ON    Full operation
+         DPMS_STANDBY   Optional state of minimal power reduction
+         DPMS_SUSPEND   Significant reduction of power consumption
+         DPMS_OFF   Lowest level of power consumption
+
+   EXAMPLE
+    CVideoCtrlTags (&Scr->ViewPort,SETVC_DPMSLevel,DPMS_OFF,TAG_DONE);
+    // set DPMS level
+
+   NOTES
+    Some DPMS levels are not implemented for certain graphics cards
+
+
+
+cybergraphics.library/DoCDrawMethodTagList
+
+   NAME
+    DoCDrawMethodTagList -- Do the given hook for the supplied rastport
+    DoCDrawMethodTags -- Varargs stub for DoCDrawMethodTagList
+
+   SYNOPSIS
+    DoCDrawMethodTagList( Hook, RastPort, TagItems )
+                           A0      A1        A2
+
+    void DoCDrawMethodTagList( struct Hook *, struct RastPort *,
+                               struct TagItem * )
+
+    DoCDrawMethodTags( Hook, RastPort, Tag1, ... )
+
+    void DoCDrawMethodTags( struct Hook *, struct RastPort *,
+                            Tag1, ... )
+
+   FUNCTION
+    This function will call the given hook for the given rastport. Is is
+    mainly used to do direct bitmap modifications in a locked graphics
+    environment. You have to support ALL known color models, so only use
+    this call if you really need it!!
+
+
+   INPUTS
+    Hook - pointer to callback hook which will be called
+           with object == (struct RastPort *)
+           and message == [ (APTR) memptr,
+                            (ULONG) offsetx, (ULONG) offsety,
+                            (ULONG) xsize, (ULONG) ysize,
+                            (UWORD) bytesperrow, (UWORD) bytesperpix,
+                            (UWORD) colormodel]
+           Where colormodel is one of the following:
+            PIXFMT_LUT8
+            PIXFMT_RGB15
+            PIXFMT_BGR15
+            PIXFMT_RGB15PC
+            PIXFMT_BGR15PC
+            PIXFMT_RGB16
+            PIXFMT_BGR16
+            PIXFMT_RGB16PC
+            PIXFMT_BGR16PC
+            PIXFMT_RGB24
+            PIXFMT_BGR24
+            PIXFMT_ARGB32
+            PIXFMT_BGRA32
+            PIXFMT_RGBA32
+    RastPort- A pointer to a cybergraphics RastPort
+    TagItems - optional taglist, currently not used. Set it to NULL!
+
+   NOTES
+    Use this call only if you want high speed. Remember that you have to
+    handle all color models! Do not use ANY os functions in your hook.
+    They would cause unpredictable results.
+
+cybergraphics.library/ExtractColor
+
+   NAME
+        ExtractColor -- Extract the specified colour/CLUT value from a given
+        CyberGraphX RastPort into a single plane bitmap starting at
+        a certain x,y location and using the specified width and
+        height. (V41)
+
+   SYNOPSIS
+    result = ExtractColor(RastPort,SingleMap,Colour,sX,sY, Width, Height)
+    D0                     A0         A1      D0   D1 D2   D3      D4
+
+
+    LONG ExtractColor(struct RastPort *,struct BitMap *,ULONG, ULONG,
+                ULONG, ULONG, ULONG );
+
+   FUNCTION
+        ExtractColor -- Extract the specified colour/CLUT value from a given
+        CyberGraphX RastPort into a single plane bitmap starting at
+        a certain x,y location and using the specified width and
+        height. Use this function if you want to create masks.
+        (V41)
+
+   INPUTS
+    RastPort -  pointer to a CyberGraphX RastPort structure
+
+    SingleMap - planar destination bitmap that has at least a depth of
+        one and the minimum width and height specified.
+
+        Colour - the color that should be extracted in AARRGGBB format for
+        true color rastports or in indexed mode for CLUT rastports.
+        The ULONG coding is as follows (for rgb screens):
+                 AA - 8-bit alpha channel component
+              (set it to 00 if you do not use it!)
+                 RR - 8-bit red component of the pixel
+                 GG - 8-bit green component
+                 BB - 8-bit blue component
+
+        For CLUT rastports only the lowest byte is used as an index
+        value to a 256 colour lookup table
+
+    sX,sY - starting point in the RastPort that should be analyzed
+    Width,Height - size of the rectangle that should be analyzed
+
+   RESULT
+    result - returns TRUE if colour could be extraced, FALSE if not
+
+   NOTES
+    This call was a no-op in very early revisions of cybergraphics v41
+
+cybergraphics.library/FillPixelArray
+
+   NAME
+        FillPixelArray -- fill a rectangular area with the supplied ARGB value
+    starting at a specified x,y location and continuing through to another
+    x,y location within a certain RastPort
+
+   SYNOPSIS
+    count = FillPixelArray(RastPort,DestX, DestY,SizeX,SizeY,ARGB)
+    D0           A1     D0:16  D1:16 D2:16 D3:16 D4:32
+
+
+    LONG FillPixelArray(struct RastPort *,UWORD,UWORD,UWORD,UWORD,ULONG)
+
+   FUNCTION
+    For each pixel in a rectangular region, write the supplied color value
+    into the bitmap used to describe a particular rastport.
+
+   INPUTS
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+        ARGB  - the desired color in AARRGGBB format. Every component
+        allocates 8 bits of the returned longword. The coding is as
+        follows:
+
+                 AA - 8-bit alpha channel component
+              (set it to 00 if you do not use it !)
+                 RR - 8-bit red component of the pixel
+                 GG - 8-bit green component
+                 BB - 8-bit blue component
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+    This function should only be used on screens depths > 8 bits.
+
+   BUGS
+    In the current release this function only works on screen rastports.
+    Because of this limitation clipping is not supported.
+
+cybergraphics.library/FreeCModeList
+
+  NAME
+    FreeCModeList -- frees a previously allocated ModeList
+
+   SYNOPSIS
+    FreeCModeList( ModeList );
+                      A0
+
+    void FreeCModeList( struct List * );
+
+   FUNCTION
+    frees all data which was previously allocated by AllocCModeListTagList
+
+   INPUTS
+    ModeList - a list structure which contains all the mode data.
+
+   SEE ALSO
+    AllocCModeListTagList()
+
+cybergraphics.library/GetCyberIDAttr
+
+   NAME
+    GetCyberIDAttr -- Returns information about a cybergraphics id
+
+   SYNOPSIS
+    value = GetCyberIDAttr( Attribute, DisplayModeID )
+      D0                       D0            D1
+
+    ULONG GetCyberIDAttr( ULONG, ULONG );
+
+   FUNCTION
+        Returns information about a specified displaymode id.
+
+   INPUTS
+    Attribute - A number telling cybergraphics which attribute
+                of the displaymode id should be returned:
+
+                CYBRIDATTR_PIXFMT return the pixel format of the supplied
+                                  screenmode id
+
+                CYBRIDATTR_WIDTH  returns visible width in pixels
+                CYBRIDATTR_HEIGHT returns visible height in lines
+                CYBRIDATTR_DEPTH  returns bits per pixel
+                CYBRIDATTR_BPPIX  returns bytes per pixel
+
+    DisplayModeID - CyberGraphX displaymode id
+
+   NOTES
+    Unknown attributes are reserved for future use, and return (-1L).
+
+    You should know what you are doing if you call this function!
+    Don't apply it on a non cybergraphics displaymode!
+
+cybergraphics.library/GetCyberMapAttr
+
+   NAME
+    GetCyberMapAttr -- Returns information about a cybergraphics bitmap
+
+   SYNOPSIS
+    value = GetCyberMapAttr( BitMap, Attribute );
+     D0                        A0       D1
+
+    ULONG GetCyberMapAttr( struct BitMap *, ULONG );
+
+   FUNCTION
+    Determines information about a extended cybergraphics bitmap.
+    This function should be used instead of making any assumptions about
+    fields in the bitmap. This will provide future compatibility.
+
+   INPUTS
+    BitMap - pointer to a cybergraphics bitmap structure
+
+    Attribute - a number telling cybergraphics which attribute
+                of the bitmap should be returned:
+
+                CYBRMATTR_XMOD        returns bytes per row of the
+                                      supplied bitmap
+
+                CYBRMATTR_BPPIX       returns number of bytes per pixel
+
+                CYBRMATTR_PIXFMT      return the pixel format of the
+                                      bitmap
+
+                CYBRMATTR_WIDTH       return width of the bitmap in
+                                      pixels
+
+                CYBRMATTR_HEIGHT      return the height in lines
+
+                CYBRMATTR_DEPTH       returns bits per pixel
+
+                CYBRMATTR_ISCYBERGFX  returns TRUE if supplied bitmap is
+                                      a CyberGraphX one
+
+                CYBRMATTR_ISLINEARMEM returns TRUE if the related display
+                                      buffer supports linear memory access
+
+   NOTES
+    Unknown attributes are reserved for future use, and return (-1L).
+
+    You should know what you are doing if you call this function!
+    Always use the CYBRMATTR_ISCYBERGFX attribute first to check if the
+    bitmap is a CyberGraphX one.
+
+
+cybergraphics.library/InvertPixelArray
+
+   NAME
+        InvertPixelArray -- invert a rectangular area tarting at a specified x,y
+    location and continuing through to another x,y location within a certain
+    RastPort
+
+   SYNOPSIS
+    count = InvertPixelArray(RastPort,DestX, DestY,SizeX,SizeY)
+    D0             A1     D0:16  D1:16 D2:16 D3:16
+
+
+    LONG InvertPixelArray(struct RastPort *,UWORD,UWORD,UWORD,UWORD)
+
+   FUNCTION
+    Invert each pixel in a rectangular region.
+
+   INPUTS
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+    This function should only be used on screens depths > 8 bits.
+
+   BUGS
+    In V40 this function only works on screen rastports.
+    Since V41 clipping is supported and window rastports are allowed.
+
+cybergraphics.library/IsCyberModeID
+
+   NAME
+    IsCyberModeID -- returns whether supplied ModeID is a cybergraphics id
+
+   SYNOPSIS
+    result = IsCyberModeID( DisplayModeID )
+    D0                            D0
+
+    BOOL IsCyberModeID( ULONG );
+
+   FUNCTION
+    returns whether the supplied ModeID is a cybergraphics.library mode
+    identifier.
+
+   INPUTS
+    DisplayModeID -- a 32 bit display identifier.
+
+   RESULT
+    result - Flag to indicate if DisplayModeID is a CyberGraphX id
+
+
+cybergraphics.library/LockBitmapTagList
+
+   NAME
+    LockBitMapTagList -- Lock supplied BitMap for a short amount of time
+                             to allow direct memory access
+
+   SYNOPSIS
+    handle = LockBitmapTagList(bitmap,tags);
+    D0                           A0    A1
+
+    APTR LockBitMapTagList( APTR,struct TagItem * );
+
+    APTR LockBitMapTags( APTR,Tag1, ... );
+
+   FUNCTION
+
+   INPUTS
+        bitmap - pointer to a CyberGraphX bitmap pointer. please check if it is
+                 a cybermap by calling GetCyberMapAttr() first.
+    tags - pointer to a mandatory taglist which's tagdata pointer fields
+               contain valid longwords after a successful call.
+
+   TAGS
+    Tags used for the screen mode requester
+
+    LBMI_WIDTH (ULONG *) - points to a longword which contains the bitmap
+                               width after a succesful call
+    LBMI_HEIGHT (ULONG *) - points to a longword which contains the bitmap
+                                height after a succesful call
+    LBMI_DEPTH (ULONG *) - points to a longword which contains the bitmap
+                               depth after a successful call
+    LBMI_PIXFMT (ULONG *) - points to a longword which contains the used
+                                pixel format.
+
+            Possibly returned colormodels are:
+
+            PIXFMT_LUT8
+            PIXFMT_RGB15
+            PIXFMT_BGR15
+            PIXFMT_RGB15PC
+            PIXFMT_BGR15PC
+            PIXFMT_RGB16
+            PIXFMT_BGR16
+            PIXFMT_RGB16PC
+            PIXFMT_BGR16PC
+            PIXFMT_RGB24
+            PIXFMT_BGR24
+            PIXFMT_ARGB32
+            PIXFMT_BGRA32
+            PIXFMT_RGBA32
+
+    LBMI_BYTESPERPIX (ULONG *) - points to a longword which contains the
+                                     amount of bytes per pixel data.
+    LBMI_BYTESPERROW (ULONG *) - points to a longword which contains the
+                                     number of bytes per row for one bitmap
+                                     line
+    LBMI_BASEADDRESS (ULONG *) - points to a longword which contains the
+                                     bitmap base address. THIS ADDRESS IS ONLY
+                                     VALID INSIDE OF THE LOCK/UNLOCKBITMAP
+                                     CALL!!!!!!!!!
+
+
+   RESULT
+    handle - 0 if the bitmap could not be locked,!= 0 it contains a handle
+                 which should be passed to UnLockBitMap afterwards
+
+   NOTES
+        Only use this call if you really NEED the rendering speed, DON'T lock the
+        bitmap longer than for one frame. DON'T use any library calls while the
+        bitmap is locked! This function is considered low level.
+
+   BUGS
+    The LBMI_DEPTH tagitem pointer will always contain 8 even for deeper
+    bitmaps. Use GetCyberMapAttr() or graphics.library/GetBitMapAttr() to
+    get the correct depth.
+
+   SEE ALSO
+    UnLockBitMap(), UnLockBitMapTagList()
+
+cybergraphics.library/MovePixelArray
+
+   NAME
+        MovePixelArray -- move the color values of a rectangular area of
+    pixels starting at a specified x,y location and continuing through
+    to another x,y location within a certain RastPort
+
+   SYNOPSIS
+    count = MovePixelArray(SrcX, SrcY, RastPort,DstX , DstY ,SizeX, SizeY)
+    D0             D0:16 D1:16  A1      D2:16  D3:16 D4:16  D5:16
+
+    LONG MovePixelArray(UWORD,UWORD,struct RastPort *,UWORD,UWORD,UWORD,
+                UWORD)
+
+   FUNCTION
+    For each pixel in a rectangular region, move the pixel value from a
+    specified source to a specified destination
+
+   INPUTS
+    (SrcX,SrcY) - starting point in the destination rectangle
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the destination rectangle
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+
+   RESULT
+    count will be set to the number of pixels moved
+
+   NOTES
+    This function should only be used on screens depths > 8 bits.
+    The blitter can be used to move the data if the bitmap is in display
+    memory. This is way you should use this call.
+
+   BUGS
+    In the current release this function only works on screen rastports.
+    Because of that limitation clipping is not supported.
+
+cybergraphics.library/ProcessPixelArray
+
+   NAME
+        ProcessPixelArray -- process a rectangular area with the supplied operation
+    starting at a specified x,y location and continuing through to another
+    x,y location within a certain RastPort
+
+   SYNOPSIS
+    count = ProcessPixelArray(RastPort,DestX, DestY,SizeX,SizeY,Operation,Value,TagList)
+    D0           A1     D0:16  D1:16 D2:16 D3:16 D4:32          D5    A2
+
+
+    LONG ProcessPixelArray(struct RastPort *,UWORD,UWORD,UWORD,UWORD,ULONG,ULONG,struct TagItem *)
+
+   FUNCTION
+    For each pixel in a rectangular region, process the supplied operation
+    on the bitmap used to describe a particular rastport.
+
+   INPUTS
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be processed
+       Operation - POP_TINT
+                       Tint pixelarray with ARGB32 color in Value
+
+                   POP_BLUR
+                       Blur pixelarray
+
+                   POP_BRIGHTEN
+                       Brighten pixelarray by delta [0-255] in Value
+
+                   POP_DARKEN
+                       Darken pixelarray by delta [0-255] in Value
+
+                   POP_SETALPHA
+                       Set alpha value in rectangular region to Value [0-255]
+
+            POP_GRADIENT
+
+       Value       32bit value specific to operation
+       TagList     list of optional tagitems
+
+                POP_GRADIENT tags
+
+                   PPAOPTAG_GRADIENTTYPE
+
+                            GRADTYPE_HORIZONTAL
+                            GRADTYPE_VERTICAL
+
+                   PPAOPTAG_GRADCOLOR1
+                            32bit argb starting color value
+
+                   PPAOPTAG_GRADCOLOR2
+                            32bit argb end color value
+
+                   PPAOPTAG_GRADFULLSCALE
+                            full pixelwidth of gradient
+
+                   PPAOPTAG_GRADOFFSET
+                            offset in gradient (pixels)
+
+                    PPAOPTAG_GRADSYMCENTER (v51)
+
+                POP_BRIGHTEN/POP_DARKEN tags (v51)
+
+                    PPAOPTAG_RGBMASK (starting with 50.18/MorphOS1.4.5 release)
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+    This function should only be used on screens depths > 8 bits.
+
+   BUGS
+
+cybergraphics.library/ReadPixelArray
+
+   NAME
+        ReadPixelArray -- Read the color values of a rectangular array of
+    pixels starting at a specified x,y location and continuing through
+    to another x,y location within a certain RastPort
+
+   SYNOPSIS
+    count = ReadPixelArray(destRect,DestX,DestY,DestMod,RastPort,SrcX ,
+    D0            A0    D0:16 D1:16 D2:16     A1     D3:16
+                SrcY ,SizeX,SizeY,DestFormat)
+                D4:16 D5:16 D6:16    D7
+
+    LONG ReadPixelArray(APTR,UWORD,UWORD,UWORD,struct RastPort *,UWORD,
+                UWORD,UWORD,UWORD,UBYTE)
+
+   FUNCTION
+    For each pixel in a rectangular region, write the color value to a
+    linear array of color values from the bitmap used to describe a
+    particular rastport.
+
+   INPUTS
+    destRect - pointer to an array of pixels where to write the pixel
+               data to. The pixel format is specified in DestFormat
+    (DestX,DestY) - starting point in the destination rectangle
+    DestMod - The number of bytes per row in the destination rectangle.
+    RastPort -  pointer to a RastPort structure
+    (SrcX,SrcY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+    DestFormat - pixel format in the destination rectangle
+                Currently supported formats are:
+
+                RECTFMT_RGB  3 bytes per pixel, one byte red, one blue
+                             and one byte green component
+
+                RECTFMT_RGBA 4 bytes per pixel, one byte red, one blue,
+                             one byte green component and the last
+                                 byte is alpha channel information which
+                         is 0 if the board does not support alpha
+                                 channel
+
+                RECTFMT_ARGB 4 bytes per pixel, one byte red, one blue,
+                             one byte green component and the first
+                                 byte is alpha channel information. If the
+                                 board does not support alpha channel a
+                         0 is returned for alpha channel information
+
+   RESULT
+    count will be set to the number of pixels read
+
+   NOTES
+    This function should only be used on screens depths > 8 bits.
+
+   BUGS
+    The count value returned is totally wrong.
+
+   SEE ALSO
+    WritePixelArray(), graphics.library/ReadPixelArray8()
+
+cybergraphics.library/ReadRGBPixel
+
+   NAME
+        ReadRGBPixel -- Reads a pixel from a specified location
+
+   SYNOPSIS
+        color = ReadRGBPixel(RastPort,x ,y )
+        D0                     A1     D0 D1
+
+        ULONG ReadRGBPixel(struct RastPort *,UWORD,UWORD);
+
+   FUNCTION
+    Read the alpha,red,green & blue 8-bit color components of the pixel at
+        a specified x,y location within a certain RastPort
+
+   INPUTS
+    rp -  pointer to a RastPort structure
+        x,y    - the coordinates of the pixel
+
+   RESULT
+        color  - the desired color in AARRGGBB format. Every component
+         allocates 8 bits in the returned longword. The coding is as
+         follows:
+
+                 AA - 8-bit alpha channel component
+              (boards which do not have an alpha channel return 00)
+                 RR - 8-bit red component of the pixel
+                 GG - 8-bit green component
+                 BB - 8-bit blue component
+
+  NOTES
+    This function should only be used on screens depths > 8 bits. Use
+    ReadPixel() on 8 bit screens!
+
+  SEE ALSO
+    WriteRGBPixel()
+
+cybergraphics.library/ScalePixelArray
+
+   NAME
+       ScalePixelArray -- Scale the colors value of a rectangular array of
+    pixels starting at a specified x,y location and continuing through
+    to another x,y location within a certain RastPort (V41)
+
+   SYNOPSIS
+    count = ScalePixelArray(srcRect,SrcW,SrcH ,SrcMod,RastPort,DestX,
+    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
+                DestY,DestW,DestH,SrcFormat)
+                D4:16 D5:16 D6:16    D7
+
+    LONG ScalePixelArray(APTR,UWORD,UWORD,UWORD,struct RastPort *,UWORD,
+                 UWORD,UWORD,UWORD,UBYTE)
+
+   FUNCTION
+    For each pixel in a rectangular region, scale the color values from a
+    linear array of color values into the bitmap used to describe a
+    particular rastport.
+
+   INPUTS
+    srcRect - pointer to an array of pixels from which to fetch the
+              pixel data. The pixel format is specified in SrcFormat
+    (SrcW,SrcH) - Width and Height of the source rectangle
+    SrcMod - The n umber of bytes per row in the source rectangle.
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (DestW,DestH) - size of the destination area
+    SrcFormat - pixel format in the source rectangle
+                Currently supported formats are:
+
+                RECTFMT_RGB  3 bytes per pixel, one byte red, one blue
+                             and one byte green component
+
+
+                RECTFMT_RGBA 4 bytes per pixel, one byte red, one blue,
+                             one byte green component and the last
+                                byte is alpha channel information. If you
+                                do not use alpha channel set this byte to
+                         0 !!!
+
+                RECTFMT_ARGB 4 bytes per pixel, one byte red, one blue,
+                             one byte green component and the first
+                                byte is alpha channel information. If you
+                                do not use alpha channel set this byte to
+                         0 !!!
+                RECTFMT_GREY8 (v50)
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+    This function should only be used on screens depths > 8 bits.
+
+   BUGS
+    In the V40 release this function only works on screen rastports.
+    Because of that limitation clipping was not supported.
+       This was fixed in V41
+
+
+cybergraphics.library/ScalePixelArrayAlpha
+
+   NAME
+       ScalePixelArrayAlpha -- Scale the colors value of a rectangular array of
+    pixels starting at a specified x,y location and continuing through
+    to another x,y location within a certain RastPort (v51)
+
+   SYNOPSIS
+    count = ScalePixelArrayAlpha(srcRect,SrcW,SrcH ,SrcMod,RastPort,DestX,
+    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
+                DestY,DestW,DestH,GlobalAlpha)
+                D4:16 D5:16 D6:16    D7
+
+    LONG ScalePixelArrayAlpha(APTR,UWORD,UWORD,UWORD,struct RastPort *,UWORD,
+                 UWORD,UWORD,UWORD,UBYTE)
+
+   FUNCTION
+    For each pixel in a rectangular region, scale and blend the color values from
+    a linear alpha array of truecolor values into the bitmap used to describe a
+    particular rastport.
+
+   INPUTS
+    srcRect       - pointer to an array of pixels from which to fetch the
+                    pixel data. The pixel format is fixed to RECTFMT_ARGB and
+                    the alpha 8bit value is used to blend the data into the
+                    target
+    (SrcW,SrcH)   - Width and Height of the source rectangle
+    SrcMod        - The number of bytes per row in the source rectangle.
+    RastPort      -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (DestW,DestH) - size of the destination area
+    GlobalAlpha   - 32bit left justified global alpha value, e.g. use
+                    0xFFFFFFFF for full opacity. This global value is combined
+                    with the per pixel alpha of the source rectangle
+
+   RESULT
+    none
+
+   NOTES
+    - This function should only be used on screens depths > 8 bits.
+    - Uses hardware acceleration on dedicated hardware
+
+   BUGS
+
+cybergraphics.library/UnLockBitMap
+
+   NAME
+    UnLockBitMap -- Unlock CyberGraphX BitMap that was previously locked
+
+   SYNOPSIS
+    UnLockBitmap( Handle )
+                        A0
+
+    void UnLockBitMap( APTR );
+
+   FUNCTION
+        Unlock CyberGraphX BitMap that was previously locked
+
+   INPUTS
+        handle - handle to the previously locked BitMap
+
+   SEE ALSO
+    LockBitMapTagList()
+
+cybergraphics.library/UnLockBitmapTagList
+
+   NAME
+    UnLockBitMapTagList -- Unlock CyberGraphX BitMap that was previously
+        locked
+    UnLockBitMapTags -- Varargs stub for UnLockBitMapTagList
+
+   SYNOPSIS
+    UnLockBitmapTagList( Handle, Tags )
+                              A0      A1
+
+    void UnLockBitMapTagList( APTR, struct TagItem * );
+
+    void UnLockBitMapTags( APTR, Tag1, ... );
+
+   FUNCTION
+        Unlock CyberGraphX BitMap that was previously locked
+
+   INPUTS
+        handle - handle to the previously locked BitMap
+
+    Tags - pointer to a mandatory taglist
+   TAGS
+    UBMI_UPDATERECTS (struct RectList *) - pointer to a rectlist which
+        contains rectangles that should be updated. This is needed for
+        cards that don't have a linear display memory address space
+        The RectList structure looks like this:
+            struct RectList
+            {
+             ULONG rl_num;         // no. of rects in this list
+             struct RectList *rl_next; // pointer to next list
+             struct Rectangle rect1;   // This is the first
+                ..         // rectangle followed by
+                ..         // rl_num-1 rectangles
+                ..
+            }
+    UBMI_REALLYUNLOCK (BOOL) - Specifies whether bitmap should really be
+        unlocked (TRUE) or not (FALSE) in case you just want to update
+        certain rectangles and unlock later.
+
+   BUGS
+    Very early v40 revisions did not support this call
+
+   SEE ALSO
+    LockBitMapTagList(), UnLockBitMap()
+
+
+cybergraphics.library/WriteLUTPixelArray
+
+   NAME
+         WriteLUTPixelArray -- write the color value generated from a given
+    color table of a rectangular array of pixels starting at a specified
+    x,y location and continuing through to another x,y location within
+    a certain RastPort (V41)
+
+   SYNOPSIS
+    count = WriteLUTPixelArray(srcRect,SrcX ,SrcY ,SrcMod,RastPort,
+    D0                A0   D0:16 D1:16 D2:16     A1
+            CTable,DestX,DestY,SizeX,SizeY,CTabFormat)
+              A2   D3:16 D4:16 D5:16 D6:16      D7
+
+    LONG WriteLUTPixelArray(APTR,UWORD,UWORD,UWORD,struct RastPort *,APTR,
+                         UWORD, UWORD,UWORD,UWORD,UBYTE)
+
+   FUNCTION
+    For each pixel in a rectangular region, write the color value
+    generated with a given color lookup table from a linear array of
+        indexed pixel values into the bitmap used to describe a particular
+    rastport.
+
+   INPUTS
+    srcRect - pointer to an array of pixels from which to fetch the
+              CLUT data. Pixels are specified in bytes, 8bits/pixel.
+    (SrcX,SrcY) - starting point in the source rectangle
+    SrcMod - The number of bytes per row in the source rectangle.
+    RastPort -  pointer to a RastPort structure
+    CTable - pointer to the color table using the format specified
+        with CTabFormat
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+    CTabFormat - color table format in the source rectangle
+        Currently supported formats are:
+         CTABFMT_XRGB8 - CTable is a pointer to a ULONG table
+            which contains 256 entries. Each entry specifies the
+            rgb colour value for the related index. The format
+            is XXRRGGBB.
+
+                     XX - unused
+                     RR - 8-bit red component of the pixel
+                     GG - 8-bit green component
+                     BB - 8-bit blue component
+
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+    Does only work on rastports with depth > 8bits
+
+   BUGS
+    The count value returned is totally wrong.
+    With cgxsystem.library up to version 41.19, the call returns
+    immediately with CTABFMT_XRGB8 due to a bug in the code
+
+   SEE ALSO
+    ReadPixelArray(), WritePixelArray(),
+    graphics.library/WritePixelArray8()
+
+cybergraphics.library/WritePixelArray
+
+   NAME
+        WritePixelArray -- write the color value of a rectangular array of
+    pixels starting at a specified x,y location and continuing through
+    to another x,y location within a certain RastPort
+
+   SYNOPSIS
+    count = WritePixelArray(srcRect,SrcX ,SrcY ,SrcMod,RastPort,DestX,
+    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
+                DestY,SizeX,SizeY,SrcFormat)
+                D4:16 D5:16 D6:16    D7
+
+    LONG WritePixelArray(APTR,UWORD,UWORD,UWORD,struct RastPort *,UWORD,
+                 UWORD,UWORD,UWORD,UBYTE)
+
+   FUNCTION
+    For each pixel in a rectangular region, write the color value from a
+    linear array of color values into the bitmap used to describe a
+    particular rastport.
+
+   INPUTS
+    srcRect - pointer to an array of pixels from which to fetch the
+              pixel data. The pixel format is specified in SrcFormat
+    (SrcX,SrcY) - starting point in the source rectangle
+    SrcMod - The number of bytes per row in the source rectangle.
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+    SrcFormat - pixel format in the source rectangle
+                Currently supported formats are:
+
+                RECTFMT_RGB  3 bytes per pixel, one byte red, one blue
+                             and one byte green component
+
+                RECTFMT_RGBA 4 bytes per pixel, one byte red, one blue,
+                             one byte green component and the last
+                                 byte is alpha channel information. If you
+                                 do not use alpha channel set this byte to
+                         0 !!!
+
+                RECTFMT_ARGB 4 bytes per pixel, one byte red, one blue,
+                             one byte green component and the first
+                                 byte is alpha channel information. If you
+                                 do not use alpha channel set this byte to
+                         0 !!!
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+    This function should only be used on screens depths > 8 bits. Use
+    WritePixelArray8() on 8 bit screens !
+
+   BUGS
+
+cybergraphics.library/WritePixelArrayAlpha
+
+   NAME
+        WritePixelArrayAlpha -- blend the color value of a rectangular array of
+    pixels starting at a specified x,y location and continuing through
+    to another x,y location within a certain RastPort
+
+   SYNOPSIS
+    count = WritePixelArrayAlpha(srcRect,SrcX ,SrcY ,SrcMod,RastPort,DestX,
+    D0                              A0   D0:16 D1:16 D2:16     A1    D3:16
+                                 DestY,SizeX,SizeY,GlobalAlpha)
+                                 D4:16 D5:16 D6:16    D7
+
+    LONG WritePixelArrayAlpha(APTR,UWORD,UWORD,UWORD,struct RastPort *,UWORD,
+                              UWORD,UWORD,UWORD,ULONG)
+
+   FUNCTION
+    For each pixel in a rectangular region, write the color value from a
+    linear array of color values into the bitmap used to describe a
+    particular rastport, taking into account alpha for individual pixels as
+    well as global alpha.
+
+   INPUTS
+    srcRect - pointer to an array of pixels from which to fetch the
+              pixel data. The pixel format is always RECTFMT_ARGB
+    (SrcX,SrcY) - starting point in the source rectangle
+    SrcMod - The number of bytes per row in the source rectangle.
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+       GlobalAlpha - 32 bit unsigned left justified fraction (1.0 = 0xffffffff)
+
+
+   RESULT
+    count will be set to the number of pixels plotted
+
+   NOTES
+       Only currently supported pixelformat is RECTFMT_ARGB
+
+   BUGS
+
+cybergraphics.library/WriteRGBPixel
+
+  NAME
+        WriteRGBPixel -- Writes a pixel to a specified location
+
+   SYNOPSIS
+        error = WriteRGBPixel(RastPort,x ,y ,color)
+        D0                      A1     D0 D1 D2
+
+        ULONG WriteRGBPixel(struct RastPort *,UWORD,UWORD,ULONG);
+
+   FUNCTION
+    Write the Alpha,Red,Green & Blue 8-bit color value of the given color
+    to a specified x,y location within a certain RastPort
+
+   INPUTS
+    rp     - pointer to a RastPort structure
+        x,y    - the coordinates of the pixel
+        color  - the desired color in AARRGGBB format. Every component
+         allocates 8 bits of the returned longword. The coding is as
+         follows:
+
+                 AA - 8-bit alpha channel component
+              (set it to 00 if you dont want to use it!)
+                 RR - 8-bit red component of the pixel
+                 GG - 8-bit green component
+                 BB - 8-bit blue component
+
+   RESULT
+    error = 0 if pixel succesfully changed
+          = -1 if (x,y) is outside the rastport
+
+   NOTES
+    This function should only be used on screens depths > 8 bits. Use
+    WritePixel() on 8 bit screens!
+
+

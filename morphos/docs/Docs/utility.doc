@@ -1,0 +1,1321 @@
+TABLE OF CONTENTS
+
+utility.library/--background--
+utility.library/AddNamedObject
+utility.library/AllocNamedObjectA
+utility.library/AllocateTagItems
+utility.library/Amiga2Date
+utility.library/ApplyTagChanges
+utility.library/AttemptRemNamedObject
+utility.library/CallHookPkt
+utility.library/CheckDate
+utility.library/CloneTagItems
+utility.library/Date2Amiga
+utility.library/FilterTagChanges
+utility.library/FilterTagItems
+utility.library/FindNamedObject
+utility.library/FindTagItem
+utility.library/FreeNamedObject
+utility.library/FreeTagItems
+utility.library/GetTagData
+utility.library/GetUniqueID
+utility.library/MapTags
+utility.library/NamedObjectName
+utility.library/NextTagItem
+utility.library/PackBoolTags
+utility.library/PackStructureTags
+utility.library/RefreshTagItemClones
+utility.library/ReleaseNamedObject
+utility.library/RemNamedObject
+utility.library/SDivMod32
+utility.library/SMult32
+utility.library/SMult64
+utility.library/Stricmp
+utility.library/Strnicmp
+utility.library/TagInArray
+utility.library/ToLower
+utility.library/ToUpper
+utility.library/UDivMod32
+utility.library/UMult32
+utility.library/UMult64
+utility.library/UnpackStructureTags
+utility.library/--background--
+
+   Function reference
+
+
+
+   Date functions
+
+    utility.library/Amiga2Date()
+    utility.library/Date2Amiga()
+    utility.library/CheckDate()
+
+
+   Hook functions
+
+    utility.library/CallHookPkt()
+
+
+   International string functions
+
+    utility.library/Stricmp()
+    utility.library/Strnicmp()
+    utility.library/ToUpper()
+    utility.library/ToLower()
+
+
+   Math functions
+
+    The math functions only exist for legacy compatibility and shouldn't be used
+    anymore. They can be substituted by standard 32/64bit math in most compilers
+
+    utility.library/SMult32()
+    utility.library/UMult32()
+    utility.library/SDivMod32()
+    utility.library/UDivMod32()
+    utility.library/SMult64()
+    utility.library/UMult64()
+
+
+   Object-oriented namespace functions
+
+    utility.library/AddNamedObject()
+    utility.library/AllocNamedObjectA()
+    utility.library/AttemptRemNamedObject()
+    utility.library/FindNamedObject()
+    utility.library/FreeNamedObject()
+    utility.library/NamedObjectName()
+    utility.library/ReleaseNamedObject()
+    utility.library/RemNamedObject()
+
+
+   TagItem related functions
+
+    utility.library/ApplyTagChanges()
+    utility.library/AllocateTagItems()
+    utility.library/CloneTagItems()
+    utility.library/FilterTagChanges()
+    utility.library/FilterTagItems()
+    utility.library/FindTagItem()
+    utility.library/FreeTagItems()
+    utility.library/GetTagData()
+    utility.library/MapTags()
+    utility.library/NextTagItem()
+    utility.library/PackBoolTags()
+    utility.library/PackStructureTags()
+    utility.library/RefreshTagItemClones()
+    utility.library/TagInArray()
+    utility.library/UnpackStructureTags()
+
+
+   Unique ID generation function(s)
+
+    utility.library/GetUniqueID()
+
+utility.library/AddNamedObject
+
+    AddNamedObject --
+
+   SYNOPSIS
+
+    BOOL AddNamedObject( struct NamedObject *nameSpace, struct NamedObject *object );
+
+   FUNCTION
+
+
+   INPUTS
+
+    nameSpace  -
+    object  -
+
+   RESULT
+
+
+utility.library/AllocNamedObjectA
+
+    AllocNamedObjectA --
+
+   SYNOPSIS
+
+    struct NamedObject *AllocNamedObjectA( CONST_STRPTR name, CONST struct TagItem *tagList );
+
+    struct NamedObject *AllocNamedObject( CONST_STRPTR name, Tag tag1, ... );
+
+   FUNCTION
+
+
+   INPUTS
+
+    name  -
+    tagList  -
+
+   RESULT
+
+
+utility.library/AllocateTagItems
+
+ NAME
+   AllocateTagItems -- allocates a new tag list (V39)
+
+ SYNOPSIS
+   tag_list = AllocateTagItems(item_count);
+
+   struct TagItem* AllocateTagItems(ULONG);
+
+ FUNCTION
+   Allocates a memory block for a tag list of specified length. The block is
+   cleared to all zeros. After use the block must be freed with
+   FreeTagItems(). For the purpose of filling the tag list, it may be
+   treated as a continuous table. Note that any manipulation on the tag list
+   may result in insertion of special tags, so NextTagItem() function must
+   be used for traversing the list after filling.
+
+   Space for terminating TAG_END item is not implied, it must be added to
+   item count.
+
+ INPUTS
+   item_count - number of tag items to be allocated
+
+ RESULT
+   tag_list - allocated and cleared tag list or NULL when out of memory
+
+ SEE ALSO
+   FreeTagItems(), CloneTagItems()
+
+utility.library/Amiga2Date
+
+ NAME
+   Amiga2Date -- converts system time to date (V39)
+
+ SYNOPSIS
+   Amiga2Date(systime, result)
+
+   VOID Amiga2Date(ULONG, struct ClockData*);
+
+ FUNCTION
+   Converts the system time to human-readable date stored in ClockData
+   structure. The system time is expressed in seconds and is counted from
+   1978-01-01 00:00:00. This number of seconds is converted to year, month,
+   month day, week day, hours, minutes and seconds. Calculated values are
+   stored in a ClockData structure pointed by the second argument.
+
+ INPUTS
+   systime - time expressed as number od seconds from 1978-01-01 00:00:00
+   result - pointer to ClockData structure being filled
+
+ RESULT
+   None. This function always succeeds.
+
+ NOTES
+   Amiga2Date() ignores leap seconds (not to be confused with leap years),
+   which have been added to some years in the past. Then the result for past
+   dates may differ to UTC by up to 17 seconds, depending of year and month.
+   At the time of writing (August 2011), the latest leap second has been
+   added at the end of year 2008.
+
+ SEE ALSO
+   Date2Amiga(), CheckDate(), dos.library/DateStamp(),
+   locale.library/FormatDate(), locale.library/ParseDate()
+
+utility.library/ApplyTagChanges
+
+ NAME
+   ApplyTagChanges -- applies list of changes to tag list data fields (V39)
+
+ SYNOPSIS
+   ApplyTagChanges(list, changes);
+
+   VOID ApplyTagChanges(struct TagItem*, const struct TagItem*);
+
+ FUNCTION
+   The function traverses the first argument (main) tag list. For every
+   non-special tag it searches for a tag with the same identifier in the
+   change list. If found, contents of data field in the change tag is
+   copied to data field of the main list tag.
+
+ INPUTS
+   list - a tag list to which changes are applied
+   changes - a tag list containing change tags with new data
+
+ RESULT
+   None. This function never fails.
+
+ SEE ALSO
+   FilterTagChanges()
+
+utility.library/AttemptRemNamedObject
+
+    AllocNamedObjectA --
+
+   SYNOPSIS
+
+    LONG AttemptRemNamedObject( struct NamedObject *object );
+
+   FUNCTION
+
+
+   INPUTS
+
+    object  -
+
+   RESULT
+
+
+utility.library/CallHookPkt
+
+ NAME
+   CallHookPkt -- calls standard callback hook (V39)
+
+ SYNOPSIS
+   result = CallHookPkt(hook, object, message);
+
+   LONG CallHookPkt(struct Hook*, APTR, APTR);
+
+ FUNCTION
+   Jumps to a callback function described by Hook structure. Hook pointer,
+   object and message can be received in the callback function in virtual
+   M68k registers A0, A2 and A1 respectively. Hook callbacks are often used
+   when a system component need to run application provided code, as hook
+   mechanism is programming language independent.
+
+ INPUTS
+   hook - pointer to Hook structure describing the callback
+   object - pointer to abstract object, passed to the callback function
+   message - pointer to abstract message, passed to the callback function
+
+ RESULT
+   Value returned from callback hook.
+
+ EXAMPLE
+   /* callback function */
+
+   LONG cb_func(void)
+   {
+     struct Hook *h = (struct Hook*)REG_A0;
+     APTR object = (APTR)REG_A2;
+     APTR message = (APTR)REG_A1;
+
+     /* ... */
+
+     return 0;   /* 0 is just an example */
+   }
+
+   /* definition of Hook and gate */
+
+   struct EmulLibEntry cb_gate = { TRAP_LIB, 0, (void(*)(void))cb_func };
+   struct Hook cb_hook = { NULL, NULL, (HOOKFUNC)&cb_gate, NULL, NULL };
+
+   /* calling the hook */
+
+   result = CallHookPkt(&cb_hook, object, message);
+
+utility.library/CheckDate
+
+ NAME
+   CheckDate -- validates and converts date to system time (V39)
+
+ SYNOPSIS
+   systime = CheckDate(date)
+
+   ULONG CheckDate(ULONG, struct ClockData*);
+
+ FUNCTION
+   Performs range validation of ClockData structure fields. If the date is
+   valid, converts the date stored in a ClockData structure into system time
+   measured as number of seconds since 1978-01-01 00:00:00. Zero is returned
+   if any of fields is out of range, or the date as a whole is not
+   representable as system time. Range of representable dates starts from
+   1978-01-01 00:00:00 (time 0) and ends on 2114-02-07 06:28:15 (time 2^32 -
+   1). CheckDate() limits it to the end of year 2113 to create some safety
+   margin.
+
+ INPUTS
+   date - pointer to filled ClockData structure
+
+ RESULT
+   systime - system time as seconds since 1978-01-01 00:00:00, or 0 in case
+   of invalid date.
+
+ NOTES
+   CheckDate() ignores leap seconds (not to be confused with leap years),
+   which have been added to some years in the past. Then the result for past
+   dates may differ to UTC by up to 17 seconds, depending of year and month.
+   At the time of writing (August 2011), the latest leap second has been
+   added at the end of year 2008.
+
+   There is no way to make difference between invalid date and date of
+   1978-01-01 00:00:00.
+
+   CheckDate() does not validate the day of week.
+
+ SEE ALSO
+   Amiga2Date(), Date2Amiga(), dos.library/DateStamp(),
+   locale.library/FormatDate(), locale.library/ParseDate()
+
+utility.library/CloneTagItems
+
+ NAME
+   CloneTagItems -- creates a cleaned up copy of tag list (V39)
+
+ SYNOPSIS
+   copy = CloneTagItems(taglist);
+
+   struct TagItem* CloneTagItems(struct TagItem*);
+
+ FUNCTION
+   Creates a clone of a taglist. The original tag list is first iterated
+   with NextTagItem() to count tags. Then a continuous block of memory is
+   allocated for the copy. The second iteration on original list copies
+   all non-special tags into the allocated block. Finally TAG_END
+   terminator is stored after the end of copy.
+
+   It is guarranted by design that both original and clone, when iterated
+   with NextTagItem() will give all tags in exactly the same order and the
+   same data. As a sideeffect, cloned tag list is cleaned up of all special
+   tags except the terminator. If original list consists of some fragments
+   linked with TAG_MORE, CloneTagItems() merges these fragments into one
+   block. Cloned tag list must be freed with FreeTagItems().
+
+ INPUTS
+   taglist - pointer to original tag list. Accepts NULL as an empty tag
+     list.
+
+ RESULT
+   copy - cloned taglist or NULL if out of memory.
+
+ SEE ALSO
+   AllocateTagItems(), FreeTagItems()
+
+utility.library/Date2Amiga
+
+ NAME
+   Date2Amiga -- converts date to system time (V39)
+
+ SYNOPSIS
+   systime = Date2Amiga(date)
+
+   ULONG Date2Amiga(ULONG, struct ClockData*);
+
+ FUNCTION
+   Converts the human-readable date stored in a ClockData structure into
+   system time measured as number of seconds since 1978-01-01 00:00:00.
+   The ClockData structure stores date as follows:
+     sec - second from 0 to 59,
+     min - minute from 0 to 59,
+     hour - hour from 0 to 23,
+     mday - day of the month from 1 to 31, upper limit depending on month,
+     month - from 1 to 12,
+     year - from 1978 to 2113 (see below).
+     wday - weekday from 0 to 6 (0 is Sunday).
+
+   Validity of fields is not checked. Passing values not representing a
+   proper date or representing date outside of the valid range, will yield
+   unpredictable result. Valid range of dates starts on 1978-01-01 00:00:00
+   (time 0) and ends on 2114-02-07 06:28:15 (time 2^32 - 1).
+
+   Weekday field is ignored by Date2Amiga().
+
+ INPUTS
+   date - pointer to filled ClockData structure
+
+ RESULT
+   systime - system time as seconds since 1978-01-01 00:00:00.
+
+ NOTES
+   Date2Amiga() ignores leap seconds (not to be confused with leap years),
+   which have been added to some years in the past. Then the result for past
+   dates may differ to UTC by up to 17 seconds, depending of year and month.
+   At the time of writing (August 2011), the latest leap second has been
+   added at the end of year 2008.
+
+ SEE ALSO
+   Amiga2Date(), CheckDate(), dos.library/DateStamp(),
+   locale.library/FormatDate(), locale.library/ParseDate()
+
+utility.library/FilterTagChanges
+
+ NAME
+   FilterTagChanges -- detects and applies changes in tag data (V39)
+
+ SYNOPSIS
+   FilterTagChanges(changes, original, apply);
+
+   VOID FilterTagChanges(struct TagItem*, struct TagItem*, ULONG);
+
+ FUNCTION
+   Compares tag list of changes with the original taglist. All tags
+   specifying no change (the same identifier, the same data) are removed
+   from list of changes. Then, if apply argument is TRUE, for all tags left
+   in change list, their data are set for corresponding tags on the original
+   list.
+
+   Original list is searched from the start for every tag on change list. If
+   the original list contains duplicated tag (with the same identifier),
+   only the first one will be affected, even if change list has the tag
+   duplicated too. Because of this, duplicated tags should be avoided in
+   both the change list (duplicated tags have no effect) and original list
+   (changes in duplicated tags cannot be detected and applied).
+
+ INPUTS
+   changes - list of tags to detect changes. NULL is allowed and treated as
+     empty tag list.
+   original - list of tags to be checked for changes. NULL is allowed and
+     treated as empty tag list.
+   apply - controls if changes detected should be applied to original list
+
+ RESULT
+
+ SEE ALSO
+   AllocateTagItems(), FreeTagItems()
+
+utility.library/FilterTagItems
+
+ NAME
+   FilterTagItems -- selectively removes tags from tag list (V39)
+
+ SYNOPSIS
+    left = FilterTagItems(list, array, control);
+
+    ULONG FilterTagItems(struct TagItem*, const Tag*, ULONG);
+
+ FUNCTION
+   Removes selected tags in tag list according to array of tags and control
+   parameter. Removing tags is done by setting their identifiers to
+   TAG_IGNORE. If control argument is set to TAGFILTER_AND, only tags
+   existing in the array are left in tag list. If control argument is set
+   to TAGFILTER_NOT, tags existing in the array are removed from tag list.
+
+ INPUTS
+   list - tag list to be filtered (by inserting TAG_IGNORE identifiers).
+   array - array of tag identifiers terminated with TAG_END. Note that it is
+     not a tag list.
+   control - control parameter
+
+ RESULT
+   left - number of non-special tags left in the modified tag list.
+
+ SEE ALSO
+   FilterTagChanges()
+
+utility.library/FindNamedObject
+
+    FindNamedObject --
+
+   SYNOPSIS
+
+    struct NamedObject *FindNamedObject( struct NamedObject *nameSpace, CONST_STRPTR name, struct NamedObject *lastObject );
+
+   FUNCTION
+
+
+   INPUTS
+
+    nameSpace  -
+    name  -
+    lastObject  -
+
+   RESULT
+
+
+utility.library/FindTagItem
+
+ NAME
+   FindTagItem -- finds tag item in a tag list (V39)
+
+ SYNOPSIS
+   tag = FindTagItem(tag, taglist)
+
+   struct TagItem* NextTagItem(Tag, struct TagItem*);
+
+ FUNCTION
+   Iterates a tag list starting from pointer passed until it finds a tag
+   with matching identifier. Follows special tags the same as NextTagItem().
+
+ INPUTS
+   tag - tag identifier to be found
+   taglist - search start point. Must point to a tag item in a valid tag
+     list. It may be also NULL, which is the same as empty taglist, NULL is
+     returned immediately.
+
+ RESULT
+   tag - pointer to the first matching tag found or NULL if the end of tag
+     list has been reached with no matches.
+
+ NOTES
+   To find all ocurrencies of a tag in a tag list, FindTagItem() call must
+   be followed by NextTagItem(), endless loop is created otherwise.
+
+ EXAMPLE
+   Searching for all occurencies of a tag in tag list:
+
+   struct TagItem *tag_list, *tag;
+
+   tag = tag_list;
+
+   while (tag = FindTagItem(id, tag))
+   {
+     /* do something with 'tag' */
+
+     if (NextTagItem(&tag) == NULL) break;
+   }
+
+ SEE ALSO
+   NextTagItem(), GetTagData()
+
+utility.library/FreeNamedObject
+
+    FreeNamedObject --
+
+   SYNOPSIS
+
+    VOID FreeNamedObject( struct NamedObject *object );
+
+   FUNCTION
+
+
+   INPUTS
+
+    object  -
+
+   RESULT
+
+
+utility.library/FreeTagItems
+
+ NAME
+   FreeTagItems -- frees tag list memory (V39)
+
+ SYNOPSIS
+   FreeTagItems(taglist);
+
+   VOID FreeTagItems(struct TagItem*);
+
+ FUNCTION
+   Frees memory block allocated with AllocateTagItems().
+
+ INPUTS
+   taglist - pointer to tag list allocated with AllocateTagItems().
+
+ RESULT
+   None.
+
+ SEE ALSO
+   AllocateTagItems(), CloneTagItems()
+
+utility.library/GetTagData
+
+ NAME
+   GetTagData -- gets tag data with default fallback (V39)
+
+ SYNOPSIS
+   data = GetTagData(tag, default, taglist)
+
+   ULONG GetTagData(Tag, ULONG, const struct TagItem*);
+
+ FUNCTION
+   Searches for a tag with matching identifier in a tag list. If the tag is
+   found, its data is returned. If tag is not found, the default value is
+   returned.
+
+ INPUTS
+   tag - tag identifier to be found
+   default - the default value returned in absence of tag
+   taglist - search start point. Must point to a tag item in a valid tag
+     list. It may be also NULL, which is the same as empty tag list (default
+     value is returned).
+
+ RESULT
+   data - either data of tag found or the default value.
+
+ SEE ALSO
+   NextTagItem(), FindTagItem()
+
+utility.library/GetUniqueID
+
+ NAME
+   GetUniqueID -- returns an unique 32-bit identifier (V39)
+
+ SYNOPSIS
+   id = GetUniqueID();
+
+   LONG GetUniqueID(VOID);
+
+ FUNCTION
+   Returns a system-wide unique 32-bit number. Callable from interrupts.
+
+ INPUTS
+   None.
+
+ RESULT
+   id - unique number
+
+ NOTES
+   Identifiers will start to repeat after the whole 32-bit range is
+   exhausted (4 294 967 296 identifiers).
+
+utility.library/MapTags
+
+ NAME
+   MapTags -- maps tag identifiers (V39)
+
+ SYNOPSIS
+   MapTags(list, map, control);
+
+   VOID MapTags(struct TagItem*, const struct TagItem*, ULONG);
+
+ FUNCTION
+   The tag list (specified by the first argument) is iterated with
+   NextTagItem(). Every non-special tag identifier is searched in the map
+   list. If found, tag identifier in the main list is replaced by tag data
+   of corresponding tag in the map. Action taken when tag identifier is not
+   found in the map, depends on control argument. MAP_REMOVE_NOT_FOUND value
+   causes not mapped tags to be removed from list (by setting TAG_IGNORE as
+   identifier). For MAP_KEEP_NOT_FOUND value, tags not found in the map are
+   left intact.
+
+   Mapping tags to TAG_END is impossible with this function. It silently
+   changes the mapping to TAG_IGNORE.
+
+ INPUTS
+   list - tag list to be mapped.
+   map - tag list containing tag mapping (source as identifires,
+     destination as data).
+   control - controls action taken on not mapped tags.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   FilterTagItems()
+
+utility.library/NamedObjectName
+
+    NamedObjectName --
+
+   SYNOPSIS
+
+    STRPTR NamedObjectName( struct NamedObject *object );
+
+   FUNCTION
+
+
+   INPUTS
+
+    object  -
+
+   RESULT
+
+
+utility.library/NextTagItem
+
+ NAME
+   NextTagItem -- tag list iterator (V39)
+
+ SYNOPSIS
+   tag = NextTagItem(tagptr)
+
+   struct TagItem* NextTagItem(struct TagItem**);
+
+ FUNCTION
+   Returns a pointer to the next tag item in a tag list, after the one
+   indirectly referenced by the argument. This function should be always
+   used as tag list iteraror, as it handles special tags properly:
+     TAG_MORE - value of this tag points to another part of tag list.
+     TAG_IGNORE - this tag item is ignored.
+     TAG_SKIP - this tag, and number of following tags specified as the tag
+       value are skipped.
+     TAG_END - tag list terminator.
+   NextTagItem() recognizes special tags and takes appropriate actions
+   instead of returning them as result.
+
+ INPUTS
+   tagptr - pointer to variable containing current position in a tag list.
+     This position should always point to an item of a valid tag list. The
+     pointer stored in the variable (not the argument itself!) may be also
+     NULL, which is the same as pointing to empty tag list.
+
+ RESULT
+   tag - pointer to the next tag item or NULL if the end of tag list has
+     been reached.
+
+ EXAMPLE
+   This is how a typical tag list iterator is organized:
+
+   struct TagItem tag_list = { /* ... */ };
+   struct TagItem *tag, *tagptr;
+
+   tagptr = tag_list;  /* iterator initialization */
+
+   while (tag = NextTagItem(&tagptr))
+   {
+     /* do something with 'tag' */
+   }
+
+ SEE ALSO
+   FindTagItem()
+
+utility.library/PackBoolTags
+
+ NAME
+   PackBoolTags -- converts tag list into bitfield (V39)
+
+ SYNOPSIS
+   bitfield = PackBoolTags(initial, taglist, masklist)
+
+   ULONG PackBoolTags(ULONG, const struct TagItem*, const struct TagItem*);
+
+ FUNCTION
+   Converts list of boolean tags into a bitfield using the second tag list
+   for mapping tags into bits. The bitfield is set to initial value first.
+   Then the tag list is iterated in a loop. Every tag in the taglist is
+   looked up in the mask list. If found, its mask is applied to the
+   bitfield. If the boolean tag data is TRUE, "1" bits from mask are set in
+   the bitfield (mask is OR-ed with bitfield). If the data is FALSE, "1"
+   bits from mask are cleared in the bitfield (bitwise negation of mask is
+   AND-ed with bitfield).
+
+   Usually every mask has only one bit set, so tags are mapped to single
+   bits in the bitfield. A tag may appear multiple times in the taglist. In
+   this case its mask will be applied multiple times, accordingly to the
+   order of tags.
+
+ INPUTS
+   initial - initial value of bitfield
+   taglist - list of tags to be converted, or NULL (treated as empty tag
+     list)
+   masklist - list of masks to be applied, or NULL (treated as empty tag
+     list)
+
+ RESULT
+   bitfield - resulting bitfield
+
+ EXAMPLE
+   struct TagItem *mask_list = {
+     { TAG_1, 0x00000001 } ,     /* controls bit 0 */
+     { TAG_2, 0x00000002 },      /* controls bit 1 */
+     { TAG_3, 0x00000004 },      /* controls bit 2 */
+     { TAG_4, 0x00000008 },      /* controls bit 3 */
+     { TAG_5, 0xFFFF0000 }};     /* controls upper half */
+
+   struct TagItem *tag_list = {
+     { TAG_1, TRUE },            /* this will set bit 0 */
+     { TAG_4, TRUE },            /* this will set bit 3 */
+     { TAG_5, FALSE }};          /* this will clear upper half */
+
+   ULONG bitfield = 0x7F8A0412;  /* initial value */
+
+   bitfield = PackBoolTags(bitfield, tag_list, mask_list);
+
+   The result will be 0x0000041B.
+
+utility.library/PackStructureTags
+
+ NAME
+   PackStructureTags -- convetrs tag list into data structure (V39)
+
+ SYNOPSIS
+   count = PackStructureTags(data, table, taglist);
+
+   ULONG PackStructureTags(APTR, CONST ULONG*, const struct TagItem*);
+
+ FUNCTION
+   The function iterates the tag list, reads data fields of tags, then
+   places them into specified memory area as directed by pack table. The
+   main purpose of this function is to compact data from taglist into a
+   data structure with fields of different length (which can be a C language
+   structure for example).
+
+   The pack table contains ULONG (32-bit) entries. The first entry defines
+   the tag base for the structure. From that base 1024 tags are available.
+   The tag base may be changed by inserting entry containing $FFFFFFFF
+   followed by a new tag base. Entry 0 terminates the table.
+
+   Every entry specifies conversion of one tag to one structure field.
+   Allowed field widths are 32, 16, 8 and 1 bit. A table entry is composed
+   as follows:
+   - bit 31 - a sign/flip flag. When packing, it has no meaning for 8, 16
+     and 32-bit fields. For single bit means the bit is inverted before
+     setting.
+   - bit 30 - pack flag. If this bit is set, table entry is ignored.
+   - bit 29 - unpack flag. Ignored by PackStructureTags().
+   - bits 28, 27 - type of field:
+     - 00: 8-bit
+     - 01: 16-bit
+     - 10: 32-bit
+     - 11: single bit
+   - bit 26 - for single bit it means bit is set only by tag existence, not
+     depending on tag data.
+   - bits 25-16 - 10-bit tag identifier offset.
+   - bits 15-0 - 16-bit offset into the destination structure. For single
+     bit, bits 15-13 are used for bit index (7 is the most significant bit,
+     0 is the least significant), structure offset is then limited to 13
+     bits (8 kB).
+
+   For every entry of the pack table, except of tagbase change, following
+   steps are taken:
+   1. Pack flag is checked. The entry is ignored if flag is not set.
+   2. Tag identifier is calculated by adding extracted tag offset to the
+      current tag base.
+   3. Resulting tag identifier is passed to FindTagItem(), to find matching
+      tag.
+   4. Byte offset in the structure is extracted from pack entry. For single
+      bit fields only 13 lower bits are used, all 16 bits for 8/16/32-bit
+      fields. For single bits number of bit is extracted as well.
+   5. For 32-bit fields tag data is stored in the field. For 8/16-bit fields
+      upper part of tag data is discarded.
+   6. For single bit fields, appropriate bit is set, cleared or toggled,
+      depending on flags.
+
+   There are several macros defined, which make constructing the data table
+   easier:
+   - PACK_STARTTABLE(tagbase) - starts the table by putting the tag base
+   - PACK_NEWOFFSET(tabgase) - emits $FFFFFFFF entry followed by new tag
+     base
+   - PACK_ENDTABLE - emits 0 entry, ending the pack table
+   - PACK_ENTRY(tagbase, tag, type, field, control) - packs a 8/16/32-bit
+     structure element. 'type' is the C type of structure, 'field' is a
+     field name in the structure. 'control' contains PKCTRL_ constants for
+     bits 31-26.
+   - PACK_BYTEBIT(tagbase, tag, type, field, control, bit) - packs a single
+     bit of 8-bit field.
+   - PACK_WORDBIT(tagbase, tag, type, field, control, bit) - packs a single
+     bit of 16-bit field.
+   - PACK_LONGBIT(tagbase, tag, type, field, control, bit) - packs a single
+     bit of 32-bit field.
+
+ INPUTS
+   data - memory area (a structure) to be filled with data
+   table - structure descriptor
+   taglist - source of data to be stored
+
+ RESULT
+   count - number of data items stored
+
+ EXAMPLE
+   Consider following structure:
+
+   struct MyData
+   {
+     UBYTE dat1;         // stored in TAG_Dat1
+     WORD  dat2;         // stored in TAG_Dat2
+     ULONG dat3;         // stored in TAG_Dat3
+     UWORD bitfield;     // bit 12 stored in TAG_Opt1, bit 9 in TAG_Opt2
+                         // bit 3 set on presence of TAG_Opt3
+                         // bit 2 cleared on presence of TAG_Opt4
+   };
+
+   Then we have definitions of tags:
+
+   #define MY_TAG_BASE   0x88880000
+   #define TAG_Dat1      (MY_TAG_BASE + 1)
+   #define TAG_Dat2      (MY_TAG_BASE + 2)
+   #define TAG_Dat3      (MY_TAG_BASE + 3)
+   #define TAG_Opt1      (MY_TAG_BASE + 4)
+   #define TAG_Opt2      (MY_TAG_BASE + 5)
+   #define TAG_Opt3      (MY_TAG_BASE + 6)
+   #define TAG_Opt4      (MY_TAG_BASE + 7)
+
+   Pack table will be defined as follows:
+
+   ULONG PackTable[] = {
+     PACK_STARTTABLE(MY_TAG_BASE),
+     PACK_ENTRY(MY_TAG_BASE, TAG_Dat1, MyData, dat1,
+       PKCTRL_PACKUNPACK | PKCTRL_BYTE),
+     PACK_ENTRY(MY_TAG_BASE, TAG_Dat2, MyData, dat2,
+       PKCTRL_PACKUNPACK | PKCTRL_WORD | PKCTRL_SIGNED),
+     PACK_ENTRY(MY_TAG_BASE, TAG_Dat3, MyData, dat3,
+       PKCTRL_PACKUNPACK | PKCTRL_LONG),
+     PACK_WORDBIT(MY_TAG_BASE, TAG_Opt1, MyData, bitfield,
+       PKCTRL_PACKUNPACK | PKCTRL_BIT, 12),
+     PACK_WORDBIT(MY_TAG_BASE, TAG_Opt2, MyData, bitfield,
+       PKCTRL_PACKUNPACK | PKCTRL_BIT, 9),
+     PACK_WORDBIT(MY_TAG_BASE, TAG_Opt3, MyData, bitfield,
+       PKCTRL_PACKUNPACK | PKCTRL_BIT | PSTF_EXISTS, 3),
+     PACK_WORDBIT(MY_TAG_BASE, TAG_Opt4, MyData, bitfield,
+       PKCTRL_PACKUNPACK | PKCTRL_FLIPBIT | PSTF_EXISTS, 2),
+     PACK_ENDTABLE};
+
+   Finally tag list can be packed to structure:
+
+   struct MyData myd;
+
+   count = PackStructureTags(&myd, PackTable, taglist);
+
+ SEE ALSO
+   UnpackStructureTags()
+
+utility.library/RefreshTagItemClones
+
+ NAME
+   RefreshTagItemClones -- makes a cleaned up copy of tag list (V39)
+
+ SYNOPSIS
+   RefreshTagItemClones(clone, original);
+
+   VOID RefreshTagItemClones(struct TagItem*, const struct TagItem*);
+
+ FUNCTION
+   The function iterates original tag list with NextTagItem(). All tags
+   returned are copied to memory block pointer passed as the first argument.
+   Order of tags in copy is exactly the same as in original.
+
+   Calling application must ensure that memory block for copy is big enough
+   to hold all the tags. If not, buffer overflow will occur, there is no
+   check. The main purpose of this function is to resynchronize a taglist
+   cloned with CloneTagItems() with the original. In this case buffer
+   overflow cannot happen.
+
+ INPUTS
+   clone - memory area to hold tag list copy
+   original - original tag list
+
+ RESULT
+   None. This function never fails.
+
+ SEE ALSO
+   CloneTagItems()
+
+utility.library/ReleaseNamedObject
+
+    ReleaseNamedObject --
+
+   SYNOPSIS
+
+    VOID ReleaseNamedObject( struct NamedObject *object );
+
+   FUNCTION
+
+
+   INPUTS
+
+    object  -
+
+   RESULT
+
+
+utility.library/RemNamedObject
+
+    RemNamedObject --
+
+   SYNOPSIS
+
+    VOID RemNamedObject( struct NamedObject *object, struct Message *message );
+
+   FUNCTION
+
+
+   INPUTS
+
+    object  -
+    message  -
+
+   RESULT
+
+
+utility.library/SDivMod32
+
+    SDivMod32 --
+
+   SYNOPSIS
+
+    LONG SDivMod32( LONG dividend, LONG divisor );
+
+   FUNCTION
+
+
+   INPUTS
+
+    dividend  -
+    divisor  -
+
+   RESULT
+
+
+utility.library/SMult32
+
+    SMult32 --
+
+   SYNOPSIS
+
+    LONG SMult32( LONG arg1, LONG arg2 );
+
+   FUNCTION
+
+
+   INPUTS
+
+    arg1  -
+    arg2  -
+
+   RESULT
+
+
+utility.library/SMult64
+
+    SMult64 --
+
+   SYNOPSIS
+
+    LONG SMult64( LONG arg1, LONG arg2 );
+
+   FUNCTION
+
+
+   INPUTS
+
+    arg1  -
+    arg2  -
+
+   RESULT
+
+
+utility.library/Stricmp
+
+ NAME
+   Stricmp -- case insensitive string comparision (V39)
+
+ SYNOPSIS
+   result = Stricmp(str1, str2);
+
+   LONG Stricmp(CONST_STRPTR, CONST_STRPTR);
+
+ FUNCTION
+   Compares two strings alphabetically ignoring case of letters. If strings
+   have different lengths, the shorter one is considered to be extended with
+   zeros.
+
+ INPUTS
+   str1 - the first string
+   str2 - the second string
+
+ RESULT
+   result of comparision
+     result < 0 when str1 is alphabetically before str2
+     result = 0 when str1 and str2 are identical
+     result > 0 when str1 is alphabetically after str2
+
+ NOTES
+   After system boot, this call is redirected to locale.library, so result
+   of this function may depend on system default locale setting. When
+   locale.library code is in use, Stricmp() uses SC_ASCII collation. It
+   means that for comparision all characters are uppercased according to
+   locale settings and then compared by character codes. It may not provide
+   dictionary order for languages using accented characters.
+
+utility.library/Strnicmp
+
+ NAME
+   Strnicmp -- length-limited case insensitive string comparision (V39)
+
+ SYNOPSIS
+   result = Strnicmp(str1, str2, length);
+
+   LONG Strnicmp(CONST_STRPTR, CONST_STRPTR, LONG);
+
+ FUNCTION
+   Compares limited spans of two strings alphabetically ignoring case of
+   letters. If any of strings is shorter than the length passed, it is
+   considered to be extended with zeros.
+
+ INPUTS
+   str1 - the first string
+   str2 - the second string
+   length - the maximum length of comparision in characters
+
+ RESULT
+   result of comparision
+     result < 0 when str1 is alphabetically before str2
+     result = 0 when str1 and str2 are identical up to the length specified
+     result > 0 when str1 is alphabetically after str2
+
+ NOTES
+   After system boot, this call is redirected to locale.library, so result
+   of this function may depend on system default locale setting. When
+   locale.library code is in use, Stricmp() uses SC_ASCII collation. It
+   means that for comparision all characters are uppercased according to
+   locale settings and then compared by character codes. It may not provide
+   dictionary order for languages using accented characters.
+
+utility.library/TagInArray
+
+ NAME
+   TagInArrag -- checks if tag identifier is in array of identifiers (V39)
+
+ SYNOPSIS
+   result = TagInArray(tag, array);
+
+   BOOL TagInArray(Tag, const Tag*);
+
+ FUNCTION
+   Checks if a tag identifier is found in array of tag identifiers. The
+   array must be terminated by TAG_END.
+
+ INPUTS
+   tag - tag to be checked.
+   array - array of tag identifiers (this is not a taglist).
+
+ RESULT
+   result - TRUE if tag identifier has been found in the array, FALSE
+     otherwise.
+
+ SEE ALSO
+   FindTagItem()
+
+utility.library/ToLower
+
+ NAME
+   ToLower -- converts a character to lowercase (V39)
+
+ SYNOPSIS
+   conv = ToLower(ch);
+
+   UBYTE ToLower(ULONG);
+
+ FUNCTION
+   Converts character to lowercase.
+
+ INPUTS
+   ch - character to be converted
+
+ RESULT
+   conv - lowercased character
+
+ NOTES
+   After system boot, this call is redirected to locale.library, so result
+   of this function may depend on system default locale setting.
+
+   This function only supports 8-bit character encodings.
+
+ SEE ALSO
+   locale.library/ConvToLower, locale.library/UCS4_ConvToLower
+
+utility.library/ToUpper
+
+ NAME
+   ToUpper -- converts a character to uppercase (V39)
+
+ SYNOPSIS
+   conv = ToUpper(ch);
+
+   UBYTE ToUpper(ULONG);
+
+ FUNCTION
+   Converts character to uppercase.
+
+ INPUTS
+   ch - character to be converted
+
+ RESULT
+   conv - uppercased character
+
+ NOTES
+   After system boot, this call is redirected to locale.library, so result
+   of this function may depend on system default locale setting.
+
+   This function only supports 8-bit character encodings.
+
+ SEE ALSO
+   locale.library/ConvToUpper, locale.library/UCS4_ConvToUpper
+
+utility.library/UDivMod32
+
+    UDivMod32 --
+
+   SYNOPSIS
+
+    ULONG UDivMod32( ULONG dividend, ULONG divisor );
+
+   FUNCTION
+
+
+   INPUTS
+
+    dividend  -
+    divisor  -
+
+   RESULT
+
+
+utility.library/UMult32
+
+    UMult32 --
+
+   SYNOPSIS
+
+    ULONG UMult32( ULONG arg1, ULONG arg2 );
+
+   FUNCTION
+
+
+   INPUTS
+
+    arg1  -
+    arg2  -
+
+   RESULT
+
+
+utility.library/UMult64
+
+    UMult64 --
+
+   SYNOPSIS
+
+    ULONG UMult64( ULONG arg1, ULONG arg2 );
+
+   FUNCTION
+
+
+   INPUTS
+
+    arg1  -
+    arg2  -
+
+   RESULT
+
+
+utility.library/UnpackStructureTags
+
+ NAME
+   UnpackStructureTags -- converts data structure into tag list (V39)
+
+ SYNOPSIS
+   count = UnpackStructureTags(data, table, taglist);
+
+   ULONG UnpackStructureTags(CONST APTR, CONST ULONG*, struct TagItem*);
+
+ FUNCTION
+   Expands data stored in a structure into a prepared taglist according to
+   specified pack table. The tag list is prepared by setting all tag
+   identifiers for data to be extracted. The function does not create a tag
+   list. It only fills data fields in an existing one.
+
+   The table may be the same as for packing if PKCTRL_PACKUNPACK flag is set
+   for all fields. Entries of the pack table are interpreted the same as for
+   PackStructureTags() with following exceptions:
+   - bit 31, if set for 8/16 bit field causes the field to be sign-extended
+     before storing in tag data.
+   - bit 30 (pack flag) is ignored.
+   - bit 29 (unpack flag) is taken into account. An entry is ignored if the
+     flag is not set.
+   - bit 26 is ignored, as storing a bit depends only on finding
+     corresponding tag identifier in the taglist.
+
+ INPUTS
+   data - structure containing data to be expanded to tag list
+   table - pack table controlling expansion process
+   taglist - pre-filled tag list, where expanded data are stored
+
+ RESULT
+   count - number of data items processed
+
+ NOTES
+   Up to version 51.3 of MorphOS utility.library, bit flipping flag
+   (bit 31 as in PKCTRL_FLIPBIT) was ignored for single bit fields. It has
+   been fixed in 51.4 version.
+
+ SEE ALSO
+   PackStructureTags()
+
+

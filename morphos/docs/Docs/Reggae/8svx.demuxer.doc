@@ -1,0 +1,188 @@
+TABLE OF CONTENTS
+
+8svx.demuxer/MMA_DataFormat
+8svx.demuxer/MMA_MediaType
+8svx.demuxer/MMA_MimeType
+8svx.demuxer/MMA_Sound_BitsPerSample
+8svx.demuxer/MMA_Sound_Channels
+8svx.demuxer/MMA_Sound_FrameCount
+8svx.demuxer/MMA_Sound_SampleRate
+8svx.demuxer/MMA_Sound_Volume
+8svx.demuxer/MMA_StreamPosBytes
+8svx.demuxer/MMM_Pull
+8svx.demuxer/MMM_Seek
+8svx.demuxer/__background__
+8svx.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- [GQ], STRPTR. (V51)
+
+ FUNCTION
+   Textual description of data format. This class returns different strings
+   depending on compression used:
+   - "IFF 8SVX" for uncompressed sounds.
+   - "IFF 8SVX Fibonacci Delta" for Fibonacci delta compression.
+   - "IFF 8SVX Exponential Delta" for exponential delta compression.
+
+8svx.demuxer/MMA_MediaType
+
+ NAME
+   MMA_MediaType -- [GQ], LONG. (V51)
+
+ FUNCTION
+   Identifier of media type. This class returns MMT_SOUND.
+
+8svx.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType -- [GQ], STRPTR. (V51)
+
+ FUNCTION
+   Returns MIME type string for the object. This class returns
+   "audio/x-8svx" string.
+
+8svx.demuxer/MMA_Sound_BitsPerSample
+
+ NAME
+   MMA_Sound_BitsPerSample -- [GQ], LONG. (V51)
+
+ FUNCTION
+   Returns number of bits used to represent one sample in source data. This
+   class returns 8 for uncompressed streams, 4 for compressed ones.
+
+8svx.demuxer/MMA_Sound_Channels
+
+ NAME
+   MMA_Sound_Channels -- [GQ], LONG. (V51)
+
+ FUNCTION
+   Returns number of audio channels in the stream. This class returns 1 for
+   mono files, 2 for stereo ones.
+
+8svx.demuxer/MMA_Sound_FrameCount
+
+ NAME
+   MMA_Sound_FrameCount -- [GQ], QUAD*. (V51)
+
+ FUNCTION
+   Returns number of sample frames (time points) in the stream.
+
+ NOTES
+   This is a 64-bit attribute and is passed as a pointer to 64-bit number.
+
+8svx.demuxer/MMA_Sound_SampleRate
+
+ NAME
+   MMA_Sound_SampleRate -- [GQ], LONG. (V51)
+
+ FUNCTION
+   Returns sampling rate of the sound in Hz. For 8SVX sounds it is never
+   higher than 65535 Hz.
+
+8svx.demuxer/MMA_Sound_Volume
+
+ NAME
+   MMA_Sound_Volume -- [GQ], LONG. (V51)
+
+ FUNCTION
+   Returns default sound volume stored in the stream in 16-bit scale. 0
+   means silence, 65536 ($10000) is full volume.
+
+8svx.demuxer/MMA_StreamPosBytes
+
+ NAME
+   MMA_StreamPosBytes -- [GQ], QUAD*. (V51)
+
+ FUNCTION
+   Returns current byte position in (undecoded) audio data.
+
+ NOTES
+   This is a 64-bit attribute and is passed as a pointer to 64-bit number.
+
+8svx.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull --  pulls undecoded 8SVX data into a buffer. (V51)
+
+ SYNOPSIS
+   LONG DoMethod(Object *obj, MMM_Pull, LONG port, APTR buffer, LONG
+   length);
+
+ FUNCTION
+   Pulls and stores requested number of bytes of undecoded (but interleaved
+   in case of stereo) 8SVX audio data.
+
+ INPUTS
+   port - this method may be only invoked on output port (port 1).
+   buffer - pointer to destination buffer. Must be aligned to 16 bytes,
+     preferrably allocated with MediaAllocVec().
+   length - number of bytes to store in buffer.
+
+  RESULT
+    Number of bytes stored. Zero means end of data, -1 means error. Error
+    code may be obtained by getting MMA_ErrorCode attribute on the object.
+
+8svx.demuxer/MMM_Seek
+
+ NAME
+   MMM_Seek -- seeks in undecoded 8SVX data. (V51)
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Seek, LONG port, LONG type, QUAD *position);
+
+ FUNCTION
+   Seeks in undecoded 8SVX data (contents of "BODY" chunk of the stream).
+   Backward seek can be performed only if a stream connected on input port
+   is seekable. Forward seek on non-seekable streams will be emulated with
+   data pulling.
+
+ INPUTS
+   port - this method may be only invoked on output port (port 1).
+   type - type of seek, only MMM_SEEK_BYTES allowed here.
+   position - requested position in data, relative to the beginning.
+
+ RESULT
+   Boolean, TRUE for success. If FALSE, error code may be obtained by
+   getting MMA_ErrorCode attribute.
+
+8svx.demuxer/__background__
+
+ DESCRIPTION
+   The class is a demultiplexer for IFF 8SVX audio streams. It supports
+   uncompressed ones, as well as Fibonacci delta and exponential delta
+   compression. Mono and stereo files are supported. Because of internal
+   structure of IFF files, IFF 8SVX streams are limited to 2 GB of data.
+
+   Stereo IFF 8SVX files have an unique feature - they store channels
+   separately, left first, then right. Then streaming of stereo 8SVX is
+   impossible. Reggae of course converts separate channels into an usual
+   interleaved stereo stream. If the stream is seekable, Reggae will read
+   chunks of audio data for left then right channel, jumping in the stream
+   back and forth once per chunk. For non-seekable streams all the left
+   channel is buferred in memory, then right is read in chunks and
+   interleaved with left channel from buffer.
+
+ PORTS
+   - port 0 - input, MMF_STREAM.
+   - port 1 - output, one of:
+     * MMF_AUDIO_PCM8
+     * MMF_AUDIO_FIB_DPCM
+     * MMF_AUDIO_EXP_DPCM.
+
+ HISTORY
+   51.4 (24.10.2015)
+   - Fix for per-output metadata.
+
+   51.3 (06.06.2010)
+   - MMM_Pull(): setting MMERR_END_OF_DATA for stereo files has been
+     delayed. For stereo files MMM_Seek() is called during pulling, so
+     error gets cleared for the object.
+
+   51.2 (04.06.2010)
+   - Fixed loading mono files, partial buffer fetch at end of stream is
+     done properly.
+
+   51.1 (25.08.2009)
+   - The first release.
+
+

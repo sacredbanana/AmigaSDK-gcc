@@ -1,0 +1,625 @@
+TABLE OF CONTENTS
+
+audio.output/--background--
+audio.output/MMA_OutputState
+audio.output/MMA_Sound_AhiUnit
+audio.output/MMA_Sound_Channels
+audio.output/MMA_Sound_LoopedPlay
+audio.output/MMA_Sound_Mute
+audio.output/MMA_Sound_SampleRate
+audio.output/MMA_Sound_Volume
+audio.output/MMA_StreamPosFrames
+audio.output/MMA_StreamPosTime
+audio.output/MMA_TaskName
+audio.output/MMA_TaskPriority
+audio.output/MMM_MessageAtEnd
+audio.output/MMM_Pause
+audio.output/MMM_Play
+audio.output/MMM_Seek
+audio.output/MMM_SignalAtEnd
+audio.output/MMM_Stop
+audio.output/--background--
+
+ DESCRIPTION
+   The class is a Reggae audio output using AHI hardware abstraction layer.
+   The class uses high-level (device style) AHI interface, number of used
+   unit may be set by application. The audio.output has one port (input)
+   number 0. This port accepts MMFC_AUDIO_INT16 format. Currently only 1 or
+   2 sound channels are supported. The audio.output class is a direct
+   subclass of multimedia.class.
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_OutputState          (V51.15) [..G.Q], LONG
+   MMA_Sound_AhiUnit        (V51)    [I.G.Q], LONG
+   MMA_Sound_Channels       (V50)    [..G.Q], LONG
+   MMA_Sound_LoopedPlay     (V51.7)  [ISGPQ], BOOL
+   MMA_Sound_SampleRate     (V50)    [..G.Q], LONG
+   MMA_Sound_Volume         (V50)    [ISGPQ], LONG
+   MMA_Sound_Mute           (v52.9)  [ISGPQ], BOOL
+   MMA_StreamPosFrames      (V51)    [..G.Q], UQUAD*
+   MMA_StreamPosTime        (V51)    [..G.Q], UQUAD*
+   MMA_TaskName             (V51.9)  [I.G.Q], STRPTR
+   MMA_TaskPriority         (V50.12) [I.G.Q], BYTE
+
+ NEW METHODS
+   MMM_MessageAtEnd(message)              (V51.6)
+   MMM_Pause()                            (V51.14)
+   MMM_Play()                             (V50)
+   MMM_Seek(port, type, position)         (V51)
+   MMM_SignalAtEnd(task, sigbit)          (V50)
+   MMM_Stop()                             (V50)
+
+ HISTORY
+   52.12 (27.02.2022)
+   - Changed to only keep the AHI unit open while playing audio. This way
+     merely creating the audio object doesn't occupy the unit unnecessarily.
+
+   52.11 (28.10.2013)
+   - Fixed broken MMA_TaskPriority attribute, which was always overridden
+     with value +26. Now lower values can be set as well.
+
+   52.10 (02.06.2013)
+   - Fixed bytes per beat calculation error, where for odd sampling rates beat
+     buffer size was not an even multiply of audio frame size.
+   - Removed busyloop possibility when broken decoders submit 0 bytes with 0
+     error code.
+
+   52.9  (22.03.2013)
+   - Implemented MMA_Sound_Mute attribute.
+
+   52.8  (20.03.2013)
+   - Stream rewind at end of stream event is now done before end signals and
+     messages are sent.
+   - MMA_Sound_Volume may now be applied in NewObject().
+
+   52.7  (04.12.2012)
+   - Fixed a deadlock introduced in 52.6. It could happen when MMM_Play()
+     encountered error or end of data in the first two buffers (40 msec).
+     PlayerEndActions() was then executed and called SetAttrs() on object
+     being still in MMM_Play(). Now PlayerEndActions() in this case is
+     called after the command message is replied.
+   - PlayerEndActions() does not set error to owner object when this error
+     is MMERR_END_OF_DATA.
+
+   52.6  (16.11.2012)
+   - Fixed MMM_SignalAtEnd() and MMM_MessageAtEnd() to return boolean value
+     of success instead of 0.
+   - Current error code of player is set as MMA_ErrorCode for audio.output
+     object just before end of stream events are executed.
+   - Main buffer refill loop redesigned to improve looping feature and error
+     reporting.
+
+   52.5  (10.10.2012)
+   - MMA_ErrorCode for the object is updated with status reported by player
+     after every player command that can fail.
+   - If MMM_Play() command fails at initial audio buffer filling, end of
+     stream events are executed, so application does not wait forever for
+     message/signal.
+
+   52.4  (12.07.2012)
+   - Fixed bug with trashed sound when playback is resumed after seeking.
+     Input and output byte counters are no more used for playback resume.
+
+   52.3  (07.05.2012)
+   - Command status is always cleared after replying command message.
+   - Command status is always sent back to the main thread.
+   - MMM_Seek() returns FALSE on failure.
+   - MMM_Seek() sets object MMA_ErrorCode on failure.
+
+   52.2  (20.02.2012)
+   - The main loop was changed, now stop and pause events abort both AHI
+     requests immediately. Then object no more crashes, when MMM_Play() is
+     issued immediately after MMM_Stop().
+   - Fixed: Race condition in player task startup handshake.
+
+   52.1  (11.01.2011)
+   - Major code rewrite.
+   - Signal at end and message at end events are not generated with
+     MMM_Stop().
+
+   51.15 (24.06.2010)
+   - Fixed MMM_Seek() to return FALSE in case of errors. When seek fails on
+     previous object(s), current stream position is not reset to seek
+     target.
+   - Fixed bug with output frame counting. Now if the last buffer is
+     truncated, only really sent frames are counted, not the whole buffer.
+   - Implemented MMA_PlayerState.
+
+   51.14 (14.02.2010)
+   - Implemented MMM_Pause() method.
+
+   51.13 (07.01.2010)
+   - Fixed broken MMA_StreamPosFrames, which was not updated at audio buffer
+     swap.
+
+   51.12 (02.06.2009)
+   - Added a workaround + log message for broken decoders returning error 0
+     in end of data conditions (fixes looped play in Multiview).
+
+   51.11 (15.05.2009)
+   - Fixed crash when object initialization failed for lack of any resources
+     (usually because of AHI being opened in exclusive mode by other
+     application).
+
+   51.10 (05.10.2008)
+   - Added error code checking in run_player_subtask(). If subtask returns a
+     non-zero error code, it is set as object error (with seterr() macro),
+     then the function returns NULL subtask pointer (as it is not running).
+     Fixes bugtracker entry #211.
+
+   51.9  (08.06.2007)
+   - Implemented MMA_TaskName.
+
+   51.8  (16.04.2007)
+   - MMA_Sound_LoopedPlay may be specified for OM_NEW, and set via port.
+   - MMA_Sound_AhiUnit works finally.
+
+   51.7  (03.04.2007)
+   - Implemented MMA_Sound_LoopedPlay.
+
+   51.6  (11.02.2007)
+   - Implemented MMM_Sound_ReplyMsgAtEnd().
+
+   51.5  (26.10.2006)
+   - Stream end should rewind the stream, the same as MMM_Stop method
+     does (of course non-seekable streams will ignore this). Fixed. Also
+     stream rewinding behaviour is now documented explicitly.
+
+   51.4  (11.07.2006)
+   - Fixed debug, altered exit message for OM_NEW if no MMA_ErrorCode
+     specified.
+
+   51.3  (15.05.2006)
+   - Fixed a bug reported by Thomas Igracki. Symptoms: OM_NEW waits forever
+     if some application opens AHI in exclusive mode.
+
+   51.2  (03.05.2005)
+   - Requires v51 multimedia.class.
+   - Sound data buffers reworked (now use MediaAllocVec()).
+   - Implemented MMM_Seek, MMM_Stop tries to rewind stream.
+   - Fixed lot of compiler warnings.
+
+   51.1  (29.04.2005)
+   - Well, v51 version, untested and probably buggy.
+
+   50.14 (18.12.2004)
+   - New, documented way of MMA_GetPort and MMA_SetPort forwarding.
+
+   50.13 (16.12.2004)
+   - Proper MMA_Get/SetPort forwarding.
+
+   50.12 (22.11.2004)
+   - Implemented MMA_TaskPriority (OM_NEW and OM_SET) with default value of
+     2.
+
+   50.11 (22.10.2004)
+   - play buffer aligned to 16 bytes for AltiVec.
+
+   50.10 (11.10.2004)
+   - removed unused library bases in the class base.
+   - added missing query support.
+   - query tags are accessible via the class base.
+
+   50.9 (05.09.2004)
+   - changed according to new multimedia design.
+
+   50.8 (16.03.2004)
+   - fixed format autonegotiation with decoders.
+
+   50.7 (09.03.2004)
+   - SNDA_CurrentPos now counts also played frames of aborted (stopped)
+     requests.
+
+   50.6 (04.03.2004)
+   - Bugfix: DTOM_SignalAtEnd did not work if playback limit set by
+     SNDA_FrameCount was lower than 16384 frames (fit in single AHI
+     request).
+
+   50.5 (04.03.2004)
+   - Added: object keeps track of number of played frames and can be
+     queried about it with SNDA_CurrentPos.
+   - Bugfix: DTOM_SignalAtEnd did not work if playback limit set by
+     SNDA_FrameCount was multiple of 16384 frames. Fixes SoundTool problem
+     with "PlayMarked" button not released after play.
+
+   50.4 (03.01.2004)
+   - Limiting frames with SNDA_FrameCount works.
+   - Implemented fetching from stream object.
+
+   50.3 (02.01.2004)
+   - Implemented DTOM_SignalAtExit.
+
+   50.2 (01.01.2004)
+   - Basic functionality: Fetching from decoder object, DTOM_Play,
+     DTOM_Stop.
+
+   50.1 (29.12.2003)
+   - Initial release.
+
+audio.output/MMA_OutputState
+
+ NAME
+   MMA_OutputState (v52.2) [..G.Q], LONG, 0x8EDA0021
+
+ FUNCTION
+   Returns the current state of the player, one of:
+   - MMV_OutputState_Stopped
+   - MMV_OutputState_Playing
+   - MMV_OutputState_Paused
+
+audio.output/MMA_Sound_AhiUnit
+
+ NAME
+   MMA_Sound_AhiUnit (V51) [I.G.Q], LONG, 0x8EDA0131
+
+ FUNCTION
+   AHI unit to be used by the object for playing. Default value is unit 0,
+   allowed range is from 0 to 3.
+
+audio.output/MMA_Sound_Channels
+
+ NAME
+   MMA_Sound_Channels (V50) [..G.Q], LONG, 0x8EDA012C
+
+ FUNCTION
+   Specifies number of sound channels in the played stream. Application need
+   not to specify it explicitly, as object queries it automatically from a
+   previous one, when being connected. The default value of this attribute
+   is one channel. It is overridden by querying the previous object (if it
+   understands the attribute). Current audio.output can handle one or two
+   channels. Streams with more channels won't be played.
+
+audio.output/MMA_Sound_LoopedPlay
+
+ NAME
+   MMA_Sound_LoopedPlay (V51) [ISGPQ], BOOL, 0x8EDA0132
+
+ FUNCTION
+   The attribute controls looped playback. When set to FALSE, a sound stream
+   is played once, then stops and is rewound to its start (if seekable).
+   When the attribute is set to TRUE, the sound is played in an infinite
+   loop. The looping is done by seeking to the stream start, so non-seekable
+   streams won't work (they will be just played once). The default value is
+   FALSE, which means no looping.
+
+ NOTES
+   Using audio.output looping feature is not recommended for very short
+   streams, streams shorter than 100 miliseconds may be very CPU intensive.
+   For such streams soundloop.filter is recommended as it buffers short
+   loops internally.
+
+ SEE ALSO
+   soundloop.filter
+
+audio.output/MMA_Sound_Mute
+
+ NAME
+   MMA_Sound_Mute (V52.9) [ISGPQ], BOOL, 0x8EDA0135
+
+ FUNCTION
+   Mutes the sound. When set to TRUE, sound is still played, but its volume
+   is temporarily set to 0. When set to FALSE, previous volume is restored.
+
+ NOTES
+   Audio hardware stays allocated and active when sound is muted.
+
+   Volume changes in muted state are accepted. When sound is unmuted, volume
+   is restored to the latest level set with MMA_Sound_Volume. Also reading
+   MMA_Sound_Volume in muted state yields latest level, not 0.
+
+   Setting MMA_Sound_Volume to 0 explicitly does not change MMA_Sound_Mute
+   state.
+
+   End of stream events in muted state are executed normally.
+
+ SEE ALSO
+   MMA_Sound_Volume, MMM_SignalAtEnd, MMM_MessageAtEnd
+
+audio.output/MMA_Sound_SampleRate
+
+ NAME
+   MMA_Sound_SampleRate (V50) [..G.Q], LONG, 0x8EDA012D
+
+ FUNCTION
+   Specifies playback sample rate in samples per second. Application need
+   not to specify it explicitly as object queries it automatically from a
+   previous one, when being connected. The default value of this attribute
+   is 8000 samples per second. It is overridden by querying the previous
+   object (if it understands the attribute). Current audio.output supports
+   playback rates from 8000 to 48000 samples per second.
+
+audio.output/MMA_Sound_Volume
+
+ NAME
+   MMA_Sound_Volume (V50) [ISGPQ], LONG, 0x8EDA012F
+
+ FUNCTION
+   Specifies playback volume. The range is from 0 (silence) to 65536 (full
+   volume), higher values are limited to the maximum. The default volume is
+   65536 (max), it may be specified in NewObject(). Then it may be
+   overridden by the previous object when objects are connected (most of
+   sound formats have no in-stream volume information, but if present, it
+   will be used here). After that an application may set it.
+
+audio.output/MMA_StreamPosFrames
+
+ NAME
+   MMA_StreamPosFrames (V52.2) [..G.Q], QUAD, 0x8EDA0014
+
+ FUNCTION
+   In case of audio.output object, this attribute returns number of frames
+   played by audio hardware, so it determines the playback time, ignoring
+   any stream seeking. It is not cleared at neither MMM_Stop(), nor
+   MMM_Pause(), so playback time may be checked after stopping or pausing
+   the stream. It is cleared however on MMM_Play(), but only  after previous
+   MMM_Stop().
+
+ SEE ALSO
+   MMA_StreamPosTime
+
+audio.output/MMA_StreamPosTime
+
+ NAME
+   MMA_StreamPosTime (V52.2) [..G.Q], QUAD, 0x8EDA0017
+
+ FUNCTION
+   In case of audio.output object, this attribute returns time of playback,
+   which is calculated from MMA_StreamPosFrames, and current playback
+   samplerate. The time is in microseconds.
+
+ NOTES
+   The time may be invalid if playback sampling rate has been changed
+   during playback.
+
+ SEE ALSO
+   MMA_StreamPosFrames
+
+audio.output/MMA_TaskName
+
+ NAME
+   MMA_TaskName (v51.9) [I.G.Q], STRPTR, 0x8EDA001D
+
+ FUNCTION
+   Specifies the name of object subprocess. The default name is "Audio
+   Output n", where 'n' is the class subprocesses counter value. The counter
+   is initialized to 0, when the class is loaded to memory (at first open).
+   The passed string must be null-terminated.
+
+ NOTES
+   The passed string is buffered, so it need not to be static.
+
+audio.output/MMA_TaskPriority
+
+ NAME
+   MMA_TaskPriority (v50.12) [I.G.Q], BYTE, 0x8EDA0005
+
+ FUNCTION
+   Sets the priority of object subprocess. All Reggae objects connected to
+   audio.output object input port perform data processing in context of the
+   subprocess. The default priority is +26, as audio playback is a realtime
+   task and should have priority higher than ordinary applications. The
+   allowed priority range is <-128, +26>.
+
+audio.output/MMM_MessageAtEnd
+
+ NAME
+   MMM_MessageAtEnd (v51.6) -- Adds a message to end of stream event.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_MessageAtEnd, struct Message *msg);
+
+ FUNCTION
+   As data processing in the class is asynchronous to calling application,
+   there must be a way of signalling the end of stream. This method adds a
+   message to be replied to the reply port set in it when end of stream
+   event happens.
+
+   End of stream event can occur in two cases:
+   - Real end of data stream.
+   - Data pulling or writing to the audio hardware failed.
+   These cases can be distinguished by checking MMA_ErrorCode attribute. It
+   will be MMERR_END_OF_DATA for end of stream, other error code in case of
+   fail.
+
+   The message is put into an internal message port. If there are more
+   calls to this method, messages passed are queued in the port. When end
+   of stream event occurs, all queued messages are replied to their
+   respective reply ports.
+
+   Unlike MMM_SignalAtEnd(), this is an "one shot" attribute, as a message
+   can be replied once only. Then it has to be reinitialized and sent
+   again with this method. On the other hand only one signal to one process
+   may be sent at end of stream, while number of messages replied is not
+   limited.
+
+ INPUTS
+   - msg, a message to be sent. It must be a properly initialized system
+     message, it means mn_Node.ln_Type, mn_Length and mn_ReplyPort fields
+     must be valid.
+
+ RESULT
+   Boolean value of success. The method can fail for following reasons:
+   - temporary message port used to communicate with the subprocess cannot
+     be created, MMA_ErrorCode is MMERR_RESOURCE_MISSING.
+   - NULL message pointer, MMA_ErrorCode is MMERR_WRONG_ARGUMENTS.
+
+ NOTES
+   Execution of MMM_Stop() or MMM_Pause(), as well as object disposing do
+   not trigger the end of stream event.
+
+ SEE ALSO
+   MMM_Play, MMM_SignalAtEnd
+
+audio.output/MMM_Pause
+
+ NAME
+   MMM_Pause (V51.14)
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Pause);
+
+ FUNCTION
+   The method stops sound playback immediately. Then the stream stays at the
+   current position, so following MMM_Play() will continue from the paused
+   position. Calling this method is effective only on playing object.
+   Performing the method on already paused or stopped stream has no effect.
+
+   The method is designed to be single frame accurate, so following
+   MMM_Play() will start from the next audio frame after pause. This is not
+   the case for live streams, which cannot be paused (for example radio
+   streams or streams coming from hardware audio input).
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   MMM_Play, MMM_Stop, MMM_Sound_SignalAtEnd, MMM_Sound_ReplyMsgAtEnd
+
+audio.output/MMM_Play
+
+ NAME
+   MMM_Play (V50)
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Play);
+
+ FUNCTION
+   The method instruct player process to start playback. It is asynchronous,
+   so it returns to the caller immediately. Player process fills playback
+   buffers with stream data, opens AHI unit and sends playback requests to
+   it. Player process pulls data incrementally as sound is played. Playback
+   is stopped automatically if data pull returns an error (MMERR_END_OF_DATA
+   typically). MMM_Play() issued while audio.output is still playing, is
+   ignored.
+
+ INPUTS
+   None.
+
+ RESULT
+   TRUE if playback started, FALSE otherwise, check MMA_ErrorCode for
+   additional information.
+
+ SEE ALSO
+   MMM_Stop, MMM_Sound_SignalAtEnd, MMM_Sound_ReplyMsgAtEnd, MMA_ErrorCode
+
+audio.output/MMM_Seek
+
+ NAME
+   MMM_Seek (V51)
+
+ SYNOPSIS
+   success = DoMethod(obj, MMM_Seek, ULONG port, ULONG type, QUAD* pos);
+
+ FUNCTION
+   Performs seek in the played audio stream. The method propagates itself to
+   all the previous objects first. If the object is playing, new data are
+   pulled to one of playback buffers, playback is stopped and restarted
+   immediately with the new data. When time seek is requested, frame number
+   is calculated based on current playback samplerate.
+
+ INPUTS
+   - obj, object to perform the method on.
+   - port, number of port is always 0.
+   - type, seek type (MMM_SEEK_FRAMES, MMM_SEEK_TIME).
+   - pos, new, absolute position in the stream. For frame seek it is in
+     frames, for time seek in microseconds. It is 64-bit parameter passed by
+     a pointer to the value.
+
+ RESULT
+   TRUE if success, FALSE otherwise. Check MMA_ErrorCode for detailed
+   information.
+
+ NOTES
+   It is synchronous call. Application waits until seek is performed.
+   This method always returned TRUE until v51.15.
+
+ SEE ALSO
+   MMA_ErrorCode
+
+audio.output/MMM_SignalAtEnd
+
+ NAME
+   MMM_SignalAtEnd (v50) -- Sets a signal for end of stream event.
+
+ SYNOPSIS
+   DoMethod(obj, MMM_SignalAtEnd, *struct Process process, ULONG sigbit);
+
+ FUNCTION
+   As data processing in the class is asynchronous to calling application,
+   there must be a way of signalling the end of stream. This method sets a
+   signal to be sent to a process specified when end of stream event
+   happens.
+
+   End of stream event can occur in two cases:
+   - Real end of data stream.
+   - Data pulling or sending to the audio hardware failed.
+   These cases can be distinguished by checking MMA_ErrorCode attribute. It
+   will be MMERR_END_OF_DATA for end of stream, other error code in case of
+   fail.
+
+   The signalling request remains active after end of stream event. The
+   signal is sent at every such event until the object is disposed. To clear
+   the signalling request call this method with NULL process pointer. Only
+   one signal to one process may be sent. If in need of multiple processes
+   signalling, one should use MMM_MessageAtEnd() method, or implement signal
+   retransmission.
+
+ INPUTS
+   - process, the process to be signalled, or NULL to cancel the signalling.
+   - sigbit, the signal number (not mask!) to be used, must be in (0, 31)
+     range, the call will be ignored otherwise and error code set to
+     MMERR_WRONG_ARGUMENTS for the object.
+
+ RESULT
+   Boolean value of success. The method can fail for following reasons:
+   - temporary message port used to communicate with the subprocess cannot
+     be created, MMA_ErrorCode is MMERR_RESOURCE_MISSING.
+   - signal number out of range, MMA_ErrorCode is MMERR_WRONG_ARGUMENTS.
+
+ NOTES
+   When using a private signal (not one of SIGBREAKB_CTRL_(C|D|E|F)), the
+   signal must be allocated by the process to be signalled with
+   AllocSignal().
+
+   Execution of MMM_Stop() or MMM_Pause(), as well as object disposing do
+   not trigger the end of stream event.
+
+ SEE ALSO
+   MMM_Stop, MMM_Pause, MMM_MessageAtEnd
+
+audio.output/MMM_Stop
+
+ NAME
+   MMM_Stop (V50)
+
+ SYNOPSIS
+   DoMethod(obj, MMM_Stop);
+
+ FUNCTION
+   The method stops sound playback immediately, flushes playback buffers and
+   performs MMM_Seek on the stream to absolute 0 position.
+
+ INPUTS
+   None.
+
+ RESULT
+   None.
+
+ NOTES
+   If source is not seekable, seeking to 0 has no effect. This method does
+   not free AHI unit. To free AHI unit the object has to be disposed.
+
+ SEE ALSO
+   MMM_Play, MMM_Sound_SignalAtEnd, MMM_Sound_ReplyMsgAtEnd
+
+

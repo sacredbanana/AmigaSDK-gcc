@@ -1,0 +1,126 @@
+TABLE OF CONTENTS
+
+iffdeep.demuxer/MMA_DataFormat
+iffdeep.demuxer/MMA_Video_BitsPerPixel
+iffdeep.demuxer/MMA_Video_FrameCount
+iffdeep.demuxer/MMA_Video_Height
+iffdeep.demuxer/MMA_Video_UseAlpha
+iffdeep.demuxer/MMA_Video_Width
+iffdeep.demuxer/MMM_Pull
+iffdeep.demuxer/__background__
+iffdeep.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat -- [GQ], STRPTR. (V51)
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns "IFF DEEP" string.
+
+iffdeep.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel -- [GQ], ULONG. (V51)
+
+ FUNCTION
+   Returns number of bits used to represent one pixel in the source data.
+
+iffdeep.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount -- [GQ], UQUAD*. (V51)
+
+ FUNCTION
+   Always returns 1.
+
+ NOTES
+   As every 64-bit attribute, this one is passed by pointer to a 64-bit
+   value.
+
+iffdeep.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height -- [GQ], ULONG. (V51)
+
+ FUNCTION
+   Returns height of image in pixels.
+
+iffdeep.demuxer/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha -- [GQ], BOOL. (V51)
+
+ FUNCTION
+   Returns TRUE if IFF DEEP image data contain alpha channel, FALSE
+   otherwise.
+
+iffdeep.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width -- [GQ], ULONG. (V51)
+
+ FUNCTION
+   Returns width of image in pixels.
+
+iffdeep.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   This class does not process image data, it only strips IFF DEEP signature,
+   screen descriptor and TVDC data table (if present). Then pull requests are
+   just forwarded to the connected stream.
+
+ INPUTS
+   port - number of port, must be output (1).
+   buffer - destination buffer.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+iffdeep.demuxer/__background__
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for IFF DEEP images. The class performs
+   following tasks:
+   - DEEP signature verification.
+   - Parsing IFF Chunks
+   - Storing Delta Compression Table (if available)
+   The class does not process image stream data following the DBOD chunk.
+
+ PORTS
+   - port 0, input, MMF_STREAM.
+   - port 1, output, one of:
+     * MMF_VIDEO_IFFDEEP,
+     * MMF_VIDEO_RGB24,
+     * MMF_VIDEO_RGBA32.
+
+ NEW ATTRIBUTES
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_DataFormat              (V51)    [..G.Q], STRPTR
+   MMA_Video_UseAlpha          (V51)    [..G.Q], ULONG
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+
+ HISTORY
+   51.3  (07.10.2014)
+   - Query.library support
+
+   51.2  (10.09.2011)
+   - Uncompressed IFF DEEP images produces MMF_VIDEO_RGBA32 and
+     MMF_VIDEO_RGB24 output stream
+
+   51.1  (08.08.2007)
+   - Initial revision.
+
+

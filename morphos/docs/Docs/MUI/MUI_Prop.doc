@@ -1,0 +1,189 @@
+TABLE OF CONTENTS
+
+Prop.mui/Prop.mui
+Prop.mui/MUIA_Prop_DeltaFactor
+Prop.mui/MUIA_Prop_Entries
+Prop.mui/MUIA_Prop_First
+Prop.mui/MUIA_Prop_Horiz
+Prop.mui/MUIA_Prop_Slider
+Prop.mui/MUIA_Prop_UseWinBorder
+Prop.mui/MUIA_Prop_Visible
+Prop.mui/MUIM_Prop_Decrease
+Prop.mui/MUIM_Prop_Increase
+Prop.mui/Prop.mui
+
+Prop class generates the well known proportional gadgets.
+It offers the same attributes as a usual boopsi gadget
+of propgclass. However, MUI's prop gadgets allow using
+any imagery for the knob and for the background.
+Prop.mui/MUIA_Prop_DeltaFactor
+
+    NAME
+	MUIA_Prop_DeltaFactor -- (V4 ) [ISG], LONG, 0x80427c5e
+
+    FUNCTION
+	yet undocumented, please complain in mailinglist :)
+
+    BUGS
+
+    SEE ALSO
+
+Prop.mui/MUIA_Prop_Entries
+
+    NAME
+	MUIA_Prop_Entries -- (V4 ) [ISG], LONG, 0x8042fbdb
+
+    FUNCTION
+	Set or get the total number of entries.
+
+    SEE ALSO
+	MUIA_Prop_Horiz, MUIA_Prop_Visible, MUIA_Prop_First
+Prop.mui/MUIA_Prop_First
+
+    NAME
+	MUIA_Prop_First -- (V4 ) [ISG], LONG, 0x8042d4b2
+
+    FUNCTION
+	Set or get the number of the first entry.
+
+    SEE ALSO
+	MUIA_Prop_Horiz, MUIA_Prop_Visible, MUIA_Prop_Entries
+Prop.mui/MUIA_Prop_Horiz
+
+    NAME
+	MUIA_Prop_Horiz -- (V4 ) [I.G], BOOL, 0x8042f4f3
+
+    FUNCTION
+	Determine if you want a horizontal or a vertical
+	prop gadget.
+
+	Defaults to FALSE, i.e. vertical.
+
+    SEE ALSO
+	MUIA_Prop_Entries, MUIA_Prop_Visible, MUIA_Prop_First
+Prop.mui/MUIA_Prop_Slider
+
+    NAME
+	MUIA_Prop_Slider -- (V4 ) [ISG], BOOL, 0x80429c3a
+
+    FUNCTION
+	OBSOLETE. DO NOT USE. PREVIOUSLY:
+	Indicate that this prop gadget is used in a slider. MUI might
+	then use different imagery. Since you really should use the
+	slider class when creating sliders, you normally don't need
+	to care about this attribute.
+Prop.mui/MUIA_Prop_UseWinBorder
+
+    NAME
+	MUIA_Prop_UseWinBorder -- (V13) [I..], LONG, 0x8042deee
+
+    SPECIAL INPUTS
+	MUIV_Prop_UseWinBorder_None
+	MUIV_Prop_UseWinBorder_Left
+	MUIV_Prop_UseWinBorder_Right
+	MUIV_Prop_UseWinBorder_Bottom
+
+    FUNCTION
+	If you set this attribute to one of
+
+	MUIV_Prop_UseWinBorder_Left,
+	MUIV_Prop_UseWinBorder_Right,
+	MUIV_Prop_UseWinBorder_Bottom,
+
+	some very special magic will take place with this
+	proportional gadget. In fact, it will not eat
+	any display space at all or render anything, it
+	stays invisible in your windows GUI. Instead, the
+	gadgets control and display will be linked to one
+	of the scrollbars in the window border.
+
+	There is no difference in talking to the object,
+	you can use all prop gadget attributes regardless
+	whether its a real prop gadget or just a window
+	border link. Of course, gadgets in window borders
+	will use the intuition look regardless what the
+	user has configured.
+
+    NOTES
+	You *must* enable border scrollers for the parent window
+	with the corresponding attributes (see below)
+	before using MUIA_Prop_UseWinBorder.
+
+	Obviously, you can only link exactly one prop gadget
+	to one window scroller. Linking more than one gadget
+	to the same window scroller will result in big
+	confusion.
+
+	To simplify programming, the classes Scrollbar.mui
+	and Listview.mui also accept the MUIA_Prop_UseWinBorder
+	attribute and pass it on when creating their prop
+	gadgets. This allows you to do something like
+
+	WindowObject,
+	   MUIA_Window_UseRightBorderScroller, TRUE,
+	   MUIA_Window_RootObject, VGroup,
+	      Child, ListviewObject,
+	         MUIA_Prop_UseWinBorder, MUIV_Prop_UseWinBorder_Right,
+	         ...
+
+	to create a listview thats controllable with a scrollbar in
+	the right window border.
+
+	Scrollgroup class (for virtual groups) features another
+	attribute called MUIA_Scrollgroup_UseWinBorder, TRUE/FALSE
+	to allow control of virtual group from window borders.
+
+    SEE ALSO
+	Window.mui/MUIA_Window_UseBottomBorderScroller,
+	Window.mui/MUIA_Window_UseLeftBorderScroller,
+	Window.mui/MUIA_Window_UseRightBorderScroller,
+	Scrollgroup.mui/MUIA_Scrollgroup_UseWinBorder
+Prop.mui/MUIA_Prop_Visible
+
+    NAME
+	MUIA_Prop_Visible -- (V4 ) [ISG], LONG, 0x8042fea6
+
+    FUNCTION
+	Set or get the number of visible entries.
+
+    SEE ALSO
+	MUIA_Prop_Horiz, MUIA_Prop_Entries, MUIA_Prop_First
+Prop.mui/MUIM_Prop_Decrease
+
+    NAME
+	MUIM_Prop_Decrease (V16) 0x80420dd1
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Prop_Decrease,LONG amount);
+
+    FUNCTION
+	This method decreases the value of a proportional gadget by the
+	specified amount. Negative values are ok. Range checking is done
+	automatically.
+
+    INPUTS
+	amount - amount to substract from the gadgets current position
+                 (will be multiplied by MUIA_Prop_Delta).
+
+    SEE ALSO
+	MUIM_Prop_Increase, MUIA_Prop_First
+Prop.mui/MUIM_Prop_Increase
+
+    NAME
+	MUIM_Prop_Increase (V16) 0x8042cac0
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Prop_Increase,LONG amount);
+
+    FUNCTION
+	This method increases the value of a proportional gadget by the
+	specified amount. Negative values are ok. Range checking is done
+	automatically.
+
+    INPUTS
+	amount - amount to add to the gadgets current position (will be
+                 multiplied by MUIA_Prop_Delta).
+
+    SEE ALSO
+	MUIM_Prop_Decrease, MUIA_Prop_First
+

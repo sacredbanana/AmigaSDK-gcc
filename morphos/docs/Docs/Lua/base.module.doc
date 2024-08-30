@@ -1,0 +1,697 @@
+TABLE OF CONTENTS
+
+base.module/assert
+base.module/collectgarbage
+base.module/dofile
+base.module/error
+base.module/gcinfo
+base.module/getfenv
+base.module/getmetatable
+base.module/ipairs
+base.module/load
+base.module/loadfile
+base.module/loadstring
+base.module/newproxy
+base.module/next
+base.module/pairs
+base.module/pcall
+base.module/print
+base.module/rawequal
+base.module/rawget
+base.module/rawset
+base.module/select
+base.module/setfenv
+base.module/setmetatable
+base.module/tonumber
+base.module/tostring
+base.module/type
+base.module/unpack
+base.module/xpcall
+base.module/assert
+
+ NAME
+   base.assert -- creates debug assertion. (V1)
+
+ SYNOPSIS
+   assert(val[, msg])
+
+ FUNCTION
+   If the value 'val' is 'nil' or 'false', the function throws a Lua
+   exception with optional message 'msg'. The default message is "assertion
+   failed!".
+
+ INPUTS
+   val - expression being asserted.
+   msg - message for exception thrown.
+
+ RESULT
+   None.
+
+base.module/collectgarbage
+
+ NAME
+   base.collectgarbage -- Lua garbage collector control. (V1)
+
+ SYNOPSIS
+   collectgarbage(o [, p])
+
+ FUNCTION
+   Controls the Lua garbage collector. 'o' is the operation to perform
+   (passed as a string), 'p' is an optional numeric parameter, used only by
+   some operations. Following operations are recognized:
+
+   "stop" - stops the collector.
+   "restart" - restarts the collector.
+   "collect" - forces a full collection cycle.
+   "count" - counts the amount of allocated memory (the same as gcinfo()).
+   "step" - performs a single collection step with specified step size.
+   "setpause" - sets the 'pause' parameter for the collector.
+   "setstepmul" - sets the 'step multiplier' for the collector.
+
+   See the Lua Reference Manual for description of the garbage collector and
+   explanation of its parameters.
+
+ INPUTS
+   o - operation to be performed, one of listed above.
+   p - parameter, only taken into account for "step", "setpause" and
+       "setstepmul".
+
+ RESULT
+   None for "stop", "restart" and "collect". For "count" the returned value
+   is the amount of currently allocated memory in kB. For "step" the
+   returned value is boolean 'true' if step triggered the collection cycle,
+   'false' otherwise. For "setpause" and "setstepmul" the returned value is
+   the previous value of 'pause' or 'step multiplier' respectively.
+
+ SEE ALSO
+   gcinfo()
+
+base.module/dofile
+
+ NAME
+   base.dofile -- loads Lua code from file and executes it. (V1)
+
+ SYNOPSIS
+   ... = dofile([name])
+
+ FUNCTION
+   Loads and precompiles Lua code from a file specified by 'name'. If 'name'
+   is not given, loads from standard input. Then the precompiled code is
+   executed, return values of the code are returned from dofile(). Any
+   exceptions thrown from the loaded code are not catched inside dofile(),
+   but propagated up.
+
+ INPUTS
+   name - path to the file to be loaded and executed.
+
+ RESULT
+   The function returns all values returned by executed code.
+
+ SEE ALSO
+   loadfile()
+
+base.module/error
+
+ NAME
+   base.error -- throws a Lua exception. (V1)
+
+ SYNOPSIS
+   error(m [, l])
+
+ FUNCTION
+   Throws a Lua exception with specified message 'm'. Information about
+   the exception position in the code is added to the message. This position
+   information is controlled by optional 'l' argument. For level 0,
+   there is no code position information. For level 1 (the default) the
+   position of error() is added. For level 2 position of function containing
+   error is added, and so on, every level goes up in the calls backtrace.
+
+ INPUTS
+   m - error message.
+   l - position information level.
+
+ RESULT
+   None. This function never returns as it throws an exception.
+
+base.module/gcinfo
+
+ NAME
+   base.gcinfo -- reports Lua memory usage. (V1)
+
+ SYNOPSIS
+   memory = gcinfo()
+
+ FUNCTION
+   Returns the current amount of memory allocated in the Lua state. The
+   amount is in kilobytes.
+
+ INPUTS
+   None.
+
+ RESULT
+   Amount of allocated memory in kB.
+
+ SEE ALSO
+   collectgarbage()
+
+base.module/getfenv
+
+ NAME
+   base.getfenv -- returns current table of global variables. (V1)
+
+ SYNOPSIS
+   env = getfenv([f])
+
+ FUNCTION
+   Returns the table of global variables (called also an environment) for
+   a function specified with 'f'. The 'f' argument may be either a function,
+   or a number meaning the depth level of the calls stack. The default value
+   of 'f' is 1, which means the current function. If 'f' is 0, the global
+   (main) environment is returned.
+
+ INPUTS
+   f - function or calls stack depth level.
+
+ RESULT
+   Table of global variables.
+
+ SEE ALSO
+   setfenv()
+
+base.module/getmetatable
+
+ NAME
+   base.getmetatable -- returns metatable of Lua object. (V1)
+
+ SYNOPSIS
+   metatable = getmetatable(obj)
+
+ FUNCTION
+   The function checks if the object 'obj' (of any type) has a metatable.
+   If not, the function returns 'nil'. If the metatable is present, a
+   '__metatable' field of it is checked. If the field exists, its value is
+   returned. If not, the metatable is returned.
+
+ INPUTS
+   obj - object.
+
+ RESULT
+   Metatable of object, or value of '__metatable' field of object's
+   metatable or 'nil'.
+
+ SEE ALSO
+   setmetatable()
+
+base.module/ipairs
+
+ NAME
+   base.ipairs -- creates ordered table iterator for Lua "for" loop. (V1)
+
+ SYNOPSIS
+   for key, val in ipairs(t) do ... end
+
+ FUNCTION
+   Returns an iterator function, passed table and numeric 0. The function is
+   designed to organize a "for" loop iterating the table. The iterator
+   performs numerically ordered iteration. It assumes the table has integer
+   numeric keys starting from 1 with an increment of 1. If the consecutive
+   key is missing, the loop ends.
+
+ INPUTS
+   t - the table to be iterated.
+
+ RESULT
+   Returned values are implicitly used in the "for" loop. The first one is
+   the iteration function (an internal one), the second is the table passed,
+   the third is 0, so the table is traversed from the start.
+
+ SEE ALSO
+   pairs()
+
+base.module/load
+
+ NAME
+   base.load -- loads Lua code using callback and precompiles it. (V1)
+
+ SYNOPSIS
+   func = load(cback [, chunkname])
+
+ FUNCTION
+   Loads a chunk of Lua code by calling specified callback function 'cback'.
+   Optional 'chunkname' parameter is used as a name in error reporting, if
+   not given the string "=(load)" is used as name. The code is precompiled
+   to a function and this function is returned. In case of error, the
+   function returns 'nil' and an error message.
+
+   The callback function should be a Lua function. At every call it should
+   deliver a next piece of code to be loaded. When there are no more pieces,
+   the function should return empty string or 'nil'.
+
+ INPUTS
+   cback - callback function called by Lua to fetch the code.
+   chunkname - name of code chunk to be used in error messages.
+
+ RESULT
+   Loaded code precompiled to a function or 'nil' + error message.
+
+ SEE ALSO
+   loadfile(), loadstring()
+
+base.module/loadfile
+
+ NAME
+   base.loadfile -- loads Lua code from file and precompiles it. (V1)
+
+ SYNOPSIS
+   func = loadfile([filename])
+
+ FUNCTION
+   Loads a chunk of Lua code from specified 'filename'. If 'filename' is
+   omitted, code is loaded from the standard input. The code is precompiled
+   to a function and this function is returned. In case of error, the
+   function returns 'nil' and an error message.
+
+ INPUTS
+   filename - path to a file to be loaded.
+
+ RESULT
+   Loaded code precompiled to a function or 'nil' + error message.
+
+ SEE ALSO
+   load(), loadstring()
+
+base.module/loadstring
+
+ NAME
+   base.loadstring -- loads Lua code from string and precompiles it. (V1)
+
+ SYNOPSIS
+   func = loadstring(str [, chunkname])
+
+ FUNCTION
+   Loads a chunk of Lua code from specified string 'str'. Optional
+   'chunkname' parameter is used as a name in error reporting, if not given
+   the entire 'str' is used as name. The code is precompiled to a function
+   and this function is returned. In case of error, the function returns
+   'nil' and an error message.
+
+ INPUTS
+   str - string to be loaded.
+   chunkname - name of code chunk to be used in error messages.
+
+ RESULT
+   Loaded code precompiled to a function or 'nil' + error message.
+
+ SEE ALSO
+   load(), loadfile()
+
+base.module/newproxy
+
+ NAME
+   base.newproxy -- creates a light userdata object with specified
+   metatable. (V1)
+
+ SYNOPSIS
+   newproxy(o)
+
+ FUNCTION
+   This is experimental function and is intentionally undocumented.
+
+base.module/next
+
+ NAME
+   base.next -- table iterator. (V1)
+
+ SYNOPSIS
+   key [, val] = next(table [, pkey])
+
+ FUNCTION
+   The function returns the next table key-value pair from 'table' after the
+   key 'pkey'. If 'pkey' is 'nil', the first table pair is returned. If
+   there are no more pairs in the table, the function returns ('nil', 'nil')
+   pair. If 'pkey' is ommited, it is assumed to be 'nil'.
+
+ INPUTS
+   table - table to be iterated.
+   pkey - current iterator position.
+
+ RESULT
+   key - the next key in the table.
+   val - the value associated with 'key'.
+
+ NOTES
+   The order of table elements is unspecified. The function only guarantees
+   that every table element will be returned before returning 'nil' key,
+   and no element will be returned more than once.
+
+   Inserting new elements to the table during iteration will make the
+   iterator to behave in an unspecified way. Note that making an assignment
+   to a nonexisting table element will insert the element.
+
+ EXAMPLE
+   Checking if table is empty:
+
+   if not next(table) then error("The table is empty.") end
+
+   Iterating the table:
+
+   key, val = next(table)
+   while key do
+     print(key)
+     print(val)
+     print("")
+     key, val = next(table, key)
+   end
+
+base.module/pairs
+
+ NAME
+   base.pairs -- creates unordered table iterator for Lua "for" loop. (V1)
+
+ SYNOPSIS
+   for key, val in pairs(t) do ... end
+
+ FUNCTION
+   Returns an iterator function, passed table and 'nil' value. The function
+   is designed to organize a "for" loop iterating the table. The function
+   used for iteration is next(), so it is an unordered iteration.
+
+ INPUTS
+   t - the table to be iterated.
+
+ RESULT
+   Returned values are implicitly used in the "for" loop. The first one is
+   the iteration function (which is next()), the second is the table passed,
+   the third is 'nil', so the table is traversed from the start.
+
+ NOTES
+   Removing and inserting table elements inside the loop leads to
+   unpredictable results.
+
+ SEE ALSO
+   next(), ipairs()
+
+base.module/pcall
+
+ NAME
+   base.pcall -- executes a function in protected mode. (V1)
+
+ SYNOPSIS
+   result [, ...] = pcall(f [, ...])
+
+ FUNCTION
+   Calls a function 'f' in protected mode. It means any exception thrown
+   inside 'f' (and all its subcalls) is catched by pcall() and not
+   propagated outside. If the call succeeds, 'result' is 'true' and all
+   return values from 'f' are available as following return values of
+   pcall(). In case of an exception, 'result' is 'false' and the next return
+   value is an error message.
+
+ INPUTS
+   f - function to be called.
+   ... - arguments for f().
+
+ RESULT
+   Boolean value of success. Return values of 'f()' if no exceptions
+   occurred. Error message in case of an exception.
+
+base.module/print
+
+ NAME
+   base.print -- dumps variables to the standard output. (V1)
+
+ SYNOPSIS
+   print(...)
+
+ FUNCTION
+   This function dumps all passed arguments separated by tabs to the
+   standard output. Non-string arguments are preprocessed with tostring()
+   function. This function is designed for debug output with very limited
+   formatting. For fully featured formatting use string.format().
+
+ INPUTS
+   List of arguments to be dumped.
+
+ RESULT
+   None.
+
+ SEE ALSO
+   tostring(), string.format()
+
+base.module/rawequal
+
+ NAME
+   base.rawequal -- performs comparision without calling metamethods. (V1)
+
+ SYNOPSIS
+   result = rawequal(arg1, arg2)
+
+ FUNCTION
+   Compares two arguments without calling metamethods for them. It means the
+   function does just plain comparision without using overloaded operators.
+
+ INPUTS
+   arg1 - the first argument to be compared.
+   arg2 - the second argument to be compared.
+
+ RESULT
+   Boolean, 'true' for equality, 'false' otherwise.
+
+base.module/rawget
+
+ NAME
+   base.rawget -- gets a table element without calling metamethods. (V1)
+
+ SYNOPSIS
+   val = rawget(table, key)
+
+ FUNCTION
+   Gets a value associated with 'key' from the 'table', without calling
+   metamethods of the 'table'.
+
+ INPUTS
+   table - a table from which value is retrieved.
+   key - key to the table.
+
+ RESULT
+   Value associated with the key.
+
+base.module/rawset
+
+ NAME
+   base.rawset -- sets a table element without calling metamethods. (V1)
+
+ SYNOPSIS
+   result = rawset(table, key, value)
+
+ FUNCTION
+   Sets 'value' for the 'table' element indexed by 'key'. Metamethods are
+   not called.
+
+ INPUTS
+   table - table to which value is written.
+   key - a key to a table element.
+   value - value to be written.
+
+ RESULT
+   The function returns the table.
+
+base.module/select
+
+ NAME
+   base.select -- function arguments selector and counter. (V1)
+
+ SYNOPSIS
+   ... = select(i, ...)
+
+ FUNCTION
+   The function select() is a helper function for writing variable arguments
+   functions. Given a selector 'i' and variable number of arguments, it
+   selects and returns these arguments starting from 'i'-th one. 'i' can be
+   also a negative number, in this case the last -'i' arguments are
+   returned. For counting arguments the selector should be the string "#".
+   Then the function returns number of arguments passed after 'i'.
+
+ INPUTS
+   i - the selector, either an integer number or string "#".
+
+ RESULT
+   All arguments of the function starting from the 'i'-th one or the number
+   of arguments passed (except argument 'i').
+
+ SEE ALSO
+   unpack()
+
+base.module/setfenv
+
+ NAME
+   base.setfenv -- sets a new set of global variables for a function. (V1)
+
+ SYNOPSIS
+   func = setfenv(f, t)
+
+ FUNCTION
+   Sets the table 't' as a table of global variables (called also an
+   environment) to a function specified by 'f'. The 'f' may be either a
+   function or a number meaning level on the calls stack. 'f' value of 1
+   means the function calling setfenv(). 'f' value of 0 sets the environment
+   for the current thread.
+
+ INPUTS
+   f - function for which the new environment is set, or a number
+       specifying function as the level on the calls stack.
+   t - table to be used as the environment for 'f'.
+
+ RESULT
+   The function 'f', or nothing if parameter 'f' was 0.
+
+ SEE ALSO
+   getfenv()
+
+base.module/setmetatable
+
+ NAME
+   base.setmetatable -- sets metatable for Lua object. (V1)
+
+ SYNOPSIS
+   setmetatable(t, m)
+
+ FUNCTION
+   Sets table 'm' as a metatable for table 't'. 'm' may be 'nil', in this
+   case the current metatable of 't' is just removed. If the original
+   metatable of 't' has a '__metatable' field, the function throws a Lua
+   exception.
+
+ INPUTS
+   t - a table, which metatable is changed.
+   m - new metatable or 'nil'.
+
+ RESULT
+   Function returns the table 't'.
+
+ SEE ALSO
+   getmetatable()
+
+base.module/tonumber
+
+ NAME
+   base.tonumber -- converts string to number. (V1)
+
+ SYNOPSIS
+   number = tonumber(a [, b])
+
+ FUNCTION
+   Converts variable 'a' (being a string or a number) to a number.
+   An optional integer argument 'b' specifies the number system base used to
+   denote 'a' and defaults to 10.
+
+   If 'a' is a number already, and the base is 10, the function just returns
+   'a'. For other bases 'a' must be a string. For the base 10, fractional
+   part and scientific notation are allowed. For other bases only integers
+   may be converted. The base may range from 2 (binary number) to 36
+   including. For bases higher than 10, consecutive letters of English
+   alphabet are used (case insensitive) starting from "a" for 11, up to "z"
+   for 35.
+
+   Leading and trailing whitespaces in 'a' are allowed. In contrast to C
+   conversion functions, trailing non-whitespace characters are NOT allowed.
+
+ INPUTS
+   a - value to convert, usually a string.
+   b - number system base from 2 to 36.
+
+ RESULT
+   Converted number or 'nil' in case conversion is not possible.
+
+base.module/tostring
+
+ NAME
+   base.tostring -- converts any variable to string. (V1)
+
+ SYNOPSIS
+   s = tostring(v)
+
+ FUNCTION
+   Converts passed variable to a string, calling '__tostring' method if
+   defined.
+
+ INPUTS
+   v - value to convert.
+
+ RESULT
+   Value converted to a string.
+
+base.module/type
+
+ NAME
+   base.type -- returns type of Lua object. (V1)
+
+ SYNOPSIS
+   n = type(v)
+
+ FUNCTION
+   The function returns type name of its argument. The name may be one of:
+   "nil", "number", "boolean", "string", "table", "function", "userdata" and
+   "thread". These names are not localized.
+
+ INPUTS
+   v - object to be checked.
+
+ RESULT
+   The name of object's type as a string.
+
+base.module/unpack
+
+ NAME
+   base.unpack -- expands table into multiple return values. (V1)
+
+ SYNOPSIS
+   ... = unpack(t [, i [, j]])
+
+ FUNCTION
+   Assuming the table 't' has integer keys, the function returns table
+   elements from t[i] to t[j] including, as its multiple return values. Both
+   'i' and 'j' are optional. The default value of 'i' is 1. The default
+   value of 'j' is the number of table elements. Then unpack(t) returns all
+   the elements of 't'.
+
+   The function is mainly used as a helper for handling arguments of
+   variadic functons.
+
+ INPUTS
+   t - table to be unpacked.
+   i - index of the first unpacked element.
+   j - index of the last unpacked element.
+
+ RESULT
+   Selected table elements as multiple return values.
+
+ SEE ALSO
+   select()
+
+base.module/xpcall
+
+ NAME
+   base.xpcall -- executes a function in protected mode with changed error
+   handler. (V1)
+
+ SYNOPSIS
+   s, ... = xpcall(f, e)
+
+ FUNCTION
+   Executes the function 'f' in protected mode, but replaces current error
+   handler function with the function 'e' for the call. An exception inside
+   'f' is catched by xpcall(), which calls the handler 'e'.
+
+ INPUTS
+   f - function to be executed.
+   e - error handler function.
+
+ RESULT
+   Execution status, 'true' if no exceptions.
+
+   The rest of values are return values of 'f' in case of succesfull
+   execution, or an error object (a string usually) returned by 'e' in case
+   when an exception occurred.
+
+

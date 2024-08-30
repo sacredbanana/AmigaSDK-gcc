@@ -1,0 +1,218 @@
+TABLE OF CONTENTS
+
+rawvideo.filter/--background--
+rawvideo.filter/MMA_StreamPosFrames
+rawvideo.filter/MMA_StreamPosTime
+rawvideo.filter/MMA_Video_FpsDenominator
+rawvideo.filter/MMA_Video_FpsNumerator
+rawvideo.filter/MMA_Video_FrameCount
+rawvideo.filter/MMA_Video_Height
+rawvideo.filter/MMA_Video_Width
+rawvideo.filter/MMM_Pull
+rawvideo.filter/MMM_Seek
+rawvideo.filter/--background--
+
+ DESCRIPTION
+   This is a Reggae filter used for importing raw video data in several
+   formats into Reggae. The filter does not process data, it is only used to
+   attach format tag to raw data stream pulled from a stream object. It is
+   also used to specify basic video parameters like image width and height
+   and framerate. The filter accepts MMF_STREAM format on its input, it
+   means that a stream object should be the source of data. It can be for
+   example memory stream to fetch data from a memory buffer, or file.stream
+   to load raw data from disk. The real format of data is specified by
+   setting MMA_Port_Format attribute for the output port. When no format is
+   set, the default one is MMFC_VIDEO_ARGB32. Then image dimensions and the
+   framerate is set with object's attributes (see below). The output
+   format may be one of common video formats of Reggae, or one of encoded
+   formats. If it is an encoded format, a decoder is usually connected to
+   the object's output. An rawvideo.filter object will allow for following
+   output formats:
+
+   Common formats:
+   - MMFC_VIDEO_ARGB32
+   - MMFC_VIDEO_CMYK32
+   - MMFC_VIDEO_GRAY8
+
+   Encoded formats:
+   - MMF_VIDEO_GRAY8,
+   - MMF_VIDEO_GRAY16BE,
+   - MMF_VIDEO_RGB24,
+   - MMF_VIDEO_RGB48BE,
+   - MMF_VIDEO_LUT8
+    - MMF_VIDEO_ARGB32
+
+ NEW ATTRIBUTES
+   Attributes applicability:
+     I - may be set at creation time.
+     S - may be set on an existing object.
+     G - may be get from an object.
+     P - may be set for an object's port.
+     Q - may be queried from an object's port.
+
+   MMA_Video_Width           (V51)    [I.G.Q], LONG
+   MMA_Video_Height          (V51)    [I.G.Q], LONG
+   MMA_Video_FrameCount      (V51)    [..G.Q], QUAD
+   MMA_Video_FpsNumerator    (V51)    [I.G.Q], LONG
+   MMA_Video_FpsDenominator  (V51)    [I.G.Q], LONG
+   MMA_StreamPosFrames       (V51)    [..G.Q], QUAD
+   MMA_StreamPosTime         (V51)    [..G.Q], QUAD
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V51)
+   MMM_Seek(port, type, position)  (V51)
+
+ HISTORY
+   51.2 (07.09.2012)
+   - Fixed error forwarding in MMM_Pull().
+
+   51.1 (10.07.2011)
+   - Initial release.
+
+rawvideo.filter/MMA_StreamPosFrames
+
+ NAME
+   MMA_StreamPosFrames (V51) [..G.Q], QUAD
+
+ FUNCTION
+   Returns number of complete frames pulled from the output port. If current
+   pull pointer is not exactly at frame boundary, the last, partially
+   fetched frame is not counted. Value of this attribute is changed by
+   MMM_Seek().
+
+rawvideo.filter/MMA_StreamPosTime
+
+ NAME
+   MMA_StreamPosTime (V51) [..G.Q], QUAD
+
+ FUNCTION
+   Returns current time position in the stream. It is strictly based on
+   MMA_StreamPosFrames and framerate specified with MMA_Video_FpsNumerator
+   and MMA_Video_FpsDenominator. Any partially fetched frame is ignored in
+   calculation. Value of this attribute is changed by MMM_Seek().
+
+rawvideo.filter/MMA_Video_FpsDenominator
+
+ NAME
+   MMA_Video_FpsDenominator (V51) [I.G.Q], LONG
+
+ FUNCTION
+   This attribute together with MMA_Video_FpsNumerator, specifies the
+   frame rate of a video stream as a rational number. The default value of
+   this tag is 1, which with MMA_Video_FpsNumerator default value of 25
+   means 25 frames per second. Maximum allowed value for this attribute is
+   1 000 000. Zero and negative values are rejected.
+
+rawvideo.filter/MMA_Video_FpsNumerator
+
+ NAME
+   MMA_Video_FpsNumerator (V51) [I.G.Q], LONG
+
+ FUNCTION
+   This attribute together with MMA_Video_FpsDenominator, specifies the
+   frame rate of a video stream as a rational number. The default value of
+   this tag is 25, which with MMA_Video_FpsDenominator default value of 1
+   means 25 frames per second. Maximum allowed value for this attribute is
+   1 000 000. Zero and negative values are rejected.
+
+rawvideo.filter/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], QUAD
+
+ FUNCTION
+   This attribute is calculated based on stream length queried on the input
+   port (MMA_StreamLength attribute), video format set on output port, and
+   video width and height specified with MMA_Video_Width and
+   MMA_Video_Height attributes. If MMA_StreamLength reported by the source
+   stream is 0 (which has meaning of "unknown"), this attribute is 0 as
+   well. The same happens if the object has no stream connected on its
+   input.
+
+ NOTES
+   This is a 64-bit attribute. Storage pointer in GetAttr() should point to
+   a QUAD variable. When using MediaGetPort() macros, select 64-bit
+   versions.
+
+   The stream length is queried once, when input port is connected to a
+   source stream.
+
+rawvideo.filter/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [I.G.Q], LONG
+
+ FUNCTION
+   Sets video stream or picture height in pixels. The default value of this
+   tag is 240 pixels.
+
+rawvideo.filter/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [I.G.Q], LONG
+
+ FUNCTION
+   Sets video stream or picture width in pixels. The default value of this
+   tag is 320 pixels.
+
+rawvideo.filter/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes video data to specified buffer. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+   length);
+
+ FUNCTION
+   Pulls needed amount of raw video data from input. As the object does not
+   process the data in any way, the request is simply forwarded to the
+   previous object.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, data must be pulled from port 1 (output).
+   buffer - destination buffer for data.
+   length - amount of data to be pulled in *bytes*.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+rawvideo.filter/MMM_Seek
+
+ NAME
+   MMM_Seek -- Moves raw video stream pointer to a new position. (V51)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, ULONG type, QUAD*
+   position);
+
+ FUNCTION
+   A rawvideo.filter objects does not process data and does not have any
+   internal buffers. It also knows frame size and sample rate, so it only
+   supports frame seek and time seek (byte seek cannot be used). Time seek
+   is converted to frames (with rounding down if neccesary) using the video
+   frame rate defined with MMA_Video_FpsNumerator and
+   MMA_Video_FpsDenominator. Frame seek is converted to byte seek, based on
+   video dimensions specified with MMA_Video_Width and MMA_Video_Height and
+   specified output format. Resulting byte seek is passed to the stream
+   connected on input port.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, seek must be done on port 1 (output).
+   buffer - type of seek, MMM_SEEK_TIME or MMM_SEEK_FRAMES.
+   position - a pointer to a QUAD variable holding the new position. It is
+     in frames for frame seek and in microseconds for time seek.
+
+ RESULT
+   Boolean value of success. Secondary error information is available via
+   MMA_ErrorCode attribute.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+

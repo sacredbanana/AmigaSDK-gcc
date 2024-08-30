@@ -1,0 +1,255 @@
+TABLE OF CONTENTS
+
+netpbm.demuxer/MMA_DataFormat
+netpbm.demuxer/MMA_MimeType
+netpbm.demuxer/MMA_Video_BitsPerPixel
+netpbm.demuxer/MMA_Video_BytesPerLine
+netpbm.demuxer/MMA_Video_FinalTouch
+netpbm.demuxer/MMA_Video_FrameCount
+netpbm.demuxer/MMA_Video_GammaCorrection
+netpbm.demuxer/MMA_Video_Height
+netpbm.demuxer/MMA_Video_Palette
+netpbm.demuxer/MMA_Video_Progressive
+netpbm.demuxer/MMA_Video_UseAlpha
+netpbm.demuxer/MMA_Video_Width
+netpbm.demuxer/MMM_Pull
+netpbm.demuxer/background
+netpbm.demuxer/MMA_DataFormat
+
+ NAME
+   MMA_DataFormat (V51.7) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only textual NULL-terminated description of decoded format.
+   This class returns subformat dependent string:
+   - for type P1 "Portable BitMap (ASCII)",
+   - for type P2 "Portable GrayMap (ASCII)",
+   - for type P3 "Portable PixMap (ASCII)",
+   - for type P4 "Portable BitMap",
+   - for type P5 "Portable GrayMap",
+   - for type P6 "Portable PixMap".
+ The class itself (not an instance) returns "Portable AnyMap".
+
+netpbm.demuxer/MMA_MimeType
+
+ NAME
+   MMA_MimeType (V51.8) [..G.Q], STRPTR
+
+ FUNCTION
+   Returns read-only NULL-terminated MIME type string. For an object, the
+   string is subformat dependent:
+   - for type P1 and P4 "image/x-portable-bitmap",
+   - for type P2 and P5 "image/x-portable-graymap",
+   - for type P3 and P6 "image/x-portable-pixmap".
+   The class itself (not an instance) returns "image/x-portable-anymap".
+
+netpbm.demuxer/MMA_Video_BitsPerPixel
+
+ NAME
+   MMA_Video_BitsPerPixel (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Number of bits used to represent one pixel in the source data. For ASCII
+   formats ("P1", "P2", "P3") it means number of bits used to represent one
+   pixel after conversion to binary. For example ASCII PBM file has 1 bit
+   per pixel, the same as a binary one.
+
+netpbm.demuxer/MMA_Video_BytesPerLine
+
+ NAME
+   MMA_Video_BytesPerLine (V51) [..G.Q], ULONG
+
+ FUNCTION
+   The attribute specifies number of binary data bytes per image line.
+
+netpbm.demuxer/MMA_Video_FinalTouch
+
+ NAME
+   MMA_Video_FinalTouch (V51) [..G.Q], BOOL
+
+ FUNCTION
+   The attribute is used for progressive display control, it goes TRUE if
+   the final image is being pulled. As NetPBM formats do not support
+   progressive display, pulled data are always the final one, so it is
+   always TRUE.
+
+netpbm.demuxer/MMA_Video_FrameCount
+
+ NAME
+   MMA_Video_FrameCount (V51) [..G.Q], UQUAD*
+
+ FUNCTION
+   Text subformats ("P1" to "P3") contains always one image frame, so the
+   attribute is 1. Binary subformats may have multiple frames, but it can be
+   detected in the header, so the attribute is 0 (meaning "unknown").
+
+ NOTES
+   As every 64-bit attribute, MMA_Video_FrameCount is passed by pointer to a
+   64-bit value.
+
+netpbm.demuxer/MMA_Video_GammaCorrection
+
+ NAME
+   MMA_Video_GammaCorrection (V51) [IS.P.], BOOL
+
+ FUNCTION
+   Grayscale and color images (PGM and PPM) should be gamma corrected
+   according to ITU-R BT.709 curve before writing, to increase color
+   dynamic range. An inverse function should be applied to pixel values
+   before processing. In spite of netpbm documentation reccomendation, most
+   of images is written without this gamma correction, that is why Reggae
+   makes it optional. Default value for this tag is FALSE.
+
+netpbm.demuxer/MMA_Video_Height
+
+ NAME
+   MMA_Video_Height (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Image height in pixels.
+
+netpbm.demuxer/MMA_Video_Palette
+
+ NAME
+   MMA_Video_Palette (V51) [..G.Q], *ULONG
+
+ FUNCTION
+   Specifies image data palette as a table of 32-bit ARGB entries. The
+   attribute is defined only for PBM formats, and is a pointer to read-only
+   table containing two entries: 0x00FFFFFF (opaque white) and 0x00000000
+   (opaque black). For grayscale and RGB formats NULL is returned.
+
+netpbm.demuxer/MMA_Video_Progressive
+
+ NAME
+   MMA_Video_Progressive (V51) [..G.Q], BOOL
+
+ FUNCTION
+   The attribute specifies availability of progressive display data in the
+   image. As NetPBM formats do not support progressive display, it is always
+   FALSE.
+
+netpbm.demuxer/MMA_Video_UseAlpha
+
+ NAME
+   MMA_Video_UseAlpha (V51) [..G.Q], BOOL
+
+ FUNCTION
+   The attribute specifies availability of alpha channel data in the image.
+   As NetPBM formats do not support alpha channel, it is always FALSE.
+
+netpbm.demuxer/MMA_Video_Width
+
+ NAME
+   MMA_Video_Width (V51) [..G.Q], ULONG
+
+ FUNCTION
+   Image width in pixels.
+
+netpbm.demuxer/MMM_Pull
+
+ NAME
+   MMM_Pull -- Writes encoded data to specified buffer. (V50)
+
+ SYNOPSIS
+   ULONG DoMethod(Object *obj, MMM_Pull, ULONG port, APTR buffer, ULONG
+     length);
+
+ FUNCTION
+   Pulls needed amount of stream data from input, processes them to extract
+   raw NetPBM data and places them in the specified buffer. The first stage
+   of processing is done only for text formats ("P1" to "P3"), text data are
+   converted to binary data. The second stage is different for different
+   subformats. PBM data (one bitplane) are passed through. Grayscale and RGB
+   data are normalized for 1 or 2 byte full range if dynamic range is
+   neither 255 nor 65535, then un-gamma correction may be applied to data if
+   MMA_Video_GammaCorrection is set to TRUE.
+
+ INPUTS
+   obj - object to perform method on.
+   port - number of port, must be output (1).
+   buffer - destination buffer for bitmap data.
+   length - amount of data to be pulled in bytes.
+
+ RESULT
+   Number of bytes pulled, secondary error information via MMA_ErrorCode.
+
+ SEE ALSO
+   multimedia.class/MMA_ErrorCode
+
+netpbm.demuxer/background
+
+ DESCRIPTION
+   The class is a Reggae demultiplexer for the family of NetPBM formats
+   Following subformats are supported:
+     "P1" - black & white plain text file (Portable BitMap, PBM),
+     "P2" - grayscale plain text file (Portable GrayMap, PGM), up to 255
+            gray levels.
+     "P3" - true color RGB plain text file (Portable PixMap, PPM), up to 255
+            levels per color component.
+     "P4" - black & white binary file (Portable BitMap, PBM),
+     "P5" - grayscale binary file (Portable GrayMap, PGM), up to 255 gray
+            levels.
+     "P6" - true color RGB binary file (protable PixMap, PPM), up to 255
+            levels per color component.
+
+   Object of netbpm.demuxer class has two ports: port 0 is an input and
+   accepts MMF_STREAM format, port 1 is an output and produces one of:
+     MMF_VIDEO_BITPLANES - for PBM files,
+     MMF_VIDEO_GRAY8 - for PGM files,
+     MMF_VIDEO_RGB24BE - for PPM files.
+
+ NEW ATTRIBUTES
+   MMA_Video_BitsPerPixel      (V51)    [..G.Q], ULONG
+   MMA_Video_BytesPerLine      (V51)    [..G.Q], ULONG
+   MMA_Video_FinalTouch        (V51)    [..G.Q], BOOL
+   MMA_Video_FrameCount        (V51)    [..G.Q], *UQUAD
+   MMA_Video_Height            (V51)    [..G.Q], ULONG
+   MMA_Video_Palette           (V51)    [..G.Q], *ULONG
+   MMA_Video_Progressive       (V51)    [..G.Q], BOOL
+   MMA_Video_UseAlpha          (V51)    [..G.Q], BOOL
+   MMA_Video_Width             (V51)    [..G.Q], ULONG
+   MMA_Video_GammaCorrection   (V51)    [IS.P.], BOOL
+   MMA_DataFormat              (V51.7)  [..G.Q], STRPTR
+   MMA_MimeType                (V51.8)  [..G.Q], STRPTR
+
+ NEW METHODS
+   MMM_Pull(port, buffer, length)  (V50)
+
+ HISTORY
+   51.8  (28.06.2015)
+   - Implemented MMA_MimeType.
+
+   51.7  (29.06.2007)
+   - Implemented MMA_DataFormat.
+
+   51.6  (02.02.2007)
+   - Added PPM recognition and processing.
+   - Added missing MMM_SetPort entry in the dispatcher.
+
+   51.5  (29.01.2007)
+   - Fixed stupid bug in the recognition routine, initial 'P' was not
+     checked and any byte there was accepted.
+
+   51.4  (26.01.2007)
+   - Added proper PGM pixel value scaling for 8-bit images.
+   - Added optional gamma correction for 8-bit images (will be useful for
+     24-bit PPM-s as well).
+   - Disabled 16-bit PGM-s for now.
+
+   51.3  (31.10.2006)
+   - Added parsing headers of PGM images - GetGrayHeader().
+   - Added MMA_Video_BytesPerLine for PGM.
+   - Enabled PGM recognition in 'recognize.c'.
+   - Added PGM scaling for arbitrary max value.
+   - Added MMF_VIDEO_GRAY16BE for max value higher than 255.
+
+   51.2  (28.08.2006)
+   - Switched to C++ (some useful classes).
+   - Added support for "P1" plain text monochrome bitmap.
+   - Added internal data bufferring for speedup.
+
+   51.1  (27.08.2006)
+   - Initial revision.
+
+

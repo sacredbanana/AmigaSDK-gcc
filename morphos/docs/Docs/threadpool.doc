@@ -1,0 +1,370 @@
+TABLE OF CONTENTS
+
+threadpool.library/AbortWorkItem()
+threadpool.library/AbortWorkQueue()
+threadpool.library/CheckWorkItem()
+threadpool.library/CheckWorkQueue()
+threadpool.library/CreateThreadPool()
+threadpool.library/DeleteThreadPool()
+threadpool.library/GetCurrentWorkItem()
+threadpool.library/IsCurrentThread()
+threadpool.library/QueueWorkItem()
+threadpool.library/SendWorkItemMessage()
+threadpool.library/SignalWorkItem()
+threadpool.library/WaitWorkItem()
+threadpool.library/WaitWorkQueue()
+threadpool.library/AbortWorkItem()
+
+ NAME
+   AbortWorkItem -- (v52) Attempts to abort a work item.
+
+ SYNOPSIS
+   result = AbortWorkItem(thread, id);
+
+   WORKITEMSTATUS AbortWorkItem(APTR thread, ssize_t id);
+
+ FUNCTION
+   Determintes the current state of a work item.
+
+ INPUTS
+   threadpool - the thread pool work item belongs to.
+   id         - the work item id.
+
+ RESULT
+   result     - WORKITEMSTATUS_NOT_FOUND if work item was not found (was
+                already completed or aborted).
+
+                WORKITEMSTATUS_EXECUTING if work item is currently under
+                execution and can't be aborted.
+
+                WORKITEMSTATUS_PENDING   if work item was in a work queue
+                and aborted.
+
+ SEE ALSO
+
+threadpool.library/AbortWorkQueue()
+
+ NAME
+   AbortWorkItem -- (v52) Attempts to abort a work queue.
+
+ SYNOPSIS
+   is_empty = AbortWorkQueue(thread);
+
+   BOOL AbortWorkQueue(APTR thread);
+
+ FUNCTION
+   Abort all work in queue.
+
+ INPUTS
+   threadpool - the thread pool workitem belongs to.
+   id         - the work item id.
+
+ RESULT
+   is_empty   - TRUE if all work items were aborted. FALSE if one work item
+                was already under execution and couldn't abort.
+
+ SEE ALSO
+'   WaitWorkItem()
+
+threadpool.library/CheckWorkItem()
+
+ NAME
+   CheckWorkItem -- (v52) Check if a work item is executed or pending.
+
+ SYNOPSIS
+   result = CheckWorkItem(threadpool, id);
+
+   WORKITEMSTATUS CheckWorkItem(APTR threadpool, ssize_t id);
+
+ FUNCTION
+   Determines the current state of a work item.
+
+ INPUTS
+   threadpool - the thread pool workitem belongs to.
+   id         - the work item id.
+
+ RESULT
+   result     - WORKITEMSTATUS_NOT_FOUND if work item was not found (was
+                completed or aborted).
+
+                WORKITEMSTATUS_EXECUTING if work item is currently under
+                execution.
+
+                WORKITEMSTATUS_PENDING   if work item is still in a work
+                queue.
+
+ SEE ALSO
+
+threadpool.library/CheckWorkQueue()
+
+ NAME
+   CheckWorkQueue -- (v52) Check if there is work in queue.
+
+ SYNOPSIS
+   result = CheckWorkQueue(thread);
+
+   BOOL CheckWorkQueue(APTR thread);
+
+ FUNCTION
+   Determintes the current state of a work queue.
+
+ INPUTS
+   threadpool - the thread pool to check work queue for.
+
+ RESULT
+   result     - FALSE if there wasn't currently work in queue, TRUE if there
+                is work in queue being executed or pending.
+
+ SEE ALSO
+
+threadpool.library/CreateThreadPool()
+
+ NAME
+   CreateThreadPool -- (v52) Create a private thread pool.
+
+ SYNOPSIS
+   CreateThreadPool(MaxThreads, TagItems)
+
+   VOID CreateThreadPool(size_t MaxThreads, CONST struct TagItem *TagItems);
+
+ FUNCTION
+   Create a new thread pool.
+
+ INPUTS
+   MaxThreads     - maximum number of concurrent threads.
+   TagItems       - (optional) pointer to an array of TagItem structures,
+                    terminated by the value TAG_END.
+
+      THREADPOOL_DataSegment (MorphOS 3.6)
+                Data segment pointer. When a thread is launched this
+                pointer is restored automatically.
+
+      THREADPOOL_MaxIdleThreads
+                Maximum number of idle threads. Default is 3.
+
+      THREADPOOL_Name
+                Default thread name. The thread name is not copied and
+                must remain valid until thread pool is deleted.
+
+      THREADPOOL_Priority
+                Default thread priority. Threads are allowed to adjust
+                priority run time. Default is 0.
+
+ RESULT
+   The pointer to a new thread pool header, or NULL for error.
+
+ SEE ALSO
+
+threadpool.library/DeleteThreadPool()
+
+ NAME
+   DeleteThreadPool -- (v52) Drain an entire thread pool.
+
+ SYNOPSIS
+   DeleteThreadPool(threadpool);
+
+   VOID DeleteThreadPool(APTR threadpool);
+
+ FUNCTION
+   Waits threads to finish and frees all associated resources.
+
+ INPUTS
+   threadpool - pointer to threadpool context.
+
+ RESULT
+
+ SEE ALSO
+
+threadpool.library/GetCurrentWorkItem()
+
+ NAME
+   GetCurrentWorkItem -- (v52) Get work ID executed in this pooled thread
+
+ SYNOPSIS
+   item = GetCurrentWorkItem(threadpool);
+
+   ssize_t GetCurrentWorkItem(APTR threadpool);
+
+ FUNCTION
+   Get a work item currently under execution.
+
+ INPUTS
+   threadpool - a pointer to a threadpool context.
+
+ RESULT
+   item       - the work item or WORKITEM_INVALID if this is not a pooled
+                thread.
+
+ SEE ALSO
+
+threadpool.library/IsCurrentThread()
+
+ NAME
+   IsCurrentThread -- (v52) Check if a work is executed in current thread.
+
+ SYNOPSIS
+   IsCurrent = IsCurrentThread(threadpool, id);
+
+   BOOL IsCurrentThread(APTR threadpool, ssize_t);
+
+ FUNCTION
+   Checks if a work item is currently under execution and if it is checks
+   if it is executed in current thread.
+
+ INPUTS
+   threadpool - a pointer to a threadpool context.
+   id         - a work item id
+
+ RESULT
+   success    - TRUE if a work item is executed in this thread, otherwise
+                a FALSE is returned.
+
+ SEE ALSO
+
+threadpool.library/QueueWorkItem()
+
+ NAME
+   QueueWorkItem -- (v52) Queue a function call for execution.
+
+ SYNOPSIS
+   id = QueueWorkItem(thread, entry, userdata);
+
+   ssize_t QueueWorkItem(APTR thread, THREADFUNC entry, APTR userdata);
+
+ FUNCTION
+   Queues a function call for execution. The function executes when previous
+   work items in this pool have completed. If there are no existing work items
+   in thread function is called immediately in a thread obtained from a thread
+   pool.
+
+   Allocated system resources (AllocTaskPooled() memory, signals, message ports)
+   must be freed by called function entry. Failing to do so consecutive function
+   calls may run out of signal bits and you are wasting memory for nothing.
+
+   Threads run with minimum system stack: 2048 bytes for 68k and 32768 bytes
+   for native code. Use stack swap if more space is required.
+
+ INPUTS
+   threadpool - pointer to a threadpool context.
+   entry      - function to call on the background.
+   userdata   - (optional) pointer to a user data.
+
+ RESULT
+   id         - Returns a positive integer on success that is a thread
+                specific work item id.
+
+                Returns WORKITEM_INVALID if a function could not be queued.
+
+ NOTES
+   Work item id is 31 bit integer value and wraps after 2^31 calls.
+
+ SEE ALSO
+   CreateThreadTagList()
+
+threadpool.library/SendWorkItemMessage()
+
+ NAME
+   SendWorkItemMessage -- (v52) Put a message to a work item.
+
+ SYNOPSIS
+   success = SendWorkItemMessage(thread, id, message);
+
+   BOOL SendWorkItemMessage(APTR thread, ssize_t id, struct Message *message);
+
+ FUNCTION
+   Attempts to send a message to the thread with the specified work item id.
+   If attaching a message fails this function does nothing and returns FALSE.
+
+   Attaching a message can fail if work item doesn't exist or was already
+   completed.
+
+   Note that attaching message can succeed without work item ever getting
+   your message (i.e. work item is already in cleanup phase). The system
+   detects undelivered messages and sends those messages back to you with
+   ln_Type set to NT_MESSAGE.
+
+ INPUTS
+   threadpool - the thread pool work item belongs to.
+   id         - work item id
+   message    - pointer to a message.
+
+ RESULT
+   success - TRUE if a message was sent successfully, FALSE if the work item
+             was not found.
+
+ SEE ALSO
+
+threadpool.library/SignalWorkItem()
+
+ NAME
+   SignalWorkItem -- (v52) Set signals of a work item
+
+ SYNOPSIS
+   result = SignalWorkItem(threadpool, id, signalmask);
+
+   WORKITEMSTATUS SignalWorkItem(APTR threadpool, ssize_t id, size_t signalmask);
+
+ FUNCTION
+   Determines the current state of a work item.
+
+ INPUTS
+   threadpool - the thread pool workitem belongs to.
+   id         - the work item id.
+   signalmask - signals to set
+
+ RESULT
+   result     - WORKITEMSTATUS_NOT_FOUND if work item was not found (was
+                completed or aborted).
+
+                WORKITEMSTATUS_EXECUTING if work item is currently under
+                execution.
+
+                WORKITEMSTATUS_PENDING   if work item is still in a work
+                queue.
+
+ SEE ALSO
+
+threadpool.library/WaitWorkItem()
+
+ NAME
+   WaitWorkItem -- (v52) Wait a work item to finish.
+
+ SYNOPSIS
+   success = WaitWorkItem(thread, workitem_id);
+
+   BOOL WaitWorkItem(APTR thread, ssize_t workitem_id);
+
+ FUNCTION
+   Wait until the work is completed.
+
+ INPUTS
+   pool     - a thread pool to wait for.
+   id       - a workitem id
+
+ RESULT
+   success - TRUE if a work item was found, FALSE if the work item was not
+             found.
+
+ SEE ALSO
+
+threadpool.library/WaitWorkQueue()
+
+ NAME
+   WaitWorkQueue -- (v52) Wait all threads to finish.
+
+ SYNOPSIS
+   WaitWorkQueue(threadpool);
+
+   VOID WaitThreads(APTR threadpool);
+
+ FUNCTION
+   Wait until all work is done.
+
+ INPUTS
+   threadpool - a pointer to a threadpool context.
+
+ RESULT
+
+ SEE ALSO
+
+
