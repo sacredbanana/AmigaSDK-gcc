@@ -544,7 +544,7 @@ Area.mui/MUIM_WhichPointerType
 	MUIM_Layout
 Area.mui/MUIA_Font
     NAME
-	MUIA_Font -- (V4) [ISG], struct TextFont *, 0x8042be50
+	MUIA_Font -- (V4) [I.G], struct TextFont *, 0x8042be50
 
     SPECIAL INPUTS
 	  * MUIV_Font_Inherit
@@ -1188,7 +1188,7 @@ Area.mui/MUIM_WhichPointerType
 
     FUNCTION
 	Normally a gadget will reverse its frame and display the configured
-	MUII_SelectedBack background pattern in its selected state. For some objects
+	MUII_SelectetBack background pattern in its selected state. For some objects
 	(e.g. checkmarks) this is not recommended and can be supressed by setting
 	MUIA_ShowSelState to FALSE.
 
@@ -1196,15 +1196,23 @@ Area.mui/MUIM_WhichPointerType
 	MUIA_Selected
 Area.mui/MUIA_TextColor
     NAME
-	MUIA_TextColor -- (V22) [..G], ULONG, 0x8042dba6
+	MUIA_TextColor -- (V22) [IS.], struct PenSpec *, 0x8042dba6
 
     FUNCTION
-	Returns the RGB color without alpha channel (00RRGGBB) information of the text
-	associated with the object. This value is valid between MUIM_Setup and
-	MUIM_Cleanup only, otherwise it returns 0.
+	Every MUI object can have its own text color, just set it with this tag. Objects
+	without an explicit color setting will inherit it the user configuration.
 
-	Do not cache this value and read it once per MUIM_Draw call to support online
-	prefs changes.
+	Valid pen specs are strings like "rRRGGBB" with R, G and being the RGB values to
+	be used. The leading 'r' character might be omitted.
+
+	Defaults to NULL, which will use the default text color.
+
+    EXAMPLE
+	/* set a red text color */
+	set(obj, MUIA_TextColor, "rff0000");
+
+	/* set a blue text color */
+	set(obj, MUIA_TextColor, "0000ff");
 Area.mui/MUIA_Timer
     NAME
 	MUIA_Timer -- (V4) [..G], LONG, 0x80426435
