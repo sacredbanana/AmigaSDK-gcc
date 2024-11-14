@@ -10,6 +10,7 @@ The other included SDKs not counting the ones already included which are from Be
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
 - json-c 0.17 https://github.com/json-c/json-c
+  
 **AmigaOS 4**
 - AmiSSL 5.13 http://aminet.net/package/util/libs/AmiSSL-5.13-SDK
 - Cairo 53.3
@@ -22,6 +23,7 @@ The other included SDKs not counting the ones already included which are from Be
 - SDI 1.7
 - Flite Device 53.1 http://aminet.net/package/mus/misc/flite_device
 - json-c 0.17 https://github.com/json-c/json-c
+  
 **MorphOS**
 - json-c 0.17 https://github.com/json-c/json-c
 
