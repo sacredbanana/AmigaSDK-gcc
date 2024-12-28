@@ -6,13 +6,13 @@ Please note these are meant to be installed on top of Bebbo's Amiga GCC devkit h
 The other included SDKs not counting the ones already included which are from Bebbo's SDK pack:
 **AmigaOS 3**
 - Roadshow 1.5 TCP/IP stack http://roadshow.apc-tcp.de/download-en.php
-- AmiSSL 5.13 http://aminet.net/package/util/libs/AmiSSL-5.13-SDK
+- AmiSSL 5.18 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
 - json-c 0.17 https://github.com/json-c/json-c
   
 **AmigaOS 4**
-- AmiSSL 5.13 http://aminet.net/package/util/libs/AmiSSL-5.13-SDK
+- AmiSSL 5.18 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
 - Cairo 53.3
 - Flex 2.5.27
 - Expat 53.6

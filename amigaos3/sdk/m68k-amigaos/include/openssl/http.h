@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 1999-2006 Andrija Antonijevic, Stefan Burstroem.
- * Copyright (c) 2014-2023 AmiSSL Open Source Team.
+ * Copyright (c) 2014-2024 AmiSSL Open Source Team.
  * All Rights Reserved.
  *
  * This file has been modified for use with AmiSSL for AmigaOS-based systems.
  *
- * Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2018-2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -47,8 +47,11 @@ extern "C" {
 
 # ifndef OPENSSL_NO_HTTP
 
-#define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
-#define OSSL_HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
+#  define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
+#  define OSSL_HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
+#  define OSSL_HTTP_DEFAULT_MAX_CRL_LEN (32 * 1024 * 1024)
+#  define OSSL_HTTP_DEFAULT_MAX_RESP_HDR_LINES 256
+
 
 /* Low-level HTTP API */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size);
@@ -166,6 +169,8 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
 const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl);
 
+void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
+                                                  size_t count);
 
 # endif /* !defined(OPENSSL_NO_HTTP) */
 # ifdef  __cplusplus

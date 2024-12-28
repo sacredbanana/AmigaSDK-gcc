@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1999-2006 Andrija Antonijevic, Stefan Burstroem.
- * Copyright (c) 2014-2023 AmiSSL Open Source Team.
+ * Copyright (c) 2014-2024 AmiSSL Open Source Team.
  * All Rights Reserved.
  *
  * This file has been modified for use with AmiSSL for AmigaOS-based systems.
@@ -37,7 +37,11 @@ extern "C" {
 
 #include <stdlib.h>
 
-/* DH parameter generation types used by EVP_PKEY_CTX_set_dh_paramgen_type() */
+/*
+ * DH parameter generation types used by EVP_PKEY_CTX_set_dh_paramgen_type()
+ * Note that additions/changes to this set of values requires corresponding
+ * adjustments to range checks in dh_gen()
+ */
 # define DH_PARAMGEN_TYPE_GENERATOR     0   /* Use a safe prime generator */
 # define DH_PARAMGEN_TYPE_FIPS_186_2    1   /* Use FIPS186-2 standard */
 # define DH_PARAMGEN_TYPE_FIPS_186_4    2   /* Use FIPS186-4 standard */
