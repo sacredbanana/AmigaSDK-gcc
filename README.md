@@ -10,6 +10,7 @@ The other included SDKs not counting the ones already included which are from Be
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
 - json-c 0.17 https://github.com/json-c/json-c
+- Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
   
 **AmigaOS 4**
 - AmiSSL 5.18 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
@@ -23,9 +24,11 @@ The other included SDKs not counting the ones already included which are from Be
 - SDI 1.7
 - Flite Device 53.1 http://aminet.net/package/mus/misc/flite_device
 - json-c 0.17 https://github.com/json-c/json-c
+- Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
   
 **MorphOS**
 - json-c 0.17 https://github.com/json-c/json-c
+- Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 
 3 Dockerfiles are also included for building the AmigaOS 3/4 and MorphOS compiler dev environments with everything included.
 The latest images can also be obtained by running `docker pull sacredbanana/amiga-compiler:m68k-amigaos`, `docker pull sacredbanana/amiga-compiler:ppc-amigaos` and `docker pull sacredbanana/amiga-compiler:ppc-morphos`.
