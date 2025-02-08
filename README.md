@@ -12,6 +12,7 @@ The other included SDKs not counting the ones already included which are from Be
 - json-c 0.17 https://github.com/json-c/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
+- Source Descriptions for FlexCat https://github.com/adtools/flexcat
   
 **AmigaOS 4**
 - AmiSSL 5.18 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
@@ -27,11 +28,13 @@ The other included SDKs not counting the ones already included which are from Be
 - json-c 0.17 https://github.com/json-c/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
+- Source Descriptions for FlexCat https://github.com/adtools/flexcat
   
 **MorphOS**
 - json-c 0.17 https://github.com/json-c/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
+- Source Descriptions for FlexCat https://github.com/adtools/flexcat
 
 3 Dockerfiles are also included for building the AmigaOS 3/4 and MorphOS compiler dev environments with everything included.
 The latest images can also be obtained by running `docker pull sacredbanana/amiga-compiler:m68k-amigaos`, `docker pull sacredbanana/amiga-compiler:ppc-amigaos` and `docker pull sacredbanana/amiga-compiler:ppc-morphos`.
