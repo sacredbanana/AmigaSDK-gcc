@@ -1,0 +1,119 @@
+<html>
+
+<head>
+<title>Notification</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td><h1 align="right">Notification</h1>
+    </td>
+  </tr>
+  <tr>
+    <td><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>Attributes of class N are notificable by an object to another object.</p>
+
+<p>It means that you can instruct RxMUI to notify an object B when an attribute of an
+object A changes.</p>
+
+<p>Notification of attributes is really important: you may not take any attention on some
+events.</p>
+
+<p>&nbsp;</p>
+
+<p>Let's suppose you have a Radio object A and a Cycle object B and you want to <i>connect</i>
+them so that when the active entry in A changes the active entry of B is changed.</p>
+
+<p>What you must do is to make B SET its attribute Active every time the attribute Active
+of A changes.</p>
+
+<p>It is done via the call:</p>
+
+<pre>    res = Notify(&quot;A&quot;,&quot;Active&quot;,&quot;EveryTime&quot;,&quot;B&quot;,&quot;Set&quot;,&quot;Active&quot;,&quot;TriggerValue&quot;) </pre>
+
+<p>We instruct RxMUI to:<br>
+<strong>Every Time the attribute Active of object A changes, invoke the method Set on the
+object B with argument Active and the same value that triggered the notification
+(TriggerValue)</strong></p>
+
+<p>&nbsp;</p>
+
+<p>Another example:</p>
+
+<p>Let's suppose you have an object called MAboutMUI and you want to open the <i>AboutMUI
+window</i> anytime the user selects that item (app is an application object):</p>
+
+<pre>    res = Notify(&quot;MAboutMUI&quot;,&quot;MenuTrigger&quot;,&quot;EveryTime&quot;,&quot;app&quot;,&quot;AboutMUI&quot;)</pre>
+
+<p>We instruct RxMUI to:<br>
+<strong>EveryTime the MAboutMUI is selected (and so its attribute MenuTrigger changes)
+invoke the method AboutMUI on the object app</strong></p>
+
+<p>&nbsp;</p>
+
+<p>Another example:</p>
+
+<p>Let's suppose you have a button named rem and a Listview named&nbsp; lv and you want to
+remove the active entry of lv anytime the rem is pressed:</p>
+
+<pre>    res = Notify(&quot;rem&quot;,&quot;Pressed&quot;,0,&quot;lv&quot;,&quot;Remove&quot;,&quot;Active&quot;)</pre>
+
+<p>We instruct RxMUI to:&nbsp;<br>
+<strong>When the attribute Pressed of rem is 0 (it means the button was pressed) invoke
+the method Remove on lv with argument Active</strong></p>
+
+<p>&nbsp;</p>
+
+<p>The arguments of <a href="functions.html#Notify">Notify()</a> are:</p>
+
+<p>&lt;notifier/V&gt;,&lt;attr/V&gt;,&lt;value/V&gt;,&lt;target/V&gt;,&lt;method/V&gt;,{parms}
+
+<ul>
+  <li><em>notifier</em> - the object that notifies</li>
+  <li><em>attr</em> - the attribute of <em>notifier</em> that triggers the notification</li>
+  <li><em>value</em> - the value of <em>attr</em> that causes the notification. A special
+    value is <strong>EveryTime</strong> that means <em>every time the attribute changes</em>;
+    if EveryTime is used, parameters for method can be <strong>TriggerValue</strong> that
+    means <em>the value of attribute</em> or <strong>NotTriggerValue</strong> that means <em>the
+    logical not of the value of the attribute</em>.</li>
+  <li><em>target</em> - the target of the notification. Specials values are: <ul>
+      <li>_app - the application <em>notifier</em> belongs to</li>
+      <li>_win - the window <em>notifier</em> belongs to</li>
+      <li>_self - <em>notifier</em> itself</li>
+    </ul>
+  </li>
+  <li><em>method</em> - the method invoked on <em>target</em></li>
+  <li><em>par</em>ms - parameters of <em>method</em></li>
+</ul>
+
+<p>The rules are: 
+
+<ol>
+  <li>Only attribute of class N can trigger the notification (be the second argument in
+    Notify())</li>
+  <li>If a parameter of the method is triggered the attribute must be of type N or G2N ; it
+    can be S but with len&lt;=64</li>
+  <li><em>method</em> bust be a valid method for <em>target</em></li>
+  <li>If <em>method</em> is SET: if the parameter is not trigger it must be of the same type
+    of <em>attribute</em> or <em>attribute</em> must be G2N and the parameter N .</li>
+  <li>Any class defines its rules for its own methods.</li>
+</ol>
+
+<p>Setting up notifications may cause potential dangerous situations. The result of a set
+of notifications may be a dead-lock as in:</p>
+
+<pre>    call Notify(&quot;cycle&quot;,&quot;active&quot;,&quot;everytime&quot;,&quot;radio&quot;,&quot;set&quot;,&quot;active&quot;,&quot;triggervalue&quot;)
+    call Notify(&quot;radio&quot;,&quot;active&quot;,&quot;everytime&quot;,&quot;cycle&quot;,&quot;set&quot;,&quot;active&quot;,&quot;nottriggervalue&quot;)
+</pre>
+
+<p>RxMUI solves this problem checking the stack : if the free stack is less than a fixed
+value, the invoked method is not executed. It fixes the whole problem. The stack limit
+value is user-settable.</p>
+</body>
+</html>

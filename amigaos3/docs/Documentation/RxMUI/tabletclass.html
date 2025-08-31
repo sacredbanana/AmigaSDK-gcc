@@ -1,0 +1,236 @@
+<html>
+
+<head>
+<title>Tablet class</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="1" valign="bottom"><font size="2"><a href="classes.html">Index</a></font></td>
+    <td width="1" valign="bottom"><font size="2"><a href="areaclass.html">Parent</a></font></td>
+    <td><h2 align="right">Tablet class</h2>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3"><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>The Tablet class is used to create an empty space to draw on.</p>
+
+<p>Note that you may use the tablet only if the window is opened and that
+what you draw in the tablet is not saved: you have to redraw all your stuff
+anytime the redraw attribute is notified, if your tablet is x-y unlimited
+or anytime the window, the tablet risides in, is opened.</p>
+
+<p>You may allocate up to 256 pen; they may be freed with TBReleasePen method, anyway
+they are freed anytime the window, the tablet risides in, is closed; so if you need
+some pens, wait for window Open attribute to be 1 and reserve them via TBAllocPen.</p>
+
+<p>Note that a tablet is:
+ <ul>
+  <li>x-y unlimited, if you don't specify any of the following</li>
+  <li>x limited, if FixWidth or FixWidthTxt is specified</li>
+  <li>y limited, if FixHeight or FixHeightTxt is specified</li>
+ </ul></p>
+
+<p>&nbsp;</p>
+
+<table border="1" cellpadding="4" width="100%">
+  <tr>
+    <th colspan="4"><u><strong>Attributes</strong></u></th>
+  </tr>
+  <tr>
+    <th><em><strong>Name</strong></em></th>
+    <th><em><strong>Type</strong></em></th>
+    <th><em><strong>Class</strong></em></th>
+    <th><em><strong>Note</strong></em></th>
+  </tr>
+  <tr>
+    <td><strong>TBAPen</strong></td>
+    <td>M</td>
+    <td>ISGN G2N</td>
+    <td>A pen value:
+    <ul>
+     <li>A fixed pen, which means a number or one of:
+      <ul>
+       <li>0 SHINE</li>
+       <li>1 HALFSHINE</li>
+       <li>2 BACKGROUND</li>
+       <li>3 HALFSHADOW</li>
+       <li>4 SHADOW</li>
+       <li>5 TEXT</li>
+       <li>6 FILL</li>
+       <li>7 MARK</li>
+      </ul></li>
+     <li>An integer rappresenting a pen allocated via AllocPen method</li>
+    </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>TBBPen</strong></td>
+    <td>M</td>
+    <td>ISGN G2N</td>
+    <td>B pen value. See TBAPen</td>
+  </tr>
+  <tr>
+    <td><strong>TBDrMd</strong></td>
+    <td>M</td>
+    <td>ISGN G2N</td>
+    <td>Draw mode, a number or one of:<ul>
+     <li>JAM1</li>
+     <li>JAM2</li>
+     <li>COMPLEMENT</li>
+     <li>INVERSVID</li>
+    </ul></td>
+  </tr>
+  <tr>
+    <td><strong>TBDrPt</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>Draw pattern</td>
+  </tr>
+  <tr>
+    <td><strong>TBOPen</strong></td>
+    <td>M</td>
+    <td>ISGN G2N</td>
+    <td>O pen value. See TBAPen</td>
+  </tr>
+  <tr>
+    <td><strong>TBRedraw</strong></td>
+    <td>B</td>
+    <td>G</td>
+    <td>If your tablet is s-y unlimited, you must setup a notification on this object with
+        Everytime as trigger value. When you are notified, you must redraw the object.
+        If your object is x-y limited, this is notified only when the window, the tablet
+        resides in, is opened.
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<table border="1" cellpadding="4" width="100%">
+  <tr>
+    <th colspan="3"><u><strong>Methods</strong></u></th>
+  </tr>
+  <tr>
+    <th><em><strong>Name</strong></em></th>
+    <th><em><strong>Parameters</strong></em></th>
+    <th><em><strong>Note</strong></em></th>
+  </tr>
+  <tr>
+    <td><strong>TBAllocPen</strong></td>
+    <td>&lt;spec&gt;</td>
+    <td>Allocate the best pen that matches the Poppen or Popimage specification
+    and write the number of the allocated pen in <em>pen</em>. The pen returned may be used
+    as value for TBAPen, TBBPen and TBOPen attributes. Up to 256 pens may be allocated.
+    Note that pens are released anytime the window the tablet resides in is closed.
+    Any pen may be released at any time via ReleasePen.</td>
+  </tr>
+  <tr>
+    <td><strong>TBAreaDraw</strong></td>
+    <td>&lt;sx&gt;,&lt;sy&gt;&lt;dx&gt;,&lt;dy&gt;</td>
+    <td>Add a line from &lt;sx,sy&gt;the current position to &lt;dx,dy&gt; to the buffer</td>
+  </tr>
+  <tr>
+    <td><strong>TBAreaEllipse</strong></td>
+    <td>&lt;x&gt;,&lt;y&gt;,&lt;hr&gt;,&lt;yr&gt;</td>
+    <td>Add an ellipse with center in &lt;x,y&gt; and hr horiz radius, yr vert radius to the buffer;
+        to draw a circle, set yr=hr</td>
+  </tr>
+  <tr>
+    <td><strong>TBAreaEnd</strong></td>
+    <td>-</td>
+    <td>Draw the shapes added to the buffer</td>
+  </tr>
+  <tr>
+    <td><strong>TBAreaMove</strong></td>
+    <td>&lt;x&gt;,&lt;y&gt;</td>
+    <td>Move the buffered raster to the position &lt;x,y&gt;</td>
+  </tr>
+  <tr>
+    <td><strong>TBClear</strong></td>
+    <td>-</td>
+    <td>Write the object background</td>
+  </tr>
+  <tr>
+    <td><strong>TBDraw</strong></td>
+    <td>&lt;sx&gt;,&lt;sy&gt;&lt;dx&gt;,&lt;dy&gt;</td>
+    <td>Draw a line from &lt;sx,sy&gt;the current position to &lt;dx,dy&gt; to the buffer</td>
+  </tr>
+  <tr>
+    <td><strong>TBDrawPic</strong></td>
+    <td>&lt;file&gt;[trans/N],[sx/N],[sy/N],<br>[dx/N],[dy/N],[width/N],[height/N]</td>
+    <td>Draw the rectangle &lt;sx,sy&gt; &lt;sx+width-1,sy+height-1&gt; from the picture specified
+        to the tablet at &lt;dx,dy&gt;</td>
+  </tr>
+  <tr>
+    <td><strong>TBDrawEllipse</strong></td>
+    <td>&lt;x&gt;,&lt;y&gt;,&lt;hr&gt;,&lt;yr&gt;</td>
+    <td>Draw an ellipse with center in &lt;x,y&gt; and hr horiz radius, yr vert radius;
+        to draw a circle, set yr=hr</td>
+  </tr>
+  <tr>
+    <td><strong>TBFlood</strong></td>
+    <td>&lt;mode&gt;,&lt;x&gt;,&lt;y&gt;</td>
+    <td>Flood an area starting at &lt;x,y&gt;, till a pixel that:<ul>
+        <li>if mode is 0 or Outline - has not the same color of O pen</li>
+        <li>if mode is 1 or Color - has the same color of the pixel at &lt;x,y&gt;</li>
+        <ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>TBRectFill</strong></td>
+    <td>&lt;sx&gt;,&lt;sy&gt;,&lt;dx&gt;,&lt;dy&gt;</td>
+    <td>Draw a rectangle from &lt;sx,sy&gt; to &lt;dx,dy&gt;</td>
+  </tr>
+  <tr>
+    <td><strong>TBReleasePen</strong></td>
+    <td>&lt;pen&gt;</td>
+    <td>Release a pen allocated via TBAllocatePen</td>
+  </tr>
+  <tr>
+    <td><strong>TBSetAfPt</strong></td>
+    <td>[stem]</td>
+    <td>Set fill pattern. A fill pattern is supplied via a stem name, which contains
+        in 0,...,n the words that defines the pattern. Note that only the first
+        power of 2 number or considered. To clear the area pattern, omit the argument</td>
+  </tr>
+  <tr>
+    <td><strong>TBSetOutlineOff</strong></td>
+    <td>-</td>
+    <td>Set outline mode off</td>
+  </tr>
+  <tr>
+    <td><strong>TBScroll</strong></td>
+    <td>&lt;dx&gt;,&lt;dy&gt;,&lt;left&gt;,&lt;top&gt;,&lt;width&gt;,&lt;height&gt;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>TBText</strong></td>
+    <td>&lt;text&gt;,&lt;tx&gt;,&lt;ty&gt;</td>
+    <td>Draw the text at x,y position</td>
+  </tr>
+  <tr>
+    <td><strong>TBTextSize</strong></td>
+    <td>&lt;text&gt;,&lt;stem&gt;</td>
+    <td>Compute the dimension of text and writes in stem:
+    <ul>
+     <li>Width</li>
+     <li>Height</li>
+     <li>MinX</li>
+     <li>MaxX</li>
+    </ul></td>
+  </tr>
+  <tr>
+    <td><strong>TBWritePixel</strong></td>
+    <td>&lt;penx&gt;</td>
+    <td>Write the pixel at &lt;x,y&gt;</td>
+  </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,422 @@
+<html>
+
+<head>
+<title>Object creation</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td><h1 align="right">Object creation</h1>
+    </td>
+  </tr>
+  <tr>
+    <td><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>Any RxMUI element you create is an object.</p>
+
+<p>An object is an instance of a class.</p>
+
+<p>Every class defines the attributes and the methods of its objects.</p>
+
+<p>Classes are:
+
+<ul>
+  <li><strong>Internal</strong> - the BASIC ones needed to create a GUI.</li>
+  <li><strong>External</strong> - shared AmigaOS libraries that are opened when needed.
+    External classes are NOT MUI custom classes.</li>
+</ul>
+
+<p>&nbsp;</p>
+
+<p>An object is referred by a name.</p>
+
+<p>The name of an object is a valid ARexx symbol &lt;64 chars.</p>
+
+<p>The name is NOT unique: the last object created is the owner of its name.</p>
+
+<p>&nbsp;</p>
+
+<p>Objects are created with the function <a href="functions.html#NewObj">NewObj()</a>.</p>
+
+<p>A call to <a href="functions.html#NewObj">NewObj()</a> can create a SINGLE object or
+MANY objects.</p>
+
+<p>The arguments for <a href="functions.html#NewObj">NewObj()</a> are:<br>
+&lt;class/V&gt;,&lt;name/O&gt;,[stem/V],[freeChild/N]
+
+<ul>
+  <li><em>class - </em>the class the object is istance of</li>
+  <li><em>name - </em>the name of the object</li>
+  <li><em>stem - </em>if supplied, Init attribute are here</li>
+  <li><em>freeChild - </em>reset children</li>
+</ul>
+
+<p>Some useful functions are provided to create objects faster.</p>
+
+<p>&nbsp;</p>
+
+<p>This lines creates a text object named status (a status line):</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">status.Frame=&quot;Text&quot;
+status.BackGroud=&quot;TextBack&quot;
+status.PreParse=&quot;1B63&quot;x
+status.Contents=&quot;I am ready&quot;
+res=NewObj(&quot;Text&quot;,&quot;status&quot;)     </font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>This lines creates a group object named g containing a text object named status:</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">g.0=&quot;status&quot;
+ status.Class=&quot;Text&quot;
+ status.Frame=&quot;Text&quot;
+ status.BackGroud=&quot;TextBack&quot;
+ status.PreParse=&quot;1B63&quot;x
+ status.Contents=&quot;I am ready&quot;
+res=NewObj(&quot;group&quot;,&quot;g&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>Because of a text object that acts like a status line can be created using the function
+<a href="functions.html#status">text()</a>, you can do the same thing with the lines:</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">g.0=text(&quot;status&quot;,&quot;I am ready&quot;)
+res=NewObj(&quot;group&quot;,&quot;g&quot;)       </font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>A very cute function, that does not create any object, but it is just used for style
+reason is <a href="functions.html#child">child()</a>, so it's the same to do:</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">child(&quot;G&quot;,text(&quot;status&quot;,&quot;I am ready&quot;))
+res=NewObj(&quot;group&quot;,&quot;g&quot;)       </font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>If you want to center horizontally status , then you can do something like:</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">g.Horiz=1
+ g.0=HSpace()
+ g.1=&quot;status&quot;
+  status.Class=&quot;Text&quot;
+  status.Frame=&quot;Text&quot;
+  status.BackGroud=&quot;TextBack&quot;
+  status.PreParse=&quot;1B63&quot;x
+  status.Contents=&quot;I am ready&quot;
+ g.2=HSpace()
+res=NewObj(&quot;group&quot;,&quot;g&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>You created a horizontal group named G with 3 children:
+
+<ol>
+  <li>an unnamed horizontal space</li>
+  <li>a text object named STATUS</li>
+  <li>an unnamed horizontal space</li>
+</ol>
+
+<p>The same thing may be done with:</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">oname=MakeObj(&quot;g&quot;,&quot;HCenter&quot;,text(&quot;status&quot;,&quot;I am ready&quot;))</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>You may use <a href="functions.html#child">child()</a> XOR <em>dotted enumeration</em>:
+you CANNOT use both in the same definition.</p>
+
+<p>It means it is <strong>not legal</strong> to do something like</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">child(&quot;G&quot;,text(&quot;status&quot;,&quot;I am ready&quot;))
+g.1=label(&quot;Hello World!&quot;)       </font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;<p>There are classes that may have children and classes that cannot have children:
+
+<ol>
+  <li><strong>Application</strong> may have <strong>0 or any number of children</strong>; they
+    are the Application windows; windows may be specified in the SubWindow attribute at Init
+    time as SubWindow.0, ..., SubWindow.n; the first window (.SubWindow.0) may be specified as
+    .SubWindow . Other windows may be added to the Application via the <a
+    href="functions.html#Add">Add()</a> function. </li>
+  <li><strong>Group and Group-subclasses</strong> must have <strong>1 or more children</strong>;
+    a group is not drawn (which means that the window it belongs to is not opened) if it has
+    not 1 child at least; the children of a group named g are specified at Init time in
+    g.0,...,g.n as in: <br>
+    <table border="1" cellpadding="4" cellspacing="0" width="100%">
+      <tr>
+        <td><pre><font color="#000000">g.Columns=2
+ g.0=label(&quot;_C&quot;)
+ g.1=CheckMark(&quot;C&quot;,0,&quot;c&quot;)
+ g.2=label(&quot;C&quot;)
+ g.3=CheckMark(&quot;C++&quot;,0)
+ g.0=label(&quot;_ARexx&quot;)
+ g.1=CheckMark(&quot;ARexx&quot;,0,&quot;a&quot;)
+ g.0=label(&quot;_E&quot;)
+ g.1=CheckMark(&quot;E&quot;,0,&quot;e&quot;)
+res=NewObj(&quot;group&quot;,&quot;g&quot;)</font></pre>
+        </td>
+      </tr>
+    </table>
+    <p>Children may be add to a group via the <a href="functions.html#add">Add()</a> function.
+    </p>
+  </li>
+</ol>
+
+<p>&nbsp;</p>
+
+<p>When you create an object, you must:
+
+<ol>
+  <li>Define any attributes of the object it needs at Init time, including its children, if
+    any; a children is always specified with a name; if a child doesn't already exist (it was
+    not already created somewhere) it is created at its parent creation time</li>
+  <li>Call the function <a href="functions.html#NewObj">NewObj()</a> </li>
+</ol>
+
+<p>As you can see, objects definition can be nested.</p>
+
+<p>&nbsp;</p>
+
+<p>Read carefully the following examples lines. They create all the same objects:</p>
+
+<pre>- a vertical framed group named g that contains
+  - an unnamed Busy bar
+  - a horizontal group named radiog that contains
+    - an unnamed label
+    - a radio named gender
+  - a text object named advert</pre>
+
+<p>&nbsp;</p>
+
+<p>1. Four NewObj() calls</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">gender.Horiz=1
+gender.ControlChar=&quot;g&quot;
+gender.Entries=&quot;Male|Female&quot;
+res=NewObj(&quot;Radio&quot;,&quot;gender&quot;)
+
+radiog.Horiz=1
+ radiog.0=label(&quot;_Gender&quot;)
+ radiog.1=&quot;gender&quot;
+res=NewObj(&quot;group&quot;,&quot;radiog&quot;)
+
+advert.Contents=ParseText(&quot;%bNote:%n Read carefully the conditions&quot;)
+res=NewObj(&quot;text&quot;,&quot;advert&quot;)
+
+g.Frame=&quot;group&quot;
+ g.0=MakeObj(,&quot;Busy&quot;)
+ g.1=&quot;radiog&quot;
+ g.2=&quot;advert&quot;
+res=NewObj(&quot;group&quot;,&quot;g&quot;)       </font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>2. Three NewObj() calls</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">radiog.Horiz=1
+ radiog.0=label(&quot;_Gender&quot;)
+ radiog.1=&quot;gender&quot;
+  gender.Class=&quot;radio&quot;
+  gender.Horiz=1
+  gender.ControlChar=&quot;g&quot;
+  gender.Entries=&quot;Male|Female&quot;
+res=NewObj(&quot;group&quot;,&quot;radiog&quot;)
+
+advert.Contents=ParseText(&quot;%bNote:%n Read carefully the conditions&quot;)
+res=NewObj(&quot;text&quot;,&quot;advert&quot;)
+
+g.Frame=&quot;group&quot;
+ g.0=MakeObj(,&quot;Busy&quot;)
+ g.1=&quot;radiog&quot;
+ g.2=&quot;advert&quot;
+res=NewObj(&quot;group&quot;,&quot;g&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>3. One NewObj() call</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">g.Frame=&quot;group&quot;
+ g.0=MakeObj(,&quot;Busy&quot;)
+ g.1=&quot;radiog&quot;
+  radiog.Class=&quot;group&quot;
+  radiog.Horiz=1
+   radiog.0=label(&quot;_Gender&quot;)
+   radiog.1=&quot;gender&quot;
+    gender.Class=&quot;radio&quot;
+    gender.Horiz=1
+    gender.ControlChar=&quot;g&quot;
+    gender.Entries=&quot;Male|Female&quot;
+ g.2=&quot;advert&quot;
+  advert.Class=&quot;text&quot;
+  advert.Contents=ParseText(&quot;%bNote:%n Read carefully the conditions&quot;)
+res=NewObj(&quot;group&quot;,&quot;g&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>4. One NewObj() call with child()</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">g.Frame=&quot;group&quot;
+ call child(&quot;g&quot;,MakeObj(,&quot;Busy&quot;))
+ call child(&quot;g&quot;,&quot;radiog&quot;,&quot;group&quot;)
+  radiog.Horiz=1
+   radiog.0=label(&quot;_Gender&quot;)
+   radiog.1=&quot;gender&quot;
+    gender.Class=&quot;radio&quot;
+    gender.Horiz=1
+    gender.ControlChar=&quot;g&quot;
+    gender.Entries=&quot;Male|Female&quot;
+ call child(&quot;g&quot;,&quot;advert&quot;,&quot;text&quot;)
+  advert.Contents=ParseText(&quot;%bNote:%n Read carefully the conditions&quot;)
+res=NewObj(&quot;group&quot;,&quot;g&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p>Your final goal is to create, at least, an Application object, that contains a
+SubWindow object, with its Contents defined.</p>
+
+<p>The following lines create:</p>
+
+<pre>- an Application object named app that contains
+  - a Window object named mwin that contains
+    - a vertical group named mgroup than contains
+      - a 2-columned group named g0 that contains
+        - an unnamed label
+        - a String object named name
+        - an unnamed label
+        - a String object named phone
+     - a horizontal group named g1 that contains
+       - a button named ok
+       - a button named cancel</pre>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">app.Title=&quot;Example&quot;
+app.Version=&quot;$VER: Example 1.1 (23.9.2001)&quot;
+app.Copyright=&quot;Copyright 2000, 2001 by Alfonso Ranieri&quot;
+app.Author=&quot;Alfonso Ranieri&quot;
+app.Description=&quot;A little RxMUI example&quot;
+app.Base=&quot;RXMUIEXAMPLE&quot;
+app.SubWindow=&quot;mwin&quot;
+
+ mwin.ID=&quot;MAIN&quot;
+ mwin.Title=&quot;A little RxMUI example&quot;
+ mwin.Contents=&quot;mgroup&quot;
+
+  mgroup.0=&quot;g0&quot;
+   g0.Class=&quot;group&quot;
+   g0.Frame=&quot;group&quot;
+   g0.Columns=2
+    g0.0=label(&quot;_Name&quot;);  g0.1=string(&quot;name&quot;,&quot;n&quot;)
+    g0.2=label(&quot;_Phone&quot;); g0.2=string(&quot;phone&quot;,&quot;p&quot;)
+
+  mgroup.1=&quot;g1&quot;
+   g1.Class=&quot;group&quot;
+    g1.0=button(&quot;ok&quot;,&quot;_OK&quot;)
+    g1.1=button(&quot;cancel&quot;,&quot;_Cancel&quot;)
+</font></pre>
+    <pre><font color="#000000">res=NewObj(&quot;Application&quot;,&quot;app&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>It is the same to do:</p>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+  <tr>
+    <td><pre><font color="#000000">app.Title=&quot;Example&quot;
+app.Version=&quot;$VER: Example 1.1 (23.9.2001)&quot;
+app.Copyright=&quot;Copyright 2000, 2001 by Alfonso Ranieri&quot;
+app.Author=&quot;Alfonso Ranieri&quot;
+app.Description=&quot;A little RxMUI example&quot;
+app.Base=&quot;RXMUIEXAMPLE&quot;
+app.SubWindow=&quot;mwin&quot;
+
+ mwin.ID=&quot;MAIN&quot;
+ mwin.Title=&quot;A little RxMUI example&quot;
+ mwin.Contents=&quot;mgroup&quot;
+
+  call child(&quot;mgroup&quot;,&quot;g0&quot;,&quot;Group&quot;)
+   g0.Frame=&quot;group&quot;
+   g0.Columns=2
+    g0.0=label(&quot;_Name&quot;);  g0.1=string(&quot;Name&quot;,&quot;n&quot;)
+    g0.2=label(&quot;_Phone&quot;); g0.2=string(&quot;Phone&quot;,&quot;p&quot;)
+
+  call child(&quot;mgroup&quot;,&quot;g1&quot;,&quot;Group&quot;)
+   g1.0=button(&quot;ok&quot;,&quot;_OK&quot;)
+   g1.1=button(&quot;cancel&quot;,&quot;_Cancel&quot;)
+</font></pre>
+    <pre><font color="#000000">res=NewObj(&quot;Application&quot;,&quot;app&quot;)</font></pre>
+    </td>
+  </tr>
+</table>
+
+<p>And so on...</p>
+
+<p>&nbsp;</p>
+
+<p><a href="functions.html#NewObj">NewObj()</a> returns 0 on success, an <a
+href="functions.html#GetRxMUIString">integer&gt;0</a> on failure.</p>
+
+<p>If an object can't be created for any reason, all the sub-created objects are disposed.
+</p>
+
+<p>&nbsp;</p>
+
+<p align="center"><strong>If you are confused...Experiencing is always the best way to
+learn.</strong></p>
+</body>
+</html>

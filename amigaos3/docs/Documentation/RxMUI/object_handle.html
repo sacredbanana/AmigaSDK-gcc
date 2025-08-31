@@ -1,0 +1,269 @@
+<html>
+
+<head>
+<title>How to handle objects</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td><h1 align="right">Object handling</h1>
+    </td>
+  </tr>
+  <tr>
+    <td><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>Once you have created your application, with windows as children, and you have defined
+the contents of any windows, you are ready to open them and handle your world.</p>
+
+<p>The first operation is to set all the notifications that will occurs.</p>
+
+<p>Any attributes of type N can be used to take care of events.</p>
+
+<p>E.g. if you have a Menuitem AboutMUI that has only to open the MUI about requester, all
+you have to do is set up a notification on that event via the call</p>
+
+<pre>   call Notify(&quot;AboutMUI&quot;,&quot;MenuTrigger&quot;,&quot;EveryTime&quot;,&quot;app&quot;,&quot;AboutMUI&quot;,&quot;win&quot;)</pre>
+
+<p>Remember that the more notifications among objects you set up the less you have to care
+about your work.</p>
+
+<p>&nbsp;</p>
+
+<p>Obviously, there are events that must be handled by yourself in the main handle cycle.</p>
+
+<p>If you want an object to just return its name when an attribute of it changes, you must
+do</p>
+
+<pre>   call Notify(obj,attr,value,app,&quot;ReturnID&quot;) </pre>
+
+<p>E.g.</p>
+
+<pre>   call Notify(&quot;button&quot;,&quot;Pressed&quot;,0,&quot;app&quot;,&quot;ReturnID&quot;) </pre>
+
+<p>&nbsp;</p>
+
+<p>As you can see, events to be dispatched by yourself are always notified to an
+application objects.</p>
+
+<p>&nbsp;</p>
+
+<p>An application objects accepts the following methods to handle events that may occur on
+objects:
+
+<ul>
+  <li>ReturnID [QUIT]</li>
+  <li>Return &lt;string&gt; [attr]</li>
+  <li>InLine &lt;fun&gt; [attr]</li>
+  <li>SetVar [var]</li>
+</ul>
+
+<dl>
+  <dt><strong>ReturnID</strong></dt>
+  <dd>It is used when you want the application to return you the name of the object; the
+    special parameter QUIT means that the event is a application killer one <pre>   call Notify(&quot;win&quot;,&quot;CloseRequest&quot;,1,&quot;app&quot;,&quot;ReturnID&quot;,&quot;QUIT&quot;)</pre>
+  </dd>
+</dl>
+
+<dl>
+  <dt><strong>Return</strong></dt>
+  <dd>It is used when you want to return custom strings to the application (with len &lt;=64
+    chars) and when you want to read the value of the triggering attribute any time it changes
+    <pre>   call Notify(&quot;cycle&quot;,&quot;active&quot;,&quot;EveryTime&quot;,&quot;app&quot;,&quot;return&quot;,
+               &quot;Cycle changed&quot;,&quot;TriggerAttr&quot;)</pre>
+    <p>It accept any G attribute as second parameter plus the special string <strong>TriggerAttr</strong>
+    that means the same attribute that triggers the notification.</p>
+  </dd>
+</dl>
+
+<dl>
+  <dt><strong>InLine</strong></dt>
+  <dd>It is used in notification such as: <pre>    call Notify(&quot;slider&quot;,&quot;Value&quot;,&quot;EveryTime&quot;,&quot;app&quot;,&quot;InLine&quot;,
+                &quot;parse arg name,value;...&quot;,&quot;TriggerAttr&quot;)</pre>
+    <p>When <em>attr</em> changes to <em>value</em>, <em>fun</em>, an inline ARexx function
+    macro, is called with arguments: <ol>
+      <li>the name of the notifier</li>
+      <li>the value of <em>attr</em>; the attribute must be G; a special value is <strong>TriggerAttr</strong>
+        that means <em>the triggering attribute</em>; if no attribute is supplied, the function
+        receives just one argument.</li>
+    </ol>
+    <p>The function is called in the same process of the running macro and so in it there can
+    be used any RxMUI functions on any object, but it is called as a separate ARexx macro and
+    HASN'T GOT the environment of the running macro (e.g. ala INTEPRET command). It means
+    mainly that the existing variables are not valid in the function (they just don't exist).</p>
+  </dd>
+</dl>
+
+<dl>
+  <dt><strong>SETVAR</strong></dt>
+  <dd>It is used when you want to set a variable to the value of the attribute that triggers
+    the notification <pre>   call Notify(&quot;cycle&quot;,&quot;active&quot;,&quot;everytime&quot;,&quot;app&quot;,&quot;SET&quot;,&quot;CYCLEACTIVE&quot;) &nbsp; </pre>
+  </dd>
+</dl>
+
+<p>Classes may define their own methods to return events.</p>
+
+<p>&nbsp;</p>
+
+<p>After that, you enter in the main cycle, THAT IS:</p>
+
+<pre>   ctrl_c=2**12
+    do forever
+        call NewHandle(&quot;app&quot;,&quot;h&quot;,ctrl_c)
+        if and(h.signals,ctrl_c)~=0 then exit /* user break */
+        if h.EventFlag
+            select
+                when h.event=&quot;QUIT&quot; then exit /* quit event */
+                when h.event=...
+                ...
+            end
+    end</pre>
+
+<p>When you receive a QUIT you must exit. If you have to complete other operations before
+exiting, you should get the attribute ForceQuit of the application to see if you can loose
+time.</p>
+
+<p>In h.event there will be the name of the object that triggered the event via ReturnID
+or the string you set up via Return In the case of e.g.</p>
+
+<pre>   call Notify(&quot;cycle&quot;,&quot;Active&quot;,&quot;EveryTime&quot;,&quot;app&quot;,&quot;Return&quot;,&quot;CYCLE&quot;,&quot;TriggerAttr&quot;)</pre>
+
+<p>you will have in h.active the active entry of cycle.</p>
+
+<p>If you set up a SetVar notification, nothing is returned, but you can be sure that in
+the specified var there is the value you need.</p>
+
+<p>RxMUI may receive 3 <i>special events</i>:
+
+<ul>
+  <li><strong>APPEVENT</strong></li>
+  <li><strong>DROPEVENT</strong></li>
+  <li><strong>AREXXCMD</strong></li>
+</ul>
+
+<dl>
+  <dt><strong>APPEVENT</strong></dt>
+  <dd>After you have declared a window AppWindow with that attribute set to 1, you will
+    receive a APPEVENT anytime an icon is dropped into the window or into any object of the
+    window, you have previously enabled to receive dropped icon via AppMessage() . You will
+    find the name of the object in h.to and the complete path to the icon in h.name </dd>
+  <dt>&nbsp;</dt>
+  <dt><strong>DROPEVENT</strong></dt>
+  <dd>User Drag &amp; Drop: a <em>manual drag and drop</em> must be performed. The interested
+    objects are in h.from and h.to . </dd>
+  <dt>&nbsp;</dt>
+  <dt><strong>AREXXCMD</strong></dt>
+  <dd>You set WantARexxCmd at Application Init time and an unknown to MUI ARexx command came
+    to the Application ARexx port. Anytime someone sends a message to the Application ARexx
+    port and MUI doesn't know what to do with it, it is notified to the Application via this
+    event. Note that at this time, the message was already replied and you can't set any
+    return code or result to send back.</dd>
+</dl>
+
+<p>&nbsp;</p>
+
+<p>Similar to <a href="functions.html#NewHandle">NewHandle()</a> is <a
+href="functions.html#handle">Handle()</a>. The differences are:
+
+<ol>
+  <li>NewHandle() just returns ONE event;<br>
+    Handle() may returns one or MORE events</li>
+  <li>NewHandle() waits for signals internally;<br>
+    Handle() doesn't wait for signal and you have to wait for them manually in the macro, e.g.
+    via rmh.library/wait()</li>
+</ol>
+
+<p>So the default cycle using Handle() is:</p>
+
+<pre>   ctrl_c=2**12
+    s=0
+    do forever
+        call Handle(&quot;APP&quot;,&quot;H&quot;,s)
+        do i=0 to h.num-1
+            if h.i=&quot;QUIT&quot; then exit /* quit event */
+            if h.i==... then
+            ...
+        end
+        s=Wait(or(h.signals,ctrl_c))
+        if and(s,ctrl_c)~=0 then exit /* user break */
+    end</pre>
+
+<p>Or if you manage any kind of manual drag and drop:</p>
+
+<pre>   ctrl_c=2**12
+    s=0
+    do forever
+        ws=1
+        call handle(&quot;APP&quot;,&quot;H&quot;,s)
+        do i=0 to h.num-1
+            if h.i=&quot;QUIT&quot; then exit /* quit event */
+            if h.i==&quot;DROPEVENT&quot; then do
+                /* handle drag and drop from h.i.from to h.i.to */
+                ws=0
+            end
+            if h.i==... then
+            ...
+        end
+        if ~ws then iterate
+        s=Wait(or(h.signals,ctrl_c))
+        if and(s,ctrl_c)~=0 then exit /* user break */
+    end</pre>
+
+<p>Handle() should be used only in peculiar situations, when you really have to wait for
+signals in the macro, e.g. you have to wait for non-blocking sockets events via
+rxsocket.library/WaitSelect(). In ordinary situations you should always use NewHandle().</p>
+
+<p>&nbsp;</p>
+
+<p>So the event you may receive are:</p>
+
+<table border="1" width="100%" cellpadding="4">
+  <tr>
+    <th><em>Name in h.i or h.event</em></th>
+    <th><em>Caused by</em></th>
+    <th><em>Note</em></th>
+    <th><em>More fields</em></th>
+  </tr>
+  <tr>
+    <td valign="top"><em>[user-defined]</em></td>
+    <td align="center" valign="top">RETURN</td>
+    <td valign="top">An object notified the application</td>
+    <td valign="top">.<em>ATTRIBUTE</em></td>
+  </tr>
+  <tr>
+    <td valign="top"><em>[name of an object]</em></td>
+    <td align="center" valign="top">RETURNID</td>
+    <td valign="top">An object notified the application</td>
+    <td valign="top">-</td>
+  </tr>
+  <tr>
+    <td valign="top">QUIT</td>
+    <td align="center" valign="top">RETURNID</td>
+    <td valign="top">The application wants to exit</td>
+    <td valign="top">-</td>
+  </tr>
+  <tr>
+    <td valign="top">APPEVENT</td>
+    <td align="center" valign="top">AppMessage()</td>
+    <td valign="top">An icon was dropped into an object</td>
+    <td valign="top">.to .name</td>
+  </tr>
+  <tr>
+    <td valign="top">DROPEVENT</td>
+    <td align="center" valign="top">DandD()</td>
+    <td valign="top">Manual D&amp;D</td>
+    <td valign="top">.from .to</td>
+  </tr>
+  <tr>
+    <td valign="top">AREXXCMD</td>
+    <td align="center" valign="top">An ARexx msg</td>
+    <td valign="top">An ARexx message came</td>
+    <td valign="top">.cmd</td>
+  </tr>
+</table>
+</body>
+</html>

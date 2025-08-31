@@ -1,0 +1,93 @@
+<html>
+
+<head>
+<title>Images in Lists</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td><h1 align="right">Images in Lists</h1>
+    </td>
+  </tr>
+  <tr>
+    <td><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>RxMUI is capable to insert images in List and NList objects.</p>
+
+<p>Here the term image refers to <em>image</em> objects rendered in a list or a NList
+object.</p>
+
+<p>A List object is capable to render:
+
+<ol>
+  <li>Bitmap objects</li>
+  <li>Picture objects</li>
+  <li>DTPic objects</li>
+  <li>Icon objects</li>
+</ol>
+
+<p>A NList object is capable to render:
+
+<ol>
+  <li>Picture objects</li>
+  <li>DTPic objects</li>
+  <li>Gfxpic objects</li>
+  <li>Icon objects</li>
+  <li>Lamp objects</li>
+</ol>
+
+<p>Note that the best results are obtained with Picture and Bitmap objects, because of they
+permit to set the <em>Transparent</em> attribute.</p>
+
+<p>Images must be specified in the <em>Image.x</em> attribute at list creation time: </p>
+
+<pre>    ...
+    l.Image.0=&quot;im0&quot;
+     im0.Class=&quot;picture&quot;
+     im0.Source=&quot;Reload&quot;
+     im0.Transparent=1
+    l.Image.1=&quot;im1&quot;
+     im1.Class=&quot;picture&quot;
+     im1.Source=&quot;Stop&quot;
+     im1.Transparent=1
+    ...</pre>
+
+<p>Note that if the image object doesn't exist, it is created on-the-fly.</p>
+
+<p>If the object is created on-the-fly, no error is reported on failure: if an image
+is not available, just nothing is rendered.</p>
+
+<p>The objects created are property of the list object and can't be removed or disposed.
+Even if it is possible, no attributes set and no method invocation should be done on them.</p>
+
+<p>Images created as described above are rendered in the list as: </p>
+
+<pre>    ...
+    l.0=&quot;[Image im0] bla bla bla&quot;
+    ...</pre>
+
+<p>or </p>
+
+<pre>    ...
+    call DoMethod(&quot;l&quot;,&quot;Insert&quot;,&quot;[Image im0] bla bla bla&quot;,&quot;bottom&quot;)
+    ...</pre>
+
+<p>An image is specified with a substring in a list entry: <code>[Image <em>ImageObjectName</em>]</code></p>
+
+<p>If <em>ImageObjectName</em> doesn't exist nothing is rendered.</p>
+
+<hr size="1" noshade width="80%">
+
+<p>Note that a very simple way to insert images in a list is to use the MUI text engine facility, e.g.:
+
+<ul>
+  <li><code>ParseText(&quot;%I[6:26]&quot;)</code> insert the Volume image</li>
+  <li><code>ParseText(&quot;%I[5:Config]&quot;)</code> insert the image named Config</li>
+</ul>
+</body>
+</html>

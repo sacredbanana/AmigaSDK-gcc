@@ -1,0 +1,408 @@
+<html>
+
+<head>
+<title>Application class</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="1" valign="bottom"><font size="2"><a href="classes.html">Index</a></font></td>
+    <td width="1" valign="bottom"><font size="2"><a href="notifyclass.html">Parent</a></font></td>
+    <td><h2 align="right">Application class</h2>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3"><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>The Application class is the main class in RxMUI.</p>
+
+<p>Any window you create must be added to an Application object.</p>
+
+<p>A window can't be opened if it is not added to an Application object.</p>
+
+<p>Windows may be added to an Application object during the init process via the SubWindow
+attribute.</p>
+
+<p>The first window may be specified as</p>
+
+<pre>    .SubWindow=&quot;win&quot;</pre>
+
+<p>or</p>
+
+<pre>    .SubWindow.0=&quot;win&quot;</pre>
+
+<p>Other windows may be added during the init process as</p>
+
+<pre>    .SubWindow.i=&quot;win&quot;</pre>
+
+<p>Wwindows may also be added to an Application object via the <a
+href="functions.html#Add">Add()</a> function</p>
+
+<p>Your goal is usually to create a tree of objects like this:</p>
+
+<pre>- An Application object which contains
+  - A Window object, with contents
+    - a Group, called main group, which contains
+      - various objects</pre>
+
+<p>See <a href="object_handle.html">Objects handling</a></p>
+
+<p>&nbsp;</p>
+
+<table border="1" cellpadding="4" width="100%">
+  <tr>
+    <th colspan="4"><u><strong>Attributes</strong></u></th>
+  </tr>
+  <tr>
+    <th><em><strong>Name</strong></em></th>
+    <th><em><strong>Type</strong></em></th>
+    <th><em><strong>Class</strong></em></th>
+    <th><em><strong>Note</strong></em></th>
+  </tr>
+  <tr>
+    <td><strong>Active</strong></td>
+    <td>B</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Author</strong></td>
+    <td>S</td>
+    <td>IG</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Base</strong></td>
+    <td>S</td>
+    <td>IG</td>
+    <td>Should be supplied if UseARexx=1 or OwnARexx=1</td>
+  </tr>
+  <tr>
+    <td><strong>Copyright</strong></td>
+    <td>S</td>
+    <td>IG</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Description</strong></td>
+    <td>S</td>
+    <td>IG</td>
+    <td>Should be supplied if UseCommodities=1</td>
+  </tr>
+  <tr>
+    <td><strong>DiskInserted</strong></td>
+    <td>B</td>
+    <td>N</td>
+    <td>If you set NotifyDisk to 1 at init time, you may set up a notifycation triggered by
+        this attribute, using Everytime as triggering values: the notification will be triggered
+        anytime a disk is inserted</td>
+  </tr>
+  <tr>
+    <td><strong>DiskObject</strong></td>
+    <td>S</td>
+    <td>IS</td>
+    <td>Name of an icon WITHOUT .info</td>
+  </tr>
+  <tr>
+    <td><strong>DiskRemoved</strong></td>
+    <td>B</td>
+    <td>N</td>
+    <td>If you set NotifyDisk to 1 at init time, you may set up a notifycation triggered by
+        this attribute, using Everytime as triggering values: the notification will be triggered
+        anytime a disk is removed</td>
+  </tr>
+  <tr>
+    <td><strong>DoubleStart</strong></td>
+    <td>B</td>
+    <td>GN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>DropObject</strong></td>
+    <td>S</td>
+    <td>S</td>
+    <td>The name of an object. Note that the attribute is only settable and that a
+    previous call to <a href="functions.html#AppMessage">AppMessage()</a> must be done (or
+    nothing will happen).</td>
+  </tr>
+  <tr>
+    <td><strong>ForceQuit</strong></td>
+    <td>B</td>
+    <td>GN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>HelpFile</strong></td>
+    <td>S</td>
+    <td>ISG</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Iconified</strong></td>
+    <td>B</td>
+    <td>SGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>MenuHelp</strong></td>
+    <td>N</td>
+    <td>GN</td>
+    <td>Notified when the user presses the help key on a menu item</td>
+  </tr>
+  <tr>
+    <td><strong>MenuStrip</strong></td>
+    <td>S</td>
+    <td>I</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>NotifyDisk</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>Set this to 1 to be notified with DiskInserted (DiskRemoved) anytime a disk is inserted (removed).
+        Note that if the Application has a commodity (that happens if you do not set UseCommodities
+        to 0 and MUI is not in light version, i.e. not registered) that is used, otherwise a private commodity is
+        created</td>
+  </tr>
+  <tr>
+    <td><strong>Num1</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>An integral user attribute, use full in situation like multiple macros
+    project, or just as container for values</td>
+  </tr>
+  <tr>
+    <td><strong>Num2</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>An integral user attribute, use full in situation like multiple macros
+    project, or just as container for values</td>
+  </tr>
+  <tr>
+    <td><strong>Num3</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>An integral user attribute, use full in situation like multiple macros
+    project, or just as container for values</td>
+  </tr>
+  <tr>
+    <td><strong>OwnARexx</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>It is so bad that we have an ARexx port opened and we can't get messages
+    from it.If you specify OwnARexx you get the same port that would be opened (it
+    means BASE if SingleTask=1 BASE.X if SingleTask=0) but internal in the macro. It means
+    that you have to handle all the commands coming to the port, MUI ones too (e.g. QUIT)</td>
+  </tr>
+  <tr>
+    <td><strong>SingleTask</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Sleep</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>String1</strong></td>
+    <td>S</td>
+    <td>ISGN</td>
+    <td>A string user attribute, use full in situation like multiple macros
+    project, or just as container for values</td>
+  </tr>
+  <tr>
+    <td><strong>String2</strong></td>
+    <td>S</td>
+    <td>ISGN</td>
+    <td>A string user attribute, use full in situation like multiple macros
+    project, or just as container for values</td>
+  </tr>
+  <tr>
+    <td><strong>String3</strong></td>
+    <td>S</td>
+    <td>ISGN</td>
+    <td>A string user attribute, use full in situation like multiple macros
+    project, or just as container for values</td>
+  </tr>
+  <tr>
+    <td><strong>Title</strong></td>
+    <td>S</td>
+    <td>I</td>
+    <td>Should be supplied if UseCommodities=1</td>
+  </tr>
+  <tr>
+    <td><strong>UseARexx</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>UsedClasses</strong></td>
+    <td>S</td>
+    <td>I</td>
+    <td>Only usefull for MUI 4 users, a list of the used MCCs separated by a |, that will
+    help MUI to create the Settings window. Don't include #?.mui or #?.mcp in the list,
+    just include the #?.mcc you are going to use</td>
+  </tr>
+  <tr>
+    <td><strong>UseCommodities</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Version</strong></td>
+    <td>S</td>
+    <td>IG</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>WantARexxCmd</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td >This attribute instructs the object to pass any ARexx command it receives
+    to its port to the macro via AREXXCMD event.</td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<table border="1" cellpadding="4" width="100%">
+  <tr>
+    <th colspan="3"><u><strong>Methods</strong></u></th>
+  </tr>
+  <tr>
+    <th><em><strong>Name</strong></em></th>
+    <th><em><strong>Parameters</strong></em></th>
+    <th><em><strong>Note</strong></em></th>
+  </tr>
+  <tr>
+    <td><strong>About </strong></td>
+    <td>[win],[string]</td>
+    <td>Shows a little about window. <em>win</em> is a window object name in front of which
+    the About window will be opened; it may be <em>_first</em> which means <em>the first
+    application opened window</em> <em>string</em> is the message to show; if it is not
+    supplied the text to show is automatically constructed.</td>
+  </tr>
+  <tr>
+    <td><strong>ABoutMUI </strong></td>
+    <td>[win]</td>
+    <td>Shows the About MUI requester. <em>win</em> is a window object name in front of which
+    the About MUI window will be opened; it may be <em>_first</em> which means <em>the first
+    application opened window.</em></td>
+  </tr>
+  <tr>
+    <td><strong>AboutRxMUI</strong></td>
+    <td>[win]</td>
+    <td>Shows the About RxMUI requester. <em>win</em> is a window object name in front of
+    which the ABout RxMUI window will be opened; it may be <em>_first</em> which means <em>the
+    first application opened window.</em></td>
+  </tr>
+  <tr>
+    <td><strong>InLine</strong></td>
+    <td>&lt;fun&gt;,[attribute | TriggerAttribute]</td>
+    <td><a href="#InlineNote">Note</a></td>
+  </tr>
+  <tr>
+    <td><strong>InputBuffered </strong></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Load</strong></td>
+    <td>[file | ENV | ENVARC]</td>
+    <td>default ENV</td>
+  </tr>
+  <tr>
+    <td><strong>OpenConfigWindow</strong></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Return</strong></td>
+    <td>&lt;string&gt; , [attr]</td>
+    <td><a href="#ReturnNote">Note</a></td>
+  </tr>
+  <tr>
+    <td><strong>ReturnID</strong></td>
+    <td>[QUIT]</td>
+    <td><a href="#ReturnIDNote">Note</a></td>
+  </tr>
+  <tr>
+    <td><strong>Save</strong></td>
+    <td>[file | ENV | ENVARC]</td>
+    <td>default ENV</td>
+  </tr>
+  <tr>
+    <td><strong>SetVar</strong></td>
+    <td>&lt;var&gt;</td>
+    <td><a href="#SetVarNote">Note</a></td>
+  </tr>
+  <tr>
+    <td><strong>ShowHelp</strong></td>
+    <td>[win],[file],[node],[line/N]</td>
+    <td>Show an help file, via the amigaGuide datatype.<br>
+    Arguments: <ul>
+      <li><em>win</em> is a Window object name to show the file on the screen of which</li>
+      <li><em>file</em> is the name of the file to show; if not supplied the Application HelpFile,
+        if any, is used</li>
+      <li><em>node</em> is the name of an AmigaGuide node to show</li>
+      <li><em>line</em> is a line number of <em>node</em> to show</li>
+    </ul>
+    </td>
+  </tr>
+</table>
+
+<p>&nbsp;
+
+<dl>
+  <dt><a name="InlineNote"><strong>Inline</strong></a></dt>
+  <dd>Used in notifications like: <pre>    call Notify(&quot;slider&quot;,trigger,value,&quot;app&quot;,&quot;InLine&quot;,&quot;parse arg name,value;...&quot;,attr)</pre>
+    <p>When <em>trigger</em> changes to <em>value</em>, <em>fun</em>, an inline ARexx function
+    macro, is called; its arguments are: <ol>
+      <li>the name of the notifier object</li>
+      <li>the value of <em>attr</em>; the attribute must be G; a special value is TRIGGERATTR that
+        means <em>the triggering attribute</em>; if no attribute is supplied, the function
+        receives just one argument.</li>
+    </ol>
+    <p>The function is called in the same process of the running macro and so in it there can
+    be used any RxMUI functions on any object, but it is called as a separate ARexx macro and
+    HASN'T GOT the environment of the running macro (e.g. ala INTEPRET command). It means
+    mainly that the existing variables are not valid in the function (they just don't exist).</p>
+  </dd>
+</dl>
+
+<dl>
+  <dt><a name="ReturnNote"><strong>Return</strong></a></dt>
+  <dd>Used only in notifications like<pre>    call Notify(&quot;WIN&quot;,&quot;CLOSEREQUEST&quot;,&quot;APP&quot;,&quot;RETURN&quot;,&quot;HELLO&quot;)
+    call Notify(&quot;CYCLE&quot;,&quot;ACTIVE&quot;,&quot;APP&quot;,&quot;RETURN&quot;,&quot;TRIGGERATTR&quot;)</pre>
+  </dd>
+</dl>
+
+<dl>
+  <dt><a name="ReturnIDNote"><strong>ReturnID</strong></a></dt>
+  <dd>Used only in notifications like<pre>    call Notify(&quot;win&quot;,&quot;CloseRequest&quot;,&quot;EveryTime&quot;,&quot;app&quot;,&quot;ReturnID&quot;,&quot;quit&quot;)</pre>
+    <p>or</p>
+    <pre>    call Notify(&quot;button&quot;,&quot;pressed&quot;,0.&quot;app&quot;,&quot;ReturnID&quot;)</pre>
+    <p>The Application will return the name of the object that triggered the notification or
+    the special value QUIT that means the Application should be closed. Any other value is a
+    bad one.</p>
+  </dd>
+</dl>
+
+<dl>
+  <dt><a name="SetVarNote"><strong>SetVar</strong></a></dt>
+  <dd>Used only in notifications, it sets a var to the value of the triggering attribute: <pre>    call Notify(&quot;CYCLE&quot;,&quot;ACTIVE&quot;,&quot;EVERYTIME&quot;,&quot;SETVAR&quot;,&quot;ACT&quot;)</pre>
+    <p><em>act</em> will always contain the active entry of <em>CYCLE</em>.</p>
+  </dd>
+</dl>
+</body>
+</html>

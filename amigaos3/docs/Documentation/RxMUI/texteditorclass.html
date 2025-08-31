@@ -1,0 +1,343 @@
+<html>
+
+<head>
+<title>TextEditor class</title>
+</head>
+
+<body>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="1" valign="bottom"><a href="classes.html"><font size="2">Index</font></a></td>
+    <td width="1" valign="bottom"><a href="areaclass.html"><font size="2">Parent</font></a></td>
+    <td><h2 align="right">TextEditor class</h2>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3"><hr size="1" noshade>
+    </td>
+  </tr>
+</table>
+
+<p>TextEditor class is used to create fully featured text editor objects.</p>
+
+<p>TextEditor class is a subclass of TextEditor.mcc, so you must have TextEditor.mcc in
+MUI:Libs/MUI to use it. TextEditor.mcc is copyright of <a
+href="mailto:DuffREMOVEME@DIKU.DK">Allan Odgaard</a>.</p>
+
+<p>&nbsp;</p>
+
+<table border="1" cellpadding="4" width="100%">
+  <tr>
+    <th colspan="4"><u><strong>Attributes</strong></u></th>
+  </tr>
+  <tr>
+    <th><em><strong>Name</strong></em></th>
+    <th><em><strong>Type</strong></em></th>
+    <th><em><strong>Class</strong></em></th>
+    <th><em><strong>Note</strong></em></th>
+  </tr>
+  <tr>
+    <td><strong>AreaMarked</strong></td>
+    <td>B</td>
+    <td>GN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>AutoClip</strong></td>
+    <td>B</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Columns</strong></td>
+    <td>N</td>
+    <td>ISG</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Contents</strong></td>
+    <td>S</td>
+    <td>ISG</td>
+    <td>This is the content of the object. Note that when you get it, you always get a
+    &lt;65536 chars string, despite the real length of it</td>
+  </tr>
+  <tr>
+    <td><strong>CursorX</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>CursorY</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Error</strong></td>
+    <td>N</td>
+    <td>GN</td>
+    <td>You may find here the last error, one of:
+    <ul>
+     <li>1 ClipboardIsEmpty: clipboard is empty</li>
+     <li>2 ClipboardIsNotFTXT: clipboard doesn't contain text</li>
+     <li>3 MacroBufferIsFull: not used</li>
+     <li>4 MemoryAllocationFailed: not used</li>
+     <li>5 NoAreaMarked: Block: operation invoked, but no area marked</li></li>
+     <li>6 NoMacroDefined: not used</li>
+     <li>7 NothingToRedo: there is nothing to redo</li>
+     <li>8 NothingToUndo: there is nothing to undo</li>
+     <li>9 NotEnoughUndoMem: a block was erased but there is not enogh mem to save it for undo operation</li>
+     <li>10 StringNotFound: not used</li>
+     <li>11 NoBookmarkInstalled</li>
+     <li>12 BookmarkHasBeenLost</li>
+    </ul></td>
+  </tr>
+  <tr>
+    <td><strong>Export</strong></td>
+    <td>S</td>
+    <td>IS</td>
+    <td>One of: <ul>
+      <li>Plain</li>
+      <li>EMail</li>
+    </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>ExportWrap</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>FixedFont</strong></td>
+    <td>B</td>
+    <td>IGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Flow</strong></td>
+    <td>M</td>
+    <td>SGN</td>
+    <td>A number or one of: <ul>
+      <li>Left</li>
+      <li>Right</li>
+      <li>Center</li>
+      <li>Justified (not implemented yet)</li>
+    </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>HasChanged</strong></td>
+    <td>B</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Import</strong></td>
+    <td>S</td>
+    <td>IS</td>
+    <td>One of: <ul>
+      <li>Plain</li>
+      <li>EMail</li>
+      <li>Mime</li>
+      <li>MimeQuoted</li>
+    </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>ImportWrap</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>InsertMode</strong></td>
+    <td>B</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>InVirtualGroup</strong></td>
+    <td>B</td>
+    <td>I</td>
+    <td>Set it to 1 if your TextEditor is (supposed to be) in a Virtgroup</td>
+  </tr>
+  <tr>
+    <td><strong>Pen</strong></td>
+    <td>N</td>
+    <td>SGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Quiet</strong></td>
+    <td>B</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>ReadOnly</strong></td>
+    <td>B</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>RedoAvailable</strong></td>
+    <td>B</td>
+    <td>GN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Rows</strong></td>
+    <td>N</td>
+    <td>I</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Separator</strong></td>
+    <td>S</td>
+    <td>SG</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Slider</strong></td>
+    <td>S</td>
+    <td>I</td>
+    <td>The name of a slider, prop, Scrollbar object to be linked to the TextEditor. Example:<pre>mgroup.0=&quot;teg&quot;
+ teg.class=&quot;group&quot;
+ teg.horiz=1
+ teg.spacing=0
+  teg.0=&quot;te&quot;
+   te.class=&quot;texteditor&quot;
+   te.slider=&quot;tescr&quot;
+    tescr.class=&quot;Scrollbar&quot;
+  teg.1=&quot;tescr&quot;</pre>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>StyleBold</strong></td>
+    <td>B</td>
+    <td>SGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>StyleItalic</strong></td>
+    <td>B</td>
+    <td>SGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>StyleUnderline</strong></td>
+    <td>B</td>
+    <td>SGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>TypeAndSpell</strong></td>
+    <td>N</td>
+    <td>SGN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>UndoAvailable</strong></td>
+    <td>B</td>
+    <td>GN</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>WrapBorder</strong></td>
+    <td>N</td>
+    <td>ISGN</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<table border="1" cellpadding="4" width="100%">
+  <tr>
+    <th colspan="3"><u><strong>Methods</strong></u></th>
+  </tr>
+  <tr>
+    <th><em><strong>Name</strong></em></th>
+    <th><em><strong>Parameters</strong></em></th>
+    <th><em><strong>Note</strong></em></th>
+  </tr>
+  <tr>
+    <td><strong>ARexxCmd</strong></td>
+    <td>&lt;cmd&gt;,[result/S]</td>
+    <td>Execute the ARexx command <em>cmd</em><br>
+    if <em>result</em> is supplied, it is used to store the result of the command, if any.</td>
+  </tr>
+  <tr>
+    <td><strong>BlockInfo</strong></td>
+    <td>&lt;stem/V&gt;</td>
+    <td>The fields of <em>stem</em> set are: <ul>
+      <li>StartX</li>
+      <li>StartY</li>
+      <li>StopX</li>
+      <li>StopY</li>
+    </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>ClearText</strong></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>FreeResources</strong></td>
+    <td>&nbsp;</td>
+    <td>When you get the contents of the object, a large amount of mem (depending of contents
+    size) is allocated (and freed only at object disposing). To free this mem, you may use
+    this method.</td>
+  </tr>
+  <tr>
+    <td><strong>Insert</strong></td>
+    <td>&lt;file&gt;,[DontMove/B]</td>
+    <td><em>DontMove</em> is a boolen: if 1, the object doesn't move to the end of the inserted
+    text.</td>
+  </tr>
+  <tr>
+    <td><strong>InsertText</strong></td>
+    <td>&lt;text&gt;,[where]</td>
+    <td><em>where</em> is one of: <ul>
+      <li>Cursor (default)</li>
+      <li>Top</li>
+      <li>Bottom</li>
+    </ul>
+    Note that RC will contain the IoErr().</td>
+  </tr>
+  <tr>
+    <td><strong>MarkText</strong></td>
+    <td>&lt;StartX&gt;,&lt;StartY&gt;,&lt;StopX&gt;,&lt;StopY&gt;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Open</strong></td>
+    <td>&lt;file&gt;</td>
+    <td>Note that RC will contain the IoErr().</td>
+  </tr>
+  <tr>
+    <td><strong>Replace</strong></td>
+    <td>&lt;string&gt;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Save</strong></td>
+    <td>&lt;file&gt;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Search</strong></td>
+    <td>&lt;string&gt;,[flags]</td>
+    <td><em>flags</em> is one or more of: <ul>
+      <li>Top</li>
+      <li>Case</li>
+    </ul>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
