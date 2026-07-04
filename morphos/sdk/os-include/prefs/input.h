@@ -29,9 +29,9 @@ struct InputPrefs
 {
 	char           ip_Keymap[16];
 	UWORD          ip_PointerTicks;
-	struct timeval ip_DoubleClick;
-	struct timeval ip_KeyRptDelay;
-	struct timeval ip_KeyRptSpeed;
+	struct TimeVal ip_DoubleClick;
+	struct TimeVal ip_KeyRptDelay;
+	struct TimeVal ip_KeyRptSpeed;
 	WORD           ip_MouseAccel;
 };
 

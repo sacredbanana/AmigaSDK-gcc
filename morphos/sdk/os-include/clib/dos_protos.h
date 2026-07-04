@@ -314,6 +314,16 @@ LONG GetSegListAttrTagList( BPTR seglist, LONG attr, APTR storage, LONG storage_
 #if !defined(USE_INLINE_STDARG)
 LONG GetSegListAttrTags( BPTR seglist, LONG attr, APTR storage, LONG storage_size, ULONG tag1, ... );
 #endif
+/*** V51.66 ***/
+LONG SetFilePosixDate( CONST_STRPTR name, CONST struct PosixDateStamp *date, struct TagItem *tags );
+LONG SetFilePosixDateTagList( CONST_STRPTR name, CONST struct PosixDateStamp *date, struct TagItem *tags );
+#if !defined(USE_INLINE_STDARG)
+LONG SetFilePosixDateTags( CONST_STRPTR name, CONST struct PosixDateStamp *date, ULONG tag1, ... );
+#endif
+/*** V51.71 ***/
+struct PosixDateStamp *PosixDateStamp(struct PosixDateStamp *pds);
+LONG PosixDateStampToDateStamp(CONST struct PosixDateStamp *pds, struct DateStamp *ds);
+LONG DateStampToPosixDateStamp(CONST struct DateStamp *ds, struct PosixDateStamp *pds);
 
 #ifdef __cplusplus
 }

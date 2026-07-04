@@ -1,7 +1,7 @@
 #ifndef LIBRARIES_XADMASTER_H
 #define LIBRARIES_XADMASTER_H
 
-/*  $Id: xadmaster.h,v 1.2 2006/08/12 17:18:45 laire Exp $
+/*  $Id: xadmaster.h,v 1.3 2025/08/27 20:09:02 piru Exp $
     xadmaster.library defines and structures
 
     XAD library system for archive handling
@@ -165,6 +165,7 @@ struct xadMasterBase {
 #define XAD_DATECPM             (TAG_USER+ 78) /* CP/M data structure (V10) */
 #define XAD_DATECPM2            (TAG_USER+ 79) /* CP/M data structure type 2 (V10) */
 #define XAD_DATEISO9660         (TAG_USER+300) /* ISO9660 date structure (V11) */
+#define XAD_DATEPOSIXDATESTAMP  (TAG_USER+400) /* MorphOS struct PosixDateStamp */
 
 /* output tags, there can be specified multiple tags for one call */
 #define XAD_GETDATEUNIX         (TAG_USER+ 80) /* unix date variable */
@@ -177,6 +178,7 @@ struct xadMasterBase {
 #define XAD_GETDATECPM          (TAG_USER+ 88) /* CP/M data structure (V10) */
 #define XAD_GETDATECPM2         (TAG_USER+ 89) /* CP/M data structure type 2 (V10) */
 #define XAD_GETDATEISO9660      (TAG_USER+320) /* ISO9660 date structure (V11) */
+#define XAD_GETDATEPOSIXDATESTAMP (TAG_PTR+420) /* MorphOS struct PosixDateStamp */
 
 /* following tags need locale.library to be installed on Amiga */
 #define XAD_MAKEGMTDATE         (TAG_USER+ 90) /* make local to GMT time */

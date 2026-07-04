@@ -4,7 +4,7 @@
  * URL: http://libharu.org
  *
  * Copyright (c) 1999-2006 Takeshi Kanno <takeshi_kanno@est.hi-ho.ne.jp>
- * Copyright (c) 2007-2008 Antony Dovgal <tony@daylessday.org>
+ * Copyright (c) 2007-2009 Antony Dovgal <tony@daylessday.org>
  *
  * Permission to use, copy, modify, distribute and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -100,6 +100,7 @@
 #define HPDF_HIDE_WINDOW_UI  4
 #define HPDF_FIT_WINDOW      8
 #define HPDF_CENTER_WINDOW   16
+#define HPDF_PRINT_SCALING_NONE   32
 
 
 /*---------------------------------------------------------------------------*/
@@ -114,7 +115,7 @@
 #define HPDF_LIMIT_MAX_STRING_LEN      65535
 #define HPDF_LIMIT_MAX_NAME_LEN        127
 
-#define HPDF_LIMIT_MAX_ARRAY           8191
+#define HPDF_LIMIT_MAX_ARRAY           32767
 #define HPDF_LIMIT_MAX_DICT_ELEMENT    4095
 #define HPDF_LIMIT_MAX_XREF_ELEMENT    8388607
 #define HPDF_LIMIT_MAX_GSTATE          28
@@ -141,7 +142,7 @@
 #define HPDF_MAX_WORDSPACE          300
 #define HPDF_MIN_CHARSPACE          -30
 #define HPDF_MAX_CHARSPACE          300
-#define HPDF_MAX_FONTSIZE           300
+#define HPDF_MAX_FONTSIZE           600
 #define HPDF_MAX_ZOOMSIZE           10
 #define HPDF_MAX_LEADING            300
 #define HPDF_MAX_LINEWIDTH          100

@@ -4,7 +4,7 @@
 /*
 	exec task definitions (V51)
 
-	Copyright © 2002-2020 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2002-2025 The MorphOS Development Team, All Rights Reserved.
 */
 
 #ifndef EXEC_NODES_H
@@ -485,6 +485,30 @@ struct PPCStackSwapArgs
  */
 #define TASKINFOTYPE_PID                0x33
 
+/*
+ * Returns task stack history. This is safe to call for the task itself, and
+ * using it on foreign tasks may give unpredictable results. At minimum the
+ * results will get stale unless if you properly extract information while
+ * keeping task scheduling locked.
+ *
+ * This info type is used to fetch struct TaskStackHistoryEntry records
+ * that hold the call stack of the task. Pass pointer to the struct
+ * TaskStacHistoryEntry array. The DataSize is used the pass the total size
+ * of the array, and the return value will contain the amount of data filled
+ * to the array. The return size is the total size of the filled array, so
+ * divide by sizeof(struct TaskStackHistoryEntry) to get number of entries.
+ *
+ * You can skip stack frames by using TASKINFOTAG_STACKHISTORY_SKIPFRAMES
+ * tag. Pass a number of frames to skip, default is 0, where no skipping is
+ * done. If you're calling NewGetTaskAttrs function yourself for your own
+ * task from a debug dump function, you might want to use skip value of
+ * 1 to omit the debug function itself from the stack history.
+ *
+ *     Data: struct TaskStackHistoryEntry *
+ * DataSize: numentries * sizeof(struct TaskStackHistoryEntry)
+ * Added in exec 51.54
+ */
+#define TASKINFOTYPE_PPC_STACKHISTORY   0x34
 
 #define TASKINFOTYPE_68K_NEWFRAME       0x50
 
@@ -527,6 +551,18 @@ struct TaskFrame68k
 	UWORD  SR;
 	ULONG  Xn[15];
 };
+
+#define TSHE_VALID              0  /* Address is considered valid */
+#define TSHE_INVALID            1  /* Address doesn't look like valid */
+struct TaskStackHistoryEntry
+{
+	ULONG  tshe_Type;          /* Currently either TSHE_VALID or TSHE_INVALID */
+	IPTR   tshe_Address;       /* Function return address */
+};
+
+/* Used with TASKINFOTYPE_PPC_STACKHISTORY to skip frames
+ */
+#define TASKINFOTAG_STACKHISTORY_SKIPFRAMES (TASKINFOTAG_DUMMY + 0x3)
 
 
 /*

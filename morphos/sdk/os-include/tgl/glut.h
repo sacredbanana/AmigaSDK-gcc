@@ -141,45 +141,6 @@ void glutInitDisplayMode(unsigned int mode);
 
 #else
 
-/* API Calls */
-void GLUTInit(GLContext *context, int *argcp, char **argv);
-void GLUTInitWindowPosition(GLContext *context, int x, int y);
-void GLUTInitWindowSize(GLContext *context, int width, int height);
-int GLUTCreateWindow(GLContext *context, char *name);
-void GLUTFullScreen(GLContext *context);
-void GLUTSetWindow(GLContext *context, int win);
-int GLUTGetWindow(GLContext *context);
-void GLUTDestroyWindow(GLContext *context, int win);
-void GLUTSwapBuffers(GLContext *context);
-void GLUTMainLoop(GLContext *context);
-void GLUTPostRedisplay(GLContext *context);
-void GLUTDisplayFunc(GLContext *context, void (*func)(void));
-void GLUTReshapeFunc(GLContext *context, void (*func)(int width, int height));
-void GLUTIdleFunc(GLContext *context, void (*func)(void));
-void GLUTKeyboardFunc(GLContext *context, void (*func)(unsigned char key, int x, int y));
-void GLUTKeyboardUpFunc (GLContext *context, void (*func)(unsigned char key, int x, int y));
-void GLUTMouseFunc(GLContext *context, void (*func)(int button, int state, int x, int y));
-void GLUTMotionFunc(GLContext *context, void (*func)(int x, int y));
-void GLUTPassiveMotionFunc(GLContext *context, void (*func)(int x, int y));
-void GLUTSpecialFunc(GLContext *context, void (*func)(int key, int x, int y));
-void GLUTSpecialUpFunc(GLContext *context, void (*func)(int key, int x, int y));
-void GLUTTimerFunc(GLContext *context, int time, void (*func)(int value), int value);
-void GLUTEntryFunc(GLContext *context, void (*func)(int state));
-void GLUTVisibilityFunc(GLContext  *context, void (*func)(int state));
-void GLUTShowWindow(GLContext *context);
-void GLUTHideWindow(GLContext *context);
-void GLUTPositionWindow(GLContext *context, int x, int y);
-void GLUTReshapeWindow(GLContext *context, int width, int height);
-int	GLUTGet(GLContext *context, GLenum state);
-int	GLUTGetModifiers(GLContext *context);
-
-void *GLUTGetWindowHandle(GLContext *c);
-
-
-
-/* Not implemented */
-void GLUTInitDisplayMode(GLContext *context, unsigned int mode);
-
 #define	glutInit(argc, argv)              GLUTInit(__tglContext, argc, argv)
 #define	glutInitWindowPosition(x, y)      GLUTInitWindowPosition(__tglContext, x, y)
 #define	glutInitWindowSize(width, height) GLUTInitWindowSize(__tglContext, width, height)
@@ -212,6 +173,10 @@ void GLUTInitDisplayMode(GLContext *context, unsigned int mode);
 #define	glutInitDisplayMode(mode)         GLUTInitDisplayMode(__tglContext, mode)
 #define	glutGetModifiers()                GLUTGetModifiers(__tglContext)
 #define	glutGetWindowHandle()             GLUTGetWindowHandle(__tglContext)
+
+/* some dummy functions */
+
+#define glutSetColor(a, b, c, d)
 
 #endif /* _NO_PPCINLINE */
 

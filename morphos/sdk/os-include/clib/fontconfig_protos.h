@@ -12,7 +12,7 @@
 #endif
 
 #include <ft2build.h>
-// ft2build.h should include these but Linux is sooooooo gay and it wont
+// ft2build.h should include these but Linux is sooooooo silly and it wont
 #include <freetype/freetype.h>
 #include <freetype/fttypes.h>
 
@@ -256,6 +256,44 @@ FcStrSet * FcGetDefaultLangs (void);
 void FcExtInsertProgressCallback(FcExtProgressCallback call);
 void FcExtRemoveProgressCallback(FcExtProgressCallback call);
 
+/* V55 */
+FcBool FcDirCacheCreateUUID (FcChar8 *dir, FcBool force, FcConfig *config);
+FcBool FcDirCacheDeleteUUID (const FcChar8 *dir, FcConfig  *config);
+int FcPatternObjectCount (const FcPattern *pat);
+FcResult FcPatternGetWithBinding (const FcPattern *p, const char *object, int id, FcValue *v, FcValueBinding *b);
+void FcPatternIterStart (const FcPattern *pat, FcPatternIter *iter);
+FcBool FcPatternIterNext (const FcPattern *pat, FcPatternIter *iter);
+FcBool FcPatternIterEqual (const FcPattern *p1, FcPatternIter *i1, const FcPattern *p2, FcPatternIter *i2);
+FcBool FcPatternFindIter (const FcPattern *pat, FcPatternIter *iter, const char *object);
+FcBool FcPatternIterIsValid (const FcPattern *pat, FcPatternIter *iter);
+const char *FcPatternIterGetObject (const FcPattern *pat, FcPatternIter *iter);
+int FcPatternIterValueCount (const FcPattern *pat, FcPatternIter *iter);
+FcResult FcPatternIterGetValue (const FcPattern *pat, FcPatternIter *iter, int id, FcValue *v, FcValueBinding *b);
+unsigned int FcFreeTypeQueryAll(const FcChar8 *file, unsigned int id, FcBlanks *blanks, int *count, FcFontSet *set);
+FcChar8 *FcLangNormalize (const FcChar8 *lang);
+FcRange *FcRangeCopy (const FcRange *r);
+FcRange *FcRangeCreateDouble (double begin, double end);
+FcRange *FcRangeCreateInteger (FcChar32 begin, FcChar32 end);
+void FcRangeDestroy (FcRange *range);
+FcBool FcRangeGetDouble(const FcRange *range, double *begin, double *end);
+FcBool FcConfigParseAndLoadFromMemory (FcConfig *config, const FcChar8 *buffer, FcBool complain);
+void FcConfigFileInfoIterInit (FcConfig *config, FcConfigFileInfoIter *iter);
+FcBool FcConfigFileInfoIterNext (FcConfig *config, FcConfigFileInfoIter *iter);
+FcBool FcConfigFileInfoIterGet (FcConfig *config, FcConfigFileInfoIter *iter, FcChar8 **name, FcChar8 **description, FcBool *enabled);
+double FcWeightFromOpenTypeDouble (double ot_weight);
+double FcWeightToOpenTypeDouble (double fc_weight);
+int FcWeightFromOpenType (int ot_weight);
+int FcWeightToOpenType (int fc_weight);
+FcChar8 *FcConfigGetFilename (FcConfig *config, const FcChar8 *url);
+FcBool FcConfigAcceptFont (FcConfig *config, const FcPattern *font);
+FcBool FcConfigAcceptFilter (FcConfig *config, const FcPattern *font);
+FcConfig *FcConfigSetFontSetFilter (FcConfig *config, FcFilterFontSetFunc filter_func, FcDestroyFunc destroy_data_func, void *user_data);
+const FcConstant *FcNameGetConstantFor (const FcChar8 *string, const char *object);
+FcBool FcPatternAddRange (FcPattern *p, const char *object, const FcRange *r);
+FcResult FcPatternGetRange (const FcPattern *p, const char *object, int id, FcRange **r);
+FcChar8 * FcStrBuildFilename (const FcChar8 *path, ...);
+void FcStrListFirst (FcStrList *list);
+void FcConfigPreferAppFont (FcConfig *config, FcBool flag);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

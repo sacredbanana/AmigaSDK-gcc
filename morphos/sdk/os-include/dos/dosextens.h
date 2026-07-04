@@ -523,6 +523,25 @@ struct StandardPacket
  */
 #define FQA_NumBlocksUsed       7
 
+/* ACTION_SET_POSIXDATE
+ * dp_Arg1 - BPTR lock
+ * dp_Arg2 - BSTR name
+ * dp_Arg3 - struct PosixTimeStamp *date, relative to 1970-01-01
+ * dp_Arg4 - struct TagItem *tags, no tags defined currently
+ *
+ * dp_Res1 - DOSFALSE for error, dp_Res2 set.
+ *           DOSTRUE for success.
+ *
+ * Implementation notes
+ * - The filesystem might not allow settings nanoseconds in which case
+ *   the uds_NSec field is ignored.
+ * - If the date is outside of the range of the filesystem can save,
+ *   DOSFALSE must be returned. dp_Res2 will be set to ERROR_BAD_NUMBER.
+ * - If DOSFALSE and dp_Res2 of ACTION_NOT_KNOWN is returned then the
+ *   filesystem does not support this packet and ACTION_SET_DATE must be
+ *   used instead.
+ */
+#define ACTION_SET_POSIXDATE    26411
 
 /*
  * Packets to get and set filesystem options runtime
@@ -539,6 +558,7 @@ struct StandardPacket
 #define ACTION_RESTORE_PATH       26602 /* arg1 - STRPTR name of a file/directory *in* Trashcan:, arg2 - STRPTR dest_buf, arg3 - LONG buffer_size */
 #define ACTION_EMPTY_TRASHCAN     26603
 #define ACTION_IS_TRASHCAN_FS     26604
+
 
 struct ErrorString
 {

@@ -16,7 +16,7 @@
 typedef unsigned short UTF16;
 #endif
 
-/* Flags for GetCharsetNumber() */
+/* Type flags for GetCharsetNumber() */
 
 #define CSF_IANA_NAME     (1 << 0)
 #define CSF_IANA_MIMENAME (1 << 1)

@@ -113,7 +113,7 @@
  * New (dos.lib 51.40+) tags
  */
 #define ADO_DN_Flags         (ADO_Dummy + 41) /* ULONG */
-#define ADO_DN_Status		 (ADO_Dummy + 42) /* ULONG */
+#define ADO_DN_Status        (ADO_Dummy + 42) /* ULONG */
 #define ADO_DN_ExitNotifyMsg (ADO_Dummy + 43) /* struct Msg* */
 
 /* Run handler only once, do not reload after exit */
@@ -346,5 +346,17 @@ struct DosAttrBuffer
  * (default to FALSE)
  */
 #define CLIDATATAG_Sorted               (CLIDATATAG_Dummy + 0x3)
+
+
+/*
+ * Examine64/ExNext64/ExamineFH64 tags
+ */
+#define EX64TAG_Dummy                   (TAG_USER + 3600)
+/*
+ * Whether Examine64/ExNext64/ExamineFH64 should attempt to fill
+ * fib_PosixDate. fib_ActExtFlags will have FIBEXTF_POSIXDATE set if
+ * fib_PosixDate is actually available.
+ */
+#define EX64TAG_PosixDate               (EX64TAG_Dummy + 0x1)
 
 #endif /* DOS_DOSTAGS_H */

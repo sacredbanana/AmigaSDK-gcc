@@ -7,7 +7,7 @@
 
 	lzma.library include
 
-	Copyright © 2017-2021 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2017-2025 The MorphOS Development Team, All Rights Reserved.
 
 */
 
@@ -84,7 +84,7 @@ extern "C" {
 */
 #define LZMA_VERSION_MAJOR 5
 #define LZMA_VERSION_MINOR 2
-#define LZMA_VERSION_PATCH 5
+#define LZMA_VERSION_PATCH 13
 #define LZMA_VERSION_STABILITY LZMA_VERSION_STABILITY_STABLE
 #ifndef LZMA_VERSION_COMMIT
 #	define LZMA_VERSION_COMMIT ""

@@ -1,33 +1,29 @@
-/* Automatically generated header! Do not edit! */
+#ifndef _PROTO_TTENGINE_H
+#define _PROTO_TTENGINE_H
 
-#ifndef PROTO_TTENGINE_H
-#define PROTO_TTENGINE_H
+#ifndef EXEC_TYPES_H
+#include <exec/types.h>
+#endif
+#ifndef CLIB_TTENGINE_PROTOS_H
+#include <clib/ttengine_protos.h>
+#endif
 
 #ifndef __NOLIBBASE__
-extern struct Library *
-#ifdef __CONSTLIBBASEDECL__
-__CONSTLIBBASEDECL__
-#endif /* __CONSTLIBBASEDECL__ */
-TTEngineBase;
-#endif /* !__NOLIBBASE__ */
-
-#include <clib/ttengine_protos.h>
+extern struct Library *TTEngineBase;
+#endif
 
 #ifdef __GNUC__
-#ifdef __PPC__
-#ifndef _NO_PPCINLINE
-#include <ppcinline/ttengine.h>
-#endif /* _NO_PPCINLINE */
-#else
-#ifndef _NO_INLINE
+#ifndef __PPC__
 #include <inline/ttengine.h>
-#endif /* _NO_INLINE */
-#endif /* __PPC__ */
-#elif defined(__VBCC__)
-#include <inline/ttengine_protos.h>
 #else
-#include <pragmas/ttengine_pragmas.h>
-#endif /* __GNUC__ */
+#include <ppcinline/ttengine.h>
+#endif
+#elif defined(__VBCC__)
+#ifndef __PPC__
+#include <inline/ttengine_protos.h>
+#endif
+#else
+#include <pragma/ttengine_lib.h>
+#endif
 
-#endif /* !PROTO_TTENGINE_H */
-
+#endif  /*  _PROTO_TTENGINE_H  */

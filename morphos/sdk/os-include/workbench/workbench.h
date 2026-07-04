@@ -262,10 +262,6 @@ struct AppMenu            { APTR am_PRIVATE; };
 #define WBCREATEDRAWER_CreateIcon       (WBA_Dummy + 81) /* Create icon: defaults to TRUE */
 #define WBCREATEDRAWER_IgnoreFile       (WBA_Dummy + 88) /* ignore name component: defaults to FALSE */
 
-#ifdef SYSTEM_PRIVATE
-#define WBCREATEDRAWER_CreateHook       (WBA_Dummy + 82)
-#define WBCREATEDRAWER_ErrorHook        (WBA_Dummy + 83)
-#endif
 
 
 #define WBCREATEICON_MimeType           (WBA_Dummy + 84)

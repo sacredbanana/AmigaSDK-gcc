@@ -7,7 +7,7 @@
  * Network Solutions Development, Inc.
  * All rights reserved.
  *
- * $Id: socket_protos.h,v 1.5 2013/01/17 00:58:14 piru Exp $
+ * $Id: socket_protos.h,v 1.6 2025/09/27 22:11:23 piru Exp $
  */
 
 #ifndef EXEC_TYPES_H
@@ -22,8 +22,8 @@
 #include <sys/types.h>
 #endif
 
-#ifndef _SYS_TIME_H_
-#include <sys/time.h>
+#ifndef _SYS__TIMEVAL_H_
+#include <sys/_timeval.h>
 #endif
 
 #ifndef _SYS_SOCKET_H_

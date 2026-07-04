@@ -42,8 +42,10 @@ Boopsiobject *MUI_MakeObject         (LONG type,...);
 #endif
 VOID    MUI_DisposeObject      (Boopsiobject *obj);
 LONG    MUI_RequestA           (APTR app,APTR win,LONGBITS flags,char *title,char *gadgets,char *format,APTR params);
+LONG    MUI_RequestObjectA     (APTR app,APTR win,LONGBITS flags,char *title,char *gadgets,Boopsiobject *obj,char *format,APTR params);
 #if !defined(USE_INLINE_STDARG)
 LONG    MUI_Request            (APTR app,APTR win,LONGBITS flags,char *title,char *gadgets,char *format,...);
+LONG    MUI_RequestObject      (APTR app,APTR win,LONGBITS flags,char *title,char *gadgets,Boopsiobject *obj,char *format,...);
 #endif
 LONG    MUI_Error              (VOID);
 APTR    MUI_AllocAslRequest    (unsigned long reqType, struct TagItem *tagList);

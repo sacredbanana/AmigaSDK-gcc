@@ -13,10 +13,6 @@
 
 #pragma pack(2)
 
-#ifndef EXEC_SILENT_BUILD
-#warning exec AVL-trees are not directly supported in MorphOS, please use btree.library or libsavl instead
-#endif
-
 struct AVLNode
 {
 	ULONG reserved[4];

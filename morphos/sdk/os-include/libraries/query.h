@@ -310,6 +310,7 @@ struct QueryUnitID
  * Custom tags used by the mprefs classes
  */
 #define QUERYINFOATTR_CUSTOM_MPREFS_MACHINEPATTERN   (QUERYINFOATTR_CUSTOM + 1)
+#define QUERYINFOATTR_CUSTOM_MPREFS_DISABLEVAR       (QUERYINFOATTR_CUSTOM + 2)
 
 /***********************************************************************************
  *

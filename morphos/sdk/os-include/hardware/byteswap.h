@@ -4,7 +4,7 @@
 /*
 	byteswap routines
 
-	Copyright © 2002 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2002-2023 The MorphOS Development Team, All Rights Reserved.
 */
 
 #ifndef EXEC_TYPES_H
@@ -55,17 +55,17 @@
 
 #define SWAPWORD(x)					\
 (__extension__						\
-({	register UWORD __x;				\
+({	register UWORD __x = x;				\
 	if (__builtin_constant_p(x))			\
 	{						\
-		__x = SWAPWORD_C(x);			\
+		__x = SWAPWORD_C(__x);			\
 	}						\
 	else						\
 	{						\
 		__asm__ (				\
 			"rolw #8,%0"			\
 		: "=d" (__x)				\
-		: "0" ((UWORD) (x))			\
+		: "0" (__x)				\
 		: "cc");				\
 	}						\
 	__x;						\
@@ -73,10 +73,10 @@
 
 #define SWAPLONG(x)					\
 (__extension__						\
-({	register ULONG __x;				\
+({	register ULONG __x = x;				\
 	if (__builtin_constant_p(x))			\
 	{						\
-		__x = SWAPLONG_C(x);			\
+		__x = SWAPLONG_C(__x);			\
 	}						\
 	else						\
 	{						\
@@ -85,7 +85,7 @@
 		"	swap %0;"			\
 		"	rolw #8,%0"			\
 		: "=d" (__x)				\
-		: "0" ((ULONG) (x))			\
+		: "0" (__x)				\
 		: "cc");				\
 	}						\
 	__x;						\
@@ -93,10 +93,10 @@
 
 #define SWAP2WORD(x)					\
 (__extension__						\
-({	register ULONG __x;				\
+({	register ULONG __x = x;				\
 	if (__builtin_constant_p(x))			\
 	{						\
-		__x = SWAP2WORD_C(x);			\
+		__x = SWAP2WORD_C(__x);			\
 	}						\
 	else						\
 	{						\
@@ -106,7 +106,7 @@
 		"	rolw #8,%0;"			\
 		"	swap %0"			\
 		: "=d" (__x)				\
-		: "0" ((ULONG) (x))			\
+		: "0" (__x)				\
 		: "cc");				\
 	}						\
 	__x;						\
@@ -120,10 +120,10 @@
 
 #define SWAPWORD(x)					\
 (__extension__						\
-({	register UWORD __x;				\
+({	register UWORD __x = x;				\
 	if (__builtin_constant_p(x))			\
 	{						\
-		__x = SWAPWORD_C(x);			\
+		__x = SWAPWORD_C(__x);			\
 	}						\
 	else						\
 	{						\
@@ -131,17 +131,17 @@
 			"rotrwi %0,%0,8;"		\
 		"	inslwi %0,%0,8,16"		\
 		: "=r" (__x)				\
-		: "0" ((UWORD) (x)));			\
+		: "0" (__x));				\
 	}						\
 	__x;						\
 }))
 
 #define SWAPLONG(x)					\
 (__extension__						\
-({	register ULONG __x;				\
+({	register ULONG __x = x;				\
 	if (__builtin_constant_p(x))			\
 	{						\
-		__x = SWAPLONG_C(x);			\
+		__x = SWAPLONG_C(__x);			\
 	}						\
 	else						\
 	{						\
@@ -150,7 +150,7 @@
 		"	rlwimi %0,%1,8,8,15;"        	\
 		"	rlwimi %0,%1,8,24,31;"		\
 		: "=&r" (__x)				\
-		: "r" ((unsigned int) (x)));		\
+		: "r" (__x));				\
 	}						\
 	__x;						\
 }))
@@ -234,16 +234,8 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #ifndef SWAPWORD
 #define SWAPWORD(x)					\
 (__extension__						\
-({	register UWORD __x;				\
-	if (__builtin_constant_p(x))			\
-	{						\
-		__x = __SWAPWORD_C((UWORD) (x));	\
-	}						\
-	else						\
-	{						\
-		__x = ((UWORD) (x));			\
-		__x = __SWAPWORD_C(__x);		\
-	}						\
+({	register UWORD __x = x;				\
+	__x = __SWAPWORD_C(__x);			\
 	__x;						\
 }))
 #endif /* SWAPWORD */
@@ -251,16 +243,8 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #ifndef SWAPLONG
 #define SWAPLONG(x)					\
 (__extension__						\
-({	register ULONG __x;				\
-	if (__builtin_constant_p(x))			\
-	{						\
-		__x = __SWAPLONG_C((ULONG) (x));	\
-	}						\
-	else						\
-	{						\
-		__x = ((ULONG) (x));			\
-		__x = __SWAPLONG_C(__x);		\
-	}						\
+({	register ULONG __x = x;				\
+	__x = __SWAPLONG_C(__x);			\
 	__x;						\
 }))
 #endif /* SWAPLONG */
@@ -268,16 +252,8 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #ifndef SWAP2WORD
 #define SWAP2WORD(x)					\
 (__extension__						\
-({	register ULONG __x;				\
-	if (__builtin_constant_p(x))			\
-	{						\
-		__x = __SWAP2WORD_C((ULONG) (x));	\
-	}						\
-	else						\
-	{						\
-		__x = ((ULONG) (x));			\
-		__x = __SWAP2WORD_C(__x);		\
-	}						\
+({	register ULONG __x = x;				\
+	__x = __SWAP2WORD_C(__x);			\
 	__x;						\
 }))
 #endif /* SWAP2WORD */
@@ -285,16 +261,8 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #ifndef SWAPQUAD
 #define SWAPQUAD(x)					\
 (__extension__						\
-({	register UQUAD __x;				\
-	if (__builtin_constant_p(x))			\
-	{						\
-		__x = __SWAPQUAD_C((UQUAD) (x));	\
-	}						\
-	else						\
-	{						\
-		__x = ((UQUAD) (x));			\
-		__x = __SWAPQUAD_C(__x);		\
-	}						\
+({	register UQUAD __x = x;				\
+	__x = __SWAPQUAD_C(__x);			\
 	__x;						\
 }))
 #endif /* SWAPQUAD */
@@ -324,8 +292,10 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #endif /* SWAPQUAD_P */
 
 
-#if defined(__BIG_ENDIAN__) | defined(_BIG_ENDIAN) | defined(mc68000) | \
-	defined(__M68K__) | defined(__MORPHOS__) | defined(__SASC)
+#if defined(__BIG_ENDIAN__) || defined(_BIG_ENDIAN) || defined(mc68000) || \
+	defined(__M68K__) || defined(__MORPHOS__) || defined(__SASC) || \
+	(defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
+	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 
 /*
 ** big-endian cpus
@@ -356,13 +326,14 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #define LE_SWAP2WORD(x)		(x)
 #define LE_SWAPQUAD(x)		(x)
 
-#define LE_SWAPWORD_P(x)
-#define LE_SWAPLONG_P(x)
-#define LE_SWAP2WORD_P(x)
-#define LE_SWAPQUAD_P(x)
+#define LE_SWAPWORD_P(x)	do {} while(0)
+#define LE_SWAPLONG_P(x)	do {} while(0)
+#define LE_SWAP2WORD_P(x)	do {} while(0)
+#define LE_SWAPQUAD_P(x)	do {} while(0)
 
-#elif defined(__LITTLE_ENDIAN__) | defined(_LITTLE_ENDIAN)
-
+#elif defined(__LITTLE_ENDIAN__) || defined(_LITTLE_ENDIAN) || \
+	(defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+	__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 /*
 ** little-endian cpus
 */
@@ -377,10 +348,10 @@ do { register UQUAD __xv, *__xx = (UQUAD *) (x); __xv = *__xx; \
 #define BE_SWAP2WORD(x)		(x)
 #define BE_SWAPQUAD(x)		(x)
 
-#define BE_SWAPWORD_P(x)
-#define BE_SWAPLONG_P(x)
-#define BE_SWAP2WORD_P(x)
-#define BE_SWAPQUAD_P(x)
+#define BE_SWAPWORD_P(x)	do {} while(0)
+#define BE_SWAPLONG_P(x)	do {} while(0)
+#define BE_SWAP2WORD_P(x)	do {} while(0)
+#define BE_SWAPQUAD_P(x)	do {} while(0)
 
 #define LE_SWAPWORD_C(x)	SWAPWORD_C(x)
 #define LE_SWAPLONG_C(x)	SWAPLONG_C(x)

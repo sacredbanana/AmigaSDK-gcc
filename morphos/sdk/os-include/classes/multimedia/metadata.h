@@ -27,8 +27,8 @@ struct MetaItem
 
 struct MetaPort
 {
-	Object*  mtp_Object; 
-	ULONG    mtp_Port;
+	Boopsiobject*  mtp_Object;
+	ULONG          mtp_Port;
 };
 
 

@@ -37,7 +37,10 @@ $VER: video.h 51.8 (16.9.2007)
 #define MMF_VIDEO_ARGB32         (MMF_VIDEOMASK + 24)  /* raw data, 8 bits per gun */
 #define MMF_VIDEO_TIFF           (MMF_VIDEOMASK + 25)
 #define MMF_VIDEO_BGRA32         (MMF_VIDEOMASK + 26)  /* raw data, 8 bits per gun */
-
+#define MMF_VIDEO_QOI            (MMF_VIDEOMASK + 26)  /* Quite Ok Image Format */
+#define MMF_VIDEO_PHOTOCD        (MMF_VIDEOMASK + 27)  /* Kodak PhotoCD */
+#define MMF_VIDEO_INGF           (MMF_VIDEOMASK + 28)  /* ImageFX native format */
+#define MMF_VIDEO_WEBP           (MMF_VIDEOMASK + 29)  /* WebP */
 
 /* methods */
 

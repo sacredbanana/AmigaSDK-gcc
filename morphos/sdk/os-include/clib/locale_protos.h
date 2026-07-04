@@ -121,6 +121,14 @@ STRPTR TZAscTime(const struct tm *tm, STRPTR buf);
 STRPTR TZCTime(ULONG t, STRPTR buf);
 struct tm *TZGMTime(ULONG t, struct tm *tm);
 LONG TZGetSysTimeZone(STRPTR buf, LONG size);
+APTR TZAlloc2(CONST_STRPTR timezone, int *errnoptr);
+QUAD TZGetSysLocalTime64(QUAD utctime, CONST_STRPTR timezone, struct tm *restm, int *errnoptr);
+struct tm *TZLocalTime64(APTR sp, QUAD t, struct tm *tmp, int *errnoptr);
+QUAD TZMKTime64(APTR sp, struct tm *tm, int *errnoptr);
+QUAD TZTime2Posix64(APTR sp, QUAD t, int *errnoptr);
+QUAD TZPosix2Time64(APTR sp, QUAD t, int *errnoptr);
+STRPTR TZCTime64(QUAD t, STRPTR buf, int *errnoptr);
+struct tm *TZGMTime64(QUAD t, struct tm *tm, int *errnoptr);
 
 #ifdef __cplusplus
 }

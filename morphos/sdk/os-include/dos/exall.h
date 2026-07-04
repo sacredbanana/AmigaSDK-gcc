@@ -15,6 +15,10 @@
 # include <utility/hooks.h>
 #endif
 
+#ifndef DOS_DOS_H
+# include <dos/dos.h>
+#endif
+
 #pragma pack(2)
 
 
@@ -31,9 +35,16 @@
 
 /* The ExAllData ed_Size64 field is filled. For files larger than 2^31-1
  * bytes, ed_Size is 0.
+ * Available in dos.library 51.30 and later. ExAll() will fail and return
+ * ERROR_BAD_NUMBER if not supported.
  */
 #define ED_SIZE64      8
 
+/* The ExAllData ed_PosixDate field is filled.
+ * Available in dos.library 51.70 and later. ExAll() will fail and return
+ * ERROR_BAD_NUMBER if not supported.
+ */
+#define ED_POSIXDATE   9
 
 struct ExAllData
 {
@@ -54,6 +65,9 @@ struct ExAllData
 
 	/* Filled for ED_SIZE64 */
 	UQUAD             ed_Size64;
+
+	/* Filled for ED_POSIXDATE */
+	struct PosixDateStamp ed_PosixDate;
 };
 
 struct ExAllControl

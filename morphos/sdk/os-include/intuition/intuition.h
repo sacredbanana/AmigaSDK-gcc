@@ -4,7 +4,7 @@
 /*
 	intuition definitions
 
-	Copyright © 2002-2008 The MorphOS Development Team, All Rights Reserved.
+	Copyright (C) 2002-2025 The MorphOS Development Team, All Rights Reserved.
 */
 
 #ifndef EXEC_TYPES_H
@@ -850,6 +850,11 @@ struct ExtNewWindow
 /* BOOL. If set to true, the window's layers will be realtime.
 ** OpenWindow will fail if the screen isn't composited. Window must
 ** be a borderless one. */
+
+#define WA_LockMouseToScreen /* ISG */          (WA_Dummy + 183)
+/* BOOL. If set to true, mouse will be prevented from leaving the
+** screen in a multi-display setup. Ignored unless the window has
+** successfully called WM_ObtainEvents */
 
 /* window methods */
 #define WM_Dummy WA_Dummy

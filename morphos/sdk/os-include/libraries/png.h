@@ -7,10 +7,13 @@
 
 	png.library include
 
-	Copyright © 2003-2021 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2003-2026 The MorphOS Development Team, All Rights Reserved.
 
 */
 
+#ifndef EXEC_LIBRARIES_H
+# include <exec/libraries.h>
+#endif
 
 #define PNG_H
 
@@ -940,6 +943,29 @@ typedef png_struct FAR * FAR * png_structpp;
 #define PNG_STRING_NEWLINE "\n"
 #endif
 
+
+#if defined(__GNUC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+static inline void png_convert_from_time_t(png_timep ptime, long long ttime)
+{
+  void png_convert_from_time_t32(png_timep ptime, long ttime);
+  void png_convert_from_time_t64(png_timep ptime, long long ttime);
+  extern struct Library *PNGBase;
+  if (PNGBase->lib_Version >= 52)
+    png_convert_from_time_t64(ptime, ttime);
+  else
+    png_convert_from_time_t32(ptime, (long) ttime);
+}
+#else
+#define png_convert_from_time_t(p,t) \
+do { \
+  png_timep ptime_tmp_ = (p); \
+  long long ttime_tmp_ = (t); \
+  if (PNGBase->lib_Version >= 52) \
+    png_convert_from_time_t64(ptime_tmp_, ttime_tmp_); \
+  else \
+    png_convert_from_time_t32(ptime_tmp_, (long) ttime_tmp_); \
+} while (0)
+#endif
 
 #ifdef __cplusplus
 }

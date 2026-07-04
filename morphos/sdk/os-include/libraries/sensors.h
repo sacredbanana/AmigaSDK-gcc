@@ -188,9 +188,12 @@ struct SensorsNotificationMessage
 
 /* ULONG, Fan speed - RPM */
 #define SENSORS_Fan_RPM                         (SENSORS_Dummy + 601)
+
 /* ULONG, Max fan RPM */
 #define SENSORS_Fan_RPM_Max                     (SENSORS_Dummy + 602)
 
+/* ULONG, Minimum fan RPM */
+#define SENSORS_Fan_RPM_Min                     (SENSORS_Dummy + 603)
 
 /* BeginSensorNotify special attributes */
 
@@ -270,6 +273,8 @@ typedef enum
 	SensorPlacement_TunnelHeatSink          = 27,
 	SensorPlacement_MLBInletAmbient         = 28,
 	SensorPlacement_DriveBay                = 29,
+	SensorPlacement_Mainboard               = 30,
+	SensorPlacement_PCIeSwitch              = 31,
 
 	SensorPlacement_NumPlacements
 } SensorPlacement;

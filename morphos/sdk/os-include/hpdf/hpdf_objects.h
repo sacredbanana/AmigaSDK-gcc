@@ -4,7 +4,7 @@
  * URL: http://libharu.org
  *
  * Copyright (c) 1999-2006 Takeshi Kanno <takeshi_kanno@est.hi-ho.ne.jp>
- * Copyright (c) 2007-2008 Antony Dovgal <tony@daylessday.org>
+ * Copyright (c) 2007-2009 Antony Dovgal <tony@daylessday.org>
  *
  * Permission to use, copy, modify, distribute and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -59,6 +59,8 @@ extern "C" {
 #define  HPDF_OSUBCLASS_ENCRYPT       0x0900
 #define  HPDF_OSUBCLASS_EXT_GSTATE    0x0A00
 #define  HPDF_OSUBCLASS_EXT_GSTATE_R  0x0B00  /* read only object */
+#define  HPDF_OSUBCLASS_NAMEDICT      0x0C00
+#define  HPDF_OSUBCLASS_NAMETREE      0x0D00
 
 
 
@@ -271,10 +273,9 @@ HPDF_String_Write  (HPDF_String  obj,
                     HPDF_Stream  stream,
                     HPDF_Encrypt e);
 
-
-HPDF_STATUS
-HPDF_String_SetValue  (HPDF_String      obj,
-                       const char  *value);
+HPDF_INT32
+HPDF_String_Cmp  (HPDF_String s1,
+                  HPDF_String s2);
 
 
 /*---------------------------------------------------------------------------*/
@@ -389,6 +390,10 @@ void
 HPDF_Array_Clear  (HPDF_Array  array);
 
 
+HPDF_UINT
+HPDF_Array_Items (HPDF_Array  array);
+
+
 /*---------------------------------------------------------------------------*/
 /*----- HPDF_Dict -----------------------------------------------------------*/
 
@@ -420,6 +425,7 @@ typedef struct _HPDF_Dict_Rec {
     HPDF_Dict_FreeFunc         free_fn;
     HPDF_Stream                stream;
     HPDF_UINT                  filter;
+    HPDF_Dict                  filterParams;
     void                       *attr;
 } HPDF_Dict_Rec;
 
@@ -571,9 +577,14 @@ HPDF_Xref_GetEntryByObjectId  (HPDF_Xref  xref,
 
 
 
+typedef HPDF_Dict  HPDF_EmbeddedFile;
+typedef HPDF_Dict  HPDF_NameDict;
+typedef HPDF_Dict  HPDF_NameTree;
 typedef HPDF_Dict  HPDF_Pages;
 typedef HPDF_Dict  HPDF_Page;
 typedef HPDF_Dict  HPDF_Annotation;
+typedef HPDF_Dict  HPDF_3DMeasure;
+typedef HPDF_Dict  HPDF_ExData;
 typedef HPDF_Dict  HPDF_XObject;
 typedef HPDF_Dict  HPDF_Image;
 typedef HPDF_Dict  HPDF_Outline;
@@ -582,6 +593,8 @@ typedef HPDF_Dict  HPDF_Action;
 typedef HPDF_Dict  HPDF_ExtGState;
 typedef HPDF_Array HPDF_Destination;
 typedef HPDF_Dict  HPDF_U3D;
+typedef HPDF_Dict  HPDF_OutputIntent;
+typedef HPDF_Dict  HPDF_JavaScript;
 
 #ifdef __cplusplus
 }

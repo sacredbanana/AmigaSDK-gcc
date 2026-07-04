@@ -112,6 +112,38 @@
 /* LONG. Returns the output number or 1 if this monitor isn't associated with a
 ** driver capable of handling multiple outputs */
 
+#define MA_Display_Manufacturer         (MA_Dummy + 25)
+/* CONST_STRPTR, 3 character manufacturer code (if available) */
+
+#define MA_Display_ProductCode          (MA_Dummy + 26)
+/* ULONG, Manufacturer code (if available) */
+
+#define MA_Display_SerialNumber         (MA_Dummy + 27)
+/* ULONG, Display serial number (if available) */
+
+#define MA_Display_Width                (MA_Dummy + 28)
+/* ULONG, Display width in cm (if available) */
+
+#define MA_Display_Height               (MA_Dummy + 29)
+/* ULONG, Display height in cm (if available) */
+
+#define MA_Output_LinkType              (MA_Dummy + 30)
+/* MONITOR_LINKTYPE */
+
+#define MA_Display_Name                 (MA_Dummy + 31)
+/* CONST_STRPTR, Name of connected display (if available) */
+
+#define MA_IsDefault                    (MA_Dummy + 32)
+/* BOOL. True if this is the default display */
+
+#define MONITOR_LINKTYPE_UNKNOWN         0
+#define MONITOR_LINKTYPE_ANALOG          1
+#define MONITOR_LINKTYPE_UNKNOWN_DIGITAL 2
+#define MONITOR_LINKTYPE_DVI             3
+#define MONITOR_LINKTYPE_HDMI_A          4
+#define MONITOR_LINKTYPE_HDMI_B          5
+#define MONITOR_LINKTYPE_DISPLAYPORT     6
+#define MONITOR_LINKTYPE_MDDI            7
 
 
 /**************** METHODS ****************************************************/

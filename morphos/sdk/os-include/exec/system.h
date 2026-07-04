@@ -236,4 +236,5 @@
  * task scheduler.
 */
 #define SYSTEMINFOTYPE_NEWSCHEDULER             0x242
+
 #endif

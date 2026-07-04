@@ -57,6 +57,11 @@ struct DateStamp
 
 #define TICKS_PER_SECOND  50
 
+struct PosixDateStamp
+{
+	QUAD pds_Sec;  /* Seconds relative to 01-01-1970 UTC */
+	LONG pds_NSec;
+};
 
 struct FileInfoBlock
 {
@@ -67,7 +72,11 @@ struct FileInfoBlock
 	LONG             fib_EntryType;
 	LONG             fib_Size;
 	LONG             fib_NumBlocks;
-	struct DateStamp fib_Date;
+	union
+	{
+		struct DateStamp fib_un_date_Date;
+		struct PosixDateStamp fib_un_date_PosixDate;
+	} fib_un_date;
 	char             fib_Comment[80];
 
 	UWORD            fib_OwnerUID;
@@ -80,6 +89,10 @@ struct FileInfoBlock
 		{
 			UQUAD    fib_un_ext_Size64;
 			UQUAD    fib_un_ext_NumBlocks64;
+			ULONG    fib_in_ext_Pad0[3];
+			UWORD    fib_un_ext_Pad1;
+			UBYTE    fib_un_ext_ActExtFlags;
+			UBYTE    fib_un_ext_ReqExtFlags;
 		} fib_un_ext;
 	} fib_un;
 };
@@ -92,10 +105,34 @@ struct FileInfoBlock
 /* Structure fields filled by Examine64() (ACTION_EXAMINE_OBJECT64),
  * ExNext64() (ACTION_EXAMINE_NEXT64) and ExamineFH64()
  * (ACTION_EXAMINE_FH64).
+ *
+ * For dos.library Examine64() / ExNext64() / ExamineFH64() the filling
+ * of the fields can be requested by using the EX64TAG_* tags.
+ *
+ * If you send ACTION_EXAMINE_OBJECT64, ACTION_EXAMINE_NEXT64 or
+ * ACTION_EXAMINE_FH64 dospackets directly, you *MUST* initialize
+ * fib_ActExtFlags to 0. fib_ReqExtFlags should be set to requested
+ * extensions (or 0).
+ *
+ * The fib_ActExtFlags will indicate the actual extensions that were
+ * available.
+ *
+ * fib_Size64 / fib_un_ext_NumBlocks64 is always available.
+ *
  */
-
+#define fib_Date        fib_un_date.fib_un_date_Date
+#define fib_PosixDate   fib_un_date.fib_un_date_PosixDate
 #define fib_Size64      fib_un.fib_un_ext.fib_un_ext_Size64
 #define fib_NumBlocks64 fib_un.fib_un_ext.fib_un_ext_NumBlocks64
+#define fib_ActExtFlags fib_un.fib_un_ext.fib_un_ext_ActExtFlags
+#define fib_ReqExtFlags fib_un.fib_un_ext.fib_un_ext_ReqExtFlags
+/*
+ * When FIBEXTF_POSIXDATE flag is requested and is supported,
+ * fib_PosixDate will be filled with the objext POSIX timestamp.
+ * In this case fib_Date is not valid. (V51.66)
+ */
+#define FIBEXTB_POSIXDATE 0
+#define FIBEXTF_POSIXDATE (1 << FIBEXTB_POSIXDATE)
 
 
 #define FIBB_OTR_READ     15
@@ -190,6 +227,7 @@ struct InfoData
 #define ID_CDROM_HSF_DISK    (('C'<<24) | ('D'<<16) | ('0'<<8) | ('0'))
 #define ID_CDROM_CDDA_DISK   (('C'<<24) | ('D'<<16) | ('D'<<8) | ('A'))
 #define ID_SFS_DISK          (('S'<<24) | ('F'<<16) | ('S'<<8) | (0))
+#define ID_SFS2_DISK         (('S'<<24) | ('F'<<16) | ('S'<<8) | (2))
 
 
 #define ERROR_NO_FREE_STORE             103

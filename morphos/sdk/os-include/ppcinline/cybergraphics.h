@@ -83,6 +83,21 @@
 		ULONG , __p9, d7, \
 		, CYBERGRAPHICS_BASE_NAME, 0, 0, 0, 0, 0, 0)
 
+#define ScaleMapRastPortAlpha(__p0, __p1, __p2, __p3, __p4, __p5, __p6, __p7, __p8, __p9, __p10) \
+	LP11(258, LONG , ScaleMapRastPortAlpha, \
+		struct BitMap * , __p0, a0, \
+		ULONG , __p1, d0, \
+		ULONG , __p2, d1, \
+		ULONG , __p3, d2, \
+		ULONG , __p4, d3, \
+		struct RastPort *, __p5, a1, \
+		ULONG , __p6, d4, \
+		ULONG , __p7, d5, \
+		ULONG , __p8, d6, \
+		ULONG , __p9, d7, \
+		struct TagList *, __p10, a2, \
+		, CYBERGRAPHICS_BASE_NAME, 0, 0, 0, 0, 0, 0)
+
 #define FreeCModeList(__p0) \
 	LP1NR(78, FreeCModeList, \
 		struct List *, __p0, a0, \

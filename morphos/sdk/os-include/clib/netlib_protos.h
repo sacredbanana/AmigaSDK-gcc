@@ -5,7 +5,7 @@
  *
  * Copyright © 2002 The MorphOS Development Team, All Rights Reserved.
  *
- * $Id: netlib_protos.h,v 1.1.1.1 2005/03/15 16:00:48 laire Exp $
+ * $Id: netlib_protos.h,v 1.2 2025/09/27 22:11:23 piru Exp $
  */
 
 #ifndef EXEC_TYPES_H
@@ -20,8 +20,8 @@
 #ifndef EXEC_LIBRARIES_H
 struct Library;
 #endif
-#ifndef _SYS_TIME_H_
-#include <sys/time.h>
+#ifndef _SYS__TIMEVAL_H_
+#include <sys/_timeval.h>
 #endif
 #ifndef _SYS_SOCKET_H_
 #include <sys/socket.h>

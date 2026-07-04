@@ -1,104 +1,59 @@
-#ifndef CALLTIPS_MCC_H
-#define CALLTIPS_MCC_H
+#ifndef __Calltips_MCC_H_
+#define __Calltips_MCC_H_
 
-/***************************************************************************
+#define MUISERIALNR_PTERMC 0xfecf
 
- Magic User Interface - MUI
- Copyright (C) 1992-2006 by Stefan Stuntz <stefan@stuntz.com>
- Copyright (C) 2006-2020 by Thore Boeckelmann, Jens Maus
- All Rights Reserved.
+#define MUIC_Calltips  "Calltips.mcc"
+#define CalltipsObject MUI_NewObject(MUIC_Calltips
 
- This program/documents may not in whole or in part, be copied, photocopied
- reproduced, translated or reduced to any electronic medium or machine
- readable form without prior consent, in writing, from the above authors.
+#define TAGBASE_Calltips                     ((TAG_USER | (MUISERIALNR_PTERMC << 16)) + 4100)
 
- With this document the authors makes no warrenties or representations,
- either expressed or implied, with respect to MUI. The information
- presented herein is being supplied on an "AS IS" basis and is expressly
- subject to change without notice. The entire risk as to the use of this
- information is assumed by the user.
+#define MUIM_Calltips_SetRectangle (TAGBASE_Calltips + 0)
+struct MUIP_Calltips_SetRectangle { ULONG id; LONG MinX; LONG MinY; LONG MaxX; LONG MaxY;};
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
- IN NO EVENT WILL THE AUTHORS BE LIABLE FOR DIRECT, INDIRECT, INCIDENTAL,
- OR CONSEQUENTIAL DAMAGES RESULTING FROM ANY CLAIM ARISING OUT OF THE
- INFORMATION PRESENTED HEREIN, EVEN IF IT HAS BEEN ADVISED OF THE
- POSSIBILITIES OF SUCH DAMAGES.
-
- MUI Official Support Site:  http://www.sasg.com/
-
- $Id: Calltips_mcc.h 6513 2020-01-02 05:36:08Z tboeckel $
-
-***************************************************************************/
+#define MUIM_Calltips_ParentSetup   (TAGBASE_Calltips + 1)
+#define MUIM_Calltips_ParentCleanup (TAGBASE_Calltips + 2)
+#define MUIM_Calltips_ParentShow    (TAGBASE_Calltips + 3)
+#define MUIM_Calltips_ParentHide    (TAGBASE_Calltips + 4)
+#define MUIM_Calltips_ParentWindowArranged (TAGBASE_Calltips + 5)
 
 /*
- * Calltips.mcc
- *
- * Calltips.mcc was originally developed by Jacek Piszczek for MorphOS.
- * This is an AmigaOS native reimplementation included in MUI for AmigaOS for convenience.
- *
- * See NewStuff demo source for details.
+** struct Rect32 *, Coordinates of an area for which to show the window, relative to the window bounds
+** of the caller's window. Can also be set via a method
 */
+#define MUIA_Calltips_Rectangle  (TAGBASE_Calltips + 0)
 
-#ifndef LIBRARIES_MUI_H
-#include <libraries/mui.h>
-#endif
-
-#if defined(__PPC__)
-  #if defined(__GNUC__)
-    #pragma pack(2)
-  #elif defined(__VBCC__)
-    #pragma amiga-align
-  #endif
-#endif
-
-/***********************************************************************/
-
-#define MUIC_Calltips       "Calltips.mcc"
-#define CalltipsObject      MUI_NewObject(MUIC_Calltips
-
-/***********************************************************************/
-
-#define MUIM_Calltips_SetRectangle         0xfecf1004
-#define MUIM_Calltips_ParentSetup          0xfecf1005
-#define MUIM_Calltips_ParentCleanup        0xfecf1006
-#define MUIM_Calltips_ParentShow           0xfecf1007
-#define MUIM_Calltips_ParentHide           0xfecf1008
-#define MUIM_Calltips_ParentWindowArranged 0xfecf1009
-
-struct MUIP_Calltips_SetRectangle
-{
-    ULONG MethodID;
-    LONG MinX;
-    LONG MinY;
-    LONG MaxX;
-    LONG MaxY;
-};
-
-/***********************************************************************/
-
-#define MUIA_Calltips_Rectangle  0xfecf1004
-#define MUIA_Calltips_Layout     0xfecf1005
-#define MUIA_Calltips_Source     0xfecf1006
-#define MUIA_Calltips_MarginLeft 0xfecf1008
-#define MUIA_Calltips_MarginTop  0xfecf1009
-
-/***********************************************************************/
+/*
+** Sets a layout policy to one of the predefine dones
+*/
+#define MUIA_Calltips_Layout (TAGBASE_Calltips + 1)
 
 #define MUIV_Calltips_Layout_Exact          0
-#define MUIV_Calltips_Layout_RightThenBelow 1 /* not yet implemented */
-#define MUIV_Calltips_Layout_BelowThenAbove 2 /* not yet implemented */
 
-/***********************************************************************/
-
-#if defined(__PPC__)
-  #if defined(__GNUC__)
-    #pragma pack()
-  #elif defined(__VBCC__)
-    #pragma default-align
-  #endif
+#if 0 // unimplemented!
+/* Start at the right end of the rectangle, if no space, show below the rectangle */
+#define MUIV_Calltips_Layout_RightThenBelow 1
+/* Start below the rectangle, if no space then show above the rectangle */
+#define MUIV_Calltips_Layout_BelowThenAbove 2
 #endif
 
-#endif /* CALLTIPS_MCC_H */
+/*
+** Object that wants to have a Calltips
+*/
+#define MUIA_Calltips_Source (TAGBASE_Calltips + 2)
+
+/*
+** If TRUE, the outer calltip group's _mleft will be substracted from the calltips rectangle
+** Defaults to TRUE
+*/
+#define MUIA_Calltips_MarginLeft (TAGBASE_Calltips + 4)
+
+/*
+** If TRUE, the outer calltip group's _mtop will be substracted from the calltips rectangle
+** Defaults to TRUE
+*/
+#define MUIA_Calltips_MarginTop (TAGBASE_Calltips + 5)
+
+
+#endif
+

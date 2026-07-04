@@ -7,7 +7,7 @@
  *      Network Solutions Development, Inc.
  *      All rights reserved.
  *
- *      $Id: socketbasetags.h,v 1.3 2020/03/29 04:45:24 piru Exp $
+ *      $Id: socketbasetags.h,v 1.4 2023/05/17 14:35:15 piru Exp $
  */
 
 #ifndef UTILITY_TAGITEM_H
@@ -133,8 +133,9 @@
 
 /*
  * Function pointer to get errno pointer. If specified this
- * function is called to set up the initial errno pointer value.
- * called as: int *ptr = func(void);
+ * function is called when setting / getting errno value. When set
+ * SBTC_ERRNOBYTE/WORD/LONGPTR set pointer is not referenced.
+ * Called as: int *ptr = func(void);
  *            D0
  * This pointer is also inherited to child processes that use the
  * implicit "autoopen" feature of NetStack (processes calling
@@ -144,7 +145,8 @@
 
 /*
  * Function pointer to get h_errno pointer. If specified this
- * function is called to set up the initial h_errno pointer value.
+ * function is called when setting / getting h_errno value. When set
+ * SBTC_HERRNOLONGPTR set pointer is not referenced.
  * Called as: int *ptr = func(void);
  *            D0
  * This pointer is also inherited to child processes that use the

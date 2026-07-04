@@ -32,17 +32,31 @@
 
 #define TIMERNAME  "timer.device"
 
+/*
+  New in SDK 3.20 onwards: The timer.device uses "struct TimeVal" consistently,
+  rather than trying to align it to <sys/time.h> "struct timeval". These
+  structures have always been different (for example, the seconds value is
+  unsigned for timer.device but is signed for sys/time.h). This caused
+  inconsistencies and outright miscompilation of code when both headers were
+  included, entirely depending on the order in which the headers were included.
+  There is a compatibility define from timeval to TimeVal, which will be
+  removed if <sys/time.h> is also included. This means that some old code that
+  compiled before may refer to structure fields that do not really exist, and
+  will thus fail to compile with new SDK. It is highly recommended to use the
+  structures consistently without mixing them. To identify if the timer.device
+  structure name is the new TimeVal, you can check for the following define:
+*/
+#define DEVICES_TIMER_H_TIMEVAL_CAMELCASE 1
 
-#ifndef _SYS_TIME_H_
-struct timeval
+struct TimeVal
 {
 	ULONG tv_secs;
 	ULONG tv_micro;
 };
-#else
-# define tv_secs tv_sec
-# define tv_micro tv_usec
-#endif /* !_SYS_TIME_H_ */
+#if !defined(_SYS__TIMEVAL_H_) && !defined(_SYS_TIME_H_) && !defined(DEVICES_TIMER_H_TIMEVAL_ALIAS)
+#define DEVICES_TIMER_H_TIMEVAL_ALIAS
+#define timeval TimeVal
+#endif
 
 struct EClockVal
 {
@@ -53,7 +67,7 @@ struct EClockVal
 struct timerequest
 {
 	struct IORequest tr_node;
-	struct timeval   tr_time;
+	struct TimeVal   tr_time;
 };
 
 

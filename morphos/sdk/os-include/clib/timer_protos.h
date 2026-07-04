@@ -16,18 +16,18 @@
 extern "C" {
 #endif /* __cplusplus */
 
-VOID AddTime( struct timeval *dest, CONST struct timeval *src );
-VOID SubTime( struct timeval *dest, CONST struct timeval *src );
-LONG CmpTime( CONST struct timeval *dest, CONST struct timeval *src );
+VOID AddTime( struct TimeVal *dest, CONST struct TimeVal *src );
+VOID SubTime( struct TimeVal *dest, CONST struct TimeVal *src );
+LONG CmpTime( CONST struct TimeVal *dest, CONST struct TimeVal *src );
 ULONG ReadEClock( struct EClockVal *dest );
-VOID GetSysTime( struct timeval *dest );
+VOID GetSysTime( struct TimeVal *dest );
 
 /*** V50 ***/
 ULONG ReadCPUClock( UQUAD *dest );
 /*** V51 ***/
-VOID GetUpTime( struct timeval *dest );
+VOID GetUpTime( struct TimeVal *dest );
 /*** V52 ***/
-VOID GetUTCSysTime( struct timeval *dest );
+VOID GetUTCSysTime( struct TimeVal *dest );
 
 #ifdef __cplusplus
 }

@@ -51,7 +51,7 @@ struct MUIP_PowerTerm_Search                {ULONG methodid; STRPTR searchstring
 struct MUIP_PowerTerm_Duplicate             {ULONG methodid;};
 struct MUIP_PowerTerm_Select                {ULONG methodid; ULONG selecttype;};
 
-#define MUIA_PowerTerm_Scroller             (TAGBASE_PTERMC + 26) /* i.s, scroller object that may be controlled by/used to control term class */
+#define MUIA_PowerTerm_Scroller             (TAGBASE_PTERMC + 26) /* igs, scroller object that may be controlled by/used to control term class */
 #define MUIA_PowerTerm_OutPtr               (TAGBASE_PTERMC + 27) /* .g., pointer to output buffer */
 #define MUIA_PowerTerm_OutLen               (TAGBASE_PTERMC + 28) /* .g., size of output buffer */
 #define MUIA_PowerTerm_Emulation            (TAGBASE_PTERMC + 29) /* igs, sets emulation mode */

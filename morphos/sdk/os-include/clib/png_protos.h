@@ -36,7 +36,8 @@ void png_read_info(png_structp png_ptr, png_infop info_ptr);
 
 png_charp png_convert_to_rfc1123(png_structp png_ptr, png_timep ptime);
 void png_convert_from_struct_tm(png_timep ptime, struct tm FAR * ttime);
-void png_convert_from_time_t(png_timep ptime, time_t ttime);
+void png_convert_from_time_t32(png_timep ptime, long ttime);
+void png_convert_from_time_t64(png_timep ptime, long long ttime);
 void png_set_expand(png_structp png_ptr);
 void png_set_gray_1_2_4_to_8(png_structp png_ptr);
 void png_set_expand_gray_1_2_4_to_8(png_structp png_ptr);

@@ -6,9 +6,9 @@
 
 	MorphOS Shared PixManLib
 	
-	pixman.library 8.0 include
+	pixman.library 10.2 include
 	
-	Copyright © 2009-2020 The MorphOS Development Team (et al.), All Rights Reserved.
+	Copyright © 2009-2026 The MorphOS Development Team (et al.), All Rights Reserved.
 
 */
 
@@ -18,10 +18,10 @@
 #define PIXMAN_VERSION_H__
 
 #define PIXMAN_VERSION_MAJOR 0
-#define PIXMAN_VERSION_MINOR 40
-#define PIXMAN_VERSION_MICRO 0
+#define PIXMAN_VERSION_MINOR 46
+#define PIXMAN_VERSION_MICRO 4
 
-#define PIXMAN_VERSION_STRING "0.40.0"
+#define PIXMAN_VERSION_STRING "0.46.4"
 
 #define PIXMAN_VERSION_ENCODE(major, minor, micro) (	\
 	  ((major) * 10000)				\
@@ -330,6 +330,37 @@ struct pixman_region32
 };
 
 /*
+ * 64 bit fractional regions
+ */
+typedef struct pixman_region64f_data	pixman_region64f_data_t;
+typedef struct pixman_box64f		pixman_box64f_t;
+typedef struct pixman_rectangle64f	pixman_rectangle64f_t;
+typedef struct pixman_region64f		pixman_region64f_t;
+
+struct pixman_region64f_data {
+    long		size;
+    long		numRects;
+/*  pixman_box64f_t	rects[size];   in memory but not explicitly declared */
+};
+
+struct pixman_rectangle64f
+{
+    double x, y;
+    double width, height;
+};
+
+struct pixman_box64f
+{
+    double x1, y1, x2, y2;
+};
+
+struct pixman_region64f
+{
+    pixman_box64f_t          extents;
+    pixman_region64f_data_t  *data;
+};
+
+/*
  * Images
  */
 typedef struct pixman_indexed		pixman_indexed_t;
@@ -421,6 +452,10 @@ typedef enum {
 /* 96bpp formats */
     PIXMAN_rgb_float =	PIXMAN_FORMAT_BYTE(96,PIXMAN_TYPE_RGBA_FLOAT,0,32,32,32),
 
+/* 64bpp formats */
+    /* [63:0] A:B:G:R 16:16:16:16 native endian */
+    PIXMAN_a16b16g16r16 = PIXMAN_FORMAT_BYTE(64,PIXMAN_TYPE_ABGR,16,16,16,16),
+
 /* 32bpp formats */
     PIXMAN_a8r8g8b8 =	 PIXMAN_FORMAT(32,PIXMAN_TYPE_ARGB,8,8,8,8),
     PIXMAN_x8r8g8b8 =	 PIXMAN_FORMAT(32,PIXMAN_TYPE_ARGB,0,8,8,8),
@@ -438,6 +473,7 @@ typedef enum {
 
 /* sRGB formats */
     PIXMAN_a8r8g8b8_sRGB = PIXMAN_FORMAT(32,PIXMAN_TYPE_ARGB_SRGB,8,8,8,8),
+    PIXMAN_r8g8b8_sRGB = PIXMAN_FORMAT(24,PIXMAN_TYPE_ARGB_SRGB,0,8,8,8),
 
 /* 24bpp formats */
     PIXMAN_r8g8b8 =	 PIXMAN_FORMAT(24,PIXMAN_TYPE_ARGB,0,8,8,8),

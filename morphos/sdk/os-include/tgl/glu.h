@@ -168,13 +168,6 @@ const GLubyte *gluErrorString(GLenum error);
 
 #else
 
-void GLUPerspective(GLContext *context, GLfloat fovy, GLfloat aspect,GLfloat zNear, GLfloat zFar);
-void GLUPickMatrix(GLContext *c, GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint viewport[4]);
-
-void GLULookAt(GLContext *context, GLfloat cx, GLfloat cy, GLfloat cz,
-                                   GLfloat ox, GLfloat oy, GLfloat oz,
-                                   GLfloat ux, GLfloat uy, GLfloat uz);
-
 #define	gluLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz) GLULookAt( __tglContext , ex, ey, ez, cx, cy, cz, ux, uy, uz)
 #define	gluPerspective(fovy, aspect, znear, zfar) GLUPerspective( __tglContext , fovy, aspect, znear, zfar)
 #define gluPickMatrix(x, y, width, height, viewport) GLUPickMatrix( __tglContext, x, y, width, height, viewport )

@@ -6,31 +6,6 @@
 #include <utility/tagitem.h>
 
 
-
-/* -------------------------------------------------------------------
- * Functions which are available through shared library interface
- * and only these ones should be used
- */
-
-int  GLAInitializeContextWindowed(GLContext *context, void *w);
-void GLADestroyContextWindowed(GLContext *context);
-void GLASwapBuffers(GLContext *c);
-
-int  GLAInitializeContextScreen(GLContext *context, void *s);
-void GLADestroyContextScreen(GLContext *context);
-
-int  GLAInitializeContextBitMap(GLContext *context, void *b);
-void GLADestroyContextBitMap(GLContext *context);
-
-void GLASetSync(GLContext *c, int enable);
-
-int  GLAInitializeContext(GLContext *context, struct TagItem *tags);
-void GLADestroyContext(GLContext *context);
-
-int GLAReinitializeContextWindowed(GLContext *context, void *w);
-
-void GLASetAttr(GLContext *c, unsigned int attr, unsigned int val);
-
 /* Context creation tags (for glACreateContext) */
 
 enum

@@ -56,15 +56,15 @@
 #define MAGICBEACON_ERROR_NOERROR                0      /* Operation was successful */
 #define MAGICBEACON_ERROR_HANDLEMISSING          1      /* The provided handle was NULL */
 #define MAGICBEACON_ERROR_OUTOFMEMORY            2      /* There wasn´t enough memory available to process the beacon */
-#define MAGICBEACON_ERROR_NAMEMISSING            3      /* MAGICBEACON_NAME is required */
-#define MAGICBEACON_ERROR_NAMEINVALID            4      /* MAGICBEACON_NAME or MAGICBEACON_APPLICATIONNAME contain invalid characters */
-#define MAGICBEACON_ERROR_NAMEHASWRONGSIZE       5      /* MAGICBEACON_NAME or MAGICBEACON_APPLICATIONNAME has the wrong size ( 3-31 ) */
+#define MAGICBEACON_ERROR_NAMEMISSING            3      /* MAGICBEACON_NOTIFICATIONNAME is required */
+#define MAGICBEACON_ERROR_NAMEINVALID            4      /* MAGICBEACON_NOTIFICATIONNAME or MAGICBEACON_APPLICATIONNAME contain invalid characters */
+#define MAGICBEACON_ERROR_NAMEHASWRONGSIZE       5      /* MAGICBEACON_NOTIFICATIONNAME or MAGICBEACON_APPLICATIONNAME has the wrong size ( 3-31 ) */
 #define MAGICBEACON_ERROR_MAGICBEACONNOTRUNNING  6      /* Notification couldn´t be send because MagicBeacon application is not running */
 
 /*************************************************************************/
 
 #define MAGICBEACON_APPLICATIONNAME_MAXLENGTH  31       /* MAGICBEACON_APPLICATIONNAME size limit */
-#define MAGICBEACON_NOTIFICATIONNAME_MAXLENGTH 31       /* MAGICBEACON_NAME size limit */
+#define MAGICBEACON_NOTIFICATIONNAME_MAXLENGTH 31       /* MAGICBEACON_NOTIFICATIONNAME size limit */
 
 /*************************************************************************/
 
@@ -115,6 +115,7 @@
 #define MBN_WIFICONNECTED             "WiFiConnected"                /* %m          - SSID of the wireless network */
 #define MBN_WIFIDISCONNECTED          "WiFiDisconnected"             /* %m          - SSID of the wireless network */
 #define MBN_WIFICONNECTIONFAILED      "WiFiConnetionFailed"          /* %m          - SSID of the wireless network */
+#define MBN_SMARTWARN                 "SmartWarn"                    /* %m          - Information on the failing drive */
 
 /*************************************************************************/
 

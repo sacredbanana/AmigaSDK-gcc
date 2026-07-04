@@ -84,8 +84,14 @@ ULONG        BltBitMapAlpha(struct BitMap *, WORD, WORD, struct BitMap *, WORD, 
 ULONG        BltBitMapRastPortAlpha(struct BitMap *, WORD, WORD, struct RastPort *, WORD, WORD, WORD, WORD, struct TagItem *);
 
 
+/*** V51 ***/
+
 LONG         ScalePixelArrayAlpha(APTR,UWORD,UWORD,UWORD,struct RastPort *,UWORD,
 							 UWORD,UWORD,UWORD,ULONG);
+/*** V52 ***/
+
+LONG         ScaleMapRastPortAlpha(struct BitMap *,ULONG,ULONG,ULONG,ULONG,struct RastPort *,ULONG,
+							 ULONG,ULONG,ULONG,struct TagItem *);
 
 
 #ifdef __cplusplus

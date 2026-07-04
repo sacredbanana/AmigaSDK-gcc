@@ -98,7 +98,7 @@ LONG fpa( FLOAT fnum, BYTE *string );
 VOID fpbcd( FLOAT fnum, BYTE *string );
 
 LONG TimeDelay( LONG unit, ULONG secs, ULONG microsecs );
-LONG DoTimer( struct timeval *, LONG unit, LONG command );
+LONG DoTimer( struct TimeVal *, LONG unit, LONG command );
 
 VOID ArgArrayDone( VOID );
 STRPTR *ArgArrayInit( LONG argc, CONST_STRPTR *argv );

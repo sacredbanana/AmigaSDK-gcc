@@ -7,7 +7,7 @@
 
 	z.library include
 
-	Copyright © 2003-2018 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2003-2024 The MorphOS Development Team, All Rights Reserved.
 
 */
 
@@ -34,6 +34,8 @@
 #endif
 #endif
 
+typedef size_t z_size_t;
+
 #define OF(args) args
 
 #undef MAX_MEM_LEVEL
@@ -46,7 +48,7 @@
 #define MAX_WBITS 15
 #define DEF_WBITS 15
 
-#define z_off_t  off_t
+#define z_off_t  int32_t
 #define z_off64_t int64_t
 
 typedef unsigned char  Byte;
@@ -59,6 +61,7 @@ typedef int   intf;
 typedef uInt  uIntf;
 typedef uLong uLongf;
 
+typedef const void *voidpc;
 typedef void *voidpf;
 typedef void *voidp;
 
@@ -80,11 +83,11 @@ extern "C" {
 #endif
 
 
-#define ZLIB_VERSION "1.2.11"
-#define ZLIB_VERNUM	 0x12b0
+#define ZLIB_VERSION "1.3.2"
+#define ZLIB_VERNUM	 0x1320
 #define ZLIB_VER_MAJOR 1
-#define ZLIB_VER_MINOR 2
-#define ZLIB_VER_REVISION 11
+#define ZLIB_VER_MINOR 3
+#define ZLIB_VER_REVISION 2
 #define ZLIB_VER_SUBREVISION 0
 
 

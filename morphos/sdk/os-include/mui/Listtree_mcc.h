@@ -1,62 +1,36 @@
+/*
+
+		MCC_Listtree (c) by kMel, Klaus Melchior
+
+		Registered class of the Magic User Interface.
+
+		Listtree_mcc.h
+
+*/
+
+
+/*** Include stuff ***/
+
 #ifndef LISTTREE_MCC_H
 #define LISTTREE_MCC_H
-
-/***************************************************************************
-
- Magic User Interface - MUI
- Copyright (C) 1992-2006 by Stefan Stuntz <stefan@stuntz.com>
- Copyright (C) 2006-2020 by Thore Boeckelmann, Jens Maus
- All Rights Reserved.
-
- This program/documents may not in whole or in part, be copied, photocopied
- reproduced, translated or reduced to any electronic medium or machine
- readable form without prior consent, in writing, from the above authors.
-
- With this document the authors makes no warrenties or representations,
- either expressed or implied, with respect to MUI. The information
- presented herein is being supplied on an "AS IS" basis and is expressly
- subject to change without notice. The entire risk as to the use of this
- information is assumed by the user.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
- IN NO EVENT WILL THE AUTHORS BE LIABLE FOR DIRECT, INDIRECT, INCIDENTAL,
- OR CONSEQUENTIAL DAMAGES RESULTING FROM ANY CLAIM ARISING OUT OF THE
- INFORMATION PRESENTED HEREIN, EVEN IF IT HAS BEEN ADVISED OF THE
- POSSIBILITIES OF SUCH DAMAGES.
-
- MUI Official Support Site:  http://www.sasg.com/
-
- $Id: Listtree_mcc.h 6518 2020-01-11 12:19:07Z tboeckel $
-
-***************************************************************************/
 
 #ifndef LIBRARIES_MUI_H
 #include <libraries/mui.h>
 #endif
 
-#if defined(__PPC__)
-  #if defined(__GNUC__)
-    #pragma pack(2)
-  #elif defined(__VBCC__)
-    #pragma amiga-align
-  #endif
-#endif
+#pragma pack(2)
 
-/***********************************************************************/
 
-#define MUIC_Listtree       "Listtree.mcc"
-#define ListtreeObject       MUI_NewObject(MUIC_Listtree
+/*** MUI Defines ***/
 
-/***********************************************************************/
+#define MUIC_Listtree "Listtree.mcc"
+#define ListtreeObject MUI_NewObject(MUIC_Listtree
 
-#define MUIM_Listtree_Active               0x8002000f
-#define MUIM_Listtree_Clear                0x8002006d
+
+
+/*** Methods ***/
+
 #define MUIM_Listtree_Close                0x8002001f
-#define MUIM_Listtree_Data                 0x80020023
-#define MUIM_Listtree_DoubleClick          0x8002002a
 #define MUIM_Listtree_Exchange             0x80020008
 #define MUIM_Listtree_FindName             0x8002003c
 #define MUIM_Listtree_GetEntry             0x8002002b
@@ -69,170 +43,97 @@
 #define MUIM_Listtree_SetDropMark          0x8002004c
 #define MUIM_Listtree_Sort                 0x80020029
 #define MUIM_Listtree_TestPos              0x8002004b
-#define MUIM_Listtree_ConstructNode        0x80020070
-#define MUIM_Listtree_DestructNode         0x80020071
-#define MUIM_Listtree_DisplayNode          0x80020072
-#define MUIM_Listtree_OpenNode             0x80020073
-#define MUIM_Listtree_CloseNode            0x80020074
 
-struct MUIP_Listtree_Active
-{
-	ULONG MethodID;
-	ULONG Position;
-};
+/*** Method structs ***/
 
-struct MUIP_Listtree_Clear
-{
+struct MUIP_Listtree_Close {
 	ULONG MethodID;
-};
-
-struct MUIP_Listtree_Close
-{
-	ULONG MethodID;
-	APTR ListNode;
-	APTR TreeNode;
+	APTR  ListNode;
+	APTR  TreeNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_CloseNode
-{
+struct MUIP_Listtree_Exchange {
 	ULONG MethodID;
-	APTR TreeNode;
-};
-
-struct MUIP_Listtree_ConstructNode
-{
-	ULONG MethodID;
-	APTR Pool;
-	APTR User;
-};
-
-struct MUIP_Listtree_Data
-{
-	ULONG MethodID;
-	ULONG ID;
-	ULONG Set;
-};
-
-struct MUIP_Listtree_DestructNode
-{
-	ULONG MethodID;
-	APTR Pool;
-	APTR User;
-};
-
-struct MUIP_Listtree_DisplayNode
-{
-	ULONG MethodID;
-	APTR TreeNode;
-	CONST_STRPTR *Array;
-	LONG Row;
-};
-
-struct MUIP_Listtree_DoubleClick
-{
-	ULONG MethodID;
-};
-
-struct MUIP_Listtree_Exchange
-{
-	ULONG MethodID;
-	APTR ListNode1;
-	APTR TreeNode1;
-	APTR ListNode2;
-	APTR TreeNode2;
+	APTR  ListNode1;
+	APTR  TreeNode1;
+	APTR  ListNode2;
+	APTR  TreeNode2;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_FindName
-{
+struct MUIP_Listtree_FindName {
 	ULONG MethodID;
-	APTR ListNode;
+	APTR  ListNode;
 	char *Name;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_GetEntry
-{
+struct MUIP_Listtree_GetEntry {
 	ULONG MethodID;
-	APTR Node;
-	LONG Position;
+	APTR  Node;
+	LONG  Position;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_GetNr
-{
+struct MUIP_Listtree_GetNr {
 	ULONG MethodID;
-	APTR TreeNode;
+	APTR  TreeNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_Insert
-{
+struct MUIP_Listtree_Insert {
 	ULONG MethodID;
 	char *Name;
-	APTR User;
-	APTR ListNode;
-	APTR PrevNode;
+	APTR  User;
+	APTR  ListNode;
+	APTR  PrevNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_Move
-{
+struct MUIP_Listtree_Move {
 	ULONG MethodID;
-	APTR OldListNode;
-	APTR OldTreeNode;
-	APTR NewListNode;
-	APTR NewTreeNode;
+	APTR  OldListNode;
+	APTR  OldTreeNode;
+	APTR  NewListNode;
+	APTR  NewTreeNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_Open
-{
+struct MUIP_Listtree_Open {
 	ULONG MethodID;
-	APTR ListNode;
-	APTR TreeNode;
+	APTR  ListNode;
+	APTR  TreeNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_OpenNode
-{
+struct MUIP_Listtree_Remove {
 	ULONG MethodID;
-	APTR TreeNode;
-};
-
-struct MUIP_Listtree_Remove
-{
-	ULONG MethodID;
-	APTR ListNode;
-	APTR TreeNode;
+	APTR  ListNode;
+	APTR  TreeNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_Rename
-{
+struct MUIP_Listtree_Rename {
 	ULONG MethodID;
-	APTR TreeNode;
+	APTR  TreeNode;
 	char *NewName;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_SetDropMark
-{
+struct MUIP_Listtree_SetDropMark {
 	ULONG MethodID;
-	LONG Entry;
+	LONG  Entry;
 	ULONG Values;
 };
 
-struct MUIP_Listtree_Sort
-{
+struct MUIP_Listtree_Sort {
 	ULONG MethodID;
-	APTR ListNode;
+	APTR  ListNode;
 	ULONG Flags;
 };
 
-struct MUIP_Listtree_TestPos
-{
+struct MUIP_Listtree_TestPos {
 	ULONG MethodID;
 	LONG  X;
 	LONG  Y;
@@ -250,10 +151,6 @@ struct MUIP_Listtree_TestPos
 #define MUIV_Listtree_Close_TreeNode_Tail         -1
 #define MUIV_Listtree_Close_TreeNode_Active       -2
 #define MUIV_Listtree_Close_TreeNode_All          -3
-
-#define MUIV_Listtree_Data_MemPool                 1
-#define MUIV_Listtree_Data_VersInfo                2
-#define MUIV_Listtree_Data_Sample                  3
 
 #define MUIV_Listtree_Exchange_ListNode1_Root      0
 #define MUIV_Listtree_Exchange_ListNode1_Active   -2
@@ -283,7 +180,6 @@ struct MUIP_Listtree_TestPos
 #define MUIV_Listtree_GetEntry_Position_Next      -3
 #define MUIV_Listtree_GetEntry_Position_Previous  -4
 #define MUIV_Listtree_GetEntry_Position_Parent    -5
-#define MUIV_Listtree_GetEntry_Position_Root     -15
 
 #define MUIV_Listtree_GetNr_TreeNode_Active       -2
 
@@ -342,7 +238,7 @@ struct MUIP_Listtree_TestPos
 #define MUIV_Listtree_TestPos_Result_Flags_Above   1
 #define MUIV_Listtree_TestPos_Result_Flags_Below   2
 #define MUIV_Listtree_TestPos_Result_Flags_Onto    3
-#define MUIV_Listtree_TestPos_Result_Flags_Sorted  4
+#define MUIV_Listtree_TestPos_Result_Flags_Sorted   4
 
 
 /*** Special method flags ***/
@@ -381,32 +277,25 @@ struct MUIP_Listtree_TestPos
 #define MUIV_Listtree_Sort_Flags_Nr              (1<<15)
 #define MUIV_Listtree_Sort_Flags_Visible         (1<<14)
 
-/***********************************************************************/
+
+
+/*** Attributes ***/
 
 #define MUIA_Listtree_Active               0x80020020
 #define MUIA_Listtree_CloseHook            0x80020033
 #define MUIA_Listtree_ConstructHook        0x80020016
 #define MUIA_Listtree_DestructHook         0x80020017
 #define MUIA_Listtree_DisplayHook          0x80020018
-#define MUIA_Listtree_DisplayOpened        0x8002002e
 #define MUIA_Listtree_DoubleClick          0x8002000d
 #define MUIA_Listtree_DragDropSort         0x80020031
 #define MUIA_Listtree_DuplicateNodeName    0x8002003d
 #define MUIA_Listtree_EmptyNodes           0x80020030
-#define MUIA_Listtree_EntryChanged         0x8002006a
 #define MUIA_Listtree_Format               0x80020014
-#define MUIA_Listtree_ImageSpecDown        0x8002001b
-#define MUIA_Listtree_ImageSpecRight       0x8002001a
 #define MUIA_Listtree_MultiSelect          0x800200c3
+#define MUIA_Listtree_NList                0x800200c4
 #define MUIA_Listtree_OpenHook             0x80020032
-#define MUIA_Listtree_PenSpecLines         0x8002002f
-#define MUIA_Listtree_PenSpecShadow        0x800200a8
 #define MUIA_Listtree_Quiet                0x8002000a
-#define MUIA_Listtree_Refresh              0x8002001c
-#define MUIA_Listtree_RememberStatus       0x8002001d
 #define MUIA_Listtree_SortHook             0x80020010
-#define MUIA_Listtree_Space                0x8002002d
-#define MUIA_Listtree_Style                0x8002002c
 #define MUIA_Listtree_Title                0x80020015
 #define MUIA_Listtree_TreeColumn           0x80020013
 
@@ -424,18 +313,17 @@ struct MUIP_Listtree_TestPos
 #define MUIV_Listtree_DoubleClick_All       -2
 #define MUIV_Listtree_DoubleClick_Tree      -3
 
-#define MUIV_Listtree_Refresh_Flag           0x8000
-
 #define MUIV_Listtree_SortHook_Head          0
 #define MUIV_Listtree_SortHook_Tail         -1
 #define MUIV_Listtree_SortHook_LeavesTop    -2
 #define MUIV_Listtree_SortHook_LeavesMixed  -3
-#define MUIV_Listtree_SortHook_LeavesBottom -4
+#define MUIV_Listtree_SortHook_LeavesBottom  -4
 
-/***********************************************************************/
 
-struct MUIS_Listtree_TreeNode
-{
+
+/*** Structures, Flags & Values ***/
+
+struct MUIS_Listtree_TreeNode {
 	LONG  tn_Private1;
 	LONG  tn_Private2;
 	char *tn_Name;
@@ -443,27 +331,28 @@ struct MUIS_Listtree_TreeNode
 	APTR  tn_User;
 };
 
-struct MUIS_Listtree_TestPos_Result
-{
+struct MUIS_Listtree_TestPos_Result {
 	APTR  tpr_TreeNode;
 	UWORD tpr_Flags;
 	LONG  tpr_ListEntry;
 	UWORD tpr_ListFlags;
 };
 
-#define TNF_OPEN   (1 << 0)
-#define TNF_LIST   (1 << 1)
-#define TNF_FROZEN (1 << 2)
-#define TNF_NOSIGN (1 << 3)
 
-/***********************************************************************/
+#define TNF_OPEN   (1<<00)
+#define TNF_LIST   (1<<01)
+#define TNF_FROZEN (1<<02)
+#define TNF_NOSIGN (1<<03)
 
-#if defined(__PPC__)
-  #if defined(__GNUC__)
-    #pragma pack()
-  #elif defined(__VBCC__)
-    #pragma default-align
-  #endif
-#endif
+
+
+
+/*** Configs ***/
+
+
+#pragma pack()
 
 #endif /* LISTTREE_MCC_H */
+
+/* PrMake.rexx 0.10 (16.2.1996) Copyright 1995 kmel, Klaus Melchior */
+

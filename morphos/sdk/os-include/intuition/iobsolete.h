@@ -168,9 +168,9 @@ struct Preferences
 
 	UWORD          BaudRate;
 
-	struct timeval KeyRptSpeed;
-	struct timeval KeyRptDelay;
-	struct timeval DoubleClick;
+	struct TimeVal KeyRptSpeed;
+	struct TimeVal KeyRptDelay;
+	struct TimeVal DoubleClick;
 
 	UWORD          PointerMatrix[POINTERSIZE];
 	BYTE           XOffset;

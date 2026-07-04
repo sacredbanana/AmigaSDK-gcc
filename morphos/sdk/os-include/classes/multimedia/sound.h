@@ -1,5 +1,5 @@
 /*
-$VER: sound.h 51.15 (25.6.2010)
+$VER: sound.h 51.16 (15.12.2025)
 */
 
 /* sound objects methods and attributes */
@@ -35,6 +35,9 @@ $VER: sound.h 51.15 (25.6.2010)
 #define MMF_AUDIO_PCM24ULE       (MMF_AUDIOMASK | 22) /* 24-bit PCM integer unsigned little endian */
 #define MMF_AUDIO_PCM32UBE       (MMF_AUDIOMASK | 23) /* 32-bit PCM integer unsigned big endian */
 #define MMF_AUDIO_PCM32ULE       (MMF_AUDIOMASK | 24) /* 32-bit PCM integer unsigned little endian */
+#define MMF_AUDIO_QOA            (MMF_AUDIOMASK | 25) /* Quite OK Audio */
+#define MMF_AUDIO_VORBIS         (MMF_AUDIOMASK | 26) /* Ogg Vorbis */
+#define MMF_AUDIO_IFFSMUS        (MMF_AUDIOMASK | 27) /* IFF SMUS */
 
 /* methods */
 

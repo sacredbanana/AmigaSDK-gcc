@@ -68,8 +68,11 @@
 #define png_convert_from_struct_tm(__p0, __p1) \
 	(((void (*)(png_timep , struct tm * ttime))*(void**)((long)(PNG_BASE_NAME) - 52))(__p0, __p1))
 
-#define png_convert_from_time_t(__p0, __p1) \
-	(((void (*)(png_timep , time_t ))*(void**)((long)(PNG_BASE_NAME) - 58))(__p0, __p1))
+#define png_convert_from_time_t32(__p0, __p1) \
+	(((void (*)(png_timep , long ))*(void**)((long)(PNG_BASE_NAME) - 58))(__p0, __p1))
+
+#define png_convert_from_time_t64(__p0, __p1) \
+	(((void (*)(png_timep , long long ))*(void**)((long)(PNG_BASE_NAME) - 1126))(__p0, __p1))
 
 #define png_set_expand(__p0) \
 	(((void (*)(png_structp ))*(void**)((long)(PNG_BASE_NAME) - 604))(__p0))

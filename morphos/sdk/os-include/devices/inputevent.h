@@ -210,7 +210,7 @@ struct InputEvent
 
 	}                   ie_position;
 
-	struct timeval      ie_TimeStamp;
+	struct TimeVal      ie_TimeStamp;
 };
 
 #define ie_X              ie_position.ie_xy.ie_x

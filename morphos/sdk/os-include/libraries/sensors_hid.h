@@ -98,7 +98,8 @@
 ** This attribute follows the SENSORS_AllowSetAttr paradigm */
 #define SENSORS_HIDInput_Rumble_Duration        (SENSORS_Dummy + 2402)
 
-
+/* ULONG, Sensor_HIDInput_Rumble_Type, type of the rumble motor */
+#define SENSORS_HIDInput_Rumble_Type            (SENSORS_Dummy + 2403)
 
 /* Trigger sensors may sometimes have leds */
 /* DOUBLE *, sets the backlight level, 0 for off, 1 for fully on (usually
@@ -145,5 +146,11 @@ typedef enum
 	Sensor_HIDInput_Limb_RightLeg            = 4,
 	Sensor_HIDInput_Limb_EitherLeg           = 5,
 } Sensor_HIDInput_Limb;
+
+typedef enum
+{
+	Sensor_HIDInput_Rumble_Type_Vibration = 0,
+	Sensor_HIDInput_Rumble_Type_Impulse   = 1,
+} Sensor_HIDInput_Rumble_Type;
 
 #endif

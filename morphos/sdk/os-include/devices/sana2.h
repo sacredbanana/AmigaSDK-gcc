@@ -123,7 +123,9 @@ struct LinkExtSana2DeviceQuery
 	ULONG HardwareType;
 
 	/*
-	** New fields for DevQueryFormat 1. Remember to check SizeSupplied!
+	** New fields for DevQueryFormat SANA2QFMT_LINKEXT. Remember to check SizeSupplied!
+	** Not all drivers will report all these fields, and the SizeSupplied will indicate
+	** which fields are available.
 	*/
 	ULONG LinkFlags;      /* Link status flags. You must ignore unknown bits */
 };
@@ -182,7 +184,7 @@ struct Sana2DeviceStats
 	ULONG          Unused;
 	ULONG          UnknownTypesReceived;
 	ULONG          Reconfigurations;
-	struct timeval LastStart;
+	struct TimeVal LastStart;
 };
 
 #define S2_START                (CMD_NONSTD)

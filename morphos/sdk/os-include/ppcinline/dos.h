@@ -1067,6 +1067,21 @@
 #define GetSegListAttrTagList(__p0, __p1, __p2, __p3, __p4) \
 	(((LONG (*)(void *, BPTR , LONG , APTR , LONG , struct TagItem *))*(void**)((long)(DOS_BASE_NAME) - 1180))((void*)(DOS_BASE_NAME), __p0, __p1, __p2, __p3, __p4))
 
+#define SetFilePosixDate(__p0, __p1, __p2) \
+	(((LONG (*)(void *, CONST_STRPTR , CONST struct PosixDateStamp *, struct TagItem *))*(void**)((long)(DOS_BASE_NAME) - 1186))((void*)(DOS_BASE_NAME), __p0, __p1, __p2))
+
+#define SetFilePosixDateTagList(__p0, __p1, __p2) \
+	(((LONG (*)(void *, CONST_STRPTR , CONST struct PosixDateStamp *, struct TagItem *))*(void**)((long)(DOS_BASE_NAME) - 1186))((void*)(DOS_BASE_NAME), __p0, __p1, __p2))
+
+#define PosixDateStamp(__p0) \
+	(((struct PosixDateStamp *(*)(void *, struct PosixDateStamp *))*(void**)((long)(DOS_BASE_NAME) - 1192))((void*)(DOS_BASE_NAME), __p0))
+
+#define PosixDateStampToDateStamp(__p0, __p1) \
+	(((LONG (*)(void *, CONST struct PosixDateStamp *, struct DateStamp *))*(void**)((long)(DOS_BASE_NAME) - 1198))((void*)(DOS_BASE_NAME), __p0, __p1))
+
+#define DateStampToPosixDateStamp(__p0, __p1) \
+	(((LONG (*)(void *, CONST struct DateStamp *, struct PosixDateStamp *))*(void**)((long)(DOS_BASE_NAME) - 1204))((void*)(DOS_BASE_NAME), __p0, __p1))
+
 #if defined(USE_INLINE_STDARG) && !defined(__STRICT_ANSI__)
 
 #include <stdarg.h>
@@ -1134,6 +1149,10 @@
 #define GetSegListAttrTags(__p0, __p1, __p2, __p3, ...) \
 	({ULONG _tags[] = { __VA_ARGS__ }; \
 	GetSegListAttrTagList(__p0, __p1, __p2, __p3, (struct TagItem *)_tags);})
+
+#define SetFilePosixDateTags(__p0, __p1, ...) \
+	({ULONG _tags[] = { __VA_ARGS__ }; \
+	SetFilePosixDateTagList(__p0, __p1, (struct TagItem *)_tags);})
 
 #endif
 

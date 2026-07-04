@@ -4,7 +4,7 @@
 /*
 	z.library C prototypes
 
-	Copyright © 2003-2018 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2003-2023 The MorphOS Development Team, All Rights Reserved.
 */
 
 #ifndef LIBRARIES_Z_H
@@ -91,13 +91,16 @@ gzFile gzopen(const char *path, const char *mode);
 gzFile gzdopen(int fd, const char *mode);
 int gzbuffer(gzFile file, unsigned size);
 int gzsetparams(gzFile file, int level, int strategy);
-int gzread (gzFile file, voidp buf, unsigned len);
-int gzwrite(gzFile file, const voidp buf, unsigned len);
+int gzread(gzFile file, voidp buf, unsigned len);
+z_size_t gzfread(voidp buf, z_size_t size, z_size_t nitems, gzFile file);
+int gzwrite(gzFile file, voidpc buf, unsigned len);
+z_size_t gzfwrite(voidpc buf, z_size_t size, z_size_t nitems, gzFile file);
 int gzprintf(gzFile file, const char *format, ...);
 int gzputs(gzFile file, const char *s);
 char * gzgets(gzFile file, char *buf, int len);
 int gzputc(gzFile file, int c);
 int gzgetc(gzFile file);
+int gzungetc(int c, gzFile file);
 int gzflush(gzFile file, int flush);
 z_off_t gzseek(gzFile file, z_off_t offset, int whence);
 int gzrewind(gzFile file);
@@ -108,7 +111,9 @@ int gzclose(gzFile file);
 int gzclose_r(gzFile file);
 int gzclose_w(gzFile file);
 const char * gzerror(gzFile file, int *errnum);
+void gzclearerr(gzFile file);
 int gzdirect(gzFile file);
+int gzvprintf(gzFile file, const char *format, va_list va);
 
 
 int blast(blast_in infun, void *inhow, blast_out outfun, void *outhow);
@@ -126,6 +131,10 @@ int uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source, uLong *source
 #define crc32_z(a,b,l) crc32(a,b,(uInt)(l))
 int inflateValidate(z_streamp strm, int check);
 unsigned long inflateCodesUsed(z_streamp strm);
+
+uLong crc32_combine_gen64(z_off64_t len2);
+uLong crc32_combine_gen(z_off_t len2);
+uLong crc32_combine_op(uLong crc1, uLong crc2, uLong op);
 
 #ifdef __cplusplus
 }

@@ -4,7 +4,7 @@
 /*
 	pixman.library C prototypes
 
-	Copyright © 2009-2020 The MorphOS Development Team, All Rights Reserved.
+	Copyright © 2009-2026 The MorphOS Development Team, All Rights Reserved.
 */
 
 #ifndef LIBRARIES_PIXMAN_H
@@ -99,11 +99,11 @@ void                    pixman_region_init_rect          (pixman_region16_t *reg
 							  int                y,
 							  unsigned int       width,
 							  unsigned int       height);
-pixman_bool_t           pixman_region_init_rects         (pixman_region16_t *region,
+pixman_bool_t           pixman_region_init_rects         (pixman_region16_t    *region,
 							  const pixman_box16_t *boxes,
-							  int                count);
-void                    pixman_region_init_with_extents  (pixman_region16_t *region,
-							  pixman_box16_t    *extents);
+							  int                  count);
+void                    pixman_region_init_with_extents  (pixman_region16_t       *region,
+							  const pixman_box16_t    *extents);
 void                    pixman_region_init_from_image    (pixman_region16_t *region,
 							  pixman_image_t    *image);
 void                    pixman_region_fini               (pixman_region16_t *region);
@@ -111,48 +111,49 @@ void                    pixman_region_fini               (pixman_region16_t *reg
 void                    pixman_region_translate          (pixman_region16_t *region,
 							  int                x,
 							  int                y);
-pixman_bool_t           pixman_region_copy               (pixman_region16_t *dest,
-							  pixman_region16_t *source);
-pixman_bool_t           pixman_region_intersect          (pixman_region16_t *new_reg,
-							  pixman_region16_t *reg1,
-							  pixman_region16_t *reg2);
-pixman_bool_t           pixman_region_union              (pixman_region16_t *new_reg,
-							  pixman_region16_t *reg1,
-							  pixman_region16_t *reg2);
-pixman_bool_t           pixman_region_union_rect         (pixman_region16_t *dest,
-							  pixman_region16_t *source,
-							  int                x,
-							  int                y,
-							  unsigned int       width,
-							  unsigned int       height);
-pixman_bool_t		pixman_region_intersect_rect     (pixman_region16_t *dest,
-							  pixman_region16_t *source,
-							  int                x,
-							  int                y,
-							  unsigned int       width,
-							  unsigned int       height);
-pixman_bool_t           pixman_region_subtract           (pixman_region16_t *reg_d,
-							  pixman_region16_t *reg_m,
-							  pixman_region16_t *reg_s);
-pixman_bool_t           pixman_region_inverse            (pixman_region16_t *new_reg,
-							  pixman_region16_t *reg1,
-							  pixman_box16_t    *inv_rect);
-pixman_bool_t           pixman_region_contains_point     (pixman_region16_t *region,
-							  int                x,
-							  int                y,
-							  pixman_box16_t    *box);
-pixman_region_overlap_t pixman_region_contains_rectangle (pixman_region16_t *region,
-							  pixman_box16_t    *prect);
-pixman_bool_t           pixman_region_not_empty          (pixman_region16_t *region);
-pixman_box16_t *        pixman_region_extents            (pixman_region16_t *region);
-int                     pixman_region_n_rects            (pixman_region16_t *region);
-pixman_box16_t *        pixman_region_rectangles         (pixman_region16_t *region,
-							  int               *n_rects);
-pixman_bool_t           pixman_region_equal              (pixman_region16_t *region1,
-							  pixman_region16_t *region2);
+pixman_bool_t           pixman_region_copy               (pixman_region16_t       *dest,
+							  const pixman_region16_t *source);
+pixman_bool_t           pixman_region_intersect          (pixman_region16_t       *new_reg,
+							  const pixman_region16_t *reg1,
+							  const pixman_region16_t *reg2);
+pixman_bool_t           pixman_region_union              (pixman_region16_t       *new_reg,
+							  const pixman_region16_t *reg1,
+							  const pixman_region16_t *reg2);
+pixman_bool_t           pixman_region_union_rect         (pixman_region16_t       *dest,
+							  const pixman_region16_t *source,
+							  int                      x,
+							  int                      y,
+							  unsigned int             width,
+							  unsigned int             height);
+pixman_bool_t		pixman_region_intersect_rect     (pixman_region16_t       *dest,
+							  const pixman_region16_t *source,
+							  int                      x,
+							  int                      y,
+							  unsigned int             width,
+							  unsigned int             height);
+pixman_bool_t           pixman_region_subtract           (pixman_region16_t       *reg_d,
+							  const pixman_region16_t *reg_m,
+							  const pixman_region16_t *reg_s);
+pixman_bool_t           pixman_region_inverse            (pixman_region16_t       *new_reg,
+							  const pixman_region16_t *reg1,
+							  const pixman_box16_t    *inv_rect);
+pixman_bool_t           pixman_region_contains_point     (const pixman_region16_t *region,
+							  int                     x,
+							  int                     y,
+							  pixman_box16_t           *box);
+pixman_region_overlap_t pixman_region_contains_rectangle (const pixman_region16_t *region,
+							  const pixman_box16_t    *prect);
+pixman_bool_t           pixman_region_empty              (const pixman_region16_t *region);
+pixman_bool_t           pixman_region_not_empty          (const pixman_region16_t *region);
+pixman_box16_t *        pixman_region_extents            (const pixman_region16_t *region);
+int                     pixman_region_n_rects            (const pixman_region16_t *region);
+pixman_box16_t *        pixman_region_rectangles         (const pixman_region16_t *region,
+							  int                     *n_rects);
+pixman_bool_t           pixman_region_equal              (const pixman_region16_t *region1,
+							  const pixman_region16_t *region2);
 pixman_bool_t           pixman_region_selfcheck          (pixman_region16_t *region);
-void                    pixman_region_reset              (pixman_region16_t *region,
-							  pixman_box16_t    *box);
+void                    pixman_region_reset              (pixman_region16_t       *region,
+							  const pixman_box16_t    *box);
 
 void                    pixman_region32_init               (pixman_region32_t *region);
 void                    pixman_region32_init_rect          (pixman_region32_t *region,
@@ -163,8 +164,8 @@ void                    pixman_region32_init_rect          (pixman_region32_t *r
 pixman_bool_t           pixman_region32_init_rects         (pixman_region32_t *region,
 							    const pixman_box32_t *boxes,
 							    int                count);
-void                    pixman_region32_init_with_extents  (pixman_region32_t *region,
-							    pixman_box32_t    *extents);
+void                    pixman_region32_init_with_extents  (pixman_region32_t    *region,
+							    const pixman_box32_t *extents);
 void                    pixman_region32_init_from_image    (pixman_region32_t *region,
 							    pixman_image_t    *image);
 void                    pixman_region32_fini               (pixman_region32_t *region);
@@ -172,49 +173,135 @@ void                    pixman_region32_fini               (pixman_region32_t *r
 void                    pixman_region32_translate          (pixman_region32_t *region,
 							    int                x,
 							    int                y);
-pixman_bool_t           pixman_region32_copy               (pixman_region32_t *dest,
-							    pixman_region32_t *source);
-pixman_bool_t           pixman_region32_intersect          (pixman_region32_t *new_reg,
-							    pixman_region32_t *reg1,
-							    pixman_region32_t *reg2);
-pixman_bool_t           pixman_region32_union              (pixman_region32_t *new_reg,
-							    pixman_region32_t *reg1,
-							    pixman_region32_t *reg2);
-pixman_bool_t		pixman_region32_intersect_rect     (pixman_region32_t *dest,
-							    pixman_region32_t *source,
-							    int                x,
-							    int                y,
-							    unsigned int       width,
-							    unsigned int       height);
-pixman_bool_t           pixman_region32_union_rect         (pixman_region32_t *dest,
-							    pixman_region32_t *source,
-							    int                x,
-							    int                y,
-							    unsigned int       width,
-							    unsigned int       height);
-pixman_bool_t           pixman_region32_subtract           (pixman_region32_t *reg_d,
-							    pixman_region32_t *reg_m,
-							    pixman_region32_t *reg_s);
-pixman_bool_t           pixman_region32_inverse            (pixman_region32_t *new_reg,
-							    pixman_region32_t *reg1,
-							    pixman_box32_t    *inv_rect);
-pixman_bool_t           pixman_region32_contains_point     (pixman_region32_t *region,
-							    int                x,
-							    int                y,
-							    pixman_box32_t    *box);
-pixman_region_overlap_t pixman_region32_contains_rectangle (pixman_region32_t *region,
-							    pixman_box32_t    *prect);
-pixman_bool_t           pixman_region32_not_empty          (pixman_region32_t *region);
-pixman_box32_t *        pixman_region32_extents            (pixman_region32_t *region);
-int                     pixman_region32_n_rects            (pixman_region32_t *region);
-pixman_box32_t *        pixman_region32_rectangles         (pixman_region32_t *region,
-							    int               *n_rects);
-pixman_bool_t           pixman_region32_equal              (pixman_region32_t *region1,
-							    pixman_region32_t *region2);
+pixman_bool_t           pixman_region32_copy               (pixman_region32_t       *dest,
+							    const pixman_region32_t *source);
+pixman_bool_t           pixman_region32_intersect          (pixman_region32_t       *new_reg,
+							    const pixman_region32_t *reg1,
+							    const pixman_region32_t *reg2);
+pixman_bool_t           pixman_region32_union              (pixman_region32_t       *new_reg,
+							    const pixman_region32_t *reg1,
+							    const pixman_region32_t *reg2);
+pixman_bool_t		pixman_region32_intersect_rect     (pixman_region32_t       *dest,
+							    const pixman_region32_t *source,
+							    int                      x,
+							    int                      y,
+							    unsigned int             width,
+							    unsigned int             height);
+pixman_bool_t           pixman_region32_union_rect         (pixman_region32_t       *dest,
+							    const pixman_region32_t *source,
+							    int                      x,
+							    int                      y,
+							    unsigned int             width,
+							    unsigned int             height);
+pixman_bool_t           pixman_region32_subtract           (pixman_region32_t       *reg_d,
+							    const pixman_region32_t *reg_m,
+							    const pixman_region32_t *reg_s);
+pixman_bool_t           pixman_region32_inverse            (pixman_region32_t       *new_reg,
+							    const pixman_region32_t *reg1,
+							    const pixman_box32_t    *inv_rect);
+pixman_bool_t           pixman_region32_contains_point     (const pixman_region32_t *region,
+							    int                      x,
+							    int                      y,
+							    pixman_box32_t          *box);
+pixman_region_overlap_t pixman_region32_contains_rectangle (const pixman_region32_t *region,
+							    const pixman_box32_t    *prect);
+pixman_bool_t           pixman_region32_empty              (const pixman_region32_t *region);
+pixman_bool_t           pixman_region32_not_empty          (const pixman_region32_t *region);
+pixman_box32_t *        pixman_region32_extents            (const pixman_region32_t *region);
+int                     pixman_region32_n_rects            (const pixman_region32_t *region);
+pixman_box32_t *        pixman_region32_rectangles         (const pixman_region32_t *region,
+							    int                     *n_rects);
+pixman_bool_t           pixman_region32_equal              (const pixman_region32_t *region1,
+							    const pixman_region32_t *region2);
 pixman_bool_t           pixman_region32_selfcheck          (pixman_region32_t *region);
-void                    pixman_region32_reset              (pixman_region32_t *region,
-							    pixman_box32_t    *box);
+void                    pixman_region32_reset              (pixman_region32_t    *region,
+							    const pixman_box32_t *box);
 
+void                    pixman_region64f_init              (pixman_region64f_t *region);
+void                    pixman_region64f_init_rect         (pixman_region64f_t *region,
+							    int                 x,
+							    int                 y,
+							    unsigned int        width,
+							    unsigned int        height);
+void                    pixman_region64f_init_rectf        (pixman_region64f_t *region,
+							    double              x,
+							    double              y,
+							    double              width,
+							    double              height);
+pixman_bool_t           pixman_region64f_init_rects        (pixman_region64f_t *region,
+							    const pixman_box64f_t *boxes,
+							    int                 count);
+void                    pixman_region64f_init_with_extents (pixman_region64f_t    *region,
+							    const pixman_box64f_t *extents);
+void                    pixman_region64f_init_from_image   (pixman_region64f_t *region,
+							    pixman_image_t     *image);
+void                    pixman_region64f_fini              (pixman_region64f_t *region);
+void                    pixman_region64f_translate         (pixman_region64f_t *region,
+							    int                 x,
+							    int                 y);
+void                    pixman_region64f_translatef        (pixman_region64f_t *region,
+							    double              x,
+							    double              y);
+pixman_bool_t           pixman_region64f_copy              (pixman_region64f_t       *dest,
+							    const pixman_region64f_t *source);
+pixman_bool_t           pixman_region64f_intersect         (pixman_region64f_t       *new_reg,
+							    const pixman_region64f_t *reg1,
+							    const pixman_region64f_t *reg2);
+pixman_bool_t           pixman_region64f_union             (pixman_region64f_t       *new_reg,
+							    const pixman_region64f_t *reg1,
+							    const pixman_region64f_t *reg2);
+pixman_bool_t		pixman_region64f_intersect_rect    (pixman_region64f_t       *dest,
+							    const pixman_region64f_t *source,
+							    int                       x,
+							    int                       y,
+							    unsigned int              width,
+							    unsigned int              height);
+pixman_bool_t		pixman_region64f_intersect_rectf   (pixman_region64f_t       *dest,
+							    const pixman_region64f_t *source,
+							    double                    x,
+							    double                    y,
+							    double                    width,
+							    double                    height);
+pixman_bool_t           pixman_region64f_union_rect        (pixman_region64f_t       *dest,
+							    const pixman_region64f_t *source,
+							    int                       x,
+							    int                       y,
+							    unsigned int              width,
+							    unsigned int              height);
+pixman_bool_t           pixman_region64f_union_rectf       (pixman_region64f_t       *dest,
+							    const pixman_region64f_t *source,
+							    double                    x,
+							    double                    y,
+							    double                    width,
+							    double                    height);
+pixman_bool_t           pixman_region64f_subtract          (pixman_region64f_t       *reg_d,
+							    const pixman_region64f_t *reg_m,
+							    const pixman_region64f_t *reg_s);
+pixman_bool_t           pixman_region64f_inverse           (pixman_region64f_t       *new_reg,
+							    const pixman_region64f_t *reg1,
+							    const pixman_box64f_t    *inv_rect);
+pixman_bool_t           pixman_region64f_contains_point    (const pixman_region64f_t *region,
+							    int                       x,
+							    int                       y,
+							    pixman_box64f_t          *box);
+pixman_bool_t           pixman_region64f_contains_pointf   (const pixman_region64f_t *region,
+							    double                    x,
+							    double                    y,
+							    pixman_box64f_t          *box);
+pixman_region_overlap_t pixman_region64f_contains_rectangle(const pixman_region64f_t *region,
+							    const pixman_box64f_t    *prect);
+pixman_bool_t           pixman_region64f_empty             (const pixman_region64f_t *region);
+pixman_bool_t           pixman_region64f_not_empty         (const pixman_region64f_t *region);
+pixman_box64f_t *       pixman_region64f_extents           (const pixman_region64f_t *region);
+int                     pixman_region64f_n_rects           (const pixman_region64f_t *region);
+pixman_box64f_t *       pixman_region64f_rectangles        (const pixman_region64f_t *region,
+							    int                      *n_rects);
+pixman_bool_t           pixman_region64f_equal             (const pixman_region64f_t *region1,
+							    const pixman_region64f_t *region2);
+pixman_bool_t           pixman_region64f_selfcheck         (pixman_region64f_t *region);
+void                    pixman_region64f_reset             (pixman_region64f_t    *region,
+							    const pixman_box64f_t *box);
+void			pixman_region64f_clear		   (pixman_region64f_t *region);
 pixman_bool_t pixman_blt                (uint32_t           *src_bits,
 					 uint32_t           *dst_bits,
 					 int                 src_stride,
@@ -272,9 +359,11 @@ void		pixman_image_set_destroy_function    (pixman_image_t		   *image,
 void *		pixman_image_get_destroy_data        (pixman_image_t		   *image);
 
 pixman_bool_t   pixman_image_set_clip_region         (pixman_image_t               *image,
-						      pixman_region16_t            *region);
+						      const pixman_region16_t            *region);
 pixman_bool_t   pixman_image_set_clip_region32       (pixman_image_t               *image,
-						      pixman_region32_t            *region);
+						      const pixman_region32_t            *region);
+pixman_bool_t   pixman_image_set_clip_region64f      (pixman_image_t               *image,
+						      const pixman_region64f_t           *region);
 void		pixman_image_set_has_client_clip     (pixman_image_t               *image,
 						      pixman_bool_t		    clien_clip);
 pixman_bool_t   pixman_image_set_transform           (pixman_image_t               *image,
@@ -357,6 +446,18 @@ void          pixman_image_composite32        (pixman_op_t        op,
 					       int32_t            dest_y,
 					       int32_t            width,
 					       int32_t            height);
+void          pixman_image_composite64f       (pixman_op_t        op,
+					       pixman_image_t    *src,
+					       pixman_image_t    *mask,
+					       pixman_image_t    *dest,
+					       double             src_x,
+					       double             src_y,
+					       double             mask_x,
+					       double             mask_y,
+					       double             dest_x,
+					       double             dest_y,
+					       double             width,
+					       double             height);
 
 pixman_fixed_t pixman_sample_ceil_y        (pixman_fixed_t             y,
 					    int                        bpp);

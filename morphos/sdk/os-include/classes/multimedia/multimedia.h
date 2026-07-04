@@ -447,7 +447,7 @@ struct mmopPort
 
 #define MGG_Selected                   (MMA_Dummy + 3003)   // selected class name
 #define MGG_DOSPattern                 (MMA_Dummy + 3004)   // filtering out classes using DOS pattern
-
+#define MGG_Args                       (MMA_Dummy + 3005)   // args list 
 
 /*------------------------------------------------------*/
 /* FOR IMPLEMENTORS OF CLASSES PROVIDING GUI GENERATORS */

@@ -16,7 +16,7 @@
 
 #include <utility/tagitem.h>
 
-#define FILESYSBOX_VERSION 3
+#define FILESYSBOX_VERSION 5
 #define FILESYSBOX_NAME "filesysbox.library"
 
 #define FUSE_VERSION 26
@@ -87,6 +87,7 @@ struct fuse_file_info {
 // 4.10
 #define FBXT_ADD_DEVICE (TAG_USER + 7) // pass name of dummy device
 
+typedef int (*fuse_fill_dir32_t ) (void *buf, const char *name, const struct FbxStat32 *stbuf, off_t off);
 typedef int (*fuse_fill_dir_t ) (void *buf, const char *name, const struct FbxStat *stbuf, off_t off);
 
 // v1. 
@@ -129,7 +130,7 @@ struct fuse_context {
 };
 
 struct fuse_operations {
-   int (*getattr) (const char *, struct FbxStat *);	
+   int (*getattr32) (const char *, struct FbxStat32 *);	
    int (*readlink) (const char *, char *, size_t); 
    int (*mknod) (const char *, mode_t, dev_t);
    int (*mkdir) (const char *, mode_t);
@@ -141,7 +142,7 @@ struct fuse_operations {
    int (*chmod) (const char *, mode_t); 
    int (*chown) (const char *, uid_t, gid_t); 
    int (*truncate) (const char *, off_t); 
-   int (*utime) (const char *, struct utimbuf *);
+   int (*utime32) (const char *, struct fsb_utimbuf32 *);
    int (*open) (const char *, struct fuse_file_info *);
    int (*read) (const char *, char *, size_t, off_t, struct fuse_file_info *);
    int (*write) (const char *, const char *, size_t, off_t, struct fuse_file_info *);
@@ -154,7 +155,7 @@ struct fuse_operations {
    int (*listxattr) (const char *, char *, size_t);
    int (*removexattr) (const char *, const char *); 
    int (*opendir) (const char *, struct fuse_file_info *); 
-   int (*readdir) (const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
+   int (*readdir32) (const char *, void *, fuse_fill_dir32_t, off_t, struct fuse_file_info *);
    int (*releasedir) (const char *, struct fuse_file_info *); 
    int (*fsyncdir) (const char *, int, struct fuse_file_info *); 
    void *(*init) (struct fuse_conn_info *conn);
@@ -162,9 +163,9 @@ struct fuse_operations {
    int (*access) (const char *, int); 
    int (*create) (const char *, mode_t, struct fuse_file_info *); 
    int (*ftruncate) (const char *, off_t, struct fuse_file_info *);
-   int (*fgetattr) (const char *, struct FbxStat *, struct fuse_file_info *);
+   int (*fgetattr32) (const char *, struct FbxStat32 *, struct fuse_file_info *);
    int (*lock) (const char *, struct fuse_file_info *, int cmd, struct flock *);  
-   int (*utimens) (const char *, const struct timespec tv[2]);
+   int (*utimens32) (const char *, const struct fsb_timespec32 tv[2]);
    int (*bmap) (const char *, size_t blocksize, off_t *idx);
    unsigned int flag_nullpath_ok : 1; 
    unsigned int flag_reserved : 31;
@@ -174,6 +175,12 @@ struct fuse_operations {
 	int (*getfsattr) (int, void *,  int); // not used yet
 	int (*setfsattr) (int, void *,  int);	// not used yet
 	int (*relabel) (const char *); // not used yet
+   /* v5 - 64-bit time functions */
+   int (*getattr) (const char *, struct FbxStat *);
+   int (*utime) (const char *, struct fsb_utimbuf64 *);
+   int (*readdir) (const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
+   int (*fgetattr) (const char *, struct FbxStat *, struct fuse_file_info *);
+   int (*utimens) (const char *, const struct fsb_timespec64 tv[2]);
 };
 
 
@@ -186,5 +193,11 @@ struct FbxTimerCallbackData;
 
 // v3
 typedef void (*FbxPushCallbackFunc)(void *arg, struct fuse_context *fcntx);
+
+// v5 utimens() can see FSB_UTIME_OMIT in tv_nsec, in which case that time is
+// not changed. Note that FSB_UTIME_NOW will be replaced by the current time
+// by the library and thus is not seen by the utimens().
+#define FSB_UTIME_NOW  ((1l << 30) - 1l)  // set time to current time
+#define FSB_UTIME_OMIT ((1l << 30) - 2l)  // don't touch time
 
 #endif /* LIBRARIES_FILESYSBOX_H */
