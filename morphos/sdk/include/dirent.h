@@ -38,17 +38,21 @@
 #ifndef _DIRENT_H_
 #define _DIRENT_H_
 
+#include <sys/cdefs.h>
+
 /*
- * The kernel defines the format of directory entries returned by 
+ * The kernel defines the format of directory entries returned by
  * the getdirentries(2) system call.
  */
 #include <sys/dirent.h>
 
-#ifdef _POSIX_SOURCE
-typedef void *  DIR;
-#else
+#if __XSI_VISIBLE
 
 #define d_ino           d_fileno        /* backward compatibility */
+
+#endif
+
+#if __BSD_VISIBLE
 
 /* definitions for library routines operating on directories. */
 #define DIRBLKSIZ       1024
@@ -75,8 +79,6 @@ typedef struct _dirdesc {
 } DIR;
 #endif
 
-#define dirfd(dirp)     ((dirp)->dd_fd)
-
 /* flags for opendir2 */
 #define DTF_HIDEW       0x0001  /* hide whiteout entries */
 #define DTF_NODUP       0x0002  /* don't return duplicate names */
@@ -87,26 +89,39 @@ typedef struct _dirdesc {
 #define NULL    0
 #endif
 
-#endif /* _POSIX_SOURCE */
+#else
+
+typedef void *  DIR;
+
+#endif
 
 #ifndef _KERNEL
 
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
+#if __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE >= 700
+int alphasort __P((const void *, const void *));
+int dirfd __P((DIR *));
+#endif
+#if __BSD_VISIBLE
+/*int versionsort __P((const struct dirent **, const struct dirent **));*/
+DIR *__opendir2 __P((const char *, int));
+DIR *fdopendir __P((int));
+/*ssize_t getdents __P((int, char *, size_t));*/
+int getdirentries __P((int, char *, int, long *));
+#endif
 DIR *opendir __P((const char *));
+DIR *fdopendir __P((int));
 struct dirent *readdir __P((DIR *));
 void rewinddir __P((DIR *));
-int closedir __P((DIR *));
-#ifndef _POSIX_SOURCE
-DIR *__opendir2 __P((const char *, int));
-long telldir __P((const DIR *));
-void seekdir __P((DIR *, long));
+#if __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE >= 700
 int scandir __P((const char *, struct dirent ***,
     int (*)(struct dirent *), int (*)(const void *, const void *)));
-int alphasort __P((const void *, const void *));
-int getdirentries __P((int, char *, int, long *));
-#endif /* not POSIX */
+#endif
+#if __XSI_VISIBLE
+void seekdir __P((DIR *, long));
+long telldir __P((const DIR *));
+#endif
+int closedir __P((DIR *));
 __END_DECLS
 
 #endif /* !_KERNEL */

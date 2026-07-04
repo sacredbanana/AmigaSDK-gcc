@@ -36,9 +36,7 @@
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
 
-#ifdef _LARGEFILE64_SOURCE
 #include <stdint.h>
-#endif
 
 typedef struct { int32_t val[2]; } fsid_t;      /* file system id type */
 
@@ -61,23 +59,6 @@ struct fid {
 #define MNAMELEN 90     /* length of buffer for returned name */
 
 struct statfs {
-	short   f_type;                 /* type of filesystem (see below) */
-	short   f_flags;                /* copy of mount flags */
-	long    f_fsize;                /* fundamental file system block size */
-	long    f_bsize;                /* optimal transfer block size */
-	long    f_blocks;               /* total data blocks in file system */
-	long    f_bfree;                /* free blocks in fs */
-	long    f_bavail;               /* free blocks avail to non-superuser */
-	long    f_files;                /* total file nodes in file system */
-	long    f_ffree;                /* free file nodes in fs */
-	fsid_t  f_fsid;                 /* file system id */
-	long    f_spare[9];             /* spare for later */
-	char    f_mntonname[MNAMELEN];  /* directory on which mounted */
-	char    f_mntfromname[MNAMELEN];/* mounted filesystem */
-};
-
-#ifdef _LARGEFILE64_SOURCE
-struct statfs64 {
 	uint32_t f_type;                /* type of filesystem (see below) */
 	uint32_t f_flags;               /* copy of mount flags */
 	uint32_t f_fsize;               /* fundamental file system block size */
@@ -92,7 +73,6 @@ struct statfs64 {
 	char     f_mntonname[MNAMELEN];  /* directory on which mounted */
 	char     f_mntfromname[MNAMELEN];/* mounted filesystem */
 };
-#endif
 
 /*
  * File system types.
@@ -259,6 +239,7 @@ typedef union nfsv2fh nfsv2fh_t;
 /*
  * Arguments to mount NFS
  */
+int     statfs __P((const char *, struct statfs *));
 struct nfs_args {
 	struct sockaddr *addr;          /* file server address */
 	int             sotype;         /* Socket type */
@@ -312,12 +293,11 @@ int     getmntinfo __P((struct statfs **, int));
 int     mount __P((int, const char *, int, void *));
 int     statfs __P((const char *, struct statfs *));
 int     unmount __P((const char *, int));
-
 #ifdef _LARGEFILE64_SOURCE
-int     fstatfs64 __P((int, struct statfs64 *));
-int     getfsstat64 __P((struct statfs64 *, long, int));
-int     getmntinfo64 __P((struct statfs64 **, int));
-int     statfs64 __P((const char *, struct statfs64 *));
+#define fstatfs64(a,b) fstatfs(a,b)
+#define getfsstat64(a,b,c) getfsstat(a,b,c)
+#define getmntinfo64(a,b) getmntinfo(a,b)
+#define statfs64 statfs
 #endif
 __END_DECLS
 

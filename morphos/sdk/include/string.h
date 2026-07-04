@@ -35,67 +35,100 @@
 
 #ifndef _STRING_H_
 #define _STRING_H_
+#include <sys/cdefs.h>
 #include <machine/ansi.h>
 
 #define __need_NULL
 #define __need_size_t
 #include <stddef.h>
 
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
+#if __BSD_VISIBLE || __POSIX_VISIBLE <= 200112
+int      bcmp __P((const void *, const void *, size_t));
+void     bcopy __P((const void *, void *, size_t));
+void     bzero __P((void *, size_t));
+#endif
+#if __XSI_VISIBLE
+int      ffs __P((int));
+#endif
+#if __BSD_VISIBLE || __POSIX_VISIBLE <= 200112
+char    *index __P((const char *, int));
+char    *rindex __P((const char *, int));
+#endif
+int      strcasecmp __P((const char *, const char *));
+int      strncasecmp __P((const char *, const char *, size_t));
+#if __BSD_VISIBLE
+int      stricmp __P((const char *, const char *));
+int      strnicmp __P((const char *, const char *, size_t));
+#endif
+
+#if __XSI_VISIBLE >= 600
+void    *memccpy __P((void *, const void *, int, size_t));
+#endif
 void    *memchr __P((const void *, int, size_t));
+#if __BSD_VISIBLE
+void    *memrchr __P((const void *, int, size_t));
+#endif
 int      memcmp __P((const void *, const void *, size_t));
 void    *memcpy __P((void *, const void *, size_t));
 void    *memmove __P((void *, const void *, size_t));
+#if __BSD_VISIBLE
+void    *mempcpy __P((void *, const void *, size_t));
+#endif
 void    *memset __P((void *, int, size_t));
+#if __POSIX_VISIBLE >= 200809
+char    *stpcpy __P((char *, const char *));
+char    *stpncpy __P((char *, const char *, size_t));
+#endif
 char    *strcat __P((char *, const char *));
-size_t   strlcat __P((char *, const char *, size_t));
 char    *strchr __P((const char *, int));
 int      strcmp __P((const char *, const char *));
 int      strcoll __P((const char *, const char *));
 char    *strcpy __P((char *, const char *));
-size_t   strlcpy __P((char *, const char *, size_t));
 size_t   strcspn __P((const char *, const char *));
+#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE
+char    *strdup __P((const char *));
+#endif
 char    *strerror __P((int));
-
+#if __POSIX_VISIBLE >= 200112
+/*char    *strerror_r __P((int, char *, size_t));*/
+#endif
+#if __BSD_VISIBLE
+size_t   strlcat __P((char *, const char *, size_t));
+size_t   strlcpy __P((char *, const char *, size_t));
+#endif
 size_t   strlen __P((const char *));
+#if __BSD_VISIBLE
+void     strmode __P((int, char *));
+#endif
 char    *strncat __P((char *, const char *, size_t));
 int      strncmp __P((const char *, const char *, size_t));
 char    *strncpy __P((char *, const char *, size_t));
+#if __POSIX_VISIBLE >= 200809
+char    *strndup __P((const char *, size_t));
+size_t   strnlen __P((const char *, size_t));
+#endif
 char    *strpbrk __P((const char *, const char *));
 char    *strrchr __P((const char *, int));
+#if __BSD_VISIBLE
+char    *strsep __P((char **, const char *));
+#endif
+#if __POSIX_VISIBLE >= 200809
+char    *strsignal __P((int));
+#endif
 size_t   strspn __P((const char *, const char *));
 char    *strstr __P((const char *, const char *));
 char    *strtok __P((char *, const char *));
-size_t   strxfrm __P((char *, const char *, size_t));
-
-/* Nonstandard routines */
-#ifndef _ANSI_SOURCE
-int      bcmp __P((const void *, const void *, size_t));
-void     bcopy __P((const void *, void *, size_t));
-void     bzero __P((void *, size_t));
-int      ffs __P((int));
-char    *index __P((const char *, int));
-void    *mempcpy __P((void *, const void *, size_t));
-void    *memrchr __P((const void *, int, size_t));
-void    *memccpy __P((void *, const void *, int, size_t));
-char    *rindex __P((const char *, int));
-char    *stpcpy __P((char *, const char *));
-char    *stpncpy __P((char *, const char *, size_t));
-size_t   strnlen __P((const char *, size_t));
-int      strcasecmp __P((const char *, const char *));
-char    *strdup __P((const char *));
-char    *strndup __P((const char *, size_t));
-void     strmode __P((int, char *));
-int      strncasecmp __P((const char *, const char *, size_t));
-char    *strsep __P((char **, const char *));
-char    *strsignal __P((int));
+#if __POSIX_VISIBLE >= 199506 || __XSI_VISIBLE >= 500
 char    *strtok_r __P((char *, const char *, char **));
+#endif
+size_t   strxfrm __P((char *, const char *, size_t));
+#if __BSD_VISIBLE
+#ifndef _SWAB_DECLARED
+#define _SWAB_DECLARED
 void     swab __P((const void *, void *, size_t));
-int      stricmp __P((const char *, const char *));
-int      strnicmp __P((const char *, const char *, size_t));
-#endif 
+#endif
+#endif
 __END_DECLS
 
 #endif /* _STRING_H_ */

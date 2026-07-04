@@ -47,7 +47,7 @@ typedef struct {
 	int __ALIGN2__ fts_rfd;         /* fd for root */
 	int __ALIGN2__ fts_pathlen;     /* sizeof(path) */
 	int __ALIGN2__ fts_nitems;      /* elements in the sort array */
-	int (*__ALIGN2__ fts_compar)(); /* compare function */
+	int (*__ALIGN2__ fts_compar)(const void *, const void *); /* compare function */
 
 #define FTS_COMFOLLOW   0x001           /* follow command line symlinks */
 #define FTS_LOGICAL     0x002           /* logical walk */
@@ -122,7 +122,7 @@ __BEGIN_DECLS
 FTSENT  *fts_children __P((FTS *, int));
 int      fts_close __P((FTS *));
 FTS     *fts_open __P((char * const *, int,
-	    int (*)(const FTSENT **, const FTSENT **)));
+	    int (*)(const void *, const void *)));
 FTSENT  *fts_read __P((FTS *));
 int      fts_set __P((FTS *, FTSENT *, int));
 __END_DECLS

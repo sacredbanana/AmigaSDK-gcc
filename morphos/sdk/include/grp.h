@@ -36,9 +36,7 @@
 #ifndef _GRP_H_
 #define _GRP_H_
 
-#ifndef _POSIX_SOURCE
 #define _PATH_GROUP             "/etc/group"
-#endif
 
 struct group {
 	char    *gr_name;               /* group name */
@@ -51,11 +49,15 @@ struct group {
 
 __BEGIN_DECLS
 struct group *getgrgid __P((gid_t));
+#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE
 struct group *getgrnam __P((const char *));
-#ifndef _POSIX_SOURCE
 struct group *getgrent __P((void));
-int setgrent __P((void));
 void endgrent __P((void));
+#endif
+#if __XSI_VISIBLE
+int setgrent __P((void));
+#endif
+#if __BSD_VISIBLE
 void setgrfile __P((const char *));
 int setgroupent __P((int));
 #endif

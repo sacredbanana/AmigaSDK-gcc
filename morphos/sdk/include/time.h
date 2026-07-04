@@ -44,8 +44,35 @@
 #ifndef _TIME_H_
 #define _TIME_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/ansi.h>
+
+#if __POSIX_VISIBLE >= 199309
+#define CLOCK_REALTIME          1
+#define CLOCK_MONOTONIC         4
+#endif
+#if __BSD_VISIBLE
+#define CLOCK_MONOTONIC_RAW     5
+#define CLOCK_UPTIME            6
+#endif
+#if __POSIX_VISIBLE >= 199506
+#define CLOCK_THREAD_CPUTIME_ID 14
+#define CLOCK_PROCESS_CPUTIME_ID 15
+#endif
+#if __BSD_VISIBLE
+#define CLOCK_BOOTTIME          CLOCK_MONOTONIC
+#endif
+
+#if __POSIX_VISIBLE >= 199309
+#define TIMER_ABSTIME   0x1     /* absolute timer */
+#endif
+
+#if __POSIX_VISIBLE > 0 && __POSIX_VISIBLE < 200112 || __BSD_VISIBLE
+#define CLK_TCK         100
+#endif
+
+#define CLOCKS_PER_SEC  100
 
 #ifdef  _BSD_CLOCK_T_
 typedef _BSD_CLOCK_T_   clock_t;
@@ -61,7 +88,9 @@ typedef _BSD_TIME_T_    time_t;
 #define __need_size_t
 #include <stddef.h>
 
-#define CLOCKS_PER_SEC  100
+#if __POSIX_VISIBLE >= 199309
+#include <sys/timespec.h>
+#endif
 
 struct tm {
 	int     tm_sec;         /* seconds after the minute [0-60] */
@@ -77,33 +106,68 @@ struct tm {
 	char    *tm_zone;       /* timezone abbreviation */
 };
 
-#include <sys/cdefs.h>
+#if __POSIX_VISIBLE
+extern char *tzname[2];
+#endif
 
 __BEGIN_DECLS
 char *asctime __P((const struct tm *));
-char *asctime_r __P((const struct tm *, char *));
 clock_t clock __P((void));
 char *ctime __P((const time_t *));
-char *ctime_r __P((const time_t *, char *));
+#ifndef _STANDALONE
 double difftime __P((time_t, time_t));
+#endif
 struct tm *gmtime __P((const time_t *));
-struct tm *gmtime_r __P((const time_t *, struct tm *));
 struct tm *localtime __P((const time_t *));
-struct tm *localtime_r __P((const time_t *, struct tm *));
 time_t mktime __P((struct tm *));
 size_t strftime __P((char *, size_t, const char *, const struct tm *));
 time_t time __P((time_t *));
-
-#if !defined(_ANSI_SOURCE)
-#define CLK_TCK         100
-extern char *tzname[2];
+#if __POSIX_VISIBLE >= 200112
+struct sigevent;
+int timer_create __P((clockid_t, struct sigevent *, timer_t *));
+int timer_delete __P((timer_t));
+int timer_gettime __P((timer_t, struct itimerspec *));
+int timer_getoverrun __P((timer_t));
+int timer_settime __P((timer_t, int, const struct itimerspec *, struct itimerspec *));
+#endif
+#if __POSIX_VISIBLE
 void tzset __P((void));
-#endif /* not ANSI */
+#endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __POSIX_VISIBLE >= 199309
+int clock_getres __P((clockid_t, struct timespec *));
+int clock_gettime __P((clockid_t, struct timespec *));
+int clock_settime __P((clockid_t, const struct timespec *));
+int nanosleep __P((const struct timespec *, struct timespec *));
+#endif
+
+#if __POSIX_VISIBLE >= 200112
+int clock_getcpuclockid __P((pid_t, clockid_t *));
+int clock_nanosleep __P((clockid_t, int, const struct timespec *, struct timespec *));
+#endif
+
+#if __POSIX_VISIBLE >= 199506
+char *asctime_r __P((const struct tm *, char *));
+char *ctime_r __P((const time_t *, char *));
+struct tm *gmtime_r __P((const time_t *, struct tm *));
+struct tm *localtime_r __P((const time_t *, struct tm *));
+#endif
+
+#if __BSD_VISIBLE
+time_t timelocal __P((struct tm * const));
+time_t timegm __P((struct tm * const));
+/*int timer_oshandle_np __P((timer_t timerid));*/
+time_t time2posix __P((time_t t));
+time_t posix2time __P((time_t t));
+struct tm *offtime __P((const time_t *, long));
+/*struct tm *offtime_r __P((const time_t *, long, struct tm *));*/
+#endif
+
+#if __BSD_VISIBLE
 char *timezone __P((int, int));
 void tzsetwall __P((void));
-#endif /* neither ANSI nor POSIX */
+#endif
+
 __END_DECLS
 
 #endif /* !_TIME_H_ */

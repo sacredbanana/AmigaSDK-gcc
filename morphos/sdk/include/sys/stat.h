@@ -36,9 +36,7 @@
 #ifndef _SYS_STAT_H_
 #define _SYS_STAT_H_
 
-#ifdef _LARGEFILE64_SOURCE
-#include <stdint.h>
-#endif
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -46,52 +44,45 @@
 #ifdef __ixemul__
 #pragma pack(2)
 #endif
-#if later
-struct stat
-{
-	dev_t	st_dev;			/* inode's device */
-	ino_t	st_ino;			/* inode's number */
-	mode_t	st_mode;		/* inode protection mode */
-	nlink_t	st_nlink;		/* number of hard links */
-	uid_t	st_uid;			/* user ID of the file's owner */
-	gid_t	st_gid;			/* group ID of the file's group */
-	dev_t	st_rdev;		/* device type */
-	off_t	st_size;		/* file size, in bytes */
-	time_t	st_atime;		/* time of last access */
-	long	st_spare1;
-	time_t	st_mtime;		/* time of last data modification */
-	long	st_spare2;
-	time_t	st_ctime;		/* time of last file status change */
-	long	st_spare3;
-	long	st_blksize;		/* optimal blocksize for I/O */
-	long	st_blocks;		/* blocks allocated for file */
-	u_long	st_flags;		/* user defined flags for file */
-	u_long	st_gen;			/* file generation number */
-};
+#if __POSIX_VISIBLE >= 200809 || \
+    defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+# define SYS_STAT_POSIX_TIME_FIELDS 1
 #else
-struct	stat
-{
-	dev_t	st_dev;
-	ino_t	st_ino;
-	unsigned short st_mode;
-	short	st_nlink;
-	uid_t	st_uid;
-	gid_t	st_gid;
-	dev_t	st_rdev;
-	off_t	st_size;
-	time_t	st_atime;
-	int	st_spare1;
-	time_t	st_mtime;
-	int	st_spare2;
-	time_t	st_ctime;
-	int	st_spare3;
-	long	st_blksize;
-	long	st_blocks;
-	long	st_spare4[2];
-};
+# define SYS_STAT_POSIX_TIME_FIELDS 0
 #endif
-
-#ifdef _LARGEFILE64_SOURCE
+struct  stat
+{
+	dev_t   st_dev;
+	ino_t   st_ino;
+	unsigned short st_mode;
+	short   st_nlink;
+	uid_t   st_uid;
+	gid_t   st_gid;
+	dev_t   st_rdev;
+	off64_t st_size;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+# define st_atime st_atim.tv_sec
+# define st_mtime st_mtim.tv_sec
+# define st_ctime st_ctim.tv_sec
+#else
+	time_t  st_atime;
+	long    st_atimensec;
+	int32_t st_atime_pad;
+	time_t  st_mtime;
+	long    st_mtimensec;
+	int32_t st_mtime_pad;
+	time_t  st_ctime;
+	long    st_ctimensec;
+	int32_t st_ctime_pad;
+#endif
+	long    st_blksize;
+	int64_t st_blocks;
+	int     st_spare2; /* at_amode */
+	long    st_spare3; /* st_handler */
+};
 struct  stat64
 {
 	dev_t   st_dev;
@@ -101,12 +92,88 @@ struct  stat64
 	uid_t   st_uid;
 	gid_t   st_gid;
 	dev_t   st_rdev;
-	int32_t st_size32;
+	off64_t st_size;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+#else
 	time_t  st_atime;
-	int     st_spare1;
+	long    st_atimensec;
+	int32_t st_atime_pad;
 	time_t  st_mtime;
-	int     st_spare2;
+	long    st_mtimensec;
+	int32_t st_mtime_pad;
 	time_t  st_ctime;
+	long    st_ctimensec;
+	int32_t st_ctime_pad;
+#endif
+	long    st_blksize;
+	int64_t st_blocks;
+	int     st_spare2; /* at_amode */
+	long    st_spare3; /* st_handler */
+};
+
+#ifdef _KERNEL_T32_STRUCTURES
+struct	stat_t32
+{
+	dev_t	st_dev;
+	ino_t	st_ino;
+	unsigned short st_mode;
+	short	st_nlink;
+	uid_t	st_uid;
+	gid_t	st_gid;
+	dev_t	st_rdev;
+	int32_t	st_size;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct { time32_t tv_sec; } st_atim;
+#else
+	time32_t st_atime;
+#endif
+	int	st_spare1;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct { time32_t tv_sec; } st_mtim;
+#else
+	time32_t st_mtime;
+#endif
+	int	st_spare2;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct { time32_t tv_sec; } st_ctim;
+#else
+	time32_t st_ctime;
+#endif
+	int	st_spare3;
+	long	st_blksize;
+	long	st_blocks;
+	long	st_spare4[2];
+};
+struct  stat64_t32
+{
+	dev_t   st_dev;
+	ino_t   st_ino;
+	unsigned short st_mode;
+	short   st_nlink;
+	uid_t   st_uid;
+	gid_t   st_gid;
+	dev_t   st_rdev;
+	int32_t st_size32;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct { time32_t tv_sec; } st_atim;
+#else
+	time32_t st_atime;
+#endif
+	int	st_spare1;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct { time32_t tv_sec; } st_mtim;
+#else
+	time32_t st_mtime;
+#endif
+	int	st_spare2;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct { time32_t tv_sec; } st_ctim;
+#else
+	time32_t st_ctime;
+#endif
 	int     st_spare3;
 	long    st_blksize;
 	int32_t st_blocks32;
@@ -124,9 +191,22 @@ struct  stat64
 #define st_amode   st_spare2
 #endif
 
+#ifndef _KERNEL
+#if __BSD_VISIBLE
+#define	st_atimespec		st_atim
+#define	st_mtimespec		st_mtim
+#define	st_ctimespec		st_ctim
+#if !SYS_STAT_POSIX_TIME_FIELDS
+#define	st_atimensec            st_atim.tv_nsec
+#define	st_mtimensec		st_mtim.tv_nsec
+#define	st_ctimensec		st_ctim.tv_nsec
+#endif
+#endif
+#endif /* !_KERNEL */
+
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	S_ISTXT	0001000			/* sticky bit */
 #endif
 
@@ -135,7 +215,7 @@ struct  stat64
 #define	S_IWUSR	0000200			/* W for owner */
 #define	S_IXUSR	0000100			/* X for owner */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	S_IREAD		S_IRUSR
 #define	S_IWRITE	S_IWUSR
 #define	S_IEXEC		S_IXUSR
@@ -151,7 +231,7 @@ struct  stat64
 #define	S_IWOTH	0000002			/* W for other */
 #define	S_IXOTH	0000001			/* X for other */
 
-#ifndef _POSIX_SOURCE
+#if __XSI_VISIBLE
 #define	S_IFMT	 0170000		/* type of file */
 #define	S_IFIFO	 0010000		/* named pipe (fifo) */
 #define	S_IFCHR	 0020000		/* character special */
@@ -161,7 +241,19 @@ struct  stat64
 #define	S_IFLNK	 0120000		/* symbolic link */
 #define	S_IFSOCK 0140000		/* socket */
 #define	S_ISVTX	 0001000		/* save swapped text even after use */
+#endif
 
+#define	S_ISDIR(m)	((m & 0170000) == 0040000)	/* directory */
+#define	S_ISCHR(m)	((m & 0170000) == 0020000)	/* char special */
+#define	S_ISBLK(m)	((m & 0170000) == 0060000)	/* block special */
+#define	S_ISREG(m)	((m & 0170000) == 0100000)	/* regular file */
+#define	S_ISFIFO(m)	((m & 0170000) == 0010000)	/* fifo */
+#if __POSIX_VISIBLE >= 200112
+#define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
+#define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
+#endif
+
+#if __BSD_VISIBLE
 #define	ACCESSPERMS	(S_IRWXU|S_IRWXG|S_IRWXO)	/* 0777 */
 							/* 7777 */
 #define	ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
@@ -171,36 +263,48 @@ struct  stat64
 #define S_BLKSIZE	512		/* block size used in the stat struct */
 #endif
 
-#define	S_ISDIR(m)	((m & 0170000) == 0040000)	/* directory */
-#define	S_ISCHR(m)	((m & 0170000) == 0020000)	/* char special */
-#define	S_ISBLK(m)	((m & 0170000) == 0060000)	/* block special */
-#define	S_ISREG(m)	((m & 0170000) == 0100000)	/* regular file */
-#define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
-#define	S_ISFIFO(m)	((m & 0170000) == 0010000)	/* fifo */
-#ifndef _POSIX_SOURCE
-#define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
+#if __POSIX_VISIBLE >= 200809
+#define	UTIME_NOW	-1
+#define	UTIME_OMIT	-2
 #endif
 
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
-mode_t	umask __P((mode_t));
 int	chmod __P((const char *, mode_t));
+#if __POSIX_VISIBLE >= 200112
+int	fchmod __P((int, mode_t));
+#endif
+#if __POSIX_VISIBLE >= 200809
+int	fchmodat __P((int, const char *, mode_t, int));
+int	futimens __P((int fd, const struct timespec times[2]));
+int	utimensat __P((int fd, const char *path, const struct timespec times[2], int flag));
+#endif
 int	fstat __P((int, struct stat *));
+#if __POSIX_VISIBLE >= 200112
+int	lstat __P((const char *, struct stat *));
+#endif
 int	mkdir __P((const char *, mode_t));
 int	mkfifo __P((const char *, mode_t));
+#if !defined(_MKNOD_DECLARED) && __XSI_VISIBLE
+int	mknod __P((const char *, mode_t, dev_t));
+#define	_MKNOD_DECLARED
+#endif
 int	stat __P((const char *, struct stat *));
-#ifndef _POSIX_SOURCE
-int	fchmod __P((int, mode_t));
-int	lstat __P((const char *, struct stat *));
-#endif /* not POSIX */
-
+mode_t	umask __P((mode_t));
+#if __POSIX_VISIBLE >= 200809
+int	fstatat __P((int, const char *, struct stat *, int));
+int	mkdirat __P((int, const char *, mode_t));
+/*int	mkfifoat __P((int, const char *, mode_t));*/
+#endif
+#if __XSI_VISIBLE >= 700
+int	mknodat __P((int, const char *, mode_t, dev_t));
+#endif
 #ifdef _LARGEFILE64_SOURCE
-int	fstat64 __P((int, struct stat64 *));
-int	stat64 __P((const char *, struct stat64 *));
-#ifndef _POSIX_SOURCE
-int	lstat64 __P((const char *, struct stat64 *));
-#endif /* not POSIX */
+int     fstat64 __P((int, struct stat64 *));
+int     stat64 __P((const char *, struct stat64 *));
+#if __POSIX_VISIBLE >= 200809
+int     fstatat64 __P((int, const char *, struct stat64 *, int));
+int     lstat64 __P((const char *, struct stat64 *));
+#endif
 #endif
 __END_DECLS
 

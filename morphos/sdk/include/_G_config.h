@@ -29,12 +29,12 @@ typedef unsigned int _G_uint32_t;
 
 typedef long _G_clock_t;
 typedef short _G_dev_t;
-typedef long _G_fpos_t;
+typedef long long _G_fpos_t;
 typedef unsigned short _G_gid_t;
 typedef unsigned int _G_ino_t;
 typedef unsigned short _G_mode_t;
 typedef unsigned short _G_nlink_t;
-typedef int _G_off_t;
+typedef long long _G_off_t;
 typedef int _G_pid_t;
 #ifndef __PTRDIFF_TYPE__
 #define __PTRDIFF_TYPE__ int
@@ -45,9 +45,13 @@ typedef unsigned int _G_sigset_t;
 #define __SIZE_TYPE__ unsigned int
 #endif
 typedef __SIZE_TYPE__ _G_size_t;
-typedef long _G_time_t;
+typedef long long _G_time_t;
 typedef unsigned short _G_uid_t;
 typedef long int _G_wchar_t;
+typedef unsigned long _G_clockid_t;
+typedef unsigned long _G_timer_t;
+typedef long _G_suseconds_t;
+typedef unsigned int _G_useconds_t;
 
 #define _G_BUFSIZ 1024
 #define _G_FOPEN_MAX 20

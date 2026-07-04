@@ -109,12 +109,15 @@ struct file {
 #else
   struct stat f_stb;    /* NOTE: ixemul itself is built with _LARGEFILE64_SOURCE */
 #endif
-  struct timeval /*f_atime, */ f_mtime; /* Only valid if FSDF_SETTIME */
+  struct timespec /*f_atime, */ f_mtime; /* Only valid if FSDF_SETTIME */
   int   f_sync_flags;   /* for process synchronization */
   BPTR  f_parentlock;   /* parentlock of the f_name */
   int   f_lock_cnt;
   void *f_ownerproc;
   struct ix_flockkey f_flockkey;
+#if USE_DELAYED_SEEK
+  off64_t f_seekpos; /* private, do not assume any knowledge of this field */
+#endif
 };
 
 
@@ -137,6 +140,11 @@ struct file {
 
 #define FSDB_DEBUG      (4)
 #define FSDF_DEBUG      (1<<4)  /* SO_DEBUG on AF_LOCAL/AF_UNIX */
+
+#if USE_DELAYED_SEEK
+#define FSDB_SEEKPENDING (5)
+#define FSDF_SEEKPENDING (1<<5)
+#endif
 #endif /* _INTERNAL_FILE_H */
 
 
@@ -148,6 +156,8 @@ struct file {
 #define DTYPE_USOCKET   6       /* socket (own socket code) */
 #define DTYPE_TTY       7       /* AmigaOS file, with special access functions */
 #define DTYPE_BPF       8       /* bsdsocket.library Berkeley Packet Filter */
+#define DTYPE_DIR       9       /* directory */
+#define DTYPE_SHAREDMEM 10      /* POSIX shared memory object */
 /* more to follow.. */
 
 #endif /* _SYS_FILE_H_ */

@@ -38,9 +38,8 @@
 #ifndef _SYS_SOCKET_H_
 #define _SYS_SOCKET_H_
 
-#ifndef _SYS_TYPES_H_
+#include <sys/cdefs.h>
 #include <sys/types.h>
-#endif
 
 /*
  * Definitions related to sockets: types, address families, options.
@@ -52,7 +51,9 @@
 #define SOCK_STREAM     1               /* stream socket */
 #define SOCK_DGRAM      2               /* datagram socket */
 #define SOCK_RAW        3               /* raw-protocol interface */
+#if __BSD_VISIBLE
 #define SOCK_RDM        4               /* reliably-delivered message */
+#endif
 #define SOCK_SEQPACKET  5               /* sequenced packet stream */
 
 /*
@@ -64,11 +65,14 @@
 #define SO_KEEPALIVE    0x0008          /* keep connections alive */
 #define SO_DONTROUTE    0x0010          /* just use interface addresses */
 #define SO_BROADCAST    0x0020          /* permit sending of broadcast msgs */
+#if __BSD_VISIBLE
 #define SO_USELOOPBACK  0x0040          /* bypass hardware when possible */
+#endif
 #define SO_LINGER       0x0080          /* linger on close if data present */
 #define SO_OOBINLINE    0x0100          /* leave received OOB data in line */
+#if __BSD_VISIBLE
 #define SO_REUSEPORT    0x0200          /* allow local address & port reuse */
-
+#endif
 /*
  * Additional options, not kept in so_options.
  */
@@ -95,12 +99,20 @@ struct  linger {
 #define SOL_SOCKET      0xffff          /* options for socket level */
 
 /*
+ * Address family type.
+ */
+typedef u_char          sa_family_t;
+
+/*
  * Address families.
  */
 #define AF_UNSPEC       0               /* unspecified */
-#define AF_LOCAL        1               /* local to host (pipes, portals) */
-#define AF_UNIX         AF_LOCAL        /* backward compatibility */
+#if __BSD_VISIBLE
+#define AF_LOCAL        AF_UNIX         /* local to host (pipes, portals) */
+#endif
+#define AF_UNIX         1               /* standardized name for AF_LOCAL */
 #define AF_INET         2               /* internetwork: UDP, TCP, etc. */
+#if __BSD_VISIBLE
 #define AF_IMPLINK      3               /* arpanet imp addresses */
 #define AF_PUP          4               /* pup protocols: e.g. BSP */
 #define AF_CHAOS        5               /* mit CHAOS protocols */
@@ -125,8 +137,16 @@ struct  linger {
 #define AF_IPX          23              /* Novell Internet Protocol */
 #define AF_SIP          24              /* Simple Internet Protocol */
 #define pseudo_AF_PIP   25              /* Help Identify PIP packets */
-
 #define AF_MAX          26
+#endif
+
+/*
+ * Constants to specify how shutdown() shuts down
+ * the connection.
+ */
+#define SHUT_RD         0
+#define SHUT_WR         1
+#define SHUT_RDWR       2
 
 /*
  * Structure used by kernel to store most
@@ -134,9 +154,10 @@ struct  linger {
  */
 struct sockaddr {
 	u_char  sa_len;                 /* total length */
-	u_char  sa_family;              /* address family */
+	sa_family_t sa_family;          /* address family */
 	char    sa_data[14];            /* actually longer; address value */
 };
+#if __BSD_VISIBLE
 
 /*
  * Structure used by kernel to pass protocol
@@ -146,7 +167,9 @@ struct sockproto {
 	u_short sp_family;              /* address family */
 	u_short sp_protocol;            /* protocol */
 };
+#endif
 
+#if __BSD_VISIBLE
 /*
  * Protocol families, same as address families for now.
  */
@@ -239,6 +262,7 @@ struct sockproto {
 	{ "flags", CTLTYPE_STRUCT }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
+#endif /* __BSD_VISIBLE */
 
 /*
  * Maximum queue length specifiable by listen.
@@ -251,11 +275,11 @@ struct sockproto {
  */
 struct msghdr {
 	caddr_t msg_name;               /* optional address */
-	u_int   msg_namelen;            /* size of address */
+	socklen_t msg_namelen;          /* size of address */
 	struct  iovec *msg_iov;         /* scatter/gather array */
 	u_int   msg_iovlen;             /* # elements in msg_iov */
 	caddr_t msg_control;            /* ancillary data, see below */
-	u_int   msg_controllen;         /* ancillary data buffer len */
+	socklen_t msg_controllen;       /* ancillary data buffer len */
 	int     msg_flags;              /* flags on received message */
 };
 
@@ -266,7 +290,9 @@ struct msghdr {
 #define MSG_TRUNC       0x10            /* data discarded before delivery */
 #define MSG_CTRUNC      0x20            /* control data lost before delivery */
 #define MSG_WAITALL     0x40            /* wait for full request or error */
+#if __BSD_VISIBLE
 #define MSG_DONTWAIT    0x80            /* this message should be nonblocking */
+#endif
 
 /*
  * Header for ancillary data objects in msg_control buffer.
@@ -275,7 +301,7 @@ struct msghdr {
  * of message elements headed by cmsghdr structures.
  */
 struct cmsghdr {
-	u_int   cmsg_len;               /* data byte count, including hdr */
+	socklen_t cmsg_len;             /* data byte count, including hdr */
 	int     cmsg_level;             /* originating protocol */
 	int     cmsg_type;              /* protocol-specific type */
 /* followed by  u_char  cmsg_data[]; */
@@ -296,6 +322,7 @@ struct cmsghdr {
 /* "Socket"-level control message types: */
 #define SCM_RIGHTS      0x01            /* access rights (array of int) */
 
+#if __BSD_VISIBLE
 /*
  * 4.3 compat sockaddr, move to compat file later
  */
@@ -315,27 +342,26 @@ struct omsghdr {
 	caddr_t msg_accrights;          /* access rights sent/received */
 	int     msg_accrightslen;
 };
+#endif
 
 #ifndef _KERNEL
 
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
-int     accept __P((int, struct sockaddr *, int *));
-int     bind __P((int, const struct sockaddr *, int));
-int     connect __P((int, const struct sockaddr *, int));
-int     getpeername __P((int, struct sockaddr *, int *));
-int     getsockname __P((int, struct sockaddr *, int *));
-int     getsockopt __P((int, int, int, void *, int *));
+int     accept __P((int, struct sockaddr *, socklen_t *));
+int     bind __P((int, const struct sockaddr *, socklen_t));
+int     connect __P((int, const struct sockaddr *, socklen_t));
+int     getpeername __P((int, struct sockaddr *, socklen_t *));
+int     getsockname __P((int, struct sockaddr *, socklen_t *));
+int     getsockopt __P((int, int, int, void *, socklen_t *));
 int     listen __P((int, int));
 ssize_t recv __P((int, void *, size_t, int));
-ssize_t recvfrom __P((int, void *, size_t, int, struct sockaddr *, int *));
+ssize_t recvfrom __P((int, void *, size_t, int, struct sockaddr *, socklen_t *));
 ssize_t recvmsg __P((int, struct msghdr *, int));
 ssize_t send __P((int, const void *, size_t, int));
 ssize_t sendto __P((int, const void *,
-	    size_t, int, const struct sockaddr *, int));
+	    size_t, int, const struct sockaddr *, socklen_t));
 ssize_t sendmsg __P((int, const struct msghdr *, int));
-int     setsockopt __P((int, int, int, const void *, int));
+int     setsockopt __P((int, int, int, const void *, socklen_t));
 int     shutdown __P((int, int));
 int     socket __P((int, int, int));
 int     socketpair __P((int, int, int, int *));

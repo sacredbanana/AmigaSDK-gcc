@@ -52,12 +52,12 @@
 #define _SYS_IPC_H_
 
 struct ipc_perm {
-	ushort  cuid;   /* creator user id */
-	ushort  cgid;   /* creator group id */
-	ushort  uid;    /* user id */
-	ushort  gid;    /* group id */
-	ushort  mode;   /* r/w permission */
-	ushort  seq;    /* sequence # (to generate unique msg/sem/shm id) */
+	unsigned short  cuid;   /* creator user id */
+	unsigned short  cgid;   /* creator group id */
+	unsigned short  uid;    /* user id */
+	unsigned short  gid;    /* group id */
+	unsigned short  mode;   /* r/w permission */
+	unsigned short  seq;    /* sequence # (to generate unique msg/sem/shm id) */
 	key_t   key;    /* user specified msg/sem/shm key */
 };
 
@@ -82,7 +82,7 @@ struct ipc_perm {
 /* Macros to convert between ipc ids and array indices or sequence ids */
 #define IPCID_TO_IX(id)         ((id) & 0xffff)
 #define IPCID_TO_SEQ(id)        (((id) >> 16) & 0xffff)
-#define IXSEQ_TO_IPCID(ix,perm) (((perm.seq) << 16) | (ix & 0xffff))
+#define IXSEQ_TO_IPCID(ix,perm) (((perm.seq) << 16) | ((ix) & 0xffff))
 
 int ipcperm __P((struct ucred *, struct ipc_perm *, int));
 #endif /* _KERNEL */

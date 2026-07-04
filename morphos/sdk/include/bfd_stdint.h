@@ -1,4 +1,4 @@
-/* generated for  ppc-morphos-gcc-9 (GCC/MorphOS) 9.4.0 */
+/* generated for  ppc-morphos-gcc-9 (GCC/MorphOS) 9.5.0 */
 
 #ifndef GCC_GENERATED_STDINT_H
 #define GCC_GENERATED_STDINT_H 1

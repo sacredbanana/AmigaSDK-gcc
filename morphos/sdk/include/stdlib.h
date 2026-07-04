@@ -39,9 +39,7 @@
 #define _STDLIB_H_
 #include <machine/ansi.h>
 
-#if !defined(_ANSI_SOURCE)      /* for quad_t, etc. */
 #include <sys/types.h>
-#endif
 
 #define __need_NULL
 #define __need_size_t
@@ -57,19 +55,6 @@ typedef struct {
 	long quot;              /* quotient */
 	long rem;               /* remainder */
 } ldiv_t;
-
-typedef struct {
-	long long quot;         /* quotient */
-	long long rem;          /* remainder */
-} lldiv_t;
-
-#if !defined(_ANSI_SOURCE)
-typedef struct {
-	quad_t quot;            /* quotient */
-	quad_t rem;             /* remainder */
-} qdiv_t;
-#endif
-
 
 #define EXIT_FAILURE    1
 #define EXIT_SUCCESS    0
@@ -90,7 +75,6 @@ int      atexit __P((void (*)(void)));
 double   atof __P((const char *));
 int      atoi __P((const char *));
 long     atol __P((const char *));
-long long atoll __P((const char *));
 void    *bsearch __P((const void *, const void *, size_t,
 	    size_t, int (*)(const void *, const void *)));
 void    *calloc __P((size_t, size_t));
@@ -103,10 +87,11 @@ void     free __P((void *));
 char    *getenv __P((const char *));
 long     labs __P((long));
 ldiv_t   ldiv __P((long, long));
-long long	 llabs __P((long long));
-lldiv_t	 lldiv __P((long long, long long));
 void    *malloc __P((size_t));
-void    *memalign __P((size_t alignment, size_t size));
+int      mblen __P((const char *, size_t));
+size_t   mbstowcs __P((wchar_t *, const char *, size_t));
+int      mbtowc __P((wchar_t *, const char *, size_t));
+void    *memalign __P((size_t, size_t));
 void     qsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
 int      rand __P((void));
@@ -117,27 +102,89 @@ float    strtof __P((const char *, char **));
 long     strtol __P((const char *, char **, int));
 long double
 	 strtold __P((const char *, char **));
-long long strtoll __P((const char *, char **, int));
 unsigned long
 	 strtoul __P((const char *, char **, int));
+int      system __P((const char *));
+int      wctomb __P((char *, wchar_t));
+size_t   wcstombs __P((char *, const wchar_t *, size_t));
+
+#if __ISO_C_VISIBLE >= 1999 || defined(__cplusplus)
+
+typedef struct {
+	long long quot;         /* quotient */
+	long long rem;          /* remainder */
+} lldiv_t;
+
+long long atoll __P((const char *));
+long long
+	 llabs __P((long long));
+lldiv_t	 lldiv __P((long long, long long));
+long long strtoll __P((const char *, char **, int));
 unsigned long long
 	 strtoull __P((const char *, char **, int));
-int      system __P((const char *));
 
-/* C11 */
 #if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
 _Noreturn
 #endif
 void	 _Exit __P((int));
+#endif /* __ISO_C_VISIBLE >= 1999 */
 
-/* these are currently just stubs */
-int      mblen __P((const char *, size_t));
-size_t   mbstowcs __P((wchar_t *, const char *, size_t));
-int      wctomb __P((char *, wchar_t));
-int      mbtowc __P((wchar_t *, const char *, size_t));
-size_t   wcstombs __P((char *, const wchar_t *, size_t));
+#if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L
+/* C11 */
+void    *aligned_alloc __P((size_t, size_t));
+#endif /* __ISO_C_VISIBLE >= 2011 */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __POSIX_VISIBLE >= 199506 || __XSI_VISIBLE
+char    *realpath __P((const char *, char *));
+#endif
+#if __POSIX_VISIBLE >= 200112
+int      posix_memalign __P((void **, size_t, size_t));
+int      setenv __P((const char *, const char *, int));
+void     unsetenv __P((const char *));
+#endif
+
+#if __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE
+#ifndef _GETSUBOPT_DECLARED
+#define	_GETSUBOPT_DECLARED
+int      getsubopt __P((char **, char * const *, char **));
+#endif
+#ifndef _MKDTEMP_DECLARED
+char    *mkdtemp __P((char *));
+#define	_MKDTEMP_DECLARED
+#endif
+#ifndef _MKSTEMP_DECLARED
+int      mkstemp __P((char *));
+#define	_MKSTEMP_DECLARED
+#endif
+#endif /* __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE */
+
+#if __XSI_VISIBLE
+long     a64l __P((const char *));
+double   drand48 __P((void));
+/* char	*ecvt(double, int, int * __restrict, int * __restrict); */
+double   erand48 __P((unsigned short[3]));
+/* char	*fcvt(double, int, int * __restrict, int * __restrict); */
+/* char	*gcvt(double, int, int * __restrict, int * __restrict); */
+char    *initstate __P((unsigned, char *, int));
+long     jrand48 __P((unsigned short[3]));
+char    *l64a __P((long));
+void     lcong48 __P((unsigned short[7]));
+long     lrand48 __P((void));
+#if !defined(_MKTEMP_DECLARED) && (__BSD_VISIBLE || __XSI_VISIBLE <= 600)
+char	*mktemp(char *);
+#define	_MKTEMP_DECLARED
+#endif
+long     mrand48 __P((void));
+long     nrand48 __P((unsigned short[3]));
+int      putenv __P((const char *));
+long     random __P((void));
+unsigned short *seed48 __P((unsigned short[3]));
+char    *setstate __P((char *));
+void     srand48 __P((long));
+void     srandom __P((unsigned int));
+#endif /* __XSI_VISIBLE */
+
+#if __BSD_VISIBLE
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void  *alloca __P((int));     /* built-in for gcc */
 #else
@@ -160,20 +207,6 @@ int      daemon __P((int, int));
 char    *devname __P((int, int));
 int      getloadavg __P((double [], int));
 
-long     a64l __P((const char *));
-char    *l64a __P((long));
-
-void     cfree __P((void *));
-
-int      getopt __P((int, char * const *, const char *));
-extern   char *optarg;                  /* getopt(3) external variables */
-extern   int opterr;
-extern   int optind;
-extern   int optopt;
-extern   int optreset;
-int      getsubopt __P((char **, char * const *, char **));
-extern   char *suboptarg;               /* getsubopt(3) external variable */
-
 int      heapsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
 int      mergesort __P((void *, size_t, size_t,
@@ -183,32 +216,19 @@ int      radixsort __P((const unsigned char **, int, const unsigned char *,
 int      sradixsort __P((const unsigned char **, int, const unsigned char *,
 	    unsigned));
 
-char    *initstate __P((unsigned, char *, int));
-long     random __P((void));
-char    *realpath __P((const char *, char *));
-char    *setstate __P((char *));
-void     srandom __P((unsigned));
-
-int      putenv __P((const char *));
-int      setenv __P((const char *, const char *, int));
-void     unsetenv __P((const char *));
-void     setproctitle __P((const char *, ...));
+void     cfree __P((void *));
 
 quad_t   qabs __P((quad_t));
+typedef struct {
+	quad_t quot;		/* quotient */
+	quad_t rem;		/* remainder */
+} qdiv_t;
 qdiv_t   qdiv __P((quad_t, quad_t));
 quad_t   strtoq __P((const char *, char **, int));
 u_quad_t strtouq __P((const char *, char **, int));
 
-double   drand48 __P((void));
-double   erand48 __P((unsigned short[3]));
-long     jrand48 __P((unsigned short[3]));
-void     lcong48 __P((unsigned short[7]));
-long     lrand48 __P((void));
-long     mrand48 __P((void));
-long     nrand48 __P((unsigned short[3]));
-unsigned short *seed48 __P((unsigned short[3]));
-void     srand48 __P((long));
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+extern char *suboptarg;			/* getsubopt(3) external variable */
+#endif /* __BSD_VISIBLE */
 
 __END_DECLS
 

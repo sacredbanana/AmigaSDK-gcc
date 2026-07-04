@@ -34,7 +34,7 @@ typedef uint32_t uint_fast32_t;
 typedef uint64_t uint_fast64_t;
 
 
-#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
+#if !defined(__cplusplus) || (__cplusplus - 0) >= 201103L || defined(__STDC_LIMIT_MACROS)
 
 #define INT8_MAX 127
 #define INT16_MAX 32767
@@ -102,7 +102,9 @@ typedef uint64_t uint_fast64_t;
 #define SIG_ATOMIC_MIN	(-2147483647-1)
 
 #define WCHAR_MAX 0x7fffffff
+#ifndef WCHAR_MIN
 #define WCHAR_MIN (-WCHAR_MAX-1)
+#endif
 
 #define WINT_MAX 2147483647
 #define WINT_MIN (-2147483647-1)
@@ -110,7 +112,7 @@ typedef uint64_t uint_fast64_t;
 #endif
 
 
-#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS)
+#if !defined(__cplusplus) || (__cplusplus - 0) >= 201103L || defined(__STDC_CONSTANT_MACROS)
 
 #define INT8_C(v) (v)
 #define INT16_C(v) (v)

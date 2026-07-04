@@ -38,7 +38,6 @@
 
 #include <sys/types.h>
 
-#ifndef _POSIX_SOURCE
 #define _PATH_PASSWD            "/etc/passwd"
 #define _PATH_MASTERPASSWD      "/etc/master.passwd"
 
@@ -54,7 +53,6 @@
 #define _PASSWORD_EFMT1         '_'     /* extended encryption format */
 
 #define _PASSWORD_LEN           128     /* max length, not counting NULL */
-#endif
 
 #ifdef _KERNEL
 struct TCP_passwd
@@ -93,16 +91,33 @@ struct passwd {
 	time_t  pw_expire;              /* account expiration */
 };
 
+#ifdef _KERNEL_T32_STRUCTURES
+struct passwd_t32 {
+	char    *pw_name;
+	char    *pw_passwd;
+	int     pw_uid;
+	int     pw_gid;
+	time32_t pw_change;
+	char    *pw_class;
+	char    *pw_gecos;
+	char    *pw_dir;
+	char    *pw_shell;
+	time32_t pw_expire;
+};
+#endif
+
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 struct passwd   *getpwuid __P((uid_t));
 struct passwd   *getpwnam __P((const char *));
-#ifndef _POSIX_SOURCE
+#if __XSI_VISIBLE >= 500
 struct passwd   *getpwent __P((void));
-int              setpassent __P((int));
 int              setpwent __P((void));
 void             endpwent __P((void));
+#endif
+#if __BSD_VISIBLE
+int              setpassent __P((int));
 #endif
 __END_DECLS
 

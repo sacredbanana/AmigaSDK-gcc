@@ -254,6 +254,14 @@ long ix_set_long(unsigned long id, long value);
  */
 #define IXID_EXTRA_FLAGS        11
 
+/* Return pointer to local errno variable, output only
+ */
+#define IXID_ERRNO_PTR          12
+
+/* Return pointer to local h_errno variable, output only
+ */
+#define IXID_H_ERRNO_PTR        13
+
 /* CPU identifications: */
 #define IX_CPU_68000            0
 #define IX_CPU_68010            1

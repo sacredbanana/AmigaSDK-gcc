@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2015 Szilard Biro
-  Copyright (C) 2020 Harry Sintonen
+  Copyright (C) 2020-2025 Harry Sintonen
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -26,8 +26,9 @@
 #include <time.h>
 #include <limits.h>
 
-#undef _POSIX_SEMAPHORES
-#define _POSIX_SEMAPHORES
+#ifndef _POSIX_SEMAPHORES
+#define _POSIX_SEMAPHORES 200112L
+#endif
 
 #undef SEM_VALUE_MAX
 #define SEM_VALUE_MAX INT_MAX

@@ -39,16 +39,6 @@
 
 #include <sys/cdefs.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-typedef struct _physadr {
-	short r[1];
-} *physadr;
-
-typedef struct label_t {                /* consistent with HP-UX */
-	int val[15];
-} label_t;
-#endif
-
 typedef unsigned long   vm_offset_t;
 typedef unsigned long   vm_size_t;
 

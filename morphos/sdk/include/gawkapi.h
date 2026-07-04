@@ -3,7 +3,8 @@
  */
 
 /*
- * Copyright (C) 2012-2019 the Free Software Foundation, Inc.
+ * copyright (c) 2012-2019, 2021-2024, 2026
+ * the Free Software Foundation, Inc.
  *
  * This file is part of GAWK, the GNU implementation of the
  * AWK Programming Language.
@@ -98,6 +99,12 @@
  * for arrays that will have subarrays as elements; however it is
  * a good idea to always do this.  This restriction may be relaxed
  * in a subsequent revision of the API.
+ *
+ * 3. While each routine in the API has a few lines of summary for it
+ * in this header, said summaries are not standalone, adequate documentation. You
+ * should read the chapter in the gawk manual on writing extensions. Find it online
+ * at https://www.gnu.org/software/gawk/manual/html_node/Dynamic-Extensions.html,
+ * or in the Info files distributed with gawk.
  */
 
 /* Allow use in C++ code.  */
@@ -149,6 +156,7 @@ typedef struct awk_input {
 	int fd;			/* file descriptor */
 #define INVALID_HANDLE (-1)
 	void *opaque;           /* private data for input parsers */
+
 	/*
 	 * The get_record function is called to read the next record of data.
 	 *
@@ -187,10 +195,10 @@ typedef struct awk_input {
 			const awk_fieldwidth_info_t **field_width);
 
 	/*
-	 * No argument prototype on read_func to allow for older systems
-	 * whose headers are not up to date.
+	 * This replaces the POSIX read() system call. Use it if you want to
+	 * manage reading raw bytes yourself, and let gawk parse the record.
 	 */
-	ssize_t (*read_func)();
+	ssize_t (*read_func)(int, void *, size_t);
 
 	/*
 	 * The close_func is called to allow the parser to free private data.
@@ -296,8 +304,8 @@ typedef struct awk_two_way_processor {
 	awk_const struct awk_two_way_processor *awk_const next;  /* for use by gawk */
 } awk_two_way_processor_t;
 
-#define gawk_api_major_version 3
-#define gawk_api_minor_version 0
+#define gawk_api_major_version 4
+#define gawk_api_minor_version 1
 
 /* Current version of the API. */
 enum {
@@ -329,6 +337,13 @@ enum AWK_NUMBER_TYPE {
 	AWK_NUMBER_TYPE_MPZ
 };
 
+/*
+ * When type is AWK_NUMBER_MPFR or AWK_NUMBER_MPZ, the memory pointed to
+ * by the ptr member belongs to gawk if it came from gawk.  Otherwise the
+ * memory belongs to the extension and gawk copies it when its received.
+ * See the manual for further discussion.
+ */
+
 typedef struct awk_number {
 	double d;	/* always populated in data received from gawk */
 	enum AWK_NUMBER_TYPE type;
@@ -359,7 +374,8 @@ typedef enum {
 	AWK_STRNUM,
 	AWK_ARRAY,
 	AWK_SCALAR,		/* opaque access to a variable */
-	AWK_VALUE_COOKIE	/* for updating a previously created value */
+	AWK_VALUE_COOKIE,	/* for updating a previously created value */
+	AWK_BOOL
 } awk_valtype_t;
 
 /*
@@ -374,6 +390,7 @@ typedef struct awk_value {
 		awk_array_t	a;
 		awk_scalar_t	scl;
 		awk_value_cookie_t vc;
+		awk_bool_t      b;
 	} u;
 #define str_value	u.s
 #define strnum_value	str_value
@@ -384,6 +401,7 @@ typedef struct awk_value {
 #define array_cookie	u.a
 #define scalar_cookie	u.scl
 #define value_cookie	u.vc
+#define bool_value	u.b
 } awk_value_t;
 
 /*
@@ -479,8 +497,14 @@ typedef struct gawk_api {
 	 * These can change on the fly as things happen within gawk.
 	 * Currently only do_lint is prone to change, but we reserve
 	 * the right to allow the others to do so also.
+	 *
+	 * N.B. If we ever again need to add an additional do_flags value,
+	 * it would be wise to convert this from an array to a bitmask. If
+	 * we add a new do_flags value and bump DO_FLAGS_SIZE, then it requires
+	 * us to increment the ABI version. If we use a bitmask instead, then
+	 * we will be free to add new flags without breaking ABI compatibility.
 	 */
-#define DO_FLAGS_SIZE	6
+#define DO_FLAGS_SIZE	7
 	awk_const int do_flags[DO_FLAGS_SIZE];
 /* Use these as indices into do_flags[] array to check the values */
 #define gawk_do_lint		0
@@ -489,11 +513,12 @@ typedef struct gawk_api {
 #define gawk_do_sandbox		3
 #define gawk_do_debug		4
 #define gawk_do_mpfr		5
+#define gawk_do_csv		6
 
 	/* Next, registration functions: */
 
 	/*
-	 * Add a function to the interpreter, returns true upon success. 
+	 * Add a function to the interpreter, returns true upon success.
 	 * Gawk does not modify what func points to, but the extension
 	 * function itself receives this pointer and can modify what it
 	 * points to, thus it's not const.
@@ -558,28 +583,30 @@ typedef struct gawk_api {
 	Table entry is type returned:
 
 
-	                        +-------------------------------------------------------+
-	                        |                   Type of Actual Value:               |
-	                        +--------+--------+--------+--------+-------+-----------+
-	                        | String | Strnum | Number | Regex  | Array | Undefined |
-	+-----------+-----------+--------+--------+--------+--------+-------+-----------+
-	|           | String    | String | String | String | String | false | false     |
-	|           +-----------+--------+--------+--------+--------+-------+-----------+
-	|           | Strnum    | false  | Strnum | Strnum | false  | false | false     |
-	|           +-----------+--------+--------+--------+--------+-------+-----------+
-	|           | Number    | Number | Number | Number | false  | false | false     |
-	|           +-----------+--------+--------+--------+--------+-------+-----------+
-	|           | Regex     | false  | false  | false  | Regex  | false | false     |
-	|           +-----------+--------+--------+--------+--------+-------+-----------+
-	|   Type    | Array     | false  | false  | false  | false  | Array | false     |
-	| Requested +-----------+--------+--------+--------+--------+-------+-----------+
-	|           | Scalar    | Scalar | Scalar | Scalar | Scalar | false | false     |
-	|           +-----------+--------+--------+--------+--------+-------+-----------+
-	|           | Undefined | String | Strnum | Number | Regex  | Array | Undefined |
-	|           +-----------+--------+--------+--------+--------+-------+-----------+
-	|           | Value     | false  | false  | false  | false  | false | false     |
-	|           | Cookie    |        |        |        |        |       |           |
-	+-----------+-----------+--------+--------+--------+--------+-------+-----------+
+	                        +----------------------------------------------------------------+
+	                        |                        Type of Actual Value:                   |
+	                        +--------+--------+--------+--------+--------+-------+-----------+
+	                        | String | Strnum | Number | Regex  | Bool   | Array | Undefined |
+	+-----------+-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | String    | String | String | String | String | String | false | false     |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Strnum    | false  | Strnum | Strnum | false  | false  | false | false     |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Number    | Number | Number | Number | false  | Number | false | false     |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Regex     | false  | false  | false  | Regex  | false  | false | false     |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|   Type    | Bool      | false  | false  | false  | false  | Bool   | false | false     |
+	| Requested +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Array     | false  | false  | false  | false  | false  | Array | false     |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Scalar    | Scalar | Scalar | Scalar | Scalar | Scalar | false | false     |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Undefined | String | Strnum | Number | Regex  | Bool   | Array | Undefined |
+	|           +-----------+--------+--------+--------+--------+--------+-------+-----------+
+	|           | Value     | false  | false  | false  | false  | false  | false | false     |
+	|           | Cookie    |        |        |        |        |        |       |           |
+	+-----------+-----------+--------+--------+--------+--------+--------+-------+-----------+
 	*/
 
 	/* Functions to handle parameters passed to the extension. */
@@ -775,16 +802,16 @@ typedef struct gawk_api {
 	void (*api_free)(void *ptr);
 
 	/*
-	 * A function that returns mpfr data should call this function
-	 * to allocate and initialize an mpfr_ptr for use in an
-	 * awk_value_t structure that will be handed to gawk.
+	 * Obsolete function, should not be used. It remains only
+	 * for binary compatibility.  Any value it returns should be
+	 * freed via api_free.
 	 */
 	void *(*api_get_mpfr)(awk_ext_id_t id);
 
 	/*
-	 * A function that returns mpz data should call this function
-	 * to allocate and initialize an mpz_ptr for use in an
-	 * awk_value_t structure that will be handed to gawk.
+	 * Obsolete function, should not be used. It remains only
+	 * for binary compatibility.  Any value it returns should be
+	 * freed via api_free.
 	 */
 	void *(*api_get_mpz)(awk_ext_id_t id);
 
@@ -833,6 +860,9 @@ typedef struct gawk_api {
 			 */
 			const awk_input_buf_t **ibufp,
 			const awk_output_buf_t **obufp);
+
+	/* Destroy an array. */
+	awk_bool_t (*api_destroy_array)(awk_ext_id_t id, awk_array_t a_cookie);
 } gawk_api_t;
 
 #ifndef GAWK	/* these are not for the gawk code itself! */
@@ -847,6 +877,7 @@ typedef struct gawk_api {
 #define do_sandbox	(api->do_flags[gawk_do_sandbox])
 #define do_debug	(api->do_flags[gawk_do_debug])
 #define do_mpfr		(api->do_flags[gawk_do_mpfr])
+#define do_csv		(api->do_flags[gawk_do_csv])
 
 #define get_argument(count, wanted, result) \
 	(api->api_get_argument(ext_id, count, wanted, result))
@@ -903,6 +934,8 @@ typedef struct gawk_api {
 
 #define create_array()		(api->api_create_array(ext_id))
 
+#define destroy_array(array)	(api->api_destroy_array(ext_id, array))
+
 #define clear_array(array)	(api->api_clear_array(ext_id, array))
 
 #define flatten_array_typed(array, data, index_type, value_type) \
@@ -928,6 +961,7 @@ typedef struct gawk_api {
 #define get_file(name, namelen, filetype, fd, ibuf, obuf) \
 	(api->api_get_file(ext_id, name, namelen, filetype, fd, ibuf, obuf))
 
+/* These two are obsolete and should not be used. */
 #define get_mpfr_ptr() (api->api_get_mpfr(ext_id))
 #define get_mpz_ptr() (api->api_get_mpz(ext_id))
 
@@ -1035,8 +1069,7 @@ make_number(double num, awk_value_t *result)
 
 /*
  * make_number_mpz --- make an mpz number value in result.
- * The mpz_ptr must be from a call to get_mpz_ptr. Gawk will now
- * take ownership of this memory.
+ * The mpz_ptr must be from a call to get_mpz_ptr.
  */
 
 static inline awk_value_t *
@@ -1050,8 +1083,7 @@ make_number_mpz(void *mpz_ptr, awk_value_t *result)
 
 /*
  * make_number_mpfr --- make an mpfr number value in result.
- * The mpfr_ptr must be from a call to get_mpfr_ptr. Gawk will now
- * take ownership of this memory.
+ * The mpfr_ptr must be from a call to get_mpfr_ptr.
  */
 
 static inline awk_value_t *
@@ -1060,6 +1092,16 @@ make_number_mpfr(void *mpfr_ptr, awk_value_t *result)
 	result->val_type = AWK_NUMBER;
 	result->num_type = AWK_NUMBER_TYPE_MPFR;
 	result->num_ptr = mpfr_ptr;
+	return result;
+}
+
+/* make_bool --- make a bool value in result */
+
+static inline awk_value_t *
+make_bool(awk_bool_t boolval, awk_value_t *result)
+{
+	result->val_type = AWK_BOOL;
+	result->bool_value = boolval;
 	return result;
 }
 

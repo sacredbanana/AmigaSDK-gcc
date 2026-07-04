@@ -64,11 +64,32 @@
 #ifndef _BSD_SSIZE_T_
 #define _BSD_SSIZE_T_   _G_ssize_t              /* byte count or error */
 #endif
+#ifndef _BSD_TIME32_T_
+#define _BSD_TIME32_T_  _G_time32_t             /* 32-bit time_t (legacy) */
+#endif
 #ifndef _BSD_TIME_T_
 #define _BSD_TIME_T_    _G_time_t               /* time() */
 #endif
+#ifndef _BSD_FPOS_T_
+#define _BSD_FPOS_T_    _G_fpos_t               /* getpos() */
+#endif
+#ifndef _BSD_OFF_T_
+#define _BSD_OFF_T_     _G_off_t                /* lseek() */
+#endif
 #ifndef _BSD_VA_LIST_
 #define _BSD_VA_LIST_   __gnuc_va_list          /* va_list */
+#endif
+#ifndef _BSD_CLOCKID_T_
+#define _BSD_CLOCKID_T_ _G_clockid_t            /* clockid_t */
+#endif
+#ifndef _BSD_TIMER_T_
+#define _BSD_TIMER_T_   _G_timer_t              /* timer_t */
+#endif
+#ifndef _BSD_SUSECONDS_T_
+#define _BSD_SUSECONDS_T_ _G_suseconds_t        /* suseconds_t */
+#endif
+#ifndef _BSD_USECONDS_T_
+#define _BSD_USECONDS_T_ _G_useconds_t          /* useconds_t */
 #endif
 
 /*

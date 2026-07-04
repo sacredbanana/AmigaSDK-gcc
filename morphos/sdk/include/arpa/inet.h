@@ -42,6 +42,10 @@
 
 #include <sys/cdefs.h>
 
+#ifndef _NETINET_IN_H_
+#include <netinet/in.h>
+#endif
+
 __BEGIN_DECLS
 unsigned long   inet_addr __P((const char *));
 int             inet_aton __P((const char *, struct in_addr *));

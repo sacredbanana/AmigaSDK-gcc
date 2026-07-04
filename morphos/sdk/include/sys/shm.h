@@ -54,11 +54,25 @@ struct shmid_ds {
 	pid_t             shm_lpid;       /* process ID of last shm op */
 	pid_t             shm_cpid;       /* process ID of creator */
 	short             shm_nattch;     /* number of current attaches */
-	time_t __ALIGN2__ shm_atime;      /* time of last shmat() */
-	time_t __ALIGN2__ shm_dtime;      /* time of last shmdt() */
-	time_t __ALIGN2__ shm_ctime;      /* time of last change by shmctl() */
+	time_t            shm_atime;      /* time of last shmat() */
+	time_t            shm_dtime;      /* time of last shmdt() */
+	time_t            shm_ctime;      /* time of last change by shmctl() */
+	void             *shm_internal;   /* sysv stupidity */
+};
+
+#ifdef _KERNEL_T32_STRUCTURES
+struct shmid_ds_t32 {
+	struct ipc_perm   shm_perm;       /* operation permission structure */
+	int               shm_segsz;      /* size of segment in bytes */
+	pid_t             shm_lpid;       /* process ID of last shm op */
+	pid_t             shm_cpid;       /* process ID of creator */
+	short             shm_nattch;     /* number of current attaches */
+	time32_t __ALIGN2__ shm_atime;    /* time of last shmat() */
+	time32_t __ALIGN2__ shm_dtime;    /* time of last shmdt() */
+	time32_t __ALIGN2__ shm_ctime;    /* time of last change by shmctl() */
 	void  *__ALIGN2__ shm_internal;   /* sysv stupidity */
 } __PACKED__;
+#endif
 
 #include <sys/cdefs.h>
 

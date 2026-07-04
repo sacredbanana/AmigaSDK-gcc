@@ -38,43 +38,9 @@
 #ifndef _SYS_TIME_H_
 #define _SYS_TIME_H_
 
+#include <sys/_timeval.h>
 #include <sys/types.h>
-
-/*
- * Structure defined by POSIX.4 to be like a timeval.
- */
-struct timespec {
-	time_t	tv_sec;		/* seconds */
-	long	tv_nsec;	/* and nanoseconds */
-};
-/* For backwards compatibility - Piru */
-#define ts_sec  tv_sec
-#define ts_nsec tv_nsec
-
-/*
- * Structure returned by gettimeofday(2) system call,
- * and used in other calls.
- */
-#ifndef DEVICES_TIMER_H
-/* Use whatever was included first, standard or Amiga (devices/timer.h)
- * includes (jch). */
-struct timeval {
-	long    tv_sec;         /* seconds */
-	long    tv_usec;        /* and microseconds */
-};
-#else
-#define tv_sec  tv_secs
-#define tv_usec tv_micro
-#endif
-
-#define TIMEVAL_TO_TIMESPEC(tv, ts) {                                   \
-	(ts)->ts_sec = (tv)->tv_sec;                                    \
-	(ts)->ts_nsec = (tv)->tv_usec * 1000;                           \
-}
-#define TIMESPEC_TO_TIMEVAL(tv, ts) {                                   \
-	(tv)->tv_sec = (ts)->ts_sec;                                    \
-	(tv)->tv_usec = (ts)->ts_nsec / 1000;                           \
-}
+#include <sys/timespec.h>
 
 struct timezone {
 	int     tz_minuteswest; /* minutes west of Greenwich */
@@ -127,6 +93,13 @@ struct  itimerval {
 	struct  timeval it_value;       /* current value */
 };
 
+#ifdef _KERNEL_T32_STRUCTURES
+struct itimerval_t32 {
+	struct  timeval_t32 it_interval;
+	struct  timeval_t32 it_value;
+};
+#endif
+
 /*
  * Getkerninfo clock information structure
  */
@@ -140,23 +113,34 @@ struct clockinfo {
 
 #ifdef _KERNEL
 int     itimerfix __P((struct timeval *tv));
-int     itimerdecr __P((struct itimerval *itp, int usec));
+#ifndef _KERNEL_T32_STRUCTURES
+struct itimerval_t32;
+#endif
+int     itimerdecr __P((struct itimerval_t32 *itp, int usec));
 void    microtime __P((struct timeval *tv));
 #else /* !_KERNEL */
 #include <time.h>
 
-#ifndef _POSIX_SOURCE
 #include <sys/cdefs.h>
+#ifndef _STANDALONE
+#include <sys/select.h>
+#endif
 
 __BEGIN_DECLS
+int     setitimer __P((int, const struct itimerval *, struct itimerval *));
+int     utimes __P((const char *, const struct timeval *));
+
+#if __BSD_VISIBLE
 int     adjtime __P((const struct timeval *, struct timeval *));
+int     settimeofday __P((const struct timeval *, const struct timezone *));
+#endif
+
+/*#if __XSI_VISIBLE*/
 int     getitimer __P((int, struct itimerval *));
 int     gettimeofday __P((struct timeval *, struct timezone *));
-int     setitimer __P((int, const struct itimerval *, struct itimerval *));
-int     settimeofday __P((const struct timeval *, const struct timezone *));
-int     utimes __P((const char *, const struct timeval *));
+/*#endif*/
+
 __END_DECLS
-#endif /* !POSIX */
 
 #endif /* !_KERNEL */
 

@@ -39,19 +39,13 @@
 #ifndef _STDIO_H_
 #define _STDIO_H_
 
-#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI_)
-#include <sys/types.h>
-#endif
-
 #include <sys/cdefs.h>
-
+#include <sys/types.h>
 #include <machine/ansi.h>
 
 #define __need_NULL
 #define __need_size_t
 #include <stddef.h>
-
-typedef long fpos_t;            /* Must match off_t <sys/types.h> */
 
 #ifdef _LARGEFILE64_SOURCE
 typedef int64_t fpos64_t;
@@ -134,7 +128,7 @@ typedef struct __sFILE {
 #else
 	int64_t _offset;        /* current lseek offset */
 #endif
-	fpos_t (*_seek32) __P((void *, fpos_t, int));
+	int32_t (*_seek32) __P((void *, int32_t, int));
 } FILE;
 
 #if 0
@@ -190,11 +184,13 @@ __END_DECLS
  * that the kernel can provide without allocation of a resource that can
  * fail without the process sleeping.  Do not use this for anything.
  */
+#ifndef FOPEN_MAX
 #define FOPEN_MAX       20      /* must be <= OPEN_MAX <sys/syslimits.h> */
+#endif
 #define FILENAME_MAX    1024    /* must be <= PATH_MAX <sys/syslimits.h> */
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
-#ifndef _ANSI_SOURCE
+#if __XSI_VISIBLE
 #define P_tmpdir        "/t/"
 #endif
 #define L_tmpnam        1024    /* XXX must be == PATH_MAX */
@@ -221,9 +217,20 @@ __END_DECLS
 #endif
 
 /*
+ * Functions defined in POSIX 1003.1.
+ */
+#if __BSD_VISIBLE || (__POSIX_VISIBLE && __POSIX_VISIBLE <= 199506)
+#define L_cuserid       9       /* size for cuserid(); UT_NAMESIZE + 1 */
+#endif
+
+#if __POSIX_VISIBLE
+#define L_ctermid       1024    /* size for ctermid(); PATH_MAX */
+#endif
+
+__BEGIN_DECLS
+/*
  * Functions defined in ANSI C standard.
  */
-__BEGIN_DECLS
 void     clearerr __P((FILE *));
 int      fclose __P((FILE *));
 int      feof __P((FILE *));
@@ -246,15 +253,6 @@ size_t   fwrite __P((const void *, size_t, size_t, FILE *));
 int      getc __P((FILE *));
 int      getchar __P((void));
 char    *gets __P((char *));
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern int sys_nerr;                    /* perror(3) external variables */
-#ifdef _USE_STATIC_LINKAGE
-/* don't use this here, as the shared library defines it, and we can't get
- * at a character array there, only at a pointer array. So always use
- * strerror() when you want what you normally accomplish with sys_errlist[] */
-extern char *sys_errlist[];
-#endif
-#endif
 void     perror __P((const char *));
 int      printf __P((const char *, ...));
 int      putc __P((int, FILE *));
@@ -274,48 +272,76 @@ int      ungetc __P((int, FILE *));
 int      vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
 int      vprintf __P((const char *, _BSD_VA_LIST_));
 int      vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+#if __ISO_C_VISIBLE >= 1999 || __POSIX_VISIBLE >= 199506
 int      snprintf __P((char *, size_t, const char *, ...));
 int      vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+#endif
+#if __ISO_C_VISIBLE >= 1999
 int      vfscanf __P((FILE *, const char *, _BSD_VA_LIST_));
 int      vscanf __P((const char *, _BSD_VA_LIST_));
 int      vsscanf __P((const char *, const char *, _BSD_VA_LIST_));
-#ifdef _LARGEFILE64_SOURCE
-int fgetpos64 __P((FILE *, fpos64_t *));
-int fsetpos64 __P((FILE *, const fpos64_t *));
-int fseeko64 __P((FILE *, off64_t, int));
-fpos64_t ftello64 __P((FILE *));
 #endif
-__END_DECLS
+#ifdef _LARGEFILE64_SOURCE
+int      fgetpos64 __P((FILE *, fpos64_t *));
+int      fsetpos64 __P((FILE *, const fpos64_t *));
+#endif
 
-/*
- * Functions defined in POSIX 1003.1.
- */
-#ifndef _ANSI_SOURCE
-#define L_cuserid       9       /* size for cuserid(); UT_NAMESIZE + 1 */
-#define L_ctermid       1024    /* size for ctermid(); PATH_MAX */
-
-__BEGIN_DECLS
+#if __POSIX_VISIBLE
 char    *ctermid __P((char *));
 FILE    *fdopen __P((int, const char *));
 int      fileno __P((FILE *));
-__END_DECLS
-#endif /* not ANSI */
+#endif
+
+#if __POSIX_VISIBLE >= 199209
+int      pclose __P((FILE *));
+FILE    *popen __P((const char *, const char *));
+#endif
+
+
+#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE >= 500
+int      fseeko __P((FILE *, off_t, int));
+off_t    ftello __P((FILE *));
+#ifdef _LARGEFILE64_SOURCE
+int      fseeko64 __P((FILE *, off64_t, int));
+off64_t  ftello64 __P((FILE *));
+#endif
+#endif
+
+#if __BSD_VISIBLE || __XSI_VISIBLE > 0 && __XSI_VISIBLE < 600
+int      getw __P((FILE *));
+int      putw __P((int, FILE *));
+#endif
+
+#if __XSI_VISIBLE
+char    *tempnam __P((const char *, const char *));
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+/*FILE    *fmemopen __P((void *, size_t, const char *));*/
+/*ssize_t  getdelim __P((char **, size_t *, int, FILE *));*/
+/*FILE    *open_memstream __P((char **, size_t *));*/
+int      renameat __P((int, const char *, int, const char *));
+/*int       vdprintf __P((int, const char *, __va_list);)*/
+/*ssize_t   getline __P((char **, size_t *, FILE *));*/
+/*int       dprintf __P((int, const char *, ...));*/
+#endif
 
 /*
  * Routines that are purely local.
  */
-#if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-__BEGIN_DECLS
+#if __BSD_VISIBLE
 char    *fgetln __P((FILE *, size_t *));
 int      fpurge __P((FILE *));
-int      getw __P((FILE *));
-int      pclose __P((FILE *));
-FILE    *popen __P((const char *, const char *));
-int      putw __P((int, FILE *));
 void     setbuffer __P((FILE *, char *, int));
 int      setlinebuf __P((FILE *));
-char    *tempnam __P((const char *, const char *));
-__END_DECLS
+
+extern int sys_nerr;                    /* perror(3) external variables */
+#ifdef _USE_STATIC_LINKAGE
+/* don't use this here, as the shared library defines it, and we can't get
+ * at a character array there, only at a pointer array. So always use
+ * strerror() when you want what you normally accomplish with sys_errlist[] */
+extern char *sys_errlist[];
+#endif
 
 /*
  * This is a #define because the function is used internally and
@@ -327,25 +353,41 @@ __END_DECLS
 /*
  * Stdio function-access interface.
  */
-__BEGIN_DECLS
 FILE    *funopen __P((const void *,
 		int (*)(void *, char *, int),
 		int (*)(void *, const char *, int),
 		fpos_t (*)(void *, fpos_t, int),
 		int (*)(void *)));
-__END_DECLS
 #define fropen(cookie, fn) funopen(cookie, fn, 0, 0, 0)
 #define fwopen(cookie, fn) funopen(cookie, 0, fn, 0, 0)
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+
+/*
+ * Portability hacks.  See <sys/types.h>.
+ */
+#ifndef _FTRUNCATE_DECLARED
+#define	_FTRUNCATE_DECLARED
+int      ftruncate __P((int, off_t));
+#endif
+#ifndef _LSEEK_DECLARED
+#define	_LSEEK_DECLARED
+off_t    lseek __P((int, off_t, int));
+#endif
+#ifndef _MMAP_DECLARED
+#define	_MMAP_DECLARED
+void    *mmap __P((void *, size_t, int, int, int, off_t));
+#endif
+#ifndef _TRUNCATE_DECLARED
+#define	_TRUNCATE_DECLARED
+int      truncate __P((const char *, off_t));
+#endif
+#endif /* __BSD_VISIBLE */
 
 /*
  * Functions internal to the implementation.
  */
-__BEGIN_DECLS
 int     __srget __P((FILE *));
 int     __svfscanf __P((FILE *, const char *, _BSD_VA_LIST_));
 int     __swbuf __P((int, FILE *));
-__END_DECLS
 
 /*
  * The __sfoo macros are here so that we can
@@ -373,6 +415,8 @@ static __inline int __sputc(int _c, FILE *_p) {
 		(*(p)->_p = (c), (int)*(p)->_p++))
 #endif
 
+#ifndef __cplusplus
+
 #define __sfeof(p)      (((p)->_flags & __SEOF) != 0)
 #define __sferror(p)    (((p)->_flags & __SERR) != 0)
 #define __sclearerr(p)  ((void)((p)->_flags &= ~(__SERR|__SEOF)))
@@ -382,15 +426,17 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define ferror(p)       __sferror(p)
 #define clearerr(p)     __sclearerr(p)
 
-#ifndef _ANSI_SOURCE
+#if __POSIX_VISIBLE
 #define fileno(p)       __sfileno(p)
 #endif
 
-#ifndef lint
 #define getc(fp)        __sgetc(fp)
 #define putc(x, fp)     __sputc(x, fp)
-#endif /* lint */
 
 #define getchar()       getc(stdin)
 #define putchar(x)      putc(x, stdout)
+#endif /* __cplusplus */
+
+__END_DECLS
+
 #endif /* _STDIO_H_ */

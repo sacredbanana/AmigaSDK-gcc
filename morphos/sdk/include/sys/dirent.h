@@ -41,7 +41,7 @@
 #include <sys/types.h>
 
 /*
- * The dirent structure defines the format of directory entries returned by 
+ * The dirent structure defines the format of directory entries returned by
  * the getdirentries(2) system call.
  *
  * A directory entry has a struct dirent at the front of it, containing its
@@ -56,13 +56,15 @@ struct dirent {
 	u_int16_t d_reclen;             /* length of this record */
 	u_int8_t  d_type;               /* file type, see below */
 	u_int8_t  d_namlen;             /* length of string in d_name */
-#ifdef _POSIX_SOURCE
-	char    d_name[255 + 1];        /* name must be no longer than this */
-#else
+#if __BSD_VISIBLE
 #define MAXNAMLEN       255
 	char    d_name[MAXNAMLEN + 1];  /* name must be no longer than this */
+#else
+	char    d_name[255 + 1];        /* name must be no longer than this */
 #endif
 };
+
+#if __BSD_VISIBLE
 
 /*
  * File types
@@ -82,5 +84,6 @@ struct dirent {
  */
 #define IFTODT(mode)    (((mode) & 0170000) >> 12)
 #define DTTOIF(dirtype) ((dirtype) << 12)
+#endif
 
 #endif /* _SYS_DIRENT_H_ */

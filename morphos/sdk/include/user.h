@@ -1,6 +1,7 @@
 /*
  *  This file is part of ixemul.library for the Amiga.
  *  Copyright (C) 1991, 1992  Markus M. Wild
+ *  Portions Copyright (C) 2019-2025 Harry Sintonen
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -19,6 +20,10 @@
 
 #ifndef _USER_H_
 #define _USER_H_
+
+#ifndef _KERNEL_T32_STRUCTURES
+#define _KERNEL_T32_STRUCTURES
+#endif
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -39,6 +44,7 @@
 #include <resolv.h>
 #include <ix.h>
 #include <wchar.h>
+#include <limits.h>
 
 struct ixnode {
   struct ixnode *next, *prev;
@@ -54,9 +60,22 @@ struct utimenode {
 };
 
 /* internal structure used by malloc(), kmalloc() and friends */
+struct malloc_data_old {
+  struct ixlist         md_list;
+  unsigned int          md_malloc_sbrk_used;
+};
+
+#define IXM_SMALL_MAX   512
+#define IXM_SMALL_STEP  16
+#define IXM_SMALL_NCLS  (IXM_SMALL_MAX / IXM_SMALL_STEP)
+#define IXM_SMALL_MAGIC 0x534D414CUL  /* 'SMAL' */
+
 struct malloc_data {
   struct ixlist         md_list;
   unsigned int          md_malloc_sbrk_used;
+  APTR md_small_pool;
+  struct ixm_small_node *md_small_free[IXM_SMALL_NCLS];
+  unsigned int          md_malloctime_dumped;
 };
 
 /* internal structure used by the stackextend code */
@@ -97,6 +116,7 @@ struct mmap_mem {
 	void            *addr;
 	size_t          length;
 	int             fd;
+	struct file    *sharedfile;
 #ifdef _LARGEFILE64_SOURCE
 	off64_t         offset;
 #else
@@ -145,6 +165,29 @@ struct vfork_msg {
 
 /* default size */
 #define A4_POINTERS 100
+
+/* Packed siginfo_t */
+typedef struct {
+	int          usi_signo;
+	int          usi_code;
+	pid_t        usi_pid;
+	uid_t        usi_uid;
+	int          usi_status;
+	union sigval usi_value;
+	union {
+		struct {
+			int     _timerid;
+			int     _overrun;
+		} _timer;
+		struct {
+			uint32_t _amigasigs;
+		} _asigs;
+        } usi_reason;
+} u_siginfo_t;
+#define usi_timerid usi_reason._timer._timerid
+#define usi_overrun usi_reason._timer._overrun
+#define usi_amigasigs usi_reason._asigs._amigasigs
+
 
 /* NB: a list of pointers for shared libraries is allocated *before*
    the start of this struct! So the struct is actually larger, but
@@ -197,10 +240,10 @@ struct user {
 	short                   u_cmask;        /* mask for file creation */
 
 /* 1.5 - timing and statistics */
-	struct rusage           u_ru;           /* stats for this proc */
-	struct rusage           u_cru;          /* sum of stats for reaped children */
-	struct itimerval        u_timer[3];
-	struct timeval          u_start;
+	struct rusage_t32       u_ru;           /* stats for this proc */
+	struct rusage_t32       u_cru;          /* sum of stats for reaped children */
+	struct itimerval_t32    u_timer[3];
+	uint32_t                u_start_pad[2]; /* currently unused */
 	struct utimenode        u_time;
 	short                   u_acflag;
 
@@ -216,7 +259,7 @@ struct user {
 	struct  rlimit u_rlimit[RLIM_NLIMITS];
 
 /* amiga specific stuff */
-	struct malloc_data      u_md;
+	struct malloc_data_old      u_md_old;
 
 	struct ixnode           u_user_node;
 	struct Task             *u_task;
@@ -297,17 +340,13 @@ struct user {
 	/* currently there's just 1, meaning don't trace me */
 	u_int                   u_trace_flags;
 
-	/* this is for getmntinfo() */
-	struct statfs           *u_mntbuf;
+	/* this is for __obsolete_getmntinfo() */
+	void                    *u_mntbuf;
 	int                     u_mntsize;
 	long                    u_bufsize;
 
-	/* this is for getmntinfo64() */
-#ifdef _LARGEFILE64_SOURCE
-	struct statfs64         *u_mntbuf64;
-#else
-	void                    *u_mntbuf64;
-#endif
+	/* this is for getmntinfo() */
+	struct statfs           *u_mntbuf64;
 	int                     u_mntsize64;
 	long                    u_bufsize64;
 
@@ -390,7 +429,7 @@ struct user {
 	struct muGroupInfo      *u_fileGroupInfo;   /* private muGroupInfo for database ops */
 	BOOL                    u_groupfileopen;    /* dummy for emulation */
 	BOOL                    u_passwdfileopen;   /* dummy for emulation */
-	struct passwd           u_passwd;       /* static buffer to hold the data */
+	struct passwd_t32       u_passwd32;     /* static buffer to hold the data (32-bit time_t) */
 	struct group            u_group;        /* ditto */
 
 	FILE                    *u_grp_fp;      /* File pointer to the groups file */
@@ -482,7 +521,7 @@ struct user {
 	void			*u_sdata_ptr;
 	void 			*u_wbmsg;
 	struct ixnode		u_detached_node;
-	sigset_t		u_exceptsigs;
+	uint32_t		u_exceptsigs;
 
 	/* alloca handling - 50.2 */
 	struct alloca_mem       *u_alloca;
@@ -497,7 +536,42 @@ struct user {
 	mbstate_t		u_is;  /* per caller static wchar state */
 	int			u_threadtype; /* one of IX_TT_#? */
 	uint32_t		u_eflags;
+
+	struct passwd           u_passwd;       /* static buffer to hold the data */
+
+	/* Currenly set locale categories */
+	char			u_lc_all[20];
+	char			u_lc_ctype[20];
+	/* current ctype array (returned to crt0.o by ix_get_vars) */
+	char			u_ctype_array[256 + 1];
+
+	sigset_t		p_siginfoflag;
+	sigset_t		p_signodeferflag;
+	sigset_t		p_sigresethandflag;
+	sigset_t		p_siginfofilled;
+	u_siginfo_t		p_stdsiginfo[_SIG_IDX(NSIG)];
+#if 0
+	u_siginfo_t		p_sigqueue[_POSIX_SIGQUEUE_MAX];
+	int			p_sigqueueidx;
+#endif
+	struct ixlist		p_posixtimers;
+	sigset_t		p_sigwait;	/* signals being sigwait */
+	
+	struct malloc_data      u_md;
 };
+
+#define SIGADDSET(set, signo) ((set) |= _SIG_BIT(signo))
+#define SIGDELSET(set, signo) ((set) &= ~_SIG_BIT(signo))
+#define SIGEMPTYSET(set) ((set) = 0)
+#define SIGFILLSET(set) ((set) = ~0U)
+#define SIGISMEMBER(set, signo) ((set) & _SIG_BIT(signo))
+#define SIGISEMPTY(set) ((set) == 0)
+#define SIGNOTEMPTY(set) ((set) != 0)
+#define SIGSETEQ(set1, set2) ((set1) == (set2))
+#define SIGSETNEQ(set1, set2) ((set1) != (set2))
+#define SIGSETOR(set1, set2) ((set1) |= (set2))
+#define SIGSETAND(set1, set2) ((set1) &= (set2))
+#define SIGSETNAND(set1, set2) ((set1) &= ~(set2))
 
 enum
 {

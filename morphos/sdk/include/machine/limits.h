@@ -38,6 +38,8 @@
 #ifndef _MACHINE_LIMITS_H_
 #define _MACHINE_LIMITS_H_
 
+#include <sys/cdefs.h>
+
 #define CHAR_BIT        8               /* number of bits in a char */
 #define MB_LEN_MAX      1               /* no multibyte characters */
 
@@ -64,22 +66,29 @@
 #define LLONG_MAX       0x7fffffffffffffffLL        /* max value for a long long */
 #define LLONG_MIN       (-0x7fffffffffffffffLL-1)  /* min value for a long long */
 
-#if !defined(_ANSI_SOURCE)
-#define SSIZE_MAX       INT_MAX         /* max value for a ssize_t */
-
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#define SIZE_T_MAX      UINT_MAX        /* max value for a size_t */
-
 #define UQUAD_MAX       0xffffffffffffffffULL           /* max unsigned quad */
 #define QUAD_MAX        0x7fffffffffffffffLL            /* max signed quad */
 #define QUAD_MIN        (-0x7fffffffffffffffLL-1)       /* min signed quad */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#if __POSIX_VISIBLE || __XSI_VISIBLE
+#define SSIZE_MAX       INT_MAX         /* max value for a ssize_t */
+#endif
 
-#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE
+#define SIZE_T_MAX      UINT_MAX        /* max value for a size_t */
+
+#define OFF_MAX         LLONG_MAX        /* max value for an off_t */
+#define OFF_MIN         LLONG_MIN        /* min value for an off_t */
+#endif
+
+#if __XSI_VISIBLE || __POSIX_VISIBLE >= 200809
 #define LONG_BIT        32
 #define WORD_BIT        32
+#endif
+
+#if __POSIX_VISIBLE
+#define MQ_PRIO_MAX     32
+#endif
 
 #define DBL_DIG         15
 #ifndef DBL_MAX
@@ -91,8 +100,6 @@
 #ifndef FLT_MAX
 #define FLT_MAX         3.40282347E+38F
 #define FLT_MIN         1.17549435E-38F
-#endif
-
 #endif
 
 #endif /* _MACHINE_LIMITS_H_ */

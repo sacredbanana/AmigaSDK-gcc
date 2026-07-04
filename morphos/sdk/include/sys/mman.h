@@ -74,7 +74,14 @@
 #define MAP_FAILED      ((void *)-1)
 
 /*
- * Advice to madvise
+ * msync() flags
+ */
+#define MS_SYNC         0x0000  /* msync synchronously */
+#define MS_ASYNC        0x0001  /* return immediately */
+#define MS_INVALIDATE   0x0002  /* invalidate all cached data */
+
+/*
+ * Advise to madvise
  */
 #define MADV_NORMAL     0       /* no further special treatment */
 #define MADV_RANDOM     1       /* expect random page references */
@@ -82,21 +89,39 @@
 #define MADV_WILLNEED   3       /* will need these pages */
 #define MADV_DONTNEED   4       /* dont need these pages */
 
+/*
+ * Advise to posix_madvise
+ */
+#define POSIX_MADV_NORMAL     MADV_NORMAL
+#define POSIX_MADV_RANDOM     MADV_RANDOM
+#define POSIX_MADV_SEQUENTIAL MADV_SEQUENTIAL
+#define POSIX_MADV_WILLNEED   MADV_WILLNEED
+#define POSIX_MADV_DONTNEED   MADV_DONTNEED
+
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 /* Some of these int's should probably be size_t's */
-caddr_t mmap __P((caddr_t, size_t, int, int, int, off_t));
-int     mprotect __P((caddr_t, size_t, int));
-int     munmap __P((caddr_t, size_t));
-int     msync __P((caddr_t, size_t));
-int     mlock __P((caddr_t, size_t));
-int     munlock __P((caddr_t, size_t));
-int     madvise __P((caddr_t, size_t, int));
+#ifndef _MMAP_DECLARED
+#define	_MMAP_DECLARED
+void   *mmap __P((void *, size_t, int, int, int, off_t));
+#endif
+int     mprotect __P((void *, size_t, int));
+int     munmap __P((void *, size_t));
+int     msync __P((void *, size_t, int));
+int     mlock __P((const void *, size_t));
+int     munlock __P((const void *, size_t));
+int     madvise __P((void *, size_t, int));
+int     posix_madvise __P((void *, size_t, int));
+int     mlockall __P((int));
+int     munlockall __P((void));
+int     shm_open __P((const char *, int, mode_t));
+int     shm_unlink __P((const char *));
 __END_DECLS
 
 #endif /* !_KERNEL */
+
 
 #endif /* _SYS_MMAN_H_ */

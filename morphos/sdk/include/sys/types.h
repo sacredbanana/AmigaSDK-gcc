@@ -45,6 +45,8 @@
 
 #define __BUILD_IS_IXEMUL
 
+#include <sys/cdefs.h>
+
 /* Machine type dependent parameters. */
 #include <machine/types.h>
 
@@ -62,13 +64,15 @@
 #endif
 #endif
 
-#if !defined _POSIX_SOURCE || defined __MORPHOS__
+#if __BSD_VISIBLE || defined __MORPHOS__
 typedef unsigned char   u_char;
 typedef unsigned short  u_short;
 typedef unsigned int    u_int;
 typedef unsigned long   u_long;
+#ifndef _KERNEL
 typedef unsigned short  ushort;         /* Sys V compatibility */
 typedef unsigned int    uint;           /* Sys V compatibility */
+#endif
 #endif
 
 typedef u_int64_t       u_quad_t;       /* quads */
@@ -77,22 +81,45 @@ typedef quad_t *        qaddr_t;
 
 typedef char *          caddr_t;        /* core address */
 typedef int32_t         daddr_t;        /* disk address */
+typedef int64_t         blkcnt_t;
+typedef int32_t         blksize_t;
 typedef int16_t         dev_t;          /* device number */
+typedef u_int64_t       fsblkcnt_t;
+typedef u_int64_t       fsfilcnt_t;
 typedef u_int32_t       fixpt_t;        /* fixed point number */
 typedef u_int16_t       gid_t;          /* group id */
+typedef int64_t         id_t;           /* generic id */
 typedef u_int32_t       ino_t;          /* inode number */
 typedef long            key_t;          /* IPC key (for Sys V IPC) */
 typedef u_int16_t       mode_t;         /* permissions */
 typedef u_int16_t       nlink_t;        /* link count */
-typedef int32_t         off_t;          /* file offset */
 typedef int32_t         pid_t;          /* process id */
 typedef int32_t         rlim_t;         /* resource limit */
 typedef int32_t         segsz_t;        /* segment size */
 typedef int32_t         swblk_t;        /* swap offset */
 typedef u_int16_t       uid_t;          /* user id */
+typedef int64_t         off64_t;        /* 64-bit file offset */
+#ifndef __socklen_t_defined
+typedef u_int32_t       socklen_t;
+# define __socklen_t_defined
+#endif
 
-#ifdef _LARGEFILE64_SOURCE
-typedef int64_t         off64_t;        /* 64bit file offset */
+#ifdef  _BSD_FPOS_T_
+typedef _BSD_FPOS_T_    fpos_t;
+#undef  _BSD_FPOS_T_
+#endif
+
+#ifdef  _BSD_OFF_T_
+typedef _BSD_OFF_T_     off_t;
+#undef  _BSD_OFF_T_
+#endif
+
+#ifndef _SIZE_T
+#ifdef  _BSD_SIZE_T_
+typedef _BSD_SIZE_T_    size_t;
+#define _SIZE_T
+#undef  _BSD_SIZE_T_
+#endif
 #endif
 
 /*
@@ -100,24 +127,30 @@ typedef int64_t         off64_t;        /* 64bit file offset */
  * long arguments will be promoted to off_t if the program fails to 
  * include that header or explicitly cast them to off_t.
  */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #ifndef _KERNEL
-#include <sys/cdefs.h>
 __BEGIN_DECLS
-off_t    lseek __P((int, off_t, int));
+#ifndef _FTRUNCATE_DECLARED
+#define	_FTRUNCATE_DECLARED
 int      ftruncate __P((int, off_t));
+#endif
+#ifndef _LSEEK_DECLARED
+#define _LSEEK_DECLARED
+off_t    lseek __P((int, off_t, int));
+#endif
+#ifndef _MMAP_DECLARED
+#define	_MMAP_DECLARED
+void    *mmap __P((void *, size_t, int, int, int, off_t));
+#endif
+#ifndef _TRUNCATE_DECLARED
+#define	_TRUNCATE_DECLARED
 int      truncate __P((const char *, off_t));
-
-#ifdef _LARGEFILE64_SOURCE
-off64_t  lseek64 __P((int, off64_t, int));
-int      ftruncate64 __P((int, off64_t));
-int      truncate64 __P((const char *, off64_t));
 #endif
 __END_DECLS
 #endif /* !_KERNEL */
-#endif /* !_POSIX_SOURCE */
+#endif /* !__BSD_VISIBLE */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 /* Major, minor numbers, dev_t's. */
 #define major(x)        ((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
 #define minor(x)        ((int32_t)((x) & 0xff))
@@ -139,10 +172,33 @@ typedef _BSD_TIME_T_    time_t;
 #undef  _BSD_TIME_T_
 #endif
 
+#define __TIMESIZE 64
+typedef int32_t time32_t;
+
+#ifdef  _BSD_CLOCKID_T_
+typedef _BSD_CLOCKID_T_ clockid_t;
+#undef  _BSD_CLOCKID_T_
+#endif
+
+#ifdef  _BSD_TIMER_T_
+typedef _BSD_TIMER_T_   timer_t;
+#undef  _BSD_TIMER_T_
+#endif
+
+#ifdef  _BSD_SUSECONDS_T_
+typedef _BSD_SUSECONDS_T_ suseconds_t;
+#undef  _BSD_SUSECONDS_T_
+#endif
+
+#ifdef  _BSD_USECONDS_T_
+typedef _BSD_USECONDS_T_ useconds_t;
+#undef  _BSD_USECONDS_T_
+#endif
+
 #define __need_size_t
 #include <stddef.h>
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define NBBY    8               /* number of bits in a byte */
 
 #include <sys/select.h>
@@ -163,5 +219,5 @@ struct  tty;
 struct  uio;
 #endif
 
-#endif /* !_POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 #endif /* !_SYS_TYPES_H_ */

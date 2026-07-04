@@ -22,14 +22,27 @@ struct semid_ds {
 	struct  ipc_perm sem_perm;      /* operation permission struct */
 	struct  sem *sem_base;          /* pointer to first semaphore in set */
 	u_short sem_nsems;              /* number of sems in set */
-	time_t  __ALIGN2__ sem_otime;   /* last operation time */
+	time_t  sem_otime;              /* last operation time */
+	time_t  sem_ctime;              /* last change time */
+					/* Times measured in secs since */
+					/* 00:00:00 GMT, Jan. 1, 1970 */
+	long    sem_pad3[4];            /* SVABI/386 says I need this here */
+};
+
+#ifdef _KERNEL_T32_STRUCTURES
+struct semid_ds_t32 {
+	struct  ipc_perm sem_perm;      /* operation permission struct */
+	struct  sem *sem_base;          /* pointer to first semaphore in set */
+	u_short sem_nsems;              /* number of sems in set */
+	time32_t  __ALIGN2__ sem_otime; /* last operation time */
 	long    __ALIGN2__ sem_pad1;    /* SVABI/386 says I need this here */
-	time_t  __ALIGN2__ sem_ctime;   /* last change time */
+	time32_t  __ALIGN2__ sem_ctime; /* last change time */
 					/* Times measured in secs since */
 					/* 00:00:00 GMT, Jan. 1, 1970 */
 	long    __ALIGN2__ sem_pad2;    /* SVABI/386 says I need this here */
 	long    __ALIGN2__ sem_pad3[4]; /* SVABI/386 says I need this here */
 } __PACKED__;
+#endif
 
 /*
  * semop's sops parameter structure
@@ -51,6 +64,14 @@ union semun {
 	struct  semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
 	u_short *array;         /* array for GETALL & SETALL */
 };
+
+#ifdef _KERNEL_T32_STRUCTURES
+union semun_t32 {
+	int     val;
+	struct  semid_ds_t32 *buf;
+	u_short *array;
+};
+#endif
 
 /*
  * commands for semctl

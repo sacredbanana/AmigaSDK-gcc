@@ -44,17 +44,17 @@
 #define _CTYPE_H_
 #include <sys/cdefs.h>
 
-#define _U      0x01
-#define _L      0x02
-#define _N      0x04
-#define _S      0x08
-#define _P      0x10
-#define _C      0x20
-#define _X      0x40
-#define _B      0x80
+#define _CTYPE_U      0x01
+#define _CTYPE_L      0x02
+#define _CTYPE_N      0x04
+#define _CTYPE_S      0x08
+#define _CTYPE_P      0x10
+#define _CTYPE_C      0x20
+#define _CTYPE_X      0x40
+#define _CTYPE_B      0x80
 
 #ifdef _KERNEL
-extern const char _ctype_[];
+#define _ctype_ u.u_ctype_array
 #else
 extern const char       *_ctype_;
 #endif
@@ -74,39 +74,48 @@ extern int      isxdigit __P ((int));
 extern int      tolower __P ((int));
 extern int      toupper __P ((int));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern int      isblank __P ((int));
+#if __XSI_VISIBLE
 extern int      isascii __P ((int));
 extern int      toascii __P ((int));
+#endif
+#if __ISO_C_VISIBLE >= 1999
+extern int      isblank __P ((int));
+#endif
+#if __XSI_VISIBLE
 extern int      _tolower __P ((int));
 extern int      _toupper __P ((int));
 #endif
 __END_DECLS
 
 #if (defined(__GNUC__) && !defined(__STRICT_ANSI__))
-#define isdigit(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _N); } )
-#define islower(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _L); } )
-#define isspace(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _S); } )
-#define ispunct(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _P); } )
-#define isupper(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _U); } )
-#define isalpha(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_U|_L)); } )
-#define isxdigit(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_N|_X)); } )
-#define isalnum(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_U|_L|_N)); } )
-#define isprint(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_P|_U|_L|_N|_B)); } )
-#define isgraph(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_P|_U|_L|_N)); } )
-#define iscntrl(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _C); } )
-#define toupper(c)	( { int _c = (c); ((_ctype_ + 1)[(unsigned char)_c] & _L) ? _c - 'a' + 'A' : _c; } )
-#define tolower(c)	( { int _c = (c); ((_ctype_ + 1)[(unsigned char)_c] & _U) ? _c - 'A' + 'a' : _c; } )
+#define isdigit(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_N); } )
+#define islower(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_L); } )
+#define isspace(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_S); } )
+#define ispunct(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_P); } )
+#define isupper(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_U); } )
+#define isalpha(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_CTYPE_U|_CTYPE_L)); } )
+#define isxdigit(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_CTYPE_N|_CTYPE_X)); } )
+#define isalnum(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_CTYPE_U|_CTYPE_L|_CTYPE_N)); } )
+#define isprint(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)); } )
+#define isgraph(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N)); } )
+#define iscntrl(c)	( { int _c = (c); (_c & ~0xFF) ? (0) : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_C); } )
+#define toupper(c)	( { int _c = (c); ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_L) ? _c - 'a' + 'A' : _c; } )
+#define tolower(c)	( { int _c = (c); ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_U) ? _c - 'A' + 'a' : _c; } )
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined (_POSIX_SOURCE)
+#if __ISO_C_VISIBLE >= 1999 && !defined(__cplusplus)
 #define isblank(c)      ((c) == ' ' || (c) == '\t')
+#endif
+
+#if __XSI_VISIBLE
 #define isascii(c)      (((c) & ~0177) == 0)
 #define toascii(c)      ((c) & 0177)
-#define isiso(c)        (((c) & ~0377) == 0)
-#define toiso(c)        ((c) & 0377)
 #define _tolower(c)     ((c) - 'A' + 'a')
 #define _toupper(c)     ((c) - 'a' + 'A')
+#endif
+#if __BSD_VISIBLE
+#define isiso(c)        (((c) & ~0377) == 0)
+#define toiso(c)        ((c) & 0377)
 #endif
 
 #endif /* !_CTYPE_H_ */

@@ -198,8 +198,8 @@ struct rrec {
 	char *__ALIGN2__ r_data;                /* pointer to data */
 } __PACKED__;
 
-extern  u_int16_t       _getshort();
-extern  u_int32_t       _getlong();
+extern  u_int16_t       _getshort __P((const u_char *));
+extern  u_int32_t       _getlong __P((const u_char *));
 
 /*
  * Inline versions of get/put short/long.

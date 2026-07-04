@@ -41,8 +41,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ASM_H_
-#define _ASM_H_
+#ifndef _M68K_ASM_H_
+#define _M68K_ASM_H_
 
 #ifdef __STDC__
 #define _C_LABEL(name)          _ ## name
@@ -73,4 +73,4 @@
 
 #define RCSID(x)                .text; .asciz x
 
-#endif /* _ASM_H_ */
+#endif /* _M68K_ASM_H_ */

@@ -68,9 +68,10 @@ struct pollfd {
 #define	POLLRDBAND	0x0080		/* OOB/Urgent readable data */
 #define	POLLWRBAND	0x0100		/* OOB/Urgent data can be written */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 /* General FreeBSD extension (currently only supported for sockets): */
 #define	POLLINIGNEOF	0x2000		/* like POLLIN, except ignore EOF */
+#define	POLLRDHUP	0x4000		/* half shut down */
 #endif
 
 /*
@@ -81,7 +82,7 @@ struct pollfd {
 #define	POLLHUP		0x0010		/* file descriptor was "hung up" */
 #define	POLLNVAL	0x0020		/* requested events "invalid" */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 
 #define	POLLSTANDARD	(POLLIN|POLLPRI|POLLOUT|POLLRDNORM|POLLRDBAND|\
 			 POLLWRBAND|POLLERR|POLLHUP|POLLNVAL)
@@ -97,17 +98,22 @@ struct pollfd {
 
 #ifndef _KERNEL
 
-#ifndef _POSIX_SOURCE
+#if __POSIX_VISIBLE >= 202405
 #include <sys/types.h>
 
-#include <sys/signal.h>
-#include <sys/time.h>
+#include <sys/_sigset.h>
+#include <sys/timespec.h>
+
+#ifndef _SIGSET_T_DECLARED
+#define _SIGSET_T_DECLARED
+typedef __sigset_t      sigset_t;
+#endif
 
 #endif
 
 __BEGIN_DECLS
 int	poll(struct pollfd _pfd[], nfds_t _nfds, int _timeout);
-#ifndef _POSIX_SOURCE
+#if __POSIX_VISIBLE >= 202405
 int	ppoll(struct pollfd _pfd[], nfds_t _nfds,
 	    const struct timespec *_timeout,
 	    const sigset_t *_newsigmask);

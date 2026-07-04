@@ -199,4 +199,6 @@
 #define __pure
 #endif
 
+#include <sys/_visible.h>
+
 #endif /* !_SYS_CDEFS_H_ */

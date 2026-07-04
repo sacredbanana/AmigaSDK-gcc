@@ -43,6 +43,10 @@
 #ifndef _NETINET_IN_H_
 #define _NETINET_IN_H_
 
+#ifndef _SYS_SOCKET_H_
+#include <sys/socket.h>
+#endif
+
 /*
  * Protocols
  */
@@ -63,6 +67,10 @@
 #define IPPROTO_RAW             255             /* raw IP packet */
 #define IPPROTO_MAX             256
 
+/*
+ * Type to represent a port.
+ */
+typedef u_int16_t in_port_t;
 
 /*
  * Local port number conventions:
@@ -77,8 +85,9 @@
 /*
  * Internet address (a structure for historical reasons)
  */
+typedef u_int32_t in_addr_t;
 struct in_addr {
-	u_int32_t s_addr;
+	in_addr_t s_addr;
 };
 
 /*
@@ -91,32 +100,32 @@ struct in_addr {
  * on these macros not doing byte-swapping.
  */
 #ifdef _KERNEL
-#define __IPADDR(x)     htonl((u_int32_t)(x))
+#define __IPADDR(x)     htonl((in_addr_t)(x))
 #else
-#define __IPADDR(x)     ((u_int32_t)(x))
+#define __IPADDR(x)     ((in_addr_t)(x))
 #endif
 
-#define IN_CLASSA(i)            (((u_int32_t)(i) & __IPADDR(0x80000000)) == \
+#define IN_CLASSA(i)            (((in_addr_t)(i) & __IPADDR(0x80000000)) == \
 				 __IPADDR(0x00000000))
 #define IN_CLASSA_NET           __IPADDR(0xff000000)
 #define IN_CLASSA_NSHIFT        24
 #define IN_CLASSA_HOST          __IPADDR(0x00ffffff)
 #define IN_CLASSA_MAX           128
 
-#define IN_CLASSB(i)            (((u_int32_t)(i) & __IPADDR(0xc0000000)) == \
+#define IN_CLASSB(i)            (((in_addr_t)(i) & __IPADDR(0xc0000000)) == \
 				 __IPADDR(0x80000000))
 #define IN_CLASSB_NET           __IPADDR(0xffff0000)
 #define IN_CLASSB_NSHIFT        16
 #define IN_CLASSB_HOST          __IPADDR(0x0000ffff)
 #define IN_CLASSB_MAX           65536
 
-#define IN_CLASSC(i)            (((u_int32_t)(i) & __IPADDR(0xe0000000)) == \
+#define IN_CLASSC(i)            (((in_addr_t)(i) & __IPADDR(0xe0000000)) == \
 				 __IPADDR(0xc0000000))
 #define IN_CLASSC_NET           __IPADDR(0xffffff00)
 #define IN_CLASSC_NSHIFT        8
 #define IN_CLASSC_HOST          __IPADDR(0x000000ff)
 
-#define IN_CLASSD(i)            (((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+#define IN_CLASSD(i)            (((in_addr_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xe0000000))
 /* These ones aren't really net and host fields, but routing needn't know. */
 #define IN_CLASSD_NET           __IPADDR(0xf0000000)
@@ -124,12 +133,12 @@ struct in_addr {
 #define IN_CLASSD_HOST          __IPADDR(0x0fffffff)
 #define IN_MULTICAST(i)         IN_CLASSD(i)
 
-#define IN_EXPERIMENTAL(i)      (((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+#define IN_EXPERIMENTAL(i)      (((in_addr_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xf0000000))
-#define IN_BADCLASS(i)          (((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+#define IN_BADCLASS(i)          (((in_addr_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xf0000000))
 
-#define IN_LOCAL_GROUP(i)       (((u_int32_t)(i) & __IPADDR(0xffffff00)) == \
+#define IN_LOCAL_GROUP(i)       (((in_addr_t)(i) & __IPADDR(0xffffff00)) == \
 				 __IPADDR(0xe0000000))
 
 #define INADDR_ANY              __IPADDR(0x00000000)
@@ -144,13 +153,15 @@ struct in_addr {
 
 #define IN_LOOPBACKNET          127                     /* official! */
 
+#define INET_ADDRSTRLEN         16
+
 /*
  * Socket address, internet style.
  */
 struct sockaddr_in {
 	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
+	sa_family_t sin_family;
+	in_port_t sin_port;
 	struct    in_addr sin_addr;
 	int8_t    sin_zero[8];
 };

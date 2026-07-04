@@ -37,8 +37,19 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#include <sys/signal.h>
-#include <sys/time.h>
+#include <sys/_sigset.h>
+#include <sys/_timeval.h>
+#include <sys/timespec.h>
+
+typedef int32_t __fd_mask;
+#if __BSD_VISIBLE
+typedef __fd_mask	fd_mask;
+#endif
+
+#ifndef _SIGSET_T_DECLARED
+#define _SIGSET_T_DECLARED
+typedef __sigset_t	sigset_t;
+#endif
 
 /*
  * Select uses bit masks of file descriptors in longs.  These macros
@@ -50,20 +61,25 @@
 #define FD_SETSIZE	256
 #endif
 
-typedef int32_t fd_mask;
-#define NFDBITS (sizeof(fd_mask) * NBBY)        /* bits per mask */
+#define _NFDBITS (sizeof(__fd_mask) * 8)        /* bits per mask */
+#if __BSD_VISIBLE
+#define NFDBITS		_NFDBITS
+#endif
 
-#ifndef howmany
-#define howmany(x, y)	(((x) + ((y) - 1)) / (y))
+#ifndef _howmany
+#define _howmany(x, y)	(((x) + ((y) - 1)) / (y))
 #endif
 
 typedef struct fd_set {
-	fd_mask fds_bits[howmany(FD_SETSIZE, NFDBITS)];
+	__fd_mask __fds_bits[_howmany(FD_SETSIZE, _NFDBITS)];
 } fd_set;
+#if __BSD_VISIBLE
+#define fds_bits	__fds_bits
+#endif
 
-#define FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
-#define FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
-#define FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
+#define FD_SET(n, p)	((p)->__fds_bits[(n)/_NFDBITS] |= (1 << ((n) % _NFDBITS)))
+#define FD_CLR(n, p)	((p)->__fds_bits[(n)/_NFDBITS] &= ~(1 << ((n) % _NFDBITS)))
+#define FD_ISSET(n, p)	((p)->__fds_bits[(n)/_NFDBITS] & (1 << ((n) % _NFDBITS)))
 #define FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
 #define FD_ZERO(p)	bzero(p, sizeof(*(p)))
 

@@ -38,52 +38,55 @@
 #ifndef _SYS_TERMIOS_H_
 #define _SYS_TERMIOS_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 
-/* 
- * Special Control Characters 
+/*
+ * Special Control Characters
  *
  * Index into c_cc[] character array.
  *
- *      Name         Subscript  Enabled by 
+ *      Name         Subscript  Enabled by
  */
 #define VEOF            0       /* ICANON */
 #define VEOL            1       /* ICANON */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define VEOL2           2       /* ICANON */
 #endif
 #define VERASE          3       /* ICANON */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define VWERASE         4       /* ICANON */
-#endif 
+#endif
 #define VKILL           5       /* ICANON */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define VREPRINT        6       /* ICANON */
 #endif
 /*                      7          spare 1 */
 #define VINTR           8       /* ISIG */
 #define VQUIT           9       /* ISIG */
 #define VSUSP           10      /* ISIG */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define VDSUSP          11      /* ISIG */
 #endif
 #define VSTART          12      /* IXON, IXOFF */
 #define VSTOP           13      /* IXON, IXOFF */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define VLNEXT          14      /* IEXTEN */
 #define VDISCARD        15      /* IEXTEN */
 #endif
 #define VMIN            16      /* !ICANON */
 #define VTIME           17      /* !ICANON */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define VSTATUS         18      /* ICANON */
 /*                      19         spare 2 */
 #endif
 #define NCCS            20
 
+#ifndef _POSIX_VDISABLE
 #define _POSIX_VDISABLE ((unsigned char)'\377')
+#endif
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define CCEQ(val, c)    (c == val ? val != _POSIX_VDISABLE : 0)
 #endif
 
@@ -101,25 +104,30 @@
 #define ICRNL           0x00000100      /* map CR to NL (ala CRMOD) */
 #define IXON            0x00000200      /* enable output flow control */
 #define IXOFF           0x00000400      /* enable input flow control */
-#ifndef _POSIX_SOURCE
+#if __XSI_VISIBLE || __POSIX_VISIBLE >= 200809
 #define IXANY           0x00000800      /* any char will restart after stop */
+#endif
+#if __BSD_VISIBLE
 #define IMAXBEL         0x00002000      /* ring bell on input queue full */
-#endif  /*_POSIX_SOURCE */
+#define IUTF8		0x00004000	/* assume input is utf-8 encoded */
+#endif
 
 /*
  * Output flags - software output processing
  */
 #define OPOST           0x00000001      /* enable following output processing */
-#ifndef _POSIX_SOURCE
+#if __XSI_VISIBLE
 #define ONLCR           0x00000002      /* map NL to CR-NL (ala CRMOD) */
+#endif
+#if __BSD_VISIBLE
 #define OXTABS          0x00000004      /* expand tabs to spaces */
 #define ONOEOT          0x00000008      /* discard EOT's (^D) on output) */
-#endif  /*_POSIX_SOURCE */
+#endif
 
 /*
  * Control flags - hardware control of terminal
  */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define CIGNORE         0x00000001      /* ignore control flags */
 #endif
 #define CSIZE           0x00000300      /* character size mask */
@@ -133,7 +141,7 @@
 #define PARODD          0x00002000      /* odd parity, else even */
 #define HUPCL           0x00004000      /* hang up on last close */
 #define CLOCAL          0x00008000      /* ignore modem status lines */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define CRTSCTS         0x00010000      /* RTS/CTS full-duplex flow control */
 #define CRTS_IFLOW      CRTSCTS         /* XXX compat */
 #define CCTS_OFLOW      CRTSCTS         /* XXX compat */
@@ -142,7 +150,7 @@
 #endif
 
 
-/* 
+/*
  * "Local" flags - dumping ground for other state
  *
  * Warning: some flags in this structure begin with
@@ -150,55 +158,31 @@
  * input flag.
  */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define ECHOKE          0x00000001      /* visual erase for line kill */
-#endif  /*_POSIX_SOURCE */
+#endif
 #define ECHOE           0x00000002      /* visually erase chars */
 #define ECHOK           0x00000004      /* echo NL after line kill */
 #define ECHO            0x00000008      /* enable echoing */
 #define ECHONL          0x00000010      /* echo NL even if ECHO is off */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define ECHOPRT         0x00000020      /* visual erase mode for hardcopy */
 #define ECHOCTL         0x00000040      /* echo control chars as ^(Char) */
-#endif  /*_POSIX_SOURCE */
+#endif
 #define ISIG            0x00000080      /* enable signals INTR, QUIT, [D]SUSP */
 #define ICANON          0x00000100      /* canonicalize input lines */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define ALTWERASE       0x00000200      /* use alternate WERASE algorithm */
-#endif  /*_POSIX_SOURCE */
+#endif
 #define IEXTEN          0x00000400      /* enable DISCARD and LNEXT */
 #define EXTPROC         0x00000800      /* external processing */
 #define TOSTOP          0x00400000      /* stop background jobs from output */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define FLUSHO          0x00800000      /* output being flushed (state) */
 #define NOKERNINFO      0x02000000      /* no kernel output from VSTATUS */
 #define PENDIN          0x20000000      /* XXX retype pending input (state) */
-#endif  /*_POSIX_SOURCE */
-#define NOFLSH          0x80000000      /* don't flush after interrupt */
-
-typedef unsigned int    tcflag_t;
-typedef unsigned char   cc_t;
-typedef unsigned int    speed_t;
-
-struct termios {
-	tcflag_t        c_iflag;        /* input flags */
-	tcflag_t        c_oflag;        /* output flags */
-	tcflag_t        c_cflag;        /* control flags */
-	tcflag_t        c_lflag;        /* local flags */
-	cc_t            c_cc[NCCS];     /* control chars */
-	int __ALIGN2__  c_ispeed;       /* input speed */
-	int __ALIGN2__  c_ospeed;       /* output speed */
-} __PACKED__;
-
-/* 
- * Commands passed to tcsetattr() for setting the termios structure.
- */
-#define TCSANOW         0               /* make change immediate */
-#define TCSADRAIN       1               /* drain output, then change */
-#define TCSAFLUSH       2               /* drain output, flush input */
-#ifndef _POSIX_SOURCE
-#define TCSASOFT        0x10            /* flag - don't alter h.w. state */
 #endif
+#define NOFLSH          0x80000000      /* don't flush after interrupt */
 
 /*
  * Standard speeds
@@ -219,7 +203,7 @@ struct termios {
 #define B9600   9600
 #define B19200  19200
 #define B38400  38400
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define B7200   7200
 #define B14400  14400
 #define B28800  28800
@@ -229,9 +213,31 @@ struct termios {
 #define B230400 230400
 #define EXTA    19200
 #define EXTB    38400
-#endif  /* !_POSIX_SOURCE */
+#endif
 
-#ifndef _KERNEL
+typedef unsigned int    tcflag_t;
+typedef unsigned char   cc_t;
+typedef unsigned int    speed_t;
+
+struct termios {
+	tcflag_t        c_iflag;        /* input flags */
+	tcflag_t        c_oflag;        /* output flags */
+	tcflag_t        c_cflag;        /* control flags */
+	tcflag_t        c_lflag;        /* local flags */
+	cc_t            c_cc[NCCS];     /* control chars */
+	int __ALIGN2__  c_ispeed;       /* input speed */
+	int __ALIGN2__  c_ospeed;       /* output speed */
+} __PACKED__;
+
+/*
+ * Commands passed to tcsetattr() for setting the termios structure.
+ */
+#define TCSANOW         0               /* make change immediate */
+#define TCSADRAIN       1               /* drain output, then change */
+#define TCSAFLUSH       2               /* drain output, flush input */
+#if __BSD_VISIBLE
+#define TCSASOFT        0x10            /* flag - don't alter h.w. state */
+#endif
 
 #define TCIFLUSH        1
 #define TCOFLUSH        2
@@ -240,8 +246,6 @@ struct termios {
 #define TCOON           2
 #define TCIOFF          3
 #define TCION           4
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 speed_t cfgetispeed __P((const struct termios *));
@@ -255,29 +259,22 @@ int     tcflow __P((int, int));
 int     tcflush __P((int, int));
 int     tcsendbreak __P((int, int));
 
-#ifndef _POSIX_SOURCE
+#if __POSIX_VISIBLE >= 200112
+/*pid_t	tcgetsid __P((int));*/
+#endif
+#if __BSD_VISIBLE
+/*int	tcsetsid __P((int, pid_t));*/
+
 void    cfmakeraw __P((struct termios *));
 int     cfsetspeed __P((struct termios *, speed_t));
-#endif /* !_POSIX_SOURCE */
+/*int	tcgetwinsize __P((int, struct winsize *));*/
+/*int	tcsetwinsize __P((int, const struct winsize *));*/
+#endif
 __END_DECLS
 
-#endif /* !_KERNEL */
-
-#ifndef _POSIX_SOURCE
-
-/*
- * Include tty ioctl's that aren't just for backwards compatibility
- * with the old tty driver.  These ioctl definitions were previously
- * in <sys/ioctl.h>.
- */
-#include <sys/ttycom.h>
-#endif
-
-/*
- * END OF PROTECTED INCLUDE.
- */
 #endif /* !_SYS_TERMIOS_H_ */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
+#include <sys/ttycom.h>
 #include <sys/ttydefaults.h>
 #endif

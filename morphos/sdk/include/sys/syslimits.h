@@ -36,6 +36,9 @@
 #ifndef _SYS_SYSLIMITS_H_
 #define _SYS_SYSLIMITS_H_
 
+#include <sys/cdefs.h>
+
+#if __POSIX_VISIBLE
 #define ARG_MAX         20480   /* max bytes for an exec function */
 #define CHILD_MAX       40      /* max simultaneous processes */
 #define LINK_MAX        32767   /* max file link count */
@@ -50,6 +53,7 @@
 #define LOGIN_NAME_MAX  12      /* max length of a login name */
 #define TZNAME_MAX      255     /* max number of bytes in a timezone name */
 
+#if __POSIX_VISIBLE >= 200112
 #define BC_BASE_MAX     99      /* max ibase/obase values allowed by bc(1) */
 #define BC_DIM_MAX      2048    /* max array elements allowed by bc(1) */
 #define BC_SCALE_MAX    99      /* max scale value allowed by bc(1) */
@@ -59,5 +63,7 @@
 #define LINE_MAX        2048    /* max length in bytes of an input line */
 #define RE_DUP_MAX      255     /* max repeated RE's using interval notation */
 #define SYMLOOP_MAX     16      /* max number of symbolic links seen in a pathname */
+#endif
+#endif
 
 #endif /* _SYS_SYSLIMITS_H_ */

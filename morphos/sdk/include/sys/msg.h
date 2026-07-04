@@ -45,13 +45,30 @@ struct msqid_ds {
 	pid_t   msg_lspid;      /* pid of last msgsnd() */
 	pid_t   msg_lrpid;      /* pid of last msgrcv() */
 	time_t  msg_stime;      /* time of last msgsnd() */
-	long    msg_pad1;
 	time_t  msg_rtime;      /* time of last msgrcv() */
-	long    msg_pad2;
 	time_t  msg_ctime;      /* time of last msgctl() */
+	long    msg_pad4[4];
+};
+
+#ifdef _KERNEL_T32_STRUCTURES
+struct msqid_ds_t32 {
+	struct  ipc_perm msg_perm;      /* msg queue permission bits */
+	struct  msg *msg_first; /* first message in the queue */
+	struct  msg *msg_last;  /* last message in the queue */
+	u_long  msg_cbytes;     /* number of bytes in use on the queue */
+	u_long  msg_qnum;       /* number of msgs in the queue */
+	u_long  msg_qbytes;     /* max # of bytes on the queue */
+	pid_t   msg_lspid;      /* pid of last msgsnd() */
+	pid_t   msg_lrpid;      /* pid of last msgrcv() */
+	time32_t msg_stime;     /* time of last msgsnd() */
+	long    msg_pad1;
+	time32_t msg_rtime;     /* time of last msgrcv() */
+	long    msg_pad2;
+	time32_t msg_ctime;     /* time of last msgctl() */
 	long    msg_pad3;
 	long    msg_pad4[4];
 };
+#endif
 
 struct msg {
 	struct  msg *msg_next;  /* next msg in the chain */

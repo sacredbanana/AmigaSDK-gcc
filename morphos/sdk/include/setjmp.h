@@ -40,30 +40,34 @@
 #error "including ixemul setjmp.h header from non-ixemul app"
 #endif
 
+#include <sys/cdefs.h>
+
 #ifdef __PPC__
 #define _JBLEN  (7+19+2*18+14+3*6+1+4*12+3) /* onstack, sigmask, r1, r2, flags, lr, cr, r13-r31, f14-f31, pc, *a7, d2-d7, a2-a7, fp2-fp7, vrsave, vr20-vr31, pad12 */
 #else
 #define _JBLEN  17  /* onstack, sigmask, sp, a5, flags, pc, 0, d2-d7/a2-a4/a6 */
 #endif
 
+#if __BSD_VISIBLE || __POSIX_VISIBLE || __XSI_VISIBLE
 typedef int sigjmp_buf[_JBLEN + 1];
+#endif
 
 typedef int jmp_buf[_JBLEN] __attribute__((aligned(8)));
 
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
-int     setjmp __P((jmp_buf));
+#if __XSI_VISIBLE >= 600
+void    volatile _longjmp __P((jmp_buf, int)) __dead2;
+int     _setjmp __P((jmp_buf));
+#endif
 void    longjmp __P((jmp_buf, int)) __dead2;
-
+#if __BSD_VISIBLE
+void    longjmperror __P((void)) __dead2;
+#endif
+int     setjmp __P((jmp_buf));
+#if __POSIX_VISIBLE || __XSI_VISIBLE
 int     sigsetjmp __P((sigjmp_buf, int));
 void    volatile siglongjmp __P((sigjmp_buf, int)) __dead2;
-
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-int     _setjmp __P((jmp_buf));
-void    volatile _longjmp __P((jmp_buf, int)) __dead2;
-void    longjmperror __P((void)) __dead2;
-#endif /* neither ANSI nor POSIX */
+#endif
 __END_DECLS
 
 #endif /* !_SETJMP_H_ */

@@ -59,36 +59,36 @@ typedef struct {
 	 * and lstat(2).
 	 */
 	void (*gl_closedir) __P((void *));
-	struct dirent *(*gl_readdir) __P((void *));     
+	struct dirent *(*gl_readdir) __P((void *));
 	void *(*gl_opendir) __P((const char *));
 	int (*gl_lstat) __P((const char *, struct stat *));
 	int (*gl_stat) __P((const char *, struct stat *));
 } glob_t;
 
+#if __POSIX_VISIBLE >= 199209
 #define GLOB_APPEND     0x01    /* append to output from previous call */
 #define GLOB_DOOFFS     0x02    /* use gl_offs */
 #define GLOB_ERR        0x04    /* return on error */
-#ifndef _POSIX_SOURCE
-#define GLOB_MAGCHAR    0x08    /* pattern had globbing characters */
-#endif
 #define GLOB_MARK       0x10    /* append / to matching directories */
 #define GLOB_NOCHECK    0x20    /* return pattern itself if nothing matches */
 #define GLOB_NOSORT     0x40    /* don't sort */
-#ifndef _POSIX_SOURCE
-#define GLOB_QUOTE      0x80    /* quote special chars with \ */
-#endif
-#define GLOB_NOCASE     0x100   /* case-insensitive sort */
-#define GLOB_AMIGA      0x200   /* allow #? as wildcard */
-
-#ifndef _POSIX_SOURCE
-#define GLOB_ALTDIRFUNC 0x0400  /* Use alternately specified directory funcs. */
-#define GLOB_BRACE      0x0800  /* Expand braces ala csh. */
-#define GLOB_NOMAGIC    0x1000  /* GLOB_NOCHECK without magic chars (csh). */
-#define GLOB_TILDE      0x2000  /* Expand tilde names from the passwd file. */
-#endif
 
 #define GLOB_NOSPACE    (-1)    /* Malloc call failed. */
-#define GLOB_ABEND      (-2)    /* Unignored error. */
+#define GLOB_ABORTED    (-2)    /* Unignored error. */
+#endif
+
+#if __BSD_VISIBLE
+#define GLOB_NOCASE     0x100   /* case-insensitive sort */
+#define GLOB_AMIGA      0x200   /* allow #? as wildcard */
+#define GLOB_ALTDIRFUNC 0x0400  /* Use alternately specified directory funcs. */
+#define GLOB_BRACE      0x0800  /* Expand braces ala csh. */
+#define GLOB_MAGCHAR    0x08    /* pattern had globbing characters */
+#define GLOB_NOMAGIC    0x1000  /* GLOB_NOCHECK without magic chars (csh). */
+#define GLOB_QUOTE      0x80    /* quote special chars with \ */
+#define GLOB_TILDE      0x2000  /* Expand tilde names from the passwd file. */
+
+#define GLOB_ABEND      GLOB_ABORTED
+#endif
 
 __BEGIN_DECLS
 int     glob __P((const char *, int, int (*)(const char *, int), glob_t *));

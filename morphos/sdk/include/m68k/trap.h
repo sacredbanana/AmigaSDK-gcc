@@ -42,6 +42,9 @@
  *      @(#)trap.h      8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _M68K_TRAP_H_
+#define _M68K_TRAP_H_
+
 /*
  * Trap codes
  */
@@ -67,3 +70,4 @@
 
 #define T_USER          0x80            /* user-mode flag or'ed with type */
 
+#endif /* _M68K_TRAP_H_ */
