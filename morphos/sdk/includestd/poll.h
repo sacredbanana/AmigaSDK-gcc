@@ -1,0 +1,1 @@
+/* libnix has no poll implementation currently */

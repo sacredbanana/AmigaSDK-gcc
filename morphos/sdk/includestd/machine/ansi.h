@@ -40,6 +40,8 @@
 
 #include <stdarg.h>
 
+#define __TIMESIZE 64
+
 /*
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
@@ -64,11 +66,26 @@
 #ifndef _BSD_SSIZE_T_
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
 #endif
+#ifndef _BSD_TIME32_T_
+#define	_BSD_TIME32_T_	long			/* 32-bit time_t (legacy) */
+#endif
 #ifndef _BSD_TIME_T_
-#define	_BSD_TIME_T_	long			/* time() */
+#define	_BSD_TIME_T_	long long		/* 64-bit time_t*/
+#endif
+#ifndef _BSD_FPOS_T_
+#define _BSD_FPOS_T_	long long		/* getpos() */
+#endif
+#ifndef _BSD_OFF_T_
+#define _BSD_OFF_T_	long long		/* lseek() */
 #endif
 #ifndef _BSD_VA_LIST_
 #define	_BSD_VA_LIST_	va_list			/* va_list */
+#endif
+#ifndef _BSD_SUSECONDS_T_
+#define	_BSD_SUSECONDS_T_ long			/* suseconds_t */
+#endif
+#ifndef _BSD_USECONDS_T_
+#define	_BSD_USECONDS_T_ unsigned int		/* useconds_t */
 #endif
 
 /*

@@ -51,8 +51,6 @@
 #define __need_size_t
 #include <stddef.h>
 
-typedef long fpos_t;		/* Must match off_t <sys/types.h> */
-
 #ifdef _LARGEFILE64_SOURCE
 typedef int64_t fpos64_t;
 #endif
@@ -240,8 +238,10 @@ size_t	 fread __P((void *, size_t, size_t, FILE *));
 FILE	*freopen __P((const char *, const char *, FILE *));
 int	 fscanf __P((FILE *, const char *, ...));
 int	 fseek __P((FILE *, long, int));
+int	 fseeko __P((FILE *, off_t, int));
 int	 fsetpos __P((FILE *, const fpos_t *));
 long	 ftell __P((FILE *));
+off_t	 ftello __P((FILE *));
 size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));

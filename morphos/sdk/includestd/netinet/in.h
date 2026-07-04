@@ -109,6 +109,7 @@ struct in_addr {
 #define	IN_BADCLASS(i)		(((long)(i) & 0xf0000000) == 0xf0000000)
 
 #define	INADDR_ANY		(u_long)0x00000000
+#define	INADDR_LOOPBACK		(u_long)0x7f000001
 #define	INADDR_BROADCAST	(u_long)0xffffffff	/* must be masked */
 #ifndef KERNEL
 #define	INADDR_NONE		0xffffffff		/* -1 return */
@@ -120,6 +121,7 @@ struct in_addr {
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
+#define	INET_ADDRSTRLEN		16
 /*
  * Socket address, internet style.
  */

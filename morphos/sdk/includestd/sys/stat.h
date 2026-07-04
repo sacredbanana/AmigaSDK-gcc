@@ -36,14 +36,11 @@
 #ifndef _SYS_STAT_H
 #define _SYS_STAT_H
 
-#ifdef _LARGEFILE64_SOURCE
-#include <stdint.h>
-#endif
 #include <sys/types.h>
 #include <sys/time.h>
 
 /* ixemul needs 2 bytes alignment for compatibility, libnix doesn't. */
-#ifdef ixemul
+#ifdef __ixemul__
 #pragma pack(2)
 #endif
 #if 0 /* later */
@@ -69,7 +66,14 @@ struct stat
 	u_long	st_gen;			/* file generation number */
 };
 #else
-struct	stat
+#if (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE - 0) >= 200809L) || \
+    (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE - 0) >= 700) || \
+    defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+# define SYS_STAT_POSIX_TIME_FIELDS 1
+#else
+# define SYS_STAT_POSIX_TIME_FIELDS 0
+#endif
+struct  stat
 {
 	dev_t	st_dev;
 	ino_t	st_ino;
@@ -78,50 +82,63 @@ struct	stat
 	uid_t	st_uid;
 	gid_t	st_gid;
 	dev_t	st_rdev;
-	off_t	st_size;
+	off64_t st_size;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+# define st_atime st_atim.tv_sec
+# define st_mtime st_mtim.tv_sec
+# define st_ctime st_ctim.tv_sec
+#else
 	time_t	st_atime;
-	int	st_spare1;
+	long	st_atimensec;
+	int32_t	st_atime_pad;
 	time_t	st_mtime;
-	int	st_spare2;
+	long	st_mtimensec;
+	int32_t	st_mtime_pad;
 	time_t	st_ctime;
-	int	st_spare3;
+	long	st_ctimensec;
+	int32_t	st_ctime_pad;
+#endif
 	long	st_blksize;
-	long	st_blocks;
-	long	st_spare4[2];
-};
-
-#ifdef _LARGEFILE64_SOURCE
-struct	stat64
-{
-	dev_t	st_dev;
-	ino_t	st_ino;
-	unsigned short st_mode;
-	short	st_nlink;
-	uid_t	st_uid;
-	gid_t	st_gid;
-	dev_t	st_rdev;
-	int32_t	st_size32;
-	time_t	st_atime;
-	int	st_spare1;
-	time_t	st_mtime;
-	int	st_spare2;
-	time_t	st_ctime;
-	int	st_spare3;
-	long	st_blksize;
-	int32_t	st_blocks32;
-	long	st_spare4[2];
-	off64_t	st_size;
 	int64_t	st_blocks;
+	int	st_spare2;
+	long	st_spare3;
+};
+struct  stat64
+{
+	dev_t	st_dev;
+	ino_t	st_ino;
+	unsigned short st_mode;
+	short	st_nlink;
+	uid_t	st_uid;
+	gid_t	st_gid;
+	dev_t	st_rdev;
+	off64_t	st_size;
+#if SYS_STAT_POSIX_TIME_FIELDS
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+#else
+	time_t	st_atime;
+	long	st_atimensec;
+	int32_t	st_atime_pad;
+	time_t	st_mtime;
+	long	st_mtimensec;
+	int32_t	st_mtime_pad;
+	time_t	st_ctime;
+	long	st_ctimensec;
+	int32_t	st_ctime_pad;
+#endif
+	long	st_blksize;
+	int64_t	st_blocks;
+	int	st_spare2;
+	long	st_spare3;
 };
 #endif
-#endif
-#ifdef ixemul
+#ifdef __ixemul__
 #pragma pack()
-#endif
-
-#ifdef __amigaos__
-#define st_handler st_spare3
-#define st_amode   st_spare2
 #endif
 
 #define	S_ISUID	0004000			/* set user id on execution */
@@ -198,7 +215,9 @@ int	lstat __P((const char *, struct stat *));
 #ifdef _LARGEFILE64_SOURCE
 int	fstat64 __P((int, struct stat64 *));
 int	stat64 __P((const char *, struct stat64 *));
+#ifndef _POSIX_SOURCE
 int	lstat64 __P((const char *, struct stat64 *));
+#endif /* not POSIX */
 #endif
 __END_DECLS
 

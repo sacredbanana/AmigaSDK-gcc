@@ -199,7 +199,7 @@ int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
 int	 undelete __P((const char *));
-int	 usleep __P((u_int));
+int	 usleep __P((useconds_t));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
 pid_t	 vfork __P((void));
 

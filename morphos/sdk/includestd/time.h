@@ -44,6 +44,7 @@
 #ifndef _TIME_H_
 #define	_TIME_H_
 
+#include <sys/types.h>
 #include <machine/ansi.h>
 
 #ifdef	_BSD_CLOCK_T_
@@ -57,13 +58,8 @@ typedef	_BSD_CLOCKID_T_	clockid_t;
 #undef	_BSD_CLOCKID_T_
 #endif
 
-#include <sys/time.h>
+#include <sys/timespec.h>
 #endif /* !defined(_ANSI_SOURCE) */
-
-#ifdef	_BSD_TIME_T_
-typedef	_BSD_TIME_T_	time_t;
-#undef	_BSD_TIME_T_
-#endif
 
 #define __need_NULL
 #define __need_size_t
@@ -131,6 +127,8 @@ int clock_nanosleep __P((clockid_t, int, const struct timespec *, struct timespe
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 char *timezone __P((int, int));
 void tzsetwall __P((void));
+
+time_t timegm __P((struct tm *));
 
 struct DateStamp;
 void utunpk __P((long, char *));

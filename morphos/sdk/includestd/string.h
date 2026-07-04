@@ -85,6 +85,7 @@ void setmem __P((void *, size_t, int));
 int	 strcasecmp __P((const char *, const char *));
 char	*strcasestr __P((const char *, const char *));
 char	*strdup __P((const char *));
+char	*strndup __P((const char *, size_t));
 void	 strmode __P((int, char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 char	*strsep __P((char **, const char *));
@@ -124,6 +125,10 @@ size_t strnlen __P((const char *, size_t));
 #if defined(_GNU_SOURCE) && !defined(basename)
 # define basename basename
 char *basename __P((const char *));
+#endif
+#if defined(_GNU_SOURCE)
+void *memrchr __P((const void *, int, size_t));
+char *strchrnul __P((const char *, int));
 #endif
 #endif
 __END_DECLS

@@ -38,8 +38,9 @@
 
 #if !defined(_SYS_SELECT_H_NO_PROTOS)
 #include <sys/cdefs.h>
-#include <sys/signal.h>
-#include <sys/time.h>
+/*#include <sys/_sigset.h>*/
+#include <sys/_timeval.h>
+#include <sys/timespec.h>
 #endif
 
 /*

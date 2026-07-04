@@ -203,9 +203,9 @@ typedef struct pthread_mutex pthread_mutex_t;
 #define _PTHREAD_NULL_SEMAPHOREREQUEST {_PTHREAD_NULL_MINNODE, 0}
 #define _PTHREAD_NULL_SIGNALSEMAPHORE {_PTHREAD_NULL_NODE, 0, _PTHREAD_NULL_MINLIST, _PTHREAD_NULL_SEMAPHOREREQUEST, 0, 0}
 
-#define PTHREAD_MUTEX_INITIALIZER {PTHREAD_MUTEX_NORMAL, _PTHREAD_NULL_SIGNALSEMAPHORE}
-#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER {PTHREAD_MUTEX_RECURSIVE, _PTHREAD_NULL_SIGNALSEMAPHORE}
-#define PTHREAD_ERRORCHECK_MUTEX_INITIALIZER {PTHREAD_MUTEX_ERRORCHECK, _PTHREAD_NULL_SIGNALSEMAPHORE}
+#define PTHREAD_MUTEX_INITIALIZER {PTHREAD_MUTEX_NORMAL, _PTHREAD_NULL_SIGNALSEMAPHORE, 0}
+#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER {PTHREAD_MUTEX_RECURSIVE, _PTHREAD_NULL_SIGNALSEMAPHORE, 0}
+#define PTHREAD_ERRORCHECK_MUTEX_INITIALIZER {PTHREAD_MUTEX_ERRORCHECK, _PTHREAD_NULL_SIGNALSEMAPHORE, 0}
 
 //
 // Condition variables
@@ -309,6 +309,8 @@ int pthread_attr_getinheritsched(pthread_attr_t *attr, int *inheritsched);
 int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched);
 int pthread_attr_getscope(const pthread_attr_t *attr, int *contentionscope);
 int pthread_attr_setscope(pthread_attr_t *attr, int contentionscope);
+int pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *guardsize);
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize);
 
 //
 // Thread functions
@@ -494,7 +496,12 @@ int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(vo
 #define pwrite(...) (pthread_testcancel(), pwrite(__VA_ARGS__))
 #define pwrite64(...) (pthread_testcancel(), pwrite64(__VA_ARGS__))
 #undef select
+#if defined(_SELECT_DECLARED) && defined(__libnix__)
+// use _static_inline_select from sys/select.h
+#define select(...) (pthread_testcancel(), _static_inline_select(__VA_ARGS__))
+#else
 #define select(...) (pthread_testcancel(), select(__VA_ARGS__))
+#endif
 #define sleep(...) (pthread_testcancel(), sleep(__VA_ARGS__))
 #define usleep(...) (pthread_testcancel(), usleep(__VA_ARGS__))
 #define write(...) (pthread_testcancel(), write(__VA_ARGS__))
@@ -562,7 +569,23 @@ int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(vo
 #define sendto(__p0, __p1, __p2, __p3, __p4, __p5) (pthread_testcancel(), LP6(60, LONG, sendto, LONG, __p0, d0, const UBYTE *, __p1, a0, LONG, __p2, d1, LONG, __p3, d2, const struct sockaddr *, __p4, a1, LONG, __p5, d3,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0))
 #define sendmsg(__p0, __p1, __p2) (pthread_testcancel(), LP3(270, LONG, sendmsg, LONG, __p0, d0, struct msghdr *, __p1, a0, LONG, __p2, d1,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0))
 #define CloseSocket(__p0) (pthread_testcancel(), LP1(120, LONG, CloseSocket, LONG, __p0, d0,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0))
+#if defined(__TIMESIZE) && __TIMESIZE == 64
+#define WaitSelect_timeval32_(__p0, __p1, __p2, __p3, __p4, __p5) LP6(126, LONG, WaitSelect, LONG, __p0, d0, fd_set *, __p1, a0, fd_set *, __p2, a1, fd_set *, __p3, a2, struct timeval32 *, __p4, a3, ULONG *, __p5, d1,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0)
+#define WaitSelect(__p0, __p1, __p2, __p3, __p4, __p5) \
+(pthread_testcancel(), \
+({ \
+	struct timeval *p4tv__ = (__p4); \
+	struct timeval32 p4tv32__, *p4tv32p__ = NULL; \
+	if (p4tv__) { \
+		p4tv32__.tv_sec = p4tv__->tv_sec > 0x7fffffffLL ? 0x7fffffffL : (p4tv__->tv_sec < -0x80000000LL ?  -0x80000000L : (long) p4tv__->tv_sec); \
+		p4tv32__.tv_usec = p4tv__->tv_usec; \
+		p4tv32p__ = &p4tv32__; \
+	} \
+	WaitSelect_timeval32_(__p0, __p1, __p2, __p3, p4tv32p__, __p5); \
+}))
+#else
 #define WaitSelect(__p0, __p1, __p2, __p3, __p4, __p5) (pthread_testcancel(), LP6(126, LONG, WaitSelect, LONG, __p0, d0, fd_set *, __p1, a0, fd_set *, __p2, a1, fd_set *, __p3, a2, struct timeval *, __p4, a3, ULONG *, __p5, d1,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0))
+#endif
 #endif
 
 #ifdef _PPCINLINE_EXEC_H

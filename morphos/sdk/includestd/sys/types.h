@@ -71,16 +71,15 @@ typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 typedef	u_int16_t	mode_t;		/* permissions */
 typedef	u_int16_t	nlink_t;	/* link count */
-typedef	int32_t		off_t;		/* file offset */
+typedef	int64_t		off_t;		/* file offset */
 typedef	int32_t		pid_t;		/* process id */
 typedef int32_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
-
-#ifdef _LARGEFILE64_SOURCE
 typedef	int64_t		off64_t;	/* 64bit file offset */
-#endif
+typedef	int64_t		fpos_t;
+
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
@@ -129,6 +128,21 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #ifdef	_BSD_TIME_T_
 typedef	_BSD_TIME_T_	time_t;
 #undef	_BSD_TIME_T_
+#endif
+
+#ifdef	_BSD_TIME32_T_
+typedef	_BSD_TIME32_T_	time32_t;
+#undef	_BSD_TIME32_T_
+#endif
+
+#ifdef	_BSD_SUSECONDS_T_
+typedef	_BSD_SUSECONDS_T_	suseconds_t;
+#undef	_BSD_SUSECONDS_T_
+#endif
+
+#ifdef	_BSD_USECONDS_T_
+typedef	_BSD_USECONDS_T_	useconds_t;
+#undef	_BSD_USECONDS_T_
 #endif
 
 #define __need_size_t

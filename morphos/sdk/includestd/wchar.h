@@ -110,6 +110,8 @@ wchar_t *wcsstr(const wchar_t *, const wchar_t *);
 wchar_t *wcstok(wchar_t * , const wchar_t * , wchar_t ** );
 wchar_t *wmemchr(const wchar_t *, wchar_t, size_t);
 size_t wcslen(const wchar_t *);
+size_t wcsnlen(const wchar_t *, size_t);
+wchar_t *wcsdup(const wchar_t *);
 wchar_t *wmemset(wchar_t *, wchar_t, size_t);
 size_t wcsftime(wchar_t * , size_t, const wchar_t * , const struct tm * );
 
@@ -122,6 +124,10 @@ size_t mbrtowc(wchar_t * , const char * , size_t, mbstate_t * );
 size_t wcrtomb(char * , wchar_t, mbstate_t * );
 size_t mbsrtowcs(wchar_t * , const char ** , size_t, mbstate_t * );
 size_t wcsrtombs(char * , const wchar_t ** , size_t, mbstate_t * );
+
+#if defined(_GNU_SOURCE)
+wchar_t *wcschrnul(const wchar_t *, wchar_t);
+#endif
 
 __END_DECLS
 

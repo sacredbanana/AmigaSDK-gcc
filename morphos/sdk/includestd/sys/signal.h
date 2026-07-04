@@ -101,7 +101,6 @@ struct sigcontext;
 #define SIGMSG	32	/* an AmigaOS signal has been set. SIGMSG is normally ignored.
 			   (code is the mask of new signals) */
 
-#if defined(_ANSI_SOURCE) || defined(__cplusplus)
 /*
  * Language spec sez we must list exactly one parameter, even though we
  * actually supply three.  Ugh!
@@ -109,11 +108,6 @@ struct sigcontext;
 #define	SIG_DFL		(void (*)(int))0
 #define	SIG_IGN		(void (*)(int))1
 #define	SIG_ERR		(void (*)(int))-1
-#else
-#define	SIG_DFL		(void (*)(void))0
-#define	SIG_IGN		(void (*)(void))1
-#define	SIG_ERR		(void (*)(void))-1
-#endif
 
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
