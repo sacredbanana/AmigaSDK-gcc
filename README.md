@@ -1,5 +1,5 @@
 # AmigaSDK-gcc
-This pack contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.16, MorphOS 3.18 SDK, plus extra SDKs fixed to work with the GCC compiler.
+This pack contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.16, MorphOS 3.20 SDK, plus extra SDKs fixed to work with the GCC compiler.
 
 Here are the extra included SDKs:
 
@@ -8,7 +8,7 @@ Here are the extra included SDKs:
 - AmiSSL 5.18 http://aminet.net/package/util/libs/AmiSSL-v5-SDK
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
-- json-c 0.17 https://github.com/json-c/json-c
+- json-c 0.19 https://github.com/json-c/json-c
 - Codesets 6.22 http://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 http://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
@@ -25,13 +25,13 @@ Here are the extra included SDKs:
 - Python 53.35
 - SDI 1.7
 - Flite Device 53.1 http://aminet.net/package/mus/misc/flite_device
-- json-c 0.17 https://github.com/json-c/json-c
+- json-c 0.19 https://github.com/json-c/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
   
 ### MorphOS
-- json-c 0.17 https://github.com/json-c/json-c
+- json-c 0.19 https://github.com/json-c/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat

@@ -12,7 +12,7 @@
 /* #undef HAS_GNU_WARNING_LONG */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-/* #undef HAVE_DLFCN_H */
+#define HAVE_DLFCN_H
 
 /* Define to 1 if you have the <endian.h> header file. */
 /* #undef HAVE_ENDIAN_H */
@@ -27,7 +27,7 @@
 #define HAVE_LIMITS_H
 
 /* Define to 1 if you have the <locale.h> header file. */
-/* #undef HAVE_LOCALE_H */
+#define HAVE_LOCALE_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H
@@ -60,7 +60,7 @@
 /* #undef HAVE_SYS_RANDOM_H */
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
-#define HAVE_SYS_RESOURCE_H
+/* #undef HAVE_SYS_RESOURCE_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H
@@ -72,7 +72,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <xlocale.h> header file. */
-#define HAVE_XLOCALE_H
+/* #undef HAVE_XLOCALE_H */
 
 /* Define to 1 if you have the <bsd/stdlib.h> header file. */
 /* #undef HAVE_BSD_STDLIB_H */
@@ -116,7 +116,7 @@
 #define HAVE_REALLOC
 
 /* Define to 1 if you have the `setlocale' function. */
-/* #undef HAVE_SETLOCALE */
+#define HAVE_SETLOCALE
 
 /* Define to 1 if you have the `snprintf' function. */
 #define HAVE_SNPRINTF
@@ -137,11 +137,14 @@
 /* Define to 1 if you have the `uselocale' function. */
 /* #undef HAVE_USELOCALE */
 
+/* Define to 1 if you have the `duplocale' function. */
+/* #undef HAVE_DUPLOCALE */
+
 /* Define to 1 if newlocale() needs freelocale() called on it's `base` argument */
 /* #undef NEWLOCALE_NEEDS_FREELOCALE */
 
 /* Define to 1 if you have the `vasprintf' function. */
-/* #undef HAVE_VASPRINTF */
+#define HAVE_VASPRINTF
 
 /* Define to 1 if you have the `vprintf' function. */
 #define HAVE_VPRINTF
@@ -186,7 +189,7 @@
 #define PACKAGE_NAME "json-c"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "json-c 0.17.99"
+#define PACKAGE_STRING "json-c 0.19.99"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "json-c"
@@ -195,7 +198,7 @@
 #define PACKAGE_URL "https://github.com/json-c/json-c"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.17.99"
+#define PACKAGE_VERSION "0.19.99"
 
 /* The number of bytes in type int */
 #define SIZEOF_INT 4
@@ -222,7 +225,7 @@
 #define STDC_HEADERS
 
 /* Version number of package */
-#define VERSION "0.17.99"
+#define VERSION "0.19.99"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
