@@ -5,7 +5,7 @@ Here are the extra included SDKs:
 
 ### AmigaOS 3
 - Roadshow 1.5 TCP/IP stack http://roadshow.apc-tcp.de/download-en.php
-- AmiSSL 5.18 http://aminet.net/package/util/libs/AmiSSL-v5-SDK
+- AmiSSL 5.27 http://aminet.net/package/util/libs/AmiSSL-v5-SDK
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
 - json-c 0.19 https://github.com/json-c/json-c
@@ -15,7 +15,7 @@ Here are the extra included SDKs:
 - RxMUI 42.7 http://aminet.net/package/util/rexx/rxmui
   
 ### AmigaOS 4
-- AmiSSL 5.18 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
+- AmiSSL 5.27 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
 - Cairo 53.3
 - Flex 2.5.27
 - Expat 53.6
