@@ -1,6 +1,13 @@
 # Docker Image for m68k AmigaOS 3.2 cross compiler
 
-FROM amigadev/crosstools:m68k-amigaos
+FROM amigadev/crosstools:m68k-amigaos AS builder
+
+RUN apt-get update && apt-get install -y \
+automake \
+libtool \
+zlib1g-dev
+
+FROM builder AS sdk
 
 COPY ./amigaos3/sdk/ /tools/
 
