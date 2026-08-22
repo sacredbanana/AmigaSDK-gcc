@@ -71,6 +71,7 @@ __stdargs size_t strlen_plus_one(const char *string);
 __stdargs char *strcpy(char *, const char *);
 __stdargs char *strlwr(char *s);
 __stdargs char *stpcpy(char *dst, const char *src);
+__stdargs size_t strlcpy(char *dst, const char *src, size_t dsize);
 __stdargs void *mempcpy(void *, const void *, size_t);
 #else
 #include "strsup.h"

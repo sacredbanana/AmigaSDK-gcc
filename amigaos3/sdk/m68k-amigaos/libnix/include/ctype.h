@@ -71,12 +71,12 @@ extern __stdargs int toascii_l (int __c, locale_t __l);
 #define	_B	0200
 
 #ifdef __HAVE_LOCALE_INFO__
-__stdargs const char *__locale_ctype_ptr (void);
+__stdargs const char *__locale_ctype_ (void);
 #else
-#define __locale_ctype_ptr()	_ctype_
+#define __locale_ctype_()	_ctype_
 #endif
 
-# define __CTYPE_PTR	(__locale_ctype_ptr ())
+# define __CTYPE_PTR	(__locale_ctype_ ())
 
 #ifndef __cplusplus
 /* These macros are intentionally written in a manner that will trigger

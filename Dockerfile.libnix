@@ -1,0 +1,87 @@
+# Build the latest libnix and export it into this repo.
+#
+# This is a generator, not a toolchain image. It is not used by build.sh and
+# nothing depends on it at runtime -- run it when you want to refresh the libnix
+# copy under amigaos3/sdk/m68k-amigaos/libnix, then rebuild the normal
+# cross-compiler image (which just copies the repo's SDK in as it always has).
+#
+#
+# !! ADOPTING A NEW LIBNIX HAS ONE KNOWN CONSEQUENCE !!
+#
+# bebbo's libnix changed the errno convention:
+#     old:  extern int errno;              -> exports the data symbol `errno`
+#     new:  #define errno (*__errno)
+#           extern int *__errno;           -> `errno` no longer exists
+#
+# Any library in this repo that was compiled *for libnix* and touches errno must
+# be rebuilt against the new headers, or linking fails with
+# "undefined reference to `errno'". For this repo that is json-c only:
+#     libnix/lib/libjson-c.a, libnix/lib/libb/libjson-c.a,
+#     libnix/lib/libm020/libjson-c.a, libnix/lib/libm060/libjson-c.a,
+#     libnix/lib/libb32/libm020/libjson-c.a
+#
+# NOT affected:
+#   * newlib (lib/**) and clib2 (clib2/lib/**) - a libnix app never links these,
+#     and each CRT supplies its own errno.
+#   * lib/libamisslstubs.a - verified clean (pure OpenSSL stubs, no errno).
+#     Note lib/libamisslauto.a *does* reference errno, but AmigaGPT links only
+#     -lamisslstubs. If you ever need -lamisslauto for libnix, rebuild it from
+#     the AmiSSL SDK's lib/autoinit_amissl_main.c.
+#
+# Verified 2026-08-23: libnix ae1c956d + json-c rebuilt -> AmigaGPT links and
+# builds clean.
+#
+# Usage:  ./update-libnix.sh          (see that script for the docker invocation)
+#
+# The final stage is FROM scratch and contains ONLY libnix's own files, so
+# exporting it overlays the repo copy without disturbing the non-libnix files
+# that live in the same tree (include/json-c, lib/**/libjson-c.a, ...).
+
+ARG BASE=amigadev/crosstools:m68k-amigaos
+
+FROM ${BASE} AS libnixbuild
+
+# libnix is target code, compiled by the cross compiler already present in the
+# base image, so no native host toolchain is needed.
+ARG LIBNIX_URL=https://franke.ms/git/bebbo/libnix
+ARG LIBNIX_BRANCH=master
+
+# NOTE: franke.ms hangs on a normal clone/fetch; a shallow, tag-less fetch is
+# the only reliable way to get the tree.
+RUN mkdir -p /src/libnix \
+ && cd /src/libnix \
+ && git init -q \
+ && git remote add origin "${LIBNIX_URL}" \
+ && git fetch --depth=1 --no-tags origin "${LIBNIX_BRANCH}" \
+ && git checkout -q FETCH_HEAD \
+ && git log -1 --format='%H %ad %s' --date=short > /src/libnix-revision.txt \
+ && cat /src/libnix-revision.txt
+
+# Same flags and out-of-tree build amiga-gcc uses (CFLAGS_FOR_TARGET).
+RUN mkdir -p /build/libnix \
+ && cd /build/libnix \
+ && CFLAGS="-O2 -fomit-frame-pointer" make -j"$(nproc)" \
+      -f /src/libnix/Makefile.gcc6 \
+      PREFIX=/opt/m68k-amigaos target=m68k-amigaos root=/src/libnix all
+
+# install covers every multilib: lib, libb, libm020, libb/libm020,
+# libb32/libm020, libm881, libb/libm020/libm881, libb32/libm020/libm881.
+RUN cd /build/libnix \
+ && make -f /src/libnix/Makefile.gcc6 \
+      PREFIX=/opt/m68k-amigaos target=m68k-amigaos root=/src/libnix install
+
+# Assemble exactly what libnix owns.
+#   lib/     - freshly installed archives
+#   include/ - libnix's headers, which its install target does NOT place
+#              (they live in sources/headers in the source tree)
+# libnix4.library is deliberately excluded: it needs a full libgcc build and the
+# repo does not carry one.
+RUN mkdir -p /out/lib /out/include \
+ && cp -a /opt/m68k-amigaos/m68k-amigaos/libnix/lib/. /out/lib/ \
+ && cp -a /src/libnix/sources/headers/. /out/include/ \
+ && rm -f /out/lib/libnix4.library \
+ && cp /src/libnix-revision.txt /out/libnix-revision.txt \
+ && echo "exported $(find /out -type f | wc -l) files"
+
+FROM scratch
+COPY --from=libnixbuild /out/ /

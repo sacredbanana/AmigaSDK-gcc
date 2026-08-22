@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 #define puts(a) amiputs(a)
-#define gets(a,b) amigets(a, b)
+#define gets_n(a,b) amigets(a, b)
 #define fputs(a,f) FPuts(f, a)
 #define fgets(a,l,f) FGets(f, a, l)
 #define putchar amiputchar
