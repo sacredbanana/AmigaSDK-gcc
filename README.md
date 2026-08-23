@@ -8,11 +8,12 @@ Here are the extra included SDKs:
 - AmiSSL 5.27 http://aminet.net/package/util/libs/AmiSSL-v5-SDK
 - Translator.library v42.4 http://aminet.net/package/util/libs/translator42
 - Textfield.gadget v3.1 http://aminet.net/package/dev/gui/textfield
-- json-c 0.19 https://github.com/json-c/json-c
+- json-c 0.19 https://github.com/sacredbanana/json-c
 - Codesets 6.22 http://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 http://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
 - RxMUI 42.7 http://aminet.net/package/util/rexx/rxmui
+- magic 5.48 https://github.com/sacredbanana/file
   
 ### AmigaOS 4
 - AmiSSL 5.27 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
@@ -25,16 +26,18 @@ Here are the extra included SDKs:
 - Python 53.35
 - SDI 1.7
 - Flite Device 53.1 http://aminet.net/package/mus/misc/flite_device
-- json-c 0.19 https://github.com/json-c/json-c
+- json-c 0.19 https://github.com/sacredbanana/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
+- magic 5.48 https://github.com/sacredbanana/file
   
 ### MorphOS
-- json-c 0.19 https://github.com/json-c/json-c
+- json-c 0.19 https://github.com/sacredbanana/json-c
 - Codesets 6.22 https://aminet.net/package/util/libs/codesets-6.22
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
+- magic 5.48 https://github.com/sacredbanana/file
 
 ## Installation
 

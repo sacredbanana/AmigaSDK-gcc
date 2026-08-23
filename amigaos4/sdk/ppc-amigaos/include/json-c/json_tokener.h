@@ -206,6 +206,7 @@ JSON_EXPORT struct json_tokener *json_tokener_new(void);
 
 /**
  * Allocate a new json_tokener with a custom max nesting depth.
+ * The depth must be at least 1.
  * @see JSON_TOKENER_DEFAULT_DEPTH
  */
 JSON_EXPORT struct json_tokener *json_tokener_new_ex(int depth);
@@ -230,7 +231,7 @@ JSON_EXPORT void json_tokener_reset(struct json_tokener *tok);
 JSON_EXPORT struct json_object *json_tokener_parse(const char *str);
 
 /**
- * Parser a json_object out of the string `str`, but if it fails
+ * Parse a json_object out of the string `str`, but if it fails
  * return the error in `*error`.
  * @see json_tokener_parse()
  * @see json_tokener_parse_ex()
