@@ -14,6 +14,8 @@ Here are the extra included SDKs:
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
 - RxMUI 42.7 http://aminet.net/package/util/rexx/rxmui
 - magic 5.48 https://github.com/sacredbanana/file
+- MCC_ActionTextEditor 1.0 https://github.com/sacredbanana/MCC_ActionTextEditor
+- MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
   
 ### AmigaOS 4
 - AmiSSL 5.27 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
@@ -31,6 +33,8 @@ Here are the extra included SDKs:
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
 - magic 5.48 https://github.com/sacredbanana/file
+- MCC_ActionTextEditor 1.0 https://github.com/sacredbanana/MCC_ActionTextEditor
+- MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
   
 ### MorphOS
 - json-c 0.19 https://github.com/sacredbanana/json-c
@@ -38,6 +42,8 @@ Here are the extra included SDKs:
 - guigfx.library 20.1 https://aminet.net/package/dev/misc/guigfxlib
 - Source Descriptions for FlexCat https://github.com/adtools/flexcat
 - magic 5.48 https://github.com/sacredbanana/file
+- MCC_ActionTextEditor 1.0 https://github.com/sacredbanana/MCC_ActionTextEditor
+- MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
 
 ## Installation
 

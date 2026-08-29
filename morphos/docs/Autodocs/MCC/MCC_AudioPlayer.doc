@@ -1,0 +1,539 @@
+TABLE OF CONTENTS
+
+AudioPlayer.mcc/AudioPlayer.mcc
+AudioPlayer.mcc/MUIA_AudioPlayer_FileName
+AudioPlayer.mcc/MUIA_AudioPlayer_Position
+AudioPlayer.mcc/MUIA_AudioPlayer_Duration
+AudioPlayer.mcc/MUIA_AudioPlayer_Seek
+AudioPlayer.mcc/MUIA_AudioPlayer_Playing
+AudioPlayer.mcc/MUIA_AudioPlayer_Paused
+AudioPlayer.mcc/MUIA_AudioPlayer_HasSpeech
+AudioPlayer.mcc/MUIA_AudioPlayer_Command
+AudioPlayer.mcc/MUIA_AudioPlayer_SampleRate
+AudioPlayer.mcc/MUIA_AudioPlayer_Channels
+AudioPlayer.mcc/MUIA_AudioPlayer_Bits
+AudioPlayer.mcc/MUIA_AudioPlayer_LittleEndian
+AudioPlayer.mcc/MUIA_AudioPlayer_WavePen
+AudioPlayer.mcc/MUIA_AudioPlayer_PeakPen
+AudioPlayer.mcc/MUIA_AudioPlayer_SpectrumPen
+AudioPlayer.mcc/MUIA_AudioPlayer_BackPen
+AudioPlayer.mcc/MUIA_AudioPlayer_BarPen
+AudioPlayer.mcc/MUIA_AudioPlayer_TextPen
+AudioPlayer.mcc/MUIM_AudioPlayer_Play
+AudioPlayer.mcc/MUIM_AudioPlayer_Pause
+AudioPlayer.mcc/MUIM_AudioPlayer_Stop
+AudioPlayer.mcc/MUIM_AudioPlayer_Rewind
+AudioPlayer.mcc/MUIM_AudioPlayer_Service
+AudioPlayer.mcc/EXAMPLE
+AudioPlayer.mcc/AudioPlayer.mcc
+
+    *******************************************************************
+    AudioPlayer.mcc 1.0 (30.08.2026)
+    Copyright (C) 2026 Cameron Armstrong (Nightfox)
+    cameronscottarmstrong@gmail.com
+
+    AudioPlayer.mcc is a MUI custom class that subclasses Area.mui.
+    It loads a WAV or raw PCM file, draws a waveform with a spectrum
+    and playhead, and plays the audio through AHI. The control bar
+    has play/pause, stop, rewind and elapsed time. Click or drag the
+    waveform to seek.
+
+    It was written for the Speech tab in AmigaGPT and is published so
+    other MUI programs can embed the same player.
+
+    REQUIREMENTS
+        MUI 3 or later.
+
+        AHI for playback. The gadget still draws a waveform if AHI
+        cannot be opened; Play then fails silently.
+        https://aminet.net/package/driver/audio/ahiusr_4.18
+
+        AmigaOS 3.1+ (68020), AmigaOS 4.1, or MorphOS.
+
+    SUPERCLASS
+        Area.mui (MUIC_Area)
+
+    CLASS NAME
+        AudioPlayer.mcc
+        #define MUIC_AudioPlayer "AudioPlayer.mcc"
+
+    HEADER
+        #include <mui/AudioPlayer_mcc.h>
+
+    CREATING AN OBJECT
+        Object *player = AudioPlayerObject,
+            MUIA_Frame, MUIV_Frame_Group,
+            MUIA_Background, MUII_SHADOW,
+            MUIA_FillArea, FALSE,
+            MUIA_AudioPlayer_FileName, "RAM:phrase.wav",
+            TAG_DONE;
+
+        The class is loaded from the system MUI class drawer
+        (MUI:Libs/MUI on AmigaOS, SYS:Classes/MUI on MorphOS).
+        Do not call MUI_CreateCustomClass() yourself.
+
+    FILE FORMATS
+        WAV (RIFF/WAVE, PCM encoding 1 or 0xFFFE)
+            Mono or stereo, 8 / 16 / 24 bit. Sample rate and channel
+            count are taken from the fmt chunk. 24-bit samples are
+            converted to 16-bit for AHI.
+
+        Raw PCM
+            Used when the file is not a valid WAV. Set
+            MUIA_AudioPlayer_SampleRate, Channels, Bits and
+            LittleEndian BEFORE setting FileName. Defaults if you
+            omit them: 24000 Hz, mono, 16-bit, little-endian.
+
+        The filename buffer is 255 characters plus a NUL.
+
+    USER INTERFACE
+        Waveform
+            Peak envelope plus an 8-band spectrum. A playhead shows
+            the current position. Click or drag to seek. Seeking
+            while playing continues from the new position.
+
+        Control bar
+            Play/pause (left), stop, rewind, and elapsed / duration
+            time. Buttons are disabled when HasSpeech is FALSE or
+            no file is loaded.
+
+    PLAYBACK
+        Playback uses ahi.device (AHI_DEFAULT_UNIT). The class adds
+        an 80 ms MUI timer input handler in MUIM_Setup so the
+        playhead advances on its own. You may also call
+        MUIM_AudioPlayer_Service from your idle loop.
+
+        16-bit little-endian PCM is byte-swapped to big-endian for
+        AHI. 8-bit samples are converted to signed.
+
+    SIZE
+        Minimum about 160 x 68. Default about 240 x 116. Both axes
+        grow with the group.
+
+    SEE ALSO
+        EXAMPLE, MUIA_AudioPlayer_FileName, MUIM_AudioPlayer_Play
+AudioPlayer.mcc/MUIA_AudioPlayer_FileName
+
+    NAME
+        MUIA_AudioPlayer_FileName -- [ISG], STRPTR
+
+    FUNCTION
+        AmigaDOS path of the WAV or raw PCM file to load. Setting it
+        stops any current playback, clears the waveform, and loads
+        the new file. An empty string or NULL unloads the file.
+
+        Get returns a pointer to an internal 256-byte buffer. Do not
+        FreeVec() it. Copy the string if you need to keep it after
+        the next FileName set.
+
+    NOTES
+        For raw PCM, set SampleRate / Channels / Bits / LittleEndian
+        on the same OM_NEW or before this set.
+
+    EXAMPLE
+        set(player, MUIA_AudioPlayer_FileName, "RAM:phrase.wav");
+
+    SEE ALSO
+        MUIA_AudioPlayer_SampleRate, MUIA_AudioPlayer_Channels,
+        MUIA_AudioPlayer_Bits, MUIA_AudioPlayer_LittleEndian
+AudioPlayer.mcc/MUIA_AudioPlayer_Position
+
+    NAME
+        MUIA_AudioPlayer_Position -- [ISG], ULONG
+
+    FUNCTION
+        Playback position in milliseconds. Setting it seeks. If the
+        gadget was playing, playback continues from the new offset.
+
+    NOTES
+        Range is 0 .. MUIA_AudioPlayer_Duration.
+
+    SEE ALSO
+        MUIA_AudioPlayer_Duration, MUIA_AudioPlayer_Seek
+AudioPlayer.mcc/MUIA_AudioPlayer_Duration
+
+    NAME
+        MUIA_AudioPlayer_Duration -- [..G], ULONG
+
+    FUNCTION
+        Length of the loaded file in milliseconds, or 0 if nothing
+        is loaded.
+
+    SEE ALSO
+        MUIA_AudioPlayer_Position
+AudioPlayer.mcc/MUIA_AudioPlayer_Seek
+
+    NAME
+        MUIA_AudioPlayer_Seek -- [..G], ULONG
+
+    FUNCTION
+        Current position in milliseconds, same value as Position.
+        The class SETs this tag when the user clicks or drags the
+        waveform so you can MUIM_Notify on user seeks.
+
+        Setting this tag from your application does not seek. Use
+        MUIA_AudioPlayer_Position to change the playhead.
+
+    EXAMPLE
+        DoMethod(player, MUIM_Notify, MUIA_AudioPlayer_Seek,
+                 MUIV_EveryTime, app, 3, MUIM_Set,
+                 MUIA_Application_Title, MUIV_TriggerValue);
+
+    SEE ALSO
+        MUIA_AudioPlayer_Position
+AudioPlayer.mcc/MUIA_AudioPlayer_Playing
+
+    NAME
+        MUIA_AudioPlayer_Playing -- [ISG], BOOL
+
+    FUNCTION
+        TRUE while AHI is writing samples. Setting TRUE starts (or
+        resumes) playback from the current offset. Setting FALSE
+        pauses and leaves the playhead where it is.
+
+    NOTES
+        Play at the end of the file rewinds to 0 and starts again.
+
+    SEE ALSO
+        MUIM_AudioPlayer_Play, MUIM_AudioPlayer_Pause,
+        MUIA_AudioPlayer_Paused
+AudioPlayer.mcc/MUIA_AudioPlayer_Paused
+
+    NAME
+        MUIA_AudioPlayer_Paused -- [ISG], BOOL
+
+    FUNCTION
+        TRUE after a pause or a seek that left the gadget stopped.
+        Get this to update your own play/pause gadget.
+
+        Setting the flag alone does not start or stop AHI. Use
+        MUIA_AudioPlayer_Playing or MUIM_AudioPlayer_Pause.
+
+    SEE ALSO
+        MUIA_AudioPlayer_Playing, MUIM_AudioPlayer_Pause
+AudioPlayer.mcc/MUIA_AudioPlayer_HasSpeech
+
+    NAME
+        MUIA_AudioPlayer_HasSpeech -- [ISG], BOOL
+
+    FUNCTION
+        When FALSE, the control-bar buttons are disabled. The
+        waveform still draws. Default is TRUE.
+
+        AmigaGPT uses this to ghost the buttons when no phrase is
+        selected or a request is in progress.
+
+    EXAMPLE
+        set(player, MUIA_AudioPlayer_HasSpeech, phrase != NULL);
+
+    SEE ALSO
+        MUIA_AudioPlayer_FileName
+AudioPlayer.mcc/MUIA_AudioPlayer_Command
+
+    NAME
+        MUIA_AudioPlayer_Command -- [ISG], ULONG
+
+    FUNCTION
+        Last control-bar command. The class SETs this when the user
+        clicks play/pause, stop or rewind so you can MUIM_Notify.
+
+        Setting the tag from your application only stores the value.
+        It does not run the command. Use the MUIM_AudioPlayer_*
+        methods instead.
+
+    SPECIAL VALUES
+        MUIV_AudioPlayer_Command_Play    1
+        MUIV_AudioPlayer_Command_Pause   2
+        MUIV_AudioPlayer_Command_Stop    3
+        MUIV_AudioPlayer_Command_Rewind  4
+
+    SEE ALSO
+        MUIM_AudioPlayer_Play, MUIM_AudioPlayer_Pause,
+        MUIM_AudioPlayer_Stop, MUIM_AudioPlayer_Rewind
+AudioPlayer.mcc/MUIA_AudioPlayer_SampleRate
+
+    NAME
+        MUIA_AudioPlayer_SampleRate -- [ISG], ULONG
+
+    FUNCTION
+        For a raw PCM file, the sample rate in Hertz used on the
+        next FileName load. Default is 24000. Ignored for WAV
+        (the fmt chunk wins).
+
+        After a file is loaded, Get returns the rate actually in
+        use.
+
+    SEE ALSO
+        MUIA_AudioPlayer_FileName, MUIA_AudioPlayer_Channels,
+        MUIA_AudioPlayer_Bits, MUIA_AudioPlayer_LittleEndian
+AudioPlayer.mcc/MUIA_AudioPlayer_Channels
+
+    NAME
+        MUIA_AudioPlayer_Channels -- [ISG], ULONG
+
+    FUNCTION
+        For raw PCM: 1 (mono) or 2 (stereo). Default is 1. Other
+        values are treated as mono. Ignored for WAV.
+
+        After a file is loaded, Get returns 1 or 2 from the AHI
+        sample type.
+
+    SEE ALSO
+        MUIA_AudioPlayer_SampleRate
+AudioPlayer.mcc/MUIA_AudioPlayer_Bits
+
+    NAME
+        MUIA_AudioPlayer_Bits -- [ISG], ULONG
+
+    FUNCTION
+        For raw PCM: 8, 16 or 24. Default is 16. Other values are
+        treated as 16. Ignored for WAV.
+
+        After a file is loaded, Get returns 8 or 16. 24-bit input
+        is converted to 16-bit for AHI, so Get will then report 16.
+
+    SEE ALSO
+        MUIA_AudioPlayer_SampleRate
+AudioPlayer.mcc/MUIA_AudioPlayer_LittleEndian
+
+    NAME
+        MUIA_AudioPlayer_LittleEndian -- [ISG], BOOL
+
+    FUNCTION
+        Byte order of raw PCM samples. Default is TRUE (little
+        endian, typical of RIFF WAV and most PC dumps). Set FALSE
+        for big-endian 16-bit dumps. Ignored for WAV.
+
+    SEE ALSO
+        MUIA_AudioPlayer_Bits
+AudioPlayer.mcc/MUIA_AudioPlayer_WavePen
+
+    NAME
+        MUIA_AudioPlayer_WavePen -- [ISG], ULONG
+
+    FUNCTION
+        MUI pen for the waveform fill. Default
+        MUIV_AudioPlayer_Pen_Default (~0) uses the screen shine
+        pen.
+
+        Pass a pen from MUI_ObtainPen() / MUIPEN(), the same values
+        you use with SetAPen() after MUIPEN().
+
+    SEE ALSO
+        MUIA_AudioPlayer_PeakPen, MUIA_AudioPlayer_SpectrumPen,
+        MUIA_AudioPlayer_BackPen, MUIA_AudioPlayer_BarPen,
+        MUIA_AudioPlayer_TextPen
+AudioPlayer.mcc/MUIA_AudioPlayer_PeakPen
+
+    NAME
+        MUIA_AudioPlayer_PeakPen -- [ISG], ULONG
+
+    FUNCTION
+        MUI pen for the peak highlight. Default uses the screen
+        highlight pen.
+
+    SEE ALSO
+        MUIA_AudioPlayer_WavePen
+AudioPlayer.mcc/MUIA_AudioPlayer_SpectrumPen
+
+    NAME
+        MUIA_AudioPlayer_SpectrumPen -- [ISG], ULONG
+
+    FUNCTION
+        MUI pen for the spectrum bars. Default uses the screen
+        shine pen.
+
+    SEE ALSO
+        MUIA_AudioPlayer_WavePen
+AudioPlayer.mcc/MUIA_AudioPlayer_BackPen
+
+    NAME
+        MUIA_AudioPlayer_BackPen -- [ISG], ULONG
+
+    FUNCTION
+        MUI pen for the waveform background. Default uses the
+        screen shadow pen.
+
+    SEE ALSO
+        MUIA_AudioPlayer_WavePen
+AudioPlayer.mcc/MUIA_AudioPlayer_BarPen
+
+    NAME
+        MUIA_AudioPlayer_BarPen -- [ISG], ULONG
+
+    FUNCTION
+        MUI pen for the control-bar background. Default uses the
+        screen background pen.
+
+    SEE ALSO
+        MUIA_AudioPlayer_WavePen
+AudioPlayer.mcc/MUIA_AudioPlayer_TextPen
+
+    NAME
+        MUIA_AudioPlayer_TextPen -- [ISG], ULONG
+
+    FUNCTION
+        MUI pen for the elapsed-time text and control-bar symbols.
+        Default uses the screen text pen.
+
+    EXAMPLE
+        SetAttrs(player,
+            MUIA_AudioPlayer_WavePen, greenPen,
+            MUIA_AudioPlayer_PeakPen, yellowPen,
+            MUIA_AudioPlayer_SpectrumPen, bluePen,
+            MUIA_AudioPlayer_TextPen, greenPen,
+            TAG_DONE);
+
+    SEE ALSO
+        MUIA_AudioPlayer_WavePen
+AudioPlayer.mcc/MUIM_AudioPlayer_Play
+
+    NAME
+        MUIM_AudioPlayer_Play
+
+    SYNOPSIS
+        DoMethod(obj, MUIM_AudioPlayer_Play);
+
+    FUNCTION
+        Starts or resumes playback from the current offset. If the
+        playhead is at the end, playback restarts from 0.
+
+    SEE ALSO
+        MUIM_AudioPlayer_Pause, MUIA_AudioPlayer_Playing
+AudioPlayer.mcc/MUIM_AudioPlayer_Pause
+
+    NAME
+        MUIM_AudioPlayer_Pause
+
+    SYNOPSIS
+        DoMethod(obj, MUIM_AudioPlayer_Pause);
+
+    FUNCTION
+        Pauses AHI and leaves the playhead at the current position.
+
+    SEE ALSO
+        MUIM_AudioPlayer_Play, MUIA_AudioPlayer_Paused
+AudioPlayer.mcc/MUIM_AudioPlayer_Stop
+
+    NAME
+        MUIM_AudioPlayer_Stop
+
+    SYNOPSIS
+        DoMethod(obj, MUIM_AudioPlayer_Stop);
+
+    FUNCTION
+        Stops playback and rewinds to the start.
+
+    SEE ALSO
+        MUIM_AudioPlayer_Rewind
+AudioPlayer.mcc/MUIM_AudioPlayer_Rewind
+
+    NAME
+        MUIM_AudioPlayer_Rewind
+
+    SYNOPSIS
+        DoMethod(obj, MUIM_AudioPlayer_Rewind);
+
+    FUNCTION
+        Seeks to 0. If the gadget was playing, playback continues
+        from the start; otherwise it stays stopped.
+
+    SEE ALSO
+        MUIM_AudioPlayer_Stop, MUIA_AudioPlayer_Position
+AudioPlayer.mcc/MUIM_AudioPlayer_Service
+
+    NAME
+        MUIM_AudioPlayer_Service
+
+    SYNOPSIS
+        DoMethod(obj, MUIM_AudioPlayer_Service);
+
+    FUNCTION
+        Pumps AHI completion and updates the playhead. The class
+        already installs an 80 ms MUI timer during MUIM_Setup, so
+        you do not have to call this for normal GUI use.
+
+        Call it from your idle loop if you need a smoother playhead
+        than the timer, or if you drive the gadget without a
+        standard MUI application input handler.
+
+    EXAMPLE
+        /* inside your main loop, after NewInput */
+        DoMethod(player, MUIM_AudioPlayer_Service);
+
+    SEE ALSO
+        MUIA_AudioPlayer_Playing, MUIA_AudioPlayer_Position
+AudioPlayer.mcc/EXAMPLE
+
+    NAME
+        EXAMPLE -- WAV playback, raw PCM and notifies
+
+    FUNCTION
+        Three snippets: load a WAV, load raw PCM, and notify when
+        the user hits play or seeks.
+
+    EXAMPLE
+        /* 1. WAV file */
+
+        #include <mui/AudioPlayer_mcc.h>
+
+        Object *player = AudioPlayerObject,
+            MUIA_Frame, MUIV_Frame_Group,
+            MUIA_FillArea, FALSE,
+            MUIA_Weight, 200,
+            MUIA_AudioPlayer_FileName, "PROGDIR:demo.wav",
+            TAG_DONE;
+
+        DoMethod(player, MUIM_AudioPlayer_Play);
+
+
+        /* 2. Raw little-endian 16-bit mono PCM at 24 kHz.
+         *    Set the format tags BEFORE FileName.
+         */
+
+        player = AudioPlayerObject,
+            MUIA_AudioPlayer_SampleRate, 24000,
+            MUIA_AudioPlayer_Channels, 1,
+            MUIA_AudioPlayer_Bits, 16,
+            MUIA_AudioPlayer_LittleEndian, TRUE,
+            MUIA_AudioPlayer_FileName, "RAM:phrase.pcm",
+            TAG_DONE;
+
+
+        /* 3. Later reload, disable buttons, watch the user */
+
+        set(player, MUIA_AudioPlayer_FileName, newPath);
+        set(player, MUIA_AudioPlayer_HasSpeech, TRUE);
+
+        DoMethod(player, MUIM_Notify, MUIA_AudioPlayer_Playing,
+                 TRUE, app, 3, MUIM_Set, MUIA_Application_Sleep,
+                 FALSE);
+
+        DoMethod(player, MUIM_Notify, MUIA_AudioPlayer_Command,
+                 MUIV_AudioPlayer_Command_Stop, player, 1,
+                 MUIM_AudioPlayer_Rewind);
+
+        DoMethod(player, MUIM_Notify, MUIA_AudioPlayer_Seek,
+                 MUIV_EveryTime, /* your object */, 3, MUIM_Set,
+                 /* your attr */, MUIV_TriggerValue);
+
+
+        /* 4. Match your app pens (values from MUI_ObtainPen) */
+
+        SetAttrs(player,
+            MUIA_AudioPlayer_WavePen, greenPen,
+            MUIA_AudioPlayer_PeakPen, yellowPen,
+            MUIA_AudioPlayer_SpectrumPen, bluePen,
+            MUIA_AudioPlayer_TextPen, greenPen,
+            TAG_DONE);
+
+    NOTES
+        Put AudioPlayer.mcc in the MUI class drawer and list
+        MUIC_AudioPlayer in USED_CLASSES.
+
+        AHI must be installed for Play to produce sound. The
+        waveform still appears without it.
+
+    SEE ALSO
+        AudioPlayer.mcc/AudioPlayer.mcc
+

@@ -1,0 +1,208 @@
+TABLE OF CONTENTS
+
+ActionTextEditor.mcc/ActionTextEditor.mcc
+ActionTextEditor.mcc/MUIA_ActionTextEditor_SubmitHook
+ActionTextEditor.mcc/EXAMPLE
+ActionTextEditor.mcc/ActionTextEditor.mcc
+
+    *******************************************************************
+    ActionTextEditor.mcc 1.0 (30.08.2026)
+    Copyright (C) 2026 Cameron Armstrong (Nightfox)
+    cameronscottarmstrong@gmail.com
+
+    ActionTextEditor.mcc is a MUI custom class that subclasses
+    TextEditor.mcc. Pressing Return while the gadget has text calls a
+    hook you supply. Right Shift + Return inserts a newline instead,
+    the same as TextEditor.mcc.
+
+    It was written for AmigaGPT and is published so other MUI programs
+    can reuse the same Return-to-submit behaviour.
+
+    REQUIREMENTS
+        MUI 3 or later.
+
+        MCC_TextEditor 15.56 or later MUST be installed. This class
+        subclasses TextEditor.mcc and will not load without it:
+
+            https://aminet.net/dev/mui/MCC_TextEditor-15.56.lha
+
+        AmigaOS 3.1+ (68020), AmigaOS 4.1, or MorphOS.
+
+    SUPERCLASS
+        TextEditor.mcc (MUIC_TextEditor)
+
+        Every TextEditor.mcc attribute and method works on an
+        ActionTextEditor object. Use MUIM_TextEditor_ExportText to
+        read the gadget after the submit hook fires.
+
+    CLASS NAME
+        ActionTextEditor.mcc
+        #define MUIC_ActionTextEditor "ActionTextEditor.mcc"
+
+    HEADER
+        #include <mui/ActionTextEditor_mcc.h>
+
+    CREATING AN OBJECT
+        Object *editor = ActionTextEditorObject,
+            MUIA_ActionTextEditor_SubmitHook, &MySubmitHook,
+            MUIA_TextEditor_Rows, 3,
+            TAG_DONE;
+
+        or
+
+        Object *editor = MUI_NewObject(MUIC_ActionTextEditor,
+            MUIA_ActionTextEditor_SubmitHook, &MySubmitHook,
+            TAG_DONE);
+
+        The class is loaded from the system MUI class drawer
+        (MUI:Libs/MUI on AmigaOS, SYS:Classes/MUI on MorphOS).
+        Do not call MUI_CreateCustomClass() yourself.
+
+    KEYBOARD
+        Return
+            If the gadget has any exported text, the submit hook is
+            called and the key is eaten. An empty gadget does not
+            submit; the event is passed to the superclass.
+
+        Right Shift + Return
+            Inserts a newline through TextEditor.mcc. The qualifier
+            is rewritten so the superclass sees a plain Return.
+
+        Other keys
+            Passed to TextEditor.mcc unchanged.
+
+    SEE ALSO
+        MUIA_ActionTextEditor_SubmitHook, EXAMPLE,
+        MCC_TextEditor autodocs
+ActionTextEditor.mcc/MUIA_ActionTextEditor_SubmitHook
+
+    NAME
+        MUIA_ActionTextEditor_SubmitHook -- [ISG], struct Hook *
+
+    FUNCTION
+        Hook called when the user presses Return (rawkey 0x44) with
+        no Right Shift and the gadget has text.
+
+        The class exports the contents with MUIM_TextEditor_ExportText
+        only to decide whether there is text. It does not pass that
+        string to the hook. Your hook should export the text itself
+        (and FreeVec() the result).
+
+        The hook is invoked with MUIM_CallHook. A typical SDI hook
+        uses HOOKPROTONHNONP and reads the editor from a global, the
+        same pattern as a MUI button notify.
+
+        Default is NULL. Return then does nothing special unless
+        Right Shift is held (newline).
+
+    INPUTS
+        struct Hook *  -- submit hook, or NULL to disable submit
+
+    NOTES
+        The event handler is installed on MUIM_GoActive and removed
+        on MUIM_GoInactive, so Return is only intercepted while the
+        gadget is the window's active object.
+
+        Exporting an empty string (or a failed export) does not call
+        the hook.
+
+    EXAMPLE
+        See ActionTextEditor.mcc/EXAMPLE.
+
+    SEE ALSO
+        ActionTextEditor.mcc/EXAMPLE,
+        MUIM_TextEditor_ExportText, MUIM_CallHook
+ActionTextEditor.mcc/EXAMPLE
+
+    NAME
+        EXAMPLE -- creating an object and handling Return
+
+    FUNCTION
+        Minimal MUI application: an ActionTextEditor gadget and a
+        status text. Return copies the gadget into the status line.
+        Right Shift + Return inserts a newline in the gadget.
+
+    EXAMPLE
+        #include <proto/exec.h>
+        #include <proto/muimaster.h>
+        #include <libraries/mui.h>
+        #include <mui/TextEditor_mcc.h>
+        #include <mui/ActionTextEditor_mcc.h>
+        #include <SDI_hook.h>
+        #include <string.h>
+
+        static Object *app;
+        static Object *window;
+        static Object *editor;
+        static Object *status;
+
+        HOOKPROTONHNONP(SubmitFunc, void)
+        {
+            STRPTR text;
+
+            text = (STRPTR)DoMethod(editor, MUIM_TextEditor_ExportText);
+            if (text != NULL)
+            {
+                set(status, MUIA_Text_Contents, text);
+                FreeVec(text);
+            }
+        }
+        MakeHook(SubmitHook, SubmitFunc);
+
+        int main(void)
+        {
+            app = ApplicationObject,
+                MUIA_Application_Title, "ActionTextEditor demo",
+                SubWindow, window = WindowObject,
+                    MUIA_Window_Title, "ActionTextEditor.mcc",
+                    WindowContents, VGroup,
+                        Child, editor = ActionTextEditorObject,
+                            MUIA_ActionTextEditor_SubmitHook,
+                                &SubmitHook,
+                            MUIA_TextEditor_Rows, 4,
+                            MUIA_TextEditor_ExportHook,
+                                MUIV_TextEditor_ExportHook_EMail,
+                            End,
+                        Child, status = TextObject,
+                            MUIA_Text_Contents, "Press Return to submit",
+                            End,
+                        End,
+                    End,
+                End;
+
+            if (app == NULL)
+                return 20;
+
+            DoMethod(window, MUIM_Notify, MUIA_Window_CloseRequest,
+                     TRUE, app, 2, MUIM_Application_ReturnID,
+                     MUIV_Application_ReturnID_Quit);
+
+            set(window, MUIA_Window_Open, TRUE);
+            set(window, MUIA_Window_ActiveObject, editor);
+
+            {
+                ULONG signals = 0;
+                while (DoMethod(app, MUIM_Application_NewInput, &signals)
+                       != MUIV_Application_ReturnID_Quit)
+                {
+                    if (signals)
+                        Wait(signals);
+                }
+            }
+
+            MUI_DisposeObject(app);
+            return 0;
+        }
+
+    NOTES
+        Put ActionTextEditor.mcc in the MUI class drawer and list
+        MUIC_ActionTextEditor in your application's USED_CLASSES
+        (or MUI_NewObject will fail).
+
+        TextEditor.mcc 15.56 or later must already be installed:
+
+            https://aminet.net/dev/mui/MCC_TextEditor-15.56.lha
+
+    SEE ALSO
+        MUIA_ActionTextEditor_SubmitHook
+
