@@ -1,7 +1,6 @@
 #ifndef REXX_STORAGE_H
 #define REXX_STORAGE_H
 /*
-**    $VER: storage.h 54.16 (22.08.2022)
 **
 **    Header file to define ARexx data structures.
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

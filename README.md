@@ -1,5 +1,5 @@
 # AmigaSDK-gcc
-This pack contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.16, MorphOS 3.20 SDK, plus extra SDKs fixed to work with the GCC compiler.
+This pack contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.25, MorphOS 3.20 SDK, plus extra SDKs fixed to work with the GCC compiler.
 
 Here are the extra included SDKs:
 
@@ -22,7 +22,7 @@ Here are the extra included SDKs:
 - Cairo 53.3
 - Flex 2.5.27
 - Expat 53.6
-- Execsg 54.3
+- Execsg 54.32
 - Minigl 2.24
 - Pthreads 53.12
 - Python 53.35

@@ -2,12 +2,11 @@
 #define USB_DEVCLASSES_H
 
 /*
-** $VER: devclasses.h 53.34 (09.12.2021)
 **
 ** USB Device Class definitions
 **
 ** Copyright (c) 2001, Thomas Graff Thoeger
-** Distributed by Hyperion Entertainment CVBA under permission.
+** Distributed by Hyperion Entertainment BV under permission.
 */
 
 /*
@@ -30,6 +29,9 @@
 #define USBCLASS_SECURITY       0x0D
 #define USBCLASS_VIDEO			0x0E
 #define USBCLASS_HEALTHCARE		0x0F
+//..
+#define USBCLASS_BILLBOARD		0x11
+#define USBCLASS_TYPE_C_BRIDGE	0x12
 //..
 #define USBCLASS_DIAGNOSTIC     0xDC
 //..

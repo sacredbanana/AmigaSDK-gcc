@@ -1,15 +1,11 @@
 #ifndef UTILITY_HOOKS_H
 #define UTILITY_HOOKS_H
 /*
-**    $VER: hooks.h 53.29 (10.8.2015)
+** Callback hooks
 **
-**    Callback hooks
+** Copyright 1989-2003 Amiga Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2019 Trevor Dickinson.
 */
 
 /*****************************************************************************/
@@ -41,18 +37,20 @@ extern "C" {
 
 /*****************************************************************************/
 
+struct Hook;
+
+/* Useful definition for casting function pointers:
+ * hook.h_Entry = (HOOKFUNC)AFunction
+ */
+typedef uint32 (*HOOKFUNC)(struct Hook *, APTR, APTR);
+
 struct Hook
 {
     struct MinNode  h_MinNode;     /* General purpose user minnode   */
-    uint32        (*h_Entry)();    /* CallHookPkt() calls code here  */
-    uint32        (*h_SubEntry)(); /* General purpose user function  */
+    HOOKFUNC        h_Entry;       /* CallHookPkt() calls code here  */
+    HOOKFUNC        h_SubEntry;    /* General purpose user function  */
     APTR            h_Data;        /* General purpose user data      */
 };
-
-/* Useful definition for casting function pointers:
- * hook.h_SubEntry = (HOOKFUNC)AFunction
- */
-typedef unsigned long (*HOOKFUNC)();
 
 /*****************************************************************************/
 

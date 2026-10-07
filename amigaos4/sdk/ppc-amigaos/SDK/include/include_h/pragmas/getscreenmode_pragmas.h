@@ -2,7 +2,6 @@
 #define PRAGMAS_GETSCREENMODE_PRAGMAS_H
 
 /*
-**    $VER: getscreenmode_pragmas.h 54.16 (22.08.2022)
 **
 **    Direct ROM interface (pragma) definitions.
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

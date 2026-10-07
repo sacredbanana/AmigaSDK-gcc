@@ -1,14 +1,17 @@
 #ifndef DOS_PATH_H
 #define DOS_PATH_H
 /*
-**    $VER: path.h  54.100 (07.09.2020)
+**    $VER: path.h  54.126 (05.08.2023)
 **
 **    Data structures and parameters for shell search path management
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */

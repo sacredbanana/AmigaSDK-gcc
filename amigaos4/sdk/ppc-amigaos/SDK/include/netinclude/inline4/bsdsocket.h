@@ -229,4 +229,3 @@
 #define getnameinfo(sa, salen, host, hostlen, serv, servlen, flags) ISocket->getnameinfo((sa), (salen), (host), (hostlen), (serv), (servlen), (flags)) 
 
 #endif /* INLINE4_BSDSOCKET_H */
-

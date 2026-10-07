@@ -1,15 +1,11 @@
 #ifndef EXEC_TASKS_H
 #define EXEC_TASKS_H
 /*
-**    $VER: tasks.h 53.29 (10.8.2015)
+** Task Control Block, Signals, and Task flags.
 **
-**    Task Control Block, Signals, and Task flags.
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_NODES_H

@@ -1,14 +1,17 @@
 #ifndef DOS_RECORD_H
 #define DOS_RECORD_H
 /*
-**    $VER: record.h  54.100 (07.09.2020)
+**    $VER: record.h  54.126 (05.08.2023)
 **
 **    include file for record locking
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -44,14 +47,14 @@ extern "C" {
 
 /*
 ** Control flags to be ORed with any mode value above.
-** This forces the use of the DOS method, regardless of whether 
-** the underlying filesystem supports record locking or not. - Added 53.114 
+** This forces the use of the DOS method, regardless of whether
+** the underlying filesystem supports record locking or not. - Added 53.114
 */
 #define RECF_DOS_METHOD_ONLY   (1<<16)
 
 /*
 ** Control flag mask used to filter mode values from control flags.
-** This is generally used internally and of no real use to applications. 
+** This is generally used internally and of no real use to applications.
 */
 #define REC_MODE_MASK          0xFF
 
@@ -59,11 +62,11 @@ extern "C" {
 
 /****************************************************************************/
 /* Struct to be passed to LockRecords()/UnLockRecords() v53.86+             */
-/* Note: the rec_Size member MUST be set in each struct or it won't work.   */ 
+/* Note: the rec_Size member MUST be set in each struct or it won't work.   */
 
 struct RecordLock
 {
-    uint32   rec_Size;       /* This MUST be set to sizeof(struct RecordLock) */  
+    uint32   rec_Size;       /* This MUST be set to sizeof(struct RecordLock) */
     BPTR     rec_FH;         /* filehandle */
     int64    rec_Offset;     /* offset in file */
     int64    rec_Length;     /* length of file record to be locked */

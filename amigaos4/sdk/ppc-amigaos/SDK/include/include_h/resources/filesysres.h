@@ -1,14 +1,17 @@
 #ifndef RESOURCES_FILESYSRES_H
 #define RESOURCES_FILESYSRES_H
 /*
-**    $VER: filesysres.h  54.100 (07.09.2020)
+**    $VER: filesysres.h  54.126 (05.08.2023)
 **
 **    FileSystem.resource description
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2011 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2011 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

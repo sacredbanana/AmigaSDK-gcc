@@ -1,7 +1,6 @@
 #ifndef LIBRARIES_SCREENBLANKER_H
 #define LIBRARIES_SCREENBLANKER_H
 /*
-**  $VER: screenblanker.h 54.16 (22.08.2022)
 **
 **	Definitions for the screenblanker library system.
 **
@@ -11,6 +10,9 @@
 **       All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -26,6 +28,9 @@
 /******************************************************************************/
 
 #ifdef __cplusplus
+#ifdef __USE_AMIGAOS_NAMESPACE__
+namespace AmigaOS {
+#endif
 extern "C" {
 #endif
 
@@ -68,6 +73,9 @@ enum enScreenBlankerTags
 
 #ifdef __cplusplus
 }
+#ifdef __USE_AMIGAOS_NAMESPACE__
+}
+#endif
 #endif
 
 /******************************************************************************/

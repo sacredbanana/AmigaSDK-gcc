@@ -1,7 +1,6 @@
 #ifndef INTUITION_PREFERENCES_H
 #define INTUITION_PREFERENCES_H TRUE
 /*
-**    $VER: preferences.h 54.16 (22.08.2022)
 **
 **    Structure definition for old-style preferences
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -186,14 +188,24 @@ struct Preferences
 #define SERIAL_PRINTER   0x01
 
 /* BaudRate */
-#define BAUD_110   0x00
-#define BAUD_300   0x01
-#define BAUD_1200  0x02
-#define BAUD_2400  0x03
-#define BAUD_4800  0x04
-#define BAUD_9600  0x05
-#define BAUD_19200 0x06
-#define BAUD_MIDI  0x07
+#define BAUD_110    0x00
+#define BAUD_300    0x01
+#define BAUD_1200   0x02
+#define BAUD_2400   0x03
+#define BAUD_4800   0x04
+#define BAUD_9600   0x05
+#define BAUD_19200  0x06
+#define BAUD_MIDI   0x07
+/* New since 54.33 */
+#define BAUD_28800  0x08
+#define BAUD_38400  0x09
+#define BAUD_57600  0x0A
+#define BAUD_76800  0x0B
+#define BAUD_115200 0x0C
+#define BAUD_230400 0x0D
+#define BAUD_460800 0x0E
+#define BAUD_576000 0x0F
+#define BAUD_921600 0x10
 
 /* PaperType */
 #define FANFOLD    0x00
@@ -289,7 +301,7 @@ struct Preferences
 #define SPARITY_SPACE 4
 
 /* Serial Handshake Mode (lower nibble, after masking using
- * macro SHANKNUM() )
+ * macro SHAKNUM() )
  */
 #define SHSHAKE_XON  0
 #define SHSHAKE_RTS  1

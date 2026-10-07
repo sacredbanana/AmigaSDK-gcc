@@ -1,15 +1,11 @@
 #ifndef EXEC_PORTS_H
 #define EXEC_PORTS_H
 /*
-**    $VER: ports.h 53.29 (10.8.2015)
+** Message ports and Messages.
 **
-**    Message ports and Messages.
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_NODES_H
@@ -55,8 +51,9 @@ struct MsgPort
 /* mp_Flags: Port arrival actions (PutMsg) */
 enum enMsgPortFlags
 {
-    PF_ACTION   = 3,     /* Mask */
-    PF_SIGALLOC = (1<<7) /* Internal use */
+    PF_ACTION    = 3,      /* Mask */
+    PF_NAMEALLOC = (1<<6), /* Internal use */
+    PF_SIGALLOC  = (1<<7)  /* Internal use */
 };
 
 enum enMsgPortActions

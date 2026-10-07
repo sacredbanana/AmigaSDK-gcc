@@ -1,11 +1,13 @@
 #ifndef GRAPHICS_MINTERM_H
 #define GRAPHICS_MINTERM_H
 /*
-**    $VER: minterm.h 54.16 (22.08.2022)
 **
 **    Minterm include file
 **
 **    Copyright (c) 2014 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

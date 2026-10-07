@@ -1,0 +1,105 @@
+Changes since the July 2007 update of AmigaOS4:
+- In open(), _open_r(), open64() and _open64_r() the mode is no longer
+  ignored.
+- utime() didn't support NULL utimebuf, fixed.
+- Disabled non-working POS_ARGS in *printf().
+- Now uses the file handle buffer size from DOS prefs as default buffer
+  size.
+- The offset in _mktm_r() with is_gmtime = 0 was wrong, fixes for
+  example localtime() as well.
+
+Changes since AmigaOS4 final:
+- Added seekdir() and telldir().
+- Support for shared objects added.
+- Added real environment.
+- Changed clock_t to 64 bit and added tm_gmtoff and tm_zone to struct
+  tm.
+  WARNING: Old executables will continue to work with the old types,
+           but when builing new software all object files and libraries
+           which use clock_t in another structure, or use struct tm or
+           struct tms have to be rebuild.
+- The default stdio CON: for programs started from WB now has the name
+  of the program as title.
+- Changed dirent functions to use IDOS->ExamineDir().
+- New functions:
+  llrint(), llrintf(), fdopen64(), fgetpos64(), fopen64(), fseeko64(),
+  fsetpos64(), ftello64(), tmpfile64(), lseek64(), fstat64(),
+  _fdopen64_r(), _fopen64_r(), _ftello64_r(), _fseeko64_r(),
+  _fgetpos64_r(), _fsetpos64_r(), _tmpfile64_r(), _lseek64_r(),
+  _fstat64_r(), open64(), _open64_r(), stat64(), lstat64(),
+  fchmod(), fchown(), readv(), writev(), gamma(), gammaf(), lgamma()
+  and lgammaf().
+- No longer clears SIGBREAKF_CTRL_C if signal(SIGINT, SIG_IGN) was used.
+- Several math functions have better precicion now, fixed broken
+  atan2() and atan2f().
+- Time functions now use timezone.library to get the UTC offset and
+  dst flag.
+- Updated to newlib 1.15.0.
+
+Changes since AmigaOS pre-release Update4:
+- Added error output for programs which will need newer versions of
+  newlib.library.
+- Added getopt_long().
+- Added working getenv() and _getenv_r().
+- _exit() and exit() now check if it was called by the correct process
+  and use IExec->RemTask(NULL) if not.
+- The memory pools used as backends for malloc(), etc. are created using
+  AllocSysObjectTags() and have a name now.
+- lsearch() and lfind() added.
+- tmpnam(), _tmpnam_r(), tempnam(NULL,) amd _tempnam_r(,NULL,) didn't
+  work for executables linked without -lunix, fixed.
+- Added uname() and sys/utsname.h.
+- getcwd() didn't return an unix path if linked with -lunix, fixed.
+- Fixed a bug in opendir().
+- Added missing INADDR_LOOPBACK define to netinet/in.h.
+- Now checks if it's running in a dos process or an exec task, using
+  newlib functions from exec tasks, using the global environment, is
+  possible as well now. Of course using things which are not possible
+  in an exec tasks wont work, for example most, if not all, file I/O.
+- Added a workaround for bug #3140, there is a global fallback C library
+  context now which is used if a non-newlib program is using newlib
+  functions which need it, for example indirectly though a library using
+  newlib.
+  Since it's global it's not usable in any way, for example it's errno
+  may have been changed 100 times by other code already after a function
+  which sets errno is called and before it's read, it just prevents
+  crashes like the one in bug #3140.
+  That additionally means pr_CLibData is no longer a general C library
+  data pointer but newlib-only, it either has to be set to a newlib
+  context or it has to be NULL, using it for anything else will cause
+  crashes now.
+- Fixed a bug in fdopen().
+- Replaced libc.a stubs by smaller versions.
+- Added missing getlogin() to libc.a.
+- Fixed an old bug in the unix->amiga path translation, for
+  example "./../foobar" was translated to "foobar:" instead of
+  "/foobar" (Bug #3109).
+- Changed struct passwd to the one RoadShow uses.
+- Replaced memory system.
+- The stubs in libc.a didn't set the minmum newlib.library version to 4
+  for symlink(), readlink(), basename(), dirname(), pread(), pwrite(),
+  _pread_r() and _pwrite_r(), fixed.
+- Added fsync().
+- Added symlink(), readlink(), basename(), dirname(), pread(),
+  pwrite(), _pread_r() and _pwrite_r().
+- Added waitselect().
+- Recreated amiga_1251.cct, cp437.cct, iso_8859_16.cct and tis_620.cct
+  in the new format newlib.library 4.x uses.
+- Updated to newlib 1.14.0.
+- Replaced local inet_aton() by a call to ISocket->inet_aton().
+- h_errno, inet_ntop(), getuid(), geteuid(), setreuid(), setuid(),
+  getgid(), getegid(), setregid(), setgid(), getgroups(), setgroups(),
+  initgroups(), getpwnam(), getpwuid(), setpwent(), getpwent(),
+  endpwent(), getgrnam(), getgrgid(), setgrent(), getgrent(),
+  endgrent(), crypt(), getpass(), setsid(), getpgrp(), getlogin()
+  added.
+- Changed iconv path from L:CharSets to L:CharSets/newlib.
+- Added __mb_cur_max().
+- It's now a kickstart module, make sure to add it to your kicklayout.
+- Fixed a bug in Lib_Open().
+- Removed sys/timeb.h.
+- Fixed MIN() and MAX() (for GCC only).
+- Added fixed netinet/in.h
+- Added stdint.h.
+- Reenabled sys/time.h macros.
+- Added missing kill() to sys/signal.h and libc.a.

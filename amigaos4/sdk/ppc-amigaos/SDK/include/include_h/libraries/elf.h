@@ -1,15 +1,14 @@
 #ifndef LIBRARIES_ELF_H
 #define LIBRARIES_ELF_H
 /*
-**    $VER: elf.h 54.16 (22.08.2022)
-**
 **    Definitions for the ELF loader
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
+**
 */
 
 /****************************************************************************/
@@ -380,20 +379,21 @@ enum enDynamicArrayTags
 /* This enum specifies error codes */
 typedef enum enElfError
 {
-    ELF32_NO_ERROR           = 0,
-    ELF32_OUT_OF_MEMORY      = 1,
-    ELF32_INVALID_HANDLE     = 2,
-    ELF32_NO_MORE_RELOCS     = 3,
-    ELF32_SECTION_NOT_LOADED = 4,
-    ELF32_UNKNOWN_RELOC      = 5,
-    ELF32_READ_ERROR         = 6,
-    ELF32_INVALID_SDA_BASE   = 7,
+    ELF32_NO_ERROR                = 0,
+    ELF32_OUT_OF_MEMORY           = 1,
+    ELF32_INVALID_HANDLE          = 2,
+    ELF32_NO_MORE_RELOCS          = 3,
+    ELF32_SECTION_NOT_LOADED      = 4,
+    ELF32_UNKNOWN_RELOC           = 5,
+    ELF32_READ_ERROR              = 6,
+    ELF32_INVALID_SDA_BASE        = 7,
 
-    ELF32_SYMBOL_NOT_FOUND	 = 8,
-    ELF32_INVALID_NAME		 = 9,
+    ELF32_SYMBOL_NOT_FOUND        = 8,
+    ELF32_INVALID_NAME            = 9,
     ELF32_REQUIRED_OBJECT_MISSING = 10,
+    ELF32_INVALID_HEADER          = 11,
 
-    ELF32_NO_SECTION         = 0xFFFFFFFF
+    ELF32_NO_SECTION              = 0xFFFFFFFF
 } Elf32_Error;
 
 /****************************************************************************/
@@ -535,6 +535,18 @@ struct SymbolMsg
 #define ELF32_ST_TYPE(i)	((i) & 0xf)
 #define ELF32_ST_BIND(i)	((i) >> 4)
 #define ELF32_ST_INFO(b,t)	(((b) << 4) + ((t) & 0xf))
+
+/****************************************************************************/
+
+// Structure definition for GetSOHandles
+
+struct GetSOLibMsg
+{
+    uint32       StructSize;    // Size of struct GetSOLibMsg in bytes
+    Elf32_Handle SOLibHandle;   // ELF handle for the shared object
+    CONST_STRPTR SOLibName;     // Name of the shared object
+    uint32       reserved;      // Reserved for future use
+};
 
 #ifdef __cplusplus
 }

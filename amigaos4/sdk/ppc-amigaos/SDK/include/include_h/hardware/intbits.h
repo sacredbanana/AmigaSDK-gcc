@@ -1,7 +1,6 @@
 #ifndef HARDWARE_INTBITS_H
 #define HARDWARE_INTBITS_H
 /*
-**    $VER: intbits.h 54.16 (22.08.2022)
 **
 **    bits in the interrupt enable (and interrupt request) register
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

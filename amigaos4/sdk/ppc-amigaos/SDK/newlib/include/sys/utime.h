@@ -1,6 +1,8 @@
 #ifndef _SYS_UTIME_H
 #define _SYS_UTIME_H
 
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

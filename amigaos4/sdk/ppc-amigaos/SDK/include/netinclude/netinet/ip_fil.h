@@ -1,6 +1,4 @@
 /*
- * $VER: ip_fil.h 54.16 (22.08.2022)
- *
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * The author accepts no responsibility for the use of this software and
@@ -457,4 +455,3 @@ typedef	struct	ipflog	{
 /****************************************************************************/
 
 #endif	/* _NETINET_IP_FIL_H */
-

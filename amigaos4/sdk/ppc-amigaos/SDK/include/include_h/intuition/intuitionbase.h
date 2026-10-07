@@ -1,7 +1,6 @@
 #ifndef INTUITION_INTUITIONBASE_H
 #define INTUITION_INTUITIONBASE_H 1
 /*
-**    $VER: intuitionbase.h 54.16 (22.08.2022)
 **
 **    Public part of IntuitionBase structure and supporting structures
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

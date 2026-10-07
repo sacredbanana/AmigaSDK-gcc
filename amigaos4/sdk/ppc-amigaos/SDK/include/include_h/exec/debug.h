@@ -1,12 +1,9 @@
 #ifndef EXEC_DEBUG_H
 #define EXEC_DEBUG_H
 /*
-**    $VER: debug.h 53.29 (10.8.2015)
+** Debugging data structure definitions
 **
-**    Debugging data structure definitions
-**
-**    Copyright (c) 2013 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2013-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H

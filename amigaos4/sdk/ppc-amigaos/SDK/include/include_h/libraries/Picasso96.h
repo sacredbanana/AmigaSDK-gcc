@@ -1,5 +1,4 @@
 /*
- * $VER: Picasso96.h 54.16 (22.08.2022)
  *
  * Picasso96.h -- include File
  *

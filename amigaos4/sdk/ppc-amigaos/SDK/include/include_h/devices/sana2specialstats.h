@@ -1,7 +1,6 @@
 #ifndef DEVICES_SANA2SPECIALSTATS_H
 #define DEVICES_SANA2SPECIALSTATS_H 1
 /*
-**    $VER: sana2specialstats.h 54.16 (22.08.2022)
 **
 **    Defined IDs for SANA-II special statistics.
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

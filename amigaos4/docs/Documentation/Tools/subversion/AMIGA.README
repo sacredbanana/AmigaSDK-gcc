@@ -1,0 +1,271 @@
+"subversion" for the Amiga
+==========================
+
+1. Introduction
+
+This is a port of "subversion" (version 1.1.4) for the Amiga, using GCC and my
+clib2 runtime library. "subversion" is a revision control system, such as the
+older "RCS" and "CVS". It does offer much more than these older systems, see
+for yourself at <http://subversion.tigris.org>. I have included some of the
+documentation that was part of the original distribution archive in the "doc"
+directory, but I recommend that you have a look at the web site.
+
+
+2. Installation
+
+I built binaries both for the 68k platform and OS4. You need an Amiga with
+68020 CPU/Kickstart 2.04 or better. Or, of course, an Amiga with AmigaOS4. If
+you want to access "subversion" repositories on SSL servers you will need to
+have AmiSSL V3 or better installed.
+
+I have made a few small changes to fit the client software (svn, etc.) better
+into the Amiga framework. These are as follows:
+
+   - The place where global subversion configuration files are searched
+     for in is "subversion:". On Unix, that would have been "/etc/subversion".
+
+   - The "svn" command uses a lot of stack space. I measured about 180K as
+     the minimum and pre-configured "svn" to use 200K just to be sure. But
+     you can override the stack size through an environment variable,
+     like this:
+
+        setenv SVN_STACK_SIZE 500000
+
+     All other commands also check the SVN_STACK_SIZE environment variable
+     to set the default stack size; they all start with a minimum of
+     20000 bytes.
+
+   - All programs bear the typical Amiga version strings.
+
+   - I have added new auto-props by the names of "amiga:protection" and
+     "amiga:comment". These specifically store the Amiga typical file and
+     directory protection bits and the comment strings associated with
+     them, respectively. If you want to use these features, don't forget
+     to put the following line into your "subversion:config" file:
+
+        auto-props=yes
+
+     Checking files in and out will then have their Amiga specific
+     protection bits and comments recorded and restored.
+
+Please note that all the tools still "believe" that they are running in a Unix
+environment. This means that path names for files and directories are following
+the Unix rules. For example "." is the name of the current directory, ".." the
+name of the parent directory and absolute path names, such as "/Work/foo/bar",
+stand for "Work:foo/bar".
+
+
+3. SSL support
+
+In order to access repositories stored on SSL servers you will need to have
+AmiSSL V4 or better installed. Older versions do not work, and neither does the
+"Miami Deluxe" SSL support library. If the required AmiSSL software is not
+installed, the "svn" and "svnversion" clients will pretend that they do not
+support SSL server access; no specific error message to detail this will be
+printed. You might even see error messages with misleading content, such as
+that the URL scheme for the repository which you are trying to access being
+invalid.
+
+To stress the point: you need AmiSSL V4 or better to make use of this
+subversion port!
+
+
+4. SSH support
+
+Starting with version 1.7 this subversion 1.1.4 port supports the svn+ssh://
+access method for repositories using a built-in SSHv1 client. This means that
+the remote repository has to support the by now rather obsolete version 1 of the
+SSH protocol, which is not necessarily the case today.
+
+Please note that this feature (subversion via secure shell) is still enabled,
+but it presents a significant security risk. Do not use this with a public
+facing subversion server!
+
+By default the SSHv1 client will connect to port 22 on the remote server. You
+can override this by creating a file "subversion:sshconfig" which contains
+server specific configuration options. Such a file could look as follows:
+
+    host        foo.bar.com
+    port        22001
+    user        barney
+    password    secret
+
+    host        foo.bar.com
+    port        22001
+    user        fred
+    password    12345
+
+    host        192.168.0.107
+    user        fred
+    password    secret
+
+Each configuration section starts with a host name, or an IPv4 address. This is
+followed by a port number, a choice of cipher and optional login information.
+
+If you omit the port number, the default of 22 will be used.
+
+For security reasons you should not include the login information in this
+configuration file, but, well, if you want to, you can. For the password to be
+picked up, the respective options have to include the matching server name and
+the matching user name.
+
+If no password is provided in the options file, the SSHv1 client will prompt you
+to enter it on the command line.
+
+
+5. Caveats
+
+This port is largely untested. I did try to check out and update repositories
+and I verified how much stack space the client programs use. They did work fine
+for me, but your mileage may vary. I do not know if the "svnserve" program
+actually does what it's supposed to do, so you better be careful.
+
+
+6. Source code
+
+I have included the source code changes I made in the "source" directory. To
+build the "subversion" programs from it, just download the
+"subversion-1.1.4.tar.gz" archive from <http://subversion.tigris.org>, unpack
+it and copy the contents of the "source" directory on top of it. I have
+provided a copy of zlib which integrates into the build. You also need a copy
+of the bsdsocket.library SDK header files (e.g. from the "Roadshow" SDK) which
+must be copied into the local "netinclude" directory. To build with SSL
+support, you will need the AmiSSL V4 SDK, whose contents must be copied into a
+directory called "amissl". With all these in place, invoke either "make -f
+GNUmakefile.68k" or "make -f GNUmakefile.os4", respectively, and wait. Note
+that you need GNU make for this to work, and of course my clib2 'C' runtime
+library which you can find on <http://sf.net/projects/clib2>.
+
+
+7. Contact information
+
+You can contact me here:
+
+      e-mail: obarthel@gmx.net
+
+  Snail mail: Olaf Barthel
+              Gneisenaustr. 43
+              D-31275 Lehrte
+              Federal Republic of Germany
+
+If you appreciate the amount of work I spent on making this software available,
+please let me know. A contribution through my PayPal account
+"o.barthel@logical-line.de" would be most appreciated!
+
+
+8. Recent changes
+
+Amiga Port 1.10 (29.2.2020)
+
+- Integrated support for AmiSSL V4, which is a prerequisite for contemporary
+  transport layer security (TLS) and the certificate infrastructure in place
+  today. This change makes it incompatible with all previous versions of the
+  AmiSSL software!
+  
+  The changes necessary to support AmiSSL V4 were contributed by
+  Costel Mincea who did all the heavy lifting to adapt the almost 25
+  year old "neon" library code for modern use. Thank you, thank you,
+  thank you!
+
+
+Amiga Port 1.9 (10.08.2010)
+
+- The SSH tunnel configuration file no longer considers "des" and "3des" to
+  be synonyms for the cipher method. If you want "3des" you now have to say so.
+  "des" is unsupported.
+
+- The SSH tunnel code now also supports "none" as the name of the cipher
+  method.
+
+- The SSH tunnel code that reads the tunnel configuration file now produces
+  better error messages, and actually checks for errors in the first place.
+  Previously, it could not tell the difference between an error and the
+  configuration file not opening...
+
+- Rewrote the fundamental SSH tunneling code, which was originally based upon
+  'sshdos' 0.8 to improve robustness. It now produces better error messages
+  and consistently verifies the information it receives in order to avoid
+  getting tripped up by buffer overflows or worse. The pseudo random number
+  generator should be more robust, too. The tunneling code falls back to
+  using the 3DES cipher if the server does not support the Blowfish cipher.
+  However, if the 3DES cipher is not supported either, the tunneling code
+  will abort instead.
+
+
+Amiga Port 1.8 (21.10.2009)
+
+- If the SSH tunnel cannot be established, the client code now returns an
+  error code and error message which svn can make sense of.
+  In Port 1.7 svn could crash trying to print the error message.
+
+
+Amiga Port 1.7 (23.4.2009)
+
+- Added ssh support. It only took two years to write this...
+
+
+Amiga Port 1.6 (21.4.2009) <cmincea>
+
+- !!! ONLY FOR AMIGAOS4 POWERPC !!!
+  Only the AmigaOS4 executables are updated! The 68k executables were not updated
+  simply because it didn't compile with my quickly set up m68k crosscompiler..
+  if somebody thinks 68k binaries are absolutely needed, feel free to compile and
+  add them to this archive. Otherwise use the 1.5 68k binaries.
+  
+- Activated the callback functions for prompting the user if he wants to
+  accept a self-signed SSL server certificate or not. Now it's finally possible
+  to connect to such servers, before svn just exited with an error message.
+
+- Corrected USR and SYS path defines for the AmigaOS version. Everything is
+  now stored in subversion: so make sure you have that assign. With this change
+  our subversion port finally is able to remember login details for certain
+  servers. You can deactivate this with store-passwords=no in the [auth]
+  section of subversion:config
+  
+- Recompiled with latest clib2 1.204
+
+
+Amiga Port 1.5 (25.2.2006)
+
+- SSL support now actually works and requires AmiSSL V3 or better. Thanks go to
+  Andrija Antonijevic for helping me to make the SSL code build and work
+  correctly.
+
+
+Amiga Port 1.4 (24.2.2006)
+
+- The "svn" client now pretends that every directory checked in is readable,
+  writable and accessible. This should have the effect of making a checkout
+  on Unix system usable again, which would have otherwise made directory
+  access more difficult.
+
+- Added experimental SSL support.
+
+- Rebuilt with most recent clib2 1.198 release.
+
+
+Amiga Port 1.3 (12.11.2005)
+
+- The "amiga:comment" and "amiga:protection" auto-props now also have
+  and effect if the names of the files and directories concerned contain
+  absolute paths, e.g. "Work:foo/bar". Previously, only relative path
+  names were supported.
+
+- Removal of the "amiga:comment" and "amiga:protection" properties no
+  longer throws Enforcer hits. For "amiga:comment" empty property data
+  will be translated into an empty comment string. An empty "amiga:protection"
+  property will be ignored altogether.
+
+- Incomplete or invalid "amiga:protection" properties will be ignored. You
+  can, however, choose to omit the group and world protection information
+  from the "amiga:protection" property and retain only the owner/special
+  protection information. For example, "----rwed" is considered valid
+  protection information, and so is "rwed" (both stand for the owner/special
+  protection bits).
+
+- Rebuilt with most recent clib2 1.197 release.
+
+
+Amiga Port 1.2 (28.4.2005)
+
+- Initial public release, as uploaded to Aminet.

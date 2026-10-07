@@ -1,15 +1,11 @@
 #ifndef UTILITY_RANDOM_H
 #define UTILITY_RANDOM_H
 /*
-**    $VER: random.h 53.29 (10.8.2015)
+** Pseudo-random number generation
 **
-**    Pseudo-random number generation
+** Copyright 1989-2003 Amiga Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2004-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H

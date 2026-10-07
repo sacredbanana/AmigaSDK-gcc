@@ -2,6 +2,10 @@
 
 FROM amigadev/crosstools:ppc-amigaos
 
+# The base image ships an older Hyperion SDK and installing over an existing SDK
+# is not supported, so remove it first. clib4 comes from adtools, not the SDK, so keep it.
+RUN find /tools/ppc-amigaos/SDK -mindepth 1 -maxdepth 1 ! -name clib4 -exec rm -rf {} +
+
 COPY ./amigaos4/sdk/ /tools/
 
 RUN ln -s /tools/ /opt/amiga

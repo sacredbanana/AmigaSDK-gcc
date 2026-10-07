@@ -1,15 +1,20 @@
 #ifndef DEVICES_HARDBLOCKS_H
 #define DEVICES_HARDBLOCKS_H
 /*
-**    $VER: hardblocks.h 54.16 (22.08.2022)
 **
 **    File System identifier blocks for hard disks
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
 **        All Rights Reserved.
 **
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **    Copyright (C) 1999 Joanne Dow to be licensed to Amiga Inc
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 **        All Rights Reserved
 **    Copyright (C) 2002 Andrea Vallinotto to be licensed to Hyperion
 **        All Rights Reserved

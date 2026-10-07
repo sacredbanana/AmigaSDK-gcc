@@ -1,7 +1,6 @@
 #ifndef GRAPHICS_MONITOR_H
 #define GRAPHICS_MONITOR_H
 /*
-**    $VER: monitor.h 54.16 (22.08.2022)
 **
 **    graphics monitor definitions
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010, 2014 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

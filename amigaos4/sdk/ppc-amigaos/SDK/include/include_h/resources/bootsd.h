@@ -1,11 +1,13 @@
 #ifndef RESOURCES_BOOTSD_H
 #define RESOURCES_BOOTSD_H
 /*
-**    $VER: bootsd.h 54.16 (22.08.2022)
 **
 **    Unit number definitions for "qoriq.resource"
 **
 **    Copyright (c) 2012 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

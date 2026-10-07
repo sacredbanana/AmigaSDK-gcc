@@ -1,14 +1,15 @@
 #ifndef REACTION_REACTION_H
 #define REACTION_REACTION_H
 /*
-**    $VER: reaction.h 54.16 (22.08.2022)
-**
 **    Reaction definitions
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -170,6 +171,9 @@ extern "C" {
 
 #include <proto/arexx.h>
 #include <classes/arexx.h>
+
+#include <proto/texteditor.h>
+#include <gadgets/texteditor.h>
 
 #endif /* ALL_REACTION_CLASSES */
 

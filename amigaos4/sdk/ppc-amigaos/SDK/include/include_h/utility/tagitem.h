@@ -1,15 +1,11 @@
 #ifndef UTILITY_TAGITEM_H
 #define UTILITY_TAGITEM_H
 /*
-**    $VER: tagitem.h 53.29 (10.8.2015)
+** Extended specification mechanism
 **
-**    Extended specification mechanism
+** Copyright 1989-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 /*****************************************************************************/
@@ -67,6 +63,28 @@ struct TagItem
  * general, including system code like Intuition or ASL, it has nothing to do
  * with user code.
  */
+
+/* The following macro can be used to define a new tag of the given 'name' to
+ * the given 'tag' constant. The third parameter 'type' allows users to specify
+ * the type that the value of the tag should have, e.g., when it is mentioned
+ * in a function call.
+ */
+
+#define DEFINE_TAG(name, tag, type) \
+    enum { name = tag }
+
+#define DEFINE_TAG_TYPELESS(name, tag) \
+    enum { name = tag }
+
+#ifdef __has_attribute
+    #if __has_attribute(__tagtype__)
+        /* Overwrite previous DEFINE_TAG with a better one */
+        #undef DEFINE_TAG
+
+        #define DEFINE_TAG(name, value, type) \
+            enum { name __attribute__((tagtype(type))) = value }
+    #endif
+#endif
 
 /*****************************************************************************/
 

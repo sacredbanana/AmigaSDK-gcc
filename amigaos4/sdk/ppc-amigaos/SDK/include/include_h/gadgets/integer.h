@@ -1,7 +1,6 @@
 #ifndef GADGETS_INTEGER_H
 #define GADGETS_INTEGER_H
 /*
-**    $VER: integer.h 54.16 (22.08.2022)
 **
 **    Definitions for the integer.gadget BOOPSI class
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

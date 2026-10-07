@@ -67,6 +67,7 @@ Warp3D/W3D_SetFilter
 Warp3D/W3D_SetFogParams
 Warp3D/W3D_SetFrontFace
 Warp3D/W3D_SetLogicOp
+Warp3D/W3D_SetParameter
 Warp3D/W3D_SetPenMask
 Warp3D/W3D_SetScissor
 Warp3D/W3D_SetState
@@ -89,6 +90,8 @@ Warp3D/W3D_WriteStencilPixel
 Warp3D/W3D_WriteStencilSpan
 Warp3D/W3D_WriteZPixel
 Warp3D/W3D_WriteZSpan
+
+
 Warp3D/W3D_AllocStencilBuffer                                         Warp3D/W3D_AllocStencilBuffer
 
    NAME
@@ -98,7 +101,7 @@ Warp3D/W3D_WriteZSpan
        success =  W3D_AllocStencilBuffer(context);
        d0                                a0
 
-       ULONG W3D_AllocStencilBuffer(W3D_Context *);
+       uint32 W3D_AllocStencilBuffer(W3D_Context *);
 
    FUNCTION
        Allocate a stencil buffer for the given context. For more
@@ -134,7 +137,7 @@ Warp3D/W3D_WriteZSpan
        texture = W3D_AllocTexObj(context, error, ATOTags);
        d0                        a0       a1     a2
 
-       W3D_Texture *W3D_AllocTexObj(W3D_Context, ULONG *, struct TagItem *);
+       W3D_Texture *W3D_AllocTexObj(W3D_Context, uint32 *, struct TagItem *);
 
    FUNCTION
        Create a new texture object. Such a texture object contains
@@ -143,7 +146,7 @@ Warp3D/W3D_WriteZSpan
 
    INPUTS
        context - pointer to a W3D_Context
-       error   - pointer to a ULONG, which will contain an error code,
+       error   - pointer to a uint32, which will contain an error code,
                    or NULL if you do not want to get the error code.
        ATOTags - pointer to a taglist. Supported tags are:
                    W3D_ATO_IMAGE (mandatory):
@@ -212,7 +215,7 @@ Warp3D/W3D_WriteZSpan
                          Defines the palette which is necessary to handle
                          chunky textures. A pointer to a palette must be
                          provided. The palette itself is an array of
-                         ULONG's, and every ULONG defines the ARGB value
+                         uint32's, and every uint32 defines the ARGB value
                          for one color index. Therefore the palette must
                          be 1024 bytes. (Note: On 8bit screens, this
                          palette *should* be the screen palette,
@@ -244,7 +247,7 @@ Warp3D/W3D_WriteZSpan
            W3D_ATO_HEIGHT,     128,
            TAG_DONE,           0
        };
-       ULONG error;
+       uint32 error;
 
        texobj = W3D_AllocTexObj(context, &error, tags);
        if (!texobj)
@@ -274,7 +277,7 @@ Warp3D/W3D_WriteZSpan
        result = W3D_AllocZBuffer(context);
        d0                        a0
 
-       ULONG W3D_AllocZBuffer(W3D_Context *);
+       uint32 W3D_AllocZBuffer(W3D_Context *);
 
    FUNCTION
        Allocates a ZBuffer. The size of the ZBuffer depends on the
@@ -292,10 +295,10 @@ Warp3D/W3D_WriteZSpan
            W3D_NOTVISIBLE  - The bitmap is not visible/swapped out of vmem
 
    EXAMPLE
-       ULONG error, status;
+       uint32 error, status;
        struct BitMap myBitMap;
        struct TagItem taglist[] = {
-           W3D_CC_BITMAP,      (ULONG)&myBitMap,
+           W3D_CC_BITMAP,      (uint32)&myBitMap,
            W3D_CC_YOFFSET,     0,
            W3D_CC_DRIVERTYPE,  W3D_DRIVER_BEST
        };
@@ -324,8 +327,8 @@ Warp3D/W3D_WriteZSpan
        ModeID = W3D_BestModeID(tags);
        ModeID = W3D_BestModeIDTags(Tag1, ...);
 
-       ULONG W3D_BestModeID(struct TagItem *tags);
-       ULONG W3D_BestModeIDTags(Tag tag1, ...);
+       uint32 W3D_BestModeID(struct TagItem *tags);
+       uint32 W3D_BestModeIDTags(Tag tag1, ...);
 
    FUNCTION
        Returns a screen mode ID that best fits the parameters
@@ -357,7 +360,7 @@ Warp3D/W3D_WriteZSpan
        error = W3D_BindTexture(context, tmu, texture);
        D0                        A0      D0   A1
 
-       ULONG W3D_BindTexture(W3D_Context*, ULONG, W3D_Texture*);
+       uint32 W3D_BindTexture(W3D_Context*, uint32, W3D_Texture*);
 
    FUNCTION
        This function specifies the texture to use for the next call to
@@ -409,7 +412,7 @@ Warp3D/W3D_WriteZSpan
        flags = W3D_CheckDriver();
        d0
 
-       ULONG W3D_CheckDriver(void);
+       uint32 W3D_CheckDriver(void);
 
    FUNCTION
        Checks what driver is available (CPU/HW), and returns it
@@ -424,7 +427,7 @@ Warp3D/W3D_WriteZSpan
            W3D_DRIVER_CPU  - A software driver is available
 
    EXAMPLE
-       ULONG flags = W3D_CheckDriver();
+       uint32 flags = W3D_CheckDriver();
        if (flags & W3D_DRIVER_3DHW) printf("Hardware driver available\n");
        if (flags & W3D_DRIVER_CPU)  printf("Software driver available\n");
 
@@ -448,7 +451,7 @@ Warp3D/W3D_WriteZSpan
        working = W3D_CheckIdle(context);
        d0                      a0
 
-       ULONG W3D_CheckIdle(W3D_Context *);
+       uint32 W3D_CheckIdle(W3D_Context *);
 
    FUNCTION
        Check if the hardware is finished with it`s current operation.
@@ -486,12 +489,12 @@ Warp3D/W3D_WriteZSpan
  		method is more efficient (and deprecates) the previous single
  		buffer methods. If the driver supports it, these operations can
 		be performed in parallel.
- 
+
  		The buffers that will be cleared by this call depend on both the
  		passed in parameters and the buffers that have actually been
  		allocated. Any non-NULL parameter indicates that the corresponding
- 		buffer should be cleared. 
- 
+ 		buffer should be cleared.
+
  		It is permitted to pass a value for a buffer that has not yet been
  		allocated (i.e request the clearing of the ZBuffer without having
  		a ZBuffer allocated). The value will be silently ignored.
@@ -529,7 +532,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ClearDrawRegion(context, color);
        d0                            a0       d0
 
-       ULONG W3D_ClearDrawRegion(W3D_Context *, ULONG);
+       uint32 W3D_ClearDrawRegion(W3D_Context *, uint32);
 
    FUNCTION
        ClearDrawRegion clears the current drawing area to the color
@@ -573,7 +576,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ClearStencilBuffer(context, clearval);
        d0                               a0       a1
 
-       ULONG W3D_ClearStencilBuffer(W3D_Context *, ULONG *);
+       uint32 W3D_ClearStencilBuffer(W3D_Context *, uint32 *);
 
    FUNCTION
        Clear the stencil buffer (fill it up) with the value
@@ -613,7 +616,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ClearZBuffer(context, clearvalue);
        d0                         a0       a1
 
-       ULONG W3D_ClearZBuffer(W3D_Context *, W3D_Double *);
+       uint32 W3D_ClearZBuffer(W3D_Context *, W3D_Double *);
 
    FUNCTION
        Clear the ZBuffer with a given value.
@@ -651,14 +654,14 @@ Warp3D/W3D_WriteZSpan
        error = W3D_ColorPointer(context, pointer, stride, format, mode, flags);
        D0                        A0      A1        D0      D1     D2     D3
 
-       ULONG W3D_ColorPointer(W3D_Context*, void*, ULONG, ULONG, ULONG);
+       uint32 W3D_ColorPointer(W3D_Context*, void*, uint32, uint32, uint32);
 
    FUNCTION
        Sets the pointer for obtaining vertex color info. Data is fetched
        from the address pointed to by the pointer parameter.
 
        When color data is needed for element <n>, the pointer is cast to an
-       UBYTE* and n*stride is added to this pointer. The result is cast back
+       uint8* and n*stride is added to this pointer. The result is cast back
        to a pointer as determined by the format parameter, and used for color
        data lookup according to mode.
 
@@ -689,7 +692,7 @@ Warp3D/W3D_WriteZSpan
 
    EXAMPLE
        W3D_Vertex VertArray[1000];     // Vertex array
-       ULONG error = W3D_ColorPointer(context, (void *)VertArray+32,
+       uint32 error = W3D_ColorPointer(context, (void *)VertArray+32,
            sizeof(W3D_Vertex), W3D_COLOR_FLOAT, W3D_CMODE_RGBA, 0);
 
 
@@ -715,7 +718,7 @@ Warp3D/W3D_WriteZSpan
        context = W3D_CreateContext(&error, CCTags);
        D0                          A0      A1
 
-       W3D_Context *W3D_CreateContext(ULONG *, struct TagItem *);
+       W3D_Context *W3D_CreateContext(uint32 *, struct TagItem *);
 
    FUNCTION
        This function creates a new Warp3D context, which is required by most
@@ -725,7 +728,7 @@ Warp3D/W3D_WriteZSpan
        are provided.
 
    INPUTS
-       error   - A pointer to a ULONG which gets the error value,
+       error   - A pointer to a uint32 which gets the error value,
                    or NULL if you don`t want an error code returned
        CCTags  - A taglist containing various input parameters:
            W3D_CC_MODEID (special):
@@ -800,10 +803,10 @@ Warp3D/W3D_WriteZSpan
            W3D_ILLEGALBITMAP   - The bitmap is not properly initialised
 
    EXAMPLE
-       ULONG error;
+       uint32 error;
        struct BitMap myBitMap;
        struct TagItem taglist[] = {
-           W3D_CC_BITMAP,      (ULONG)&myBitMap,
+           W3D_CC_BITMAP,      (uint32)&myBitMap,
            W3D_CC_YOFFSET,     0,
            W3D_CC_DRIVERTYPE,  W3D_DRIVER_BEST
        };
@@ -869,7 +872,7 @@ Warp3D/W3D_WriteZSpan
        error = W3D_DrawArray(context, primitive, base, count);
        D0                        A0      D0       D1    D2
 
-       ULONG W3D_DrawArray(W3D_Context*, ULONG, ULONG, ULONG);
+       uint32 W3D_DrawArray(W3D_Context*, uint32, uint32, uint32);
 
    FUNCTION
        Draws a primitive based on the current array pointers.
@@ -955,7 +958,7 @@ Warp3D/W3D_WriteZSpan
        error = W3D_DrawElements(context, primitive, type, count, indices);
        D0                        A0       D0         D1    D2     A1
 
-       ULONG W3D_DrawElements(W3D_Context*, ULONG, ULONG, ULONG, void*);
+       uint32 W3D_DrawElements(W3D_Context*, uint32, uint32, uint32, void*);
 
    FUNCTION
        This function is very similar to the W3D_DrawArray function. Unlike
@@ -1004,7 +1007,7 @@ Warp3D/W3D_WriteZSpan
 
    EXAMPLE
        W3D_Vertex VertArray[1000];     // Vertex array
-       UBYTE indices[] = {1, 2, 3, 0, 4, 3, 1, 2, 5};
+       uint8 indices[] = {1, 2, 3, 0, 4, 3, 1, 2, 5};
        error = W3D_DrawElements(context,
            W3D_PRIMITIVE_TRIANGLES, W3D_INDEX_UBYTE, 9,
            (void *)indices);
@@ -1043,7 +1046,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawLine(context, line);
        d0                     a0       a1
 
-       ULONG W3D_DrawLine(W3D_Context *, W3D_Line *);
+       uint32 W3D_DrawLine(W3D_Context *, W3D_Line *);
 
    FUNCTION
        This function draws a line based on the current state.
@@ -1083,7 +1086,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawLineLoop(context, lines);
        d0                          a0       a1
 
-       ULONG W3D_DrawLineLoop(W3D_Context *, W3D_Lines *);
+       uint32 W3D_DrawLineLoop(W3D_Context *, W3D_Lines *);
 
    FUNCTION
        This function draws a connected sequence of lines, similar to
@@ -1125,7 +1128,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawLineStrip(context, lines);
        d0                          a0       a1
 
-       ULONG W3D_DrawLineStrip(W3D_Context *, W3D_Lines *);
+       uint32 W3D_DrawLineStrip(W3D_Context *, W3D_Lines *);
 
    FUNCTION
        Draws a sequence of connected lines (a line strip). The first
@@ -1168,7 +1171,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawPoint(context, point);
        d0                      a0       a1
 
-       ULONG W3D_DrawPoint(W3D_Context *, W3D_Point *);
+       uint32 W3D_DrawPoint(W3D_Context *, W3D_Point *);
 
    FUNCTION
        Draw a point based on the current context
@@ -1211,7 +1214,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawTriangle(context, triangle);
        d0                         a0       a1
 
-       ULONG W3D_DrawTriangle(W3D_Context *, W3D_Triangle *);
+       uint32 W3D_DrawTriangle(W3D_Context *, W3D_Triangle *);
 
    FUNCTION
        Draw a triangle to the given context, based on that context`s
@@ -1250,7 +1253,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawTriangleV(context, triangle);
        d0                         a0       a1
 
-       ULONG W3D_DrawTriangleV(W3D_Context *, W3D_TriangleV *);
+       uint32 W3D_DrawTriangleV(W3D_Context *, W3D_TriangleV *);
 
    FUNCTION
        Draw a triangle to the given context, based on that context`s
@@ -1292,7 +1295,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawTriFan(context, triangles);
        d0                       a0       a1
 
-       ULONG W3D_DrawTriFan(W3D_Context *, W3D_Triangles *);
+       uint32 W3D_DrawTriFan(W3D_Context *, W3D_Triangles *);
 
    FUNCTION
        Draw a triangle fan. The first vertex in the list is
@@ -1335,7 +1338,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawTriFanV(context, triangles);
        d0                       a0       a1
 
-       ULONG W3D_DrawTriFanV(W3D_Context *, W3D_TrianglesV *);
+       uint32 W3D_DrawTriFanV(W3D_Context *, W3D_TrianglesV *);
 
    FUNCTION
        Draw a triangle fan. The first vertex in the list is
@@ -1384,7 +1387,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawTriStrip(context, triangles);
        d0                       a0       a1
 
-       ULONG W3D_DrawTriStrip(W3D_Context *, W3D_Triangles *);
+       uint32 W3D_DrawTriStrip(W3D_Context *, W3D_Triangles *);
 
    FUNCTION
        Draw a triangle strip. For more information
@@ -1426,7 +1429,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_DrawTriStripV(context, triangles);
        d0                       a0       a1
 
-       ULONG W3D_DrawTriStripV(W3D_Context *, W3D_TrianglesV *);
+       uint32 W3D_DrawTriStripV(W3D_Context *, W3D_TrianglesV *);
 
    FUNCTION
        Draw a triangle strip. For more information
@@ -1471,8 +1474,8 @@ Warp3D/W3D_WriteZSpan
        success = W3D_FillStencilBuffer(context, x, y, width, height, depth, data);
        d0                              a0       d0 d1 d2     d3      d4     a1
 
-       ULONG W3D_FillStencilBuffer(W3D_Context *, ULONG, ULONG, ULONG, ULONG,
-                           ULONG, void *);
+       uint32 W3D_FillStencilBuffer(W3D_Context *, uint32, uint32, uint32, uint32,
+                           uint32, void *);
 
    FUNCTION
        This function fills the stencil buffer with a rectangular image
@@ -1711,7 +1714,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_FreeStencilBuffer(context);
        d0                              a0
 
-       ULONG W3D_FreeStencilBuffer(W3D_Context *);
+       uint32 W3D_FreeStencilBuffer(W3D_Context *);
 
    FUNCTION
        Free up all memory associated with the stencil buffer.
@@ -1770,7 +1773,7 @@ Warp3D/W3D_WriteZSpan
            W3D_ATO_HEIGHT,     128,
            TAG_DONE,           0
        };
-       ULONG error;
+       uint32 error;
 
        texobj = W3D_AllocTexObj(context, &error, tags);
        if (!texobj) {
@@ -1801,7 +1804,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_FreeZBuffer(context);
        d0                        a0
 
-       ULONG W3D_FreeZBuffer(W3D_Context *);
+       uint32 W3D_FreeZBuffer(W3D_Context *);
 
    FUNCTION
        Free the ZBuffer previously allocated with W3D_AllocZBuffer
@@ -1833,7 +1836,7 @@ Warp3D/W3D_WriteZSpan
        format = W3D_GetDestFmt();
        d0
 
-       ULONG W3D_GetDestFmt(void);
+       uint32 W3D_GetDestFmt(void);
 
    FUNCTION
        *DEPRECATED* DO NOT USE THIS IN NEW PROJECTS
@@ -1866,7 +1869,7 @@ Warp3D/W3D_WriteZSpan
            W3D_FMT_B8G8R8A8
 
    EXAMPLE
-       ULONG fmt = W3D_GetDestFmt();
+       uint32 fmt = W3D_GetDestFmt();
 
        if (fmt & W3D_FMT_CLUT)     printf("Driver supports 8 bit modes\n");
        if (fmt & W3D_R5G5B5)       printf("Driver supports 15 bit RGB modes\n");
@@ -1922,7 +1925,7 @@ Warp3D/W3D_WriteZSpan
        result = W3D_GetDriverState(context);
        d0                          a0
 
-       ULONG W3D_GetDriverState(W3D_Context *);
+       uint32 W3D_GetDriverState(W3D_Context *);
 
    FUNCTION
        Return information about the current state of the driver.
@@ -1960,7 +1963,7 @@ Warp3D/W3D_WriteZSpan
        info = W3D_GetDriverTexFmtInfo(driver, format, destfmt);
        d0                               a0       d0      d1
 
-       ULONG W3D_GetDriverTexInfo(W3D_Driver*, ULONG, ULONG);
+       uint32 W3D_GetDriverTexInfo(W3D_Driver*, uint32, uint32);
 
    FUNCTION
        This function is used to get information about the texture
@@ -2055,7 +2058,7 @@ Warp3D/W3D_WriteZSpan
        result = W3D_GetState(context, state);
        d0                    a0       d0
 
-       ULONG W3D_GetState(W3D_Context *, ULONG);
+       uint32 W3D_GetState(W3D_Context *, uint32);
 
    FUNCTION
        This function reads the state of the bits in the
@@ -2067,12 +2070,12 @@ Warp3D/W3D_WriteZSpan
                  be one of the following:
                      W3D_AUTOTEXMANAGEMENT  automatic texture management
                      W3D_SYNCHRON           wait, until HW is idle
-                     W3D_INDIRECT           buffer drawings until 
-											 W3D_Flush()'ed (obsolete)
+                     W3D_INDIRECT           buffer drawings until
+                                            W3D_Flush()'ed (obsolete)
                      W3D_GLOBALTEXENV       global texture modes
                      W3D_DOUBLEHEIGHT       screen has double height.
                      W3D_FAST               Drawing functions may modify
-											 passed structures
+                                            passed structures
                      W3D_TEXMAPPING         texmapping state
                      W3D_PERSPECTIVE        perspective correction state
                      W3D_GOURAUD            gouraud/flat shading
@@ -2091,8 +2094,8 @@ Warp3D/W3D_WriteZSpan
                      W3D_SPECULAR           Specular highlightung state
                      W3D_TEXMAPPING3D       3D texturemapping state
                      W3D_CHROMATEST         Chroma test (color keying)
-					  W3D_MULTITEXTURE		 See W3D_SetState
-					  W3D_FOG_COORD			 See W3D_SetState
+                     W3D_MULTITEXTURE       See W3D_SetState
+                     W3D_FOG_COORD          See W3D_SetState
 
    RESULT
        One of the following:
@@ -2135,7 +2138,7 @@ Warp3D/W3D_WriteZSpan
        info = W3D_GetTexFmtInfo(context, format, destfmt);
        d0                       a0       d0      d1
 
-       ULONG W3D_GetTexInfo(W3D_Context, ULONG, ULONG);
+       uint32 W3D_GetTexInfo(W3D_Context, uint32, uint32);
 
    FUNCTION
        This function is used to get information about the texture
@@ -2171,7 +2174,7 @@ Warp3D/W3D_WriteZSpan
                                        internally converted
 
    EXAMPLE
-       ULONG info = W3D_GetTexFmtInfo(NULL, W3D_CHUNKY, W3D_FMT_CLUT);
+       uint32 info = W3D_GetTexFmtInfo(NULL, W3D_CHUNKY, W3D_FMT_CLUT);
        if (info & W3D_TEXFMT_CLUTFAST) printf("Supported in CLUT modes\n");
 
    NOTES
@@ -2200,7 +2203,7 @@ Warp3D/W3D_WriteZSpan
        result = W3D_Hint(context, mode, quality);
        d0                a0       d0    d1
 
-       ULONG W3D_Hint(W3D_Context, ULONG, ULONG);
+       uint32 W3D_Hint(W3D_Context, uint32, uint32);
 
    FUNCTION
        Gives Warp3D a hint about the desired quality of some
@@ -2267,8 +2270,13 @@ Warp3D/W3D_WriteZSpan
 		order specified below:
 
 		W3D_VFORMAT_FOG
+ 		W3D_VFORMAT_FOG_FACTOR
 			The vertex data contains a single floating point fog coordinate.
 			This is equivalent to calling the W3D_FogCoordPointer funtion.
+ 			The FOG_FACTOR variant will not specify a W coordinate but rather
+ 			the direct blend weight for the pixel color/fog color, with 1.0
+ 			meaning no fogging (i.e. full pixel color) and 0.0f meaning full
+ 			fog color.
 		W3D_VFORMAT_COLOR
 		W3D_VFORMAT_PACK_COLOR
 			The vertex data contains a primary color value, either as a packed
@@ -2283,14 +2291,14 @@ Warp3D/W3D_WriteZSpan
 		W3D_VFORMAT_SCOLOR
 		W3D_VFORMAT_PACK_SCOLOR
 			Like the above, only for secondary color values.
-			This is equivalent to calling the W3D_SecondaryColorPointer 
+			This is equivalent to calling the W3D_SecondaryColorPointer
 			function.
 		W3D_VFORMAT_TCOORD_n
 			Specifies that for each <n> there is a set of three 32 bit single
-			precision floating point values for u,v and w coordinates. If the 
+			precision floating point values for u,v and w coordinates. If the
 			flag W3D_TEXCOORD_NORMALIZED is set in the flag parameter, then
 			the u and v values are in the range 0..1, otherwise they are in the
-			range 0..texwidth and 0..texheight respectively. 
+			range 0..texwidth and 0..texheight respectively.
 			Texture coordinate sets must be specified in ascending and unbroken
 			order, i.e. W3D_VFORMAT_TCOORD_0|W3D_VFORMAT_TCOORD_1 is a valid
 			input while W3D_VFORMAT_TCOORD_0|W3D_VFORMAT_TCOORD_2 is not. Sets
@@ -2320,7 +2328,7 @@ Warp3D/W3D_WriteZSpan
            W3D_ILLEGALINPUT    - driver cannot handle this layout
 
 	EXAMPLE
-		
+
 		typedef struct _myVertex {
 			float x,y,z;
 			uint32 color;
@@ -2333,7 +2341,7 @@ Warp3D/W3D_WriteZSpan
 
 		IWarp3D->W3D_InterleavedArray(context, array, sizeof(MyVertex),
 			MYVERTEX_FORMAT, W3D_TEXCOORD_NORMALIZED);
-		
+
 		Another example - vertex structures may contain other data that is
 		being ignored:
 
@@ -2377,7 +2385,7 @@ Warp3D/W3D_WriteZSpan
        res = W3D_LockHardware(context);
        d0                     a0
 
-       ULONG W3D_LockHardware(W3D_Context *);
+       uint32 W3D_LockHardware(W3D_Context *);
 
    FUNCTION
        This function gains exclusive access to the hardware. It must be
@@ -2421,7 +2429,7 @@ Warp3D/W3D_WriteZSpan
        res = W3D_Query(context, query, destfmt)
        d0              a0       d0     d1
 
-       ULONG W3D_Query(W3D_Context *, ULONG, ULONG);
+       uint32 W3D_Query(W3D_Context *, uint32, uint32);
 
    FUNCTION
        This function is used to query the hardware/driver
@@ -2444,10 +2452,12 @@ Warp3D/W3D_WriteZSpan
               W3D_Q_BILINEARFILTER     bilinear filter
               W3D_Q_MMFILTER           mipmap filter
               W3D_Q_LINEAR_REPEAT      W3D_REPEAT for linear texmapping
-              W3D_Q_LINEAR_CLAMP       W3D_CLAMP for linear texmapping
+              W3D_Q_LINEAR_CLAMP_LAST  W3D_CLAMP_LAST for linear texmapping
+              W3D_Q_LINEAR_CLAMP_COLOR  W3D_CLAMP_COLOR for linear texmapping
               W3D_Q_PERPESCTIVE        perspective correction
               W3D_Q_PERSP_REPEAT       W3D_REPEAT for persp. texmapping
-              W3D_Q_PERSP_CLAMP        W3D_CLAMP for persp. texmapping
+              W3D_Q_PERSP_CLAMP_LAST   W3D_CLAMP_LAST for persp. texmapping
+              W3D_Q_PERSP_CLAMP_COLOR  W3D_CLAMP_COLOR for persp. texmapping
               W3D_Q_ENV_REPLACE        texenv REPLACE
               W3D_Q_ENV_DECAL          texenv DECAL
               W3D_Q_ENV_MODULATE       texenv MODULATE
@@ -2507,7 +2517,7 @@ Warp3D/W3D_WriteZSpan
            W3D_NOT_SUPPORTED       Not supported
 
        With "what is the value"-type queries like W3D_Q_MAXTEXWIDTH,
-       an ULONG is returned.
+       an uint32 is returned.
 
    EXAMPLE
        switch(W3D_Query(context, W3D_Q_TEXMAPING, destfmt)) {
@@ -2546,7 +2556,7 @@ Warp3D/W3D_WriteZSpan
        res = W3D_QueryDriver(driver, query, destfmt)
        d0                    a0       d0     d1
 
-       ULONG W3D_QueryDriver(W3D_Driver *, ULONG, ULONG);
+       uint32 W3D_QueryDriver(W3D_Driver *, uint32, uint32);
 
    FUNCTION
        This function is similar to the W3D_Query function, only
@@ -2584,7 +2594,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ReadStencilPixel(context, x, y, st);
        d0                             a0       d0 d1 a1
 
-       ULONG W3D_ReadStencilPixel(W3D_Context *, ULONG, ULONG, ULONG *);
+       uint32 W3D_ReadStencilPixel(W3D_Context *, uint32, uint32, uint32 *);
 
    FUNCTION
        Read the stencil buffer pixel at x,y into the variable pointed
@@ -2634,8 +2644,8 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ReadStencilSpan(context, x, y, n, st);
        d0                            a0       d0 d1 d2 a1
 
-       ULONG W3D_ReadStencilSpan(W3D_Context *, ULONG, ULONG, ULONG,
-                    ULONG []);
+       uint32 W3D_ReadStencilSpan(W3D_Context *, uint32, uint32, uint32,
+                    uint32 []);
 
    FUNCTION
        Read a span of pixel value from the stencil buffer. The resulting
@@ -2689,7 +2699,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ReadZPixel(context, x, y, z);
        d0                       a0       d0 d1 a1
 
-       ULONG W3D_ReadZPixel(W3D_Context *, ULONG, ULONG, W3D_Double *);
+       uint32 W3D_ReadZPixel(W3D_Context *, uint32, uint32, W3D_Double *);
 
    FUNCTION
        Read ZBuffer pixel x,y into variable pointed to by z;
@@ -2736,7 +2746,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_ReadZSpan(context, x, y, n, z);
        d0                      a0       d0 d1 d2 a1
 
-       ULONG W3D_ReadZSpan(W3D_Context *, ULONG, ULONG, ULONG, W3D_Double []);
+       uint32 W3D_ReadZSpan(W3D_Context *, uint32, uint32, uint32, W3D_Double []);
 
    FUNCTION
        Read a span of ZBuffer pixels into an array pointed to by the z
@@ -2826,7 +2836,7 @@ Warp3D/W3D_WriteZSpan
        ModeID = W3D_RequestMode(taglist);
           D0                     a0
 
-       ULONG W3D_RequestMode(struct TagItem *);
+       uint32 W3D_RequestMode(struct TagItem *);
 
    FUNCTION
        This function presents the user with an ASL-Type screen mode
@@ -2887,11 +2897,11 @@ Warp3D/W3D_WriteZSpan
 			uint32 stride, uint32 format, uint32 flags);
 
    FUNCTION
-       Sets the pointer for obtaining secondary vertex color info. Data is 
+       Sets the pointer for obtaining secondary vertex color info. Data is
        fetched from the address pointed to by the pointer parameter.
 
-       When secondary color data is needed for element <n>, the pointer is cast 
-       to an UBYTE* and n*stride is added to this pointer. The result is cast 
+       When secondary color data is needed for element <n>, the pointer is cast
+       to an uint8* and n*stride is added to this pointer. The result is cast
        back to a pointer as determined by the format parameter, and used for
        secondary color data lookup according to mode.
 
@@ -2900,7 +2910,7 @@ Warp3D/W3D_WriteZSpan
        pointer - pointer to the array data or NULL to delete the pointer.
        stride  - array stride, i.e. the byte offset from one element to
                  the next.
-       format  - the format of the secondary color data. The following is 
+       format  - the format of the secondary color data. The following is
 				  allowed:
            W3D_COLOR_FLOAT         all color components are floats in the
                                    range 0.0 .. 1.0
@@ -2943,7 +2953,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetAlphaMode(context, mode, refval);
        d0                         a0       d1    a1
 
-       ULONG W3D_SetAlphaMode(W3D_Context, ULONG, W3D_Float *);
+       uint32 W3D_SetAlphaMode(W3D_Context, uint32, W3D_Float *);
 
    FUNCTION
        This function defines the way the alpha test is performed.
@@ -2990,7 +3000,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetBlendMode(context, srcfunc, dstfunc);
        d0                         a0       d0       d1
 
-       ULONG W3D_SetBlendMode(W3D_Context *, ULONG, ULONG);
+       uint32 W3D_SetBlendMode(W3D_Context *, uint32, uint32);
 
    FUNCTION
        Sets the blending mode. Blending has to be enabled using
@@ -3052,7 +3062,7 @@ Warp3D/W3D_WriteZSpan
        res = W3D_SetChromaTestBounds(context, texture, lower, upper, mode)
        d0                            a0       a1       d0     d1     d2
 
-       ULONG W3D_SetChromaTestBounds(W3D_Context *, W3D_Texture *, ULONG, ULONG, ULONG);
+       uint32 W3D_SetChromaTestBounds(W3D_Context *, W3D_Texture *, uint32, uint32, uint32);
 
    FUNCTION
        Sets the bounds for chroma testing. All colors inside the range defined by
@@ -3074,7 +3084,8 @@ Warp3D/W3D_WriteZSpan
    RESULT
        One of the following:
            W3D_SUCCESS             Success
-           W3D_UNSUPPORTED        Chroma keying is not supported on this hardware
+           W3D_UNSUPPORTED         Chroma keying is not supported on this hardware
+           W3D_ILLEGALINPUT        invalid mode specified
 
    EXAMPLE
 
@@ -3096,7 +3107,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetColorMask(context, red, green, blue, alpha);
        d0                         a0       d0   d1     d2    d3
 
-       ULONG W3D_SetColorMask(W3D_Context *, W3D_Bool, W3D_Bool, W3D_Bool,
+       uint32 W3D_SetColorMask(W3D_Context *, W3D_Bool, W3D_Bool, W3D_Bool,
            W3D_Bool);
 
    FUNCTION
@@ -3133,7 +3144,7 @@ Warp3D/W3D_WriteZSpan
        ret = W3D_SetCurrentColor(context, color);
                                  a0       a1
 
-       ULONG W3D_SetCurrentColor(W3D_Context *, W3D_Color *);
+       uint32 W3D_SetCurrentColor(W3D_Context *, W3D_Color *);
 
    FUNCTION
        Defines the color to use for operations where one single color
@@ -3165,7 +3176,7 @@ Warp3D/W3D_WriteZSpan
        W3D_SetCurrentPen(context, pen);
                          a0       d1
 
-       void W3D_SetCurrentPen(W3D_Context *, ULONG);
+       void W3D_SetCurrentPen(W3D_Context *, uint32);
 
    FUNCTION
        Define the pen to use for single-color operations, such as flat-shaded
@@ -3196,7 +3207,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetDrawRegion(context, bm, yoffset, scissor);
        d0                          a0       a1  d1       a2
 
-       ULONG W3D_SetDrawRegion(W3D_Context *, struct BitMap *, int,
+       uint32 W3D_SetDrawRegion(W3D_Context *, struct BitMap *, int,
                W3D_Scissor *);
 
    FUNCTION
@@ -3238,7 +3249,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetDrawRegion(context, bm, scissor);
        d0                          a0       a1  a2
 
-       ULONG W3D_SetDrawRegion(W3D_Context *, W3D_Bitmap *, W3D_Scissor *);
+       uint32 W3D_SetDrawRegion(W3D_Context *, W3D_Bitmap *, W3D_Scissor *);
 
    FUNCTION
        This function defines/changes the current drawing region.
@@ -3275,8 +3286,8 @@ Warp3D/W3D_WriteZSpan
        res = W3D_SetFilter(context, texture, MinFilter, MagFilter);
        d0                  a0       a1       d0         d1
 
-       ULONG W3D_SetFilter(W3D_Context *, W3D_Texture *, ULONG,
-               ULONG);
+       uint32 W3D_SetFilter(W3D_Context *, W3D_Texture *, uint32,
+               uint32);
 
    FUNCTION
        Set the texture`s filter mode. The filter mode used is
@@ -3327,7 +3338,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetFogParams(context, fogparams, fogmode);
        d0                         a0       a1         d1
 
-       ULONG W3D_SetFogParams(W3D_Context *, W3D_Fog *, ULONG);
+       uint32 W3D_SetFogParams(W3D_Context *, W3D_Fog *, uint32);
 
    FUNCTION
        This function defines fogging parameters and modes.
@@ -3363,14 +3374,14 @@ Warp3D/W3D_WriteZSpan
 
 Warp3D/W3D_SetFrontFace                                                     Warp3D/W3D_SetFrontFace
 
-   NAME   
+   NAME
        W3D_SetFrontFace -- Set the winding order of front facing triangles
 
    SYNOPSIS
        W3D_SetFrontFace(context, direction);
                         a0       d0
 
-       void W3D_SetFrontFace(W3D_Context *, ULONG);
+       void W3D_SetFrontFace(W3D_Context *, uint32);
 
    FUNCTION
        This function is used to determine which triangles should be
@@ -3436,7 +3447,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetLogicOp(context, operation);
        d0                       a0       d1
 
-       ULONG W3D_SetLogicOp(W3D_Context *, ULONG);
+       uint32 W3D_SetLogicOp(W3D_Context *, uint32);
 
    FUNCTION
        Set the logical operation. For further information, see the OpenGL
@@ -3476,6 +3487,47 @@ Warp3D/W3D_WriteZSpan
 
    SEE ALSO
 
+Warp3D/W3D_SetParameter                                                     Warp3D/W3D_SetParameter
+
+   NAME
+       W3D_SetParameter -- Set drawing parameters
+
+   SYNOPSIS
+		result = W3D_SetParameter(context, target, parameter);
+
+		uint32 W3D_SetParameter(W3D_Context *, uint32, void *);
+
+   FUNCTION
+		This functions set parameters for drawing with DrawArrays or DrawElements.
+		The obsoleted single primitive functions are not affected.
+
+   INPUTS
+		context - Warp3D context
+		target - One of W3D_STIPPLE_LINE, W3D_STIPPLE_POLYGON,
+			W3D_STIPPLE_LINE_FACTOR, W3D_POINT_SIZE or W3D_LINE_WIDTH
+		parameter - Pointer to the parameter to be set. The following data is
+			valid for a given target:
+			W3D_STIPPLE_LINE: A pointer to an unsigned short, forming a 16x1 stipple
+				pattern for lines
+			W3D_STIPPLE_LINE_FACTOR: A pointer to an integer, giving a "stretch" factor
+				for the pattern (1 .. 256)
+			W3D_POLYGON_STIPPLE: A pointer to an array of 32 unsigned longs, forming a
+				32x32 stippling pattern for poylgons.
+			W3D_POINT_SIZE: A pointer for a float determining the size of points.
+			W3D_LINE_WIDTH: A pointer to a float determinign the width of lines.
+ 			W3D_FOG_COLOR:
+ 				The color value for fogging. Points to a W3D_ColorRGB.
+
+
+   RESULT
+       Either W3D_SUCCESS or W3D_UNSUPPORTED.
+
+	NOTES
+		Stippling must be enabled for lines or polygons by enabling the appropriate states.
+
+   SEE ALSO
+		W3D_SetState
+
 Warp3D/W3D_SetPenMask                                                         Warp3D/W3D_SetPenMask
 
    NAME
@@ -3485,7 +3537,7 @@ Warp3D/W3D_WriteZSpan
        ret = W3D_SetPenMask(context, indexmask)
        d0                   a0       d1
 
-       ULONG W3D_SetPenMask(W3D_Context *, ULONG);
+       uint32 W3D_SetPenMask(W3D_Context *, uint32);
 
    FUNCTION
        This function defines the mask for all drawing operations in
@@ -3548,7 +3600,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetState(context, state, newstate);
        d0                     a0       d0     d1
 
-       ULONG W3D_SetState(W3D_Context *, ULONG, ULONG);
+       uint32 W3D_SetState(W3D_Context *, uint32, uint32);
 
    FUNCTION
        This function is used to enable or disable hardware
@@ -3586,15 +3638,15 @@ Warp3D/W3D_WriteZSpan
                    W3D_SCISSOR            Scissor test
                    W3D_CHROMATEST         Chroma testing (i.e. color keying)
                    W3D_CULLFACE           Backface culling
-					W3D_MULTITEXTURE	   Implies W3D_GLOBALTEXENV. When
-										   active, normal texture environment
-										   is ignored and separated blend 
-										   stages are responsible for texture
-								           application.
-					W3D_FOG_COORD		   Use the special FogCoord array
-										   instead of the W coord of TMU 0
-										   for fogging.
-									
+                   W3D_MULTITEXTURE       Implies W3D_GLOBALTEXENV. When
+                                          active, normal texture environment
+                                          is ignored and separated blend
+                                          stages are responsible for texture
+                                          application.
+                  W3D_FOG_COORD           Use the special FogCoord array
+                                          instead of the W coord of TMU 0
+                                          for fogging.
+
        newstate - indicates what should be done to the state bit:
                    W3D_ENABLE             try to switch this feature on
                    W3D_DISABLE            try to switch it off
@@ -3631,7 +3683,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetStencilFunc(context, func, refvalue, mask);
        d0                           a0       d0    d1        d2
 
-       ULONG W3D_SetStencilMode(W3D_Context *, ULONG, ULONG, ULONG);
+       uint32 W3D_SetStencilMode(W3D_Context *, uint32, uint32, uint32);
 
    FUNCTION
        Set the stencil test function, as used by the OpenGL render pipeline.
@@ -3678,7 +3730,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetStencilOp(context, sfail, dpfail, dppass);
        d0                         a0       d0     d1      d2
 
-       ULONG W3D_SetStencilOp(W3D_Context *, ULONG, ULONG, ULONG);
+       uint32 W3D_SetStencilOp(W3D_Context *, uint32, uint32, uint32);
 
    FUNCTION
        Set the stencil test operation, as used by the OpenGL render
@@ -3722,7 +3774,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetTexEnv(context, texture, envparam, envcolor);
        d0                      a0       a1       d1        a2
 
-       ULONG W3D_SetTexEnv(W3D_Context *, W3D_Texture *, ULONG,
+       uint32 W3D_SetTexEnv(W3D_Context *, W3D_Texture *, uint32,
                W3D_Color *);
 
    FUNCTION
@@ -3732,7 +3784,8 @@ Warp3D/W3D_WriteZSpan
 
    INPUTS
        context     - a pointer to a W3D_Context (surprise !:)
-       texture     - a pointer to the texture object to be modified
+       texture     - a pointer to the texture object to be modified. Ignored
+                     when W3D_GLOBALTEXENV is enabled.
        envparam    - the environment parameter. One of the following:
                      W3D_REPLACE       Unlit texturing
                      W3D_DECAL         Lit texturing using the alpha component
@@ -3776,7 +3829,7 @@ Warp3D/W3D_WriteZSpan
 
    FUNCTION
  		This function controls multitexturing.
- 
+
  		Very complex stuff. Please write a better autodoc for me.
 
    INPUTS
@@ -3807,8 +3860,8 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetWrapMode(context, texture, mode_s, mode_t, border);
        d0                        a0        a1      d0      d1      a2
 
-       ULONG W3D_SetWrapMode(W3D_Context *, W3D_Texture *, ULONG,
-               ULONG, W3D_Color *);
+       uint32 W3D_SetWrapMode(W3D_Context *, W3D_Texture *, uint32,
+               uint32, W3D_Color *);
 
    FUNCTION
        Sets the texture`s wrapping mode.
@@ -3818,9 +3871,10 @@ Warp3D/W3D_WriteZSpan
        texture     - The texture to be modified
        mode_s      - The wrapping in s direction (vertical). Can be one
                      of the following constants:
-                     W3D_REPEAT    Texture is repeated
-                     W3D_CLAMP     Texture is clamped, the border is filled
-                                   with the color given in border.
+                     W3D_REPEAT             Texture is repeated
+                     W3D_CLAMP_LAST   Texture is clamped to the last texel
+                     W3D_CLAMP_COLOR Texture is clamped, the border is
+                                            filled with the color given in border.
        mode_t      - Wrapping in t direction (horizontal). Same as above.
        border      - A pointer to a W3D_Color used for the border (when clamping).
 
@@ -3837,7 +3891,7 @@ Warp3D/W3D_WriteZSpan
         The Virge does not allow asymmetric wrapping, therefore you should
         use the query facility, if asymmetric wrapping is possible.
 
-        You should usually use W3D_REPEAT, since W3D_CLAMP is currently
+        You should usually use W3D_REPEAT, since W3D_CLAMP_* are currently
         not possible with the Virge.
 
    BUGS
@@ -3854,7 +3908,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetWriteMask(context, mask);
        d0                         a0       d1
 
-       ULONG W3D_SetWriteMask(W3D_Context *, ULONG);
+       uint32 W3D_SetWriteMask(W3D_Context *, uint32);
 
    FUNCTION
        Defines which bits of the stencil buffer are write protected
@@ -3891,7 +3945,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_SetZCompareMode(context, mode);
        d0                            a0       d1
 
-       ULONG W3D_SetZCompareMode(W3d_Context *, ULONG);
+       uint32 W3D_SetZCompareMode(W3d_Context *, uint32);
 
    FUNCTION
        Set the compare mode used by ZBuffering. This mode
@@ -3946,7 +4000,7 @@ Warp3D/W3D_WriteZSpan
        driver = W3D_TestMode(modeid);
           D0                  D0
 
-       W3D_Driver *W3D_TestMode(ULONG);
+       W3D_Driver *W3D_TestMode(uint32);
 
    FUNCTION
        Given a standard ModeID, this function tests if there is a
@@ -3982,15 +4036,15 @@ Warp3D/W3D_WriteZSpan
        error = W3D_TexCoordPointer(context, pointer, stride, unit, off_v, off_w, flags);
        D0                           A0      A1        D0      D1    D2     D3     D4
 
-       ULONG W3D_TexCoordPointer(W3D_Context*, void*, int, int, int, ULONG);
+       uint32 W3D_TexCoordPointer(W3D_Context*, void*, int, int, int, uint32);
 
    FUNCTION
        This function sets the basis pointer for the texture coordinate data.
 
        When data is fetched from this array at element <n>, the pointer is cast
-       into a UBYTE*, and n*stride is added to the pointer. The u coordinate is
+       into a uint8*, and n*stride is added to the pointer. The u coordinate is
        fetched from this address.
-       To fetch the v coordinate the u address pointer is converted to an UBYTE*, and
+       To fetch the v coordinate the u address pointer is converted to an uint8*, and
        the off_v is added to this address. The result is cast back
        into a W3D_Float*, and v is fetched from there. The w coordinate is fetched
        the same way, with off_v replaced by off_w, starting from the same address
@@ -4027,7 +4081,7 @@ Warp3D/W3D_WriteZSpan
        array, using the standard layout of F_F_D.
 
        W3D_Vertex VertArray[1000];     // Vertex array
-       ULONG error = W3D_TexCoordPointer(context, (void*)VertArray+20, sizeof(W3D_Vertex)
+       uint32 error = W3D_TexCoordPointer(context, (void*)VertArray+20, sizeof(W3D_Vertex)
            0, 4, -4, 0);
 
    NOTES
@@ -4090,8 +4144,8 @@ Warp3D/W3D_WriteZSpan
        success = W3D_UpdateTexImage(context, texture, teximage, level, palette);
        d0                           a0       a1       a2        d1     a3
 
-       ULONG W3D_UpdateTexImage(W3D_Context *, W3D_Texture *, void *,
-               ULONG, ULONG *);
+       uint32 W3D_UpdateTexImage(W3D_Context *, W3D_Texture *, void *,
+               uint32, uint32 *);
 
    FUNCTION
        Change the image mipmap data to the given texture. The new source
@@ -4147,8 +4201,8 @@ Warp3D/W3D_WriteZSpan
                         palette, scissor, srcbpr);
                         a3       a4       d0
 
-       ULONG W3D_UpdateTexImage(W3D_Context *, W3D_Texture *, void *,
-               ULONG, ULONG *, W3D_Scissor*, ULONG);
+       uint32 W3D_UpdateTexImage(W3D_Context *, W3D_Texture *, void *,
+               uint32, uint32 *, W3D_Scissor*, uint32);
 
    FUNCTION
        Update only part of a texture, as defined by the scissor region.
@@ -4192,9 +4246,9 @@ Warp3D/W3D_WriteZSpan
            W3D_NOTVISIBLE  (Indirect context only) Flushing failed due to failed
                            hardware locking
 	        W3D_UNSUPPORTEDTEXFMT
-                           The texture format can not be partially updated. 
-                           This happens when trying to update compressed 
-                           textures.                
+                           The texture format can not be partially updated.
+                           This happens when trying to update compressed
+                           textures.
 
    EXAMPLE
 
@@ -4219,7 +4273,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_UploadTexture(context, texture);
        d0                          a0       a1
 
-       ULONG W3D_UploadTexture(W3D_Context *, W3D_Texture *);
+       uint32 W3D_UploadTexture(W3D_Context *, W3D_Texture *);
 
    FUNCTION
        `Upload` a texture to video ram. Video memory is allocated and
@@ -4262,7 +4316,7 @@ Warp3D/W3D_WriteZSpan
        error = W3D_VertexPointer(context, pointer, stride, mode, flags);
        D0                          A0      A1        D0     D1    D2
 
-       ULONG W3D_VertexPointer(W3D_Context*, void*, int, ULONG, ULONG);
+       uint32 W3D_VertexPointer(W3D_Context*, void*, int, uint32, uint32);
 
    FUNCTION
        This function sets the basis pointer for the vertex coordinate data.
@@ -4276,7 +4330,7 @@ Warp3D/W3D_WriteZSpan
        considered to be 12, 16 or 24 bytes large.
 
        When data is fetched from this array, the address of an element <n> is
-       computed by casting the vertex pointer to and UBYTE * and adding n*stride
+       computed by casting the vertex pointer to and uint8 * and adding n*stride
        to it (where stride is fetched from the stride parameter). The resulting
        address is considered to be a W3D_Float* or W3D_Double* according to
        mode, and data is fetched from the next three addresses, equally according
@@ -4305,7 +4359,7 @@ Warp3D/W3D_WriteZSpan
        array, using the standard layout of F_F_D.
 
        W3D_Vertex VertArray[1000];     // Vertex array
-       ULONG error = W3D_VertexPointer(context, (void *)VertArray,
+       uint32 error = W3D_VertexPointer(context, (void *)VertArray,
            sizeof(W3D_Vertex), W3D_VERTEX_F_F_D, 0);
 
    NOTES
@@ -4372,7 +4426,7 @@ Warp3D/W3D_WriteZSpan
        res = W3D_WriteStencilBuffer(context, x, y, st);
        d0                           a0       d0 d1 d2
 
-       ULONG W3D_WriteStencilBuffer(W3D_Context *, ULONG, ULONG, ULONG);
+       uint32 W3D_WriteStencilBuffer(W3D_Context *, uint32, uint32, uint32);
 
    FUNCTION
        This function writes the pixel st into the stencil buffer of context,
@@ -4424,8 +4478,8 @@ Warp3D/W3D_WriteZSpan
        success = W3D_WriteStencilSpan(context, x, y, n, st, mask);
        d0                             a0       d0 d1 d2 a1  a2
 
-       ULONG W3D_WriteStencilSpan(W3D_Context *, ULONG, ULONG, ULONG,
-                       ULONG [], UBYTE []);
+       uint32 W3D_WriteStencilSpan(W3D_Context *, uint32, uint32, uint32,
+                       uint32 [], uint8 []);
 
    FUNCTION
        Write a span of n stencil pixels into the stencil buffer, starting
@@ -4479,7 +4533,7 @@ Warp3D/W3D_WriteZSpan
        success = W3D_WriteZPixel(context, x, y, z);
        d0                        a0       d0 d1 a1
 
-       ULONG W3D_WriteZBuffer(W3D_Context *, ULONG, ULONG, W3D_Double *);
+       uint32 W3D_WriteZBuffer(W3D_Context *, uint32, uint32, W3D_Double *);
 
    FUNCTION
        Write  ZBuffer pixel z into context's ZBuffer, at x,y.
@@ -4521,8 +4575,8 @@ Warp3D/W3D_WriteZSpan
        W3D_WriteZSpan(context, x, y, n, z, mask);
                       a0       d0 d1 d2 a1 a2
 
-       W3D_WriteZSpan(W3D_Context *, ULONG, ULONG, ULONG,
-                   W3D_Double [], UBYTE []);
+       W3D_WriteZSpan(W3D_Context *, uint32, uint32, uint32,
+                   W3D_Double [], uint8 []);
 
    FUNCTION
        Write a span of pixels pointed to by z into the zbuffer.

@@ -1,18 +1,21 @@
 #ifndef DOS_ANCHORPATH_H
 #define DOS_ANCHORPATH_H
 /*
-**    $VER: anchorpath.h  54.100 (07.09.2020)
+**    $VER: anchorpath.h  54.126 (05.08.2023)
 **
 **    Pattern-matching structure definitions
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
-                      
+
 #ifndef EXEC_LIBRARIES_H
 #include <exec/libraries.h>
 #endif
@@ -55,11 +58,11 @@ struct AnchorPathOld;
 /*  Returned by obsolete Examine(), ExamineFH() and ExNext(), it must also be
 **  allocated on a 4 byte boundary address.
 **
-**  This structure is obsolete, due to 4 gig file size limits, short string 
+**  This structure is obsolete, due to 4 gig file size limits, short string
 **  length issues and lack of extensibility.
 **  Software should migrate to using the new ExamineDir() and the ExamineObject()
 **  functions which use the struct ExamineData.   See; dos/dos.h
-** 
+**
 **  This structure is here because it is nested within other structures and for
 **  legacy compatibility reasons, so this definition can't be removed at this time.
 **
@@ -71,14 +74,14 @@ struct AnchorPathOld;
 struct FileInfoBlock
 {
     uint32           fib_DiskKey;        /* -- FILESYSTEM PRIVATE !!                */
-    int32            fib_DirEntryType;   /* Use FIB_IS_ macros to identify object.  */
+    int32            fib_DirEntryType;   /* Identity of object.  ST_xxx             */
     TEXT             fib_FileName[108];  /* Null terminated.                        */
     uint32           fib_Protection;     /* Bit mask of protection, rwxd are 3-0.   */
 
     int32            fib_Obsolete;       /* -- OBSOLETE !! - Do not access this.    */
                                          /* Change old source code to reference     */
                                          /* the fib_DirEntryType member instead.    */
-                                         /* Handlers should init this to the same   */
+                                         /* Handlers must set this to the same      */
                                          /* compatibility value as fib_DirEntryType */
 
     uint32           fib_Size;           /* Byte size of file, only good to 4 gig   */
@@ -90,16 +93,16 @@ struct FileInfoBlock
     **  Note: the following two fields are not supported by all filesystems.
     **  They should be initialized to 0 when sending an ACTION_EXAMINE packet.
     **  When Examine() is called, these are set to 0 for you.
-    **  AllocDosObject() also initializes them to 0. 
+    **  AllocDosObject() also initializes them to 0.
     */
     uint16           fib_OwnerUID;       /* owner's UID */
     uint16           fib_OwnerGID;       /* owner's GID */
 
-    uint32           fib_DOSReserved[8]; /* -- DOS PRIVATE !! - Do not access this. 
+    uint32           fib_DOSReserved[8]; /* -- DOS PRIVATE !! - Do not access this.
                                          **    DOS uses all of this space for the
                                          **    legacy emulation context data.
                                          */
-}; 
+};
 /* FileInfoBlock - 260 bytes */
 
 /****************************************************************************/
@@ -197,7 +200,7 @@ struct AnchorPath                         /* Redefined for dos 50.76+ (2004) */
 
 /****************************************************************************/
 /*  Note that the following AP_IS_xxx() macros will only read the fib_DirEntryType member
-**  to determine the object type, this is for compatibility with older software that does
+**  to determine the object type, this is for compatibility with older software that did
 **  type morphing with this value alone.
 */
 #define AP_IS_FILE(ap)        ((ap)->ap_Info.fib_DirEntryType < 0)
@@ -220,24 +223,24 @@ struct AnchorPath                         /* Redefined for dos 50.76+ (2004) */
 
 /*****************************************************************************/
 /*
-**  Obsolete V40 definition ==ONLY== for legacy reference.     
-**  This is what DOS will expect when NOT allocated by AllocDosObject().    
-**                                                                          
+**  Obsolete V40 definition ==ONLY== for legacy reference.
+**  This is what DOS will expect when NOT allocated by AllocDosObject().
+**
 **  #define USE_OLD_ANCHORPATH   ; will force the use of this old definition
-**  for old source code that does NOT allocate it with AllocDosObject().    
+**  for old source code that does NOT allocate it with AllocDosObject().
 */
 
 struct AnchorPathOld
 {
-    struct AChain *      ap_Base;       /* pointer to first anchor */
-    struct AChain *      ap_Current;    /* pointer to current anchor */
+    struct AChain *      ap_Base;       /* pointer to first */
+    struct AChain *      ap_Current;    /* pointer to current */
     uint32               ap_BreakBits;  /* Bits we want to break on */
     uint32               ap_FoundBreak; /* Bits we broke on. Also returns ERROR_BREAK */
-    uint8                ap_Flags;      /* New use for extra word. */
+    uint8                ap_Flags;      /* New use for extra byte. */
     uint8                ap_Reserved;
     uint16               ap_Strlen;     /* This is what ap_Length used to be */
     struct FileInfoBlock ap_Info;
-    TEXT                 ap_Buf[1];     /* Buffer for path name, allocated by user */
+    TEXT                 ap_Buf[1];     /* Buffer for full path name, user allocated */
 };
 
 
@@ -245,7 +248,7 @@ struct AnchorPathOld
 
 
 /****************************************************************************/
-/* 
+/*
  * Some usefull synonyms.
  */
 
@@ -255,7 +258,7 @@ struct AnchorPathOld
 
 
 /***************************************************************************/
-/* 
+/*
  * Flags for AnchorPath->ap_Flags.
  */
 
@@ -285,7 +288,7 @@ struct AnchorPathOld
                                to not following hardlinks on a DODIR. */
 
 #define APB_MultiAssigns 8  /* Set this bit via AllocDosObject() to allow
-                               Multi-Assign scanning to be enabled.  
+                               Multi-Assign scanning to be enabled.
                               ( NOTE: ONLY AVAILABLE FROM DOS 50.76+ ) */
 
 
@@ -298,7 +301,7 @@ struct AnchorPathOld
 #define APF_DirChanged   (1<<APB_DirChanged)
 #define APF_FollowHLinks (1<<APB_FollowHLinks)
 
-#define APF_MultiAssigns (1<<APB_MultiAssigns)  
+#define APF_MultiAssigns (1<<APB_MultiAssigns)
                          /* New for V50, See AllocDosObject() */
 
 
@@ -322,7 +325,19 @@ struct AChain
     struct AChain * an_Parent;
     BPTR            an_Lock;
     /*
-    **  an_Lock is the directory lock for the object.
+    **  AP_GET_CD_LOCK() macro defined above, returns this an_Lock,
+    **  this is the directory lock for the object returned by
+    **  the macro; AP_GET_NAME().
+    **
+    **  Some old source code referenced the object name from this AChain
+    **  via the obsolete field; ap->ap_Current->an_Info.fib_FileName,
+    **  this usage is no longer supported and legacy source code should
+    **  be changed to use; ap->ap_Info.fib_FileName instead.
+    **
+    **  However, for upward compatibility, new code should always use the
+    **  new allocation methods and macros for structure access, otherwise
+    **  returning accurate data for long names and large files greater
+    **  than 4 gig, will simply not work.
     */
 };
 
@@ -330,7 +345,7 @@ struct AChain
 #endif /* dos_achain */
 /****************************************************************************/
 
-#ifdef __GNUC__ 
+#ifdef __GNUC__
    #ifdef __PPC__
     #pragma pack()
    #endif

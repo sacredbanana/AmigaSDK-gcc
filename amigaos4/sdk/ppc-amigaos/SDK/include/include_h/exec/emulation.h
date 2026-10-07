@@ -1,15 +1,9 @@
 #ifndef EXEC_EMULATION_H
 #define EXEC_EMULATION_H
 /*
-**    $VER: emulation.h 53.29 (10.8.2015)
+** Emulator related constants and definitions.
 **
-**    Emulator related constans and definitions.
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2019 Trevor Dickinson.
 */
 
 #ifndef   UTILITY_TAGITEM_H

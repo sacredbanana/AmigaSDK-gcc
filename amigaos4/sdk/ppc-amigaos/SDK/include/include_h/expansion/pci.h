@@ -1,16 +1,10 @@
 #ifndef EXPANSION_PCI_H
 #define EXPANSION_PCI_H
 /*
-**    $VER: pci.h 53.29 (10.8.2015)
+** Structures and defines for the expansion.library
+** PCI Interface.
 **
-**    Structures and defines for the expansion.library
-**    PCI Interface.
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2018 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H
@@ -208,7 +202,7 @@ enum enPCIBaseAddressBits
 };
 
 #define PCI_BASE_ADDRESS_MEM_MASK (0xFFFFFFF0UL)
-#define PCI_BASE_ADDRESS_IO_MASK  (0xFFFFFFF8UL)
+#define PCI_BASE_ADDRESS_IO_MASK  (0xFFFFFFFEUL)
 
 #define PCI_ROM_ADDRESS_ENABLE    0x01
 #define PCI_ROM_ADDRESS_MASK      (0xFFFF8000UL)

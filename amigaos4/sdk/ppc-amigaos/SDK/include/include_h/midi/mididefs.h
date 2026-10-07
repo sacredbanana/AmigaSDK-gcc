@@ -1,7 +1,6 @@
 #ifndef MIDI_MIDIDEFS_H
 #define MIDI_MIDIDEFS_H
 /*
-** $VER: mididefs.h 54.16 (22.08.2022)
 ** 
 ** C. A. M. D. (Commodore Amiga MIDI Driver)
 **
@@ -20,6 +19,9 @@
 **
 ** Copyright (c) 2013 Hyperion Entertainment CVBA.
 **
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 /***************************************************************

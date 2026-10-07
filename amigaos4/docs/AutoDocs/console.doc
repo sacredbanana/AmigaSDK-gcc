@@ -849,12 +849,17 @@ console.device/RawKeyConvert
    -------------------------------------
    Some Write sequences solicit responses from the Console in the form of
    an extended string headed by a <CSI> (\x9B) and terminated by a
-   printable ASCII character. The response is NOT terminated by a NewLine
-   character, thus the caller must engage RAW mode and read the characters
-   one at a time until the terminating character is received. Note that a
-   Read request for N characters can be satisfied by any number of 
-   characters up to and including N and the string that is returned from a
-   Read request may not be the full string including the terminator.
+   printable ASCII character. By default, the response is NOT terminated
+   by a NewLine character, thus the caller must engage RAW mode and read
+   the characters one at a time until the terminating character is
+   received. [Note that a Read request for N characters can be satisfied
+   by any number of characters up to and including N and the string that
+   is returned from a Read request may not be the full string including
+   the terminator]
+   This difficulty is overcome in V53.113+, when optionally the console
+   can be opened with the CONFLAG_SEQ_END_WITH_NL flag set. This flag
+   will cause responses to be terminated with a NL character (and the
+   returned sequence will be one character longer as a result).
 
    Window Status Request (WSR): the request to the Console consists of the
    sequence "<CSI> q", where "CSI" is either the "\x9B" character or the 
@@ -863,12 +868,16 @@ console.device/RawKeyConvert
    "<CSI>1;1;HH;WW r", where HH is the number of text rows in the window
    and WW is the number of characters across the window. HH and WW are ASCII
    characters describing a decimal number (eg "82", "29".
+   A NL character will be appended to the sequence if the console was
+   opened with a flag byte containing the CONFLAG_SEQ_END_WITH_NL.
    Note that these data can also be obtained by the GetAttrs() call.
 
-   Device Status Report (DSR): the request to the Console consists of the
-   sequence "<CSI6n". The response consists of the string:
-   "<CSI>XX;YYR", where XX and YY are the column and row values of the
+   Device Status Request (DSR): the request to the Console consists of the
+   sequence "<CSI>6n". The response consists of the string:
+   "<CSI>1;1;XX;YYR", where XX and YY are the column and row values of the
    current cursor position.
+   A NL character will be appended to the sequence if the console was
+   opened with a flag byte containing the CONFLAG_SEQ_END_WITH_NL.
    Note that these data can also be obtained by the GetAttrs() call.
 
    Intuition-Triggered Outputs
@@ -891,6 +900,8 @@ console.device/RawKeyConvert
    Y is the Y-ordinate of the mouse pointer at the time of the event;
    SS is the Timestamp of the event (seconds);
    MM is the Timestamp of the event (microseconds).
+   A NL character will be appended to the sequence if the console was
+   opened with a flag byte containing the CONFLAG_SEQ_END_WITH_NL.
    Note: in the case of simulated "events", only the "Class" field is 
    accurate, all other fields are zero.
 
@@ -1090,6 +1101,14 @@ console.device/RawKeyConvert
    is complete before returning to the caller. This blocking action is 
    forced for legacy windows but optional for new-style windows with Tabs
    or History.
+
+   Bit 5 (CONFLAG_SEQ_END_WITH_NL) (V53.113) (optional)
+   This bit forces escape sequence responses to be terminated
+   with a NL. It affects the sequences:
+   aWSR (Window Status Request);
+   DSR (Device Status Report).
+   Each of these response strings will be terminated with a NL if the
+   flag is set. Normally the response ends with a letter character.
 
    io_Data field:
    This field is used to pass the address of an existing Window when a Unit

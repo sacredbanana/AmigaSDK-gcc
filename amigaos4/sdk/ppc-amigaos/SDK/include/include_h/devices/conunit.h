@@ -1,12 +1,15 @@
 #ifndef DEVICES_CONUNIT_H
 #define DEVICES_CONUNIT_H
 /*
-** $VER: conunit.h 54.16 (22.08.2022)
+**    $VER: conunit.h 53.21 (31.05.2010)
 **
-** Console device unit definitions
+**    Console device unit definitions
 **
-** Copyright (C) 1985-2009 Hyperion Entertainment CVBA.
-** All Rights Reserved
+**    Copyright (C) 1985-2009 Hyperion Entertainment CVBA.
+**          All Rights Reserved
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 #ifndef   EXEC_TYPES_H
@@ -65,6 +68,7 @@ extern "C" {
 #define	CONFLAG_CREATE_WINDOW		0x04
 #define	CONFLAG_TABBED_WINDOW		0x08
 #define	CONFLAG_SYNC_WRITES			0x10
+#define	CONFLAG_SEQ_END_WITH_NL		0x20
 
 #define PMB_LNM M_LNM              /* internal storage bit for NL flag */
 #define PMF_LNM (1<<(M_LNM&7))     /* bit value in that byte           */

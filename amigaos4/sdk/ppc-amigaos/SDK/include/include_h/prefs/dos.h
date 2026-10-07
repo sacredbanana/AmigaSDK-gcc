@@ -8,10 +8,13 @@
 **  Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **      All Rights Reserved
 **
-**  Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**  Copyright (c) 2010 Hyperion Entertainment BV.
 **      All Rights Reserved.
 */
- 
+
 /*****************************************************************************/
 
 #ifndef   EXEC_TYPES_H
@@ -74,7 +77,7 @@ struct DOSPrefs
 #define WildStar_Default               0            /* BOOLEAN FALSE */
 #define AssignMount_Default            1            /* BOOLEAN TRUE  */
 #define BootCliFontSize_Default        9            /* 9 point font (8 or 9) */
-#define BootCliCloseGadget_Default     1            /* BOOLEAN TRUE  */    
+#define BootCliCloseGadget_Default     1            /* BOOLEAN TRUE  */
 
 
 
@@ -95,10 +98,10 @@ struct DOSPrefs
 #define WWT_MIN		0			/* min= 0 seconds  */
 #define WWT_MAX		600			/* max= 600 seconds (10 minutes) */
 
-/* Warning post time before auto-closing requester - note that 0= post forever. 
+/* Warning post time before auto-closing requester - note that 0= post forever.
 ** NB: Values between 1 and 5 should be avoided to prevent requesters
 **     disappearing too fast for the user to be able to read them.
-*/ 
+*/
 #define WPT_MIN		0			/* min= 0 seconds = post forever */
 #define WPT_MAX		600			/* max= 600 seconds maximum post time */
 

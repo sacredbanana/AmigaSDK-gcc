@@ -1,7 +1,6 @@
 #ifndef INTUITION_SCREENS_H
 #define INTUITION_SCREENS_H
 /*
-**    $VER: screens.h 54.16 (22.08.2022)
 **
 **    The Screen and NewScreen structures and attributes
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

@@ -1,15 +1,11 @@
 #ifndef EXEC_AVL_H
 #define EXEC_AVL_H
 /*
-**    $VER: avl.h 53.29 (10.8.2015)
+** AVL tree data structure definitions
 **
-**    AVL tree data structure definitions
+** Copyright 2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H

@@ -1,12 +1,11 @@
 #ifndef USB_HUB_H
 #define USB_HUB_H
 /*
-** $VER: hub.h 53.34 (09.12.2021)
 **
 ** Hub driver includes
 **
 ** Copyright (c) 2001, Thomas Graff Thoeger
-** Distributed by Hyperion Entertainment CVBA under permission.
+** Distributed by Hyperion Entertainment BV under permission.
 */
 
 #ifndef USB_USB_H

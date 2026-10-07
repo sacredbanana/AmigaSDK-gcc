@@ -1,12 +1,14 @@
 #ifndef PREFS_CON_H
 #define PREFS_CON_H
 /*
-**  $VER: console.h 54.16 (22.08.2022)
 **
 **  File format for Console preferences
 **
 **  Copyright (C) 1985-2009 Hyperion Entertainment CVBA.
 **      All Rights Reserved
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 /*****************************************************************************/

@@ -1,7 +1,6 @@
 #ifndef REXX_RXSLIB_H
 #define REXX_RXSLIB_H
 /*
-**    $VER: rxslib.h 54.16 (22.08.2022)
 **
 **    The header file for the REXX Systems Library
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

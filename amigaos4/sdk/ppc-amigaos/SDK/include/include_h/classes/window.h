@@ -1,7 +1,6 @@
 #ifndef CLASSES_WINDOW_H
 #define CLASSES_WINDOW_H
 /*
-**    $VER: window.h 54.16 (22.08.2022)
 **
 **    window.class definitions
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -280,6 +282,9 @@ extern "C" {
        case (for more information see <intuition/intuition.h>).
        If you don't use context menus you never need to check this
        attribute. (V54) */
+
+#define WINDOW_CopyTitle          (WINDOW_Dummy + 68)
+    /* (BOOL) Copy WA_Title into an internal buffer. (V54.15) */
 
 /****************************************************************************/
 

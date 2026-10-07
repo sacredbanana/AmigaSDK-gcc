@@ -6,6 +6,8 @@ filesysbox.library/--env-variables--
 filesysbox.library/FbxCleanupFS
 filesysbox.library/FbxEventLoop
 filesysbox.library/FbxFuseVersion
+filesysbox.library/FbxGetSysTime
+filesysbox.library/FbxGetUpTime
 filesysbox.library/FbxInstallTimerCallback
 filesysbox.library/FbxQueryFS
 filesysbox.library/FbxQueryMountMsg
@@ -15,7 +17,6 @@ filesysbox.library/FbxSetupFS
 filesysbox.library/FbxSignalDiskChange
 filesysbox.library/FbxUninstallTimerCallback
 filesysbox.library/FbxVersion
-filesysbox/main/FbxGetSysTime
 
 
 filesysbox.library/--about-handlers--                         filesysbox.library/--about-handlers--
@@ -28,13 +29,13 @@ filesysbox/main/FbxGetSysTime
 
    LIBRARY
        Copyright (c) 2008-2011 Leif Salomonsson.
-       Copyright (c) 2013-2019 Fredrik Wikstrom.
+       Copyright (c) 2013-2022 Fredrik Wikstrom.
        This library is released under AROS PUBLIC LICENSE v.1.1.
        See the file LICENSE.APL.
 
    AUTODOC
        Copyright (c) 2011 Leif Salomonsson.
-       Copyright (c) 2013-2019 Fredrik Wikstrom.
+       Copyright (c) 2013-2022 Fredrik Wikstrom.
        This material has been released under and is subject to
        the terms of the Common Documentation License, v.1.0.
        See the file LICENSE.CDL.
@@ -46,7 +47,16 @@ filesysbox/main/FbxGetSysTime
        various types of debug output in the library.
 
        To enable all debug output:
-       SetEnv FBX_DBGFLAGS 0xffffffff
+       SetEnv FBX_DBGFLAGS 0xff
+
+       The types of debug output that are currently defined are:
+       0x01 - general
+       0x02 - packets
+       0x04 - notify
+       0x08 - resolve
+       0x10 - dir
+       0x20 - cconv
+       0x40 - fsops
 
 filesysbox.library/FbxCleanupFS                                     filesysbox.library/FbxCleanupFS
 
@@ -129,6 +139,64 @@ filesysbox/main/FbxGetSysTime
    SEE ALSO
        FbxVersion()
 
+filesysbox.library/FbxGetSysTime                                   filesysbox.library/FbxGetSysTime
+
+   NAME
+      FbxGetSysTime -- Get the current system time. (V54.4)
+
+   SYNOPSIS
+      void FbxGetSysTime(struct FbxFS *fs, struct TimeVal *tv);
+
+   FUNCTION
+       Reads the current system time and stores it in the supplied
+       TimeVal structure. Basically just a convenient way to call
+       GetSysTime() from a filesysbox handler that doesn't require
+       the "timer.device" to be opened again.
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       tv - TimeVal structure to store the time in.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
+filesysbox.library/FbxGetUpTime                                     filesysbox.library/FbxGetUpTime
+
+   NAME
+      FbxGetUpTime -- Get the current up time. (V54.11)
+
+   SYNOPSIS
+      void FbxGetUpTime(struct FbxFS *fs, struct TimeVal *tv);
+
+   FUNCTION
+       Reads the current up time and stores it in the supplied
+       TimeVal structure. Basically just a convenient way to call
+       GetUpTime() from a filesysbox handler that doesn't require
+       the "timer.device" to be opened again.
+
+   INPUTS
+       fs - The result of FbxSetupFS().
+       tv - TimeVal structure to store the time in.
+
+   RESULT
+       This function does not return a result
+
+   EXAMPLE
+
+   NOTES
+
+   BUGS
+
+   SEE ALSO
+
 filesysbox.library/FbxInstallTimerCallback               filesysbox.library/FbxInstallTimerCallback
 
    NAME
@@ -165,7 +233,7 @@ filesysbox/main/FbxGetSysTime
 filesysbox.library/FbxQueryFS                                         filesysbox.library/FbxQueryFS
 
    NAME
-      FbxQueryFS -- Query function for FS
+      FbxQueryFS -- Query function for FS. (V54.4)
       FbxQueryFSTags -- Vararg stub
 
    SYNOPSIS
@@ -371,6 +439,12 @@ filesysbox/main/FbxGetSysTime
                path string and use this instead of st_ino for the
                ObjectID.
 
+           FBXF_USE_FILL_DIR_STAT (V54.8)
+               Indicates that the stat structure provided by readdir() to
+               the callback function contains valid stat data. This means
+               that the FSExamineDir() does not have to explicitly call
+               getattr() for every file.
+
        FBXT_FSSM (struct FileSysStartupMsg *)
            Overrides the one in msg.
            A NULL fssm is OK and will disable ACTION_GET_DISK_FSSM.
@@ -485,34 +559,5 @@ filesysbox/main/FbxGetSysTime
 
    SEE ALSO
        FbxFuseVersion()
-
-filesysbox/main/FbxGetSysTime                                         filesysbox/main/FbxGetSysTime
-
-   NAME
-      FbxGetSysTime -- Get the current system time
-
-   SYNOPSIS
-      void FbxGetSysTime(struct FbxFS *fs, struct TimeVal *tv);
-
-   FUNCTION
-       Reads the current system time and stores it in the supplied
-       TimeVal structure. Basically just a convenient way to call
-       GetSysTime() from a filesysbox filesystem that doesn't require
-       the "timer.device" to be opened again.
-
-   INPUTS
-       fs - The result of FbxSetupFS().
-       tv - TimeVal structure to store the time in.
-
-   RESULT
-       This function does not return a result
-
-   EXAMPLE
-
-   NOTES
-
-   BUGS
-
-   SEE ALSO
 
 

@@ -1,14 +1,17 @@
 #ifndef DOS_DOSTAGS_H
 #define DOS_DOSTAGS_H
 /*
-**    $VER: dostags.h  54.103 (26.12.2021)
+**    $VER: dostags.h  54.135 (14.07.2025)
 **
 **    Tag definitions for all Dos routines using tags
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -34,38 +37,6 @@ extern "C" {
    #pragma amiga-align
 #endif
 
-/*****************************************************************************/
-/* definitions for the System() call.
- */
-
-#define SYS_Dummy               (TAG_USER + 32)
-
-#define SYS_CommandRunMode      (SYS_Dummy + 0)
-    /* (BOOLEAN) - PRIVATE Internal SHELL tag to identify "run" command. */
-
-#define SYS_Input               (SYS_Dummy + 1)
-    /* (BPTR) - specifies the input filehandle  */
-
-#define SYS_Output              (SYS_Dummy + 2)
-    /* (BPTR) - specifies the output filehandle */
-
-#define SYS_Asynch              (SYS_Dummy + 3)
-    /* (BOOLEAN) - run asynch, close input/output on exit(!) */
-
-#define SYS_UserShell           (SYS_Dummy + 4)
-    /* (BOOLEAN) - send to user shell instead of boot shell */
-
-#define SYS_CustomShell         (SYS_Dummy + 5)
-    /* (STRPTR) - send to a specific shell (data is name) */
-
-#define SYS_Error               (SYS_Dummy + 6)
-    /* (BPTR) - specifies the error output filehandle (New for V50) */ 
-
-#define SYS_ExecuteInputStream  (SYS_Dummy + 7)
-    /* (BOOLEAN) - instead of reading the 'command' string parameter, 
-     *             reads commands from the input filehandle instead. (V53.45)
-     */
-
 
 /*****************************************************************************/
 /* definitions for the (V51.96) GetDiskInfo() call.
@@ -74,18 +45,18 @@ extern "C" {
 #define GDI_Dummy                   (TAG_USER+500)
 
 #define GDI_StringNameInput         (GDI_Dummy+1)
-    /* (STRPTR) - pointer to a string identifier for the handler. 
+    /* (STRPTR) - pointer to a string identifier for the handler.
      * Identify the handler by the volume: device: or assignment: name.
      * This function will use the current directory if there is no ":"
-     * within the string specification.  
+     * within the string specification.
      */
 
 #define GDI_FileHandleInput         (GDI_Dummy+2)
     /* (BPTR) - BCPL pointer to a FileHandle to identify the handler */
- 
+
 #define GDI_LockInput              (GDI_Dummy+3)
     /* (BPTR) - BCPL pointer to a Lock to identify the handler. */
-#define GDI_FileLockInput           GDI_LockInput 
+#define GDI_FileLockInput           GDI_LockInput
 
 #define GDI_MsgPortInput            (GDI_Dummy+4)
     /* (struct MsgPort *) - Pointer to the handlers message port */
@@ -98,7 +69,7 @@ extern "C" {
 
 #define GDI_ShowRequesters          (GDI_Dummy+12)
     /* (boolean) - TRUE to allow requesters to appear, defaults to FALSE */
- 
+
 
 /*****************************************************************************/
 /* definitions for the (V53.59) ObtainConsoleDataTags() call.
@@ -116,8 +87,8 @@ extern "C" {
 
 
 /****************************************************************************/
-/*  Tags for AsyncIO().  
- */ 
+/*  Tags for AsyncIO().
+ */
 
 #define  AIO_Dummy                (TAG_USER+700)
 
@@ -209,9 +180,9 @@ extern "C" {
 
 
 /*****************************************************************************/
-/* definitions for the CreateNewProc() call;
- * you MUST specify one of NP_Seglist or NP_Entry. All others are optional.
- * NOTE: NP_Error was not actually implemented in DOS until V50 
+/* Definitions for the CreateNewProc() call;
+ * MUST specify one of NP_Seglist or NP_Entry. All others are optional.
+ * NOTE: NP_Error was not actually implemented in DOS until V50
  */
 
 #define NP_Dummy            (TAG_USER + 1000)
@@ -225,10 +196,10 @@ extern "C" {
 
 #define NP_Start            (NP_Dummy + 3)
 #define NP_Entry            NP_Start
-    /* (APTR) - entry point to run for the new process.  */
-    /* Added alias for old source code, NP_Entry name changed to
-    ** remove confusion with NP_EntryCode which wasn't reported until V54.
-    */
+    /* (APTR) - entry point to run for the new process.
+     * Added alias for old source code, NP_Entry name changed to
+     * remove confusion with NP_EntryCode which wasn't reported until V54.
+     */
 
 #define NP_Input            (NP_Dummy + 4)
     /* (BPTR) - filehandle, default is Open("NIL:"...) */
@@ -255,7 +226,7 @@ extern "C" {
     /* (uint32) - stacksize for process */
 
 #define NP_Name             (NP_Dummy + 12)
-    /* (STRPTR) - name for process, default "New Process"*/
+    /* (STRPTR) - name for process, default "New Process" */
 
 #define NP_Priority         (NP_Dummy + 13)
     /* (int32) - priority, (-128 to +127), default same as parent */
@@ -277,8 +248,8 @@ extern "C" {
     /* (int32) - create cli structure, default FALSE */
 
 #define NP_Path             (NP_Dummy + 19)
-    /* (BPTR) - struct PathNode chain, default is copy of parents path, 
-     *          only valid if a cli process! 
+    /* (BPTR) - struct PathNode chain, default is copy of parents path,
+     *          only valid if a cli process!
      */
 
 #define NP_CommandName      (NP_Dummy + 20)
@@ -287,7 +258,7 @@ extern "C" {
 #define NP_Arguments        (NP_Dummy + 21)
     /* (STRPTR) - arguments passed with str in a0, length in d0.
      * (copied and freed on exit.) Default is 0-length NULL ptr.
-     * You must NEVER use NP_Arguments with a NP_Input of NULL. 
+     * You must NEVER use NP_Arguments with a NP_Input of NULL.
      */
 
 #define NP_unused1          (NP_Dummy + 22)
@@ -306,31 +277,31 @@ extern "C" {
     /* (int32) - optional value to install into task->tc_UserData. */
 
 #define NP_Child            (NP_Dummy + 27)
-    /* (int32) - boolean flag to nominate this new process as a dependant child 
-     * of the parent. (V50) 
+    /* (int32) - boolean flag to nominate this new process as a dependant child
+     * of the parent. (V50)
      */
 
 #define NP_NotifyOnDeathMessage        (NP_Dummy+28)
-    /* (struct DeathMessage *) - Specify an initialised death message 
+    /* (struct DeathMessage *) - Specify an initialised death message
      * structure to ReplyMsg() to, upon death of this process.
      * Defaults to none.  (V51.53)
      */
 
 #define NP_NotifyOnDeathSigTask        (NP_Dummy+29)
-    /* (struct Task *) - Specify the task or process to signal upon 
+    /* (struct Task *) - Specify the task or process to signal upon
      * death of this process. Specify NULL for the parent of this child process.
      * Defaults to no signalling, if this tag is not specified. (V51.53)
      */
 
 #define NP_NotifyOnDeathSignalBit      (NP_Dummy+30)
     /* (int32) - A value (0-31) for the signal bit number to send to the task
-     * NP_NotifyOnDeathSigTask, upon death of this process. 
-     * Defaults to SIGB_CHILD if not specified.  (See; exec/tasks.h) 
+     * NP_NotifyOnDeathSigTask, upon death of this process.
+     * Defaults to SIGB_CHILD if not specified.  (See; exec/tasks.h)
      */
 
 #define NP_LocalVars                   (NP_Dummy+31)
-    /* (STRPTR *) - Paired array of string pointers representing a 
-     * list of local variables to add to the new process, array must be 
+    /* (STRPTR *) - Paired array of string pointers representing a
+     * list of local variables to add to the new process, array must be
      * arranged as;  Name1,Value1, Name2,Value2, Name3,Value3, NULL;
      * Default NULL. (V51.70)
      */
@@ -350,7 +321,7 @@ extern "C" {
 
 #define NP_LocalAlias                  (NP_Dummy+36)
     /* (STRPTR *) - Paired array of string pointers to represent a list of
-     * local aliases to add to the new process, array must be arranged as;  
+     * local aliases to add to the new process, array must be arranged as;
      *    Alias1,Value1, Alias2,Value2, Alias3,Value3, NULL;
      * Default NULL. (Added V52.5)
      */
@@ -358,7 +329,7 @@ extern "C" {
 #define NP_LockStack                    (NP_Dummy+37)
     /* (int32) - Boolean tag to cause exec to lock the stack in place,
      * specifying TRUE will prevent the stack frame being swapped out.
-     * Default FALSE   (Added V52.10) 
+     * Default FALSE   (Added V52.10)
      */
 
 #define NP_OwnerUID                     (NP_Dummy+38)
@@ -369,20 +340,67 @@ extern "C" {
 
 
 
+
+/*****************************************************************************/
+/* definitions for the System() call.  (Uses some of the NP_tags)
+ */
+
+#define SYS_Dummy               (TAG_USER + 32)
+
+#define SYS_CommandRunMode      (SYS_Dummy + 0)
+    /* (BOOLEAN) - PRIVATE Internal SHELL tag to identify "run" command. */
+
+#define SYS_Input               (SYS_Dummy + 1)
+    /* (BPTR) - specifies the input filehandle  */
+
+#define SYS_Output              (SYS_Dummy + 2)
+    /* (BPTR) - specifies the output filehandle */
+
+#define SYS_Asynch              (SYS_Dummy + 3)
+    /* (BOOLEAN) - run asynch, close input/output on exit(!) */
+
+#define SYS_UserShell           (SYS_Dummy + 4)
+    /* (BOOLEAN) - send to user shell instead of boot shell */
+
+#define SYS_CustomShell         (SYS_Dummy + 5)
+    /* (STRPTR) - send to a specific shell (data is name) */
+
+#define SYS_Error               (SYS_Dummy + 6)
+    /* (BPTR) - specifies the error output filehandle (New for V50) */
+
+#define SYS_ExecuteInputStream  (SYS_Dummy + 7)
+    /* (BOOLEAN) - instead of reading the 'command' string parameter,
+     *  reads commands from the input filehandle instead. (V53.45)
+     */
+
+/*
+** The following are synonym tags to abstract the safer NP_xxx tags. (54.133)
+*/
+
+#define  SYS_CurrentDir         (NP_CurrentDir)
+#define  SYS_WindowPtr          (NP_WindowPtr)
+#define  SYS_Priority           (NP_Priority)
+#define  SYS_CloseError         (NP_CloseError)
+#define  SYS_StackSize          (NP_StackSize)
+#define  SYS_Name               (NP_Name)
+#define  SYS_Path               (NP_Path)
+#define  SYS_CopyVars           (NP_CopyVars)
+
+
 /*****************************************************************************/
 /* tags for AllocDosObject()
  */
 
 #define ADO_Dummy        (TAG_USER + 2000)
 
-#define ADO_TermCharStr	 (ADO_Dummy + 0)   
-    /* Added for FReadLine() V53.19 
+#define ADO_TermCharStr	 (ADO_Dummy + 0)
+    /* Added for FReadLine() V53.19
      */
 
 /* Obsolete tags +1...+5 have been moved to obsolete.h */
 
 #define ADO_AddedSize   (ADO_Dummy + 6)
-    /* Size of additional buffer to allocate over and above the 
+    /* Size of additional buffer to allocate over and above the
      * base structure size required by the flag DOS_xxxxx .  (V50)
      */
 #define ADO_Strlen       ADO_AddedSize
@@ -390,7 +408,7 @@ extern "C" {
 
 #define ADO_Flags        (ADO_Dummy + 7)
     /* Generic 32 bit flags for those allocations that
-     * require initialisation of a specific flags field. (V50) 
+     * require initialisation of a specific flags field. (V50)
      */
 #define ADO_DOSType       ADO_Flags           /* alias V51 */
 #define ADO_TermChar      ADO_Flags           /* alias V51 */
@@ -400,7 +418,7 @@ extern "C" {
 
 #define ADO_Mask         (ADO_Dummy + 8)
     /* Generic 32 bit mask for those allocations that
-     * require initialisation of a specific bitmask. (V50) 
+     * require initialisation of a specific bitmask. (V50)
      */
 #define ADO_AddColon      ADO_Mask            /* alias V53 */
 
@@ -411,7 +429,7 @@ extern "C" {
 
 #define ADO_NotifyName    ADO_Name      /* alias V52 */
     /* Name of the volume, directory or file to monitor and produce
-     * notification messages for. (V51) 
+     * notification messages for. (V51)
      */
 
 #define ADO_NotifyUserData    (ADO_Dummy + 10)
@@ -419,38 +437,38 @@ extern "C" {
 
 #define ADO_NotifyMethod      (ADO_Dummy + 11)
     /* Notification method; must be one of NRF_SEND_MESSAGE,
-     * NRF_SEND_SIGNAL or NRF_CALL_HOOK. (V51) 
+     * NRF_SEND_SIGNAL or NRF_CALL_HOOK. (V51)
      */
 
 #define ADO_NotifyPort        (ADO_Dummy + 12)
     /* MsgPort to send notification messages to; this is used
-     * for the NRF_SEND_MESSAGE notification method. (V51) 
+     * for the NRF_SEND_MESSAGE notification method. (V51)
      */
 
 #define ADO_NotifyTask        (ADO_Dummy + 13)
     /* Task to send a notification signal to; this is used for
-     * the NRF_SEND_SIGNAL notification method. (V51) 
+     * the NRF_SEND_SIGNAL notification method. (V51)
      */
 
 #define ADO_NotifySignalNumber    (ADO_Dummy + 14)
     /* The signal number (0..31) to use when sending a notification
      * signal; this is used for the NRF_SEND_SIGNAL notification
-     * method. (V51) 
+     * method. (V51)
      */
 
 #define ADO_NotifyHook        (ADO_Dummy + 15)
     /* The hook to call when a notification is required; this is
-     * used for the NRF_CALL_HOOK method. (V51) 
+     * used for the NRF_CALL_HOOK method. (V51)
      */
 
 #define ADO_NotifyWaitReply   (ADO_Dummy + 16)
     /* Selects if the further notification messages should be sent
-     * unless the last message has been replied. (V51) 
+     * unless the last message has been replied. (V51)
      */
 
 #define ADO_NotifyInitial     (ADO_Dummy + 17)
     /* Selects if the notification should be sent immediately after
-     * it was requested. (V51) 
+     * it was requested. (V51)
      */
 
 #define ADO_Size              (ADO_Dummy + 18)
@@ -458,7 +476,7 @@ extern "C" {
 
 #define ADO_DOSMethodOnly     (ADO_Dummy + 19)
     /* Force the dos.library to service the notify request, and exclude
-     * the filesystem routines even if they are available. (V52.33) 
+     * the filesystem routines even if they are available. (V52.33)
      */
 
 #define ADO_ExamineData_NameSize      (ADO_Dummy + 20)
@@ -494,14 +512,14 @@ extern "C" {
 
 
 /****************************************************************************/
-/* Tags for TimedDosRequester() 
+/* Tags for TimedDosRequester()
  */
 
 #define TDR_Dummy                (TAG_USER + 3500)
 
 #define TDR_IDCMP_Ptr            (TDR_Dummy+1)
     /* (uint32 *) - [OPTIONAL] Pointer to a longword initialised with the
-       IDCMP flags that you want to terminate the requester on.  
+       IDCMP flags that you want to terminate the requester on.
        (Default; NULL)  */
 
 #define TDR_Timeout              (TDR_Dummy+2)
@@ -512,17 +530,17 @@ extern "C" {
        avoided whenever possible, to be user-friendly. (Default; 0) */
 
 #define TDR_Window               (TDR_Dummy+3)
-    /* (struct Window *) [OPTIONAL] 
+    /* (struct Window *) [OPTIONAL]
        - A pointer to an (over-riding) reference window pointer.
        Normally, you would not need to specify this tag.
-       
-       However, if you are calling this function from a task, 
+
+       However, if you are calling this function from a task,
        then the default process window will not be available and
        you would normally finish up having the requester rendered
        on the default public screen instead, (usually workbench)
-       therefore you can use this tag to force it to use your 
-       own specified window,this will work from both a task or 
-       a process. 
+       therefore you can use this tag to force it to use your
+       own specified window,this will work from both a task or
+       a process.
        (Default; proc->pr_WindowPtr, or WB screen from a task)  */
 
 #define TDR_EasyStruct           (TDR_Dummy+4)
@@ -546,7 +564,7 @@ extern "C" {
 #define TDR_GadgetString         (TDR_Dummy+7)
     /* (STRPTR) [OPTIONAL]
        - The string spec for the gadgets/text for the requester.
-       If this tag is present, it will override a Gadget string 
+       If this tag is present, it will override a Gadget string
        that may have been supplied with a private TDR_EasyStruct.  */
 
 #define TDR_ImageType            (TDR_Dummy+8)
@@ -555,7 +573,7 @@ extern "C" {
        be specified to indicate the style of request this is directed
        for.   (Default; TDRIMAGE_DEFAULT)
        The values for this tag are defined below.  */
-enum 
+enum
 {
     TDRIMAGE_DEFAULT,
     TDRIMAGE_INFO,
@@ -594,7 +612,7 @@ enum
        TDR_CharSet should be set by localized applications that want
        to display localized requesters, they tell locale.library in
        OpenCatalog() that it shall not convert the catalog charset to
-       current system default charset and use the value of 
+       current system default charset and use the value of
        Catalog->cat_CodeSet for the TDR_CharSet.    (Default; 0) */
 
 #define TDR_NonBlocking          (TDR_Dummy+12)
@@ -605,7 +623,7 @@ enum
        a task context.
        This tag will effectively bypass the use of any reaction components
        that may cause blocking issues and re-apply the original dos.library
-       code that only calls the intuition library EasyRequest() function, 
+       code that only calls the intuition library EasyRequest() function,
        as if it was never patched by "IPrefs". (Default; FALSE) */
 
 #define TDR_Arg1            (TDR_Dummy+20)
@@ -627,12 +645,12 @@ enum
  */
 
 #define GSLI_Dummy          (TAG_USER+4000)
- 
-#define GSLI_NATIVE         (GSLI_Dummy+1)   
-#define GSLI_Native         (GSLI_Dummy+1)  
+
+#define GSLI_NATIVE         (GSLI_Dummy+1)
+#define GSLI_Native         (GSLI_Dummy+1)
     /* (struct PseudoSegList **) - if PPC executable.
      * this only means it's native and executable,
-     * it does NOT imply any particular type of executable. 
+     * it does NOT imply any particular type of executable.
      */
 
 #define GSLI_68KHUNK        (GSLI_Dummy+5)
@@ -646,12 +664,12 @@ enum
 
 #define GSLI_PSData         (GSLI_Dummy+2)
 #define GSLI_Data           (GSLI_Dummy+2)  /* old synonym */
-    /* (APTR *) - ptr to ps_Data of a struct pseudoseglist. */ 
+    /* (APTR *) - ptr to ps_Data of a struct pseudoseglist. */
 
 #define GSLI_68KPS          (GSLI_Dummy+3)
-    /* (struct PseudoSeglist **) - if 68K pseudoseglist*/ 
+    /* (struct PseudoSeglist **) - if 68K pseudoseglist*/
 
-#define GSLI_ElfHandle      (GSLI_Dummy+4) 
+#define GSLI_ElfHandle      (GSLI_Dummy+4)
     /* (Elf32_Handle *) - if Elf32 style pseudoseglist. */
 
 #define GSLI_68KFileSize    (GSLI_Dummy+7)
@@ -665,7 +683,7 @@ enum
 
 #define GSLI_SegmentSize    (GSLI_Dummy+10)
     /* (uint32 *) - byte size of the entire segment allocation.  52.13  */
-  
+
 #define GSLI_VersionString  (GSLI_Dummy+11)
     /* (STRPTR *) - returns a "$VER:" version string in a seglist. 52.18 */
 
@@ -693,7 +711,7 @@ enum
 
 
 /****************************************************************************/
-/* Tags for DosControl() 
+/* Tags for DosControl()
  */
 
 #define DC_Dummy                (TAG_USER + 5000)
@@ -745,10 +763,10 @@ enum
     /* (int32 *) - Obtain the size of the boot cli font size. */
 
 #define DC_Reload68KApplistW    (DC_Dummy+15)
-    /* (int32) - DOSTRUE will cause DEVS:applications.dos config file to 
+    /* (int32) - DOSTRUE will cause DEVS:applications.dos config file to
                  reload from disk. 51.58 */
 
-#define DC_unused1R             (DC_Dummy+16)  
+#define DC_unused1R             (DC_Dummy+16)
     /* pad tag for DC_Reload68KApplistR slot */
 
 #define DC_BootCliCloseGadgetW  (DC_Dummy+17)
@@ -771,14 +789,14 @@ enum
 
 #define DC_AddLoadSegHookW      (DC_Dummy+23)
     /* (struct Hook *) - Add this hook to LoadSeg() callback hook list. 54.50 */
- 
+
 #define DC_RemLoadSegHookW      (DC_Dummy+24)
     /* (struct Hook *) - Remove this hook from the LoadSeg() callback hook list. 54.50 */
 
 
 
 /****************************************************************************/
-/* Tags for ReadLineItem() 
+/* Tags for ReadLineItem()
  */
 
 #define RLI_Dummy                (TAG_USER + 5500)
@@ -794,7 +812,7 @@ enum
 
 #define RLI_EscapeChars          (RLI_Dummy+10)
     /* (STRPTR) - Nul-terminated string of one or more characters
-       to be recognised as escape characters.  
+       to be recognised as escape characters.
        This may be an empty string "" or NULL, for none.
        Defaults to "*".  */
 
@@ -827,30 +845,34 @@ enum
 
 #define LK_Dummy          (TAG_USER+5750)
 
-#define LK_Name           (LK_Dummy+1)
+#define LK_Name              (LK_Dummy+1)
     /* (STRPTR) - Name of object to lock. */
 
-#define LK_Mode           (LK_Dummy+2)
+#define LK_Mode              (LK_Dummy+2)
     /* (int32) - Access mode; SHARED_LOCK or EXCLUSIVE_LOCK */
 
-#define LK_InfoMask       (LK_Dummy+3)
+#define LK_InfoMask          (LK_Dummy+3)
     /* (uint32 *) - pointer to info mask storage area. */
 
-#define LK_SoftLinks      (LK_Dummy+4)
+#define LK_SoftLinks         (LK_Dummy+4)
     /* (uint32 *) - pointer to softlink count storage area. */
 
-#define LK_ResolveSL      (LK_Dummy+5)
+#define LK_ResolveSL         (LK_Dummy+5)
     /* (int32) - Boolean switch to control softlink resolution. */
- 
-#define LK_ResolveMA      (LK_Dummy+6)
+
+#define LK_ResolveMA         (LK_Dummy+6)
     /* (int32) - Boolean switch to control multi-assign resolution. 54.21 */
- 
+
+#define LK_SoftLinksAccum    (LK_Dummy+7)
+    /* (uint32 *) - performs the same function as LK_SoftLinks counter,
+       except this one does not get initialised upon entry,
+       this counter only accumulates the softlink count. 54.121 */
 
 
 
 
 /****************************************************************************/
-/* Tags for SetFileHandleAttr() 
+/* Tags for SetFileHandleAttr()
  */
 
 #define FH_Dummy               (TAG_USER + 6000)
@@ -864,7 +886,7 @@ enum
 
 
 /****************************************************************************/
-/* Tags for SetOwnerInfo(), GetOwnerInfo(). 
+/* Tags for SetOwnerInfo(), GetOwnerInfo().
  */
 
 #define OI_Dummy               (TAG_USER + 6200)
@@ -873,7 +895,7 @@ enum
     /*  (STRPTR) - Pointer to a string identifying a filesystem object.
         This tag is mutually exclusive with OI_Process. */
 #define OI_StringName  OI_StringNameInput
-  
+
 #define OI_ProcessInput        (OI_Dummy + 2)
     /*  (struct Process *) - Pointer to a process structure,
         or NULL for this process, to identify a process.
@@ -899,8 +921,8 @@ enum
 
 
 /****************************************************************************/
-/* Common tags for ExamineObject() and ObtainDirContext().  
- */ 
+/* Common tags for ExamineObject() and ObtainDirContext().
+ */
 
 #define  EX_Dummy                (TAG_USER+6500)
 
@@ -926,7 +948,7 @@ enum
 
 
 /*
- * The following is only for use with ExamineObject(). (Added 54.54+) 
+ * The following is only for use with ExamineObject(). (Added 54.54+)
  */
 #define  EX_RawStringNameInput   (EX_Dummy+4)
 #define  EX_RawStringName        (EX_Dummy+4)         /* alias */
@@ -937,8 +959,8 @@ enum
 
 
 /*
- * The following are used only with ObtainDirContext() when 
- * preparing a context for ExamineDir(). 
+ * The following are used only with ObtainDirContext() when
+ * preparing a context for ExamineDir().
  */
 
 #define  EX_DataFields           (EX_Dummy+10)
@@ -947,16 +969,17 @@ enum
 
 #define  EX_MatchFunc            (EX_Dummy+11)
     /*  (struct Hook *) - Pointer to a custom Hook structure which has the
-        h_Entry function pointer set to a filtering function. 
+        h_Entry function pointer set to a filtering function.
         (Default = NULL) for the internal filter to be used instead. */
 
 #define  EX_MatchString          (EX_Dummy+12)
     /* (STRPTR) - A pointer to a pre-parsed pattern string. (Default=NULL)
-       If this field is NULL then all entries will be returned from the 
+       If this field is NULL then all entries will be returned from the
        internal filter function.  */
 
-#define  EX_DoCurrentDir          (EX_Dummy+13)
-    /*  (BOOLEAN) - Set TRUE if you wish DOS to make the reference to 
+#define  EX_SetCurrentDir         (EX_Dummy+13)
+#define  EX_DoCurrentDir          (EX_Dummy+13)   /* alias */
+    /*  (BOOLEAN) - Set TRUE if you wish DOS to make the reference to
         the specified directory the current directory. (Default=FALSE) */
 
 #define  EX_ResetContext          (EX_Dummy+14)
@@ -967,78 +990,86 @@ enum
 
 
 /****************************************************************************/
-/* Tags for FileSystemAttr() 
+/* Tags for FileSystemAttr()
  */
 
-#define FSA_Dummy                    (TAG_USER + 9000)
+#define FSA_Dummy                     (TAG_USER + 9000)
 
-#define FSA_StringNameInput          (FSA_Dummy+1)
+#define FSA_StringNameInput           (FSA_Dummy+1)
     /* (STRPTR) - Identify the filesystem by this name reference. */
 
-#define FSA_FileHandleInput          (FSA_Dummy+2)
+#define FSA_FileHandleInput           (FSA_Dummy+2)
     /* (BPTR) - Identify the filesystem by this FileHandle. */
 
-#define FSA_LockInput                (FSA_Dummy+3)
+#define FSA_LockInput                 (FSA_Dummy+3)
     /* (BPTR) - Identify the filesystem by this Lock. */
-#define FSA_FileLockInput             FSA_LockInput
+#define FSA_FileLockInput              FSA_LockInput
 
-#define FSA_MsgPortInput             (FSA_Dummy+4)
+#define FSA_MsgPortInput              (FSA_Dummy+4)
     /* (struct MsgPort *)  Identify the filesystem by this message port.
      *  NOTE: This tag was added in dos.library 51.96
      */
 
-#define FSA_ShowRequesters           (FSA_Dummy+8)
+#define FSA_ShowRequesters            (FSA_Dummy+8)
     /* (boolean) - TRUE to allow requesters to appear, defaults to FALSE */
- 
 
-#define FSA_MaxFileNameLengthR       (FSA_Dummy+10)
-    /* (uint32 *) - Obtain the maximum filename length. (including \0) */  
 
-#define FSA_MaxFileNameLengthW       (FSA_Dummy+11)
-    /* (uint32) - Set the maximum filename length. (including \0) */  
+#define FSA_MaxFileNameLengthR        (FSA_Dummy+10)
+    /* (uint32 *) - Obtain the maximum filename length. (including \0) */
 
-#define FSA_VersionNumberR           (FSA_Dummy+12)
+#define FSA_MaxFileNameLengthW        (FSA_Dummy+11)
+    /* (uint32) - Set the maximum filename length. (including \0) */
+
+#define FSA_VersionNumberR            (FSA_Dummy+12)
     /* (uint32 *) - Obtain the version/rev number for the filesystem. */
 
-#define FSA_DOSTypeR                 (FSA_Dummy+13)
+#define FSA_DOSTypeR                  (FSA_Dummy+13)
     /* (uint32 *) - Obtain the dostype identifier for the filesystem. */
 
-#define FSA_ActivityFlushTimeoutR    (FSA_Dummy+14)
+#define FSA_ActivityFlushTimeoutR     (FSA_Dummy+14)
     /* (uint32 *) - Obtain the mS (1000th second) before a flush while active occurs. */
 
-#define FSA_ActivityFlushTimeoutW    (FSA_Dummy+15)
+#define FSA_ActivityFlushTimeoutW     (FSA_Dummy+15)
     /* (uint32) - Set the mS (1000th second) before a flush while active occurs. */
 
-#define FSA_InactivityFlushTimeoutR  (FSA_Dummy+16)
+#define FSA_InactivityFlushTimeoutR   (FSA_Dummy+16)
     /* (uint32 *) - Obtain the mS (1000th second) before a flush when inactive occurs. */
 
-#define FSA_InactivityFlushTimeoutW  (FSA_Dummy+17)
+#define FSA_InactivityFlushTimeoutW   (FSA_Dummy+17)
     /* (uint32) - Set the mS (1000th second) before a flush when inactive occurs. */
 
-#define FSA_MaxRecycledEntriesR      (FSA_Dummy+18)
+#define FSA_MaxRecycledEntriesR       (FSA_Dummy+18)
     /* (uint32 *) - Obtain the number of recycled entries supported. */
 
-#define FSA_MaxRecycledEntriesW      (FSA_Dummy+19)
+#define FSA_MaxRecycledEntriesW       (FSA_Dummy+19)
     /* (uint32) - Set the number of recycled entries supported. */
 
-#define FSA_HasRecycledEntriesR      (FSA_Dummy+20)
+#define FSA_HasRecycledEntriesR       (FSA_Dummy+20)
     /* (int32 *) - Obtain boolean value if the filesystem supports recycled entries. */
 
-#define FSA_VersionStringR           (FSA_Dummy+21)
+#define FSA_VersionStringR            (FSA_Dummy+21)
     /* (STRPTR) - Obtain a copy of the version string for the filesystem. */
 
-#define FSA_VersionStringR_BufSize   (FSA_Dummy+22)
+#define FSA_VersionStringR_BufSize    (FSA_Dummy+22)
     /* (uint32) - Sub tag to specify the space provided for FSA_VersionStringR. */
 
-#define FSA_VersionStringR_Len    FSA_VersionStringR_BufSize  /* compatibility alias */
+#define FSA_VersionStringR_Len    FSA_VersionStringR_BufSize  /* old compatibility alias */
 
-#define FSA_MaxFileSizeR             (FSA_Dummy+24)
+#define FSA_MaxFileSizeR              (FSA_Dummy+24)
     /* (uint64 *) - Obtain the maximum file size the filesystem supports. */
 
+#define FSA_RecycledDirNameR          (FSA_Dummy+25)
+    /* (STRPTR) - Obtain a copy of the recycled directory name, if supported. */
+
+#define FSA_RecycledDirNameR_BufSize  (FSA_Dummy+26)
+    /* (uint32) - Sub tag to specifiy the space provided for FSA_RecycledDirNameR. */
+
+
+
 /*
-**  NOTE: (FSA_Dummy+25) to (FSA_Dummy+200) are exclusively reserved for DOS.
+**  NOTE: (FSA_Dummy) to (FSA_Dummy+200) are exclusively reserved for DOS.
 **  No private tags for FileSystemAttr() are to be implemented in this range.
-*/ 
+*/
 
 
 

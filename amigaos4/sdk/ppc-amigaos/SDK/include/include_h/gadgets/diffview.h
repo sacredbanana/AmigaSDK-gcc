@@ -1,12 +1,14 @@
 #ifndef GADGETS_DIFFVIEW_H
 #define GADGETS_DIFFVIEW_H
 /*
-**    $VER: diffview.h 54.16 (22.08.2022)
 **
 **    Definitions for the diffviewgclass and linecmpgclass BOOPSI classes
 **
 **    Copyright (c) 2011 Hyperion Entertainment CVBA.
 **    All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 #ifndef EXEC_TYPES_H
@@ -25,18 +27,21 @@ extern "C" {
 /*****************************************************************************/
 
 // Tags for the gadget
-#define DIFFVIEW_Dummy          (TAG_USER+0x04000000)
+#define DIFFVIEW_Dummy            (TAG_USER+0x04000000)
 
-#define DIFFVIEW_DiffObject     (DIFFVIEW_Dummy+1)    // Allocated with CreateDiffObject
-#define DIFFVIEW_Screen         (DIFFVIEW_Dummy+2)    // (struct Screen *)
-#define DIFFVIEW_Font           (DIFFVIEW_Dummy+3)    // (struct TextFont *)
-#define DIFFVIEW_VertScroller   (DIFFVIEW_Dummy+4)    // (Object *)
-#define DIFFVIEW_ViewOffsetTop  (DIFFVIEW_Dummy+5)    // int32
-#define DIFFVIEW_TabSize        (DIFFVIEW_Dummy+6)    // uint32 
-#define DIFFVIEW_HorizScroller  (DIFFVIEW_Dummy+7)    // (Object *)
-#define DIFFVIEW_ViewOffsetLeft (DIFFVIEW_Dummy+8)    // int32
-#define DIFFVIEW_CurrentLine    (DIFFVIEW_Dummy+9)    // int32 (1..n)
-#define DIFFVIEW_LineCmp        (DIFFVIEW_Dummy+10)   // (Object *)
+#define DIFFVIEW_DiffObject       (DIFFVIEW_Dummy+1)    // Allocated with CreateDiffObject
+#define DIFFVIEW_Screen           (DIFFVIEW_Dummy+2)    // (struct Screen *)
+#define DIFFVIEW_Font             (DIFFVIEW_Dummy+3)    // (struct TextFont *)
+#define DIFFVIEW_VertScroller     (DIFFVIEW_Dummy+4)    // (Object *)
+#define DIFFVIEW_ViewOffsetTop    (DIFFVIEW_Dummy+5)    // int32
+#define DIFFVIEW_TabSize          (DIFFVIEW_Dummy+6)    // uint32 
+#define DIFFVIEW_HorizScroller    (DIFFVIEW_Dummy+7)    // (Object *)
+#define DIFFVIEW_ViewOffsetLeft   (DIFFVIEW_Dummy+8)    // int32
+#define DIFFVIEW_CurrentLine      (DIFFVIEW_Dummy+9)    // int32 (1..n)
+#define DIFFVIEW_LineCmp          (DIFFVIEW_Dummy+10)   // (Object *)
+#define DIFFVIEW_ShowTabs         (DIFFVIEW_Dummy+11)   // uint32
+#define DIFFVIEW_ShowEOLs         (DIFFVIEW_Dummy+12)   // uint32
+
 
 #define DIFFVIEW_BackCol          (DIFFVIEW_Dummy+100)  // Text background (rgb)
 #define DIFFVIEW_TextCol          (DIFFVIEW_Dummy+101)  // Normal Text (rgb)
@@ -57,43 +62,43 @@ extern "C" {
 
 // Tags to CreateDiffObject
 // Some of which may be obtainable via GetDiffObjectAttr in the future
-#define DIFFOBJECT_Dummy         (TAG_USER+0x05000000)
+#define DIFFOBJECT_Dummy          (TAG_USER+0x05000000)
 
-#define DIFFOBJECT_OldFile       (DIFFOBJECT_Dummy+1)  // STRPTR
-#define DIFFOBJECT_OldFileLen    (DIFFOBJECT_Dummy+2)  // uint32
-#define DIFFOBJECT_NewFile       (DIFFOBJECT_Dummy+3)  // STRPTR
-#define DIFFOBJECT_NewFileLen    (DIFFOBJECT_Dummy+4)  // uint32
-#define DIFFOBJECT_Diffs         (DIFFOBJECT_Dummy+5)  // STRPTR
-#define DIFFOBJECT_DiffsLen      (DIFFOBJECT_Dummy+6)  // uint32
-#define DIFFOBJECT_ErrorStr      (DIFFOBJECT_Dummy+7)  // STRPTR *
-#define DIFFOBJECT_ErrorNum      (DIFFOBJECT_Dummy+8)  // uint32 *
-#define DIFFOBJECT_OldFileName   (DIFFOBJECT_Dummy+9)  // STRPTR
-#define DIFFOBJECT_NewFileName   (DIFFOBJECT_Dummy+10) // STRPTR
-#define DIFFOBJECT_WsUnimportant (DIFFOBJECT_Dummy+11) // BOOL
-#define DIFFOBJECT_ProgressCB    (DIFFOBJECT_Dummy+12) // DIFFOBJPROGCB
-#define DIFFOBJECT_ProgCBData    (DIFFOBJECT_Dummy+13) // APTR
+#define DIFFOBJECT_OldFile        (DIFFOBJECT_Dummy+1)  // STRPTR
+#define DIFFOBJECT_OldFileLen     (DIFFOBJECT_Dummy+2)  // uint32
+#define DIFFOBJECT_NewFile        (DIFFOBJECT_Dummy+3)  // STRPTR
+#define DIFFOBJECT_NewFileLen     (DIFFOBJECT_Dummy+4)  // uint32
+#define DIFFOBJECT_Diffs          (DIFFOBJECT_Dummy+5)  // STRPTR
+#define DIFFOBJECT_DiffsLen       (DIFFOBJECT_Dummy+6)  // uint32
+#define DIFFOBJECT_ErrorStr       (DIFFOBJECT_Dummy+7)  // STRPTR *
+#define DIFFOBJECT_ErrorNum       (DIFFOBJECT_Dummy+8)  // uint32 *
+#define DIFFOBJECT_OldFileName    (DIFFOBJECT_Dummy+9)  // STRPTR
+#define DIFFOBJECT_NewFileName    (DIFFOBJECT_Dummy+10) // STRPTR
+#define DIFFOBJECT_WsUnimportant  (DIFFOBJECT_Dummy+11) // BOOL
+#define DIFFOBJECT_ProgressCB     (DIFFOBJECT_Dummy+12) // DIFFOBJPROGCB
+#define DIFFOBJECT_ProgCBData     (DIFFOBJECT_Dummy+13) // APTR
 
 // Attributes specific to GetDiffObjectAttr
-#define DIFFOBJECT_DiffPositions (DIFFOBJECT_Dummy+10000) // struct DiffPositions
+#define DIFFOBJECT_DiffPositions  (DIFFOBJECT_Dummy+10000) // struct DiffPositions
 
 /*****************************************************************************/
 
 // Tags for the linecmp gadget
-#define LINECMP_Dummy            (TAG_USER+0x06000000)
+#define LINECMP_Dummy             (TAG_USER+0x06000000)
 
-#define LINECMP_Screen           (LINECMP_Dummy+2)    // (struct Screen *)
-#define LINECMP_Font             (LINECMP_Dummy+3)    // (struct TextFont *)
-#define LINECMP_TabSize          (LINECMP_Dummy+6)    // uint32 
-#define LINECMP_HorizScroller    (LINECMP_Dummy+7)    // (Object *)
-#define LINECMP_ViewOffsetLeft   (LINECMP_Dummy+8)    // int32
-#define LINECMP_OldLine          (LINECMP_Dummy+9)    // STRPTR
-#define LINECMP_NewLine          (LINECMP_Dummy+10)   // STRPTR
+#define LINECMP_Screen            (LINECMP_Dummy+2)    // (struct Screen *)
+#define LINECMP_Font              (LINECMP_Dummy+3)    // (struct TextFont *)
+#define LINECMP_TabSize           (LINECMP_Dummy+6)    // uint32 
+#define LINECMP_HorizScroller     (LINECMP_Dummy+7)    // (Object *)
+#define LINECMP_ViewOffsetLeft    (LINECMP_Dummy+8)    // int32
+#define LINECMP_OldLine           (LINECMP_Dummy+9)    // STRPTR
+#define LINECMP_NewLine           (LINECMP_Dummy+10)   // STRPTR
 
-#define LINECMP_OldBackCol       (LINECMP_Dummy+100)  // Text background for old line (rgb)
-#define LINECMP_OldTextCol       (LINECMP_Dummy+101)  // Text colour for old line (rgb)
-#define LINECMP_NewBackCol       (LINECMP_Dummy+102)  // Text background for new line (rgb)
-#define LINECMP_NewTextCol       (LINECMP_Dummy+103)  // Text colour for new line (rgb)
-#define LINECMP_BlankCol         (LINECMP_Dummy+104)  // Grey pattern for blank lines
+#define LINECMP_OldBackCol        (LINECMP_Dummy+100)  // Text background for old line (rgb)
+#define LINECMP_OldTextCol        (LINECMP_Dummy+101)  // Text colour for old line (rgb)
+#define LINECMP_NewBackCol        (LINECMP_Dummy+102)  // Text background for new line (rgb)
+#define LINECMP_NewTextCol        (LINECMP_Dummy+103)  // Text colour for new line (rgb)
+#define LINECMP_BlankCol          (LINECMP_Dummy+104)  // Grey pattern for blank lines
 
 /*****************************************************************************/
 

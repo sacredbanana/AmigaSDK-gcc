@@ -2,17 +2,21 @@
 #define PROTO_USBRESOURCE_H
 
 /*
-**	$VER: usbresource.h 54.16 (22.08.2022)
-**	Includes Release 50.1
 **
 **	Prototype/inline/pragma header file combo
 **
-**	(C) Copyright 2003-2004 Amiga, Inc.
-**	    All Rights Reserved
+**	Copyright (c) 2010 Hyperion Entertainment CVBA.
+**	All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 #ifndef EXEC_TYPES_H
 #include <exec/types.h>
+#endif
+#ifndef EXEC_LISTS_H
+#include <exec/lists.h>
 #endif
 #ifndef EXEC_PORTS_H
 #include <exec/ports.h>
@@ -51,14 +55,14 @@
  #if defined(__GNUC__)
   #ifndef __PPC__
    #include <inline/usbresource.h>
-  #else
+  #else /* __PPC__ */
    #include <ppcinline/usbresource.h>
   #endif /* __PPC__ */
  #elif defined(__VBCC__)
   #ifndef __PPC__
    #include <inline/usbresource_protos.h>
   #endif /* __PPC__ */
- #else
+ #else /* __GNUC__ */
   #include <pragmas/usbresource_pragmas.h>
  #endif /* __GNUC__ */
 #endif /* __amigaos4__ */

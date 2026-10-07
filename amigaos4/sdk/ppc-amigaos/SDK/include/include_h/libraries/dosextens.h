@@ -1,14 +1,17 @@
 #ifndef LIBRARIES_DOSEXTENS_H
 #define LIBRARIES_DOSEXTENS_H
 /*
-**    $VER: dosextens.h  54.100 (07.09.2020)
+**    $VER: dosextens.h  54.126 (05.08.2023)
 **
 **    DOS structures not needed for the casual AmigaDOS user
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

@@ -1,7 +1,6 @@
 #ifndef MIDI_CAMD_H
 #define MIDI_CAMD_H
 /*
-** $VER: camd.h 54.16 (22.08.2022)
 **
 ** C. A. M. D. (Commodore Amiga MIDI Driver)
 **
@@ -17,6 +16,9 @@
 **
 ** Copyright (c) 2013 Hyperion Entertainment CVBA.
 **
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 #ifndef EXEC_LISTS_H

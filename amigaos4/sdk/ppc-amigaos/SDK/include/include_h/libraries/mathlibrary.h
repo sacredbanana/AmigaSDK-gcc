@@ -1,7 +1,6 @@
 #ifndef LIBRARIES_MATHLIBRARY_H
 #define LIBRARIES_MATHLIBRARY_H
 /*
-**    $VER: mathlibrary.h 54.16 (22.08.2022)
 **
 **    Data structure returned by OpenLibrary of:
 **    mathieeedoubbas.library,mathieeedoubtrans.library
@@ -11,6 +10,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

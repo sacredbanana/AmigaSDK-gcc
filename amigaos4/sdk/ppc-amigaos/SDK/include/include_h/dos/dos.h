@@ -1,16 +1,19 @@
 #ifndef DOS_DOS_H
 #define DOS_DOS_H
 /*
-**    $VER: dos.h  54.112 (17.02.2021)
+**    $VER: dos.h  54.138 (02.06.2025)
 **
 **    Standard C header for AmigaDOS
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
-*/ 
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
+**        All Rights Reserved.
+*/
 
 #ifndef EXEC_TYPES_H
 #include <exec/types.h>
@@ -48,7 +51,7 @@ extern "C" {
 /****************************************************************************/
 /* These are the return codes used by convention by AmigaDOS commands.
  * See FAILAT and IF commands for relevance to EXECUTE files.
- * See RunCommand() and CreateNewProc() for relevance to all DOS processes. 
+ * See RunCommand() and CreateNewProc() for relevance to all DOS processes.
  */
 
 #define RETURN_OK      0  /* No problems, success */
@@ -67,6 +70,18 @@ extern "C" {
 #define BYTESPERLONG    4
 #define BITSPERLONG     32
 
+#define MAXINT8         0x7F
+#define MININT8         0x80
+
+#define MAXUINT8        0xFF
+#define MINUINT8        0
+
+#define MAXINT16        0x7FFF
+#define MININT16        0x8000
+
+#define MAXUINT16       0xFFFF
+#define MINUINT16       0
+
 #define MAXINT32        0x7FFFFFFF
 #define MININT32        0x80000000
 
@@ -84,18 +99,19 @@ extern "C" {
 /* AmigaDOS Strlen() constants that applications MUST be able to handle.
  *
  * Older DosPacket filesystem designs may not be able to support these lengths
- * but newer vector-port style filesystems certainly can and will. 
+ * but newer vector-port style filesystems certainly can and will.
  *
  * Use IDOS->FileSystemAttr() to find out filesystem specific values.
  * Note that worst-case UTF-8 encodings can use 4 bytes per character.
  *
  * These values are the Strlen() and do not include the nul-terminator byte.
+ * Use these definitions in place of numerical constants in applications.
  */
 
 /* Strlen() of the largest AmigaDOS UTF-8 name that can exist. (in bytes) */
 #define   MAX_DOS_NAME                255
 
-/* Minimum string length for any AmigaDOS UTF-8 path specification. (in bytes) */
+/* String length for any AmigaDOS UTF-8 path specification. (in bytes) */
 #define   MAX_DOS_PATH                4000
 
 /* Alias... */
@@ -111,7 +127,7 @@ extern "C" {
 
 
 /****************************************************************************/
-/* ALL BCPL DATA MUST ALWAYS BE ALIGNED ON A LONG WORD (4 byte) ADDRESS. 
+/* ALL BCPL DATA MUST ALWAYS BE ALIGNED ON A LONG WORD (4 byte) ADDRESS.
  * BCPL pointers are a long word address (i.e byte address divided by 4 (>>2))
  */
 
@@ -128,10 +144,10 @@ typedef int32 BSTR; /* Long word pointer to BCPL string - must be signed. */
 #define MKBADDR(x)   ((BPTR)(((uint32)(x)) >> 2))
 
 /*
- * README -- LEGACY BCPL STRINGS (BSTR):  
- * 
+ * README -- LEGACY BCPL STRINGS (BSTR):
+ *
  * BSTR's were originally the BCPL address of a string that has the length
- * in the first byte with the actual string bytes following.  
+ * in the first byte with the actual string bytes following.
  * For example, with the original BCPL implementation, the string "SYS"
  * was formatted as: s[0]=3  s[1]='S'  s[2]='Y'  s[3]='S'
  *
@@ -142,7 +158,7 @@ typedef int32 BSTR; /* Long word pointer to BCPL string - must be signed. */
  * shall now be formatted as: s[0]=3  s[1]='S'  s[2]='Y'  s[3]='S'  s[4]=0
  *
  * DOS library provides functions to handle new standard BSTR's correctly.
- *     IDOS->CopyStringCToBSTR() and IDOS->CopyStringBSTRToC(). 
+ *     IDOS->CopyStringCToBSTR() and IDOS->CopyStringBSTRToC().
  *
  * From V53.23+ the dos.library can also send dospackets to handlers with
  * longer strings in a compatibility format called XBSTR. (eXtended BSTR).
@@ -160,82 +176,65 @@ typedef int32 BSTR; /* Long word pointer to BCPL string - must be signed. */
  * an EXEC task or a DOS process.   V52.
  */
 
-#define IS_PROCESS(x)     (NT_PROCESS==((struct Task *)x)->tc_Node.ln_Type)
-#define IS_TASK(x)        (NT_TASK==((struct Task *)x)->tc_Node.ln_Type)
+#define IS_PROCESS(x)    (NT_PROCESS==((struct Task *)x)->tc_Node.ln_Type)
+#define IS_TASK(x)       (NT_TASK==((struct Task *)x)->tc_Node.ln_Type)
 
 
 /****************************************************************************/
-/* Macro for getting the byte offset of a structure member, usefull for 
- * determining if a newer member is present, given the structure size.  V54.
+/* Modes for Open(), all modes set file position to beginning of file.      */
+
+#define MODE_NEWFILE     1006    /* Open freshly created file, deletes old
+                                    file data if it exists. (exclusive) */
+
+#define MODE_OLDFILE     1005    /* Open existing file, fails if file does
+                                    not exist. (shared)  */
+
+#define MODE_UPDATE      1004    /* Open old file, but creates a new file
+                                    if it doesn't exist. (shared)   */
+
+
+#define MODE_READWRITE   MODE_UPDATE  /* source compatibility for V54- */
+
+
+/****************************************************************************/
+/* Relative 'mode' position to ChangeFilePosition(), ChangeFileSize(),
+ * Seek(obsolete) and SetFileSize(obsolete).
  */
 
-#define BYTE_OFFSET_IN_STRUCT(structure, structmember) \
-                ((uint32)&(((struct structure *)0)->structmember))
-
-/* Example:
- *
- * uint32 offset = BYTE_OFFSET_IN_STRUCT(FindTrackedAddressMsg,ftam_AAS);
- *
- * if( f->ftam_Size > offset )
- * {
- *    struct_includes_member_and_can_be_accessed();
- * }
- */ 
-
+#define OFFSET_BEGINNING   -1     /* relative to Begining Of File */
+#define OFFSET_CURRENT      0     /* relative to Current file position */
+#define OFFSET_END          1     /* relative to End Of File      */
 
 /****************************************************************************/
-/* Mode parameter to Open(), all files are positioned at beginning of file. */
+/* Passed as 'accessmode' to Lock() and Locktags() */
 
-#define MODE_OLDFILE        1005    /* Open existing file for read/write,
-                                       fails if file doesn't exist. (shared)*/
-
-#define MODE_NEWFILE        1006    /* Open freshly created file, read/write,
-                                       deletes an old file. (exclusive)     */
-
-#define MODE_READWRITE      1004    /* Open old file, read/write, creates
-                                       file if it doesn't exist. (shared)   */
-
-/****************************************************************************/
-/* Relative position to Seek(obsolete) and ChangeFilePosition()  */
-
-#define OFFSET_BEGINNING     -1     /* relative to Begining Of File */
-#define OFFSET_CURRENT        0     /* relative to Current file position */
-#define OFFSET_END            1     /* relative to End Of File      */
-
-
-/****************************************************************************/
-/* Passed as 'accessMode' to Lock() */
-
-#define SHARED_LOCK     -2    /* Object is accessible by all others */
-#define ACCESS_READ     -2    /* Somewhat misleading old synonym */
-
-#define EXCLUSIVE_LOCK  -1    /* No other access is allowed */
-#define ACCESS_WRITE    -1    /* Somewhat misleading old synonym */
+#define SHARED_LOCK        -2     /* Object is accessible by all others */
+#define EXCLUSIVE_LOCK     -1     /* No other access is allowed */
 
 /****************************************************************************/
 /* Flags for the bitmasks returned by LockTags() when using LK_InfoMask tag.
- * These provide detailed information on the string being resolved.  V53.57 
+ * These provide detailed information on the string being resolved.  V53.57
  */
 
-#define  LOCKB_SOFTLINK_MIDPART   8  
+#define  LOCKB_SOFTLINK_MIDPART   8
   /* One or more soft links were found in the middle of the path */
   /* but none of these formed the last component of the path.    */
 
 #define  LOCKB_SOFTLINK_ENDPART   9
   /* One soft link exists as the last component of the path. */
- 
+
 #define  LOCKB_DEVICE            16
   /* The supplied path is a device relative specification. */
- 
+
 #define  LOCKB_VOLUME            17
   /* The supplied path is a volume relative specification. */
- 
+
 #define  LOCKB_ASSIGNMENT        18
   /* The supplied path is an assignment relative specification. */
- 
+
 #define  LOCKB_PROGDIR           19
   /* The supplied path is a PROGDIR: relative specification. */
- 
+
 #define  LOCKB_CURRDIR           20
   /* The supplied path is a CURRDIR: relative specification. */
 
@@ -246,7 +245,7 @@ typedef int32 BSTR; /* Long word pointer to BCPL string - must be signed. */
   /* The supplied path returned the root of the default filesystem. */
 
 /* Field definitions of the above. */
-#define  LOCKF_SOFTLINK_MIDPART    (1L<<LOCKB_SOFTLINK_MIDPART)  
+#define  LOCKF_SOFTLINK_MIDPART    (1L<<LOCKB_SOFTLINK_MIDPART)
 #define  LOCKF_SOFTLINK_ENDPART    (1L<<LOCKB_SOFTLINK_ENDPART)
 #define  LOCKF_DEVICE              (1L<<LOCKB_DEVICE)
 #define  LOCKF_VOLUME              (1L<<LOCKB_VOLUME)
@@ -283,6 +282,7 @@ typedef int32 BSTR; /* Long word pointer to BCPL string - must be signed. */
 
 #define   GPID_PROCESS      1
 #define   GPID_PARENT       2
+#define   GPID_CHILD        3
 
 /****************************************************************************/
 
@@ -291,7 +291,7 @@ struct DateStamp
     int32   ds_Days;     /* Number of days since 1 Jan 1978 */
     int32   ds_Minute;   /* Number of minutes past midnight */
     int32   ds_Tick;     /* Number of ticks past minute */
-}; 
+};
 /* DateStamp */
 
 #define TICKS_PER_SECOND 50    /* Fifty ticks = one second  */
@@ -302,19 +302,21 @@ struct DateStamp
  * This structure supports unlimited string lengths, 64 bit file sizes,
  * automatic resolution of link targets and extended auxilliary information.
  *
- * NOTE; Applications DO NOT allocate these, the filesystem does it.
- *       Also, the filesystem itself must always allocate these using
- *       AllocDosObject(), otherwise they will simply not work.
- */ 
+ * NOTE; Applications generally do not need to allocate these themselves,
+ *       the filesystem mainly does it for ExamineObject() and ExamineDir().
+ *       However rare cases may require one for special applications.
+ *       Nevertheless, these must always be allocated with AllocDosObject(),
+ *       otherwise they will simply not work.
+ */
 
 struct  ExamineData
-{ 
+{
     struct MinNode   EXDnode;     /* MinList node.                           */
     uint32           EXDinfo;     /* General purpose user data.     [Note 0] */
+    uint32           EXDinfo2;    /* General purpose user data 2.   [Note 0] */
 
     /* Private members exclusively for the FS & DOS, never change these.     */
-    uint32           Reserved0;   /* DOS RESERVED.                           */
-    uint32           FSPrivate;   /* FILESYSTEM ONLY - Private usage.        */
+    APTR             FSPrivate;   /* FILESYSTEM ONLY - Private usage.        */
     APTR             DOSPrivate;  /* DOSLIB ONLY - Private context.          */
                                   /*                                         */
     /* The following are public fields.                                      */
@@ -340,9 +342,9 @@ struct  ExamineData
 /*	(RO) = Read Only, these fields must not be modified by anyone but DOS.   */
 
 /*
- * [Note 0] This is a general purpose field for use by anyone for anything.
- *          Neither DOS or the FileSystem will ever touch this, although DOS
- *          does guarantee it is always initialised to zero when allocated.
+ * [Note 0] These are general purpose fields for use by anyone for anything.
+ *          Neither DOS or the FileSystem will ever touch these, although DOS
+ *          does guarantee these are always initialised to zero when allocated.
  *
  * [Note 1] If possible, this field should be supported by filesystems that
  *          support hardlinks, it is used to indicate the hardlink reference
@@ -369,8 +371,9 @@ struct  ExamineData
  *          directory relative specification, it can also reference a path
  *          on another disk volume that may or may not be currently mounted,
  *          this field is used by DOS to resolve softlinks.
- *          For hard links, this contains just the target object name,
- *          this is not used by DOS and is here for semantical reasons only.
+ *          For hard links, this must contains only the target object name,
+ *          nothing else, this is not used by DOS directly, but applications
+ *          do use it for display or other unspecified purposes.
  *          For all other objects, this will be a nul-string. ("")
  *          This field will be undefined if you fail to specify the EXF_LINK
  *          bit in the EX_DataFields mask.
@@ -388,7 +391,7 @@ struct  ExamineData
 
 /****************************************************************************/
 /* DOS USE ONLY - internal SDK version test. */
-#define  V54_SDK  (1<<16)   
+#define  V54_SDK  (1<<16)
 
 
 /****************************************************************************/
@@ -416,15 +419,19 @@ struct  ExamineData
 #define  EXF_spare3       (1<<13)  /* Reserved for future EXF_ALL feature */
 #define  EXF_spare2       (1<<14)  /* Reserved for future EXF_ALL feature */
 #define  EXF_spare1       (1<<15)  /* Reserved for future EXF_ALL feature */
+
 #define  EXF_dosprivate0  (1<<16)  /* For internal dos use */
+#define  EXF_dosprivate1  (1<<17)  /* For internal dos use */
+#define  EXF_dosprivate2  (1<<18)  /* For internal dos use */
+#define  EXF_dosprivate3  (1<<19)  /* For internal dos use */
 
 #define  EXF_ALL          (0xFFFF|V54_SDK)  /* Return all of the above. */
 
 
 /****************************************************************************/
-/* Values for ExamineData->Type for checking what kind of object it describes. 
- * The lower 8 bits form the unique descriptor value, the upper bits are used 
- * as a bitmask. The FSO_TYPE_MASK is used to filter the descriptor value. 
+/* Values for ExamineData->Type for checking what kind of object it describes.
+ * The lower 8 bits form the unique descriptor value, the upper bits are used
+ * as a bitmask. The FSO_TYPE_MASK is used to filter the descriptor value.
  */
 #define FSO_TYPE_SOFTLINK   0      /* Object is a softlink */
 #define FSO_TYPE_FILE       1      /* Object is a file */
@@ -454,7 +461,7 @@ struct  ExamineData
 /*
  *  DEVELOPERS;
  *  The following V54 Examinedata->Type flag bits are reserved exclusively
- *  for the handlers private use, these 8 bits may be used for any purpose. 
+ *  for the handlers private use, these 8 bits may be used for any purpose.
  */
 #define FSOF_FSPRIVATE24    (1<<24)
 #define FSOF_FSPRIVATE25    (1<<25)
@@ -472,8 +479,8 @@ struct  ExamineData
  * macros below to work otherwise random values will be returned in 'Type'.
  *
  * NB:  TEST FOR ALL LINK TYPES FIRST.
- *      The object type macros below this always mask out the attribute bits,
- *      therefore it is mandatory to always check for all links first.
+ *      The object type macros below always mask out the attribute bits,
+ *      therefore it is mandatory to check for all links first.
  */
 #define EXD_IS_LINK(exd)        ((exd)->Type & (FSOF_LINK|FSOF_ALTLINK))
 
@@ -487,17 +494,17 @@ struct  ExamineData
 #define EXD_IS_PIPE(exd)        (((exd)->Type & FSO_TYPE_MASK) == FSO_TYPE_PIPE)
 #define EXD_IS_SOCKET(exd)      (((exd)->Type & FSO_TYPE_MASK) == FSO_TYPE_SOCKET)
 /*
- * Note; EXD_IS_FILE() returns truth for a plain file or a hard file link,
+ * Note that EXD_IS_FILE() returns truth for a plain file or a hard file link,
  * same for  EXD_IS_DIRECTORY() with a plain directory or hard directory link.
  * This allows hard links to work just like regular files and directories.
- * Use EXD_IS_LINK() as the FIRST test, if required to differentiate.  
+ * Use EXD_IS_LINK() as the FIRST test, if required to differentiate.
  */
 
 
 #define EXD_IS_EMULATED(exd)      ((exd)->Type & FSOF_EMULATED)
 /*
  * Added in DOS 54.93.
- * When this returns truth, it means DOS emulated this call by falling back 
+ * When this returns truth, it means DOS emulated this call by falling back
  * and using one of the old limited 32 bit filesystem functions.
  * This also means fallback limitation can apply to the data, such limitations
  * may include truncated strings and/or reported file sizes limited to 4 gig max
@@ -506,19 +513,19 @@ struct  ExamineData
 
 
 #define EXD_TYPE(exd)   ((exd)->Type & (FSO_TYPE_MASK|FSOF_LINK|FSOF_ALTLINK))
-/* 
+/*
  * This extracts the object type identifier value along with the link bits
  * and masks out all the other bits that are not relevant for type comparisons.
  * This also provides upward compatibility by not assuming that currently
  * unassigned bits would always be zero.
- */ 
+ */
 
 
 
 
 /****************************************************************************
  * Information relating to the ExamineData; OwnerUID and OwnerGID members.
- *  
+ *
  * AmigaDOS permissions are NOT the same as the standard UNIX values.
  * For the DOS/Filesystem UID/GID values;
  *
@@ -528,7 +535,7 @@ struct  ExamineData
  * These only apply to DOS and the Filesystems, but the C and usergroup
  * libraries use the standard UNIX permissions, where;
  *
- *     [nobody/nogroup] = 65534. 
+ *     [nobody/nogroup] = 65534.
  *     [root/wheel]     = 0.
  *
  * The AmigaOS C libraries convert between these two protocols.
@@ -551,7 +558,7 @@ struct  ExamineData
 
 /****************************************************************************/
 /* Defined protection bits.  */
-/* Unsurprisingly, these just happen to coincide with the old FIB protection bits. */
+/* Unsurprisingly, these coincide with the old FIB protection bits. */
 
 #define EXDB_OTR_READ         15    /* Other: file is readable */
 #define EXDB_OTR_WRITE        14    /* Other: file is writable */
@@ -562,17 +569,17 @@ struct  ExamineData
 #define EXDB_GRP_EXECUTE       9    /* Group: file is executable */
 #define EXDB_GRP_DELETE        8    /* Group: file is deletable */
 
-#define EXDB_HOLD              7    /* (H) Hold in shell resident list, must also be (P) */
+#define EXDB_HOLD              7    /* (H) Hold (P)ure executables in shell resident list */
 #define EXDB_SCRIPT            6    /* (S) Script file for the "Execute" command */
-#define EXDB_PURE              5    /* (P) Pure, program is reentrant and reexecutable */
-#define EXDB_ARCHIVE           4    /* (A) Archived, cleared by FS whenever object is changed */
-#define EXDB_NO_READ           3    /* (R) NOT readable  */
-#define EXDB_NO_WRITE          2    /* (W) NOT writable  */
-#define EXDB_NO_EXECUTE        1    /* (E) NOT executable, (used by Shell handler only) */
-#define EXDB_NO_DELETE         0    /* (D) NOT deletable */
+#define EXDB_PURE              5    /* (P) Pure, program is re-entrant and re-executable */
+#define EXDB_ARCHIVE           4    /* (A) Archived, FS clears this when an object is changed */
+#define EXDB_NO_READ           3    /* (R) NOT readable, FS attribute  */
+#define EXDB_NO_WRITE          2    /* (W) NOT writable, FS attribute  */
+#define EXDB_NO_EXECUTE        1    /* (E) NOT executable, Shell handler use only */
+#define EXDB_NO_DELETE         0    /* (D) NOT deletable, FS attribute */
 
 /*
- *  Note that when bits 0,1,2,3  are set, this represent a negated function. 
+ *  Note that when bits 0,1,2,3  are set, this represent a negated function.
  *  Early contrarily named definitions have been moved to dos/obsolete.h
  */
 
@@ -602,25 +609,24 @@ struct  ExamineData
  * This equates to the attributes; R,W,E,D
  */
 #define EXDF_DEFAULT   0
-  
+
 
 /****************************************************************************/
-/* Standard semantical maximum length for an error string from fault/printfault. 
+/* Standard semantical maximum length for an error string from fault/printfault.
  * However, most error strings should be kept under 60 characters if possible.
- * Don't forget space for the header you pass in. 
+ * Don't forget space for the header you pass in.
  */
 
 #define FAULT_MAX  82
 
 
-
 /****************************************************************************/
 /* For the old Info() function, the structure must be on a 4 byte boundary.
- * The new V51+ GetDiskInfo() doesn't require special structure alignment. 
- * Just use AllocDosObject(DOS_INFO,0); to get the right one every time.
+ * The new V51+ GetDiskInfo() doesn't require special structure alignment.
+ * Use AllocDosObject(DOS_INFO,0); to get the right one every time.
  *
  * The id_BytesPerBlock may, or may not, always be the same value as the
- * low level media blocksize, it generally will be, however this value can
+ * low level media blocksize, it generally will be, however this value may
  * be adjusted in some cases to yield the correct result when used with
  * extremely large storage devices, so it should always be treated as an
  * abstract "block" by applications.  See also; GetDiskFileSystemData()
@@ -636,22 +642,23 @@ struct  ExamineData
  * The id_UseCount field shall be set to zero if there are no locks (or files)
  * active on this handler, otherwise, the non-zero value returned from some
  * older handlers may be an entirely arbitrary non-zero boolean value,
- * but more frequently a DOSTRUE (-1) value.
+ * but more frequently a DOSTRUE (-1) value to indicate at least one usage.
  * From V50+ filesystems should return an integer for the number of active
- * locks/files currently in use. 
+ * locks/files currently in use.
  * Stream handlers should indicate the number of streams currently open.
  * The con-handler also uses this field for a completely different and
  * incompatible purpose, such as storing a pointer to the console I/O request.
- * As with id_VolumeNode this field should be treated with caution.
+ * As with id_VolumeNode this field should be treated with some caution.
  *
  * The first two fields of this structure are deprecated and are now reserved
- * for future expansion, handler developers should leave these set to zero. 
+ * for future expansion, handler developers should leave these set to zero.
+ * See; GetDiskInfo() for more info on this subject.
  */
 
 struct InfoData
 {
-    int32  id_Reserved1;        /* Reserved for expansion; See GetDiskInfo() for more info. */
-    int32  id_Reserved2;        /* Reserved for expansion; See GetDiskInfo() for more info. */
+    int32  id_Reserved1;        /* 0 - Reserved for expansion. */
+    int32  id_Reserved2;        /* 0 - Reserved for expansion. */
     int32  id_DiskState;        /* Disk/Media Status, See defines below */
     uint32 id_NumBlocks;        /* Number of "blocks" on disk */
     uint32 id_NumBlocksUsed;    /* Number of "blocks" in use */
@@ -659,7 +666,7 @@ struct InfoData
     int32  id_DOSType;          /* Handler DOSType code, see defines below */
     BPTR   id_VolumeNode;       /* BCPL pointer to volume node (see DosList) */
     int32  id_UseCount;         /* Use count, zero if not in use */
-}; 
+};
 /* InfoData */
 
 /* old name synonym */
@@ -684,27 +691,24 @@ struct InfoData
  *       Always refer to this in conjunction with id_DOSType to gain the full
  *       status of handlers that are in a non-functional state.
  *
- *       New ID_DISKSTATE values will likely be added for future media features.
+ *       New ID_DISKSTATE values may be added for future media features,
+ *       so ensure there is a 'default' case in evaluation for undefined values.
+ *       Some older handlers are already known to return values other than those
+ *       specified above, be prepared for -1 and 0 cases.
  *
- *       Some older handlers are known to already return values other than those
- *       specified above, so write code in a way that has a default case to
- *       handle all undocumented values being presented in a suitable way.
- *       Also, be prepared for negative 1 and 0 cases.
- *       
- *       
  */
 
 
 
 /*
- *  Special status indicator DOS type codes for; id_DOSType 
+ *  Special status indicator DOS type codes for; id_DOSType
  */
 #define ID_NO_DISK_PRESENT    (-1)
 #define ID_UNREADABLE_DISK    (0x42414400)    /* 'BAD\0'  */
 #define ID_BUSY_DISK          (0x42555359)    /* 'BUSY'   */
 #define ID_NOT_REALLY_DOS     (0x4E444F53)    /* 'NDOS'   */
 
-/* The following are the standard and historic FFS DOS types.*/ 
+/* The following are the standard and historic FFS DOS types.*/
 #define ID_DOS_DISK           (0x444F5300)    /* 'DOS\0'  */
 #define ID_FFS_DISK           (0x444F5301)    /* 'DOS\1'  */
 #define ID_INTER_DOS_DISK     (0x444F5302)    /* 'DOS\2'  */
@@ -723,15 +727,15 @@ struct InfoData
 #define ID_RAM_DISK           (0x52414D01)    /* 'RAM\1' ram-handler      */
 #define ID_ENV_DISK           (0x454E5601)    /* 'ENV\1' env-handler      */
 #define ID_APPDIR_DISK        (0x41504401)    /* 'APD\1' appdir-handler   */
-#define ID_NGF0_DISK          (0x4E474600)    /* 'NGF\0' NGFS filesystem  */    
-#define ID_NGF1_DISK          (0x4E474601)    /* 'NGF\1' NGFS filesystem  */    
+#define ID_NGF0_DISK          (0x4E474600)    /* 'NGF\0' NGFS filesystem  */
+#define ID_NGF1_DISK          (0x4E474601)    /* 'NGF\1' NGFS filesystem  */
 #define ID_VP255_DOS_DISK     (0x56504600)    /* 'VPF\0  fsvptool example */
 
 /* Special 'DOS type' signatures returned by con-handler  */
 #define ID_CON                (0x434F4E00)    /* 'CON\0'  */
 #define ID_RAWCON             (0x52415700)    /* 'RAW\0'  */
 
-/* Other known DOS types */  
+/* Other known DOS types */
 #define ID_MSDOS_DISK         (0x4D534400)    /* 'MSD\0   */
 #define ID_MSDOS_DISK_HD      (0x4D534800)    /* 'MSH\0'  */
 #define ID_MSDOS_DISK_DS      (0x4D444400)    /* 'MDD\0'  */
@@ -754,7 +758,7 @@ struct InfoData
  *
  * DosTypes used for Unix partitions in the RDB:
  *    Amix (Commodore Amiga Unix for the A3000UX): 'UNI\0', 'UNI\1'
- * NetBSD (used by OpenBSD as well): 
+ * NetBSD (used by OpenBSD as well):
  *    'NBR\7' (root partition), 'NBU\7' (others partitions), 'NBS\1' (swap partition)
  * Linux: 'LNX\0', 'SWP\0' (swap partition)
  * Ami File Safe: 'AFS\0', 'AFS\1'
@@ -775,7 +779,7 @@ struct InfoData
 
 /*
  *  Bit fields that signal that a user has issued a break,
- *  See IDOS->CheckSignal() for examples. 
+ *  See IDOS->CheckSignal() for examples.
  */
 #define SIGBREAKF_CTRL_C (1L<<SIGBREAKB_CTRL_C)
 #define SIGBREAKF_CTRL_D (1L<<SIGBREAKB_CTRL_D)
@@ -790,6 +794,13 @@ struct InfoData
 #define LOCK_SAME_VOLUME    1    /* locks are on same volume */
 
 /****************************************************************************/
+/* Values returned by SubLock() */
+
+#define SL_INSIDE        -1     /* destination lock is inside the source  */
+#define SL_OUTSIDE        1     /* destination lock is outside the source */
+#define SL_ERROR          0     /* function failure */
+
+/****************************************************************************/
 /* Values returned by SameFH() */
 
 #define FH_DIFFERENT     -1
@@ -797,7 +808,7 @@ struct InfoData
 #define FH_SAME_VOLUME    1    /* filehandles are on same volume */
 
 /****************************************************************************/
-/* 'Flags' bitfield definitions for Format() and FormatPort()  (v54.81) */
+/* Format() and FormatPort() 'Flags' bitfield definitions  (v54.81) */
 /* Only the first one is in use so far. */
 
 #define FMTF_AddRecycled  (1<<0)
@@ -805,13 +816,22 @@ struct InfoData
 #define FMTF_spare2       (1<<2)
 
 /****************************************************************************/
-/* Types for ChangeMode() */
+/* Values for ChangeMode() */
 
 #define CHANGE_LOCK    0
 #define CHANGE_FH      1
 
+/* 'NewMode' Flags */
 #define CHANGE_MODE_SHARED      SHARED_LOCK
 #define CHANGE_MODE_EXCLUSIVE   EXCLUSIVE_LOCK
+
+/* 'NewMode' Flag Synonyms */
+#define CHANGE_MODE_OLDFILE     SHARED_LOCK
+#define CHANGE_MODE_UPDATE      SHARED_LOCK
+#define CHANGE_MODE_NEWFILE     EXCLUSIVE_LOCK
+
+/* Earlier source code compatibility */
+#define CHANGE_MODE_READWRITE   SHARED_LOCK
 
 /****************************************************************************/
 /* Mode parameter for DevNameFromLock() and DevNameFromFH() */
@@ -854,9 +874,8 @@ struct FReadLineData
 
 /****************************************************************************/
 /* Values for MakeLink() - DO NOT use random values, new link types will
- * be added in the future that require other values to be used. 
+ * be added in the future that require other values to be used.
  */
-
 #define LINK_HARD      0
 #define LINK_SOFT      1
 
@@ -883,10 +902,29 @@ struct FReadLineData
 #define DOS_NOTIFYREQUEST   8   /* for Notify request functions (V51)  */
 #define DOS_LOCK            9   /* for filesystem lock allocations (V51) */
 #define DOS_FREADLINEDATA  10   /* for FReadLine() structure. (V51) */
-#define DOS_EXAMINEDATA    11   /* for filesystem ExamineData allocations.(V51) */ 
+#define DOS_EXAMINEDATA    11   /* for filesystem ExamineData allocations.(V51) */
 #define DOS_DOSLIST        12   /* for struct DosList allocations. (V52.16) */
 #define DOS_VOLUMELIST     13   /* for struct list with attached nodes. (V53.52) */
 #define DOS_FSVECTORPORT   14   /* for filesystem vector port creation. (V53.80) */
+
+
+/****************************************************************************/
+/* Macro for getting the byte offset of a structure member, usefull for
+ * determining if a newer member is present, given the structure size.  V54.
+ */
+
+#define BYTE_OFFSET_IN_STRUCT(structure, structmember) \
+                ((uint32)&(((struct structure *)0)->structmember))
+
+/* Example:
+ *
+ * uint32 offset = BYTE_OFFSET_IN_STRUCT(FindTrackedAddressMsg,ftam_AAS);
+ *
+ * if( f->ftam_Size > offset )
+ * {
+ *    struct_includes_member_and_can_be_accessed();
+ * }
+ */
 
 
 /****************************************************************************/

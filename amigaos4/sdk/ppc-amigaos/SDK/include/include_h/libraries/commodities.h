@@ -1,7 +1,6 @@
 #ifndef LIBRARIES_COMMODITIES_H
 #define LIBRARIES_COMMODITIES_H
 /*
-**    $VER: commodities.h 54.16 (22.08.2022)
 **
 **    Commodities definitions
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010-2017 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

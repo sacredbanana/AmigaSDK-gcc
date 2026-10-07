@@ -1,20 +1,12 @@
 #ifndef EXEC_EXECTAGS_H
 #define EXEC_EXECTAGS_H
 /*
-**    $VER: exectags.h 53.29 (10.8.2015)
+** Defines tag items for various functions
 **
-**    Defines tag items for various functions
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2020,2022 Trevor Dickinson.
 */
 
-#ifndef   UTILITY_TAGITEM_H
 #include <utility/tagitem.h>
-#endif
 
 /****************************************************************************/
 
@@ -57,7 +49,10 @@ extern "C" {
 #define ASOINTR_Size        (TAG_USER + 10) /* Size of the object */
 #define ASOINTR_Code        (TAG_USER + 11) /* Code pointer */
 #define ASOINTR_Data        (TAG_USER + 12) /* Data pointer */
-#define ASOINTR_SoftInt		(TAG_USER + 13) /* Interrupt is used by Cause() */
+#define ASOINTR_SoftInt     (TAG_USER + 13) /* Interrupt is used by Cause() */
+#define ASOINTR_Pri         (TAG_USER + 14) /* The interrupt's priority */
+#define ASOINTR_Name        (TAG_USER + 15) /* Name for the interrupt */
+#define ASOINTR_CopyName    (TAG_USER + 16) /* Copy the name string */
 
 /* List */
 #define ASOLIST_Size        (TAG_USER + 10) /* Size of the object */
@@ -74,6 +69,7 @@ extern "C" {
 #define ASONODE_Type        (TAG_USER + 12) /* Node's type */
 #define ASONODE_Pri         (TAG_USER + 13) /* Node's priority */
 #define ASONODE_Name        (TAG_USER + 14) /* Pointer to a node string */
+#define ASONODE_CopyName    (TAG_USER + 15) /* Copy the name string */
 
 /* Message port */
 #define ASOPORT_Size        (TAG_USER + 10) /* Size of the object */
@@ -116,8 +112,10 @@ extern "C" {
 /* Item Pool */
 #define ASOITEM_MFlags      (TAG_USER + 10) /* Memory flags for the pool */
 #define ASOITEM_ItemSize    (TAG_USER + 11) /* Size of individual items */
-#define ASOITEM_BatchSize   (TAG_USER + 12) /* Amount of items to be allocated in one batch */
-#define ASOITEM_MaxSize     (TAG_USER + 13) /* Maximum amount of items allowed in pool */
+#define ASOITEM_BatchItems  (TAG_USER + 12) /* Amount of items to be allocated in one batch */
+#define ASOITEM_BatchSize    ASOITEM_BatchItems   /* old source compatibility alias */
+#define ASOITEM_MaxItems    (TAG_USER + 13) /* Maximum amount of items allowed in pool */
+#define ASOITEM_MaxSize      ASOITEM_MaxItems     /* old source compatibility alias */
 #define ASOITEM_GCPolicy    (TAG_USER + 14) /* Garbage collection policy */
 #define ASOITEM_GCParameter (TAG_USER + 15) /* Garbage collection parameter */
 #define ASOITEM_Constructor (TAG_USER + 16) /* Constructor hook */
@@ -131,6 +129,16 @@ extern "C" {
 #define ASOEXTMEM_Size          	(TAG_USER + 10) /* Size of extended memory area */
 #define ASOEXTMEM_AllocationPolicy	(TAG_USER + 11) /* Allocation policy */
 
+/* Log */
+#define ASOLOG_Name                     (TAG_USER + 10)
+#define ASOLOG_MaxSeverity              (TAG_USER + 11)
+#define ASOLOG_SeverityNames            (TAG_USER + 12)
+#define ASOLOG_Size                     (TAG_USER + 13)
+#define ASOLOG_RollOver                 (TAG_USER + 14)
+#define ASOLOG_SeverityFilter           (TAG_USER + 15)
+#define ASOLOG_CategoryFilter           (TAG_USER + 16)
+#define ASOLOG_SubCategoryFilter        (TAG_USER + 17)
+
 /* Item pool GCPolicy types */
 enum enItemPoolGCPolicy
 {
@@ -141,9 +149,9 @@ enum enItemPoolGCPolicy
 /* Ext Memory allocation policies */
 enum enExtMemAllocationPolicy
 {
-        EXTMEMPOLICY_IMMEDIATE  = 0,
-        EXTMEMPOLICY_DELAYED    = 1,
-        EXTMEMPOLICY_ACCESS    	= 2
+    EXTMEMPOLICY_IMMEDIATE = 0,
+    EXTMEMPOLICY_DELAYED   = 1,
+    EXTMEMPOLICY_ACCESS    = 2
 };
 
 
@@ -176,23 +184,23 @@ enum enKMemCacheType
                                              * allocation
                                              */
 #define ASORMAP_CacheMax    (TAG_USER + 13) /* Maximum size for quantum caches.
-											 * All allocations smaller or equal
-											 * to this size will come from
-											 * quantum caches
-											 */
+                                             * All allocations smaller or equal
+                                             * to this size will come from
+                                             * quantum caches
+                                             */
 
 
 /* Tags for AllocVecTagList (V51) */
-#define AVT_Type            (TAG_USER + 1)
-#define AVT_Contiguous      (TAG_USER + 2)
-#define AVT_Lock            (TAG_USER + 3)
-#define AVT_Alignment       (TAG_USER + 4)
+#define AVT_Type              (TAG_USER + 1)
+#define AVT_Contiguous        (TAG_USER + 2)
+#define AVT_Lock              (TAG_USER + 3)
+#define AVT_Alignment         (TAG_USER + 4)
 #define AVT_PhysicalAlignment (TAG_USER + 5)
-#define AVT_Clear           (TAG_USER + 6)
-#define AVT_ClearWithValue	(TAG_USER + 6)
-#define AVT_ClearValue		(TAG_USER + 6)
-#define AVT_Wait            (TAG_USER + 7)
-#define AVT_NoExpunge       (TAG_USER + 8)
+#define AVT_Clear             (TAG_USER + 6)
+#define AVT_ClearWithValue    (TAG_USER + 6)
+#define AVT_ClearValue        (TAG_USER + 6)
+#define AVT_Wait              (TAG_USER + 7)
+#define AVT_NoExpunge         (TAG_USER + 8)
 
 /* Tags for AllocNamedMemory (V51) */
 #define ANMT_CheckSum       (TAG_USER + 1)
@@ -224,7 +232,8 @@ enum enAllocNamedMemoryErrors
 #define GCIT_CacheLineSize  (TAG_USER + 14)
 #define GCIT_CPUPageSize    (TAG_USER + 15)
 #define GCIT_ExecPageSize   (TAG_USER + 16)
-#define GCIT_TimeBaseSpeed	(TAG_USER + 17)
+#define GCIT_TimeBaseSpeed  (TAG_USER + 17)
+#define GCIT_CurrentCPUNum  (TAG_USER + 18)
 
 /* Family codes */
 enum enCPUFamiliy
@@ -235,8 +244,9 @@ enum enCPUFamiliy
     CPUFAMILY_74XX    = 3,
     CPUFAMILY_4XX     = 4,
     CPUFAMILY_PA6T    = 5,
-    CPUFAMILY_E300	  = 6,
+    CPUFAMILY_E300    = 6,
     CPUFAMILY_E5500   = 7,
+    CPUFAMILY_E500    = 8
 };
 
 /* Model codes */
@@ -263,7 +273,8 @@ enum enCPUModel
     CPUTYPE_PA6T_1682M	   = 18,
     CPUTYPE_PPC460EX       = 19,
     CPUTYPE_PPC5121E	   = 20,
-    CPUTYPE_P50XX		   = 21
+    CPUTYPE_P50XX          = 21,
+    CPUTYPE_P10XX          = 22
 };
 
 /* Vector unit types */
@@ -297,6 +308,7 @@ enum enAllocSysObjectTypes
     ASOT_RMAP      = 12, /* Resource map */
     ASOT_MUTEX     = 13, /* Mutex */
     ASOT_EXTMEM    = 14, /* Extended memory */
+    ASOT_LOG	   = 15, /* Log object */
 };
 
 /****************************************************************************/
@@ -340,6 +352,14 @@ enum enDebugMessage
 
 #define CT_LockStack      (TAG_USER + 20)
 
+#define AT_Core           (TAG_USER + 30)
+
+/* Possible parameters for AT_CoreNum */
+#define ATCN_SAME         -1  /* Force task creation on same core */
+#define ATCN_DOMAIN       -2  /* Force task creation on same domain */
+#define ATCN_ANY          -3  /* Create task on any core */
+
+
 /****************************************************************************/
 
 /* Tags for NewStackRun */
@@ -353,6 +373,44 @@ enum enDebugMessage
 #define NSR_Arg4          (NSR_Dummy+13)
 #define NSR_Arg5          (NSR_Dummy+14)
 #define NSR_Arg6          (NSR_Dummy+15)
+
+/****************************************************************************/
+
+/* Tags for GetTaskAttrs */
+#define GTATAG_IsValidTask  (TAG_USER+1)    /* Check if a pointer is a valid task */
+
+/****************************************************************************/
+
+/* Tags for FindResidentTagList */
+#define FRT_Name            (TAG_USER+1)    /* Search for a name */
+#define FRT_Flags           (TAG_USER+2)    /* Search by flags */
+#define FRT_Skip            (TAG_USER+3)    /* Skip n matches */
+
+/****************************************************************************/
+
+/* Tags for GetSystemInfo */
+#define GSITAG_SchedulerState           (TAG_USER+1)
+#define GSITAG_SchedulerStateGlobal     (TAG_USER+2)
+#define GSITAG_InterruptState           (TAG_USER+3)
+#define GSITAG_InterruptStateGlobal     (TAG_USER+4)
+#define GSITAG_ProcessingInterrupt      (TAG_USER+5)
+#define GSITAG_ColdCapture              (TAG_USER+6)
+#define GSITAG_CoolCapture              (TAG_USER+7)
+
+enum enSchedulerInterruptState
+{
+    GSISTATE_ENABLE  = 0,
+    GSISTATE_DISABLE = 1,
+};
+
+/****************************************************************************/
+
+/* Tags for SetTaskAffinity */
+#define STA_Core                        (TAG_USER+1)
+
+/* Special constants for SetTaskAffinity */
+#define STACORE_CLEAR                   -1
+#define STACORE_CURRENT                 -2
 
 /****************************************************************************/
 

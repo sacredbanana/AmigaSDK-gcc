@@ -1,14 +1,17 @@
 #ifndef DOS_FILEHANDLER_H
 #define DOS_FILEHANDLER_H
 /*
-**    $VER: filehandler.h  54.102 (28.09.2021)
+**    $VER: filehandler.h  54.127 (14.02.2024)
 **
 **    Device and file handler specific code for AmigaDOS
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -43,8 +46,8 @@ extern "C" {
 
 /****************************************************************************
 **  The disk "environment" structure was a longword array that describes
-**  the disk geometry.  It has traditionally been a variable sized array, 
-**  with the number of 32 bit entries that follow de_TableSize in de_TableSize.  
+**  the disk geometry.  It has traditionally been a variable sized array,
+**  with the number of 32 bit entries that follow de_TableSize in de_TableSize.
 **
 **  It was not guaranteed to be the sizeof(struct DosEnvec), so check it.
 **
@@ -58,12 +61,13 @@ struct DosEnvec
 {
     uint32    de_TableSize;
               /* Number of 32 bit entries following this.
-              ** Minimum value is 11, (includes DE_NUMBUFFERS) 
+              ** Minimum value is 11, (includes DE_NUMBUFFERS)
               */
-    
+
     uint32    de_SectorSize;
-              /* Specified in longwords - Physical disk sector size, std value is 128 (for 512 bytes)
-              ** Used to be called de_SizeBlock in V40.
+              /* Specified in longwords - The physical disk sector size,
+              ** the standard value is 128 (for 512 byte) sectors.
+              ** -- Used to be called de_SizeBlock in V40.
               */
 
     uint32    de_SecOrg;
@@ -73,22 +77,32 @@ struct DosEnvec
               /* Number of heads (surfaces). drive specific */
 
     uint32    de_SectorPerBlock;
-              /* Not currently used, must be 1 -- de_SectorSize sectors per logical block */
+              /* The number of physical disk sectors that make
+              ** up a logical block for the file system partition.
+              */
 
     uint32    de_SectorPerTrack;
-              /* Sectors per track. drive specific, used to be called de_BlocksPerTrack in V40 */
+              /* Sectors per track. drive specific.
+              **   -- Used to be called de_BlocksPerTrack in V40
+              */
 
     uint32    de_Reserved;
-              /* Number of reserved logical file system blocks at the beginning of the partition. */
+              /* Number of reserved logical file system blocks at
+              ** the beginning of the partition.
+              */
 
     uint32    de_PreAlloc;
-              /* Number of reserved logical file system blocks at the end of the partition. */
+              /* Number of reserved logical file system blocks at the end of the partition.
+              ** Valid only for file system type "DOS\1" (the fast file system). Zero otherwise.
+              */
 
     uint32    de_Interleave;
-              /* This has never been used, should be 0. */
+              /* This is not generally used, should be 0.
+              ** NB: It may have been used for old file system type "DOS\0". (unconfirmed).
+              */
 
     uint32    de_LowCyl;
-              /* Starting cylinder. typically 0 */
+              /* Starting cylinder. */
 
     uint32    de_HighCyl;
               /* Max cylinder. drive specific */
@@ -106,7 +120,7 @@ struct DosEnvec
               /* If read/writes are going to be made using buffer memory covered by this mask,
               ** I/O operations have to be made using buffers allocated with de_BufMemType.
               */
- 
+
     int32     de_BootPri;
               /* Boot priority for autoboot, values -128 to +127 */
 
@@ -123,7 +137,7 @@ struct DosEnvec
 
     uint32    de_BootSectors;
               /* Number of physical disk sectors at the beginning of the partition
-              ** which contain bootstrapping code.  Used to be called de_BootBlocks.
+              ** which contain bootstrapping code.  -- Used to be called de_BootBlocks in V40.
               */
 };
 
@@ -132,25 +146,25 @@ struct DosEnvec
 ** -- First partition sector    =   de_LowCyl * de_Surfaces * de_SectorPerTrack;
 ** -- Sectors in a partition    = ( de_HighCyl - de_LowCyl + 1) * de_Surfaces * de_SectorPerTrack;
 ** -- Partition size (in bytes) = ((de_HighCyl - de_LowCyl + 1) * de_Surfaces * de_SectorPerTrack / de_SectorPerBlock) *
-**                                 (de_SectorPerBlock * de_SectorSize * 4); 
+**                                 (de_SectorPerBlock * de_SectorSize * 4);
 */
 
 
 /* The following are the offsets when DosEnvec was accessed as an array of longwords;
 ** DE_TABLESIZE is set to the number of fields in the array, minus 1,
-** that is, NOT including the DE_TABLESIZE field itself. 
+** that is, NOT including the DE_TABLESIZE field itself.
 ** So if de_DosType was the last valid entry, de_TableSize == DE_DOSTYPE.
 */
 
 #define DE_TABLESIZE      0    /* minimum value is 11 (includes NumBuffers) */
-#define DE_SECSIZE        1    /* in longwords: standard value is 128 */
+#define DE_SECSIZE        1    /* in longwords: standard value is 128 (for 512) */
 #define DE_SECORG         2    /* not used; must be 0 */
 #define DE_SURFACES       3    /* # of heads (surfaces). drive specific */
-#define DE_SECSPERBLK     4    /* not used; must be 1 */
+#define DE_SECSPERBLK     4    /* between 1 and de_SectorSize */
 #define DE_SECSPERTRACK   5    /* sectors per track. drive specific */
 #define DE_RESERVEDBLKS   6    /* unavailable blocks at start.     usually 2 */
-#define DE_PREFAC         7    /* not used; must be 0 */
-#define DE_INTERLEAVE     8    /* not used - usually 0 */
+#define DE_PREFAC         7    /* not generally used; must be 0 */
+#define DE_INTERLEAVE     8    /* not generally used; usually 0 */
 #define DE_LOWCYL         9    /* starting cylinder. typically 0 */
 #define DE_UPPERCYL      10    /* max cylinder.  drive specific */
 #define DE_NUMBUFFERS    11    /* suggested initial # of buffers.  typically 5 */
@@ -173,7 +187,7 @@ struct DosEnvec
 /****************************************************************************
 ** The file system startup message is linked into a device node's startup
 ** field. It contains a pointer to the above environment, plus the
-** information needed to do an exec OpenDevice(). 
+** information needed to do an exec OpenDevice().
 */
 
 struct FileSysStartupMsg
@@ -187,9 +201,9 @@ struct FileSysStartupMsg
 
 
 /****************************************************************************
-** The public portion of the structure used for the new V50 functions; 
-** GetDiskFileSystemData() and FreeDiskFileSystemData(). 
-** Do not depend on the size of this structure to stay constant. 
+** The public portion of the structure used for the new V50 functions;
+** GetDiskFileSystemData() and FreeDiskFileSystemData().
+** Do not depend on the size of this structure to stay constant.
 */
 
 
@@ -202,14 +216,14 @@ struct FileSystemData
     uint32             fsd_DeviceFlags;    /* the EXEC opendevice() flags */
     struct DosEnvec *  fsd_Environment;    /* WARNING: See (Note 1) below    */
 
-    APTR               fsd_DosPrivate[4];  /* this really is dos private ! */  
+    APTR               fsd_DosPrivate[4];  /* this really is dos private ! */
     APTR               fsd_Reserved[4];    /* future struct expansion space.  */
 };
 
 /*  Note 1:
 **  ======
 **  The fsd_Environment is a pointer to variable size array of longword
-**  entries that follow the de_TableSize field.  
+**  entries that follow the de_TableSize field.
 **  You must not assume it is always sizeof(struct DosEnvec).
 **  See struct DosEnvec for more information. (above).
 */
@@ -242,7 +256,7 @@ struct FileSystemVectorPort;       /* FWD reference */
 
 
 /****************************************************************************
-** For new vector-port filesystems, the following are the maximum lengths  
+** For new vector-port filesystems, the following are the maximum lengths
 ** that should be supported.  String buffers should also reflect these.
 ** Older ported filesystem designs may not be able to support these lengths
 ** due to internal structure limitations, so call IDOS->FileSystemAttr()
@@ -264,14 +278,14 @@ struct FileSystemVectorPort;       /* FWD reference */
 
 /****************************************************************************
 **  This vector initialisation structure is defined as a constant static structure and initialised
-**  by the filesystem with all of the mentioned sundry data and function pointers, 
+**  by the filesystem with all of the mentioned sundry data and function pointers,
 **  a pointer to this structure is then passed as a parameter to IDOS->AllocDosObject() which will
 **  copy it to the 'FSV' space of the allocated struct FileSystemVectorPort structure.
 **
 **  For unimplemented functions, a stub routine that returns 0 and ERROR_ACTION_NOT_KNOWN in result2
 **  should be used instead of a NULL pointer, this prevents DOS from falling back and retrying the
 **  same action with the equivalent DosPacket. See 'struct FileSystemVectorPort' info below for details.
-*/ 
+*/
 
 struct FileSystemVectors
 {
@@ -288,14 +302,14 @@ struct FileSystemVectors
 
     APTR           DOSPrivate;  /* Filesystems initialise this to 0 - DOS private usage only. */
 
-    void         (*DOSEmulatePacket)(struct FSVP *vp, struct DosPacket *dp);  
+    void         (*DOSEmulatePacket)(struct FSVP *vp, struct DosPacket *dp);
                   /* Filesystems shall initialise this to NULL.  */
                   /* AllocDosObject() will insert a function pointer here for the filesystem to use.  */
                   /* This function is to be called from the packet handler process of the filesystem  */
                   /* to provide legacy emulation support for old applications that send Dospackets    */
                   /* directly to the filesystem message port.                                         */
                   /* See; "dos.dospacket.doc" for further details and example source code for this.   */
-                
+
 
     /***************************************************************************************************/
 
@@ -346,7 +360,7 @@ struct FileSystemVectors
 
     int32         (*FSChangeFilePosition)(struct FSVP *vp, int32 *res2, struct FileHandle *file, int32 mode, int64 position);
                   /* Equivalent function for ACTION_CHANGE_FILE_POSITION64  */
- 
+
     int32         (*FSChangeFileSize)(struct FSVP *vp, int32 *res2, struct FileHandle *file, int32 mode, int64 size);
                   /* Equivalent function for ACTION_CHANGE_FILE_SIZE64 */
 
@@ -357,7 +371,7 @@ struct FileSystemVectors
                   /* Equivalent function for ACTION_GET_FILE_SIZE64 */
 
     int32         (*FSChangeLockMode)(struct FSVP *vp, int32 *res2, struct Lock *lock, int32 new_lock_mode);
-                  /* Equivalent function for ACTION_CHANGE_MODE (LOCK) - never changes directories from a SHARED_LOCK */ 
+                  /* Equivalent function for ACTION_CHANGE_MODE (LOCK) - never changes directories from a SHARED_LOCK */
 
     int32         (*FSChangeFileMode)(struct FSVP *vp, int32 *res2, struct FileHandle *fh, int32 new_lock_mode);
                   /* Equivalent function for ACTION_CHANGE_MODE (FILE) */
@@ -378,20 +392,20 @@ struct FileSystemVectors
     int32         (*FSSetUser)(struct FSVP *vp, int32 *res2, struct Lock *rel_dirlock, CONST_STRPTR name, uint32 user);
                   /* Equivalent function for ACTION_SET_OWNER / ACTION_SET_OWNER_INFO */
 
-    int32         (*FSRename)(struct FSVP *vp, int32 *res2, struct Lock *src_rel, CONST_STRPTR src, 
+    int32         (*FSRename)(struct FSVP *vp, int32 *res2, struct Lock *src_rel, CONST_STRPTR src,
                               struct Lock *dst_rel, CONST_STRPTR dst);
                   /* Equivalent function for ACTION_RENAME_OBJECT */
 
 
-    int32         (*FSCreateSoftLink)(struct FSVP *vp, int32 *res2, struct Lock *rel_dirlock, 
+    int32         (*FSCreateSoftLink)(struct FSVP *vp, int32 *res2, struct Lock *rel_dirlock,
                                       CONST_STRPTR linkname, CONST_STRPTR dest_obj);
                   /* Equivalent function for ACTION_MAKE_LINK (SOFT) */
 
-    int32         (*FSCreateHardLink)(struct FSVP *vp, int32 *res2, struct Lock *rel_dirlock, 
+    int32         (*FSCreateHardLink)(struct FSVP *vp, int32 *res2, struct Lock *rel_dirlock,
                                       CONST_STRPTR linkname, struct Lock *dest_obj);
                   /* Equivalent function for ACTION_MAKE_LINK (HARD) */
 
-    int32         (*FSReadSoftLink)(struct FSVP *vp, int32 *res2, struct Lock *rel_dir, 
+    int32         (*FSReadSoftLink)(struct FSVP *vp, int32 *res2, struct Lock *rel_dir,
                                     CONST_STRPTR linkname, STRPTR buf, int32 bufsize);
                   /* Equivalent function for ACTION_READ_SOFT_LINK */
 
@@ -416,7 +430,7 @@ struct FileSystemVectors
     int32         (*FSReserved1)(struct FSVP *vp, int32 *res2);
                   /* Spare function slot, Filesystems initialise this to NULL */
 
-  
+
     struct ExamineData * (*FSExamineObj)(struct FSVP *vp, int32 *res2, struct Lock *lock, CONST_STRPTR object);
                   /* Equivalent function for ACTION_EXAMINEDATA_OBJ */
 
@@ -446,20 +460,20 @@ struct FileSystemVectors
                   /* Equivalent function for ACTION_RENAME_DISK */
 
 
-    int32         (*FSReserved3)(struct FSVP *vp, int32 *res2);  
+    int32         (*FSReserved3)(struct FSVP *vp, int32 *res2);
                   /* Spare function slot, Filesystems initialise this to NULL */
 
 
 
    /*************************************************************************
-    **  OPTIONAL FUNCTIONS 
+    **  OPTIONAL FUNCTIONS
     **  ==================
     **  The following two notification functions are optional, the dos.library
-    **  provides these functions internally when these functions return FALSE
-    **  and Result2 = ERROR_ACTION_NOT_KNOWN.
+    **  provides these functions internally when these vector functions return
+    **  FALSE and Result2 = ERROR_ACTION_NOT_KNOWN.
     **  These vectors have been provided for remote filesystem implementations.
     */
-  
+
     int32         (*FSAddNotify)(struct FSVP *vp, int32 *res2, struct NotifyRequest *nr);
                   /* Equivalent function for ACTION_ADD_NOTIFY */
 
@@ -469,14 +483,14 @@ struct FileSystemVectors
 
 
   /*************************************************************************
-    **  OPTIONAL FUNCTIONS 
+    **  OPTIONAL FUNCTIONS
     **  ==================
     **  The following two record locking functions are optional, the dos.library
     **  provides these functions internally when these vector functions return
     **  FALSE and Result2 = ERROR_ACTION_NOT_KNOWN.
     **  These vectors have been provided for remote filesystem implementations.
     */
- 
+
     int32         (*FSLockRecord)(struct FSVP *vp, int32 *res2, struct FileHandle *file,
                                   int64 offset, int64 length, uint32 mode, uint32 timeout);
                   /* Equivalent function for ACTION_LOCK_RECORD64 */
@@ -503,7 +517,7 @@ struct FileSystemVectors
 **
 **  This is the structure returned from IDOS->AllocDosObject(DOS_FSVECTORPORT,...)
 **  it is pre-initialised so that it is ready to be called by dos.library.
-** 
+**
 **  The dos.library always validates this structure before every call to any
 **  of the function vectors with the IDOS->GetFileSystemVectorPort() function
 **  and a NULL pointer check after that.
@@ -513,14 +527,14 @@ struct FileSystemVectors
 **      2) The FSV.Version must be 53 (or greater for later additions).
 **      3) The actual function vector pointer must not be NULL.
 **
-**  Failure to validate any of these three tests will cause dos.library to 
+**  Failure to validate any of these three tests will cause dos.library to
 **  fall back to sending a DosPacket to the handlers message port instead.
 **
 */
 
 struct FileSystemVectorPort
 {
-   struct MsgPort            MP;  
+   struct MsgPort            MP;
    struct FileSystemVectors  FSV;
 };
 
@@ -532,7 +546,7 @@ struct FileSystemVectorPort
 #ifndef NO_VECTORPORT_FUNCTION_PROTOTYPES
 /****************************************************************************/
 
-void DOSEmulatePacket(struct FSVP *vp, struct DosPacket *dp);  
+void DOSEmulatePacket(struct FSVP *vp, struct DosPacket *dp);
 
 struct Lock *FSLock(struct FSVP *vp, int32 *res2, struct Lock *rel_lock, CONST_STRPTR obj, int32 mode);
 int32  FSUnLock(struct FSVP *vp, int32 *res2, struct Lock *lock);

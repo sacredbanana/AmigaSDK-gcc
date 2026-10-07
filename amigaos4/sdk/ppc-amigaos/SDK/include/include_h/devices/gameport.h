@@ -1,7 +1,6 @@
 #ifndef DEVICES_GAMEPORT_H
 #define DEVICES_GAMEPORT_H
 /*
-**    $VER: gameport.h 54.16 (22.08.2022)
 **
 **    GamePort device command definitions
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

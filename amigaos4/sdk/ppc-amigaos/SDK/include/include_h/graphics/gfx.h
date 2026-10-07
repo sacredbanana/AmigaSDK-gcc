@@ -1,7 +1,6 @@
 #ifndef GRAPHICS_GFX_H
 #define GRAPHICS_GFX_H
 /*
-**    $VER: gfx.h 54.16 (22.08.2022)
 **
 **    general include file for application programs
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -291,10 +293,10 @@ enum enPixelFormat
                          // format: 0rrrrrgggggbbbbb
 
     PIXF_B5G6R5PC  = 12, // HiColor16 (5 bit R, 6 bit G, 5 bit B)
-                         // format: gggrrrrrbbbbbggg */
+                         // format: gggrrrrrbbbbbggg
 
     PIXF_B5G5R5PC  = 13, // HiColor15 (5 bit each)
-                         // format: gggrrrrr0bbbbbbgg
+                         // format: gggrrrrr0bbbbbgg
 
     PIXF_YUV422CGX = 14, // 2 Byte TrueColor YUV (CCIR recommendation CCIR601).
                          // Each two-pixel unit is stored as one longword

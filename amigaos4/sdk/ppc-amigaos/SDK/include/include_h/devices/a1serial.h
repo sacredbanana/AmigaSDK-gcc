@@ -1,7 +1,6 @@
 #ifndef DEVICES_A1SERIAL_H
 #define DEVICES_A1SERIAL_H
 /*
-**    $VER: a1serial.h 54.16 (22.08.2022)
 **
 **    External declarations for the a1serial device.
 **
@@ -9,6 +8,9 @@
 **     All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

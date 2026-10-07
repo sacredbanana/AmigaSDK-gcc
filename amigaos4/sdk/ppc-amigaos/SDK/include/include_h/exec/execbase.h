@@ -1,15 +1,11 @@
 #ifndef EXEC_EXECBASE_H
 #define EXEC_EXECBASE_H
 /*
-**    $VER: execbase.h 53.29 (10.8.2015)
+** Definition of the exec.library base structure.
 **
-**    Definition of the exec.library base structure.
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_LISTS_H
@@ -51,6 +47,12 @@ extern "C" {
    #pragma msg 79 ignore push
 #endif
 
+#if 0
+#define FieldIsObsolete(x)	x##OBSOLETE
+#else
+#define FieldIsObsolete(x)	x
+#endif
+
 /****************************************************************************/
 
 /* Definition of the Exec library base structure (pointed to by location 4).
@@ -86,15 +88,15 @@ struct ExecBase
 
 /****** Dynamic System Variables *************************************/
 
-    struct Task *ThisTask;  /* pointer to current task (readable) */
+    FieldIsObsolete(struct Task *ThisTask);  /* pointer to current task (readable) */
 
     ULONG   IdleCount;      /* idle counter */
     ULONG   DispCount;      /* dispatch counter */
     UWORD   Quantum;        /* time slice quantum */
     UWORD   Elapsed;        /* current quantum ticks */
     UWORD   SysFlags;       /* misc internal system flags */
-    BYTE    IDNestCnt;      /* interrupt disable nesting count */
-    BYTE    TDNestCnt;      /* task disable nesting count */
+    FieldIsObsolete(BYTE    IDNestCnt);      /* interrupt disable nesting count */
+    FieldIsObsolete(BYTE    TDNestCnt);      /* task disable nesting count */
 
     UWORD   AttnFlags;      /* special attention flags (readable) */
 
@@ -114,8 +116,8 @@ struct ExecBase
     struct List IntrList;
     struct List LibList;
     struct List PortList;
-    struct List TaskReady;
-    struct List TaskWait;
+    FieldIsObsolete(struct List TaskReady);
+    FieldIsObsolete(struct List TaskWait);
 
     struct SoftIntList SoftInts[5];
 

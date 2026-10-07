@@ -2,14 +2,17 @@
 #define DOSLIB_STARTUP_H
 
 /*
-**    $VER: startup.h  54.101 (13.01.2021)
+**    $VER: startup.h  54.126 (05.08.2023)
 **
 **    dos.library application startup definitions
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -50,23 +53,16 @@ int32  _start( STRPTR argstring, int32 arglen, struct ExecBase *sysbase );
 /****************************************************************************/
 /*
  *  The following is a "bare bones" native _start() example that is the
- *  minimum required to get an AmigaDOS application up and running. 
+ *  minimum required to get an AmigaDOS application up and running.
  *
  *  Note that if you are using a CLIB style library environment, this DOS
  *  startup code is included, you would enter at the main() function instead.
  *
- *  For this stand-alone DOS startup code example;
- *    1)  Only dos.library is opened and closed.
- *    2)  Any workbench startup message is simply fetched and replied to.
- *    3)  No global library bases or interfaces are initialised.
- *    4)  No parameters are used from the workbench message or cli.
- * 
- *
  *  Mandatory Caveats;
  *    1) It is never permissable to open libraries or call any dos.library
  *       functions or perform any i/o whatsoever, directly or indirectly
- *       from this process context, before a workbench startup message
- *       has been fetched from the process structure message port. 
+ *       from this process context, before a workbench / startup message
+ *       has been fetched from the process structure message port.
  *
  *    2) After replying to a workench startup message on exit, with the
  *       IExec->ReplyMsg() function, assume that all process locks and
@@ -89,6 +85,12 @@ int32  _start( STRPTR argstring, int32 arglen, struct ExecBase *sysbase );
  *
  *
  *  Example Code;
+ *  For the following stand-alone DOS startup code example;
+ *    1)  Only dos.library is opened and closed.
+ *    2)  Any workbench startup message is simply fetched and replied to.
+ *    3)  No global library bases or interfaces are initialised.
+ *    4)  No parameters are used from the workbench message or cli.
+ *
  *  ========================================================================
  *
  *
@@ -99,21 +101,21 @@ int32  _start( STRPTR argstring, int32 arglen, struct ExecBase *sysbase );
  *  #include <dos/startup.h>
  *
  *
- *  int32  _start(STRPTR args UNUSED, int32 arglen UNUSED, struct ExecBase *sysbase)  
+ *  int32  _start(STRPTR args UNUSED, int32 arglen UNUSED, struct ExecBase *sysbase)
  *  {
  *     struct ExecIFace *iexec = (APTR)sysbase->MainInterface;
  *     struct WBStartup *wbmsg = NULL;
  *     struct DOSIFace  *idos;
  *     struct Library   *dosbase;
  *     struct Process   *process;
- *     int32  r2 = ERROR_INVALID_RESIDENT_LIBRARY; // failure for openlibrary 
+ *     int32  r2 = ERROR_INVALID_RESIDENT_LIBRARY; // failure for openlibrary
  *     int32  rc = RETURN_FAIL;
  *
  *
  *     iexec->Obtain();
  *     process = (struct Process *) iexec->FindTask(NULL);
  *
- *     if( ! process->pr_CLI )  // if not from CLI, get startup message first. 
+ *     if( ! process->pr_CLI )  // if not from CLI, get startup message first.
  *     {
  *         iexec->WaitPort(&process->pr_MsgPort);
  *         wbmsg = (struct WBStartup *) iexec->GetMsg(&process->pr_MsgPort);
@@ -146,9 +148,9 @@ int32  _start( STRPTR argstring, int32 arglen, struct ExecBase *sysbase );
  *         iexec->CloseLibrary(dosbase);
  *     }
  *
- *     process->pr_Result2 = r2; // set the secondary result code. 
+ *     process->pr_Result2 = r2; // set the secondary result code.
  *
- *     if( wbmsg )               // reply to a workbench startup message 
+ *     if( wbmsg )               // reply to a workbench startup message
  *     {
  *         iexec->ReplyMsg((struct Message *)wbmsg );
  *     }
@@ -159,7 +161,7 @@ int32  _start( STRPTR argstring, int32 arglen, struct ExecBase *sysbase );
  *
  ****************************************************************************
  *
- *  NOTES: 
+ *  NOTES:
  *  To differentiate startup methods employed by AmigaDOS, three cases need
  *  to be handled to cover all possible senarios.
  *
@@ -176,10 +178,10 @@ int32  _start( STRPTR argstring, int32 arglen, struct ExecBase *sysbase );
  *     with the dp_Type set to the value ACTION_STARTUP.
  *
  *
- *  Generally, applications only need to check process->pr_CLI to tell how 
- *  they were started.  Handlers needs to go that extra step to make sure.
+ *  Generally, applications only need to check process->pr_CLI to tell how
+ *  they were started.  DOS Handlers needs to go the extra step.
  *
- *  The SDK supplied "FSVPTool" will create example handler startup files. 
+ *  The SDK supplied "FSVPTool" will create example handler startup files.
  *
  */
 /****************************************************************************/

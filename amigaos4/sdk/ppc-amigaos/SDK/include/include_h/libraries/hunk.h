@@ -1,14 +1,17 @@
 #ifndef LIBRARIES_HUNK_H
 #define LIBRARIES_HUNK_H
 /*
-**    $VER: hunk.h  54.100 (07.09.2020)
+**    $VER: hunk.h  54.126 (05.08.2023)
 **
 **    Definitions for the HUNK library loader
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -50,7 +53,7 @@ extern "C" {
 /****************************************************************************/
 /* Message structure passed to the hook function calls.                     */
 
-struct HunkMessage 
+struct HunkMessage
 {
     uint32 hm_StructureSize; /* Always the size of this structure.      */
 
@@ -58,7 +61,7 @@ struct HunkMessage
                              /* Set to overlay handle in UnLoadHunk().  */
 
     APTR   hm_Library;       /* Set by tag; LH_Library exclusively.     */
-                                                                
+
     APTR   hm_Memory;        /* The memory or buffer parameter.         */
 
     uint32 hm_MemoryAttr;    /* The memory attributes for allocations.  */
@@ -75,79 +78,79 @@ struct HunkMessage
 #define LH_Dummy              (TAG_USER+750)
 
 
-#define LH_AllocHook          (LH_Dummy+1) 
+#define LH_AllocHook          (LH_Dummy+1)
    /* (struct Hook *) -- Pointer to the hook structure which has
-    *  the h_Entry field pointing to your memory allocation function. 
+    *  the h_Entry field pointing to your memory allocation function.
     *  The hook function shall return NULL on error or a
     *  pointer to the memory block if it succeeds.
     *
     *  Hook function invocation will be;
-    *  APTR hook_function( struct Hook *hook, APTR userdata, 
+    *  APTR hook_function( struct Hook *hook, APTR userdata,
     *                      struct HunkMessage *hm);
     *
     *  The hm_Length field is the size in bytes to allocate.
     *  The hm_MemoryAttr is the memory attribute flags.
     */
 
-#define LH_FreeHook           (LH_Dummy+2) 
+#define LH_FreeHook           (LH_Dummy+2)
    /* (struct Hook *) -- Pointer to the hook structure which has
     *  the h_Entry field pointing to your memory deallocation function.
     *  The hook function return value is ignored.
-    * 
+    *
     *  Hook function invocation will be;
-    *  VOID hook_function( struct Hook *hook, APTR userdata, 
+    *  VOID hook_function( struct Hook *hook, APTR userdata,
     *                      struct HunkMessage *hm);
     *
     *  The hm_Length field is the size in bytes.
     *  The hm_Memory is the memory block pointer to free.
     */
 
-#define LH_ReadHook           (LH_Dummy+3) 
+#define LH_ReadHook           (LH_Dummy+3)
    /* (struct Hook *) -- Pointer to the hook structure which has
-    *  the h_Entry field pointing to your data reading function. 
+    *  the h_Entry field pointing to your data reading function.
     *  The hook function shall return -1 on error (Not 0)
     *  or the number of bytes read into memory upon success.
     *
     *  Hook function invocation will be;
-    *  int32 hook_function( struct Hook *hook, APTR userdata, 
+    *  int32 hook_function( struct Hook *hook, APTR userdata,
     *                       struct HunkMessage *hm);
     *
     *  The hm_Length field is the number of bytes to read.
     *  The hm_Memory is the buffer to read the data into.
     */
 
-#define LH_UserData           (LH_Dummy+4) 
+#define LH_UserData           (LH_Dummy+4)
    /* (APTR) -- (OPTIONAL) Anything you wish to pass to all
     *  the hook function calls as the "userdata" arg.
     *  Default 0.
     */
 
-#define LH_Handle             (LH_Dummy+5) 
-   /* (APTR) -- (OPTIONAL) Pointer to the value that goes 
-    *  into the hm_Handle field when calling LoadHunk[tags](). 
+#define LH_Handle             (LH_Dummy+5)
+   /* (APTR) -- (OPTIONAL) Pointer to the value that goes
+    *  into the hm_Handle field when calling LoadHunk[tags]().
     *  You should use this for your file handle pointer.
     *  Default 0.
     */
 
-#define LH_Library            (LH_Dummy+6) 
-   /* (APTR) -- (OPTIONAL) Pointer to a library base or an 
+#define LH_Library            (LH_Dummy+6)
+   /* (APTR) -- (OPTIONAL) Pointer to a library base or an
     *  interface you may wish to pass to the hook
     *  function in the hm_Library field.  Default 0.
     */
 
-#define LH_FileSize           (LH_Dummy+7) 
+#define LH_FileSize           (LH_Dummy+7)
    /* (uint32 *) -- (OPTIONAL) Pointer to a longword to return
     *  the size of the binary file.  Default NULL.
     */
 
-#define LH_FileXSum           (LH_Dummy+8) 
+#define LH_FileXSum           (LH_Dummy+8)
    /* (uint32 *) -- (OPTIONAL) Pointer to a longword to return
     *  the 32 bit checksum of the binary file. Default NULL.
     */
 
-#define LH_IoErr              (LH_Dummy+9) 
+#define LH_IoErr              (LH_Dummy+9)
    /* (int32 *) -- (OPTIONAL) Pointer to a longword to return
-    *  the DOS error code if the function fails. 
+    *  the DOS error code if the function fails.
     *  This will only be valid if the function returns failure.
     *  Default NULL.
     */
@@ -155,7 +158,7 @@ struct HunkMessage
 #define LH_HunkTable   (LH_Dummy+10)
    /* (APTR) -- (OPTIONAL) Pointer to the hunk table
     *  memory allocation, generally when used to load overlays.
-    *  Default 0. 
+    *  Default 0.
     */
 
 #define LH_SegList            (LH_Dummy+11)
@@ -168,20 +171,20 @@ struct HunkMessage
 
 /****************************************************************************/
 /* The following is the old style Overlay hunk file reference header.
- * (First segment only) That was used in the past for overlay hunk files.  
- * This is what the first segment of an overlay hunk file should look like. 
+ * (First segment only) That was used in the past for overlay hunk files.
+ * This is what the first segment of an overlay hunk file should look like.
  *
  * Overlay hunk files loaded with LoadHunk() return the BPTR to the seglist
  * header below as a negative BPTR value, (-seglist), you need to negate it
- * before you can use it.   This is for backward compatibility purposes in DOS. 
+ * before you can use it.   This is for backward compatibility purposes in DOS.
  *
  * Normal (non overlay) hunk files do not do this.
  */
 
 #define  OVHID  0xABCD
-  
+
 struct OverlayHunk
-{  
+{
    BPTR   ov_NextSeg;        /* BPTR to the next segment.                    */
    uint32 ov_BRA;            /* Usually a 68K branch instruction to ov_User  */
    uint32 ov_Ident;          /* Identifier value; 0xABCD                     */

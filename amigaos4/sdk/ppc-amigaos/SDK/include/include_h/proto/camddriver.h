@@ -2,7 +2,6 @@
 #define PROTO_CAMDDRIVER_H
 
 /*
-** $VER: camddriver.h 54.16 (22.08.2022)
 **
 ** C. A. M. D. (Commodore Amiga MIDI Driver)
 **
@@ -10,6 +9,9 @@
 **
 ** Copyright (c) 2015 Hyperion Entertainment CVBA.
 ** All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 /****************************************************************************/

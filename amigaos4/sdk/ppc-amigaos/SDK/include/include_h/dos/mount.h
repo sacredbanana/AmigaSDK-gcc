@@ -1,14 +1,17 @@
 #ifndef DOS_MOUNT_H
 #define DOS_MOUNT_H
 /*
-**    $VER: mount.h  54.100 (07.09.2020)
+**    $VER: mount.h  54.126 (05.08.2023)
 **
 **    Data structures used with mounting file systems
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -164,7 +167,7 @@ extern "C" {
 /*
  * Flags for DismountDevice()
  */
- 
+
 #define    DMDF_KEEPDEVICE          (1<<0)
 #define    DMDF_REMOVEDEVICE        (1<<1)
 #define    DMDF_FORCE_DISMOUNT      (1<<2)

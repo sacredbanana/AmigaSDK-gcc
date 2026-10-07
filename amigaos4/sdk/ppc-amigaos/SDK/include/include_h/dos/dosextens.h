@@ -1,14 +1,17 @@
 #ifndef DOS_DOSEXTENS_H
 #define DOS_DOSEXTENS_H
 /*
-**    $VER: dosextens.h  54.103 (17.02.2021)
+**    $VER: dosextens.h  54.134 (04.08.2025)
 **
 **    DOS structures not needed for the casual AmigaDOS user
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -63,14 +66,14 @@ extern "C" {
  * if a BCPL program is launched, it will halt with a dead-end requester.
  *
  * Old BCPL register values & members marked as "do not access" must NOT be
- * accessed or assumed to contain any values whatsoever, they may even be 
+ * accessed or assumed to contain any values whatsoever, they may even be
  * intensionally reused in the future for completely incompatible purposes,
- * these are guaranteed to have indeterminant contents that can and will 
+ * these are guaranteed to have indeterminant contents that can and will
  * change without any notice.  So be warned !!!  Leave these alone.
  *
  * PRIVATE structure members should not be accessed by applications when
- * there is an API accessor function mentioned, use those instead. 
- * 
+ * there is an API accessor function mentioned, use those instead.
+ *
  * Most importantly, do not attempt to allocate these structures yourself,
  * they are guaranteed to grow and change in the future.
  */
@@ -85,40 +88,40 @@ struct Process
     uint32          pr_StackSize;      /* The running process stack size, in bytes */
     int32           pr_gv;             /* -- OBSOLETE BCPL value - do not access this. */
     uint32          pr_CliNum;         /* CLI number, for DOS allocated cli processes. */
-    BPTR            pr_sb;             /* -- OBSOLETE BCPL value - do not access this. */
-    int32           pr_Result2;        /* Secondary result from last call, for IoErr() */
-    BPTR            pr_CurrentDir;     /* Lock associated with current directory  */
+    int32           pr_Result1;        /* Primary result from start() function. */
+    int32           pr_Result2;        /* Secondary result - See; IoErr() */
+    BPTR            pr_CurrentDir;     /* Current Directory Lock - See; Set/GetCurrentDir() */
     BPTR            pr_CIS;            /* Current Input Stream - See; Input() */
     BPTR            pr_COS;            /* Current Output Stream - See; Output() */
     struct MsgPort *pr_ConsolePort;    /* Console handler port, See; GetConsolePort() */
     struct MsgPort *pr_FileSystemPort; /* Filesystem for current drive, See; GetFileSysPort()*/
     BPTR            pr_CLI;            /* BCPL Ptr to struct CommandLineInterface, See; Cli()*/
     APTR            pr_ra;             /* -- OBSOLETE - do not access this. */
-    APTR          (*pr_PktWait)();     /* Function to be called when awaiting packet */
+    APTR          (*pr_PktWait)();     /* Function to be called when awaiting packet in WaitPkt() */
     APTR            pr_WindowPtr;      /* Window for posting error requesters */
 
     /* following definitions are new with 2.0 (v36 - 1990) */
-    BPTR            pr_ProgramDir;     /* Program's home directory lock, See; GetProgramDir() */
+    BPTR            pr_ProgramDir;     /* Home directory lock of program, See; Get/SetProgramDir() */
     uint32          pr_Flags;          /* Flags telling dos about this process */
     VOID          (*pr_ExitCode)();    /* Code to call on exit of process or NULL */
     int32           pr_ExitData;       /* Argument for pr_ExitCode func. See; GetExitData() */
     STRPTR          pr_Arguments;      /* Arguments passed to the process at start, See; GetArgStr() */
-    struct MinList  pr_LocalVars;      /* Local environment variables */
-    uint32          pr_ShellPrivate;   /* -- PRIVATE - Internal shell use only. */
-    BPTR            pr_CES;            /* ErrorOutput() stream - If 0, use Output(). */
+    struct MinList  pr_LocalVars;      /* Local environment variables, See; #?var() functions. */
+    uint32          pr_ShellPrivate;   /* -- PRIVATE - Internal shell handler use only. */
+    BPTR            pr_CES;            /* ErrorOutput() stream - If 0, use pr_COS. See; Output(). */
 
     /* following definitions are new from 4.0 (v50 - Apr,2004) */
     APTR            pr_PrData;         /* -- PRIVATE - internal dos access ONLY. */
     BPTR            pr_CurrentSeg;     /* Seglist of current running code. See; GetProcSegList() */
     uint32          pr_EmulPrivate;    /* -- PRIVATE - Flags for 68k JIT Emulator. */
     uint32          pr_68kPrivate;     /* -- PRIVATE - 68K control opts, OS access only */
-    uint32          pr_ParentID;       /* ID# of parent process, 0 if a task, for GetPID() */
-    uint32          pr_ProcessID;      /* ID# for this process, for GetPID() */
-    uint32          pr_Reserved4;      /* -- reserved for dos expansion - leave alone */
+    uint32          pr_ParentID;       /* ID# of parent process, See; GetPID() */
+    uint32          pr_ProcessID;      /* ID# for this process, See; GetPID() */
+    uint32          pr_ChildID;        /* ID# inherited by children, See; GetPID() (54.123) */
     APTR            pr_OGLContextData; /* -- PRIVATE - ogl access only. */
-    APTR            pr_Reserved5;      /* -- reserved for dos expansion - leave alone. */
-    APTR            pr_CLibData;       /* -- PRIVATE - clib/newlib use, copied by CNP() */
-    APTR            pr_Reserved6;      /* -- reserved for dos expansion - leave alone  */
+    APTR            pr_Reserved5;      /* -- PRIVATE - reserved for dos expansion. */
+    APTR            pr_CLibData;       /* -- PRIVATE - c-library newlib use, copied by CNP() */
+    APTR            pr_Reserved6;      /* -- PRIVATE - reserved for dos expansion. */
 
     /* following definitions are new from (v51 - Jan,2006) */
     struct MinList  pr_RestoreList;    /* -- PRIVATE - used by DOS for process cleanup() */
@@ -129,27 +132,30 @@ struct Process
     int32           pr_EntryData;      /* Passed as an argument to pr_EntryCode func. See; GetEntryData() */
     VOID          (*pr_FinalCode)();   /* Code to call on exit of the process, or NULL  */
     int32           pr_FinalData;      /* Passed as an argument to pr_FinalCode func.   */
-	uint32          pr_DLNotifyData;   /* -- PRIVATE - dos NotifyDosListChange() data.  */
-    uint32          pr_PLNotifyData;   /* -- PRIVATE - dos NotifyProcListChange() data. */
+	uint32          pr_DLNotifyData;   /* -- PRIVATE data, See; NotifyDosListChange()  */
+    uint32          pr_PLNotifyData;   /* -- PRIVATE data, See; NotifyProcListChange() */
 
     /* following definitions are new from (v52 - Dec,2006) */
-    uint32          pr_UID;            /* -- PRIVATE - dos Set/GetOwnerInfo() use only. */
-    uint32          pr_GID;            /* -- PRIVATE - dos Set/GetOwnerInfo() use only. */
-    int32           pr_Reserved3;      /* -- reserved for dos expansion - leave alone */
-    int32           pr_Reserved2;      /* -- reserved for dos expansion - leave alone */
-    int32           pr_Reserved1;      /* -- reserved for dos expansion - leave alone */
-    int32           pr_Reserved0;      /* -- reserved for dos expansion - leave alone */
+    uint32          pr_UID;            /* -- PRIVATE data, See; Set/GetOwnerInfo()     */
+    uint32          pr_GID;            /* -- PRIVATE data, See; Set/GetOwnerInfo()     */
+
+    /* following definitions are new from (v54 - July,2023) */
+    struct MinList  pr_LocalContext;   /* -- PRIVATE list, See Set/GetContext()        */
+    int32           pr_Reserved3;      /* -- reserved for dos expansion -- leave alone */
+    int32           pr_Reserved2;      /* -- reserved for dos expansion -- leave alone */
+    int32           pr_Reserved1;      /* -- reserved for dos expansion -- leave alone */
+    int32           pr_Reserved0;      /* -- reserved for dos expansion -- leave alone */
 };
-/* Process - 344 bytes */
+/* Process - 356 bytes */
 
 
 
 
 /*
  * Flags for Process->pr_Flags for all DOS processes.
- * These bits control how the process works and also provide
- * statistical and historical information about the process
- * to allow other subsystems to interact appropriately.
+ * The low bits control how the process works and the rest
+ * provide statistical and historical information about the
+ * process to allow other subsystems to interact appropriately.
  */
 #define PRB_FREESEGLIST         0   /* NP_FreeSegList,TRUE sets this bit. */
 #define PRB_FREECURRDIR         1   /* NP_CurrentDir will be UnLocked if set */
@@ -177,7 +183,7 @@ struct Process
 #define PRB_spare22            22
 #define PRB_WAITINGFORCHILD    23   /* (V54) WaitForChildExit() sets this while waiting. */
 #define PRB_CHILDPROCESS       24   /* (V50) NP_Child,TRUE sets this for a dependant child. */
-#define PRB_HADCHILDREN        25   /* (V51) Gets set if this process had created any children. */
+#define PRB_HADCHILDREN        25   /* (V51) Gets set if this process has created any children. */
 #define PRB_HASDLNOTIFY        26   /* (V51) Set when doslist change signal notify is enabled. */
 #define PRB_HASPLNOTIFY        27   /* (V51) Set when process list change signal notify is on. */
 #define PRB_SERVERPROCESS      28   /* (V53) Set when process is one of the dos servers */
@@ -187,24 +193,24 @@ struct Process
 
 
 /* Mask definitions for above bits */
-#define PRF_FREESEGLIST        (1 << PRB_FREESEGLIST)
-#define PRF_FREECURRDIR        (1 << PRB_FREECURRDIR)
-#define PRF_FREECLI            (1 << PRB_FREECLI)
-#define PRF_CLOSEINPUT         (1 << PRB_CLOSEINPUT)
-#define PRF_CLOSEOUTPUT        (1 << PRB_CLOSEOUTPUT)
-#define PRF_FREEARGS_OBSOLETE  (1 << PRB_FREEARGS_OBSOLETE)
-#define PRF_CLOSEERROR         (1 << PRB_CLOSEERROR)
-#define PRF_LOCKSTACK          (1 << PRB_LOCKSTACK)    
+#define PRF_FREESEGLIST        (1UL << PRB_FREESEGLIST)
+#define PRF_FREECURRDIR        (1UL << PRB_FREECURRDIR)
+#define PRF_FREECLI            (1UL << PRB_FREECLI)
+#define PRF_CLOSEINPUT         (1UL << PRB_CLOSEINPUT)
+#define PRF_CLOSEOUTPUT        (1UL << PRB_CLOSEOUTPUT)
+#define PRF_FREEARGS_OBSOLETE  (1UL << PRB_FREEARGS_OBSOLETE)
+#define PRF_CLOSEERROR         (1UL << PRB_CLOSEERROR)
+#define PRF_LOCKSTACK          (1UL << PRB_LOCKSTACK)
 
-#define PRF_WAITINGFORCHILD    (1 << PRB_WAITINGFORCHILD)
-#define PRF_CHILDPROCESS       (1 << PRB_CHILDPROCESS)
-#define PRF_HADCHILDREN        (1 << PRB_HADCHILDREN)
-#define PRF_HASDLNOTIFY        (1 << PRB_HASDLNOTIFY)
-#define PRF_HASPLNOTIFY        (1 << PRB_HASPLNOTIFY)
-#define PRF_SERVERPROCESS      (1 << PRB_SERVERPROCESS)
-#define PRF_HANDLERPROCESS     (1 << PRB_HANDLERPROCESS)
-#define PRF_SHELLPROCESS       (1 << PRB_SHELLPROCESS)
-#define PRF_EXTENDED_FLAGS     (1 << PRB_EXTENDED_FLAGS)
+#define PRF_WAITINGFORCHILD    (1UL << PRB_WAITINGFORCHILD)
+#define PRF_CHILDPROCESS       (1UL << PRB_CHILDPROCESS)
+#define PRF_HADCHILDREN        (1UL << PRB_HADCHILDREN)
+#define PRF_HASDLNOTIFY        (1UL << PRB_HASDLNOTIFY)
+#define PRF_HASPLNOTIFY        (1UL << PRB_HASPLNOTIFY)
+#define PRF_SERVERPROCESS      (1UL << PRB_SERVERPROCESS)
+#define PRF_HANDLERPROCESS     (1UL << PRB_HANDLERPROCESS)
+#define PRF_SHELLPROCESS       (1UL << PRB_SHELLPROCESS)
+#define PRF_EXTENDED_FLAGS     (1UL << PRB_EXTENDED_FLAGS)
 
 
 
@@ -217,8 +223,8 @@ struct Process
  * This structure is effectively READ-ONLY outside of dos.library & handlers.
  * Do not assume the size of this structure, it will expand at any time.
  * Do not access private members, their function can change at any time.
- * Do not allocate these structures other than through the DOS API,
- *  otherwise they will =NOT= work anymore, as validation data is now present.
+ * Do not allocate these structures other than through the DOS API methods,
+ *  otherwise they will =NOT= work anymore, as validation data is present.
  */
 #ifndef dos_filehandle
 
@@ -228,7 +234,7 @@ struct FileHandle
     uint16     fh_Flags;          /* --Private DOS use only.              */
 
     int32      fh_Interactive;    /* BOOLEAN; True if interactive handle  */
-    struct MsgPort *fh_MsgPort;   /* MsgPort of the filesystem/handler.   */
+    struct MsgPort *fh_MsgPort;   /* MsgPort of the handler.              */
 
     BPTR       fh_Buf;            /* --Private Bufferered stream members. */
     int32      fh_Pos;
@@ -238,18 +244,27 @@ struct FileHandle
     APTR       fh_Func2;          /*   DOS i/o routines.                  */
     APTR       fh_Func3;
 
-    BPTR       fh_Arg1;           /* --Private, dospacket handler use.    */
+    BPTR       fh_Arg1;           /* --Private, Dospacket handler use.    */
     APTR       fh_Arg2;           /* --Private, FSVP handler use.         */
 
     uint32     fh_OpenerPID;      /* The process ID of the opener. V52.16 */
-    uint32     fh_OpenTime;       /* Time (seconds) when opened. V54.62   */
+    uint32     fh_OpenTime;       /* AmigaTime (in seconds). V54.62       */
     int32      fh_Reserved1;      /* public expansion, leave alone.       */
 
     uint32     fh_DOSPrivate[18]; /* --Private DOS library fields.        */
-}; 
+};
 /* FileHandle - 128 bytes */
 
 #endif /* dos_filehandle */
+
+
+/****************************************************************************/
+/*  Handy macro to get the message port from a BPTR FileHandle. (NULL safe) */
+
+#define GETFILEPORT(bptr_fh) \
+((bptr_fh) ? ((struct FileHandle *)BADDR(bptr_fh))->fh_MsgPort : 0)
+
+
 
 
 
@@ -261,10 +276,10 @@ struct FileHandle
 struct AsyncInfoMsg
 {
     struct Message Msg;   /* Internal message structure.      */
-    
+
     int32  IoErr;         /* DOS Error code on error.         */
     int64  Result;        /* Bytes transfered or -1 on error. */
-    
+
     /* These are all set by the supplied tags, otherwise 0.   */
     APTR   UserData;      /* Userdata.                        */
     APTR   ExtraUserData; /* Extra Userdata.                  */
@@ -274,26 +289,26 @@ struct AsyncInfoMsg
     BPTR   WriteFH;       /* Write Filehandle.                */
     BPTR   AbortFH;       /* Abort Filehandle.                */
     int32  Priority;      /* Async process priority.          */
-    int64  *ResultPtr;    /* Result ptr.                      */
-    int32  *IoErrPtr;     /* IoErr ptr.                       */
+    int64 *ResultPtr;     /* Result ptr.                      */
+    int32 *IoErrPtr;      /* IoErr ptr.                       */
     uint32 NotifyUpdateTicks;      /* Update hook period.     */
     struct Hook *NotifyUpdateHook; /* Notify update hook.     */
     struct MsgPort *NotifyPort;    /* Notify end port.        */
     struct Hook *NotifyHook;       /* Notify end hook.        */
-    int32  *NotifyFlag;            /* Notify end flag.        */
-    int32  *NotifyCounter;         /* Notify counter.         */
+    int32 *NotifyFlag;             /* Notify end flag.        */
+    int32 *NotifyCounter;          /* Notify counter.         */
     struct Hook *ReadHook;    /* Read() substitute hook.      */
     struct Hook *WriteHook;   /* Write() substitute hook.     */
-    
-    uint32 DOSPrivate[4]; /* DOS use only.                    */
-    uint64 DOSInternal;   /* DOS use only.                    */
+
+    uint32 DOSPrivate[4];     /* DOS use only.                */
+    uint64 DOSInternal;       /* DOS use only.                */
 };
 /* AsyncInfoMsg - 120 bytes */
 
 
 
 /****************************************************************************/
-/* This is the standard extension to EXEC Messages used by DOS 
+/* This is the standard extension to EXEC Messages used by DOS
  */
 
 struct DosPacket
@@ -328,7 +343,7 @@ struct DosPacket
 #define dp_BufAddr  dp_Arg1
 
 /* A Packet does not require the Message to be before it in memory,
- * but for convenience it is useful to associate the two. 
+ * but for convenience it is useful to associate the two.
  */
 
 struct StandardPacket
@@ -455,7 +470,7 @@ struct StandardPacket64
 #define ACTION_NIL                0
 #define ACTION_STARTUP            0
 #define ACTION_EVENT              6     /* INTERNAL for CDFS and CrossDos commodity */
-#define ACTION_CURRENT_VOLUME     7     /* DEPRECATED from DOS 53.100+ */   
+#define ACTION_CURRENT_VOLUME     7     /* DEPRECATED from DOS 53.100+ */
 #define ACTION_LOCATE_OBJECT      8
 #define ACTION_RENAME_DISK        9
 #define ACTION_FREE_LOCK         15
@@ -489,7 +504,7 @@ struct StandardPacket64
 #define ACTION_WRITE_RETURN      1002   /* INTERNAL con-handler */
 #define ACTION_INT_WRITE_RETURN  1003   /* INTERNAL con-handler */
 
-#define ACTION_FINDUPDATE        1004   /* aka MODE_READWRITE */
+#define ACTION_FINDUPDATE        1004   /* aka MODE_UPDATE    */
 #define ACTION_FINDINPUT         1005   /* aka MODE_OLDFILE   */
 #define ACTION_FINDOUTPUT        1006   /* aka MODE_NEWFILE   */
 #define ACTION_END               1007
@@ -527,7 +542,7 @@ struct StandardPacket64
 /* Similar functionality to ACTION_DIE, which was never properly documented.
    This replacement causes supporting filesystems to relinquish all active
    locks to the dos lockhandler process, remove the volume node (if added),
-   and then end the filesystem process itself. 
+   and then end the filesystem process itself.
    See; DismountDevice() for extensive information. (V51) */
 #define ACTION_SHUTDOWN             3000
 
@@ -565,7 +580,7 @@ struct StandardPacket64
 #define ACTION_EXAMINEDATA_DIR        3040
 
 
-/* DOS will emulate notifications from 52.33+ if you do not support these */ 
+/* DOS will emulate notifications from 52.33+ if you do not support these */
 #define ACTION_ADD_NOTIFY             4097   /* optional */
 #define ACTION_REMOVE_NOTIFY          4098   /* optional */
 
@@ -580,7 +595,7 @@ struct StandardPacket64
 
 /* Obtain a disk's geometry data (struct FileSysStartupMsg) from a
    file system. This must be released again with ACTION_FREE_DISK_FSSM
-   when no longer needed.  (V50: see function GetDiskFileSystemData() ) 
+   when no longer needed.  (V50: see function GetDiskFileSystemData() )
    NOTE: If this packet is unsupported by the handler, DOS will emulate
          this functionality by using startup data from the device node. */
 #define ACTION_GET_DISK_FSSM          4201   /* DEPRECATED */
@@ -591,7 +606,7 @@ struct StandardPacket64
 
 
 /* New dospacket to control dos.library long path handling code. (@ v53.23)
- * This dospacket has been introduced to be able to formally control the 
+ * This dospacket has been introduced to be able to formally control the
  * behaviour of the internal dos.library long path name handling code.
  *
  * When a dospacket based filesystem responds with DOSTRUE to this query,
@@ -605,7 +620,7 @@ struct StandardPacket64
  *
  * This dospacket is not used with Vector-Port based filesystems or
  * DOS handlers that do not identify as a filesystem.
- */ 
+ */
 #define ACTION_INHIBIT_DOS_LONGPATH_HANDLING   5323
 
 
@@ -658,7 +673,7 @@ struct ConsoleWindowData
     uint32          ConsoleType;   /* Identifies the type of console,
                                       e.g. ID_RAWCON or ID_CON */
 
-    APTR            DOSPrivate[2]; /* Private fields for use by DOS only */ 
+    APTR            DOSPrivate[2]; /* Private fields for use by DOS only */
 };
 
 
@@ -682,7 +697,7 @@ struct FindTrackedAddressMsg
     APTR                  ftam_ExtraInfo;
     int32                 ftam_ExtraInfoSize;
 /* -- 40 bytes @ V50 */
-    struct AddressAndSize ftam_AAS; 
+    struct AddressAndSize ftam_AAS;
 /* -- 48 bytes @ 53.118 */
 };
 
@@ -700,23 +715,27 @@ struct CapturedExpression
     APTR                  cape_Pool;   /* private */
 };
 
+
 /****************************************************************************/
-/* The public structure for PseudoSegLists which are used by RunCommand(),
-   LoadSeg(), Create[new]Proc(), AllocSegList(), etc..  to handle new formats.
+/* The public structure for a PseudoSegList which is used by RunCommand(),
+   LoadSeg(), Create[new]Proc(), AllocSegList(), etc...  to handle new
+   formats as well as being transparent for existing 68K hunk loadables.
+
    ==DO NOT== create these yourself if you can call AllocSegList() to do so,
    there are members omitted here, like the int32 segment size in front,
    however, this structure declaration does provide the required minimum size,
    due to ps_Data[4] being included as part of the public size definition.
 
    WARNING:  Alignment padding may change in future for segment alignments
-   greater than 32 bytes, so, avoid accessing members past ps_Ikey yourself,
+   greater than 32 bytes, so, avoid accessing members past ps_Ikey manually,
    instead, call the function; IDOS->GetSegListInfoTags() to obtain any
    information about a seglist/segment.
 
-   Do not expect any loaded object code or data to be actually present within
-   a segment memory allocation, especially for native loadables, these may
-   only store a reference to this information, use IDOS->GetSegListInfoTags()
-   to obtain pointers and sizes of the actual loaded code/data sections.
+   Do not expect any new loaded object code or data to actually be present
+   within a segment memory allocation, especially for native loadables,
+   these only store a reference to this information, use the function
+   IDOS->GetSegListInfoTags() to obtain pointers and sizes of the actual
+   loaded code/data sections for native loadables.
 
    Refer to IDOS->AllocSegList() documentation for further details.
    Refer to IDOS->GetSegListInfo() to access information from any seglist.
@@ -734,7 +753,7 @@ struct PseudoSegList
     uint32  ps_DosPrivate; /* uint32 - DOS Private use only.                */
     uint32  ps_Reserved1;  /* uint32 - Block alignment - reserved.          */
     uint32  ps_Reserved2;  /* uint32 - Block alignment - reserved.          */
-    uint8   ps_Data[4];    /* uint8  - First 4 bytes of data area.          */
+    uint8   ps_Data[4];    /* uint8  - First 4 bytes of aligned data area.  */
 };
 
 
@@ -766,6 +785,7 @@ struct PseudoSegList
     /*                                                                      */
     /* A hand-made PPC segment MUST have at least the following members     */
     /* initialised exactly as shown, to be recognised by DOS.               */
+    /* All members below are 32 bit wide.                                   */
     /*                                                                      */
     /*     SegSize >= sizeof(struct PseudoSegList);  //@ -4 byte offset     */
     /*     ps_Next  = 0;                             //@  0 byte offset     */
@@ -796,7 +816,7 @@ struct PseudoSegList
 
 /****************************************************************************/
 /* The structure for the DOS resident list.  Do NOT allocate these manually,
-   use AddSegment[taglist]() instead and heed the warnings in the autodocs! 
+   use AddSegment[taglist]() instead and heed the warnings in the autodocs!
    For legacy reasons, the name string is in BCPL format, but is NOT a BPTR.
    The BCPL format means that the first byte holds the strlen() of the
    following bytes, it is also nul-terminated to be interoperable with
@@ -838,6 +858,13 @@ struct CommandLineInterface
     uint32 cli_DefaultStack;   /* Stack size to be obtained in long words   */
     BPTR   cli_StandardOutput; /* Default (terminal) CLI output             */
     BPTR   cli_Module;         /* SegList of currently loaded command       */
+/* -- 64 bytes @ DOS V54.127 */
+
+    uint32 cli_StructSize;     /* Structure size, added @ DOS V54.128       */
+    int32  cli_Reserved_3;
+    BSTR   cli_Epilog;         /* BSTR epilog string.                       */
+    BSTR   cli_Reserved_1;
+/* -- 80 bytes @ DOS V54.128 */
 };
 
 #define  cli_Background  cli_RunBackground   /* synonym */
@@ -846,10 +873,10 @@ struct CommandLineInterface
 
 
 /****************************************************************************/
-/* DosList structures can take on different values depending on whether it 
+/* DosList structures can take on different values depending on whether it
    is a device, an assignment, or a volume.  Below is the structure
    reflecting volumes only, following that is the structure representing
-   only devices, following that is the structure for assignments, 
+   only devices, following that is the structure for assignments,
    then following that is the unioned structure representing all types. */
 
 struct VolumeNode   /* VOLUME structure; vn_Type==DLT_VOLUME */
@@ -858,7 +885,7 @@ struct VolumeNode   /* VOLUME structure; vn_Type==DLT_VOLUME */
     int32            vn_Type;        /* always DLT_VOLUME for dos "volumes" */
     struct MsgPort * vn_Port;        /* msg port for the handler process    */
     int32            vn_Reserved2;   /* -- reserved for use by DOS          */
-    struct DateStamp vn_VolumeDate;  /* creation (formatted) date           */
+    struct DateStamp vn_VolumeDate;  /* mounted,formatted,serialized        */
     BPTR             vn_LockList;    /* generally unused, leave as 0        */
     int32            vn_DOSType;     /* ie; 'DOS\7' - 32 bit hex dostype    */
     int32            vn_FSPrivate;   /* private filesystem use only         */
@@ -898,11 +925,13 @@ struct DeviceNode   /* DEVICE structure; dn_Type==DLT_DEVICE */
 /*
 **  NOTE: Accessing dn_Startup field can be dangerous if you are unprepared
 **        when scanning the doslist, take care and expect any of the following;
-**        1) A value of zero. 
+**        1) A value of zero.
 **        2) A simple integer <= 64 for some handlers.
 **        3) A BSTR to a BCPL formatted string for handlers & some filesystems.
 **        4) A BPTR to a struct FileSysStartupMsg for disk based filesystems.
 **
+**        Differentiating between 3 and 4 may be somewhat problematic.
+**        It is safer to use IDOS->GetDiskFileSystemData() for these.
 */
 
 #define DN_STARTUP_MAXINT  64
@@ -969,13 +998,13 @@ struct DosList      /* COMBINED structure for all types. */
         BPTR    dol_Startup;      /* Startup msg: FileSysStartupMsg for disks.   */
         BPTR    dol_SegList;      /* Already loaded seglist for new process.     */
         int32   dol_GlobVec;      /* Global vector locking method key (-1 or -2) */
-      } 
+      }
       dol_device;
 
       struct
       {
         int32   dol_Reserved2;    /* -- Reserved for use by DOS.               */
-        struct  DateStamp dol_VolumeDate;   /* Creation (formatted) date.      */
+        struct  DateStamp dol_VolumeDate;   /* mounted,formatted,serialized.   */
         BPTR    dol_LockList;     /* -- Reserved by DOS, leave as 0            */
         int32   dol_DOSType;      /* 32 bit hex identity, eg: 'DOS\0'          */
         int32   dol_FSPrivate;    /* Used privately by filesystems.            */
@@ -991,7 +1020,7 @@ struct DosList      /* COMBINED structure for all types. */
         int32   dol_Unused[3];    /* -- Reserved for new types, leave as 0     */
       }
       dol_assign;
-    } 
+    }
     dol_misc;
 
     BSTR        dol_Name;         /* BSTR formatted name string */
@@ -1034,7 +1063,7 @@ struct DosList      /* COMBINED structure for all types. */
 #define LDB_ENTRY        5
 #define LDB_DELETE       6
 
-/* Internal semaphore flags */
+/* Internal semaphore flags, not for application use. */
 #define LDF_ENTRY       (1 << LDB_ENTRY)
 #define LDF_DELETE      (1 << LDB_DELETE)
 
@@ -1068,21 +1097,25 @@ struct DosList      /* COMBINED structure for all types. */
 /* A filesystem lock structure, as returned by Lock(), DupLock(), etc...    */
 /* Most of this structure is private to the filesystem and dos.library.     */
 /* Some filesystems do not play nicely with others, and may not share.      */
-/* So, DO NOT ACCESS PRIVATE FIELDS - They may not even be used for the     */
-/* purpose indicated by the labelled name or type declaration.              */
+/* So, DO NOT ACCESS PRIVATE FIELDS unless extreme care is taken,           */
+/* as they may not even be used for the advertised purpose.                 */
 /****************************************************************************/
 
 struct Lock
 {
-    BPTR             fl_Link;          /* PRIVATE - filesystem use only.    */
-    int32            fl_Key;           /* PRIVATE - filesystem use only.    */
-    int32            fl_Access;        /* PRIVATE - filesystem use only.    */
+    BPTR             fl_Link;          /* PRIVATE - BCPL node linkage.      */
+    int32            fl_Key;           /* PRIVATE - Object unique ID.       */
+    int32            fl_Access;        /* PRIVATE - Shared/Exclusive mode.  */
 
     struct MsgPort * fl_Port;          /* Handler process message port      */
 
     BPTR             fl_Volume;        /* BPTR to DLT_VOLUME DosList entry.
-                                       ** This can be NULL for some special
+                                       ** This can be NULL for some 'special'
                                        ** handlers, never assume otherwise.
+                                       ** If the ptr is not 0, extra checks
+                                       ** should be done, at least vn_Type.
+                                       ** The vn_Port field should also be
+                                       ** be the same as fl_Port.
                                        */
 
                                        /* -- V51 additions -- */
@@ -1099,7 +1132,25 @@ struct Lock
     int32            fl_DosPrivate;    /* PRIVATE - dos library use only.   */
     int32            fl_Reserved[2];   /* RESERVED for expansion. V53       */
 };
-/* Filesystem private data can extend past the end of this definition. */
+/* Filesystem private data will extend past the end of this definition. */
+
+/****************************************************************************/
+/* Note; that the struct Lock will expand in future and software should     */
+/* assume that a few new fields may be added to the existing structure.     */
+/* So, if embedding a struct Lock in a custom structure, ensure that there  */
+/* is plenty of usused INT32 pad spaces (4-8) after the existing structure, */
+/* so nothing private will get clobbered in the interim.                    */
+/****************************************************************************/
+
+
+
+
+/****************************************************************************/
+/*  Handy macro to get the message port from a BPTR Lock. (NULL safe).      */
+
+#define GETLOCKPORT(bptr_lk) \
+((bptr_lk) ? ((struct Lock *)BADDR(bptr_lk))->fl_Port : 0)
+
 
 
 
@@ -1122,8 +1173,8 @@ struct DevProc
 
 /* Definitions for DevProc->dvp_Flags;  */
 
-#define DVPB_UNLOCK         0    
-  /* For DOS internal use. 
+#define DVPB_UNLOCK         0
+  /* For DOS internal use.
    * This currently means the lock is temporary and will be unlocked
    * on the next call to GetDeviceProcFlags() or FreeDeviceProc().
    * This is generally used for resolving assignments.
@@ -1138,21 +1189,21 @@ struct DevProc
 
 /*
  * The following flags were added at V53.56 to provide additional
- * functionality for LockTags() and other internal subsystems. 
+ * functionality for LockTags() and other internal subsystems.
  */
 
 #define DVPB_DEVICE         16
   /* The supplied path is a device relative specification. */
- 
+
 #define DVPB_VOLUME         17
   /* The supplied path is a volume relative specification. */
- 
+
 #define DVPB_ASSIGNMENT     18
   /* The supplied path is an assignment relative specification. */
- 
+
 #define DVPB_PROGDIR        19
   /* The supplied path is a PROGDIR: relative specification. */
- 
+
 #define DVPB_CURRDIR        20
   /* The supplied path is a CURRDIR: relative specification. */
 
@@ -1166,7 +1217,7 @@ struct DevProc
   /* The supplied path returned the root of the default filesystem. */
 
 
-/* Field definitions for above bits */ 
+/* Field definitions for above bits */
 #define DVPF_UNLOCK         (1 << DVPB_UNLOCK)
 #define DVPF_MULTIASSIGN    (1 << DVPB_MULTIASSIGN)
 #define DVPF_DEVICE         (1 << DVPB_DEVICE)
@@ -1213,8 +1264,8 @@ struct DevProc
  * and finally contact developer support for help, if all else fails.
  *
  * The most asked questions to date are;
- *  
- * (Q) How do I access the reference directory lock without peeking in here. ? 
+ *
+ * (Q) How do I access the reference directory lock without peeking in here. ?
  * (A) Set EX_DoCurrentDir,TRUE in ObtainDirContext() and call GetCurrentDir().
  *     Refer to ObtainDirContext() autodoc for detailed information.
  *
@@ -1234,7 +1285,6 @@ struct PRIVATE_ExamineDirContext
     struct MsgPort *    MessagePort;
     APTR                MemoryPool;
 	uint32              reserved_spares[7];
-
     APTR                FSPrivateMemPtr;
     uint32              FSPrivate[8];
 /* 108 bytes - v51.104 */

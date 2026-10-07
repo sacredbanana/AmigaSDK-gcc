@@ -1,12 +1,14 @@
 #ifndef GRAPHICS_LAYERS_H
 #define GRAPHICS_LAYERS_H
 /*
-**    $VER: layers.h 54.16 (22.08.2022)
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

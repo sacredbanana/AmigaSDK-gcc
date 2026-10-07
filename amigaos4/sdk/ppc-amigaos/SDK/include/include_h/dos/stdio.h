@@ -1,14 +1,17 @@
 #ifndef DOS_STDIO_H
 #define DOS_STDIO_H
 /*
-**    $VER: stdio.h  54.102 (28.09.2021)
+**    $VER: stdio.h  54.126 (05.08.2023)
 **
 **    ANSI-like stdio defines for dos buffered I/O
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */

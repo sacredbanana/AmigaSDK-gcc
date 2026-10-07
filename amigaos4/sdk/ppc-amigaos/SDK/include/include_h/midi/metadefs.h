@@ -1,7 +1,6 @@
 #ifndef MIDI_METADEFS_H
 #define MIDI_METADEFS_H
 //
-// $VER: metadefs.h 54.16 (22.08.2022)
 //
 // Meta events are stored in a MIDI file, but are NEVER
 // transmitted through CAMD. They are used to carry additional

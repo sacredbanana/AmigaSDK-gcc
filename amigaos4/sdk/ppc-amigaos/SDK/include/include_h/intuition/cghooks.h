@@ -1,7 +1,6 @@
 #ifndef INTUITION_CGHOOKS_H
 #define INTUITION_CGHOOKS_H 1
 /*
-**    $VER: cghooks.h 54.16 (22.08.2022)
 **
 **    Custom Gadget processing
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

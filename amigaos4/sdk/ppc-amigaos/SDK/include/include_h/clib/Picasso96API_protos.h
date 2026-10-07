@@ -2,11 +2,13 @@
 #define CLIB_PICASSO96API_PROTOS_H
 
 /*
-**    $Id: Picasso96API_protos.h,v 1.7 2010-01-31 01:28:53 ssolie Exp $
 **
 **    C prototypes. For use with 32 bit integers only.
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

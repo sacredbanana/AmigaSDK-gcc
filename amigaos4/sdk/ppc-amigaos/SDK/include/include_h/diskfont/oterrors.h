@@ -1,7 +1,6 @@
 #ifndef DISKFONT_OTERRORS_H
 #define DISKFONT_OTERRORS_H
 /*
-**    $VER: oterrors.h 54.16 (22.08.2022)
 **
 **    error results from outline libraries AKA font engines
 **
@@ -12,6 +11,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

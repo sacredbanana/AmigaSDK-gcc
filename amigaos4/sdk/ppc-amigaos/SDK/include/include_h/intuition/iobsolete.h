@@ -2,7 +2,6 @@
 #define INTUITION_IOBSOLETE_H
 
 /*
-**    $VER: iobsolete.h 54.16 (22.08.2022)
 **
 **    Obsolete identifiers for Intuition.  Use the new ones instead!
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

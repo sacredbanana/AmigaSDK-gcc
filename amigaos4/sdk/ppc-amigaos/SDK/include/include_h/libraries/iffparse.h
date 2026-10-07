@@ -1,7 +1,6 @@
 #ifndef IFF_IFFPARSE_H
 #define IFF_IFFPARSE_H
 /*
-**    $VER: iffparse.h 54.16 (22.08.2022)
 **
 **    iffparse.library structures and constants
 **
@@ -11,6 +10,9 @@
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
 **    All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 /*****************************************************************************/

@@ -1,15 +1,11 @@
 #ifndef EXEC_LIBRARIES_H
 #define EXEC_LIBRARIES_H
 /*
-**    $VER: libraries.h 53.29 (10.8.2015)
+** Definitions for use when creating or using Exec libraries
 **
-**    Definitions for use when creating or using Exec libraries
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_NODES_H

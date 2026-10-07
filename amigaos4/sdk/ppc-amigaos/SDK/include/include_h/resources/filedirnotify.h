@@ -1,14 +1,14 @@
 #ifndef RESOURCES_DOSFILEDIRNOTIFY_H
 #define RESOURCES_DOSFILEDIRNOTIFY_H
 /*
-**    $VER: filedirnotify.h  54.100 (07.09.2020)
+**    $VER: filedirnotify.h  54.126 (05.08.2023)
 **
 **    DOSFileDirNotify.resource description
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -47,13 +47,13 @@ extern "C" {
 
 
 /****************************************************************************
- * This resource allows the dos.library notification handler process to 
- * rendezvous with the notification list and also provide statistical data 
- * for any other callers requiring this information by providing a copy of the 
+ * This resource allows the dos.library notification handler process to
+ * rendezvous with the notification list and also provide statistical data
+ * for any other callers requiring this information by providing a copy of the
  * DOS libraries internal filesystem style notification handlers notify list.
  *
  * Also this resource provided a method to globally monitor all filesystem
- * object changes that occur on all mounted volumes. 
+ * object changes that occur on all mounted volumes.
  ****************************************************************************/
 
 struct FDNResource
@@ -63,18 +63,18 @@ struct FDNResource
 
     /*
     ** Notification request list functions
-    ** This resource was added in doslib 53.23 
+    ** This resource was added in doslib 53.23
     */
     struct List * VARARGS68K (*ObtainNotifyList)  (void);
     void          VARARGS68K (*ReleaseNotifyList) (struct List *);
 
 
     /*
-    ** DOS event monitoring functions. 
+    ** DOS event monitoring functions.
     ** These vectors were added in doslib 53.81 - previously NULL pointers.
     */
     void          VARARGS68K (*AddEventHook)      (struct Hook *);
-    void          VARARGS68K (*RemoveEventHook)   (struct Hook *); 
+    void          VARARGS68K (*RemoveEventHook)   (struct Hook *);
 
 
     int32         Reserved[4];
@@ -88,13 +88,13 @@ struct FDNResource
 
 
 /****************************************************************************
- * NOTIFICATION REQUEST LIST: 
+ * NOTIFICATION REQUEST LIST:
  *
- * The notification list returned is a standard exec list with a standard 
+ * The notification list returned is a standard exec list with a standard
  * exec node for each active dos.library notification request.
  *
- * The list pointer is obtained by calling the ObtainNotifyList() function, 
- * at which time it will allocate a list structure and copy all active 
+ * The list pointer is obtained by calling the ObtainNotifyList() function,
+ * at which time it will allocate a list structure and copy all active
  * dos.library notify requests nodes and append them to the list.
  *
  * A corresponding call to the ReleaseNotifyList() function is mandatory to
@@ -104,11 +104,11 @@ struct FDNResource
  *
  * The node->ln_Type is the type of notification, it is initialised with
  * the value from; notifyrequest->nr_Flags & 0xFF;
- * This represents a bitfield that may contain any combinations of the 
+ * This represents a bitfield that may contain any combinations of the
  * following flags;  NRF_SEND_MESSAGE, NRF_SEND_SIGNAL, NRF_CALL_HOOK,
  *                   NRF_WAIT_REPLY,   NRF_NOTIFY_INITIAL
  *
- * The node->ln_Name points to the full DOS path of the object being monitored 
+ * The node->ln_Name points to the full DOS path of the object being monitored
  * as found from the string in; notifyrequest->nr_FullName;
  *
  ****************************************************************************
@@ -173,7 +173,7 @@ struct DosEventMsg
     CONST_STRPTR    FullName;     /* full device-centric path & object name. */
     uint32          Reserved[4];  /* reserved fields for dos expansion.      */
 };
- 
+
 
 
 
@@ -186,11 +186,11 @@ struct DosEventMsg
  * API functions.
  *
  * The monitoring is performed by adding a struct Hook to the internal list
- * where the hooks h_Entry function will be called within the context of the 
- * notify handler process for EVERY DOS EVENT that modifies any filesystem 
+ * where the hooks h_Entry function will be called within the context of the
+ * notify handler process for EVERY DOS EVENT that modifies any filesystem
  * object on any volume.
  *
- * The hook calling occurs just after any notifications have first been 
+ * The hook calling occurs just after any notifications have first been
  * processed (if any) and just before the DosEventMsg is deleted.
  *
  * For filtering events for specific volumes, simply compare the message port
@@ -205,11 +205,11 @@ struct DosEventMsg
  *
  * NOTE: It is absolutely mandatory to RemoveEventHook() your hook before
  *       your program exits, otherwise a system crash will definately result.
- *       
+ *
  *       Attempting to RemoveEventHook() an already removed hook is harmless.
  *       Attempting to RemoveEventHook() a never added hook is also harmless.
- *       
- *       Rather than checking the dos.library version and revision, simply 
+ *
+ *       Rather than checking the dos.library version and revision, simply
  *       checking for NULL vector pointer will be sufficient if the resource
  *       opens as these two vectors were previously NULL pointers.
  *
@@ -227,8 +227,8 @@ struct DosEventMsg
  *  STATIC void ehook(struct Hook *h, int32 o UNUSED, struct DosEventMsg *m)
  *  {
  *      struct MyHookData *hd = h->h_Data;
- *  
- *      hd->idos->FPrintf(hd->stream, "%-20s %-50s %-20s PID=%lu \n", 
+ *
+ *      hd->idos->FPrintf(hd->stream, "%-20s %-50s %-20s PID=%lu \n",
  *                    m->FuncName, m->FullName, m->TaskName, m->ProcessID);
  *  }
  *
@@ -238,21 +238,21 @@ struct DosEventMsg
  *      struct FDNResource *resource = IExec->OpenResource(FDNR_NAME);
  *      struct Hook         HOOK;
  *      struct MyHookData   HD;
- *  
+ *
  *      if( resource )   //resource only opens from dos 53.23
  *      {
  *          if( resource->AddEventHook ) //added in dos 53.81, previously 0
  *          {
  *              HD.idos   = IDOS;
  *              HD.stream = IDOS->Output();
- *  
+ *
  *              HOOK.h_Entry = (APTR)ehook;
  *              HOOK.h_Data  = &HD;
- *  
+ *
  *              resource->AddEventHook(&HOOK);
- *  
+ *
  *              IExec->Wait(SIGBREAKF_CTRL_C);    //wait for CTRL-C to exit.
- *  
+ *
  *              resource->RemoveEventHook(&HOOK);
  *          }
  *      }

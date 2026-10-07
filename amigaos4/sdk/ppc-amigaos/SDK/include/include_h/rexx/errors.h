@@ -1,7 +1,6 @@
 #ifndef REXX_ERRORS_H
 #define REXX_ERRORS_H
 /*
-**    $VER: errors.h 54.16 (22.08.2022)
 **
 **    Definitions for ARexx error codes
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

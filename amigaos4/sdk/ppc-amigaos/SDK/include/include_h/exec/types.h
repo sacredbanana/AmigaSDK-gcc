@@ -1,15 +1,11 @@
 #ifndef EXEC_TYPES_H
 #define EXEC_TYPES_H
 /*
-**    $VER: types.h 53.29 (10.8.2015)
+** Data typing.  Must be included before any other Amiga include.
 **
-**    Data typing.  Must be included before any other Amiga include.
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   AMIGA_COMPILER_H
@@ -207,13 +203,13 @@ typedef unsigned char TEXT; /* Non-negative character */
 
 /****************************************************************************/
 
+#ifndef NULL
 #ifdef __cplusplus
 #define NULL 0L
 #else
-#ifndef NULL
 #define NULL ((void *)0L)
-#endif
 #endif /* __cplusplus */
+#endif
 
 /****************************************************************************/
 
@@ -245,6 +241,18 @@ typedef unsigned char TEXT; /* Non-negative character */
 #define AMIGAOS_TYPE(x) x
 #define AMIGAOS_STRUCT(x) struct x
 #endif
+
+/****************************************************************************/
+
+/* This type is only used for the page backend to be able to cope with physical
+ * memory sizes of more than 4 GB.
+ * Note: The conversion macros convert a physical pointer to a native physical
+ * pointer, this does NOT have anything to do with converting to virtual
+ * addresses.
+ */
+typedef uint64 physical_address_t;
+#define PHYS_TO_NATIVE(pointer) ((APTR)((uint32)(pointer)))
+#define NATIVE_TO_PHYS(pointer) ((physical_address_t)((uint64)((uint32)(pointer))))
 
 /****************************************************************************/
 

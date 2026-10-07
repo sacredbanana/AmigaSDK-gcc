@@ -1,7 +1,6 @@
 #ifndef GADGETS_COLORWHEEL_H
 #define GADGETS_COLORWHEEL_H
 /*
-**    $VER: colorwheel.h 54.16 (22.08.2022)
 **
 **    Definitions for the colorwheel BOOPSI class
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

@@ -1,14 +1,7 @@
 /*
-**    $VER: performancemonitor.h 53.29 (10.8.2015)
+** Performance monitor resource
 **
-**    Performance monitor resource
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
-**
+** Copyright 2004-2018 Trevor Dickinson.
 */
 
 #ifndef _RESOURCES_PERFORMANCEMONITOR_H
@@ -21,8 +14,7 @@ enum enPerformanceMonitorItems
     PMCI_CPUCycles      =   1, /* Number of CPU cycles */
     PMCI_Instr          =   2, /* Number of CPU finished instructions */
     PMCI_FPUInstr       =   3, /* Number of instructions completed by FPU */
-    PMCI_Transition     =   4, /* Number of transitions of RTC bit from 0 to 1
-                                */
+    PMCI_Transition     =   4, /* Number of transitions of RTC bit from 0 to 1 */
     PMCI_InstrDisp      =   5, /* Number of CPU instructions dispatched */
     PMCI_EIEIO          =   6, /* Number of eieio instructions completed */
     PMCI_SYNC           =   7, /* Number of sync instructions completed */
@@ -55,8 +47,7 @@ enum enPerformanceMonitorItems
 #define PMECT_Enable         (TAG_USER + 2) /* Enable even generation   */
 
 /* Tag items for MonitorControl */
-#define PMMCT_FreezeCounters (TAG_USER + 1) /* Define freeze count conditions
-                                             */
+#define PMMCT_FreezeCounters (TAG_USER + 1) /* Define freeze count conditions */
 #define PMMCT_RTCBitSelect   (TAG_USER + 3) /* Select bit for sampling */
 #define PMMCT_Threshold      (TAG_USER + 4) /* Define threshold for events */
 #define PMMCT_GetThreshold   (TAG_USER + 5) /* Get the currently active
@@ -68,7 +59,7 @@ enum enPerformanceMonitorItems
 /* Values for PMMCT_Count[Enable|Disable] */
 enum enPerformanceMonitorCountControl
 {
-    PMMC_Always   = 0x01, /* Always freeze */
+    PMMC_Always   = 0x01, /* Always freeze, disable counting globally */
     PMMC_Super    = 0x02, /* Freeze in supervisor mode */
     PMMC_User     = 0x04, /* Freeze in user mode */
     PMMC_Marked   = 0x08, /* Freeze if marked */

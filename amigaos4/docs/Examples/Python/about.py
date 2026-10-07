@@ -11,5 +11,4 @@ str = "AmigaOS Python\n" \
  + "CPU: " + amiga.getcpu() + "\n" \
  + "Machine: " + amiga.getmachine() + "\n"
 
-asl.MessageBox("Amiga Python 2.5.6", str, "Great")
-
+asl.MessageBox("Amiga Python 2.5.1", str, "Great")

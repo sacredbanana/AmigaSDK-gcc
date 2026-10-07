@@ -1,18 +1,21 @@
 #ifndef DOS_DOSASL_H
 #define DOS_DOSASL_H
 /*
-**    $VER: dosasl.h  54.100 (07.09.2020)
+**    $VER: dosasl.h  54.126 (05.08.2023)
 **
 **    Pattern-matching structure definitions
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
-                      
+
 #ifndef EXEC_LIBRARIES_H
 #include <exec/libraries.h>
 #endif
@@ -45,7 +48,7 @@ extern "C" {
 /*******************************************************************************
  * WARNING:   The V50 AnchorPath structure has moved to dos/anchorpath.h
  *
- * You MUST now allocate these with AllocDosObject() from DOS 50.76+ 
+ * You MUST now allocate these with AllocDosObject() from DOS 50.76+
  *           MatchXXX() will simply not work if you do not heed this warning.
  ******************************************************************************/
 

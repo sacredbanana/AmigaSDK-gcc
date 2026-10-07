@@ -1,7 +1,6 @@
 #ifndef HARDWARE_CUSTOM_H
 #define HARDWARE_CUSTOM_H
 /*
-**    $VER: custom.h 54.16 (22.08.2022)
 **
 **    Offsets of Amiga custom chip registers
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

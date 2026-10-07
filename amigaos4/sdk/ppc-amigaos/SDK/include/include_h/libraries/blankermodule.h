@@ -1,7 +1,6 @@
 #ifndef LIBRARIES_BLANKERMODULE_H
 #define LIBRARIES_BLANKERMODULE_H
 /*
-**  $VER: blankermodule.h 54.16 (22.08.2022)
 **
 **	Structure and method definitions for the blankermodule library system.
 **
@@ -11,6 +10,9 @@
 **       All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -34,6 +36,9 @@
 /******************************************************************************/
 
 #ifdef __cplusplus
+#ifdef __USE_AMIGAOS_NAMESPACE__
+namespace AmigaOS {
+#endif
 extern "C" {
 #endif
 
@@ -159,6 +164,9 @@ enum enBlankerModuleSet
 
 #ifdef __cplusplus
 }
+#ifdef __USE_AMIGAOS_NAMESPACE__
+}
+#endif
 #endif
 
 /******************************************************************************/

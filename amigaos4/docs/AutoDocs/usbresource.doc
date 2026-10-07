@@ -1,14 +1,17 @@
 TABLE OF CONTENTS
 
 usbresource.library/--overview--
-usbresource.library/USBResRegisterFDA
-usbresource.library/USBResUnregisterFD
-usbresource.library/USBResRegisterHCDA
-usbresource.library/USBResUnregisterHCD
+usbresource.library/USBResAddHook
 usbresource.library/USBResAddNotify
+usbresource.library/USBResRegisterFDA
+usbresource.library/USBResRegisterHCDA
 usbresource.library/USBResRemNotify
+usbresource.library/USBResRemoveHook
+usbresource.library/USBResUnregisterFD
+usbresource.library/USBResUnregisterHCD
 
-usbresource.library/--overview--               usbresource.library/--overview--
+
+usbresource.library/--overview--                 usbresource.library/--overview--
 
    For the USB stack HCD drivers are usually loaded automatically upon
    startup and FDs are loaded when needed. For the USB stack to know
@@ -23,8 +26,140 @@ usbresource.library/USBResRemNotify
    By registering thru usbresource.library the USB stack can utilize them
    even before DOS is started.
 
+usbresource.library/USBResAddHook               usbresource.library/USBResAddHook
 
-usbresource.library/USBResRegisterFDA     usbresource.library/USBResRegisterFDA
+   NAME
+      USBResAddHook -- Add a callback hook to the USB stack for debugging
+                       purposes (53.25)
+
+   SYNOPSIS
+      hookKey = USBResAddHook( eventType, hook, name )
+
+      ULONG USBResAddHook( ULONG, struct Hook *, char * );
+
+   FUNCTION
+      Using this function you install a callback hook into the USB stack.
+      When the hook will be called, and which arguments are passed to it,
+      depends on the event type you register the hook for.
+
+      Before calling here the Hook.MinNode must be cleared - i.e. mln_Succ
+      and mln_Pred must be set to NULL. If not, the Hook may be rejected
+      by the USB stack to guard against adding the same Hook multiple
+      times.
+
+      An installed struct Hook should be treated as owned by the USB
+      stack. Only the Hook.h_Data field may be used.
+
+      Hooks are called in-line and in context of the Task or Process in
+      which the USB stack event is occuring. This also means that while
+      your hook code is executing, you may be blocking the USB stack from
+      doing other work. So be specific in what your hook does, and don't
+      spend more time than necessary.
+
+      The Hook must be removed again when no longer needed by calling
+      USBResRemoveHook().
+
+      The following event types are currently defined:
+
+         USB_HOOKEVENT_HOOKCHANGE
+            The hook is called whenever an event hook is added or removed
+            from any event type.
+            Hook will be called with a NULL object and a pointer to a
+            struct USBHookChangeEventData as message.
+
+         USB_HOOKEVENT_LOGENTRY
+            The hook is called for every USB log entry being added.
+            It will be called with a NULL object and a pointer to a
+            struct USBLogHookEventData as message.
+
+         USB_HOOKEVENT_IOTRACE
+            The hook is called for every IO tracing event logged with the
+            USB stack.
+            Hook will be called with a NULL object and a pointer to a
+            struct USBIoTraceEventData as message.
+
+
+   INPUTS
+      eventType  The type of event for which the given Hook should be
+                 called.
+      hook       The hook to call when the event is triggered.
+      name       A NUL terminated name for the hook installed.
+                 This will be used if the USB stack needs to refer to the
+                 hook in messages or debug output. The name will be copied
+                 to an internal buffer and need not stay valid while the
+                 hook is installed.
+
+   RESULT
+      A key uniquely identifying the installed hook, or zero if the hook
+      could not be installed. Use this key for removing the hook later.
+
+   SEE ALSO
+      usbresource.library/USBResRemoveHook(),
+      usb/system.h
+
+usbresource.library/USBResAddNotify           usbresource.library/USBResAddNotify
+
+   NAME
+      USBResAddNotify -- Add a subscription for global USB notifications
+                         (new in v1.8)
+
+   SYNOPSIS
+      subs = USBResAddNotify( type, msgport )
+       D0                      D0      A0
+
+      APTR USBResAddNotify( ULONG, struct MsgPort * );
+
+
+   FUNCTION
+      This function is used for subscribing to a specific global USB stack
+      event. Once subscribed, a notification message is sent to the
+      specified MsgPort every time an event of the specified type occurs.
+      All notification messages received at the port must be ReplyMsg()'ed
+      after use. Once replied the message must nolonger be referenced.
+
+      One example of an event is the detachment event. If subscribed, a
+      message is received every time a USB Function is detached.
+
+      This function returns a reference for the notification subscription.
+      Use this reference to unsubscribe at a later time by calling
+      USBResRemNotify().
+
+   NOTE
+      This global USB stack notification mechanism is *not* for general
+      driver use. It is intended for things such as a USB stack GUI which
+      will need to know when USB stack related things change so that the
+      GUI can be updated.
+      Do not expect USB object pointers (such as UsbRawFunction or
+      UsbRawInterface ptrs) returned in notifications to be comparable to
+      those obtainable thru driverlevel functions (e.g. USBFindFunctionA()
+      and USBFindInterfaceA()). The notification subsystem may operate on
+      an altogether different view of the USB stack, thus using different
+      internal structures and public references.
+      Only compare object pointers from the notification subsystem with
+      pointers from the notification or USB topology readback subsystem,
+      unless noted otherwise for the specific notification type.
+
+      Note that the notification subsystem is not implemented as a
+      critical subsystem. That is, in certain extreme situations events
+      may pass without notification messages being sent. This will e.g.
+      happen if the system is running low on memory so that notification
+      messages cannot be allocated.
+
+   INPUTS
+      type     -  The type of event to receive notifications for.
+                  Specify one of the USBNM_TYPE_xxx codes.
+      msgport  -  The MsgPort to which notification messages are sent.
+
+   RESULTS
+      subs -  USB System Software private reference for the notification
+              subscription. Use this for canceling the notification
+              subscription at a later time.
+              NULL is returned on failure to setup the notification.
+
+   SEE ALSO
+      USBResRemNotify()
+
+usbresource.library/USBResRegisterFDA       usbresource.library/USBResRegisterFDA
 
    NAME
       USBResRegisterFDA -- Add a Function Driver to list of available
@@ -140,7 +275,7 @@ usbresource.library/USBResRemNotify
                   USBA_VendorID
                      ti_Data is a USB VendorID indicating the company
                      which has created a USB Function. Use this tag
-                     only for vendor-specific Function drivers.
+                     only for vendor specific Function drivers.
 
                   USBA_ProductID
                      ti_Data is a USB ProductID indicating which products
@@ -149,10 +284,25 @@ usbresource.library/USBResRemNotify
                      together with USBA_VendorID.
                      Use this tag only for vendor specific FDs.
 
+                  USBA_VendorProductIDs (V53.30)
+                     Use this tag to specify multiple vendors and (optionally)
+                     vendor products being supported by the FD.
+                     ti_Data is a pointer to an array of
+                     struct USBVendorProductIDs entries. The array must
+                     be terminated by an entry with a NULL ProductIDs ptr and
+                     a zero ProductIDCount.
+                     To indicate support for all products of a vendor make
+                     an entry with the VendorID and a single ProductID
+                     of -1L.
+                     Use this tag for vendor specific FDs only.
+                     If not specified USB_VendorID and USBA_ProductID
+                     tags are in effect. If specified the USBA_VendorID
+                     and USBA_ProductID tags are ignored.
+
                   USBA_StackSize
                      ti_Data is a LONG specifying the amount of
                      stackspace required for the FD being registered.
-                     If not specified the stacksize will default to 4k.
+                     If not specified the stacksize will be at least 16KB.
 
 
    RESULTS
@@ -162,46 +312,7 @@ usbresource.library/USBResRemNotify
    SEE ALSO
       USBResUnregisterFD()
 
-
-usbresource.library/USBResUnregisterFD   usbresource.library/USBResUnregisterFD
-
-   NAME
-      USBResUnregisterFD -- Remove a Function Driver from the list of
-                            available Function Drivers.
-
-   SYNOPSIS
-      USBResUnregisterFD( fdkey )
-                           A0
-
-      void USBResUnregisterFD( APTR );
-
-
-   FUNCTION
-      Using this function a USB Function Driver can remove itself from
-      the USB stack's list of available Function Drivers.
-      Once removed the USB stack will nolonger use the FD for USB
-      Functions attached to the USB bus. However, any running instances
-      of the FD will not be stopped or signalled by the USB stack. The
-      FD is itself responsible for doing such.
-
-      Once this call returns the FD can rest assured that it will not be
-      instantiated by the USB stack again.
-      If the FD has been added more than once (e.g. under a different
-      name or by a Function Driver Descriptor file from disk) the other
-      registrations are still active within the USB stack.
-
-   INPUTS
-      fdkey  -  The value returned by USBResRegisterFDA() when the FD
-                was added.
-
-   RESULTS
-      none
-
-   SEE ALSO
-      USBResRegisterFDA()
-
-
-usbresource.library/USBResRegisterHCDA   usbresource.library/USBResRegisterHCDA
+usbresource.library/USBResRegisterHCDA     usbresource.library/USBResRegisterHCDA
 
    NAME
       USBResRegisterHCDA -- Add a Host Controller Driver to list
@@ -237,9 +348,10 @@ usbresource.library/USBResRemNotify
       this and also open these device units.
 
       Note that the same HCD device name and unit number can only be
-      registered once with usbresource.library. Attempts to register an already
-      registered device unit will result in this function returning NULL
-      indicating that the device unit could not be registered.
+      registered once with usbresource.library. Attempts to register an
+      already registered device unit will result in this function
+      returning NULL indicating that the device unit could not be
+      registered.
       By using the USBA_ErrorCode tag you can get the reason for failure.
       If the error is USBERR_ISPRESENT this function failed due to the
       HCD device unit already being registered.
@@ -276,105 +388,7 @@ usbresource.library/USBResRemNotify
    SEE ALSO
       USBResUnregisterHCD()
 
-
-usbresource.library/USBResUnregisterHCD usbresource.library/USBResUnregisterHCD
-
-   NAME
-      USBResUnregisterHCD -- Remove a HCD from the list of available
-                             HCDs.
-
-   SYNOPSIS
-      USBResUnregisterHCD( hcdkey )
-                                 A0
-
-      void USBResUnregisterHCD( APTR );
-
-
-   FUNCTION
-      Using this function a USB HCD can remove itself from the USB stack's
-      list of available HCDs.
-      Once removed the USB stack will not start the HCD if the USB stack
-      is restarted. There is no guarantee that the USB stack will shut
-      down USB operations on an already instantiated HCD. In fact, the
-      current USB stack will most definately not do this - but that is
-      subject to change.
-
-
-   INPUTS
-      hcdkey  -  The value returned by USBResRegisterHCDA() when the
-                 HCD was added.
-
-   RESULTS
-      none
-
-   SEE ALSO
-      USBResRegisterHCDA()
-
-
-usbresource.library/USBResAddNotify         usbresource.library/USBResAddNotify
-
-   NAME
-      USBResAddNotify -- Add a subscription for global USB notifications
-                         (new in v1.8)
-
-   SYNOPSIS
-      subs = USBResAddNotify( type, msgport )
-       D0                      D0      A0
-
-      APTR USBResAddNotify( ULONG, struct MsgPort * );
-
-
-   FUNCTION
-      This function is used for subscribing to a specific global USB stack
-      event. Once subscribed, a notification message is sent to the
-      specified MsgPort every time an event of the specified type occurs.
-      All notification messages received at the port must be ReplyMsg()'ed
-      after use. Once replied the message must nolonger be referenced.
-
-      One example of an event is the detachment event. If subscribed, a
-      message is received every time a USB Function is detached.
-
-      This function returns a reference for the notification subscription.
-      Use this reference to unsubscribe at a later time by calling
-      USBResRemNotify().
-
-   NOTE
-      This global USB stack notification mechanism is *not* for general
-      driver use. It is intended for things such as a USB stack GUI which
-      will need to know when USB stack related things change so that the
-      GUI can be updated.
-      Do not expect USB object pointers (such as UsbRawFunction or
-      UsbRawInterface ptrs) returned in notifications to be comparable to
-      those obtainable thru driverlevel functions (e.g. USBFindFunctionA()
-      and USBFindInterfaceA()). The notification subsystem may operate on
-      an altogether different view of the USB stack, thus using different
-      internal structures and public references.
-      Only compare object pointers from the notification subsystem with
-      pointers from the notification or USB topology readback subsystem,
-      unless noted otherwise for the specific notification type.
-
-      Note that the notification subsystem is not implemented as a
-      critical subsystem. That is, in certain extreme situations events
-      may pass without notification messages being sent. This will e.g.
-      happen if the system is running low on memory so that notification
-      messages cannot be allocated.
-
-   INPUTS
-      type     -  The type of event to receive notifications for.
-                  Specify one of the USB_EVENT_xxx codes.
-      msgport  -  The MsgPort to which notification messages are sent.
-
-   RESULTS
-      subs -  USB System Software private reference for the notification
-              subscription. Use this for canceling the notification
-              subscription at a later time.
-              NULL is returned on failure to setup the notification.
-
-   SEE ALSO
-      USBResRemNotify()
-
-
-usbresource.library/USBResRemNotify         usbresource.library/USBResRemNotify
+usbresource.library/USBResRemNotify           usbresource.library/USBResRemNotify
 
    NAME
       USBResRemNotify -- Remove a USB notification subscription. (new in v1.8)
@@ -398,5 +412,107 @@ usbresource.library/USBResRemNotify
 
    SEE ALSO
       USBResAddNotify()
+
+usbresource.library/USBResRemoveHook         usbresource.library/USBResRemoveHook
+
+   NAME
+      USBResRemoveHook -- Remove a callback hook from the USB stack (53.25)
+
+   SYNOPSIS
+      USBResRemoveHook( eventType, hookKey )
+
+      void USBResRemoveHook( ULONG, ULONG )
+
+   FUNCTION
+      Using this function you remove a previously installed  callback hook
+      from the USB stack. The eventType argument must match the type
+      specified when installing the callback hook.
+
+      After calling here the Hook.MinNode has been cleared - i.e. mln_Succ
+      and mln_Pred are both set to NULL - if the hook was found and
+      removed.
+      If the hook is not found this function does nothing.
+
+   INPUTS
+      eventType  The type of event for which the given Hook was installed.
+      hookKey    The hook key, as returned by USBResAddHook(), of the hook to
+                 remove
+
+   RESULT
+      None
+
+   SEE ALSO
+      usbresource.library/USBResAddHook(),
+      usb/system.h
+
+usbresource.library/USBResUnregisterFD     usbresource.library/USBResUnregisterFD
+
+   NAME
+      USBResUnregisterFD -- Remove a Function Driver from the list of
+                            available Function Drivers.
+
+   SYNOPSIS
+      USBResUnregisterFD( fdkey )
+                           A0
+
+      void USBResUnregisterFD( APTR );
+
+
+   FUNCTION
+      Using this function a USB Function Driver can remove itself from
+      the USB stack's list of available Function Drivers.
+      Once removed the USB stack will nolonger use the FD for USB
+      Functions attached to the USB bus. However, any running instances
+      of the FD will not be stopped or signalled by the USB stack. The
+      FD is itself responsible for doing such.
+
+      Once this call returns the FD can rest assured that it will not be
+      instantiated by the USB stack again.
+      If the FD has been added more than once (e.g. under a different
+      name or by a Function Driver Descriptor file from disk) the other
+      registrations are still active within the USB stack.
+
+   INPUTS
+      fdkey  -  The value returned by USBResRegisterFDA() when the FD
+                was added.
+
+   RESULTS
+      none
+
+   SEE ALSO
+      USBResRegisterFDA()
+
+usbresource.library/USBResUnregisterHCD   usbresource.library/USBResUnregisterHCD
+
+   NAME
+      USBResUnregisterHCD -- Remove a HCD from the list of available
+                             HCDs.
+
+   SYNOPSIS
+      USBResUnregisterHCD( hcdkey )
+                             A0
+
+      void USBResUnregisterHCD( APTR );
+
+
+   FUNCTION
+      Using this function a USB HCD can remove itself from the USB stack's
+      list of available HCDs.
+      Once removed the USB stack will not start the HCD if the USB stack
+      is restarted. There is no guarantee that the USB stack will shut
+      down USB operations on an already instantiated HCD. In fact, the
+      current USB stack will most definately not do this - but that is
+      subject to change.
+
+
+   INPUTS
+      hcdkey  -  The value returned by USBResRegisterHCDA() when the
+                 HCD was added.
+
+   RESULTS
+      none
+
+   SEE ALSO
+      USBResRegisterHCDA()
 
 

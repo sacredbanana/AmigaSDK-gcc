@@ -1,7 +1,6 @@
 #ifndef DEVICES_NARRATOR_H
 #define DEVICES_NARRATOR_H
 /*
-**    $VER: narrator.h 54.16 (22.08.2022)
 **
 **    V37 Narrator device C language include file
 **

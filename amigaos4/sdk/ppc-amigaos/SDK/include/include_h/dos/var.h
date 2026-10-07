@@ -1,14 +1,17 @@
 #ifndef DOS_VAR_H
 #define DOS_VAR_H
 /*
-**    $VER: var.h  54.100 (07.09.2020)
+**    $VER: var.h  54.127 (13.06.2024)
 **
 **    include file for dos local and environment variables
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -33,6 +36,16 @@ extern "C" {
 #elif defined(__VBCC__)
    #pragma amiga-align
 #endif
+
+
+/****************************************************************************/
+/* Flags for SetContext() / GetContext() */
+
+#define CXF_LOCAL      (0)
+#define CXF_LOCK       (1<<0)
+#define CXF_INHERIT    (1<<1)
+
+
 
 /****************************************************************************/
 /* The structure in the pr_LocalVars list;
@@ -72,7 +85,7 @@ struct LocalVar
    Item will be treated as a single line of text unless BINARY_VAR is specified */
 
 /* ignore this entry on GetVar, FindVar() etc */
-#define LVB_IGNORE              7 
+#define LVB_IGNORE              7
 
 /* only use global vars, no local vars will be accessed. */
 #define GVB_GLOBAL_ONLY         8
@@ -83,7 +96,7 @@ struct LocalVar
 /* treat as binary var, don't truncate at a newline or carriage return char. */
 #define GVB_BINARY_VAR         10
 
-/* do not add a nul-terminator 0 byte at the end of data. */ 
+/* do not add a nul-terminator 0 byte at the end of data. */
 #define GVB_DONT_NULL_TERM     11    /* can only be used with GVF_BINARY_VAR */
 
 /* this is only supported in >= V39 dos.  V37 dos ignores this.
@@ -97,8 +110,8 @@ struct LocalVar
 #define GVB_SCAN_LEVEL         14    /* for ScanVars() - v53 */
 #define GVB_SCAN_TOPLEVEL      GVB_SCAN_LEVEL  /* old synonym */
 
-/* causes only the ROOT DIR RELATIVE directory name which is specified with
-   a c-string in 'extradata', to be the beginning of the directory scan. 
+/* causes only the DIR RELATIVE directory name which is specified with
+   a c-string in 'extradata', to be the beginning of the directory scan.
    All characters before a ":" will be skipped.  */
 #define GVB_SCAN_STARTDIR      15
 
@@ -115,7 +128,7 @@ struct LocalVar
 #define GVF_SCAN_ENVARC         (1<<GVB_SCAN_ENVARC)
 #define GVF_SCAN_LEVEL          (1<<GVB_SCAN_LEVEL)
 #define GVF_SCAN_STARTDIR       (1<<GVB_SCAN_STARTDIR)
- 
+
 /* old name change */
 #define GVF_SCAN_TOPLEVEL       GVF_SCAN_LEVEL
 
@@ -123,8 +136,8 @@ struct LocalVar
 /* Mode value for NotifyVar() (V50) */
 
 #define NV_REMOVE_NOTIFY_HOOK     (1<<1)  /* V50 */
-#define NV_REMOVE_NOTIFY_NAME     (1<<2)  /* added 54.82  */ 
-#define NV_REMOVE_NOTIFY_THISPROC (1<<3)  /* added 54.83  */   
+#define NV_REMOVE_NOTIFY_NAME     (1<<2)  /* added 54.82  */
+#define NV_REMOVE_NOTIFY_THISPROC (1<<3)  /* added 54.83  */
 #define NV_SCAN_NOTIFY            (1<<4)  /* added 53.122 */
 #define NV_CAUSE_NOTIFY           (1<<5)  /* added 54.28  */
 #define NV_ADD_NOTIFY             (1<<8)  /* V50 */
@@ -140,10 +153,10 @@ struct LocalVar
 
 struct ScanVarsMsg
 {
-    uint32   sv_SVMSize; 
+    uint32   sv_SVMSize;
     uint32   sv_Flags;
     STRPTR   sv_GDir;
-    STRPTR   sv_Name;      
+    STRPTR   sv_Name;
     STRPTR   sv_Var;
     uint32   sv_VarLen;
     APTR     sv_DosPrivate;

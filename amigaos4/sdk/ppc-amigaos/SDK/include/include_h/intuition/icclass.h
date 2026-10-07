@@ -1,7 +1,6 @@
 #ifndef INTUITION_ICCLASS_H
 #define INTUITION_ICCLASS_H
 /*
-**    $VER: icclass.h 54.16 (22.08.2022)
 **
 **    Gadget/object interconnection classes
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

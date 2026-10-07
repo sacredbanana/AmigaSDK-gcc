@@ -1,7 +1,6 @@
 #ifndef WORKBENCH_WORKBENCH_H
 #define WORKBENCH_WORKBENCH_H
 /*
-**    $VER: workbench.h 54.16 (22.08.2022)
 **
 **    workbench.library general definitions
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2011 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -629,10 +631,21 @@ struct SetupCleanupHookMsg
 #define WBA_Reserved77  (WBA_Dummy+155)
 #define WBA_Reserved78  (WBA_Dummy+156)
 #define WBA_Reserved79  (WBA_Dummy+157)
+#define WBA_Reserved80  (WBA_Dummy+159)
+#define WBA_Reserved81	(WBA_Dummy+160)
+#define WBA_Reserved82	(WBA_Dummy+161)
+#define WBA_Reserved83	(WBA_Dummy+162)
+#define WBA_Reserved84	(WBA_Dummy+163)
+#define WBA_Reserved85	(WBA_Dummy+164)
+#define WBA_Reserved86	(WBA_Dummy+165)
+#define WBA_Reserved87	(WBA_Dummy+166)
+#define WBA_Reserved88	(WBA_Dummy+167)
+#define WBA_Reserved89	(WBA_Dummy+168)
+#define WBA_Reserved90	(WBA_Dummy+169)
 
 /****************************************************************************/
 
-#define WBA_LAST_TAG (WBA_Dummy+158)
+#define WBA_LAST_TAG (WBA_Dummy+169)
 
 /****************************************************************************/
 
@@ -810,6 +823,10 @@ struct DeleteDataMsg
     STRPTR ddm_Name;   /* The name of the object whose contents or
                         * which itself should be deleted.
                         */
+	/* New V54 fields, do not try to access if ddm_Length is incorrect */
+	ULONG  ddm_Flags;  /* Some flags associated with delete message,
+						* may be any DLFLAGS_xxx (see below) (V54+).
+						*/
 };
 
 struct DeleteEndMsg
@@ -843,6 +860,13 @@ struct DeleteEndMsg
 #define DLACTION_End             (5) /* This indicates that the
                                       * deletion process is finished.
                                       */
+
+/* Size value to condition access to V54 fields in DeleteDataMsg */
+#define DDMLENGTH_Pre54          (16) /* If the ddm_Length is equal to this
+									   * do not attempt to access V54 fields. */
+
+/* Flags for ddm_flags */
+#define DLFLAGS_NoRequester      0x00000001 /* Do not display any requester */
 
 /****************************************************************************/
 

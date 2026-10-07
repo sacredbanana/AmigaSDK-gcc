@@ -8,7 +8,6 @@
 #define PRAGMAS_DOS_PRAGMAS_H
 
 /*
-**	$Id: dos_pragmas.h 40.99 2010-04-26 07:26:16 cwenzel Exp $
 **
 **	Direct ROM interface (pragma) definitions.
 **
@@ -540,6 +539,9 @@
  #pragma libcall DOSBase FindVar 396 2102
 #endif /* __CLIB_PRAGMA_LIBCALL */
 #ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase CliInit 39c 801
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
  #pragma libcall DOSBase CliInitNewcli 3a2 801
 #endif /* __CLIB_PRAGMA_LIBCALL */
 #ifdef __CLIB_PRAGMA_LIBCALL
@@ -566,6 +568,9 @@
 #endif /* __CLIB_PRAGMA_LIBCALL */
 #ifdef __CLIB_PRAGMA_LIBCALL
  #pragma libcall DOSBase MatchPatternNoCase 3cc 2102
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase PrivateDosGetString 3d2 101
 #endif /* __CLIB_PRAGMA_LIBCALL */
 /* this was added for V37 dos, returned 0 before then. */
 #ifdef __CLIB_PRAGMA_LIBCALL
@@ -1018,6 +1023,47 @@
 #ifdef __CLIB_PRAGMA_LIBCALL
  #pragma libcall DOSBase CheckForChildExit 660 101
 #endif /* __CLIB_PRAGMA_LIBCALL */
+
+/* --- Added 54.126 --- */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase GetContext 666 801
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase SetContext 66c 321804
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase GetFinalData 672 00
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase SetChildPID 678 1802
+#endif /* __CLIB_PRAGMA_LIBCALL */
+
+/* --- Added 54.129 --- */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase GetCliEpilog 67e 2102
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase SetCliEpilog 684 101
+#endif /* __CLIB_PRAGMA_LIBCALL */
+
+/* --- Added 54.130 --- */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase RelativePath 68a 432104
+#endif /* __CLIB_PRAGMA_LIBCALL */
+
+/* --- Added 54.132 --- */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase SubLock 690 2102
+#endif /* __CLIB_PRAGMA_LIBCALL */
+
+/* --- Added 54.134 --- we need int64 support. */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase HexToLongLong 696 9802
+#endif /* __CLIB_PRAGMA_LIBCALL */
+#ifdef __CLIB_PRAGMA_LIBCALL
+ #pragma libcall DOSBase StrToLongLong 69c 9802
+#endif /* __CLIB_PRAGMA_LIBCALL */
+
 /*--- (4 function slots reserved here) ---*/
 
 #endif /* PRAGMAS_DOS_PRAGMAS_H */

@@ -1,14 +1,17 @@
 #ifndef DOS_RDARGS_H
 #define DOS_RDARGS_H
 /*
-**    $VER: rdargs.h  54.100 (07.09.2020)
+**    $VER: rdargs.h  54.126 (05.08.2023)
 **
 **    ReadArgs() structure definitions
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -43,7 +46,7 @@ extern "C" {
 /**********************************************************************
  *
  * The CSource data structure defines the input source for "ReadItem()"
- * ReadLineItem() as well as the ReadArgs() call.  
+ * ReadLineItem() as well as the ReadArgs() call.
  * It is a publicly defined structure which may be used by applications
  * which use code that follows the conventions defined for access.
  *
@@ -73,7 +76,7 @@ extern "C" {
  * To initialize a struct CSource, you set CSource->CS_Buffer to
  * a string which is used as the data source, and set CS_Length to
  * the number of characters in the string, as returned by strlen().
- * Normally CS_CurChr should be initialized to ZERO, or left as it was 
+ * Normally CS_CurChr should be initialized to ZERO, or left as it was
  * from prior use as a CSource.
  *
  **********************************************************************/

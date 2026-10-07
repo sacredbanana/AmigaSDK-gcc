@@ -2787,6 +2787,22 @@ static __inline__ BPTR ___NewLoadSegTags(struct Library * DOSBase, CONST_STRPTR 
   }); \
 })
 
+#define CliInit(dp) ({ \
+  struct DosPacket * _CliInit_dp = (dp); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __CliInit__bn __asm("a6") = DOS_BASE_NAME;\
+  register LONG __CliInit__re __asm("d0"); \
+  register struct DosPacket * __CliInit_dp __asm("a0") = (_CliInit_dp); \
+  __asm volatile ("jsr a6@(-924:W)" \
+  : "=r"(__CliInit__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__CliInit__bn), "rf"(__CliInit_dp) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
 #define CliInitNewcli(dp) ({ \
   struct DosPacket * _CliInitNewcli_dp = (dp); \
   ({ \
@@ -2794,7 +2810,7 @@ static __inline__ BPTR ___NewLoadSegTags(struct Library * DOSBase, CONST_STRPTR 
   register int _a0 __asm("a0"); \
   register int _a1 __asm("a1"); \
   register struct Library * const __CliInitNewcli__bn __asm("a6") = DOS_BASE_NAME;\
-  register LONG __CliInitNewcli__re __asm("d0"); \
+  register ULONG __CliInitNewcli__re __asm("d0"); \
   register struct DosPacket * __CliInitNewcli_dp __asm("a0") = (_CliInitNewcli_dp); \
   __asm volatile ("jsr a6@(-930:W)" \
   : "=r"(__CliInitNewcli__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
@@ -2810,7 +2826,7 @@ static __inline__ BPTR ___NewLoadSegTags(struct Library * DOSBase, CONST_STRPTR 
   register int _a0 __asm("a0"); \
   register int _a1 __asm("a1"); \
   register struct Library * const __CliInitRun__bn __asm("a6") = DOS_BASE_NAME;\
-  register LONG __CliInitRun__re __asm("d0"); \
+  register ULONG __CliInitRun__re __asm("d0"); \
   register struct DosPacket * __CliInitRun_dp __asm("a0") = (_CliInitRun_dp); \
   __asm volatile ("jsr a6@(-936:W)" \
   : "=r"(__CliInitRun__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
@@ -2914,6 +2930,22 @@ static __inline__ LONG ___Printf(struct Library * DOSBase, CONST_STRPTR format, 
   __asm volatile ("jsr a6@(-972:W)" \
   : "=r"(__MatchPatternNoCase__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
   : "r"(__MatchPatternNoCase__bn), "rf"(__MatchPatternNoCase_pat), "rf"(__MatchPatternNoCase_str) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define PrivateDosGetString(num) ({ \
+  LONG _PrivateDosGetString_num = (num); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __PrivateDosGetString__bn __asm("a6") = DOS_BASE_NAME;\
+  register CONST_STRPTR __PrivateDosGetString__re __asm("d0"); \
+  register LONG __PrivateDosGetString_num __asm("d1") = (_PrivateDosGetString_num); \
+  __asm volatile ("jsr a6@(-978:W)" \
+  : "=r"(__PrivateDosGetString__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__PrivateDosGetString__bn), "rf"(__PrivateDosGetString_num) \
   : "fp0", "fp1", "cc", "memory"); \
   }); \
 })
@@ -4836,6 +4868,186 @@ static __inline__ int32 ___AsyncIOTags(struct Library * DOSBase, uint32 tags, ..
   __asm volatile ("jsr a6@(-1632:W)" \
   : "=r"(__CheckForChildExit__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
   : "r"(__CheckForChildExit__bn), "rf"(__CheckForChildExit_pid) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define GetContext(name) ({ \
+  CONST_STRPTR _GetContext_name = (name); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __GetContext__bn __asm("a6") = DOS_BASE_NAME;\
+  register APTR __GetContext__re __asm("d0"); \
+  register CONST_STRPTR __GetContext_name __asm("a0") = (_GetContext_name); \
+  __asm volatile ("jsr a6@(-1638:W)" \
+  : "=r"(__GetContext__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__GetContext__bn), "rf"(__GetContext_name) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define SetContext(name, flags, value, reserved) ({ \
+  CONST_STRPTR _SetContext_name = (name); \
+  uint32 _SetContext_flags = (flags); \
+  APTR _SetContext_value = (value); \
+  int32 _SetContext_reserved = (reserved); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __SetContext__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __SetContext__re __asm("d0"); \
+  register CONST_STRPTR __SetContext_name __asm("a0") = (_SetContext_name); \
+  register uint32 __SetContext_flags __asm("d1") = (_SetContext_flags); \
+  register APTR __SetContext_value __asm("d2") = (_SetContext_value); \
+  register int32 __SetContext_reserved __asm("d3") = (_SetContext_reserved); \
+  __asm volatile ("jsr a6@(-1644:W)" \
+  : "=r"(__SetContext__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__SetContext__bn), "rf"(__SetContext_name), "rf"(__SetContext_flags), "rf"(__SetContext_value), "rf"(__SetContext_reserved) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define GetFinalData() ({ \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __GetFinalData__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __GetFinalData__re __asm("d0"); \
+  __asm volatile ("jsr a6@(-1650:W)" \
+  : "=r"(__GetFinalData__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__GetFinalData__bn) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define SetChildPID(proc, pid) ({ \
+  const struct Process * _SetChildPID_proc = (proc); \
+  uint32 _SetChildPID_pid = (pid); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __SetChildPID__bn __asm("a6") = DOS_BASE_NAME;\
+  register uint32 __SetChildPID__re __asm("d0"); \
+  register const struct Process * __SetChildPID_proc __asm("a0") = (_SetChildPID_proc); \
+  register uint32 __SetChildPID_pid __asm("d1") = (_SetChildPID_pid); \
+  __asm volatile ("jsr a6@(-1656:W)" \
+  : "=r"(__SetChildPID__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__SetChildPID__bn), "rf"(__SetChildPID_proc), "rf"(__SetChildPID_pid) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define GetCliEpilog(buf, len) ({ \
+  STRPTR _GetCliEpilog_buf = (buf); \
+  int32 _GetCliEpilog_len = (len); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __GetCliEpilog__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __GetCliEpilog__re __asm("d0"); \
+  register STRPTR __GetCliEpilog_buf __asm("d1") = (_GetCliEpilog_buf); \
+  register int32 __GetCliEpilog_len __asm("d2") = (_GetCliEpilog_len); \
+  __asm volatile ("jsr a6@(-1662:W)" \
+  : "=r"(__GetCliEpilog__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__GetCliEpilog__bn), "rf"(__GetCliEpilog_buf), "rf"(__GetCliEpilog_len) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define SetCliEpilog(str) ({ \
+  CONST_STRPTR _SetCliEpilog_str = (str); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __SetCliEpilog__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __SetCliEpilog__re __asm("d0"); \
+  register CONST_STRPTR __SetCliEpilog_str __asm("d1") = (_SetCliEpilog_str); \
+  __asm volatile ("jsr a6@(-1668:W)" \
+  : "=r"(__SetCliEpilog__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__SetCliEpilog__bn), "rf"(__SetCliEpilog_str) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define RelativePath(refdir, objlock, buffer, bufsize) ({ \
+  BPTR _RelativePath_refdir = (refdir); \
+  BPTR _RelativePath_objlock = (objlock); \
+  STRPTR _RelativePath_buffer = (buffer); \
+  uint32 _RelativePath_bufsize = (bufsize); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __RelativePath__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __RelativePath__re __asm("d0"); \
+  register BPTR __RelativePath_refdir __asm("d1") = (_RelativePath_refdir); \
+  register BPTR __RelativePath_objlock __asm("d2") = (_RelativePath_objlock); \
+  register STRPTR __RelativePath_buffer __asm("d3") = (_RelativePath_buffer); \
+  register uint32 __RelativePath_bufsize __asm("d4") = (_RelativePath_bufsize); \
+  __asm volatile ("jsr a6@(-1674:W)" \
+  : "=r"(__RelativePath__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__RelativePath__bn), "rf"(__RelativePath_refdir), "rf"(__RelativePath_objlock), "rf"(__RelativePath_buffer), "rf"(__RelativePath_bufsize) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define SubLock(src, dst) ({ \
+  BPTR _SubLock_src = (src); \
+  BPTR _SubLock_dst = (dst); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __SubLock__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __SubLock__re __asm("d0"); \
+  register BPTR __SubLock_src __asm("d1") = (_SubLock_src); \
+  register BPTR __SubLock_dst __asm("d2") = (_SubLock_dst); \
+  __asm volatile ("jsr a6@(-1680:W)" \
+  : "=r"(__SubLock__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__SubLock__bn), "rf"(__SubLock_src), "rf"(__SubLock_dst) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define HexToLongLong(str, val) ({ \
+  CONST_STRPTR _HexToLongLong_str = (str); \
+  APTR _HexToLongLong_val = (val); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __HexToLongLong__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __HexToLongLong__re __asm("d0"); \
+  register CONST_STRPTR __HexToLongLong_str __asm("a0") = (_HexToLongLong_str); \
+  register APTR __HexToLongLong_val __asm("a1") = (_HexToLongLong_val); \
+  __asm volatile ("jsr a6@(-1686:W)" \
+  : "=r"(__HexToLongLong__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__HexToLongLong__bn), "rf"(__HexToLongLong_str), "rf"(__HexToLongLong_val) \
+  : "fp0", "fp1", "cc", "memory"); \
+  }); \
+})
+
+#define StrToLongLong(str, val) ({ \
+  CONST_STRPTR _StrToLongLong_str = (str); \
+  APTR _StrToLongLong_val = (val); \
+  ({ \
+  register int _d1 __asm("d1"); \
+  register int _a0 __asm("a0"); \
+  register int _a1 __asm("a1"); \
+  register struct Library * const __StrToLongLong__bn __asm("a6") = DOS_BASE_NAME;\
+  register int32 __StrToLongLong__re __asm("d0"); \
+  register CONST_STRPTR __StrToLongLong_str __asm("a0") = (_StrToLongLong_str); \
+  register APTR __StrToLongLong_val __asm("a1") = (_StrToLongLong_val); \
+  __asm volatile ("jsr a6@(-1692:W)" \
+  : "=r"(__StrToLongLong__re), "=r" (_d1), "=r" (_a0), "=r" (_a1) \
+  : "r"(__StrToLongLong__bn), "rf"(__StrToLongLong_str), "rf"(__StrToLongLong_val) \
   : "fp0", "fp1", "cc", "memory"); \
   }); \
 })

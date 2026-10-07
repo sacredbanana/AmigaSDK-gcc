@@ -8,8 +8,11 @@ usbhcd.hcd/USBHCRemFunction
 usbhcd.hcd/USBHCAddEndPoint
 usbhcd.hcd/USBHCRemEndPoint
 usbhcd.hcd/USBHCGetAttrs
+usbhcd.hcd/USBHCGetFrameNumber
+usbhcd.hcd/USBHCGetUnitAttrs
 usbhcd.hcd/CMD_READ
 usbhcd.hcd/CMD_WRITE
+usbhcd.hcd/USBCMD_TRACE
 
 usbhcd.hcd/--overview--                                 usbhcd.hcd/--overview--
 
@@ -102,7 +105,7 @@ usbhcd.hcd/CMD_WRITE
       driver for the Root Hub, neither try to create EndPoints at it.
 
       A UsbRawInterface for the Root Hub is handed to the HCD by the USB
-      stack. The HCD's Root Hub driver must USBClaimFunction() this to
+      stack. The HCD's Root Hub driver must USBClaimInterface() this to
       obtain a pointer to a UsbInterface. This UsbInterface must be used
       by the Root Hub driver for calling USBAddFunction() when something
       is being attached at the HCD Root Hub. This is the *only* supported
@@ -110,16 +113,16 @@ usbhcd.hcd/CMD_WRITE
 
       When the HCD has added all USB Functions attached to the RootHub it
       *must* call USBIfcDriverRunning() on the RootHub UsbInterface. The
-      idead behind this is, that the USBs tack will then know when the HCD
+      idea behind this is, that the USB stack will then know when the HCD
       is done adding the initially attached USB Functions.
       See USBIfcDriverRunning() for more information on this.
       This requirement is new per USB stack v1.13. Old HCDs which do not
-      call USBIfcDriverRunning() will result in a boot delay of the OS in
+      call USBIfcDriverRunning() may result in a boot delay of the OS in
       the magnitude of seconds if the USB stack is installed as a kernel
       module, since the USB stack will then have to rely on a timeout to
-      guess when the entire USB topology has been added.
+      guess when the entire USB topology has been enumerated.
 
-      When the USB stack is terminating the HCD unit, it will call
+      When the USB stack is terminating the HCD unit it will call
       USBHCUninitRootHub() on the HCD unit.
 
    NOTE
@@ -167,7 +170,7 @@ usbhcd.hcd/CMD_WRITE
                            if ( hcunit->RootHub = AllocMem( ... ) ) {
                               // .. setup your RootHub stuff
                               *hcfkt = hcunit->RootHub; // Return RH ref
-                              return( TRUE ); // Root Hub setup
+                              return USBERR_NOERROR; // Root Hub setup
                            }
                         }
                         ...
@@ -287,11 +290,11 @@ usbhcd.hcd/CMD_WRITE
       as for any other error condition prohibiting the adding of a new
       USB Function.
 
-      It may happen (due to versin mix of USB stack and drivers) that this
+      It may happen (due to version mix of USB stack and drivers) that this
       function gets called without a USBA_HubPort tag. For USB1.1-only HCDs
-      this should pose no problem. For USB2 HCDs this will pose problems if
-      the attached Function is operating af LOW og FULL speed. The HCD must
-      in such a case fail the attachment by returning NULL, and setting
+      this should pose no problem. For USB2 HCDs this will pose A problem
+      IF the attached Function is operating at LOW or FULL speed. The HCD
+      MUST in such a case fail the attachment by returning NULL, and setting
       USB_ErrorCode (if the tag is specified) to USBERR_BADARGS. Preferably
       the HCD will also add a log entry to the USB log using USBLogPuts()
       so the reason for attachment failure can be found by user inspection.
@@ -331,6 +334,20 @@ usbhcd.hcd/CMD_WRITE
                      This tag may, or may not, be specified at the
                      discretion of the hub driver. Be prepared to handle
                      the abscense of this tag in a polite manner.
+
+                  USBA_HubHasMultiTT (ULONG)
+                     This tag only really has meaning when a Function with
+                     USB1 device speed is being added in a higher speed USB
+                     bus. The value specifies whether the Function is being
+                     added on a USB1 bus segment controlled by a hub which
+                     uses multiple Transaction Translators.
+                     The HCD will most likely be using this information when
+                     issuing Clear_TT_Buffer requests in response to bus
+                     transaction failures for endpoints of the Function.
+                     
+                     To support usbsys.device versions prior to V53.24 a
+                     HCD must fall back to a benign default if this tag is
+                     not supplied.
 
                   USBA_DeviceAddress (LONG *) (new in v2)
                      This tag specifies a pointer to a LONG where the HCD
@@ -377,7 +394,7 @@ usbhcd.hcd/CMD_WRITE
    FUNCTION
       This function is called by the USS when a USB Function has been
       removed (detached) from the USB bus.
-      The HCD must free whatever ressources used for the USB Function.
+      The HCD must free all ressources used for the USB Function.
       On exit of this function the USB System Software private reference
       given for the Function at USBHCAddFunction() time becomes invalid
       and must nolonger be used by the HCD.
@@ -458,14 +475,25 @@ usbhcd.hcd/CMD_WRITE
                   USBA_InterfaceDesc (struct USBBusIntDsc *)
                      ti_Data is a pointer to a USB Interface descriptor, as
                      read from a USB Function, for the Interface the EndPoint
-                     is part of. The tag value will be NULL, if the EndPoint
-                     is not part of any Interfaces (e.g. the Default Control
-                     Pipe EndPoint).
+                     is part of. The tag will not be present, or its value
+                     will be NULL if the EndPoint is not part of any
+                     interfaces (e.g. the Default Control Pipe EndPoint).
 
                   USBA_DeviceDesc (struct USBBusDevDsc *)
                      ti_Data is a pointer to a USB Device descriptor, as
                      read from a USB Function, for the USB Function the
                      EndPoint belongs to.
+                     
+                     Note that if "epnum" argument is zero it means that the
+                     Default Control EndPoint is being created and that no
+                     Device Descriptor data therefore can have been read yet.
+                     Prior to usbsys.device 53.28 this tag might still be
+                     present with a valid pointer although the data pointed
+                     to was all zeroes.
+                     From usbsys.device 53.28 and up the descriptor pointed
+                     to will have a valid USBBusDscHead header and its
+                     dd_MaxPacketSize0 value will have a valid default value
+                     depending on the bus speed of the containing Function.
 
                   USBA_ErrorCode (LONG)
                      This tag specifies a pointer to a LONG where the HCD
@@ -476,7 +504,6 @@ usbhcd.hcd/CMD_WRITE
                      the caller is responsible for a benign default value,
                      i.e. USBERR_NOERROR, so it is safe for HCDs to ignore
                      handling of the USBA_ErrorCode tag.
-
 
    RESULTS
       hcep  -  HCD private reference to the created EndPoint. The USS
@@ -511,12 +538,12 @@ usbhcd.hcd/CMD_WRITE
       hcep  -  The HCD private reference for the EndPoint to remove.
 
    BUGS
-      The current USB stack implementation has a bug regarding removal of
-      EndPoints when a USB Function is detached or an Interface is shut.
-      At these two events the USB stack aborts pending IO and continues
+      Before v52.9 the USB stack had a bug regarding removal of EndPoints
+      when a USB Function is detached or an Interface is removed.
+      At these two events the USB stack aborted pending IO and continued
       to call USBHCRemEndPoint() for all involved EndPoints. If some IO
-      did not successfully abort immediately then the EndPoint might still
-      contain pending IO when USBHCRemEndPoint() is called.
+      did not successfully abort immediately the EndPoint would still
+      contain pending IO when USBHCRemEndPoint() was called.
 
    SEE ALSO
       usbhcd.hcd/USBHCAddEndPoint
@@ -537,15 +564,34 @@ usbhcd.hcd/CMD_WRITE
 
       void USBHCGetAttrs( ULONG, ... );
 
-
    FUNCTION
       The USS will call this function to obtain various information
       about the HCD.
       The HCD should only respond to tags it recognizes, and leave
       all other tag values at their preset value.
-
+      Even though this function is superceeded by HCDAPI version 2 it is
+      still required to be able to get the HCDAPI version before assuming
+      a HCD to be using the version 2 API.
 
    TAGS
+      USBA_HCD_APIVersion (ULONG *)
+         The HCD must store its API version number in the ULONG pointed to
+         by ti_Data. The API version is the value of the USBHCD_APIVERSION
+         constant stored in the USB stack include files for the API
+         version the HCD supports.
+         If the USB stack cannot support the API version then it may
+         choose to not use the HCD device.
+
+      USBA_DeviceSpeed (ULONG *)
+         The HCD must store the speed of the USB controller in the ULONG
+         pointed to by ti_Data. The speed is specified using one of the
+         USB_SPEED_xxx constants from usb/system.h.
+         Since USBA_DeviceSpeed usage was not added until v2 of the USB
+         stack, the USB stack will fall back to expect USB_SPEED_FULL speed
+         (i.e. 12MBit/s) for the HCD if it does not respond to this tag.
+         USB2+ capable HCDs are required to support this tag, or they will
+         only see USB1 device attachments.
+
       USBA_FD_SignalsRunning (LONG *)
          The USB stack will use this tag when querying if the HCDs
          RootHub Function Driver will call USBIfcDriverRunning() on the
@@ -558,28 +604,113 @@ usbhcd.hcd/CMD_WRITE
          the USB stack must set this property to TRUE and call
          USBIfcDriverRunning() as described for USBHCInitRootHub().
 
-      USBA_DeviceSpeed (ULONG *)
-         The HCD must store the speed of the USB controller in the ULONG
-         pointed to by ti_Data. The speed is specified using one of the
-         USB_SPEED_xxx constants from usb/system.h.
-         Since USBA_DeviceSpeed usage was not added until v2 of the USB
-         stack, the USB stack will fall back to expect USB_SPEED_FULL speed
-         (i.e. 12MBit/s) for the HCD if it does not respond to this tag.
-         USB2+ capable HCDs are required to support this tag, or they will
-         only see USB1 device attachments.
-
-      USBA_HCD_APIVersion (ULONG *)
-         The HCD must store its API version number in the ULONG pointed to
-         by ti_Data. The API version is the value of the USBHCD_APIVERSION
-         constant stored in the USB stack include files for the API
-         version the HCD supports.
-         If the USB stack cannot support the API version then it may
-         choose to not use the HCD device.
-
    INPUTS
       taglist  -  Pointer to the first TagItem of a taglist. The HCD
                   must respond to supported tags in this list.
 
+   SEE ALSO
+      usbhcd.hcd/USBHCInitRootHub, usbsys.device/USBIfcDriverRunning
+
+
+usbhcd.hcd/USBHCGetFrameNumber                   usbhcd.hcd/USBHCGetFrameNumber
+
+   NAME
+      USBHCGetFrameNumber -- Get the current USB frame number of a
+                             host controller. (HCDAPI version 2)
+
+   SYNOPSIS
+      framenumber = USBHCGetFrameNumber( hcunit, timestamp )
+
+      ULONG USBHCGetFrameNumber( APTR, struct TimeVal * );
+
+   FUNCTION
+      This function must return the current USB frame number of the host
+      controller unit specified.
+      
+      Although the USB stack can use the returned frame number as it sees
+      fit, the intent of this function is to allow isochronous IO
+      operations to be linked to specific frame numbers on the target USB
+      bus.
+      
+      To be able to more precisely synchronize with the USB bus, a pointer
+      to a TimeVal structure may be passed as well. If this pointer is
+      non-NULL the HCD is required to fill this with the system time as
+      returned by timer.device/GetSysTime() at the time when the USB frame
+      number is recorded.
+
+   INPUTS
+      hcunit     -  The HCD unit representing the USB bus to get the current
+                    frame number for.
+      timestamp  -  Pointer to a struct TimeVal in which to store the system
+                    time at frame number sample time. May be NULL, in which
+                    case no time stamp is to be recorded.
+
+   RESULTS
+      framenumber  -  The current USB frame number
+
+   SEE ALSO
+      timer.device/GetSysTime, devices/timer.h
+
+
+usbhcd.hcd/USBHCGetUnitAttrs                       usbhcd.hcd/USBHCGetUnitAttrs
+
+   NAME
+      USBHCGetUnitAttrs -- Query a HCD unit for its properties.
+                           (HCDAPI version 2)
+
+   SYNOPSIS
+      USBHCGetUnitAttrsA( hcunit,  taglist )
+
+      void USBHCGetUnitAttrsA( APTR, struct TagItem * );
+
+      USBHCGetUnitAttrs( hcunit, Tag1, ... )
+
+      void USBHCGetAttrs( APTR, ULONG, ... );
+
+   FUNCTION
+      The USS will call this function to obtain various information
+      about HCD unit once opened.
+      The HCD should only respond to tags it recognizes, and leave
+      all other tag values at their preset value.
+
+   TAGS
+      USBA_HCD_CachedIsochronousFrames (ULONG *)
+         USB controller hardware or HCD may choose to cache isochronous
+         transfers a number of USB frames in advance of actually putting
+         the transfers on the USB bus. This means that isochronous
+         transfers must be prepared timely for targetting a specific frame
+         on the USB bus. It also means that to be able to create a steady
+         stream of isochronous data (either in or out) this number of
+         frames of transfers must be scheduled ahead of time so the
+         HCD/hardware has transfer requests in time for filling its cache.
+         The HCD must return the number of such cached-ahead USB frames
+         in use for isochronous transfers in the ULONG pointed to by
+         ti_Data of this tag.
+         The USB stack will default to expecting two cached USB frames if
+         the HCD does not respond to this tag.
+
+      USBA_HCD_MaxPeriodicPollInterval (ULONG *)
+         USB hardware may not be able to support the full range of poll
+         intervals of periodic endpoints (Interrupt and Isochronous).
+         The value returned by this tag indicates the maximum poll
+         interval the HCD supports for periodic endpoints. The value is
+         specified in microframes.
+         If an endpoint's endpoint descriptor Interval field indicates a
+         longer poll interval than this, this maximum interval is instead
+         used by the HCD for that endpoint.
+         The value must be a power of two - i.e. one bit set. This will
+         ensure that even if poll interval limiting occurs, the limited
+         poll interval will still service the endpoint at its intended
+         poll interval (as well as couple of times in between).
+         The USB stack needs access to this value to be able to report
+         correct endpoint information to FDs.
+         Interval-limitation in this way, i.e. polling at a faster rate
+         than what the periodic endpoint specifies, is allowed by the
+         USB specification.
+
+   INPUTS
+      taglist  -  Pointer to the first TagItem of a taglist. The HCD
+                  must respond to supported tags in this list.
 
    SEE ALSO
       usbhcd.hcd/USBHCInitRootHub, usbsys.device/USBIfcDriverRunning
@@ -592,7 +723,7 @@ usbhcd.hcd/CMD_WRITE
 
    FUNCTION
       Using this request the USB System Software reads data from an
-      EndPoint. The actual IO Request is a struct USBIOReqHCD.
+      EndPoint. The actual IO request is a struct USBIOReqHCD.
 
       The USS may request larger data transfers than the EndPoint is
       able to handle in a single packet. In such cases the HCD is
@@ -601,9 +732,9 @@ usbhcd.hcd/CMD_WRITE
       fields of the USBIOReqHCD structure, allowing the HCD to e.g. use
       io_Offset for transfers split into separate packets.
 
-      Upon completing the transfer for the IO Request, it must be
+      Upon completing the transfer for the IO request, it must be
       replied to the USS, which will forward the transfer completion
-      to the initiator of the IO Request.
+      to the initiator of the IO request.
 
       When working with Control EndPoints a setup packet is sent to
       initiate each transfer. The data for the setup packet is
@@ -611,7 +742,7 @@ usbhcd.hcd/CMD_WRITE
       io_SetupLength is 0 there is no setup packet to send for the
       transfer.
 
-      When working with Interrupt EndPoints only up to the EndPoints
+      When working with Interrupt EndPoints only up to the EndPoint's
       MaxPacketSize bytes of data can be expected received from the
       EndPoint per interrupt period. That is, if more than MaxPacketSize
       bytes are to be read, then the transaction will be split into
@@ -635,6 +766,11 @@ usbhcd.hcd/CMD_WRITE
       overflow - this is at the discretion of the USS, which may
       choose to return USBERR_NOERROR to the request originator.
 
+      ISOCHRONOUS ENDPOINTS
+      There's a general discussion about handling isochronous
+      endpoints in the CMD_WRITE section. It contains mandatory
+      behavioral information on how a HCD must react to IO requests
+      for an isochronous endpoint.
 
    IO REQUEST
       io_Command     CMD_READ
@@ -649,11 +785,14 @@ usbhcd.hcd/CMD_WRITE
 
    RESULTS
       io_Actual      Number of bytes actually read from EndPoint.
+                     For isochronous endpoints this is the number of
+                     transfer setups processed for the operation, and
+                     hence the number of transfer results which are set.
       io_Error       Error code indicating completion status.
                      Zero on success.
 
    SEE ALSO
-      usb/system.h, exec/errors.h
+      usb/system.h, exec/errors.h, usbhcd.hcd/CMD_WRITE
 
 
 usbhcd.hcd/CMD_WRITE                                       usbhcd.hcd/CMD_WRITE
@@ -663,18 +802,18 @@ usbhcd.hcd/CMD_WRITE
 
    FUNCTION
       Using this request the USB System Software writes data to an
-      EndPoint. The actual IO Request is a struct USBIOReqHCD.
+      EndPoint. The actual IO request is a struct USBIOReqHCD.
 
       The USS may request larger data transfers than the EndPoint is
       able to handle in a single packet. In such cases the HCD is
       responsible for breaking up the transfer into smaller packets.
-      While the IO Request is in progress the HCD owns all public
+      While the IO request is in progress the HCD owns all public
       fields of the USBIOReqHCD structure, allowing the HCD to e.g. use
       io_Offset for transfers split into separate packets.
 
-      Upon completing the transfer for the IO Request, it must be
+      Upon completing the transfer for the IO request, it must be
       replied to the USS, which will forward the transfer completion
-      to the initiator of the IO Request.
+      to the initiator of the IO request.
 
       When working with Control EndPoints a setup packet is sent to
       initiate each transfer. The data for the setup packet is
@@ -688,13 +827,160 @@ usbhcd.hcd/CMD_WRITE
       the transaction must be split into several interrupt packets sent
       one at a time using the interrupt frequency of the EndPoint.
 
-      A Zero length data write is valid on the USB bus. A zero length
+      A zero length data write is valid on the USB bus. A zero length
       data packet must be generated if io_Data is non-NULL and io_Length
       is zero. If io_Data is NULL no data packet should be generated
-      on the bus. This behavior must be obayed for any type of EndPoint.
+      on the bus. This behavior must be obeyed for any type of EndPoint.
 
       Upon completion, the io_Error field must be set to indicate the
       completion status.
+
+      ISOCHRONOUS ENDPOINTS
+      The following section contains special considerations for handling
+      isochronous EndPoints, and only applies to HCDs using HCD_API 2 and
+      above. Before that HCD_API version there was no special provisioning
+      for isochronous transfers, although the transfer size restrictions
+      also apply to earlier HCD_API versions.
+      
+      Isochronous EndPoints are special in that they are all about timely
+      and time bound data transfer. To that end they have no data
+      handshake and no retransmission or retries in case of data
+      corruption. To be able to correctly handle isochronous endpoint
+      transfers, some isochronous-specific fields exist in the IO request
+      structure. Only if the endpoint is isochronous should these fields
+      be used:
+
+		io_UsbFlags
+		   Containts flags for controlling the handling of the IO request.
+		   Currently only one isochronous-related flag exist:
+		    - USBIOF_ISO_USETARGETFRAME
+		        If set it indicates that io_TargetFrame holds a valid
+		        USB frame number, and that the first transfer of the IO
+		        request must be put on the USB bus in this exact frame.
+                Since icochronous endpoints run on a fixed scheduling,
+                this exact USB frame may not match a USB frame in which
+                the endpoint is being serviced on the bus. Hence the IO
+		        start may be deferred up to one endpoint service interval
+		        from this USB frame to actually reach a USB frame where
+		        the endpoint is being serviced.
+		        If this flag is not set the IO request must be scheduled
+		        at the next available service interval of the endpoint.
+		        
+        io_TargetFrame
+           This is the frame number on the USB bus at which the first
+           transaction of the IO request is to occur. If this frame has
+           been missed when the IO request is being handled by the HCD,
+           the HCD must skip transfer setups up until the transfer setup
+           matching the current USB (micro)frame. Any skipped transfers
+           must get the Result value USBERR_FRAMEMISSED and Actual value
+           0 in its transfer result. Transfer should be performed for
+           the remaining defined transfers. If all transfers of the IO
+           request have been missed, the entire IO request should be
+           failed with the io_Error USBERR_FRAMEMISSED. In this case
+           individual frame definitions need not have their Result or
+           Actual values set.
+
+           Since isochronus endpoints have an interval defined for its
+           data frame rate, a specific given frame number may fall in
+           between the frame numbers which are used for servicing the
+           endpoint. In this case the HCD must defer the target frame
+           to the next serviced frame number after the specified
+           frame number.
+           
+           This field is only valid if io_UsbFlags has the flag
+           USBIOF_ISO_USETARGETFRAME set. If the flag is not set the
+           first transaction of the IO request is to be performed at the
+           next suitable USB frame.
+           
+           Upon return of the IO request io_TargetFrame must be updated
+           to hold the frame number of the actual target frame used by
+           the HCD. This will allow a driver to synchronize to the
+           endpoint. io_TargetFrame is only to be updated if the endpoint
+           is isochronous and only if the USBIOF_ISO_USETARGETFRAME flag
+           is set in io_UsbFlags. In all other cases the field should
+           be left untouched.
+           
+           A HCD must not re-order multiple requests to the same
+           Isochronous endpoint by their io_TargetFrame value. The
+           requestor is responsible for delivering IO requests to
+           isochronous endpoints in frame number order.
+                      
+      An IO request to an isochronous EndPoint will have a set of
+      transfer setups associated with it. These transfer setups define
+      how the transfer of the IO request is to be split up over
+      individual (micro)frames on the USB bus. The individual transfer
+      setups are accessible thru USBGetIsoTransferSetupHcd().
+      Each transfer setup specifies which section of data from the
+      io_Data buffer is to be transfered in that (micro)frame.
+      
+      A transfer result is associated with each transfer setup,
+      containing an Actual byte count and an Error code (a USBERR_xxx
+      value).
+      On reply of an IO request which has an isochronous endpoint as
+      target and an io_Error of USBERR_NOERROR or USBERR_CHECKRESULTS,
+      the Actual and Error code of the transfer result for every utilized
+      transfer setup *must* be updated by the HCD to reflect the handling
+      of the IO request. This is a requirement.
+      A "utilized transfer setup" in this context is a transfer setup
+      with an index contained in the IO request io_Actual value the HCD
+      returns with the IO request. Normally this will be all transfer
+      setups until the first setup whose Offset is greater or equal to
+      io_Length. In the special case of io_Data != NULL and
+      io_Length == 0 the first transfer setup is utilized by definition,
+      its role being to generate a zero-length isochronous transaction.
+      So, generally speaking, if io_Data != NULL the IO request has at
+      least one utilized transfer setup. If io_Data == NULL there are
+      no utilized trqansfer setups - the IO request is a no-operation.
+
+      Transfer setups not utilized in a specific IO request does not
+      need to be updated by the HCD since they have no role in the IO
+      operation (see below for more info).
+      
+      When returned io_Error is not USBERR_NOERROR or USBERR_CHECKRESULTS
+      the IO request is failed at a general level and the requestor must
+      not inspect any individual transfer results. Subsequently the HCD
+      does not need to update the transfer results of the IO request.
+      This also means, that the HCD must *only* return a general
+      io_Error other than USBERR_NOERROR or USBERR_CHECKRESULTS if
+      it means to fail the *entire* IO request and all its transfer
+      setups. If individual transfers fail, that error should go
+      into the Error field of the transfer result for the failed
+      transfer setup. It must not fail the IO request as a whole, and
+      any following transfer setups of the IO request must still be
+      executed in time.
+      
+      The transfer setups acts as a template for how the data to transfer
+      is broken up over USB (micro)frames. This template may describe
+      more data bytes than are available in the data buffer of the IO
+      request. This does not constitute an error.
+      A HCD performs transfers in the order of the transfer setups, and
+      is done scheduling transfers for the isochronous IO request once it
+      reaches the end of utilized transfer setups, as previously defined.
+      The last utilized transfer setup, however, may define a length
+      which exceeds the end of the io_Data buffer. This the HCD must
+      handle gracefully and only transfer until the end of the data
+      buffer. Never read or write outside the buffer.
+      
+      If, on the other hand, a transfer setup describes a transfer
+      which is too large for the endpoint to handle, the HCD should set
+      the transfer result for that transfer to USBERR_BADTRANSFERSETUP
+      and not do any transfer for it. The transfer setup is wrong for
+      the endpoint, and the requestor needs to know about it.
+      
+      If an IO request for an isochronous endpoint is received with no
+      transfer setups at all a HCD must fail the IO request with the
+      error USBERR_NOTRANSFERSETUP. This situation should not occur,
+      but this requirement provides a well defined behavior for it.
+      
+      An IO request with a non-NULL buffer and a zero io_Length, is
+      also valid for isochronous EndPoints and can be used for
+      generating empty transfers. The same holds true for the transfer
+      setup Length field - a zero length is valid, and must generate
+      a zero length transfer.
+      
+      More information about isochronous transfers can be found in the
+      AutoDoc for usbsys.device/USBSetIsoTransferSetup(), albeit from
+      a Function Driver perspective.
 
    IO REQUEST
       io_Command     CMD_WRITE
@@ -708,8 +994,39 @@ usbhcd.hcd/CMD_WRITE
 
    RESULTS
       io_Actual      Number of bytes actually written to EndPoint.
+                     For isochronous endpoints this is the number of
+                     transfer setups processed for the operation, and
+                     hence the number of transfer results which are set.
       io_Error       Error code indicating completion status.
                      Zero on success.
+
+   SEE ALSO
+      usb/system.h, exec/errors.h, usbsys.device/USBSetIsoTransferSetup
+
+
+usbhcd.hcd/USBCMD_TRACE                                 usbhcd.hcd/USBCMD_TRACE
+
+   NAME
+      USBCMD_TRACE -- Control IO tracing settings of the HCD.
+                      Support for this command is optional. It has been
+                      introduced with usbsys.device 53.25.
+
+   FUNCTION
+      Using this request the USB System Software informs the HCD of whether
+      or not IO tracing should be performed.
+      Since IO tracing may be an expensive operation the HCD will be told
+      when the USB stack is tracing IO and when it is not. A HCD should
+      only collect and report IO tracing data when tracing is enabled.
+      
+   IO REQUEST
+      io_Command     USBCMD_TRACING
+      io_Data        Pointer to a struct USBTracingControlData holding the
+                     new IO tracing settings of the USB stack.
+      io_Length      Length of the struct USBTracingControlData data
+                     payload.
+
+   RESULTS
+      io_Error       Error code indicating completion status.
 
    SEE ALSO
       usb/system.h, exec/errors.h

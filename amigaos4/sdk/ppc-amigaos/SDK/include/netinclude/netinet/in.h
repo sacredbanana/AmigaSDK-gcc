@@ -1,10 +1,8 @@
 /*
- * $VER: in.h 54.16 (22.08.2022)
- *
  * :ts=8
  *
  * 'Roadshow' -- Amiga TCP/IP stack
- * Copyright © 2001-2016 by Olaf Barthel.
+ * Copyright (C) 2001-2022 by Olaf Barthel.
  * All Rights Reserved.
  *
  * Amiga specific TCP/IP 'C' header files;
@@ -177,6 +175,8 @@ struct sockaddr_in {
 	__UBYTE		sin_zero[8];
 };
 
+#define INET_ADDRSTRLEN 16
+
 /*
  * Structure used to describe IP options.
  * Used to store options internally, to pass them to a process,
@@ -275,4 +275,3 @@ struct ip_mreq {
 /****************************************************************************/
 
 #endif /* _NETINET_IN_H */
-

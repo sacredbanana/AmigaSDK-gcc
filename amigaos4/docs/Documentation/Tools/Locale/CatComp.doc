@@ -1,5 +1,4 @@
-
-                 $VER: CatComp_Documentation 52.12 (28.5.2007)
+                 $VER: CatComp_Documentation 53.2 (28.5.2011)
                  =============================================
 
 CatComp is a program to handle the creation and maintenance of the message
@@ -80,7 +79,10 @@ in the 68k version.
   CATALOG/K
   Specifies the name of the IFF catalog file to produce. When this option
   is specified, a translation file must have been given in the previous
-  argument.
+  argument. Note that when generating a catalog, strict validation is
+  enforced. However, if only the CTFILE option is used without CATALOG,
+  CatComp will tolerate structural errors in the input translation file
+  to facilitate incremental translation workflows.
 
   CTFILE/K
   Specifies the name of the catalog translation file to produce. This
@@ -88,7 +90,10 @@ in the 68k version.
   catalog translation file will be blank. When you also specified
   a source translation file, the version string, language, codeset and
   strings of the source translation file will be copied to the new
-  translation file.
+  translation file. If the CATALOG option is not specified, CatComp will
+  tolerate missing tokens in the translation file and report them as
+  informational messages rather than warnings or errors, allowing build
+  systems like GNU make to continue processing without interruption.
 
   CFILE/K
   Specifies the name of the C-language source file header to produce. This
@@ -446,6 +451,16 @@ C-language % command appear in both the description and the translation file.
 This guarantees the integrity of the application stack-frame when using
 translated string in printf() statements.
 
+Starting with version 52.13, CatComp's validation behavior has been refined
+to support modern build workflows. When the CTFILE option is used without
+CATALOG, CatComp will tolerate structural errors in the input translation
+file. Furthermore, tokens present in the translation file but missing from
+the description file (or vice versa) are no longer treated as fatal errors
+or warnings. They are now reported as informational messages. This allows
+build systems like GNU make to process catalog files without halting on
+expected translation discrepancies, while still maintaining strict validation
+when generating final IFF catalogs.
+
 Most errors detected by CatComp are fatal and cause the program to abort.
 Errors are reported to the console with a descriptive error message, a
 filename, and if needed a line and column number. Non-fatal errors (warnings)
@@ -501,7 +516,10 @@ ERROR: <name> is not a valid token
 
 ERROR: token <name> not found
   A token specified in a catalog description file was not present in
-  a translation file and the NOOPTIM switch was used.
+  a translation file and the NOOPTIM switch was used. When generating or
+  updating a translation file without creating a catalog, this is now
+  reported as an informational message rather than a warning or error,
+  allowing non-interactive build processes to continue.
 
 ERROR: string too short for token <name>
   A string in a translation file is shorter than the minimum length
@@ -578,6 +596,11 @@ WARNING: token <name> not found
   A token specified in a catalog description file was not present in
   a translation file and the NOOPTIM switch was not used. Then the string
   will not be written into the output catalog file.
+
+WARNING: trailing whitespace in string
+  A string in the catalog description file ends with a trailing space or
+  tab character. This may cause rendering or localization issues in some
+  locales and is flagged for review.
 
 
 C, Assembly, and Modula-2 Source Files
@@ -780,6 +803,12 @@ command. The supported commands are:
 
   #basename
   In a .cd file CatComp simply ignores this command for compatibility.
+
+Note on Generated Header Guards: Starting with version 52.13, the generated
+C header files no longer unconditionally define `__NOLIBBASE__` and
+`__NOGLOBALIFACE__`. These symbols are now only undefined if they were not
+already defined by the user, preventing conflicts in applications that
+rely on global library bases and interfaces.
 
 
 Object Files

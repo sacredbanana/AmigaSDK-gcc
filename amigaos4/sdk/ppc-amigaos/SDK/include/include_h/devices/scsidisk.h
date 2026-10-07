@@ -1,15 +1,20 @@
 #ifndef DEVICES_SCSIDISK_H
 #define DEVICES_SCSIDISK_H
 /*
-**    $VER: scsidisk.h 54.16 (22.08.2022)
 **
 **    SCSI exec-level device command
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
 **        All Rights Reserved.
 **
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 **
 **    Copyright (C) 1999 by Joanne Dow, Wizardess Designs, licensed to
 **        Amiga Inc.

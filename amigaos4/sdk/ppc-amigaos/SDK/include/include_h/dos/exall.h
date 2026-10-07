@@ -1,14 +1,17 @@
 #ifndef DOS_EXALL_H
 #define DOS_EXALL_H
 /*
-**    $VER: exall.h  54.100 (07.09.2020)
+**    $VER: exall.h  54.126 (05.08.2023)
 **
 **    Include file for obsolete ExAll() data structures
 **
 **    (C) Copyright 1989-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -45,7 +48,7 @@ extern "C" {
  ****************************************************************************/
 
 /*
- *   Structure in which exall results are returned in. 
+ *   Structure in which exall results are returned in.
  *   Note that only the fields asked for will exist!
  */
 struct ExAllData
@@ -66,7 +69,7 @@ struct ExAllData
 
 
 /*
- *   Control structure passed to ExAll.  Unused fields MUST be initialized 
+ *   Control structure passed to ExAll.  Unused fields MUST be initialized
  *   to 0, expecially eac_LastKey.
  *   eac_MatchFunc is a hook (see utility.library documentation for usage)
  *   It should return true if the entry is to returned, false if it is to be
@@ -80,6 +83,47 @@ struct ExAllControl
     STRPTR       eac_MatchString; /* wildcard string for pattern match or NULL */
     struct Hook *eac_MatchFunc;   /* optional private wildcard function */
 };
+
+
+
+/****************************************************************************/
+/*   ExAll() definitions.
+ *   NOTE: V37 dos.library, when doing ExAll() emulation, and V37 filesystems
+ *   will return an error if passed ED_OWNER.  If you get ERROR_BAD_NUMBER,
+ *   retry with ED_COMMENT to get everything but owner info.  All filesystems
+ *   supporting ExAll() must support through ED_COMMENT, and must check Type
+ *   and return ERROR_BAD_NUMBER if they don't support the type.
+ */
+
+/*   Values that can be passed for what data you want from ExAll() each higher
+ *   value includes those below it (numerically) you MUST choose one of these values.
+ */
+
+#define ED_NAME        1
+#define ED_TYPE        2
+#define ED_SIZE        3
+#define ED_PROTECTION  4
+#define ED_DATE        5
+#define ED_COMMENT     6
+#define ED_OWNER       7
+
+/****************************************************************************/
+/* Handy macros for checking what kind of object a ExAllData's ed_Type describes;
+   ExAll() */
+
+#define EAD_IS_FILE(ead)    ((ead)->ed_Type <  0)
+
+#define EAD_IS_DRAWER(ead)  ((ead)->ed_Type >= 0 && \
+                             (ead)->ed_Type != ST_SOFTLINK)
+
+#define EAD_IS_LINK(ead)    ((ead)->ed_Type == ST_SOFTLINK || \
+                             (ead)->ed_Type == ST_LINKDIR || \
+                             (ead)->ed_Type == ST_LINKFILE)
+
+#define EAD_IS_SOFTLINK(ead) ((ead)->ed_Type == ST_SOFTLINK)
+
+#define EAD_IS_LINKDIR(ead)  ((ead)->ed_Type == ST_LINKDIR)
+
 
 
 /****************************************************************************/

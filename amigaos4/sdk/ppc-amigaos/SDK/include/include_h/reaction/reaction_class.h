@@ -1,7 +1,6 @@
 #ifndef REACTION_REACTION_CLASS_H
 #define REACTION_REACTION_CLASS_H
 /*
-**    $VER: reaction_class.h 54.16 (22.08.2022)
 **
 **    reaction class author definitions
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

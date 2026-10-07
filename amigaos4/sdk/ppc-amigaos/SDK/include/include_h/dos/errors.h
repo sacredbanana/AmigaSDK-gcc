@@ -1,16 +1,19 @@
 #ifndef DOS_ERRORS_H
 #define DOS_ERRORS_H
 /*
-**    $VER: errors.h  54.100 (07.09.2020)
+**    $VER: errors.h  54.126 (05.08.2023)
 **
 **    All error codes defined by the dos.library API
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
-*/ 
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
+**        All Rights Reserved.
+*/
 
 #ifndef EXEC_TYPES_H
 #include <exec/types.h>
@@ -91,7 +94,7 @@ extern "C" {
 
 /****************************************************************************/
 
-/* ErrorReport() special code, (see dosextens.h) */  
+/* ErrorReport() special code, (see dosextens.h) */
 /* #define ABORT_BUSY                    288    "You MUST replace..." */
 /* #define ABORT_DISK_ERROR              296    Read/write error */
 

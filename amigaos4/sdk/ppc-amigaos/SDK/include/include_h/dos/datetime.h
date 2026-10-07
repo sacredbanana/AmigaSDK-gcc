@@ -1,14 +1,17 @@
 #ifndef DOS_DATETIME_H
 #define DOS_DATETIME_H
 /*
-**    $VER: datetime.h  54.100 (07.09.2020)
+**    $VER: datetime.h  54.126 (05.08.2023)
 **
 **    Date and time C header for AmigaDOS
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -72,10 +75,10 @@ struct DateTime
 #define FORMAT_USA    2        /* mm-dd-yy  */
 #define FORMAT_CDN    3        /* dd-mm-yy  */
 #define FORMAT_DEF    4        /* use default format, as defined
-                                  by locale; if locale not available, 
+                                  by locale; if locale not available,
                                   use FORMAT_DOS instead */
 #define FORMAT_ISO    5        /* yyyy-mm-dd (ISO 8601)
-                                  Requires locale V48 or dos V50.36 
+                                  Requires locale V48 or dos V50.36
                                   if locale not available */
 #define FORMAT_MAX    FORMAT_ISO
 

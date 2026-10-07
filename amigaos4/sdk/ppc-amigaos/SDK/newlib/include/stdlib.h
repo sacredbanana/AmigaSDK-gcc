@@ -220,6 +220,13 @@ long double	strtold (const char *__n, char **__end_PTR);
 long double	_strtold_r (struct _reent *, const char *__n, char **__end_PTR);
 #endif /* _HAVE_LONG_DOUBLE */
 
+/*
+ * If we're in a mode greater than C99, expose C11 functions.
+ */
+#if defined(__amigaos4__) && __ISO_C_VISIBLE >= 2011
+void *	aligned_alloc(size_t, size_t);
+#endif /* __ISO_C_VISIBLE >= 2011 */
+
 _END_STD_C
 
 #endif /* _STDLIB_H_ */

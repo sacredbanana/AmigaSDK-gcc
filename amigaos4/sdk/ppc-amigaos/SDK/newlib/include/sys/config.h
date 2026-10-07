@@ -1,10 +1,6 @@
 #ifndef __SYS_CONFIG_H__
 #define __SYS_CONFIG_H__
 
-#ifdef __VBCC__
- #define __extension__
-#endif
-
 #if defined (__amigaos4__) && !defined(_BIG_ENDIAN)
  #define _BIG_ENDIAN 1
  #ifndef __BIG_ENDIAN__

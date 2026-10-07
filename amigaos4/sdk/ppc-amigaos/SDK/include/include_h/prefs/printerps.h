@@ -1,7 +1,6 @@
 #ifndef PREFS_PRINTERPS_H
 #define PREFS_PRINTERPS_H
 /*
-**    $VER: printerps.h 54.16 (22.08.2022)
 **
 **    File format for PostScript printer preferences
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

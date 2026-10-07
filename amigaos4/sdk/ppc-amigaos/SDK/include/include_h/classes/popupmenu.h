@@ -1,7 +1,6 @@
 #ifndef CLASSES_POPUPMENU_H
 #define CLASSES_POPUPMENU_H
 /*
-**    $VER: popupmenu.h 54.16 (22.08.2022)
 **
 **    popupmenu.class definitions &
 **    popupmenuitem.class definitions
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

@@ -1,7 +1,6 @@
 #ifndef PREFS_SCREENMODE_H
 #define PREFS_SCREENMODE_H
 /*
-**    $VER: screenmode.h 54.16 (22.08.2022)
 **
 **    File format for screen mode preferences
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

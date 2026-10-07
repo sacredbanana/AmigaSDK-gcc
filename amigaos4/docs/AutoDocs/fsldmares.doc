@@ -2,6 +2,8 @@ TABLE OF CONTENTS
 
 fsldma.resource/-copyright-
 fsldma.resource/CopyMemDMA
+fsldma.resource/CopyMemDMA64
+fsldma.resource/CopyMemDMA64TagList
 fsldma.resource/CopyMemDMATagList
 fsldma.resource/StartDMAChain
 fsldma.resource/StartDMAChainTagList
@@ -9,7 +11,7 @@ fsldma.resource/StartDMAChainTagList
 
 fsldma.resource/-copyright-
 
- Copyright 2021 Trevor Dickinson.
+ Copyright 2021,2023 Trevor Dickinson.
 
 fsldma.resource/CopyMemDMA
 
@@ -41,17 +43,240 @@ fsldma.resource/StartDMAChainTagList
      See the fsldma_example_1.c source in the SDK:Examples/fsldma/
      folder for an example of using IfslDMA->CopyMemDMA() to make
      simple "Blocking" memory copies using the DMA hardware on
-     the X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+     the X5000/20 (p5020), X5000/40 (p5040) and A1222 (p1022) systems.
 
    NOTES
      The CopyMemDMA() function is provided as a convenient way
      to accelerate "blocking" copy memory functions that work
      with virtual memory, like IExec->CopyMemQuick().
 
+   SEE ALSO
+     CopyMemDMATagList, CopyMemDMATags, StartDMAChain,
+     CopyMemDMA64, CopyMemDMA64Tags
+
+fsldma.resource/CopyMemDMA64
+
+   NAME
+     CopyMemDMA64 -- Attempt a memory copy using DMA hardware
+
+   SYNOPSIS
+     BOOL CopyMemDMA64(CONST_DMAPTR SrcAddr64, DMAPTR DestAddr64, uint32 lBufferSize);
+
+   FUNCTION
+     Copy memory from source to destination using the DMA engine.
+
+     Arbitrary overlapping copies are not supported.
+
+   INPUTS
+     source - CONST_DMAPTR (64 Bit value) that represents
+              the *physical* source data region
+     dest   - DMAPTR (64 Bit value) that represents
+              the *physical* destination data region
+     size   - size of the copy in bytes
+
+   RESULT
+     This function returns TRUE if the DMA copy was successful,
+     or FALSE if passed invalid parameters or an error occurred.
+
+     FALSE may also be returned if all DMA channels are currently
+     busy when this request is made. See CopyMemDMA64TagList() for
+     options on how to check a further result code.
+
+   EXAMPLE
+     See the fsldma_copymem64.c source in the SDK:Examples/fsldma/
+     folder for an example of using IfslDMA->CopyMemDMA64() to make
+     simple "Blocking" memory copies using the DMA hardware on
+     the X5000/20 (p5020), X5000/40 (p5040) and A1222 (p1022) systems.
+
+   NOTES
+     The CopyMemDMA64() function is provided as a convenient
+     version of the CopyMemDMA() function which directly uses
+     64-Bit address values as input and expects those address
+     values to represent the *Physical* location of a contigous
+     block of memory (normally for some hardware component).
+
+     If you need to use one or more Virtual memory addresses
+     in your DMA copy, then use the 32-Bit version - CopyMemDMA()
+     instead. CopyMemDMA64() only supports Physical locations.
+
    BUGS
 
    SEE ALSO
-     CopyMemDMATagList, CopyMemDMATags, StartDMAChain
+     CopyMemDMA64TagList, CopyMemDMA64Tags, StartDMAChain,
+     CopyMemDMATagList, CopyMemDMATags
+
+fsldma.resource/CopyMemDMA64TagList
+
+   NAME
+     CopyMemDMA64TagList -- Attempt a memory copy using DMA hardware
+
+   SYNOPSIS
+     BOOL CopyMemDMA64TagList(CONST_DMAPTR SrcAddr64, DMAPTR DestAddr64,
+                              uint32 lBufferSize, const struct TagItem *tags);
+     BOOL CopyMemDMA64Tags(CONST_DMAPTR SrcAddr64, DMAPTR DestAddr64,
+                           uint32 lBufferSize, uint32 Tag1, ...);
+
+   FUNCTION
+     Copy memory from source to destination using the DMA engine.
+
+     Arbitrary overlapping copies are not supported.
+
+   INPUTS
+     SrcAddr64   - CONST_DMAPTR (64 Bit value) that represents
+                   the *physical* source data region
+     DestAddr64  - DMAPTR (64 Bit value) that represents
+                   the *physical* destination data region
+     lBufferSize - size of the copy in bytes
+
+     tags - A list of tag items used to access advanced
+            features of the DMA hardware or control the
+            operational mode of the DMA transaction.
+            Currently, the following tags are defined
+            (the information in brackets refers to the
+            data type of the tag item, as well as its
+            default value):
+
+            FSLDMA_CM_NotifyHook (struct Hook *)
+                If this tag is provided then the Hook structure
+                is called based on the provided NotifyHookFlags.
+
+                The Notify Hook is separate from the Notify signals
+                and as such does not require FSLDMA_CM_NotifyTask
+                to be provided.
+
+            FSLDMA_CM_NotifyHookFlags (uint32)
+                This tag is used to request which notification
+                events should call the Notify Hook.
+
+                FSLDMA_CM_NotifyHook must be provided with
+                a pointer to a proper Hook structure.
+
+                This tags defaults to call the Hook on completion
+                or error events.
+
+                The possible values for this tag are listed below.
+                The specified Hook function with be called on each
+                event type listed here.
+
+                FSLDMA_NF_COMPLETE   = "DMA Chain completed successfully"
+                FSLDMA_NF_INPROGRESS = "Sub-block completed successfully"
+                FSLDMA_NF_ERROR      = "Error occurred"
+                FSLDMA_NF_COMMON     = Requests "Completed" or "Error" only
+                FSLDMA_NF_ALL        = Call Hook function on all three listed above
+
+            FSLDMA_CM_DoNotWait (BOOL, FALSE)
+              If set to TRUE, the DMA Copy will start and
+              return immediately. See the "Notify" tags
+              below if you wish to be notified that the
+              requested copy has been completed.
+
+              If you do not also set at least FSLDMA_CM_NotifyTask
+              and FSLDMA_CM_NotifySignalNumber, then the caller
+              will *not* be notify when the copy is complete.
+
+              This is effectively "spray-and-pray" mode,
+              where the caller only needs to queue up DMA
+              transfers, but does not care when (or if) they
+              have completed.
+
+            FSLDMA_CM_NotifyTask (struct Task *, NULL)
+              Provide the Task to be Signaled upon completion,
+              error, or status changes. Passing a valid Task
+              pointer here, plus at least one of the three
+              possible signal numbers (listed below) will also
+              set FSLDMA_CM_DoNotWait to TRUE, causing the
+              call to return immediately and signal notifications
+              upon completion.
+
+            FSLDMA_CM_NotifySignalNumber (int8, no default)
+              Provide the Signal Number to be sent
+              upon the successful completion of the
+              entire transfer.
+
+              Requires FSLDMA_CM_NotifyTask to be set
+              or silently does nothing.
+
+            FSLDMA_CM_NotifyProgessSignalNumber (int8, no default)
+              Provide the Signal Number to be sent
+              upon the successful completion of one
+              sub-block of the total transfer.
+
+              Requires FSLDMA_CM_NotifyTask to be set
+              or silently does nothing.
+
+            FSLDMA_CM_NotifyErrorSignalNumber (int8, no default)
+              Provide the Signal Number to be sent
+              upon an error in the requested transfer.
+
+              Requires FSLDMA_CM_NotifyTask to be set
+              or silently does nothing.
+
+            FSLDMA_CM_ResultCode (uint32 *)
+              If a pointer to a uint32 variable is provided using
+              this tag, then the specific DMA Transaction Result Code
+              will be filled into that memory location.
+
+              This tag is optional but provides a good way to
+              determine why the requested DMA transaction may
+              have returned before it was started.
+
+              The most common use of this tag is to determine
+              why the API call (eg. CopyMemDMA64Tags()) returned
+              during setup.
+
+              The possible DMA Result Code values are listed below.
+
+              FSLDMA_RC_STARTED  = The DMA transaction was started successfully*
+
+              FSLDMA_RC_BUSY     = The transaction was not started because all
+                                   DMA Channels are currently busy.
+                                   Try the call again.
+
+              FSLDMA_RC_PRGERROR = The transaction could not start because missing
+                                   or incorrect arguments were provided
+
+              FSLDMA_RC_HALTED   = The DMA transaction was halted
+                                   (most likely in response to an Abort request)
+
+              FSLDMA_RC_TRANSERR = The DMA transaction failed to complete,
+                                    a transfer error occurred
+
+              *The FSLDMA_CM_ResultCode will be set to FSLDMA_RC_STARTED when
+               either a "blocking" request was completed without error, or
+               when a "non-blocking" request was successfully started and is
+               currently running. See the FSLDMA_CM_Notify tags for details
+               about capturing the results from "non-blocking" transactions.
+
+               The uint32 variable provided to the FSLDMA_CM_ResultCode Tag
+               should be initialize to FSLDMA_RC_UNKNOWN before the API call is made.
+
+
+   RESULT
+     This function returns TRUE if the DMA copy was possible
+     and successful, or FALSE if using the DMA was not possible
+     or submitting the copy to the DMA hardware returned an
+     error (see FSLDMA_CM_ResultCode for more).
+
+   EXAMPLE
+     See the fsldma_copymem64tags.c source in the SDK:Examples/fsldma/
+     folder for an example of using IfslDMA->CopyMemDMA64Tags() to make
+     "Non-Blocking" memory copies using the DMA hardware on
+     the X5000/20 (p5020), X5000/40 (p5040) and A1222 (p1022) systems.
+
+   NOTES
+     The CopyMemDMA64Tags() function is provided as a convenient
+     version of the CopyMemDMATags() function which directly uses
+     64-Bit address values as input and expects those address
+     values to represent the *Physical* location of a contigous
+     block of memory (normally for some hardware component).
+
+     If you need to use one or more Virtual memory addresses
+     in your DMA copy, then use the 32-Bit version - CopyMemDMATags()
+     instead. CopyMemDMA64Tags() only supports Physical locations.
+
+   SEE ALSO
+     CopyMemDMA64, CopyMemDMA64Tags, StartDMAChain,
+     CopyMemDMA, CopyMemDMATags
 
 fsldma.resource/CopyMemDMATagList
 
@@ -259,7 +484,8 @@ fsldma.resource/StartDMAChainTagList
    BUGS
 
    SEE ALSO
-     CopyMemDMA, CopyMemDMATags, StartDMAChain
+     CopyMemDMA,   CopyMemDMATags, StartDMAChain,
+     CopyMemDMA64, CopyMemDMA64Tags
 
 fsldma.resource/StartDMAChain
 
@@ -288,7 +514,7 @@ fsldma.resource/StartDMAChainTagList
      folder for an example of using IfslDMA->StartDMAChain() to make
      either "Blocking" or "Non-Blocking" memory copies of an entire
      set of memory blocks using the DMA hardware on the
-     X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+     X5000/20 (p5020), X5000/40 (p5040) and A1222 (p1022) systems.
 
    NOTES
      StartDMAChain() provides a highly efficient means to perform
@@ -301,11 +527,10 @@ fsldma.resource/StartDMAChainTagList
      in building a proper array of DMA Link Descriptors for your
      programs.
 
-   BUGS
-
    SEE ALSO
      StartDMAChainTagList, StartDMAChainTags,
-     CopyMemDMA, CopyMemDMATagList, CopyMemDMATags
+     CopyMemDMA, CopyMemDMATagList, CopyMemDMATags,
+     CopyMemDMA64TagList, CopyMemDMA64Tags
 
 fsldma.resource/StartDMAChainTagList
 
@@ -462,7 +687,7 @@ fsldma.resource/StartDMAChainTagList
      folder for an example of using IfslDMA->StartDMAChainTags() to make
      either "Blocking" or "Non-Blocking" memory copies of an entire
      set of memory blocks using the DMA hardware on the
-     X5000/20 (p5020), X5000/40 (p5040) an A1222 (p1022) systems.
+     X5000/20 (p5020), X5000/40 (p5040) and A1222 (p1022) systems.
 
    NOTES
      StartDMAChain() provides a highly efficient means to perform
@@ -475,9 +700,8 @@ fsldma.resource/StartDMAChainTagList
      in building a proper array of DMA Link Descriptors for your
      programs.
 
-   BUGS
-
    SEE ALSO
-     StartDMAChain, CopyMemDMA, CopyMemDMATagList, CopyMemDMATags
+     StartDMAChain, CopyMemDMA, CopyMemDMATagList, CopyMemDMATags,
+     CopyMemDMA64TagList, CopyMemDMA64Tags
 
 

@@ -2,7 +2,6 @@
 #define CLIB_ALL_PROTOS_H
 
 /*
-**    $Id: all_protos.h,v 1.6 2010-01-31 01:28:54 ssolie Exp $
 **
 **    Simple all-including include
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

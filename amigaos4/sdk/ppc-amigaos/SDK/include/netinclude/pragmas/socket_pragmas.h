@@ -1,10 +1,8 @@
 /*
- * $VER: socket_pragmas.h 54.16 (22.08.2022)
- *
  * :ts=8
  *
  * 'Roadshow' -- Amiga TCP/IP stack
- * Copyright © 2001-2016 by Olaf Barthel.
+ * Copyright (C) 2001-2016 by Olaf Barthel.
  * All Rights Reserved.
  *
  * "Miami" compatibility header file
@@ -21,4 +19,3 @@
 #endif /* PRAGMAS_BSDSOCKET_PRAGMAS_H */
 
 #endif /* !PRAGMAS_SOCKET_PRAGMAS_H */
-

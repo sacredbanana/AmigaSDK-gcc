@@ -1,28 +1,36 @@
 #ifndef DOS_OBSOLETE_H
 #define DOS_OBSOLETE_H
 /*
-**    $VER: obsolete.h  54.100 (07.09.2020)
+**    $VER: obsolete.h  54.127 (01.03.2025)
 **
-**    include file for obsolete dos compatibility. 
+**    include file for obsolete dos compatibility.
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
 /****************************************************************************
 **
 **                     ===========================
-**                     DEVELOPERS PLEASE READ THIS 
+**                     DEVELOPERS PLEASE READ THIS
 **                     ===========================
 **
 **       Include this file ONLY for old source code compatibility.
-**       Newer applications should be written using the latest methods. 
+**       Newer applications should be written using the latest methods.
 **
 *****************************************************************************/
 
+#ifdef __amigaos4__
+  #ifdef __GNUC__
+    #pragma message "dos/obsolete.h has been included !!"
+  #endif
+#endif
 
 #ifndef EXEC_NODES_H
 #include <exec/nodes.h>
@@ -31,9 +39,13 @@
 #ifndef DOS_DOS_H
 #include <dos/dos.h>
 #endif
- 
+
+#ifndef DOS_DOSEXTENS_H
+#include <dos/dosextens.h>
+#endif   /* For the dol_Lock reference. */
+
 #ifndef DOS_ANCHORPATH_H
-#include <dos/anchorpath.h> 
+#include <dos/anchorpath.h>
 #endif   /* For the FIB struct and ST_XXXX defines. */
 
 
@@ -63,10 +75,13 @@ extern "C" {
 #define  MAXINT               MAXINT32
 #define  MININT               MININT32
 
+#define ACCESS_READ           SHARED_LOCK
+#define ACCESS_WRITE          EXCLUSIVE_LOCK
+
 #define  id_NumSoftErrors     id_Reserved1
 #define  id_UnitNumber        id_Reserved2
 
-#define  pr_TaskNum           pr_CliNum 
+#define  pr_TaskNum           pr_CliNum
 #define  pr_OGLContextPtr     pr_OGLContextData
 #define  pr_ConsoleTask       pr_ConsolePort
 #define  pr_FileSystemTask    pr_FileSystemPort
@@ -90,7 +105,7 @@ extern "C" {
 #define  dol_Lock             dol_misc.dol_assign.dol_Lock
 
 #define  AssignList           MultiAssign
-#define  al_Next              ma_Next 
+#define  al_Next              ma_Next
 #define  al_Lock              ma_Lock
 
 #define  Segment              DosResidentSeg
@@ -124,9 +139,9 @@ extern "C" {
 
 /* Semantical name changes in DosEnvec */
 #define  DE_SIZEBLOCK         DE_SECSIZE
-#define  de_SizeBlock         de_SectorSize 
- 
-#define  DE_BLKSPERTRACK      DE_SECSPERTRACK    
+#define  de_SizeBlock         de_SectorSize
+
+#define  DE_BLKSPERTRACK      DE_SECSPERTRACK
 #define  de_BlocksPerTrack    de_SectorPerTrack
 
 #define  DE_NUMHEADS          DE_SURFACES
@@ -158,8 +173,8 @@ extern "C" {
 
 
 /*
-** Finally redefine the name to reflect the exact function 
-** of these particular contradictory protection bits. 
+** Finally redefine the name to reflect the exact function
+** of these particular contradictory protection bits.
 */
 #define EXDB_READ            EXDB_NO_READ
 #define EXDB_WRITE           EXDB_NO_WRITE
@@ -167,9 +182,9 @@ extern "C" {
 #define EXDB_DELETE          EXDB_NO_DELETE
 
 #define EXDF_READ            EXDF_NO_READ
-#define EXDF_WRITE           EXDF_NO_WRITE 
+#define EXDF_WRITE           EXDF_NO_WRITE
 #define EXDF_EXECUTE         EXDF_NO_EXECUTE
-#define EXDF_DELETE          EXDF_NO_DELETE 
+#define EXDF_DELETE          EXDF_NO_DELETE
 
 
 /* semantical name change */
@@ -181,7 +196,7 @@ extern "C" {
 /* Renamed functions */
 
 /* this was changed in V50 */
-#define Flush(x)                     FFlush(x) 
+#define Flush(x)                     FFlush(x)
 
 /* these were changed in V53 */
 #define SetPrompt(x)                 SetCliPrompt(x)
@@ -242,9 +257,9 @@ extern "C" {
 /*********************/
 /* Obsolete macros   */
 
-/* 
+/*
 **  This assumes a BCPL pointer always has the two most significant bits cleared.
-**  Unfortunately, this will only be true with 32 bit addressing.
+**  Unfortunately, this will only be true with unsigned BPTR's and 32 bit addressing.
 */
 #define IS_VALID_BPTR(bptr)   ((((uint32)(bptr)) & 0xC0000000) == 0)
 
@@ -278,7 +293,7 @@ struct DeviceList
 
 /****************************************************************************/
 /* Obsolete device structure definition,  this structure has identical      */
-/* members to a struct DeviceNode that used to be found in filehandler.h.   */
+/* members to a struct DeviceList that used to be found in filehandler.h.   */
 /* Moved this one here because it was pointless having two definitions.     */
 
 struct DevInfo
@@ -334,7 +349,7 @@ struct RecordLock32
 #define FIBB_GRP_EXECUTE       9    /* Group: file is executable */
 #define FIBB_GRP_DELETE        8    /* Group: prevent file from being deleted */
 
-#define FIBB_HOLD              7    /* (V50) hold loaded program in cli resident list */ 
+#define FIBB_HOLD              7    /* (V50) hold loaded program in cli resident list */
 #define FIBB_SCRIPT            6    /* program is a script (execute) file */
 #define FIBB_PURE              5    /* program is reentrant and rexecutable */
 #define FIBB_ARCHIVE           4    /* cleared whenever file is changed */
@@ -378,46 +393,6 @@ struct RecordLock32
 #define FIB_IS_SOFTLINK(fib)  ((fib)->fib_DirEntryType == ST_SOFTLINK)
 
 #define FIB_IS_LINKDIR(fib)   ((fib)->fib_DirEntryType == ST_LINKDIR)
-
-
-
-
-
-/****************************************************************************/
-/* Obsolete ExAll() definitions.
-   NOTE: V37 dos.library, when doing ExAll() emulation, and V37 filesystems
-   will return an error if passed ED_OWNER.  If you get ERROR_BAD_NUMBER,
-   retry with ED_COMMENT to get everything but owner info.  All filesystems
-   supporting ExAll() must support through ED_COMMENT, and must check Type
-   and return ERROR_BAD_NUMBER if they don't support the type. */
-
-/* Values that can be passed for what data you want from ExAll() each higher
-   value includes those below it (numerically) you MUST chose one of these values */
-
-#define ED_NAME        1
-#define ED_TYPE        2
-#define ED_SIZE        3
-#define ED_PROTECTION  4
-#define ED_DATE        5
-#define ED_COMMENT     6
-#define ED_OWNER       7
-
-/****************************************************************************/
-/* Handy macros for checking what kind of object a ExAllData's ed_Type describes;  ExAll() */
-
-#define EAD_IS_FILE(ead)    ((ead)->ed_Type <  0)
-
-#define EAD_IS_DRAWER(ead)  ((ead)->ed_Type >= 0 && \
-                             (ead)->ed_Type != ST_SOFTLINK)
-
-#define EAD_IS_LINK(ead)    ((ead)->ed_Type == ST_SOFTLINK || \
-                             (ead)->ed_Type == ST_LINKDIR || \
-                             (ead)->ed_Type == ST_LINKFILE)
-
-#define EAD_IS_SOFTLINK(ead) ((ead)->ed_Type == ST_SOFTLINK)
-
-#define EAD_IS_LINKDIR(ead)  ((ead)->ed_Type == ST_LINKDIR)
-
 
 
 

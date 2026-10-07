@@ -22,6 +22,9 @@
 #ifndef USB_SYSTEM_H
 #include <usb/system.h>
 #endif
+#ifndef USB_EVENTHOOKS_H
+#include <usb/eventhooks.h>
+#endif
 
 #ifdef __cplusplus
 #ifdef __USE_AMIGAOS_NAMESPACE__
@@ -108,6 +111,8 @@ struct USBSysIFace
 	struct USBTransferResult * APICALL (*USBGetIsoTransferResult)(struct USBSysIFace *Self, struct USBIOReq * ioReq, ULONG transferIndex, struct USBTransferSetup ** setupOut);
 	struct USBTransferSetup * APICALL (*USBGetIsoTransferSetupHcd)(struct USBSysIFace *Self, struct USBIOReqHCD * ioReq, ULONG transferIndex);
 	BOOL APICALL (*USBSetIsoTransferResultHcd)(struct USBSysIFace *Self, struct USBIOReqHCD * ioReq, ULONG transferIndex, ULONG actual, LONG result);
+	void APICALL (*USBTraceIoHcdA)(struct USBSysIFace *Self, struct USBIOReqHCD * ioReq, uint32 tracePoint, uint32 traceFlags, struct USBIoTraceCustomData * customData, struct TagItem * taglist);
+	void APICALL (*USBTraceIoHcd)(struct USBSysIFace *Self, struct USBIOReqHCD * ioReq, uint32 tracePoint, uint32 traceFlags, struct USBIoTraceCustomData * customData, ...);
 };
 
 #ifdef __cplusplus

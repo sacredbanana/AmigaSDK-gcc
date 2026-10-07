@@ -219,9 +219,14 @@ extern int __signbitd (double x);
 	  ((sizeof(__x) == sizeof(float))  ? __fpclassifyf(__x) : \
 	  __fpclassifyd(__x))
   #ifndef isfinite
-    #define isfinite(__y) \
-	    (__extension__ ({int __cy = fpclassify(__y); \
-			     __cy != FP_INFINITE && __cy != FP_NAN;}))
+    #ifdef __GNUC__
+      #define isfinite(__y) \
+          (__extension__ ({int __cy = fpclassify(__y); \
+                           __cy != FP_INFINITE && __cy != FP_NAN;}))
+    #else
+      #define isfinite(__x) \
+          (fpclassify(__x) != FP_INFINITE && fpclassify(__x) != FP_NAN)
+    #endif
   #endif
   #ifndef isinf
     #define isinf(__x) (fpclassify(__x) == FP_INFINITE)
@@ -256,7 +261,7 @@ extern int __signbitd (double x);
 #define islessequal(__x,__y)	(__builtin_islessequal (__x, __y))
 #define islessgreater(__x,__y)	(__builtin_islessgreater (__x, __y))
 #define isunordered(__x,__y)	(__builtin_isunordered (__x, __y))
-#else
+#elif defined(__GNUC__)
 #define isgreater(x,y) \
           (__extension__ ({__typeof__(x) __x = (x); __typeof__(y) __y = (y); \
                            !isunordered(__x,__y) && (__x > __y);}))
@@ -276,19 +281,7 @@ extern int __signbitd (double x);
 #define isunordered(a,b) \
           (__extension__ ({__typeof__(a) __a = (a); __typeof__(b) __b = (b); \
                            fpclassify(__a) == FP_NAN || fpclassify(__b) == FP_NAN;}))
-#endif
-
-#if defined(__VBCC__)
-#define fpclassify(x) \
-          ((sizeof(x)==sizeof(float)) ? __fpclassifyf(x) : __fpclassifyd(x))
-
-#define isfinite(x) \
-          (fpclassify(x)!=FP_INFINITE && fpclassify(x)!=FP_NAN)
-#define isnormal(x) \
-          (fpclassify(x)==FP_NORMAL)
-#define signbit(x) \
-          ((sizeof(x)==sizeof(float)) ? __signbitf(x) : __signbitd(x))
-
+#else
 #define isgreater(x,y) \
           (!isunordered(x,y) && ((x) > (y)))
 #define isgreaterequal(x,y) \

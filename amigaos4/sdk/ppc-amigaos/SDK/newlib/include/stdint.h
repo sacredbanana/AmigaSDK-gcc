@@ -235,11 +235,14 @@ typedef uint64_t  	uint_least32_t;
   typedef unsigned long uintmax_t;
 #endif
 
-/*
- * GCC doesn't provide an appropriate macro for [u]intptr_t
- * For now, use __PTRDIFF_TYPE__
- */
-#if defined(__PTRDIFF_TYPE__)
+#if defined(__INTPTR_TYPE__)
+typedef __INTPTR_TYPE__ intptr_t;
+#if defined(__UINTPTR_TYPE__)
+typedef __UINTPTR_TYPE__ uintptr_t;
+#else
+typedef unsigned __INTPTR_TYPE__ uintptr_t;
+#endif
+#elif defined(__PTRDIFF_TYPE__)
 typedef signed __PTRDIFF_TYPE__ intptr_t;
 typedef unsigned __PTRDIFF_TYPE__ uintptr_t;
 #else
@@ -370,6 +373,28 @@ typedef unsigned long uintptr_t;
 /* This must match ptrdiff_t  in <stddef.h> (currently long int) */
 #define PTRDIFF_MIN (-__STDINT_EXP(LONG_MAX) - 1L)
 #define PTRDIFF_MAX __STDINT_EXP(LONG_MAX)
+
+#ifdef __INTPTR_TYPE__
+#define INTPTR_MIN (-__INTPTR_MAX__ - 1)
+#define INTPTR_MAX (__INTPTR_MAX__)
+#define UINTPTR_MAX (__UINTPTR_MAX__)
+#elif defined(__PTRDIFF_TYPE__)
+#define INTPTR_MAX PTRDIFF_MAX
+#define INTPTR_MIN PTRDIFF_MIN
+#ifdef __UINTPTR_MAX__
+#define UINTPTR_MAX (__UINTPTR_MAX__)
+#else
+#define UINTPTR_MAX (2UL * PTRDIFF_MAX + 1)
+#endif
+#else
+/*
+ * Fallback to hardcoded values, 
+ * should be valid on cpu's with 32bit int/32bit void*
+ */
+#define INTPTR_MAX (__STDINT_EXP(LONG_MAX))
+#define INTPTR_MIN (-__STDINT_EXP(LONG_MAX) - 1)
+#define UINTPTR_MAX (__STDINT_EXP(LONG_MAX) * 2UL + 1)
+#endif
 
 /** Macros for minimum-width integer constant expressions */
 #define INT8_C(x)	x

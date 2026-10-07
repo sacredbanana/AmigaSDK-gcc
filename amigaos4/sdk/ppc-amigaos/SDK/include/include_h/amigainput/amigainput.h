@@ -2,7 +2,6 @@
 #define AMIGAINPUT_AMIGAINPUT_H
 
 /*
-**    $VER: amigainput.h 54.16 (22.08.2022)
 **
 **    AmigaInput definitions
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -68,12 +70,14 @@ typedef struct _AIN_InputEvent
    int32          Value;
 } AIN_InputEvent;
 
+
 typedef struct _AIN_RequesterResult
 {
     uint8  ModName[1024];  
     uint32 UnitNo;         
     uint32 DeviceID;       
 } AIN_RequesterResult;
+
 
 /* Errortypes */
 
@@ -149,7 +153,7 @@ typedef struct _AIN_RequesterResult
 
 /* AXIS_class */
 
-#define AINAS_UNKOWN     0
+#define AINAS_UNKNOWN    0
 #define AINAS_XAXIS      1
 #define AINAS_YAXIS      2
 #define AINAS_ZAXIS      3
@@ -162,15 +166,21 @@ typedef struct _AIN_RequesterResult
 #define AINAS_RUDDER    10
 #define AINAS_THROTTLE  11
 
+/* Former versions had this typo */
+#define AINAS_UNKOWN AINAS_UNKNOWN
+
 
 /* Layout_class */
 
-#define AINLC_UNKOWN       0
+#define AINLC_UNKNOWN      0
 #define AINLC_MOUSE        1
 #define AINLC_KEYBOARD     2
 #define AINLC_JOYSTICK     3
 #define AINLC_FLIGHTSTICK  4
 #define AINLC_COMPLEXSTICK 5
+
+/* Former versions had this typo */
+#define AINLC_UNKOWN AINLC_UNKNOWN
 
 
 /* Subclass */

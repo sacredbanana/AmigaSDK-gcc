@@ -1,11 +1,13 @@
 #ifndef RESOURCES_XENA_H
 #define RESOURCES_XENA_H
 /*
-**    $VER: xena.h 54.16 (22.08.2022)
 **
 **    Unit number definitions for "xena.resource"
 **
 **    Copyright (c) 2012 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

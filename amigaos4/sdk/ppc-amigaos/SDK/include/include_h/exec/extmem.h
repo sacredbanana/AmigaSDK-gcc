@@ -1,15 +1,9 @@
 #ifndef EXEC_EXTMEM_H
 #define EXEC_EXTMEM_H
 /*
-**    $VER: extmem.h 53.29 (10.8.2015)
+** Definitions for the Extended Memory System (ExtMem)
 **
-**    Definitions for the Extended Memory System (ExtMem)
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2014 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2014-2019 Trevor Dickinson.
 */
 
 #ifdef __cplusplus

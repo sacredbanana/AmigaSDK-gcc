@@ -26,6 +26,9 @@
 #ifndef USB_SYSTEM_H
 #include <usb/system.h>
 #endif
+#ifndef USB_EVENTHOOKS_H
+#include <usb/eventhooks.h>
+#endif
 #include <interfaces/usbsys.h>
 
 /* Inline macros for Interface "main" */
@@ -183,5 +186,11 @@
 #define USBGetIsoTransferResult(ioReq, transferIndex, setupOut) IUSBSys->USBGetIsoTransferResult((ioReq), (transferIndex), (setupOut)) 
 #define USBGetIsoTransferSetupHcd(ioReq, transferIndex) IUSBSys->USBGetIsoTransferSetupHcd((ioReq), (transferIndex)) 
 #define USBSetIsoTransferResultHcd(ioReq, transferIndex, actual, result) IUSBSys->USBSetIsoTransferResultHcd((ioReq), (transferIndex), (actual), (result)) 
+#define USBTraceIoHcdA(ioReq, tracePoint, traceFlags, customData, taglist) IUSBSys->USBTraceIoHcdA((ioReq), (tracePoint), (traceFlags), (customData), (taglist)) 
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || (__GNUC__ >= 3)
+#define USBTraceIoHcd(ioReq, tracePoint, traceFlags, ...) IUSBSys->USBTraceIoHcd((ioReq), (tracePoint), (traceFlags), __VA_ARGS__) 
+#elif (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
+#define USBTraceIoHcd(ioReq, tracePoint, traceFlags, vargs...) IUSBSys->USBTraceIoHcd(ioReq, tracePoint, traceFlags, ## vargs) 
+#endif
 
 #endif /* INLINE4_USBSYS_H */

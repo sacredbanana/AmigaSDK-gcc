@@ -122,6 +122,10 @@ graphics.library/OpenMonitor
 graphics.library/OrRectRegion
 graphics.library/OrRegionRegion
 graphics.library/OwnBlitter
+graphics.library/PIP_Close
+graphics.library/PIP_Get
+graphics.library/PIP_Open
+graphics.library/PIP_Set
 graphics.library/PolyDraw
 graphics.library/QBlit
 graphics.library/QBSBlit
@@ -152,6 +156,7 @@ graphics.library/SetMaxPen
 graphics.library/SetOPen
 graphics.library/SetOutlinePen
 graphics.library/SetRast
+graphics.library/SetRastColor
 graphics.library/SetRGB32
 graphics.library/SetRGB32CM
 graphics.library/SetRGB4
@@ -3383,6 +3388,20 @@ graphics.library/XorRegionRegion
                      is never altered or aligned by the system.
                      Returns zero if this is not an RTG bitmap. (V54)
 
+                 BMA_USERPRIVATE returns TRUE if the bitmap is user
+                     private and doesn't need to be locked and FALSE
+                     otherwise. (V54.233)
+
+                 BMA_BASEADDRESS returns a pointer to the start of the
+                     bitmap data for user private bitmaps. For bitmaps
+                     that are not user private this will always return
+                     NULL. (V54.233)
+
+                 BMA_BYTESPERROW returns the number of bytes to add
+                     to get to the next row of the bitmap. For bitmaps
+                     that are not user private this will always returns
+                     zero. (V54.233)
+
    RESULT
        value - A uint32 value. The interpretation of the return value
                depends on which of the chosen attrnum above.
@@ -3462,15 +3481,21 @@ graphics.library/XorRegionRegion
 
        GBD_FreeMemory (uint64 *) -- Pointer to the total number of
            free bytes. This function does not lock to gather this
-           information so it could change before you get the result;
-           user only for tools that display free memory and the like.
+           information so it could change before you get the result.
+           Use only for tools that display free memory and the like.
 
        GBD_LargestFreeMemory (uint64 *) -- Pointer to the size of the
            largest chuck of free memory in bytes.
 
        GBD_InternalMemorySize (uint64 *) -- Pointer to the total amount
            of memory that is available to the GPU including any VRAM
-           that is not CPU accessible in bytes.
+           that is not CPU accessible in bytes. Same as GBD_TotalMemory
+           if the underlying graphics driver does not support this tag.
+
+       GBD_FreeInternalMemorySize (uint64 *) -- Pointer to the total
+           amount of free memory available to the GPU in bytes. Same
+           as GBD_FreeMemory if the underlying graphics driver does not
+           support this tag. (V54.241)
 
        GBD_PCIVendorID (uint16 *) -- Pointer to the PCI vendor ID.
 
@@ -5326,6 +5351,94 @@ graphics.library/XorRegionRegion
 
    SEE ALSO
 	DisownBlitter() WaitBlit()
+graphics.library/PIP_Close                                     graphics.library/PIP_Close
+
+   NAME
+       PIP_CLose -- Close PIP Window (54.212).
+
+   SYNOPSIS
+       PIP_Close( win )
+
+       BOOL PIP_Close( struct Window * );
+
+   FUNCTION
+
+   INPUTS
+       win = Window Pointer obtained from PIP_OpenTags()
+
+   RESULT
+
+   BUGS
+
+   SEE ALSO
+       PIP_OpenTags()  PIP_GetTags(), PIP_SetTags()
+
+graphics.library/PIP_Get                                         graphics.library/PIP_Get
+
+   NAME
+       PIP_Get -- Get PIP Window Tags (54.212).
+
+   SYNOPSIS
+       result PIP_Get( win, tags )
+
+       uint32 PIP_GetTags( struct Window *, ... );
+
+   FUNCTION
+
+   INPUTS
+       win = Window Pointer obtained from PIP_OpenTags()
+
+   RESULT
+
+   BUGS
+
+   SEE ALSO
+       PIP_OpenTags()  PIP_Close(), PIP_SetTags()
+
+graphics.library/PIP_Open                                       graphics.library/PIP_Open
+
+   NAME
+       PIP_Open -- Open PIP Window (54.212).
+
+   SYNOPSIS
+       win PIP_Open( tags )
+
+       struct Window *PIP_Open( ... );
+
+   FUNCTION
+
+   INPUTS
+
+   RESULT
+       win = Window Pointer or NULL.
+
+   BUGS
+
+   SEE ALSO
+       PIP_Close(), PIP_SetTags(), PIP_GetTags()
+
+graphics.library/PIP_Set                                         graphics.library/PIP_Set
+
+   NAME
+       PIP_Set -- Set PIP Window Tags (54.212).
+
+   SYNOPSIS
+       result PIP_Set( win, tags )
+
+       uint32 PIP_SetTags( struct Window *, ... );
+
+   FUNCTION
+
+   INPUTS
+       win = Window Pointer obtained from PIP_OpenTags()
+
+   RESULT
+
+   BUGS
+
+   SEE ALSO
+       PIP_OpenTags()  PIP_Close(), PIP_GetTags()
+
 graphics.library/PolyDraw                                       graphics.library/PolyDraw
 
    NAME
@@ -6313,6 +6426,33 @@ graphics.library/XorRegionRegion
 
    SEE ALSO
        RectFill() graphics/rastport.h
+
+graphics.library/SetRastColor                               graphics.library/SetRastColor
+
+   NAME
+       SetRastColor - Set an entire drawing area to a specified ARGB value.
+
+   SYNOPSIS
+       SetRastColor( rp, color )
+
+       VOID SetRastColor( struct RastPort *, uint32 );
+
+   FUNCTION
+       Set the entire contents of the specified RastPort to the
+       specified ARGB value.
+
+   INPUTS
+       rp - pointer to RastPort structure
+       color - ARGB value used for the fill operation
+
+   RESULT
+       All pixels within the drawing area are set to the
+       ARGB value.
+
+   BUGS
+
+   SEE ALSO
+       RectFillColor() graphics/rastport.h
 
 graphics.library/SetRGB32                                       graphics.library/SetRGB32
 

@@ -2,7 +2,6 @@
 #define LIBRARIES_NONVOLATILE_H
 
 /*
-**    $VER: nonvolatile.h 54.16 (22.08.2022)
 **
 **    nonvolatile.library interface structures and defintions.
 **
@@ -10,6 +9,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

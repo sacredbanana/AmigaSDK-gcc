@@ -24,7 +24,11 @@ usbsys.device/USBFreeDescriptors
 usbsys.device/USBFreeObject
 usbsys.device/USBFreeRequest
 usbsys.device/USBGetEndPoint
+usbsys.device/USBGetEndPointAttrsA
+usbsys.device/USBGetFrameNumber
 usbsys.device/USBGetInterface
+usbsys.device/USBGetIsoTransferResult
+usbsys.device/USBGetIsoTransferSetupHcd
 usbsys.device/USBGetRawFunctionAttrsA
 usbsys.device/USBGetRawInterfaceAttrsA
 usbsys.device/USBGetStackAttrsA
@@ -44,9 +48,15 @@ usbsys.device/USBReleaseResource
 usbsys.device/USBRemFunction
 usbsys.device/USBSetFunctionAttrsA
 usbsys.device/USBSetInterfaceAttrsA
+usbsys.device/USBSetIsoTransferCount
+usbsys.device/USBSetIsoTransferResultHcd
+usbsys.device/USBSetIsoTransferSetup
+usbsys.device/USBTraceIoHcdA
 usbsys.device/USBUnlockFunction
 usbsys.device/USBUnlockInterface
-usbsys.device/--overview--                         usbsys.device/--overview--
+
+
+usbsys.device/--overview--                             usbsys.device/--overview--
 
    Developers *must* keep in mind that the USB is a LittleEndian bus!
    The USB stack does *not* do Endianness conversion - it is not possible,
@@ -58,7 +68,7 @@ usbsys.device/USBUnlockInterface
    Big<->Little endianness conversion of a 16 bit word.
 
 
-usbsys.device/CloseDevice                           usbsys.device/CloseDevice
+usbsys.device/CloseDevice                               usbsys.device/CloseDevice
 
    NAME
       CloseDevice -- Close the USB System Software device
@@ -84,7 +94,7 @@ usbsys.device/USBUnlockInterface
       OpenDevice
 
 
-usbsys.device/CMD_READ                                 usbsys.device/CMD_READ
+usbsys.device/CMD_READ                                     usbsys.device/CMD_READ
 
    NAME
       CMD_READ -- Request data retrieval from a USB EndPoint
@@ -98,17 +108,158 @@ usbsys.device/USBUnlockInterface
       The request is not returned before either the requested amount of
       data has been read, or an error occurs.
 
+      The USB defines four different types of endpoints:
+       - Control
+       - Bulk
+       - Interrupt
+       - Isochronous
+
+      For detailed information on the endpoint types you should have a
+      look at the USB specifications.
+      While bulk transfer is straight forward moving of blocks of data,
+      when bus bandwidth is available, the other endpoint types (transfer
+      types) needs some special care. This will be outlined in the
+      following sections.
+
+      CONTROL ENDPOINTS
       When reading from a Control EndPoint the USB Function will expect
       each transaction to start with a Setup stage. To do this the
       USBIOReq has two Setup specific fields, io_SetupData and
       io_SetupLength. With these fields you give the USB System Software
       the data to send in the Setup stage.
 
+      INTERRUPT ENDPOINTS
       When reading from an Interrupt EndPoint you should generally only
-      request data up to MaxPacketSize of the EndPoint. Otherwise your
-      request may end up waiting for more Interrupts to occur before it
-      will be replied to you. This may be the behavior you want - in that
+      request data up to MaxTransferSize of the EndPoint - i.e. as much
+      data as the endpoint can transfer in a single USB (micro)frame.
+      If more data is to be transfered you request may end up waiting
+      for multiple interrupt periods to pass before it will be fulfilled
+      and replied to you. This may be the behavior you want - in that
       case go ahead.
+
+      ISOCHRONOUS ENDPOINTS
+      Isochronous transfers are special in the USB. Unlike its sibling
+      endpoint types, isochronus endpoints are time bound. This means
+      that the importance is put on timeliness of data over completeness.
+      If an isochronous transfer has an error it will not be retried,
+      rather the data transfer is failed. The intent here is to keep
+      the data flow consistent with time - you may miss a transfer, but
+      the remaining transfers will still occur in time.
+      The target audience for this kind of transfer is time-bound data
+      such as audio or video.
+
+      Due to the timebound nature of isochronous transfers software
+      needs a transfer result for every transfer made: As there are no
+      retries of transmissions, a transfer failure may leave gaps in
+      the data stream. Without a transfer result for each transfer
+      software would not be able to detect, and handle, such gaps.
+
+      Before USB Stack version 53.17 there was no special provisioning
+      for isochronous transfers in the USB stack. It was just another
+      endpoint you could transfer data to. It did, however, not make
+      sense to handle more than MaxTransferSize of data bytes in an IO
+      request - otherwise you couldn't get an io_Error response for
+      the underlying USB data transfer, and hence not detect gaps.
+
+      With USB Stack version 53.17+ extra provisioning has been added
+      for isochronous handling, allowing an IO request to carry data
+      for more than one transfer. While not strictly a requirement from
+      a USB perspective, HCD standards such as OHCI and EHCI makes it
+      more or less a requirement in order to obtain proper transfer
+      speeds (i.e. avoid bounce buffers for all transfers made).
+      Being able to send multiple transfers in the same IO request
+      also lowers the number of IO requests needed to be passed back
+      and forth to transfer a buffer, and hence lowers the overall
+      overhead required for the data transfer. In light of the 8 times
+      faster polling rates of USB2+, this becomes even more important.
+
+      To read data from an isochronus endpoint you therefore need to
+      do four things:
+        1. Setup the transfer layout to use for sending a buffer.
+           This is done using USBSetIsoTransferCount() and
+           USBSetIsoTransferSetup() on the USBIOReq you want to send.
+           This setup is done once after allocating the IO request,
+           or if you later need another transfer layout.
+        2. Set the buffer in the IO request io_Data and io_Length.
+        3. Send the IO request
+        4. Wait for the IO request to complete.
+
+      Take note that you must always schedule data requests in a
+      granularity of a USB frame. This means that if the target
+      endpoint has a poll interval of 1, 2 or 4 microframes you will
+      need to define 8, 4 or 2 transfer setups, respectively, for
+      each USB frame your IO request is intended to cover. If you
+      setup fewer transfers, the remaining transfers for the endpoint
+      in the USB frame will not be performed, and you may miss data
+      from the endpoint.
+
+      An example: If your endpoint has a poll interval of 4 microframes
+      (twice every USB frame) you will need 2 transfer setups, and
+      accompanying buffer space, if you intend to transfer data for one
+      USB frame worth of data.
+      If you want to transfer data for two USB frames with the IO
+      request, you'd have to double that to 4 transfer setups. And,
+      ofcourse, double you buffer space as well.
+
+      Another example: If your endpoint has a poll rate of 1 microframe
+      (eight times every USB frame) you will need 8 transfer setups and
+      accompanying buffer space. If you choose to only use 7 transfer
+      setups, the 8th transfer in every USB frame cannot be used, and
+      you will miss any data the endpoint would've otherwise sent you
+      at that service interval.
+      If you want to transfer data for two USB frames of only 7
+      transfers each with the IO request, though, you might expect to
+      simply setup for the double number of transfers. But having 14
+      transfer setups would have you end up with 8 transfer setups used
+      for the first USB frame, and the remaining 6 transfer setups used
+      for the next serviced USB frame of the endpoint.
+
+      Once an IO request is replied back to you, io_Error is the first
+      place to go to check if the IO succeeded. For isochronous IO
+      you may need a bit more work. Since the IO request can contain
+      multiple transfers, as per the transfers setup with
+      USBSetIsoTransferSetup(), you will also have a transfer result
+      for each of these transfers.
+      if io_Error is USBERR_NOERROR all individual transfers have
+      succeeded without problems. If io_Error is USBERR_CHECKRESULTS
+      one or more of your transfer setups may've failed, so you need
+      to check them individually. If io_Error is any other value the
+      entire IO request is failed, and you will get no meaningful
+      data from checking the result of individual transfer setups.
+      Access transfer results with USBGetIsoTransferResult(). This
+      will give you access to an actual transfer byte count as well as
+      an IO error for that specific transfer. Note that for CMD_WRITE
+      the actual value will always be the length requested transfered
+      since there is no transmission handshakes in isochronous
+      transfers. So it is basically not possible to know how much of
+      the data was actually received by the target - it is only known
+      that the data was sent without problems. For CMD_READ it tells
+      how many bytes of data was received and stored in the buffer.
+
+      Frames on the USB bus are numbered. Each frame the frame number
+      is incremented. The frame number is a 32 bit unsigned value, and
+      is local to the physical USB bus. I.e. each USB controller
+      hardware may have individually incrementing frame numbers. Each
+      USB frame represents one millisecond of time.
+      It is possible to request an isochronous IO request to target a
+      specific USB frame number with its first transfer. In this way
+      it is possible to synchronize multiple isochronous transfers to
+      different endpoints to eachother. To target a specific USB frame
+      number, set io_TargetFrame to the frame number, and set the flag
+      USBIOF_ISO_USETARGETFRAME in the io_UsbFlag field.
+      Do note, though, that endpoints may have different poll intervals
+      and hence be serviced at different USB frames. The USB system
+      will adjust the target USB frame to the first serviced USB frame
+      at, or after, the requested target frame number.
+      Upon getting the IO request replied io_TargetFrame will hold the
+      actual frame number at which the IO request was started on the
+      USB bus.
+
+      Ofcourse the USB stack has backwards compatibility for software
+      written before USB stack version 53.17. Hence, if you neglect to
+      call USBSetIsoTransferCount() your IO request is in compatibility
+      mode with regards to isochronous data transfer. See the notes on
+      USBSetIsoTransferCount() for more information on that.
 
    NOTE
       Take note that the USB bus is a LittleEndian bus. The USB System
@@ -125,48 +276,80 @@ usbsys.device/USBUnlockInterface
       io_SetupLength Size of USBBusSetupData, or zero if io_SetupData is
                      NULL.
       io_EndPoint    USB System Software private EndPoint reference for
-                     EndPoint to read from. As obtained from USBGetEndPoint()
-.
+                     EndPoint to read from. As obtained from
+                     USBGetEndPoint().
 
    RESULT
-      io_Actual      Number of bytes actually read into buffer
+      io_Actual      Number of bytes actually read into buffer.
+                     For isochronous endpoint IO where transfer setups
+                     are used, this is the number of transfer setups
+                     processed for the IO operation (53.17)
       io_Error       Error code for request. Zero on success.
 
    SEE ALSO
       usbsys.device/USBAllocRequest, usbsys.device/USBGetEndPoint,
+      usbsys.device/USBSetIsoTransferCount,
+      usbsys.device/USBSetIsoTransferSetup,
+      usbsys.device/USBGetFrameNumber,
       usb/system.h, exec/errors.h
 
+usbsys.device/CMD_WRITE                                   usbsys.device/CMD_WRITE
 
-usbsys.device/CMD_WRITE                               usbsys.device/CMD_WRITE
+   NAME
+      CMD_WRITE -- Request data transmission to a USB EndPoint
 
-    NAME
-       CMD_WRITE -- Request data transmission to a USB EndPoint
+   FUNCTION
+      Using this request you can write data to a USB EndPoint.
+      The amount of data to write is specified in the USBIOReq carrying
+      the CMD_WRITE request.
+      If the data to write is larger than the maximum packet size of the
+      EndPoint, the transfer will be split over separate packets.
+      The request is not returned before either the specified amount of
+      data has been written, or an error occurs.
 
-    FUNCTION
-       Using this request you can write data to a USB EndPoint.
-       The amount of data to write is specified in the USBIOReq carrying the
-       CMD_WRITE request.
-       If the data to write is larger than the maximum packet size of the
-       EndPoint, the transfer will be invisibly split over separate packets.
-       The request is not returned before either the specified amount of
-       data has been written, or an error occurs.
+      The USB defines four different types of endpoints:
+       - Control
+       - Bulk
+       - Interrupt
+       - Isochronous
 
-       When writing to a Control EndPoint the USB Function will expect
-       each transaction to start with a Setup stage. To do this the
-       USBIOReq has two Setup specific fields, io_SetupData and
-       io_SetupLength. With these fields you give the USB System Software
-       the data to send in the Setup stage.
+      For detailed information on the endpoint types you should have a
+      look at the USB specifications.
+      While bulk transfer is straight forward moving of blocks of data,
+      when bus bandwidth is available, the other endpoint types (transfer
+      types) needs some special care. This will be outlined in the
+      following sections.
 
-       When writing to an Interrupt EndPoint you should generally only write
-       data up to MaxPacketSize of the EndPoint. Otherwise the payload data
-       will be split over separate Interrupts on the EndPoint. If this is
-       the intended behavior, i.e. this is what the target EndPoint expects,
-       then go right ahead.
+      CONTROL ENDPOINTS
+      When writing to a Control EndPoint the USB Function will expect
+      each transaction to start with a Setup stage. To do this the
+      USBIOReq has two Setup specific fields, io_SetupData and
+      io_SetupLength. With these fields you give the USB System Software
+      the data to send in the Setup stage.
 
-       A Zero length data write is valid on the USB bus. A zero length
-       data packet will be generated if io_Data is non-NULL and io_Length
-       is zero. If io_Data is NULL no data packet will be generated
-       on the bus at all.
+      INTERRUPT ENDPOINTS
+      When writing to an Interrupt EndPoint you should generally only
+      write data up to MaxTransferSize of the EndPoint. Otherwise the
+      payload data will be split over separate interrupts on the EndPoint.
+      If this is the intended behavior, i.e. this is what the target
+      EndPoint expects, then go right ahead.
+
+      ISOCHRONOUS ENDPOINTS
+      Before writing to an isochronous endpoint you must prepare your
+      IO request for the specifics of the target endpoint. This is done
+      by configuring transfer setups using USBSetIsoTransferCount() and
+      USBSetIsoTransferSetup(). Before doing so for the first time, your
+      IO request is in compatibility mode with regards to isochronous
+      endpoints, limiting your abilities as noted on
+      USBSetIsoTransferCount().
+      For a more detailed description on isochronous transfers, see the
+      CMD_READ section of this autodoc.
+
+      GENERAL CONSIDERATIONS
+      A Zero length data write is valid on the USB bus. A zero length
+      data packet will be generated if io_Data is non-NULL and io_Length
+      is zero. If io_Data is NULL no data packet will be generated
+      on the bus at all.
 
    NOTE
       Take note that the USB bus is a LittleEndian bus. The USB System
@@ -189,12 +372,19 @@ usbsys.device/USBUnlockInterface
 
    RESULT
       io_Actual      Number of bytes actually written to EndPoint.
+                     For isochronous endpoints IO where transfer setups
+                     are used, this is the number of transfer setups
+                     processed for the IO operation (53.17)
       io_Error       Error code for request. Zero on success.
 
    SEE ALSO
       usbsys.device/USBAllocRequest, usbsys.device/USBGetEndPoint
+      usbsys.device/USBSetIsoTransferCount,
+      usbsys.device/USBSetIsoTransferSetup
+      usbsys.device/CMD_WRITE,
       usb/system.h, exec/errors.h
-usbsys.device/OpenDevice                             usbsys.device/OpenDevice
+
+usbsys.device/OpenDevice                                 usbsys.device/OpenDevice
 
    NAME
       OpenDevice -- Open the USB System Software device
@@ -231,7 +421,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       CloseDevice()
 
-usbsys.device/USBAddFunctionA                   usbsys.device/USBAddFunctionA
+usbsys.device/USBAddFunctionA                       usbsys.device/USBAddFunctionA
 
    NAME
       USBAddFunctionA -- Add a USB Function to the System Software.
@@ -327,7 +517,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBRemFunction()
 
-usbsys.device/USBAllocObject                     usbsys.device/USBAllocObject
+usbsys.device/USBAllocObject                         usbsys.device/USBAllocObject
 
    NAME
 	   USBAllocObject -- Allocate a USB Object
@@ -361,7 +551,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
 	   USBFreeObject()
 
-usbsys.device/USBAllocRequestA                 usbsys.device/USBAllocRequestA
+usbsys.device/USBAllocRequestA                     usbsys.device/USBAllocRequestA
 
    NAME
       USBAllocRequestA -- Allocate a USBIOReq structure
@@ -409,7 +599,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBFreeRequest()
 
-usbsys.device/USBClaimFunction                 usbsys.device/USBClaimFunction
+usbsys.device/USBClaimFunction                     usbsys.device/USBClaimFunction
 
    NAME
       USBClaimFunction -- Claim USB Function for communication ownership.
@@ -443,7 +633,7 @@ usbsys.device/USBUnlockInterface
       USBDeclaimFunction() at a later time, releasing the Function for
       use by others (or allowing the USB System Software to perform
       cleanup if the Function has been detached from the bus).
-      Inside a USBClaimFunctoin()/USBDeclaimFunction() pair the USB
+      Inside a USBClaimFunction()/USBDeclaimFunction() pair the USB
       Function is guarded against expunge from the USB System Software.
       It is thus not needed (nor possible) to use USBLockFunction()/
       USBUnlockFunction() on a claimed Function reference.
@@ -470,7 +660,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBDeclaimFunction()
 
-usbsys.device/USBClaimInterface               usbsys.device/USBClaimInterface
+usbsys.device/USBClaimInterface                   usbsys.device/USBClaimInterface
 
    NAME
       USBClaimInterface -- Claim USB Interface for communication
@@ -531,7 +721,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBDeclaimInterface()
 
-usbsys.device/USBDeclaimFunction             usbsys.device/USBDeclaimFunction
+usbsys.device/USBDeclaimFunction                 usbsys.device/USBDeclaimFunction
 
    NAME
       USBDeclaimFunction -- Give up ownership of a USB Function
@@ -564,7 +754,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBClaimFunction
 
-usbsys.device/USBDeclaimInterface           usbsys.device/USBDeclaimInterface
+usbsys.device/USBDeclaimInterface               usbsys.device/USBDeclaimInterface
 
    NAME
       USBDeclaimInterface -- Give up ownership of a USB Interface
@@ -599,7 +789,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBClaimInterface, USBGetInterface()
 
-usbsys.device/USBEPControlXferA               usbsys.device/USBEPControlXferA
+usbsys.device/USBEPControlXferA                   usbsys.device/USBEPControlXferA
 
    NAME
       USBEPControlXferA -- Perform a single Control Transfer operation
@@ -688,7 +878,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       usb/system.h, usb/usb.h
 
-usbsys.device/USBEPDestall                         usbsys.device/USBEPDestall
+usbsys.device/USBEPDestall                             usbsys.device/USBEPDestall
 
    NAME
       USBEPDestall -- Destall a USB EndPoint (v2.0)
@@ -720,15 +910,14 @@ usbsys.device/USBUnlockInterface
 
    SEE ALSO
 
-usbsys.device/USBEPGetDescriptorA           usbsys.device/USBEPGetDescriptorA
+usbsys.device/USBEPGetDescriptorA               usbsys.device/USBEPGetDescriptorA
 
    NAME
       USBEPGetDescriptorA -- Get a descriptor from a USB EndPoint.
 
    SYNOPSIS
 
-      dscr = USBEPGetDescriptorA( openreq, usep, rtype, dtype, didx, taglist 
-)
+      dscr = USBEPGetDescriptorA( openreq, usep, rtype, dtype, didx, taglist )
        D0                            A0     A1     D0     D1    D2      A2
 
       struct USBBusDscHead *USBEPGetDescriptorA( struct IORequest *,
@@ -788,10 +977,25 @@ usbsys.device/USBUnlockInterface
                   USBA_USBSetupDataIndex  (New in 2)
                      If specified the tag data is used as sd_Index value
                      in the USBBusSetupData for the descriptor reading USB
-                     Control Transfer. Endianness conversion of the tag
-                     data is internally handled by USBEPGetDescriptorA().
+                     Control Transfer. The tag data defaults to zero.
+                     Endianness conversion of the tag data is internally
+                     handled by USBEPGetDescriptorA().
 
-                  USBA_ErrorCode (53.11) (LONG*)
+                     If reading a string descriptor, this tag value
+                     specifies the language ID with which to read the
+                     string. Make sure to only use language IDs supported
+                     by the target Function.
+                     Specifying a zero language ID will result in the string
+                     being read in the Function default language.
+                     Using this tag for string descriptor language selection
+                     is available from v53.28 - previous versions would
+                     always read strings in the Function default language.
+
+                  USBA_DataLength (int32 *)  (new in 52.8)
+                     Pointer to an int32 where the amount of data actually
+                     received or sent by the ControlXfer will be stored.
+
+                  USBA_ErrorCode (LONG *) (new in 53.11)
                      A pointer to memory address, where the error code is
                      stored, if this call fails. One of USBERR_.
 
@@ -803,7 +1007,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBFktGetCfgDescriptors(), USBFreeDescriptors(), usb/usb.h
 
-usbsys.device/USBFindFunctionA                 usbsys.device/USBFindFunctionA
+usbsys.device/USBFindFunctionA                     usbsys.device/USBFindFunctionA
 
    NAME
       USBFindFunctionA -- Find a USB Function based on its properties.
@@ -894,7 +1098,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       usbsys.device/USBUnlockFunction
 
-usbsys.device/USBFindInterfaceA               usbsys.device/USBFindInterfaceA
+usbsys.device/USBFindInterfaceA                   usbsys.device/USBFindInterfaceA
 
    NAME
       USBFindInterfaceA -- Find a USB Interface based on its properties.
@@ -977,7 +1181,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       usbsys.device/USBUnlockInterface
 
-usbsys.device/USBFktDriverRunning           usbsys.device/USBFktDriverRunning
+usbsys.device/USBFktDriverRunning               usbsys.device/USBFktDriverRunning
 
    NAME
       USBFktDriverRunning -- Signal USB stack that Function Driver is running
@@ -1043,7 +1247,7 @@ usbsys.device/USBUnlockInterface
       usbsys.device/USBIfcDriverRunning(),
       usb/system.h
 
-usbsys.device/USBFktGetCfgDescriptorsA usbsys.device/USBFktGetCfgDescriptorsA
+usbsys.device/USBFktGetCfgDescriptorsA     usbsys.device/USBFktGetCfgDescriptorsA
 
    NAME
       USBFktGetCfgDescriptorsA -- Get a configuration descriptor set
@@ -1101,7 +1305,7 @@ usbsys.device/USBUnlockInterface
       USBFktSetConfigurationA(), USBParseDecriptors(), USBNextDescriptor(),
       USBPrevDescriptor()
 
-usbsys.device/USBFktSetConfigurationA   usbsys.device/USBFktSetConfigurationA
+usbsys.device/USBFktSetConfigurationA       usbsys.device/USBFktSetConfigurationA
 
    NAME
       USBFktSetConfigurationA -- Change the configuration of a USB Function.
@@ -1139,6 +1343,10 @@ usbsys.device/USBUnlockInterface
       the caller to ensure this.
       Changing Function Configuration while IO is pending at EndPoints
       must be considered hazardous.
+
+      Any locks or claims on Interfaces of the Function will interfere
+      with changing the configuration. You must clear all such locks before
+      calling here.
 
       This function returns an error code indicating the result of trying
       to change configuration.
@@ -1203,7 +1411,7 @@ usbsys.device/USBUnlockInterface
         USBFktGetCfgDescriptorsA(), USBEPControlXferA(),
         USBParseDescriptors(), usb/system.h
 
-usbsys.device/USBFreeDescriptors             usbsys.device/USBFreeDescriptors
+usbsys.device/USBFreeDescriptors                 usbsys.device/USBFreeDescriptors
 
    NAME
       USBFreeDescriptors -- Free a list of descriptors as returned by
@@ -1229,7 +1437,7 @@ usbsys.device/USBUnlockInterface
       usbsys.device/USBParseDescriptors(),
       usb/system.h
 
-usbsys.device/USBFreeObject                       usbsys.device/USBFreeObject
+usbsys.device/USBFreeObject                           usbsys.device/USBFreeObject
 
    NAME
 	   USBFreeObject -- Free a Object allocated with USBAllocObject()
@@ -1250,7 +1458,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
 	   usbsys.device/USBAllocObject
 
-usbsys.device/USBFreeRequest                     usbsys.device/USBFreeRequest
+usbsys.device/USBFreeRequest                         usbsys.device/USBFreeRequest
 
    NAME
       USBFreeRequest -- Free a USBIOReq request allocated with
@@ -1278,7 +1486,7 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
 	   usbsys.device/USBAllocRequestA
 
-usbsys.device/USBGetEndPoint                     usbsys.device/USBGetEndPoint
+usbsys.device/USBGetEndPoint                         usbsys.device/USBGetEndPoint
 
    NAME
       USBGetEndPoint -- Obtain an EndPoint reference from a USB Function.
@@ -1299,11 +1507,11 @@ usbsys.device/USBUnlockInterface
       EndPoints are either obtained from a claimed Function or a claimed
       Interface. In either case only EndPoints belonging to the given
       source can be located:
-      ·  If a claimed Function is the source of USBGetEndPoint() only
+      ï¿½  If a claimed Function is the source of USBGetEndPoint() only
          EndPoints which do not belong to any Interface can be found.
          This will typically only be the Default Control Pipe - EndPoint
          zero.
-      ·  If a claimed Interface is the source of USBGetEndPoint() only
+      ï¿½  If a claimed Interface is the source of USBGetEndPoint() only
          EndPoints belonging to that specific Interface can be found.
          Note that the Default Control Pipe belongs to *all* Interfaces
          as well as the Function, and can thus be found from any
@@ -1355,7 +1563,163 @@ usbsys.device/USBUnlockInterface
       usbsys.device/USBClaimInterface, usbsys.device/USBDeclaimInterface,
       usb/usb.h
 
-usbsys.device/USBGetInterface                   usbsys.device/USBGetInterface
+usbsys.device/USBGetEndPointAttrsA             usbsys.device/USBGetEndPointAttrsA
+
+   NAME
+      USBGetEndPointAttrsA -- Get attributes of an EndPoint (V53.17)
+      USBGetEndPointAttrs -- Vararg stub (V53.17)
+
+   SYNOPSIS
+      USBGetEndPointAttrsA(struct UsbEndPoint * ep,
+                           struct TagItem * taglist);
+
+      USBGetEndPointAttrs(struct UsbEndPoint * ep, ...);
+
+   FUNCTION
+      Use this function to query the USB stack about a specific endpoint.
+
+      The following attributes are currently defined:
+
+         USBA_DeviceSpeed (V53.18)
+            This tag is used for specifying the speed of the USB Function
+            containing the endpoint. With the introduction of USB2 the
+            device speed influences the interpretation of certain fields
+            in certain descriptors, and so may be required to properly
+            interpret endpoint capabilities.
+
+            ti_Data is pointer to a ULONG which will be set to the device
+            speed:
+                USB_SPEED_LOW  for a LowSpeed Function (1.5 Mb/s).
+                USB_SPEED_FULL for a FullSpeed Function (12 Mb/s).
+                USB_SPEED_HIGH for a HighSpeed Function (480 Mb/s).
+                USB_SPEED_SUPER for a SuperSpeed Function (4800 Mb/s).
+
+         USBA_EP_MaxTransferSize
+            Get the maximum byte transfer possible with the endpoint within
+            a single service interval. This value only really make sense for
+            interrupt and isochronous endpoint types, and indicates how many
+            bytes of data can be transfered to/from the endpoint within a
+            single USB transfer (microframe for HighSpeed, frame for Full/Low
+            speed). This is also the maximum allowed data length for an
+            isochronous transfer data definition targeting the endpoint.
+            This value will differ from the endpoint MaxPacketSize if the
+            endpoint supports high-bandwidth transfers (USB2) or burst mode
+            transfers (USB3), which raises the amount of data the endpoint
+            can handle in a single (micro)frame, due to support for multiple
+            packets being exchanged in the same (micro)frame transfer.
+            ti_Data is pointer to a ULONG in which the value will be stored.
+
+         USBA_EP_TransfersPerFrame (V53.18)
+            With this tag you get the numbe of transfers the endpoint can
+            make per service interval. As such this tag is only relevant for
+            periodic endpoints, i.e. interrupt and isochronous. This tag is,
+            however, primarily relevant for isochronous endpoints, since all
+            IO requests to such devices must describe transfers in whole
+            frames. Using this tag you will know how many transfers
+            (transfer setups) are required for each USB frame of transfer.
+            Low and Full speed endpoints will always only be able to make
+            one transfer per service interval. High speed endpoints can
+            perform up to 8 transfers per USB frame (once per microframe),
+            requiring up to 8 transfer setups in an IO request to make full
+            use of the device transfer capabilities.
+            ti_Data is pointer to a ULONG in which the value will be stored.
+
+         USBA_EP_PollInterval (V53.19)
+            Get the poll interval in microframes of a periodic endpoint.
+            While this value will normally match the poll interval which can
+            be calculated from the endpoint descriptor, this value is
+            limited to the maximum poll interval which the underlying
+            hardware and hardware driver supports.
+            ti_Data is pointer to a ULONG in which the value will be stored.
+
+         USBA_HCD_CachedIsochronousFrames
+            A USB host controller may choose to cache isochronous
+            transfers a number of USB frames in advance of actually putting
+            the transfers on the USB bus. This means that isochronous
+            transfers must be prepared timely for targetting a specific
+            frame on the USB bus. It also means that to be able to create
+            a steady stream of isochronous data (either in or out) this
+            number of frames of transfers must be scheduled ahead of time
+            so the HCD/hardware has transfer requests in time for filling
+            its cache.
+            Do note that this frame count only accounts for the HCD.
+            Depending on the CPU speed and current workload you may need to
+            be further ahead with your transfer planning to reach the USB
+            bus in time with your isochronous transfers.
+            ti_Data is a pointer to a ULONG into which this frame count will
+            be stored.
+
+   INPUTS
+      ep      - EndPoint to get attributes of.
+      taglist - TagList holding attribute queries.
+
+   RESULT
+      none
+
+   SEE ALSO
+      usb/system.h
+
+usbsys.device/USBGetFrameNumber                   usbsys.device/USBGetFrameNumber
+
+   NAME
+      USBGetFrameNumber -- Get the current USB frame number of the USB bus
+                           hosting a specific endpoint (V53.18)
+
+   SYNOPSIS
+      ULONG USBGetFrameNumber(struct UsbEndPoint * ep,
+                              struct TimeVal * timestamp);
+
+   FUNCTION
+      With this function you can get the frame number of the current USB
+      frame of the USB bus hosting the given endpoint. Use this information
+      for synchronizing isochronous data transfers precisely in the time
+      domain. This should only be needed if you want to tightly synchronize
+      multiple isochronous data streams, or if you need to do an isochronous
+      transfer at an exact point in time. In most situations all which is
+      required is to do isochronous IO in the next available transfer slot -
+      and then you won't need this.
+
+   INPUTS
+      endpoint   - The USB endpoint on the USB bus to get the frame
+                   number of.
+      timestamp  - Pointer to a struct TimeVal in which you would like to
+                   get the system time at which the USB frame number was
+                   recorded. Use this to synchronize data transfers
+                   across multiple physical USB bus instances.
+                   If you do not require this level of precision you can
+                   pass a NULL pointer, in which case you will not get
+                   any timestamp for the frame number.
+
+   RESULT
+      The current USB frame number.
+      If the Host Controller Driver (HCD) responsible for the USB bus holding
+      the endpoint does not maintains a current USB frame number, the
+      returned value is undefined. use USBGetRawFunctionAttrs() or
+      USBGetInterfaceAttrs() with USBA_HCD_MaintainsFrameNumber to know in
+      advance if you can expect a valid result.
+
+   NOTES
+      A USB frame number is a 32-bit unsigned incrementing number. It
+      identifies progress of time on the USB bus. Each USB frame represents
+      a duration of 1 millisecond. For more information see the USB bus
+      specification.
+      If enough time passes, the USB frame number will roll over from
+      0xFFFFFFFF to 0x00000000 and count on. So if you do comparisons
+      remember to handle this correctly.
+
+      If a USBA_HCD_MaintainsFrameNumber query returned FALSE the
+      underlying USB HCD does not support USB frame number synchronization.
+      In this case you have no means of synchronizing isochronous data
+      transfers to the frame number of the USB bus. Your best bet is to
+      request isochronous transfers be started at the next suitable USB
+      frame.
+
+   SEE ALSO
+      usbsys.device/USBGetRawFunctionAttrs,
+      usbsys.device/USBGetInterfaceAttrs,
+      usb/system.h, timer.device/GetSysTime, devices/timer.h
+
+usbsys.device/USBGetInterface                       usbsys.device/USBGetInterface
 
    NAME
       USBGetInterface -- Get an Interface from a claimed Function.
@@ -1405,7 +1769,129 @@ usbsys.device/USBUnlockInterface
    SEE ALSO
       USBDeclaimInterface()
 
-usbsys.device/USBGetRawFunctionAttrsA   usbsys.device/USBGetRawFunctionAttrsA
+usbsys.device/USBGetIsoTransferResult       usbsys.device/USBGetIsoTransferResult
+
+   NAME
+      USBGetIsoTransferResult -- Get the transfer result for a single USB
+                                 (micro)frame transfer after an IO request
+                                 for an isochronous endpoint has finished.
+                                 (53.17)
+
+   SYNOPSIS
+      struct USBTransferResult *USBGetIsoTransferResult(
+          struct USBIOReq *ioreq, ULONG transferIndex,
+          struct USBTransferSetup **setupOut);
+
+   FUNCTION
+      Using this function you get access to the results of the isochronous
+      transfer performed for an IO request in a given (micro)frame.
+      The tranferIndex is the index for the IO request of the
+      USBTransferSetup whose transfer result you want to inspect.
+      The trnasfer result returned is read-only and must not be modified.
+
+      The transfer result tells you how the data transfer for a single
+      (micro)frame went. This in the shape of the actual byte count
+      transfered and a USBERR_xxx error code for the USB (micro)frame
+      transfer.
+
+      If you pass a non-NULL pointer to a pointer in the "setupOut"
+      argument you will receive a pointer to the transfer setup for the
+      transfer as well. This transfer setup is also read-only, but can be
+      used for detmining the exact buffer section the transfer result is
+      for. This will match exactly what you defined using
+      USBSetIsoTransferSetup() for the transfer index and is made available
+      thru here for easy reference.
+
+      You should not inspect the transfer result of indices beyond the
+      range of io_Actual of the IO request. Those transfer result are
+      not being maintained since no transfers were made for them.
+      You can, however, access up to the number of transfer results and
+      setups previously defined by USBSetIsoTransferCount().
+
+      Under no circumstance should you rely on the transfer result value
+      fields for *any* transfer index in the IO request if the IO request
+      itself is failed. That is, if io_Error is USBERR_NOERROR
+      or USBERR_CHECKRESULTS you may inspect the transfer result.
+      For any other io_Error code the entire IO request is failed as a
+      whole - individual transfer status is not available.
+
+   INPUTS
+      ioreq         -  The IO request whose isochronous transfer result
+                       to get.
+      transferIndex -  The transfer setup number to get a transfer result
+                       for.
+      setupOut      -  Pointer to a struct USBTransferSetup pointer which
+                       will be set to a pointer to the setup data for the
+                       requested transfer index. The contents of this
+                       structure is read-only. Do *not* modify it - it is
+                       for your convenience in relating the transfer result
+                       to a section of the io_Data buffer of the IO request.
+                       NULL is valid for not getting a transfer setup
+                       pointer.
+
+   RESULT
+      A pointer to the struct USBTransferResult for the requested
+      transfer index of the IO request.
+      NULL will be returned if the "transferIndex" argument does not
+      denote a valid transfer setup index.
+
+   SEE ALSO
+      USBSetIsoTransferSetup(), usb/system.h
+
+usbsys.device/USBGetIsoTransferSetupHcd   usbsys.device/USBGetIsoTransferSetupHcd
+
+   NAME
+      USBGetIsoTransferSetupHcd -- Get the transfer setup for a single USB
+                                   (micro)frame when handling an IO request
+                                   for an isochronous endpoint at a HCD.
+                                   (53.17)
+
+   SYNOPSIS
+      struct USBTransferSetup * USBGetIsoTransferSetupHcd(
+          struct USBIOReqHCD * ioreq, ULONG transferIndex);
+
+   FUNCTION
+      Using this function you get access to the setup of the isochronous
+      transfer to be performed for an IO request in a single (micro)frame.
+      The transfer index is the index of the USBTransferSetup you
+      want to access in the given IO request.
+      The transfer setup returned is read-only and must not be modified.
+
+      The transfer setup descibes which part of the IO request data buffer
+      should be transfered to/from in the USB (micro)frame performing the
+      transfer.
+
+      You can access all of the transfer setups defined for the IO request
+      with this function. More transfer setups may be defined than are
+      needed for the current IO request, since the data buffer may
+      be shorter than what is required to fulfill the entire set of
+      transfer setups. The transfer setups needed for the current IO
+      request are the "utilized transfer setups". That is, all transfer
+      setups until the first transfer setup whose Offset is greater or
+      equal to io_Length. In the special case of io_Data != NULL and
+      io_Length == 0 the first transfer setup is utilized by definition,
+      its role to generate a zero-length isochronous transaction.
+      So, generally speaking, if io_Data != NULL the IO request has at
+      least one utilized transfer setup. If io_Data == NULL there are no
+      utilized transfer setups - the IO request is a no-operation.
+
+      Note that this function is only relevant for IO requests for
+      isochronous endpoints. Only isochronous endpoints utilizes the
+      transfer setups for defining transfers.
+
+   INPUTS
+      ioreq         - IO request to query
+      transferIndex - The zero based transfer setup index to get
+
+   RESULT
+      Pointer to the USBTransferSetup of the transfer index specified.
+      NULL is returned if the transfer index is too high and does not
+      refer to a defined transfer setup.
+
+   SEE ALSO
+      USBSetIsoTransferCount(), USBSetIsoTransferSetup()
+
+usbsys.device/USBGetRawFunctionAttrsA       usbsys.device/USBGetRawFunctionAttrsA
 
    NAME
       USBGetRawFunctionAttrsA -- Get information about an unclaimed USB
@@ -1448,7 +1934,6 @@ usbsys.device/USBUnlockInterface
             As always when querying, be prepared to handle a NULL pointer!
             ti_data is struct USBBusDevDsc **
 
-
          USBA_ConfigurationDesc
             Get a copy of the current configuration of the USB Function.
             ti_Data points to a memory location where a pointer to a copy of
@@ -1463,7 +1948,6 @@ usbsys.device/USBUnlockInterface
             As always when querying, be prepared to handle a NULL pointer!
             ti_data is struct USBBusDevDsc **
 
-
          USBA_VendorName
             Get a copy of the string descriptor holding the vendor or
             manufacturer string.
@@ -1474,7 +1958,6 @@ usbsys.device/USBUnlockInterface
             prepared to handle a NULL pointer!
             ti_Data is struct USBBusDscHead **
 
-
          USBA_ProductName
             Get a copy of the string descriptor holding the product name
             string.
@@ -1484,7 +1967,6 @@ usbsys.device/USBUnlockInterface
             Be advised that not all USB Functions has a product name, so be
             prepared to handle a NULL pointer!
             ti_Data is struct USBBusDscHead **
-
 
          USBA_SerialName
             Get a copy of the string descriptor holding the serial number
@@ -1499,39 +1981,50 @@ usbsys.device/USBUnlockInterface
          USBA_DeviceSpeed (V53.9)
             Get the speed by which the function operates. One of the
             USB_SPEED_#? values.
-            ti_data is int32 *
+            ti_Data is uint32 *
 
          USBA_Level (V53.9)
             Get the topological level of the function. For the root hub
             this would be 0.
-            ti_data is int32 *
+            ti_Data is int32 *
 
          USBA_OwnerStr (V53.9)
             Get the name of the current owner of the function. Memory for
             the string is allocated via AllocVec(), so the result needs
             to be freed with FreeVec().
-            ti_data is STRPTR *
+            ti_Data is STRPTR *
 
          USBA_DevicePower (V53.9)
             Get the number of mA the device draws from its upstream
             port in its current configuration.
-            ti_data is uint32 *
+            ti_Data is uint32 *
 
          USBA_SubtreePower (V53.9)
             Get the number of mA that all devices draw from this device.
             (i.e., without this device).
-            ti_data is uint32 *
+            ti_Data is uint32 *
 
          USBA_HCD_Name (V53.9)
             Get the name of the driver that manages the host controller
             to which the function is attached. The result needs to be
             freed with FreeVec().
-            ti_data is STRPTR *
+            ti_Data is STRPTR *
 
          USBA_HCD_Unit (V53.9)
             Get the unit of the driver that manages the host controller
             to which the function is attached.
-            ti_data is uint32 *.
+            ti_Data is uint32 *.
+
+         USBA_HCD_MaintainsFrameNumber (V53.18)
+            Get whether the HCD hosting the function maintains a USB bus
+            current frame number. I.e. whether USBGetFrameNumber() will
+            return anything useful, and whether you can send isochronous
+            IO requests targetting specific USB frames.
+            The returned value is either FALSE (zero) indicating no frame
+            number support, or non-zero indicating frame number support.
+            ti_Data is uint32 *
+
+
    INPUTS
       rawfkt   -  The UsbRawFunction to get information on.
       taglist  -  Taglist describing the attributes to read. See above for
@@ -1540,7 +2033,7 @@ usbsys.device/USBUnlockInterface
    RESULT
       none
 
-usbsys.device/USBGetRawInterfaceAttrsA usbsys.device/USBGetRawInterfaceAttrsA
+usbsys.device/USBGetRawInterfaceAttrsA     usbsys.device/USBGetRawInterfaceAttrsA
 
    NAME
       USBGetRawInterfaceAttrsA -- Get information about an unclaimed USB
@@ -1584,7 +2077,6 @@ usbsys.device/USBUnlockInterface
             As always when querying, be prepared to handle a NULL pointer!
             ti_data is struct USBBusDevDsc **
 
-
          USBA_ConfigurationDesc
             Get a copy of the current configuration of the USB Function
             hosting the Interface. ti_Data points to a memory location where
@@ -1599,17 +2091,14 @@ usbsys.device/USBUnlockInterface
             As always when querying, be prepared to handle a NULL pointer!
             ti_data is struct USBBusDevDsc **
 
-
          USBA_InterfaceDesc
             Get a copy of the Interface Descriptor of the USB Interface.
             ti_Data points to a memory location where a pointer to a copy of
             the Interface Descriptor will be placed.
-            When you're done using the Interface Descriptor you *MUST* free i
-t
+            When you're done using the Interface Descriptor you *MUST* free it
             manually using USBFreeDescriptors().
             As always when querying, be prepared to handle a NULL pointer!
             ti_Data is struct USBBusIntDsc **
-
 
          USBA_VendorName
             Get a copy of the string descriptor holding the vendor or
@@ -1623,7 +2112,6 @@ t
             prepared to handle a NULL pointer!
             ti_Data is struct USBBusDscHead **
 
-
          USBA_ProductName
             Get a copy of the string descriptor holding the product name
             string. The product name comes from the USB Function hosting the
@@ -1636,7 +2124,6 @@ t
             prepared to handle a NULL pointer!
             ti_Data is struct USBBusDscHead **
 
-
          USBA_SerialName
             Get a copy of the string descriptor holding the serial number
             string. The serial number string comes from the USB Function
@@ -1648,7 +2135,6 @@ t
             Be adviced that not all USB Functions has a serial number string,
             so be prepared to handle a NULL pointer!
             ti_Data is struct USBBusDscHead **
-
 
          USBA_InterfaceName
             Get a copy of the string descriptor holding the Interface name
@@ -1667,6 +2153,20 @@ t
             to be freed with FreeVec().
             ti_data is STRPTR *
 
+         USBA_DeviceSpeed (V53.18)
+            Get the speed by which the function operates. One of the
+            USB_SPEED_#? values.
+            ti_data is uint32 *
+
+         USBA_HCD_MaintainsFrameNumber (V53.18)
+            Get whether the HCD hosting the function maintains a USB bus
+            current frame number. I.e. whether USBGetFrameNumber() will
+            return anything useful, and whether you can send isochronous
+            IO requests targetting specific USB frames.
+            The returned value is either FALSE (zero) indicating no frame
+            number support, or non-zero indicating frame number support.
+            ti_Data is uint32 *
+
 
    INPUTS
       rawifc   -  The UsbRawInterface to get information on.
@@ -1676,7 +2176,7 @@ t
    RESULT
       none
 
-usbsys.device/USBGetStackAttrsA               usbsys.device/USBGetStackAttrsA
+usbsys.device/USBGetStackAttrsA                   usbsys.device/USBGetStackAttrsA
 
    NAME
       USBGetStackAttrsA -- Get information about the USB stack
@@ -1716,7 +2216,7 @@ t
    RESULT
       none
 
-usbsys.device/USBIfcDriverRunning           usbsys.device/USBIfcDriverRunning
+usbsys.device/USBIfcDriverRunning               usbsys.device/USBIfcDriverRunning
 
    NAME
       USBIfcDriverRunning -- Signal USB stack that Function Driver is running
@@ -1782,7 +2282,7 @@ t
       usbsys.device/USBFktDriverRunning(),
       usb/system.h
 
-usbsys.device/USBIntGetAltSettingA         usbsys.device/USBIntGetAltSettingA
+usbsys.device/USBIntGetAltSettingA             usbsys.device/USBIntGetAltSettingA
 
    NAME
       USBIntGetAltSettingA -- Get a copy of the current Alternate Setting
@@ -1807,6 +2307,10 @@ t
       With this function you can obtain a copy of the Interface
       descriptor list of the Alternate Setting currently assigned to an
       Interface.
+      In other words, you'll get a descriptor list containing the
+      Interface descriptor of the currently active Alternate Setting,
+      as well as all descriptors from the parent Function configuration
+      belonging to that Alternate Setting.
 
       This function will be most usefull to selfstarting Interface FDs
       as they are not presented with an Interface's descriptor list
@@ -1836,7 +2340,7 @@ t
    SEE ALSO
       USBFreeDescriptors()
 
-usbsys.device/USBIntGetConfigurationA   usbsys.device/USBIntGetConfigurationA
+usbsys.device/USBIntGetConfigurationA       usbsys.device/USBIntGetConfigurationA
 
    NAME
       USBIntGetConfigurationA -- Get a copy of the configuration
@@ -1905,7 +2409,7 @@ t
    SEE ALSO
       USBFreeDescriptors()
 
-usbsys.device/USBIntSetAltSettingA         usbsys.device/USBIntSetAltSettingA
+usbsys.device/USBIntSetAltSettingA             usbsys.device/USBIntSetAltSettingA
 
    NAME
       USBIntSetAltSettingA -- Change the current Alternate Setting
@@ -1981,7 +2485,7 @@ t
 
    SEE ALSO
 
-usbsys.device/USBLockFunction                   usbsys.device/USBLockFunction
+usbsys.device/USBLockFunction                       usbsys.device/USBLockFunction
 
    NAME
       USBLockFunction -- Lock an unclaimed USB Function from being
@@ -2030,7 +2534,7 @@ t
       usbsys.device/USBUnlockFunction, usbsys.device/USBClaimFunction,
       usbsys.device/USBFindFunction
 
-usbsys.device/USBLockInterface                 usbsys.device/USBLockInterface
+usbsys.device/USBLockInterface                     usbsys.device/USBLockInterface
 
    NAME
       USBLockInterface -- Lock an unclaimed USB Interface from being
@@ -2081,7 +2585,7 @@ t
       usbsys.device/USBUnlockInterface, usbsys.device/USBClaimInterface,
       usbsys.device/USBFindInterface
 
-usbsys.device/USBLogPuts                             usbsys.device/USBLogPuts
+usbsys.device/USBLogPuts                                 usbsys.device/USBLogPuts
 
    NAME
       USBLogPuts -- Append an entry to the USB System log
@@ -2126,7 +2630,7 @@ t
    SEE ALSO
       usbsys.device/USBLogVPrintf()
 
-usbsys.device/USBLogVPrintf                       usbsys.device/USBLogVPrintf
+usbsys.device/USBLogVPrintf                           usbsys.device/USBLogVPrintf
 
    NAME
       USBLogVPrintf -- Append an entry to the USB System log using a
@@ -2222,7 +2726,7 @@ t
    SEE ALSO
       usbsys.device/USBLogPuts()
 
-usbsys.device/USBNextDescriptor               usbsys.device/USBNextDescriptor
+usbsys.device/USBNextDescriptor                   usbsys.device/USBNextDescriptor
 
    NAME
       USBNextDescriptor -- Get next descriptor in a list of descriptors
@@ -2250,7 +2754,7 @@ t
       usbsys.device/USBPrevDescriptor(),
       usb/system.h
 
-usbsys.device/USBObtainResourceA             usbsys.device/USBObtainResourceA
+usbsys.device/USBObtainResourceA                 usbsys.device/USBObtainResourceA
 
    NAME
       USBObtainResourceA -- Obtain access to a shared USB resource.
@@ -2311,7 +2815,7 @@ t
       usbsys.device/USBReleaseResource(),
       usb/system.h
 
-usbsys.device/USBParseDescriptors           usbsys.device/USBParseDescriptors
+usbsys.device/USBParseDescriptors               usbsys.device/USBParseDescriptors
 
    NAME
       USBParseDescriptors -- Parse a buffer holding one or more USB
@@ -2357,7 +2861,7 @@ t
       usbsys.device/USBNextDescriptor(), usbsys.device/USBPrevDescriptor(),
       usb/system.h
 
-usbsys.device/USBPrevDescriptor               usbsys.device/USBPrevDescriptor
+usbsys.device/USBPrevDescriptor                   usbsys.device/USBPrevDescriptor
 
    NAME
       USBPrevDescriptor -- Get previous descriptor in a list of descriptors
@@ -2385,7 +2889,7 @@ t
       usbsys.device/USBNextDescriptor(),
       usb/system.h
 
-usbsys.device/USBReleaseResource             usbsys.device/USBReleaseResource
+usbsys.device/USBReleaseResource                 usbsys.device/USBReleaseResource
 
    NAME
       USBReleaseResource -- Release access to a shared USB resource.
@@ -2416,7 +2920,7 @@ t
       usbsys.device/USBObtainResource(),
       usb/system.h
 
-usbsys.device/USBRemFunction                     usbsys.device/USBRemFunction
+usbsys.device/USBRemFunction                         usbsys.device/USBRemFunction
 
    NAME
       USBRemFunction -- Signal physical detachment of a USB Function.
@@ -2462,7 +2966,7 @@ t
       usbsys.device/USBAddFunctionA, usbsys.device/USBFindFunction,
       usbsys.device/USBUnlockFunction
 
-usbsys.device/USBSetFunctionAttrsA         usbsys.device/USBSetFunctionAttrsA
+usbsys.device/USBSetFunctionAttrsA             usbsys.device/USBSetFunctionAttrsA
 
    NAME
       USBSetFunctionAttrsA -- Modify the attributes of a USB Function.
@@ -2544,7 +3048,7 @@ t
       A non-FALSE value is returned if all attributes were changed.
       Returns FALSE if one or more attributes could not be changed.
 
-usbsys.device/USBSetInterfaceAttrsA       usbsys.device/USBSetInterfaceAttrsA
+usbsys.device/USBSetInterfaceAttrsA           usbsys.device/USBSetInterfaceAttrsA
 
    NAME
       USBSetInterfaceAttrsA -- Modify the attributes of a USB Interface.
@@ -2618,7 +3122,397 @@ t
    SEE ALSO
       usbsys.device/USBSetFunctionAttrsA, usbsys.device/USBFindFunction,
 
-usbsys.device/USBUnlockFunction               usbsys.device/USBUnlockFunction
+usbsys.device/USBSetIsoTransferCount         usbsys.device/USBSetIsoTransferCount
+
+   NAME
+      USBSetIsoTransferCount -- Set the number of (micro)frames of data
+                                transfer to be supported for an IO request
+                                when transferring data to/from an
+                                isochronous endpoint.
+                                (53.17)
+
+   SYNOPSIS
+      success = USBSetIsoTransferCount( ioReq, transferCount )
+
+      BOOL USBSetIsoTransferCount( struct USBIOReq *, ULONG );
+
+   FUNCTION
+      This function will prepare a USB IO request for setting up a number
+      of (micro)frames of data transfer to/from an isochronous endpoint.
+      After setting up the frame count you must use USBSetIsoTransferSetup()
+      to actually define the isochronous data transfer of the data in the
+      IO request data buffer.
+      Do not expect any specific content of the frame data items after
+      setting the frame count. I.e. whenever called you will need to
+      (re)define the frame layout for transfering isochronous data.
+
+      Once set, the frame count of the IO request will stick around until
+      you either free the IO request or change the frame count. So if
+      you'll always be using the same (micro)frame layout to transfer your
+      isochronous data with a specific IO request, you only need to set
+      the frame count once.
+
+      While this function sets up the frame count and prepares the IO
+      request it does not define the transfer frames. Before using the IO
+      request for isochronous transfers you *must* define the individual
+      frames by using USBSetIsoTransferSetup() for each frame.
+
+      An IO request for an isochronous endpoint may contain transfer setups
+      for more (micro)frames than are required for the actual data buffer
+      of the IO request. This is to allow a USB function driver to setup
+      an IO request for generic use with an isochronous endpoint even
+      though the amount of data to transfer may vary, and thus require
+      a different number of USB (micro)frames to do the transfer from one
+      IO operation to the next.
+
+   NOTE
+      Until this function is called on an IO request that IO request is,
+      in terms of using it with an isochronous endpoint, in compatibility
+      mode. In compatibility mode the IO request when used with an
+      isochronous endpoint will
+       - Only support io_Length up to the maximum transfer size of the
+         target endpoint. That is, as much data as can be handled in
+         a single USB (micro)frame transfer with the endpoint.
+       - Set io_Actual to the actual number of bytes transfered upon
+         IO completion.
+
+      Once out of compatibility mode (i.e. you've called this function)
+      the IO request when used with an isochronous endpoint will:
+       - Support any io_Length.
+       - Require you to define transfer setups specifying how to transfer
+         the data (packetizing the buffer length).
+       - Set io_Actual to the number of transfer setups utilized in the
+         IO operation upon IO completion.
+
+   INPUTS
+      ioReq          The USB IO request to affect
+      transferCount  The number of USB (micro)frames of transfer to setup
+                     the IO request to be able to support. Transfer count
+                     is currenly limited to a maximum of 65535 transfers.
+
+   RESULT
+      TRUE if the USB IO Request transfer count has been successfully set.
+      FALSE otherwise.
+
+   SEE ALSO
+      usbsys.device/USBSetIsoTransferSetup(),
+      usbsys.device/USBGetIsoTransferResult(),
+      usb/system.h
+
+usbsys.device/USBSetIsoTransferResultHcd usbsys.device/USBSetIsoTransferResultHcd
+
+   NAME
+      USBSetIsoTransferResultHcd -- Set the transfer result for a given
+                                    transfer index in an IO request for an
+                                    isochronous endpoint.
+                                    (53.17)
+
+   SYNOPSIS
+      BOOL USBSetIsoTransferResultHcd(struct USBIOReqHCD * ioreq, 
+          ULONG transferIndex, ULONG actual, LONG error);
+
+   FUNCTION
+      Using this function a HCD reports back the transfer result for a
+      single USB (micro)frame transfer of an IO request to an isochronous
+      endpoint.
+
+      When handling an isochronous transfer, each USB (micro)frame
+      involved in the transfer has a Transfer Setup defined in the IO
+      request. Once a Transfer Setup has been effectuated, the Transfer
+      Result corresponding to the Transfer Setup must be updated with the
+      Actual byte transfer count and the Error code for that transfer.
+
+      If the IO request is successfully performed (i.e. the IO request
+      is not failed at a global level with an error in io_Error) it
+      is required that the Transfer Result of all processed Transfer
+      Setups are filled with valid result values. That is, this
+      function must be called for all transferIndex values up to
+      (but not including) the io_Actual value of the IO request when
+      it is replied by the HCD.
+
+      Note that this function is only relevant for IO requests for
+      isochronous endpoints.
+
+   INPUTS
+       ioreq         -  The IO request to affect.
+       transferIndex -  The transfer index to affect in the IO request.
+       actual        -  The actual number of bytes transfered for the
+                        USB (micro)frame.
+       error         -  The USBERR_xxx error code describing the
+                        transfer result. USBERR_NOERROR if the transfer
+                        was successful.
+
+   RESULT
+      TRUE if the transfer index related to a valid transfer index in the
+      IO request - i.e. the result has been filled.
+      FALSE is returned if the transfer index did not relate to a
+      transfer setup in the IO request.
+
+   SEE ALSO
+      USBSetIsoTransferCount(), USBSetIsoTransferSetup(),
+      USBGetIsoTransferResult()
+
+usbsys.device/USBSetIsoTransferSetup         usbsys.device/USBSetIsoTransferSetup
+
+   NAME
+      USBSetIsoTransferSetup -- Set the isochronous transfer setup for a
+                                single USB (micro)frame for an IO request
+                                for an isochronous endpoint.
+                                (53.17)
+
+   SYNOPSIS
+      ULONG USBSetIsoTransferSetup(struct USBIOReq * ioreq,
+                                   ULONG transferIndex,
+                                   ULONG offset, ULONG length);
+
+   FUNCTION
+      Using this function you define which part of the data buffer of an
+      IO request is utilized for the transfer of a single USB (micro)frame.
+
+      The total set of transfer setups of an IO request must progressively
+      cover the data buffer of the IO request - although gaps in the buffer
+      coverage are allowed. Do note, though, that there is a limit to the
+      distance between buffer segments: Two neighboring transfer setups
+      must have their Offset values no longer apart than a single
+      per-(micro)frame maximum transfer size of the target endpoint.
+
+      In other words, when defining isochronous transfer setups the
+      following rules must be obeyed:
+       - Offset and Length are unsigned integers and cannot be negative.
+       - Offset must be a higher value than that of the previous Transfer
+         Setup.
+       - Offset must not be more than maximum-transfer-size bytes higher
+         than that of its predecessor Transfer Setup.
+       - Length must be equal to, or less than, the endpoint maximum-
+         transfer-size.
+
+      While this function may try to validate the setup, it will not be
+      able to fully validate it. So take any validation performed as a
+      help - you as a developer is ultimately responsible for adhering to
+      the rules set.
+
+      Each of the transfer setup definitions will correspond to a
+      (micro)frame on the USB bus (frame in full-speed, microframe in
+      high-speed or super-speed). Hence, for full-speed devices the Length
+      field must not exceed the endpoint maximum packet size, which is the
+      maximum per-frame byte transfer of the endpoint. For high-speed and
+      super-speed the Length field must not exceed the maximum per-micro-
+      frame byte transfer of the endpoint (including high-bandwidth and
+      burst multi-packets-per-micro-frame transfers) and so may exceed
+      the endpoint maximum packet size. E.g. if the endpoint may do one
+      burst transfer (that is, two transfers in total per microframe),
+      then the Length field can be up to 2 * MaxPacketSize. You can
+      query the EndPoint for its maximum (micro)frame transfer size using
+      USBGetEndPointAttrs() to avoid having to do your own calculations.
+      If the frame data Length is too high for the endpoint you may
+      receive an error when the IO request is being handled.
+
+   INPUTS
+      ioreq         -  The IO request whose isochronous transfer setup
+                       to affect.
+      transferIndex -  The index of the transfer setup to affect.
+                       Transfer setups are numbered from zero op to the
+                       count previously set using USBSetIsoTransferCount()
+                       minus one.
+      offset        -  The byte offset into the io_Data buffer of the
+                       first byte to utilize for the USB transfer.
+      length        -  The number of bytes to include from the io_Data
+                       buffer for the USB transfer. Zero is a valid
+                       transfer length and will generate a zero-byte
+                       transfer.
+
+   RESULT
+      An error code indicating the result of setting the transfer setup
+      for the transfer index:
+
+       USBISOSETFRAME_OK
+          All went well
+
+       USBISOSETFRAME_INDEX_UNKNOWN
+          Transfer index is unknown - i.e. out of range.
+
+       USBISOSETFRAME_OFFSET_INVALID
+          Offset value is invalid. Offsets of transfer setups must increment
+          and not overlap any previously defined transfer setup. I.e. it
+          must be larger than offset+length of any previous transfer setup.
+
+   SEE ALSO
+      usbsys.device/USBSetIsoTransferCount(),
+      usbsys.device/USBGetIsoTransferResult(),
+      usb/system.h
+
+usbsys.device/USBTraceIoHcdA                         usbsys.device/USBTraceIoHcdA
+
+   NAME
+      USBTraceIoHcdA -- Trace progress of an IO request by a HCD (53.25)
+
+   SYNOPSIS
+      USBTraceIoHcdA(ioReq, tracePoint, customData, taglist);
+
+      void USBTraceIoHcdA(struct USBIOReqHCD *, uint32, 
+                          struct USBIoTraceCustomData *, 
+                          struct TagItem *);
+
+
+      USBTraceIoHcd(ioReq, tracePoint, customData, tag1, ...);
+
+      void USBTraceIoHcd(struct USBIOReqHCD *, uint32, 
+                         struct USBIoTraceCustomData *, ULONG, ...);
+
+   FUNCTION
+      Using this function a HCD can report progress of an IO request for
+      tracing when IO tracing is enabled in the USB stack.
+      IO tracing can help driver developers in figuring out how the IO
+      their driver is initiating flows thru the USB stack, and also track
+      actually sent or received data for inspection or bug hunting.
+
+      HCDs are incouraged to implement IO tracing support, but it is not
+      a requirement. IO tracing may even help the HCD developer by allowing
+      inspection of the handling of IO requests in test scenarios.
+
+      To be able to relate the IO tracing to a HCD, and thus ultimately to
+      a physical USB bus, the USB stack requires that one of either the
+      USBIOReqHCD argument, the USBA_EndPoint tag or, as a last resort, the
+      USBA_RawFunction tag be specified. Failing to specify at least one may
+      result in the IO tracing being ignored as incomplete.
+
+   TAGS
+      A number of tags are defined for use with this function. The intent
+      of these tags are to be able to override certain values from the
+      traced IO request. A HCD may need to do this if it is internally
+      initiating transfers which are not related to an IO request, and
+      these transfers should be traced. An example of this could be Control
+      transfers for setting up a newly added device in USBHCAddFunction().
+
+      USBA_EndPoint (struct UsbEndPoint *)
+         Specifies the EndPoint the IO tracing is related to.
+         If this tag is specified its data will override the target
+         endpoint of the given IO request.
+         Not specifying either an IO request in the call or a non-NULL
+         endpoint using this tag, the USB stack has no knowledge of
+         what is being traced. In this case the USB stack assumes you're
+         tracing for EndPoint zero at USB address zero - i.e. the default
+         control pipe of a USB Function in the process of attaching.
+
+      USBA_RawFunction (struct UsbRawFunction *)
+         Specifies the USB Function the IO tracing relates to.
+         This tag is mutually exclusive with USBA_EndPoint since specifying
+         the EndPoint also indirectly specifies the USB Function.
+         Only specify this tag if unable to specify either an IO request
+         or an endpoint.
+
+      USBA_TransactionId (uint32)
+         If no IO request is specified for the "ioReq" argument, the USB
+         stack has no link back to extract a transaction ID for tracing the
+         IO. So in that case you must specify a transaction ID manually
+         using this tag.
+
+      USBA_IO_Command
+         Specifies the IO command being traced.
+         If specified this overrides the value from the io_Command of the
+         given IO request in the traced data. The value must be one of
+         the IO commands defined for HCD use.
+         (uint32)
+
+      USBA_IO_Data (APTR)
+         Specifies a pointer to the data buffer of the traced IO.
+         If specified the value overrides the io_Data of the given IO
+         request in the traced data.
+
+      USBA_IO_Length (uint32)
+         Specifies the byte size of the data buffer of the traced IO.
+         If specified the value overrides the io_Length of the given IO
+         request in the traced data.
+
+      USBA_IO_SetupData (APTR)
+         Specifies a pointer to the setup data buffer of the traced IO.
+         If specified the value overrides the io_SetupData of the given IO
+         request in the traced data.
+
+      USBA_IO_SetupLength (uint32)
+         Specifies the byte size of the setup data buffer of the traced IO.
+         If specified the value overrides the io_SetupLength of the given IO
+         request in the traced data.
+
+      USBA_IO_Error (int32)
+         Specifies the IO error which the traced IO resulted in.
+         If specified the value overrides the io_Error of the given IO
+         request in the traced data.
+
+      USBA_TransferType (uint32)
+         This tag is only relevant if tracing at USB_IOTRACE_POINT_HCDXFER.
+         The tag value contains the type of the completed transfer being
+         traced. ti_Data is one of the USB_XFERTYPE_xx constants.
+         
+      USBA_TransferLength (uint32)
+         This tag is only relevant if tracing at USB_IOTRACE_POINT_HCDXFER.
+         The tag value contains the byte size of completed transfer being
+         traced.
+         
+      USBA_TransferError (int32)
+         This tag is only relevant if tracing at USB_IOTRACE_POINT_HCDXFER.
+         The tag value contains an IO error code for the completed transfer
+         being traced.
+         This tag differs from USBA_IO_Error in that USBA_TransferError
+         relates to the specific transfer, whereas USBA_IO_Error relates
+         to the IO request as a whole.
+         
+   INPUTS
+      ioReq      - The IO request to trace progress of. May be NULL if
+                   the IO being traced does not relate to an IO request.
+
+      tracePoint - The trace point indicating the progress of the IO
+                   request at the time of calling.
+                   This must be one of
+
+                    - USB_IOTRACE_POINT_HCDBEGIN
+                      The HCD has received the IO request for processing.
+
+                    - USB_IOTRACE_POINT_HCDXFER
+                      The HCD has performed a transfer for the IO
+                      request.
+
+                    - USB_IOTRACE_POINT_HCDEND
+                      The HCD has finished the IO request and is about
+                      to reply it.
+
+                    - USB_IOTRACE_POINT_HCDCUSTOM
+                      The HCD wants to trace some information for the IO
+                      request during handling of the IO request.
+
+      traceFlags - Flags with boolean information about the tracepoint.
+                   Only one flag is currently valid:
+
+                    - USB_IOTRACEF_BUFFERACCESS
+                      Setting this flag indicates that it is OK to access
+                      the data buffers of the IO request for tracing the
+                      payload. Normally you should set this flag to allow
+                      IO tracing to capture the payload if needed.
+                      However, if the data buffers of the IO request are
+                      rigged for DMA at the time of tracing IO progress
+                      this flag must not be set - if data buffer memory
+                      is accessed for tracing it may break DMA operations
+                      by filling or flushing CPU caches at inapropriate
+                      times and affect the memory content.
+
+      customData - Pointer to an array of struct USBIoTraceCustomData
+                   entries, defining name/value pairs of custom tracing
+                   data from the HCD. This array and the contained data
+                   need only be valid for the duration of this call, and
+                   so can be generated on the stack.
+                   The array *must* end with an entry holding a NULL
+                   name to indicate the end of the array.
+
+      taglist    - Tag list with extended trace information.
+                   Supported tags are described in the TAGS section above.
+
+   RESULT
+      None
+
+   SEE ALSO
+      usb/eventhooks.h, usb/system.h
+
+usbsys.device/USBUnlockFunction                   usbsys.device/USBUnlockFunction
 
    NAME
       USBUnlockFunction -- Unlock a USB Function (allow expunge)
@@ -2646,7 +3540,7 @@ t
    SEE ALSO
       usbsys.device/USBLockFunction
 
-usbsys.device/USBUnlockInterface             usbsys.device/USBUnlockInterface
+usbsys.device/USBUnlockInterface                 usbsys.device/USBUnlockInterface
 
    NAME
       USBUnlockInterface -- Unlock a USB Interface (allow expunge)

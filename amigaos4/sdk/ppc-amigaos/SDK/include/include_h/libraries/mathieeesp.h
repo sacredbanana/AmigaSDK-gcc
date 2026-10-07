@@ -1,7 +1,6 @@
 #ifndef LIBRARIES_MATHIEEESP_H
 #define LIBRARIES_MATHIEEESP_H
 /*
-**    $VER: mathieeesp.h 54.16 (22.08.2022)
 **
 **    Include file to use for <math.h>
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

@@ -1,13 +1,15 @@
 #ifndef LIBRARIES_MATHIEEEDP_H
 #define LIBRARIES_MATHIEEEDP_H
 /*
-**    $VER: mathieeedp.h 54.16 (22.08.2022)
 **    Include file to use for <math.h>
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

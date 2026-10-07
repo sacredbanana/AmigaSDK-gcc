@@ -2,12 +2,14 @@
 #define LIBRARIES_APPLICATION_H
 
 /*
-**    $VER: application.h 54.16 (22.08.2022)
 **
 **    Structure and method definitions for application.library
 **
 **    Copyright (C) 2010 Hyperion Entertainment CVBA.
 **        All Rights Reserved
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 #ifndef EXEC_LIBRARIES_H

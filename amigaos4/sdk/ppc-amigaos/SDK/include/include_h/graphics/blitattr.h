@@ -1,7 +1,6 @@
 #ifndef GRAPHICS_BLITATTR_H
 #define GRAPHICS_BLITATTR_H
 /*
-**    $VER: blitattr.h 54.16 (22.08.2022)
 **
 **    tag definitions for BltBitMapTagList, BltBitMapTags
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

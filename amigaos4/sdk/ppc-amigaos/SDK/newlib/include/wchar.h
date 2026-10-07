@@ -72,6 +72,8 @@ wchar_t	*wcschr (const wchar_t *, wchar_t);
 int	wcscmp (const wchar_t *, const wchar_t *);
 int	wcscoll (const wchar_t *, const wchar_t *);
 wchar_t	*wcscpy (wchar_t * , const wchar_t *);
+wchar_t	*wcsdup (const wchar_t *);
+wchar_t	*_wcsdup_r (struct _reent *, const wchar_t *);
 size_t	wcscspn (const wchar_t *, const wchar_t *);
 size_t  wcsftime (wchar_t *, size_t, const wchar_t *, const struct tm *);
 size_t	wcslcat (wchar_t *, const wchar_t *, size_t);

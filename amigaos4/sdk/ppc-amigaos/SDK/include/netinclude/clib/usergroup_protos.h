@@ -1,10 +1,8 @@
 /*
- * $VER: usergroup_protos.h 54.16 (22.08.2022)
- *
  * :ts=8
  *
  * 'Roadshow' -- Amiga TCP/IP stack; "usergroup.library" API
- * Copyright © 2001-2016 by Olaf Barthel.
+ * Copyright (C) 2001-2016 by Olaf Barthel.
  * All Rights Reserved.
  *
  * Amiga specific TCP/IP 'C' header files;
@@ -78,4 +76,3 @@ struct UserGroupCredentials *getcredentials( struct Task *task );
 #endif /* __cplusplus */
 
 #endif /* CLIB_USERGROUP_PROTOS_H */
-

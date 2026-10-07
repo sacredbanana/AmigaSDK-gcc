@@ -8,7 +8,6 @@
 #define  CLIB_DOS_PROTOS_H
 
 /*
-**	$Id: dos_protos.h 40.99 2010-04-26 07:26:16 cwenzel Exp $
 **
 **	C prototypes. For use with 32 bit integers only.
 **
@@ -250,8 +249,9 @@ LONG SetVar( CONST_STRPTR name, CONST_STRPTR buffer, LONG size, ULONG flags );
 LONG GetVar( CONST_STRPTR name, STRPTR buffer, LONG size, ULONG flags );
 LONG DeleteVar( CONST_STRPTR name, ULONG flags );
 struct LocalVar *FindVar( CONST_STRPTR name, ULONG type );
-LONG CliInitNewcli( struct DosPacket *dp );
-LONG CliInitRun( struct DosPacket *dp );
+LONG CliInit( struct DosPacket *dp );
+ULONG CliInitNewcli( struct DosPacket *dp );
+ULONG CliInitRun( struct DosPacket *dp );
 LONG WriteChars( CONST_STRPTR buf, ULONG buflen );
 LONG PutStr( CONST_STRPTR str );
 LONG VPrintf( CONST_STRPTR format, CONST APTR argarray );
@@ -259,6 +259,7 @@ LONG Printf( CONST_STRPTR format, ULONG arg1, ... );
 /* these were unimplemented until dos 36.147 */
 LONG ParsePatternNoCase( CONST_STRPTR pat, STRPTR buf, LONG buflen );
 LONG MatchPatternNoCase( CONST_STRPTR pat, CONST_STRPTR str );
+CONST_STRPTR PrivateDosGetString( LONG num );
 /* this was added for V37 dos, returned 0 before then. */
 LONG SameDevice( BPTR lock1, BPTR lock2 );
 /* These calls were added for V39 dos: */
@@ -449,6 +450,27 @@ int32 WaitForChildExit( uint32 pid );
 
 /* --- Added 54.107 --- */
 int32 CheckForChildExit( uint32 pid );
+
+/* --- Added 54.126 --- */
+APTR GetContext( CONST_STRPTR name );
+int32 SetContext( CONST_STRPTR name, uint32 flags, APTR value, int32 reserved );
+int32 GetFinalData( VOID );
+uint32 SetChildPID( CONST struct Process *proc, uint32 pid );
+
+/* --- Added 54.129 --- */
+int32 GetCliEpilog( STRPTR buf, int32 len );
+int32 SetCliEpilog( CONST_STRPTR str );
+
+/* --- Added 54.130 --- */
+int32 RelativePath( BPTR refdir, BPTR objlock, STRPTR buffer, uint32 bufsize );
+
+/* --- Added 54.132 --- */
+int32 SubLock( BPTR src, BPTR dst );
+
+/* --- Added 54.134 --- we need int64 support. */
+int32 HexToLongLong( CONST_STRPTR str, APTR val );
+int32 StrToLongLong( CONST_STRPTR str, APTR val );
+
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,159 @@
+About
+=====
+This small tool will install an event hook into the Sirion USB stack and print out IO
+tracing information to the console. Nothing more, nothing less.
+
+Once started press CTRL+C to stop the tool again.
+
+Command arguments
+-----------------
+usbiotrace takes an optional set of arguments used to form a filter for the IO trace
+events to capture. The filtering argument will be AND'ed together, meaning that only
+trace events matching all of the filter arguments specified will be captured.
+If a filter argument is not specified it defaults to matching anything, i.e. the
+filter will not affect the captured events. In effect, not specifying any filter
+arguments will trace all possible IO events.
+
+BUSNUMBERS=BUSSES/K
+ A string holding a comma sepparated list of USB bus numbers from which to
+ trace IO events.
+ The USB bus numbers can be found by inspecting the output of the
+ "usbinfo tree" command for the HCDs to trace IO from.
+ 
+FUNCTIONIDS=FKTIDS/K
+ A string holding a comma separated list of UsbRawFunction identifiers for
+ which to trace IO events.
+ The UsbRawFunction identifiers can be found by inspecting the output of the
+ "usbinfo tree" command for the USB Functions to trace IO from.
+
+INTERFACEIDS=IFCIDS/K
+ A string holding a comma separated list of UsbRawInterface identifiers for
+ which to trace IO events.
+ The UsbRawInterface identifiers can be found by inspecting the output of the
+ "usbinfo tree" command for the USB Interfaces to trace IO from.
+
+ENPOINTIDS=EPIDS/K
+ A string holding a comma separated list of UsbEndPoint identifiers for
+ which to trace IO events.
+ The UsbEndPoint identifiers can be found by inspecting the output of the
+ "usbinfo tree" command for the USB EndPoints to trace IO from.
+
+ENDPOINTNUMBERS=EPNUMS/K
+ A string holding a comma separated list of endpoint numbers for which to
+ trace IO events. The endpoint numbers are the numbers found in the endpoint
+ descriptor for a given endpoint. Each USB Function may contain an endpoint
+ with a given endpoint number, so filtering by endpoint number can give
+ traces across multiple USB Functions and USB busses.
+ EndPoint numbers can be found by inspecting the output of the "usbinfo tree"
+ command for USB EndPoints to trace IO from.
+
+ENDPOINTTYPES=EPTYPES/K
+ A string holding a comma separated list of endpoint types for which to
+ trace IO events. The possible endpoint type values are
+
+  - "Control" / "Ctrl"
+    Includes Control endpoints in the filter
+
+  - "Isochronous" / "Iso"
+    Includes Isochronous endpoints in the filter
+
+  - "Bulk"
+    Includes Bulk endpoints in the filter
+
+  - "Interrupt" / "Int"
+    Include Interrupt endpoints in the filter
+
+IOCOMMANDS=IOCMDS/K
+ A string holding a comma separated list of IO commands for which to
+ trace IO events. The possible IO command values are
+ 
+  - "CMD_READ" / "READ"
+    Include CMD_READ IO. I.e. data reads from USB endpoints
+  
+  - "CMD_WRITE" / "WRITE"
+    Include CMD_WRITE IO. I.e. data writes to USB endpoints
+
+PORTPATH=PATH/K
+ A string holding the path to a specific USB Function or topology subtree
+ for which IO is to be traced. You can either construct this port path
+ from knowledge of the USB topology you want to trace, or by using the
+ usbinfo command and inspect the port path information of the "Hub"
+ property of the Function you want to trace IO to.
+
+ The value is a string of the format
+ 
+   [PathRootFunctionId[:]]PortPath[/*]
+   
+ where
+  - PathRootFunctionId is the UsbRawFunction identifier of the hub from
+    which the actual port path given will be reckoned.
+    If specified along with a port path, the PathRootFunctionId and the
+    port path must be separated with a colon.
+    If omitted, the root of the port path is the HCD root port.
+
+  - PortPath a path of hub ports leading down the USB topology to the USB
+    Function at (and possibly below) which IO tracing may occur.
+    Each hub port specified is separated from the next by a slash. There
+    is no trailing slash in a port path.
+    A hub port may be specified as "?", meaning any hub port at this
+    topology level matches the port path filtering.
+    
+  - If a trailing "/*" is specified in the port path (or just a "*" if
+    specified directly after the PathRootFunctionId) it means that IO
+    tracing should be enabled for the entire USB topology at, and below,
+    the specified port path. If no "*" is specified in the path only an
+    exact match will allow IO tracing - i.e. the port path is specific
+    to an exact location in the USB topology.
+
+ For example
+
+ - "PATH=0x0452BDE0" will trace IO for any Function which is connected
+   directly to a port on hub Function 0x0452BDE0.
+
+ - "PATH=0x0452BDE0/*" will trace IO for any Function which is connected
+   anywhere in the USB topology below the hub Function 0x0452BDE0.
+
+ - "PATH=0x0452BDE0:2/1" will trace IO only for the Function which is
+   connected directly to port 1 on the hub which is connected to port 2
+   on hub Function 0x0452BDE0.
+
+ - "PATH=0x0452BDE0:2/1/*" will trace IO for any Function which is connected
+   anywhere in the USB topology at, or below, port 1 on the hub which is
+   connected to port 2 on hub Function 0x0452BDE0.
+
+ - "PATH=0x0452BDE0:?/1" will trace IO only for the Function which is
+   connected directly to port 1 on a hub which is connected to any port
+   on hub Function 0x0452BDE0.
+
+TRACEPOINT=POINT/K
+ A string holding a comma separated list of trace points for which to
+ trace IO events. The possible trace point values are
+ 
+ - "BEGIN"
+   Capture IO request when it reaches usbsys.device from its originator.
+
+ - "END"
+   Capture IO request when usbsys.device is replying it back to the originator.
+
+ - "HCDBEGIN"
+   Capture IO request when a HCD traces it as received.
+
+ - "HCDXFER"
+   Capture IO progress when a HCD traces that a data transfer has been
+   performed on the IO request.
+
+ - "HCDCUSTOM"
+   Capture any custom data a HCD may trace
+
+ - "HCDEND"
+   Capture IO request when a HCD traces it as being replied
+
+ Notice that all the "HCD#?" trace points depend on the HCDs partaking in
+ IO tracing. It is optional for a HCD to support IO tracing.
+
+TRACEDATA=DATA/S
+ A switch argument which, if present, will make IO tracing capture the
+ data buffer content of an IO request as it is being traced.
+ For some IO trace events the data buffers may be unavailable to avoid
+ interfering with e.g. DMA data transfers. In such a case no data buffer
+ capture will take place.

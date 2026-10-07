@@ -7,6 +7,9 @@
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment CVBA.
 **          All Rights Reserved
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 #ifndef   EXEC_TYPES_H

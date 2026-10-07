@@ -1,7 +1,6 @@
 #ifndef CLIB_MACROS_H
 #define CLIB_MACROS_H
 /*
-**    $Id: macros.h,v 1.8 2010-01-31 01:29:02 ssolie Exp $
 **
 **    C macros
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

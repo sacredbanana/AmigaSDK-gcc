@@ -76,12 +76,39 @@ usbfd.fd/USBFDRunInterface
          and should generally not be inserted in a Descriptor. Leaving out
          the VENDOR keyword indicates that all USB Vendors are accepted by
          the Function Driver.
+         
+         In a usbsys.device/usbresource.library 53.30+ environment multiple
+         VENDOR keywords are accepted in combination with using the PRODUCTS
+         keyword. This allows the definition of support for multiple products
+         for multiple vendors in the same Function Driver descriptor file.
+         In a pre-53.30 environment multiple VENDOR keywords are ignored with
+         only the last one in the descriptor file taking effect.
 
       PRODUCT
          The value of this keyword is a USB ProductID value for a specific
          product that the Function Driver is supporting. As ProductIDs are
          vendor specific you should only use this keyword if you also define
          a specific vendor using the VENDOR keyword.
+      
+      PRODUCTS
+         The value of this keyword is a space-separated list of USB ProductID
+         values of specific product that the Function Driver is supporting.
+         As ProductIDs are vendor specific you should only use this keyword
+         if you also define a specific vendor using the VENDOR keyword.
+         If multiple VENDOR keywords are present in the Function Driver
+         descriptor the ProductIDs specified will be related to the VendorID
+         last specified before the PRODUCTS keyword.
+         If both the PRODUCT and PRODUCTS keywords are in the descriptor file
+         the PRODUCT keyword value is ignored.
+         
+         This keyword is supported from usbsys.device 53.30, and also requires
+         usbresource.library 53.30.
+         usbsys.device versions prior to 53.30 will ignore the PRODUCTS keyword.
+         Likewise the values of the PRODUCTS keyword are ignored if
+         usbresource.library version is prior to 53.30.
+         The net effect is that an FD descriptor with both PRODUCT and PRODUCTS
+         keywords specified will be using the PRODUCT keyword in pre-53.30
+         environments but the PRODUCTS keyword(s) in 53.30+ environments.
 
       CLASS
          The value of this keyword is a hex value specifying the USB class
@@ -121,9 +148,9 @@ usbfd.fd/USBFDRunInterface
 
       PRI
          The value of this keyword specifies the driver priority. If more
-         drivers are able to handle a USB class the driver with the
-         highest priority will win.
-         The priority is an unsigned byte value.
+         drivers are able to handle an attached USB device the driver with
+         the highest priority will win.
+         The priority is an unsigned byte value. I.e. in range 0 to 255.
 
       DRIVER
          The value of this keyword is the filename of the Function Driver
@@ -137,7 +164,7 @@ usbfd.fd/USBFDRunInterface
       STACK
          The value of this keyword is the amount of stack space needed by
          the driver program, specified in bytes.
-         If not specified, stack space will be the OS default value (4K).
+         If not specified, stack space will be at least 4K.
 
 usbfd.fd/USBFDGetAttrs                                   usbfd.fd/USBFDGetAttrs
 

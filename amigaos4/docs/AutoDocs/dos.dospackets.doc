@@ -257,7 +257,7 @@ dos.library/ACTION_WRITE_PROTECT
 	    1001       ACTION_READ_RETURN                INTERNAL
 	    1002       ACTION_WRITE_RETURN               INTERNAL
 	    1003       ACTION_INT_WRITE_RETURN           INTERNAL
-	    1004       ACTION_FINDUPDATE (MODE_READWRITE)
+	    1004       ACTION_FINDUPDATE (MODE_UPDATE)
 	    1005       ACTION_FINDINPUT  (MODE_OLDFILE)
 	    1006       ACTION_FINDOUTPUT (MODE_NEWFILE)
 	    1007       ACTION_END
@@ -458,8 +458,8 @@ dos.library/ACTION_WRITE_PROTECT
 
 	NB: Excessive paranoia should be employed with DosPackets received at a
 	filesystem message port, for example, DOS will always set the message
-	replyport to dp_Port in a DosPacket before sending it, others may not,
-	they may make their own packets and use PutMsg() to send them.
+	replyport to the same value as dp_Port in a DosPacket before sending it,
+	others may not, they may make their own packets and use PutMsg().
 	Also, some applications send private messages to the ports of some
 	filesystems as well as DosPackets, so make sure this is also safe.
 
@@ -471,9 +471,9 @@ dos.library/ACTION_WRITE_PROTECT
 	   
 	   while((msg = IExec->GetMsg(&VectorPort.MP)))
 	   {
-	      if(( dp = (struct DosPacket *) msg->mn_Node.ln_Name ))
+	      if(( dp = (struct DosPacket *) msg->mn_Node.ln_Name )) /* not 0 */
 	      {
-	         if( dp->dp_Link == msg )  /* validate for safety */
+	         if( dp->dp_Link == msg )  /* validate packet for safety */
 	         {
 	            msg->mn_ReplyPort = dp->dp_Port; /* be sure replyport set */
 
@@ -634,7 +634,7 @@ dos.library/ACTION_WRITE_PROTECT
 	internal notification handler.
 
 
-	This action asks a file system to notify the calling program if a
+	This action asks the handler to notify the calling program if a
 	particular object is altered.  The handler will notify a program 
 	either by sending a message, calling a Hook or by signaling a task.
 
@@ -642,38 +642,38 @@ dos.library/ACTION_WRITE_PROTECT
 	NotifyRequest structure, this is done with IDOS->AllocDosObject(),
 	the handler gets the watched object's name from the nr_FullName field.
 
-	The string in nr_FullName will be an absolute path, including the
-	name of the root volume or device, but will never be assignments.  
-	The absolute path is necessary because the file or its parent
-	directories do not have to exist when the notification is set up, this
-	allows notification on files and directories that do not yet exist.
-	Notification will not occur until the directory or file is created.
 	An application that uses the StartNotify() DOS call does not fill in
 	the NotifyRequest's nr_FullName field, but instead fills in the nr_Name
 	field.  StartNotify() takes the name from the nr_Name field and uses
-	GetDeviceProc() to expand any assignments and stores the device
+	GetDeviceProc() to expand any assignments and stores the full device
 	relative path in nr_FullName, subdirecties and files are not touched
 	or evaluated, so paths with trailing slashes are not legal here,
 	therefore any trailing slashes will be removed by DOS.
+	
+	The string created in nr_FullName will be the absolute path, because
+	the file or its parent directories do not have to exist when the
+	notification is set up, this allows notification on directories and
+	files that do not yet exist.  Notification will not occur until the
+	directory or file is created.
 
 	The notification type depends on which bit is set in the 
 	NotifyRequest.nr_Flags field.  If the NRF_SEND_MESSAGE bit is set, 
 	an application receives notification of changes to the object through
 	a message (see NotifyMessage from dos/notify.h).  In this case, the
 	nr_Port field must point to the message port that will receive the
-	notifying message .  If the nr_Flags NRF_SEND_SIGNAL bit is set, the
-	file system will signal a task instead of sending a message.  
+	notifying message .  If the nr_Flags NRF_SEND_SIGNAL bit is set, 
+	the handler will signal a task instead of sending a message.  
 	In this case, nr_Task points to the task and nr_SignalNum is the 
 	signal number.  
 
 	The third method is NRF_CALL_HOOK, invoke the Hook pointed to by
 	NotifyRequest->nr_stuff.nr_CallHook.nr_Hook;
 	Note that this feature may not be supported by all file systems
-	so be prepared for failure.
+	so be prepared for failure unless the internal DOS handler is used.
 	This notification method was intended to be used with directories
-	and does not work with files when serviced by FFS filesystem, however,
-	both are supported only if dos.library V52.33+ is used to handle the
-	notification.
+	and does not work with files when serviced by the FFS filesystem,
+	however, both objects are supported only if dos.library V52.33+ is
+	used to handle the notification.
 	                
 	NB: The hook structure should remain persistent for the life of the
 	    notify request.
@@ -687,7 +687,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 	The 'reserved' parameter is currently used for special features within
 	the operating system when employing dos.library handled notifications,
-	filesystems must set this to 0.
+	filesystem handlers must set this to 0.
 
 	Your hook function should return 0 if successful.
 
@@ -739,9 +739,9 @@ dos.library/ACTION_WRITE_PROTECT
 	        entries. For example, creating a new file will produce a
 	        message of type NHM_ACTION_ADD. Deleting a file will produce a
 	        message of type NHM_ACTION_DELETE.
-	        Changes to entries involving modification time, comments, size,
-	        protection bits and owner info will trigger NHM_ACTION_CHANGE
-	        messages.
+	        Changes to entries involving data modification, time, comments,
+	        size, protection bits and owner info will trigger messages of
+	        type NHM_ACTION_CHANGE.
 	        You will need to find out for yourself what exactly has changed.
 
 	Only one of these three bits should be set!
@@ -759,7 +759,7 @@ dos.library/ACTION_WRITE_PROTECT
 	Handlers should only perform a notification when the actual contents
 	of the file have changed or its associated meta-data.  
 	This includes ACTION_WRITE, ACTION_SET_xxxx, ACTION_DELETE, 
-	ACTION_RENAME_OBJECT, ACTION_FINDUPDATE (MODE_READWRITE - create),
+	ACTION_RENAME_OBJECT, ACTION_FINDUPDATE (MODE_UPDATE - upon create),
 	ACTION_FINDOUTPUT (MODE_NEWFILE).
 
 	For file write (change) and create notifications, these are sent in the
@@ -767,7 +767,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 	It should also include a change notification for all other meta-data
 	modification actions such as the ACTION_SET_COMMENT/PROTECT/DATE/OWNER
-	function, but this was not generally supported by filesystems.
+	function, but this was not generally supported by filesystem handlers.
 	The built-in dos.library notification handler does support this.
 
 
@@ -896,8 +896,8 @@ dos.library/ACTION_WRITE_PROTECT
    INPUTS    (DosPacket64 method)
 	dp_Type - (int32) ACTION_CHANGE_FILE_SIZE64
 	dp_Arg1 - (BPTR)  filehandle->fh_Arg1
-	dp_Arg2 - (int64) size
-	dp_Arg3 - (int32) mode
+	dp_Arg2 - (int64) Size relative to mode
+	dp_Arg3 - (int32) OFFSET_BEGINNING, OFFSET_CURRENT or OFFSET_END
 	dp_Arg4 - (struct FileHandle *) filehandle
 	dp_Arg5 - (int64) 0  (must be zero before dp_Arg4 will be validated.) 
 	RESULT1 - (int64) 64 bit success/failure (-1LL or 0LL)  0LL on failure.
@@ -940,8 +940,8 @@ dos.library/ACTION_WRITE_PROTECT
 	implement only the shared directory lock mode, then the dos.library
 	vector-port and path handling code will not work properly, neither
 	will functions like NameFromLock(), NameFromFH(), etc...
-	If this situation occurs the secondary result code returned shall
-	be ERROR_OBJECT_WRONG_TYPE.
+	If this situation is attempted the secondary result code returned
+	shall be ERROR_OBJECT_WRONG_TYPE.
 
 	If an objects mode is already the same mode as being requested,
 	a success code shall be returned even though nothing changed.
@@ -976,11 +976,11 @@ dos.library/ACTION_WRITE_PROTECT
 
 
    NOTES
-	From V54 this document has synonyms for SHARED_LOCK and EXCLUSIVE_LOCK,
+	From V54 this document uses synonyms for SHARED_LOCK and EXCLUSIVE_LOCK,
 	these are; CHANGE_MODE_SHARED or CHANGE_MODE_EXCLUSIVE.
 	The includes specifically define these for this function to remove the
-	"newmode confusion" caused by the use of lock modes for filehandles and
-	visa-versa. So these are the only values mentioned here now.
+	"newmode confusion" caused by the use of lock modes for filehandles 
+	and visa-versa.
 
    SEE ALSO
 	IDOS->ChangeMode()
@@ -1013,8 +1013,9 @@ dos.library/ACTION_WRITE_PROTECT
 	ACTION_COLLECT
 
    FUNCTION
-	This is a sub-packet used in conjunction with ACTION_SHUTDOWN
-	Refer to ACTION_SHUTDOWN for extended documentation.
+	This is a sub-packet used in conjunction with ACTION_SHUTDOWN packet
+	for a filesystem handler to send objects to the "dos_lock_handler" port
+	when dismounting.  Refer to ACTION_SHUTDOWN for extended documentation.
 
 	Currently, the only way this packet can fail is if you pass an object
 	that was not allocated by the IDOS->AllocDosObject() function,
@@ -1026,15 +1027,16 @@ dos.library/ACTION_WRITE_PROTECT
 	these are passed in dp_Arg2;  ID_COLLECT_LOCK, ID_COLLECT_FILEHANDLE
 	or ID_COLLECT_NOTIFICATION.
 
-	The object passed to the lock handler for servicing MUST be the
+	The object passed to the dos lock handler for servicing MUST be the
 	same public structure addresss known to the application which
 	requested its creation.  Internal filesystem locks should never be
 	passed to this handler, as no-one will ever try to unlock them.
+	The object is an APTR to the respective structure, NOT a BPTR.
 
    INPUTS    (DosPacket method)
 	dp_Type - (int32) ACTION_COLLECT
 	dp_Arg1 - (int32) ID_COLLECT_xxxx (as above)
-	dp_Arg2 - (APTR)  object.
+	dp_Arg2 - (APTR)  object structure pointer.
 	RESULT1 - (int32) Success/Failure indicator, (FALSE on failure.)
 	RESULT2 - (int32) Failure code if RESULT1 == FALSE
 
@@ -1093,7 +1095,7 @@ dos.library/ACTION_WRITE_PROTECT
 
    FUNCTION
 	This actions original name (ACTION_COPY_DIR_FH) was misleading as it
-	does not actually manipulate directories, instead, it creates a shared
+	does not actually work on directories, instead, it creates a shared
 	lock on an open file. ACTION_COPY_LOCK_FH should only be used now.
 
 	This function requests that the handler return a lock associated with
@@ -1166,12 +1168,17 @@ dos.library/ACTION_WRITE_PROTECT
 	If the disk itself is write protected, return failure along with the
 	error code; ERROR_DISK_WRITE_PROTECTED.
 
-	Directory names shall be rejected if the name contains any colon or
-	slash ascii characters. The error code is; ERROR_INVALID_COMPONENT_NAME.
+	A directory name shall not be created if the name contains any colon or
+	slash ascii characters, one asterisk "*", or contains characters < 32,
+	the error code shall be set to ERROR_INVALID_COMPONENT_NAME.
 
 	The new directory shall also inherit the parents protection mask,
 	as well as the group and owner values, and comments shall always 
 	default to a nul-string.
+
+	Note that for directories, the (D)elete bit is the ONLY bit that is
+	defined to control the functionality of a filesystems, all other bits
+	must not affect filesystem operations in any way.
 	
 
    INPUTS    (FileSystemVectorPort method)
@@ -1357,7 +1364,7 @@ dos.library/ACTION_WRITE_PROTECT
 	
 	Besides closing the stream, this function is also generally used to
 	update the datestamp and clear the (A)rchive bit for changed object,
-	the archive bit of the parent directory shall also be cleared.
+	the parent directory shall also be updated.
 	Some filesystems may propagate the update right back to the root dir
 	so directories with changed objects can be identified quickly by backup
 	software, however, this extended behavious is no longer mandatory. 
@@ -1745,13 +1752,13 @@ dos.library/ACTION_WRITE_PROTECT
 
 	struct ExamineData
 	{
-	  struct MinNode   EXDnode;      /* List node.                         */
-	  uint32           EXDinfo;      /* General purpose user data.         */
+	  struct MinNode EXDnode;        /* MinList node.                      */
+	  uint32         EXDinfo;        /* General purpose user data.         */
+	  uint32         EXDinfo2;       /* General purpose user data 2.       */
 	                                 /*                                    */
 	  /* These are private members exclusively for the FS & DOS.           */
-	  uint32           Reserved0;    /* DOS RESERVED.                      */
-	  uint32           FSPrivate;    /* FILESYSTEM ONLY - Private usage.   */
-	  APTR             DOSPrivate;   /* DOSLIB ONLY - Private usage.       */
+	  APTR           FSPrivate;      /* FILESYSTEM ONLY - Private usage.   */
+	  APTR           DOSPrivate;     /* DOSLIB ONLY - Private usage.       */
 	                                 /*                                    */
 	  /* The following are public fields.                                  */
 	  uint32           StructSize;   /* (RO) Full size of the structure.   */
@@ -1847,12 +1854,12 @@ dos.library/ACTION_WRITE_PROTECT
 
 	struct ExamineData
 	{
-	  struct MinNode   EXDnode;      /* List node.                         */
+	  struct MinNode   EXDnode;      /* MinList node.                      */
 	  uint32           EXDinfo;      /* General purpose user data.         */
+	  uint32           EXDinfo2;     /* General purpose user data 2.       */
 	                                 /*                                    */
 	  /* These are private members exclusively for the FS & DOS.           */
-	  uint32           Reserved0;    /* DOS RESERVED.                      */
-	  uint32           FSPrivate;    /* FILESYSTEM ONLY - Private usage.   */
+	  APTR             FSPrivate;    /* FILESYSTEM ONLY - Private usage.   */
 	  APTR             DOSPrivate;   /* DOSLIB ONLY - Private usage.       */
 	                                 /*                                    */
 	  /* The following are public fields.                                  */
@@ -1967,10 +1974,11 @@ dos.library/ACTION_WRITE_PROTECT
 	          nodes which have already been returned to the caller by DOS,
 	          from invoking the IDOS->ExamineDir() function.
 
-	    |     On each call to this function, (and if the filesystem does
-	    |     not wish to attempt node reuse), the filesystem should simply
-	    |     call IExec->RemHead() for all nodes on this list and release
-	    |     them back to the memory pool by calling;
+	    |     On each call to FSExamineDir() or ACTION_EXAMINEDATA_DIR, 
+	    |     (and if the filesystem does not wish to attempt node reuse),
+	    |     the filesystem should simply call IExec->RemHead() for all
+	    |     nodes on this list and release them back to the memory pool
+	    |     by calling;
 	    |        while((n=IExec->RemHead(&ctx->StaleNodeList)))
 	    |        {
 	    |             IDOS->FreeDosObject(DOS_EXAMINEDATA,n);
@@ -2023,11 +2031,13 @@ dos.library/ACTION_WRITE_PROTECT
 	    |     if resources are limited.
 	    |
 	    |     Remember, the return code from this function only controls
-	    |     whether DOS saves the Result2 code, it does not prevent DOS
-	    |     calling again with a refill request. If a bonafide error did
-	    |     occur and you wish to abort the scan, you have to take action
-	    |     yourself to deny any further refill requests from DOS.
-	    |     The example code generated by the FSVPTool shows this.
+	    |     whether DOS saves the Result2 code for the caller, it does not
+	    |     prevent DOS calling again with a refill request. 
+	    |     If a bonafide error did occur and you wish to abort the scan,
+	    |     you have to take action yourself to deny any further refill
+	    |     requests from DOS.
+	    |     The example code generated by the FSVPTool shows this by
+	    |     using FSPrivate[0] to keep track of the last error code. 
 
 	    DataRequestFlags - (uint32) The bitmask specified with the tag; 
 	          EX_DataFields in the ObtainDirContext() call to specify what
@@ -2083,10 +2093,10 @@ dos.library/ACTION_WRITE_PROTECT
 	          ( Filesystem use only. )
 
 	    DOSPrivateCD - (BPTR) DOS private lock for the original current
-	          directory lock when EX_DoCurrentDir,TRUE tag was specified.
+	          directory lock when EX_SetCurrentDir,TRUE tag was specified.
 	          The old current dir will be restored in ReleaseDirContext()
 	          or on subsequent failure of this function if context reused.
-	          This value will be (BPTR)-1 if the tag EX_DoCurrentDir,TRUE
+	          This value will be (BPTR)-1 if the tag EX_SetCurrentDir,TRUE
 	          has not been specified.
 	          ( Filesystems ignore this. )
 
@@ -2120,7 +2130,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 	    DOSPrivateResourceTracker - (struct Trackable *) Pointer to the
 	          struct Trackable that was setup for this context.
-	          This is used by DOS for resource tracking.
+	          This is used by DOS for resource tracking and freeing.
 	          ( Filesystems ignore this. )
 
 
@@ -2155,9 +2165,8 @@ dos.library/ACTION_WRITE_PROTECT
 
 	For hardlinks, the filesystem shall copy the target object name only
 	into the examinedata->Link field buffer, nothing more.
-	DOS does not require this information to resolve hardlinks, this string
-	is superfluous and is provided simply for semantical reasons.
-
+	This is not used by DOS directly, but applications do use it for
+	display or other unspecified purposes.
 
    SEE ALSO
 	IDOS->ExamineDir()
@@ -2195,13 +2204,13 @@ dos.library/ACTION_WRITE_PROTECT
 
 	struct ExamineData
 	{
-	  struct MinNode   EXDnode;      /* List node.                         */
-	  uint32           EXDinfo;      /* General purpose user data.         */
+	  struct MinNode EXDnode;        /* MinList node.                      */
+	  uint32         EXDinfo;        /* General purpose user data.         */
+	  uint32         EXDinfo2;       /* General purpose user data 2.       */
 	                                 /*                                    */
 	  /* These are private members exclusively for the FS & DOS.           */
-	  uint32           Reserved0;    /* DOS RESERVED.                      */
-	  uint32           FSPrivate;    /* FILESYSTEM ONLY - Private usage.   */
-	  APTR             DOSPrivate;   /* DOSLIB ONLY - Private usage.       */
+	  APTR           FSPrivate;      /* FILESYSTEM ONLY - Private usage.   */
+	  APTR           DOSPrivate;     /* DOSLIB ONLY - Private usage.       */
 	                                 /*                                    */
 	  /* The following are public fields.                                  */
 	  uint32           StructSize;   /* (RO) Full size of the structure.   */
@@ -2327,13 +2336,13 @@ dos.library/ACTION_WRITE_PROTECT
 
 	struct ExamineData
 	{
-	  struct MinNode   EXDnode;      /* List node.                         */
-	  uint32           EXDinfo;      /* General purpose user data.         */
+	  struct MinNode EXDnode;        /* MinList node.                      */
+	  uint32         EXDinfo;        /* General purpose user data.         */
+	  uint32         EXDinfo2;       /* General purpose user data 2.       */
 	                                 /*                                    */
 	  /* These are private members exclusively for the FS & DOS.           */
-	  uint32           Reserved0;    /* DOS RESERVED.                      */
-	  uint32           FSPrivate;    /* FILESYSTEM ONLY - Private usage.   */
-	  APTR             DOSPrivate;   /* DOSLIB ONLY - Private usage.       */
+	  APTR           FSPrivate;      /* FILESYSTEM ONLY - Private usage.   */
+	  APTR           DOSPrivate;     /* DOSLIB ONLY - Private usage.       */
 	                                 /*                                    */
 	  /* The following are public fields.                                  */
 	  uint32           StructSize;   /* (RO) Full size of the structure.   */
@@ -2422,9 +2431,8 @@ dos.library/ACTION_WRITE_PROTECT
 
 	For hardlinks, the filesystem shall copy the target object name only
 	into the examinedata->Link field buffer, nothing more.
-	DOS does not require this information to resolve hardlinks, this string
-	is mostly superfluous and is provided only for semantical reasons.
-
+	This is not used by DOS directly, but applications do use it for
+	display or other unspecified purposes.
 
    SEE ALSO
 	IDOS->ExamineObject(), IDOS->ExamineDir()
@@ -2458,6 +2466,8 @@ dos.library/ACTION_WRITE_PROTECT
 	promoting it to MODE_NEWFILE with the ACTION_CHANGE_MODE or the 
 	FSChangeFileMode() function.
 
+	Upon success, the internal file position pointer must be placed at
+	the beginning of the file.
 
    INPUTS    (FileSystemVectorPort method)
 	fsvp    - (struct FileSystemVectorPort *) Pointer to the vector port.
@@ -2498,11 +2508,11 @@ dos.library/ACTION_WRITE_PROTECT
 	(unless dos.library can supply the required information.)
 
 	This function works by using a taglist to supply or obtain information,
-	the taglist items are passed through to the underlying filesystem, 
+	the taglist items are passed through to the underlying filesystem,
 	the options are defined in such a way, as to provide specific tags that
 	are used for either read or write mode.
 
-	This function is also used on some FileSystems to privately communicate
+	This function is also used for some FileSystems to privately communicate
 	with their own support tools using private tag values, so be prepared to
 	handle all tags values that are not publicly defined by dos.library,
 	as these custom programs may accidently be used on the wrong filesystem.
@@ -2541,7 +2551,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 	FSA_MsgPortInput   (struct MsgPort *) -- Pointer to a message port.
 	    Identify the filesystem by this associated message port.
-	    ( NOTE: This tag was added in 51.96 )
+	    ( Note: This tag was added in 51.96 )
 
                                    ===
 
@@ -2560,13 +2570,13 @@ dos.library/ACTION_WRITE_PROTECT
 
 	FSA_MaxFileNameLengthR (uint32 *) -- Pointer to a uint32 storage area.
 	    Obtain the maximum filename length permitted. (not including \0) 
-	    NOTE: DOS library will attempt to extrapolate this value if the 
+	    Note: DOS library will attempt to extrapolate this value if the 
 	        filesystem does not support this option.
 
 	FSA_DOSTypeR (uint32 *) -- Pointer to a uint32 storage area.
 	    Obtain the dostype identifier signature for the filesystem. 
 	    EG: 0x444F5303 = 'DOS\3'
-	    NOTE: The DOS library will attempt to extrapolate this value
+	    Note: The DOS library will attempt to extrapolate this value
 	          from V54.54+ by using an InfoData call, if the filesystem
 	          does not support this tag.
 
@@ -2579,12 +2589,12 @@ dos.library/ACTION_WRITE_PROTECT
 	    format as the 'bumprev' tools VSTRING, this being; 
 	         "filesystem_name VER.REV (dd.mm.yyyy)"
 
-	    You are required to specify the size of your string buffer area
-	    with the following tag; FSA_VersionStringR_BufSize.
+	    The size of the the string buffer area must be specified with
+	    the following tag; FSA_VersionStringR_BufSize.
 	    Failing to supply this tag will cause ERROR_REQUIRED_ARG_MISSING
 	    to be returned by IoErr(). 
-	    (Dos.library tests for this before calling the filesystem)
-	    NOTE: DOS library will attempt to extrapolate this value if the 
+	    (DOS.library checks for this before calling the filesystem)
+	    Note: DOS library will attempt to extrapolate this value if the 
 	          filesystem does not support this option, by searching for a
 	          $VER: cookie in the device node seglist. Note that the 
 	          result buffer will have $VER: part removed, if one is found.
@@ -2604,6 +2614,14 @@ dos.library/ACTION_WRITE_PROTECT
 	    Obtain the time in milliseconds before a flush when inactive occurs.
 	    ( 1000mS = 1 second)
 
+	FSA_MaxFileSizeR (uint64 *) -- Pointer to a uint64 storage area.
+	    Obtain the maximum file size that the filesystem can support and
+	    also accurately report via the examination API functions.
+	    The amount of media storage available is not relevant here,
+	    use IDOS->GetDiskInfo() for media storage information. 
+	    Note: The DOS library will attempt to extrapolate this value
+	          if the filesystem does not support this tag.  (Added 54.53)
+
 	FSA_HasRecycledEntriesR	(int32 *) -- Pointer to a int32 storage area.
 	    Boolean test to see if the filesystem supports recycled entries.
 	    Note: This tag exists because the following FSA_MaxRecycledEntriesR
@@ -2616,13 +2634,17 @@ dos.library/ACTION_WRITE_PROTECT
 	          entries until the filesystem finds it absolutely necessary,
 	          usually due to insufficient disk space. 
 
-	FSA_MaxFileSizeR (uint64 *) -- Pointer to a uint64 storage area.
-	    Obtain the maximum file size that the filesystem can support and
-	    also accurately report via the examination API functions.
-	    The amount of media storage available is not relevant here,
-	    use IDOS->GetDiskInfo() for media storage information. 
-	    NOTE: The DOS library will attempt to extrapolate this value
-	          if the filesystem does not support this tag. (Added 54.53)
+	FSA_RecycledDirNameR (STRPTR) -- Pointer to a string buffer area.
+	    Obtain a copy of the name for the recycled directory, if supported.
+	    The recycled name will be the name of a (generally hidden) directory
+	    some filesystems use to move deleted files into, prior to deletion.
+	    The size of the name buffer area must be specified with the tag;
+	    FSA_RecycledDirNameR_BufSize.  (1+MAX_DOS_NAME recommended)
+	    Failing to supply this tag will cause ERROR_REQUIRED_ARG_MISSING
+	    to be returned by IoErr(). 
+	    (Dos.library checks for this before calling the filesystem)
+	    Note: This tag will usually fail unless the above mention tag
+	          FSA_HasRecycledEntriesR returns a TRUTH value. (Added 54.131)
 
                                    ===
 
@@ -2684,8 +2706,9 @@ dos.library/ACTION_WRITE_PROTECT
 	the filesystem.
 
 	The dos.library will pre-test common errors such as a NULL buffer
-	pointer and zero length parameter for FSA_VersionStringR, which will
-	result in the function being aborted before calling the filesystem.
+	pointer and zero length parameter for FSA_VersionStringR and also
+	FSA_RecycledDirNameR, which will result in the function being aborted
+	before calling the filesystem.
 
 
    SEE ALSO
@@ -2698,7 +2721,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 	ACTION_FINDINPUT   aka   MODE_OLDFILE
 	ACTION_FINDOUTPUT  aka   MODE_NEWFILE
-	ACTION_FINDUPDATE  aka   MODE_READWRITE
+	ACTION_FINDUPDATE  aka   MODE_UPDATE
 
    SYNOPSIS
 	int32 RESULT1 = FSOpen(struct FileSystemVectorPort *fsvp, 
@@ -2738,12 +2761,12 @@ dos.library/ACTION_WRITE_PROTECT
 	before calling the vector-port function.
 
 	For DosPacket callers (only), 'name' is not limited to a single file
-	name but instead can include a volume name (followed by a colon)
-	and multiple slashes requiring the file system to resolve the object name.
+	name but instead can include a volume name (followed by a colon) and
+	multiple slashes requiring the file system to resolve the object name.
 	This eliminated the need for AmigaDOS or the application to parse names
 	before sending them to the file system, unfortunately this also means
-	that every filesystem must parse every dospacket name string to resolve
-	it to a single object name.
+	that every filesystem must parse every dospacket name string correctly
+	to resolve it to a single object name.   See also;  IDOS->ResolvePath().
 
 	The calling program owns the file handle.  
 	In the case of a call to the DOS Open() function, the DOS library
@@ -2777,10 +2800,10 @@ dos.library/ACTION_WRITE_PROTECT
 	This opening mode is not affected by the protection bits or the disk
 	write protection status.
 
-	FINDUPDATE (MODE_READWRITE) will also open it with a shared lock
+	FINDUPDATE (MODE_UPDATE) will also open it with a shared lock
 	but if the file doesn't exist, FINDUPDATE will create a new file.
 	The disk write protection status must be observed with this mode 
-	when creating new files, the protection bits and the disk write
+	only when creating new files, the protection bits and the disk write
 	protection status have no effect on opening an existing file.
 
 	FINDOUTPUT (MODE_NEWFILE) will open a new file with an exclusive lock.
@@ -2792,8 +2815,8 @@ dos.library/ACTION_WRITE_PROTECT
 	with a error code of ERROR_DELETE_PROTECTED.
 	If the existing file is write protected, failure shall be returned
 	with a error code of ERROR_WRITE_PROTECTED as a delete implies a write.
-	If the disk itself is write protected the error code returned shall
-	be ERROR_DISK_WRITE_PROTECTED.
+	If the disk volume itself is write protected the error code returned
+	shall be ERROR_DISK_WRITE_PROTECTED.
 
 	All modes attempting to open on a directory object shall always return
 	failure, the error code must be ERROR_OBJECT_WRONG_TYPE.
@@ -2802,7 +2825,8 @@ dos.library/ACTION_WRITE_PROTECT
 	the error code must be ERROR_IS_SOFT_LINK.
 
 	A file shall not be created if the name contains any colon or slash
-	ascii characters, the error code shall be ERROR_INVALID_COMPONENT_NAME.
+	ascii characters, is a single asterisk "*", or has characters < 32,
+	the error code shall be set to ERROR_INVALID_COMPONENT_NAME.
 
 	On success, all modes above will place the internal file position
 	pointer at the beginning of the file.
@@ -2814,7 +2838,7 @@ dos.library/ACTION_WRITE_PROTECT
 	fh      - (struct FileHandle *) Pointer to the filehandle struct.
 	rel     - (struct Lock *) Pointer to the reference lock for 'name'.
 	name    - (CONST_STRPTR) Pointer to the object name. (no path component)
-	mode    - (int32) MODE_OLDFILE, MODE_NEWFILE, MODE_READWRITE.
+	mode    - (int32) MODE_OLDFILE, MODE_NEWFILE, MODE_UPDATE.
 	RESULT1 - (int32) Boolean Success/Failure - (DOSTRUE or FALSE)
 	RESULT2 - (int32) Failure code if RESULT1 == FALSE
 
@@ -2845,8 +2869,8 @@ dos.library/ACTION_WRITE_PROTECT
 	protection attributes set to EXDF_DEFAULT, a size of zero bytes, 
 	no comment string and a fresh creation datestamp, without affecting
 	the existing hard file linkage.
-	The default owner and user values for new files shall be inherited
-	from the parent directory.
+	The default owner (group and user) values for new files shall be
+	inherited from the parent directory. Default is DOS_OWNER_NONE (0).
 
 
    SEE ALSO
@@ -2869,6 +2893,13 @@ dos.library/ACTION_WRITE_PROTECT
 	This action allows an application to make sure that the data that is
 	supposed to be on the disk is actually written to the disk instead
 	of waiting in a buffer.
+
+	This action is syncronous, in that it must not return until the 
+	filesystem has completely finished the flushing operation.
+
+	This action should NOT be able to fail, even if it did, nobody is
+	likely to be looking at the result because the packet call was never
+	documented to have a result.
 
 
    INPUTS    (FileSystemVectorPort method)
@@ -2980,8 +3011,8 @@ dos.library/ACTION_WRITE_PROTECT
 
    FUNCTION
 	This action frees the lock passed to it, for this handler.  
-	If passed a ZERO lock, the handler must also return success, (DOSTRUE).
-	If passed a lock from another handler, return failure, (FALSE).
+	If passed a ZERO lock, the handler does nothing but return success.
+	If passed a lock from another handler, return failure (FALSE).
 
 
    INPUTS    (FileSystemVectorPort method)
@@ -3181,16 +3212,16 @@ dos.library/ACTION_WRITE_PROTECT
 	                                 struct InfoData *infodat);
 
    FUNCTION
-	This action is used to get information about the device and status
-	of the handler. It fills in an InfoData structure about the device
-	the file system currently controls.  This packet has a special
-	meaning for console style handlers.  When presented with this packet,
-	a console style handler will return an InfoData structure where some
-	fields have special meaning and are documented here.
+	This action is used to get information about the handler device and
+	current status. It fills in an InfoData structure about the handler.
+	This packet has a special meaning for console style handlers.
+	When presented with this packet, a console style handler will return
+	an InfoData structure where some fields have special meaning and are
+	documented here.
 
 	The InfoData structure will always be longword aligned for dospacket
-	calls due to the BPTR conversions required.  For vector-port calls,
-	default word alignment must be assumed.
+	calls due to the BPTR conversions required.  For filesystem vector-port
+	calls, default word alignment must be assumed.
 	
 	Unlike FSVolumeInfo()/ACTION_INFO, this function does not depend on
 	the state of a volume or depend on whether removable media is inserted,
@@ -3313,7 +3344,6 @@ dos.library/ACTION_WRITE_PROTECT
 	            a so-called "Kickstart" disk which contains the
 	            operating system for the Amiga 1000 and Amiga 3000
 	            computers. It is identified by the following value:
-
 	                ID_KICKSTART_DISK
 
 	            Other disk type values may exist, which represent
@@ -3384,8 +3414,7 @@ dos.library/ACTION_WRITE_PROTECT
    FUNCTION
 	This action is used to fill in an InfoData structure for the volume.
 	The lock argument (dp_Arg1) is provided only for DOSPacket callers,
-	it may also be ZERO.
-	For vector-port callers, there is no lock argument.  
+	it may also be ZERO. For vector-port callers, there is no lock argument.
 
 	This function is generally expected to return DOSTRUE if the volume is
 	mounted, otherwise it may post a requester and return failure if the
@@ -3393,7 +3422,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 	The InfoData structure will always be longword aligned for dospacket
 	calls due to the BPTR conversions required.  For vector-port calls,
-	default word alignment must be assumed.
+	default word alignment is be assumed.
 
 
 	The contents of the InfoData structure are arranged as follows:
@@ -3514,7 +3543,6 @@ dos.library/ACTION_WRITE_PROTECT
 	            a so-called "Kickstart" disk which contains the
 	            operating system for the Amiga 1000 and Amiga 3000
 	            computers. It is identified by the following value:
-
 	                ID_KICKSTART_DISK
 
 	            Other disk type values may exist, which represent
@@ -3634,7 +3662,8 @@ dos.library/ACTION_WRITE_PROTECT
 
 
    SEE ALSO
-	IDOS->Inhibit(), IDOS->Format(), IDOS->NonBlockingModifyDosEntry().
+	IDOS->Inhibit(), IDOS->Format(), IDOS->FlushVolume(),
+	IDOS->NonBlockingModifyDosEntry().
 
 dos.library/ACTION_INHIBIT_DOS_LONGPATH_HANDLING   dos.library/ACTION_INHIBIT_DOS_LONGPATH_HANDLING
 
@@ -3741,7 +3770,7 @@ dos.library/ACTION_WRITE_PROTECT
 	When the 'rel' reference lock is NULL, then the reference shall always
 	be taken as being the root directory of the volume.
 	If the 'name' is a empty string (""), the returned lock shall be a copy
-	of the reference lock.
+	of the reference lock, regardless of what it may be.
 	Therefore, if both the reference lock 'rel' is NULL, and the 'name' is
 	an empty string, a copy of the root directory lock shall be returned.
 	Never assume 'rel' is a directory lock, it may actually be on a file.
@@ -3968,9 +3997,10 @@ dos.library/ACTION_WRITE_PROTECT
 	the file system will make one of its hard links the new `real' object,
 	this is usually accomplished by simply swapping the 'real' object
 	name (and meta-data) with one of the hardlinks, effectively renaming it,
-	then delete the hardlink instead, so that the 'real' object remains
-	and any other hardlinks still points to it.  This happens until all
-	hardlink references are gone, then the 'real' object can be deleted. 
+	then delete the hardlink instead, so that the 'real' object data 
+	remains and any other hardlinks still points to it.
+	This happens until all hardlink references are gone, then the 'real'
+	object can be deleted. 
 
 	Hard links can exist on directories as well.
 	Because hard links `link' directly to the underlying media, hard links
@@ -3982,7 +4012,7 @@ dos.library/ACTION_WRITE_PROTECT
 	RESULT2 code set to; ERROR_INVALID_LOCK.
 
 	For hard directory links, precautions are required against creating
-	directory loops (like FSRename()), in that it should be impossible
+	directory loops (like in FSRename()), in that it should be impossible
 	to create a hard directory link that points to a target directory
 	at or above the level of the hard directory link itself.
 	To accomplish this test, simply iterate backwards (towards the root
@@ -4055,8 +4085,9 @@ dos.library/ACTION_WRITE_PROTECT
 	making of this hardlink. Just like the examinations functions, it is
 	only used to identify the object, it is never consumed. 
 
-	A link shall not be created if the link name contains any colon or
-	slash characters, the error code shall be ERROR_INVALID_COMPONENT_NAME.
+	A link shall not be created if the name contains any colon or slash
+	ascii characters, a single asterisk "*", or contains characters < 32,
+	the error code shall be set to ERROR_INVALID_COMPONENT_NAME.
 
 
    SEE ALSO
@@ -4072,15 +4103,17 @@ dos.library/ACTION_WRITE_PROTECT
 	Vector-port based filesystems have no support for it because the
 	optimal buffer size is determined automatically and/or dynamically
 	by the respective filesystem.
-	Some stream handlers and some esoteric types of handler may still use
-	this for buffer control, but don't depend on it.
+	Some stream handlers and some esoteric types of handler may still
+	use this for buffer control, but don't depend on it.
 
 	For older dospacket based filesystems and handlers, this action may
 	allows an application to change the number of internal buffers used
 	by the filesystem for caching, generally via the AddBuffers() function.
 
 	The amount of memory used per buffer, and any limits on the number of
-	buffers, are dependant on the handler in question.
+	buffers, are dependant on the handler in question, however it is
+	generally assumed that 1 buffer equals 512 bytes and this document
+	has no reason to recommend anything different at this time.
 
 	Note that a positive number increases the number of buffers while a
 	negative number decreases the number of buffers.  
@@ -4511,7 +4544,8 @@ dos.library/ACTION_WRITE_PROTECT
 	return failure with the error code set to; ERROR_OBJECT_EXISTS.
 
 	The new object name shall be rejected if it contains any colon or slash
-	ascii characters. The error code is; ERROR_INVALID_COMPONENT_NAME.
+	ascii characters, is a single asterisk "*", or contains characters < 32,
+	the error code shall be set to ERROR_INVALID_COMPONENT_NAME.
 
 	It is perfectly legal to specify the same object for the source and
 	destination strings, but with different case, by default AmigaDOS
@@ -4530,7 +4564,12 @@ dos.library/ACTION_WRITE_PROTECT
 	It is mandatory that vector-port based filesystems support both
 	changing the name of a link and moving it outside its original
 	directory if requested, regardless of whether it adversely affects
-	a softlink target path string validity.
+	a softlink target path string validity, or possible looping cases
+	because dos.library does provide protection for looping softlinks.
+
+	Hard directory link renaming must ensure that a loop cannot be made
+	by moving it into a child directory of the target.
+	Hard file links are safe to move anywhere within the volume.
 
 	To handle the relative dir and name string parameters correctly,
 	use the example code shown in ACTION_LOCATE_OBJECT / FSLock() autodoc.
@@ -5017,7 +5056,6 @@ dos.library/ACTION_WRITE_PROTECT
 	in conjunction with the ExamineData EXDF_OTR_xxx and EXDF_GRP_xxx 
 	protection bits.
 
-
 	Some filesystems previously stored both group and user values in
 	the same 32 bit longword as; user uid (31:16) and group id (15:0)
 	if the filesystem has room, these two values should be stored in their
@@ -5098,21 +5136,27 @@ dos.library/ACTION_WRITE_PROTECT
 	By default, all objects are created with a mask value of EXDF_DEFAULT,
 	this is currently a value of zero for a mask that defines an object
 	as; (R)eadable, (W)riteable, (E)xecutable, (D)eletable.
+	Software depends on this.
 
 	A filesystem operation which modifies an object or its meta-data,
-	(except this function), is required to clear the (A)rchive bit, 
+	(except by this function), is required to clear the (A)rchive bit,
 	this shall include at least the immediate parent directory for the
 	modified object, although older filesystems may also clear the
 	(A)rchive bit all the way back to, and including, the root directory,
 	however this behavour is no longer required for newer and faster
-	modern filesystem implementations.
+	modern filesystem implementations, only do the immediate parent dir.
+
+	Changes made to the protection bits by this function will not affect
+	other meta-data such as the datestamp, whereas changing a datestamp
+	or comment string can affect protection bits, such as clearing the
+	(A)rchive bit.
 
 	For files; 
 	the (R)ead, (W)rite and (D)elete bits control filesystem functionality
 	for their respective operations.
 
 	For directories;
-	besides the (A)rchive bit, the (D)elete bit is the ONLY other bit that
+	Besides the (A)rchive bit, the (D)elete bit is the ONLY other bit that
 	has any defined function for filesystems, the other bits shall not have
 	any affect on any operations until new functionality is formally ratified.
 	Do NOT cook-up your own (however well intentioned) functionality for the
@@ -5158,7 +5202,7 @@ dos.library/ACTION_WRITE_PROTECT
 
 
    SEE ALSO
-	IDOS->SetProtection()
+	IDOS->SetProtection(), IDOS->SetComment(), IDOS->SetDate().
 
 dos.library/ACTION_SHUTDOWN                                             dos.library/ACTION_SHUTDOWN
 
@@ -5185,7 +5229,7 @@ dos.library/ACTION_WRITE_PROTECT
 	The filesystem should then obtain the dos library lockhandler public
 	message port with;  port = IExec->FindPort("dos_lock_handler_port");
 	then send the ACTION_COLLECT packets to it, (with IDOS->DoPkt()),
-	one packet for each and every public lock, filehandle or notifyrequest
+	one packet for each public lock or filehandle or notifyrequest
 	that the filesystem still has currently open/active.
 	These will be collected by the lockhandler which will effectively
 	service any remaining packets being sent to them.
@@ -5193,13 +5237,16 @@ dos.library/ACTION_WRITE_PROTECT
 	The lockhander will currently respond to these packets successfully:
 	ACTION_FREE_LOCK, ACTION_END, ACTION_REMOVE_NOTIFY, ACTION_INHIBIT,
 	and of course ACTION_COLLECT.
-	All remaining packets will respond with ERROR_ACTION_NOT_KNOWN.
+	Some remaining packets may be serviced to some extent to render them
+	basically harmless, but most will respond with ERROR_ACTION_NOT_KNOWN.
 	This is currently sufficient to allow the original opener to be able
 	to close/free the particular object in question, when the original
 	opener decides to do so.
 
 	The format for sending an ACTION_COLLECT packet to the lockhandler is;
 	dp_Type=ACTION_COLLECT, dp_Arg1=ID_COLLECT_xxx, dp_Arg2=(APTR)object.
+	Note that the object parameter is always an APTR structure pointer,
+	not a BPTR for locks or filehandles, those must be BADDR() converted. 
 
 	The ID_COLLECT_xxx values identify the type of object being collected
 	and are described next.
@@ -5497,14 +5544,12 @@ dos.library/ACTION_WRITE_PROTECT
 	file position (although the file may have been extended and some data
 	overwritten) so that an application can safely retry the operation.
 
-
 	A partial write failure may occur due to insufficient media space,
 	or some other error occured while writing, in these sort of cases
 	it is acceptable to return the number of bytes that were actually
 	written, which may be smaller than the requested size, this is deemed
 	as an error and RESULT2 must indicate clearly what error occured,
 	eg: RESULT2= ERROR_DISK_FULL.
-
 
 	It is the responsibility of the handler to make sure a file
 	is in a suitable state before attempting any Write operation,

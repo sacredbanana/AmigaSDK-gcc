@@ -1,15 +1,11 @@
 #ifndef EXEC_RESIDENT_H
 #define EXEC_RESIDENT_H
 /*
-**    $VER: resident.h 53.29 (10.8.2015)
+** Resident/ROMTag stuff.  Used to identify and initialize code modules.
 **
-**    Resident/ROMTag stuff.  Used to identify and initialize code modules.
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H
@@ -58,6 +54,8 @@ enum enResidentFlags
     RTF_AUTOINIT   = (1<<7), /* rt_Init points to data structure */
     RTF_NATIVE     = (1<<5), /* rt_Init points to a native function
                               * (otherwise, 68k is assumed) */
+							  
+	RTF_GRAPHICS   = (1<<3), /* Module used by graphics library */
     RTF_AFTERDOS   = (1<<2),
     RTF_SINGLETASK = (1<<1),
     RTF_COLDSTART  = (1<<0)

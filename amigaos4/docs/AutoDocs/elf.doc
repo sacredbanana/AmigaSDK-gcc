@@ -13,6 +13,7 @@ elf.library/GetElfAttrs
 elf.library/GetElfString
 elf.library/GetSection
 elf.library/GetSectionHeader
+elf.library/GetSOHandles
 elf.library/InitSHLibs
 elf.library/OpenElf
 elf.library/RelocateSection
@@ -20,6 +21,8 @@ elf.library/ScanSymbolTable
 elf.library/SetElfAttrs
 elf.library/SymbolQuery
 elf.library/UnloadSection
+
+
 elf.library/--hooks--                                                         elf.library/--hooks--
 
    NAME
@@ -59,9 +62,9 @@ elf.library/UnloadSection
            Seek to a specified position within the "file". The only
            argument is the absolute new position of the file
            pointer, i.e. this operation always executes a Seek with
-           OFFSET_CURRENT set. The function is supposed to return the
-           previous position in the file. Seeks outside the file's
-           defined area should be ignored, and should return -1.
+           OFFSET_BEGINNING set. The function is supposed to return
+           non-zero for success, zero on failure. Seeks outside the
+           file's defined area should be ignored and return zero.
 
        ELFCMD_DOS_CLOSE:
 
@@ -165,6 +168,10 @@ elf.library/UnloadSection
                once and will free all storage associated with the
                handle.
 
+           CET_ReClose
+               This tag has to be used to close an elfhandle reopened
+               (or copied) with OET_ElfHandle.
+
    RESULT
        This function does not return a result.
 
@@ -185,21 +192,38 @@ elf.library/UnloadSection
 
    FUNCTION
 	This function's purpose is to assist baserel programs to create a copy
-	of their data segment and relocating it.
+	of their data segment and relocating it. Requires the program to have
+	a .data section.
+
+	Since V53.35, if a .data section is not present, either a .bss, .sdata
+	and/or .sbss section is required instead. The location of the first
+	non-zero sized data section in the data segment is used when
+	calculating the baseOffset.
 
    INPUTS
-	ElfHandle - the handle of the program who's data section should be
-	            copied.
+	ElfHandle - the handle of the program who's data segment should be
+	            copied. Prior to V53.35, this required the handle to have
+	            a file handle open, as the relocations were loaded from
+	            disk each time. Since V53.35, the handle may be reopened
+	            with OET_NoDOS set to TRUE, as no disk I/O is performed.
 	baseOffset - Pointer to an uint32 variable that will hold the
 	             base offset. For -mbaserel-compiled binaries, it is
 	             necessary to set r2 to the base of the .data section.
-	             The .data section might not be the first one, so this
-	             offset has to be added to the base of the copied data
-	             segment to get the correct value.
+	             Similarly, for -msdata compiled binaries, it is necessary
+	             to set r13 to the base of the .sdata section, plus an
+	             offset defined by the compiler (usually 0x8000). The
+	             .data or .sdata section might not be the first one, so
+	             this offset has to be added to the base of the copied
+	             data segment to get the correct value.
 
    RESULT
 	The base address of the copied data segment. This must be passed
 	to FreeDataSegmentCopy to free it again.
+
+   BUGS
+	Before version 53.35, this could fail to apply any relocations to the
+	copy, silently ignoring errors, yet still appear successful by
+	returning a non-NULL result.
 
    SEE ALSO
 	FreeDataSegmentCopy
@@ -258,12 +282,13 @@ elf.library/UnloadSection
  		order:
 
  		- Current directory
+ 		- <DT_RPATH> (Optional; See below)
  		- PROGDIR:
  		- PROGDIR:sobjs/
  		- SOBJS: assign
 
- 		An DT_RPATH in the main program (or any shared object) is currently
- 		ignored.
+ 		A single DT_RPATH in main programs is supported. DT_RPATH in shared
+ 		objects is currently ignored.
 
  		This function accepts a flags word as the second parameter. The flags
  		modify the behavior of DLSym with respect to this object file.
@@ -286,7 +311,7 @@ elf.library/UnloadSection
  			ELF32_RTLD_LOCAL - if this flag is used, symbols in this shared
  				object are not found by special handles.
 
- 			If neither of these flags is specified, RLF32_RTLD_GLOBAL is
+ 			If neither of these flags is specified, ELF32_RTLD_GLOBAL is
  			assumed.
 
    RESULT
@@ -300,7 +325,9 @@ elf.library/UnloadSection
  		This function is available in elf.library 52.2 or later
 
    BUGS
- 		DT_RPATH is currently ignored.
+ 		DT_RPATH is only supported for ELF files of type ET_EXEC (i.e. main
+ 		program executables). Only a single path is honored. DR_RPATH is not
+ 		supported for shared objects.
 
    SEE ALSO
  		DLSym(), DLClose()
@@ -311,7 +338,7 @@ elf.library/UnloadSection
       	DLSym -- Look up a symbol in a shared object
 
    SYNOPSIS
-      	APTR DLSym(Elf32_Handle RootHandle, APTR Handle,
+      	Elf32_Error DLSym(Elf32_Handle RootHandle, APTR Handle,
  			CONST_STRPTR SymbolName, APTR* Result);
 
    FUNCTION
@@ -414,7 +441,7 @@ elf.library/UnloadSection
 elf.library/FreeDataSegmentCopy                                     elf.library/FreeDataSegmentCopy
 
    NAME
-	FreeDataSegmentCopy -- Release memory of a copyied data segment (V51)
+	FreeDataSegmentCopy -- Release memory of a copied data segment (V51)
 
    SYNOPSIS
 	void FreeDataSegmentCopy(Elf32_Handle ElfHandle, void *Base);
@@ -614,53 +641,121 @@ elf.library/UnloadSection
    SEE ALSO
        elf.library/OpenElf
 
+elf.library/GetSOHandles                                                   elf.library/GetSOHandles
+
+   NAME
+	GetSOHandles -- Get the shared object handles associated
+	                with an elf handle (V53.42)
+
+   SYNOPSIS
+	int32 GetSOHandles(Elf32_Handle handle, Hook *hook);
+
+   FUNCTION
+	This function calls the hook function once for each shared object
+	handle associated with the given elf handle.
+
+   INPUTS
+	ElfHandle - the handle previously opened by OpenElf.
+	Hook - a hook structure to call for each entry
+
+	  The hook function should have the following prototype:
+
+	  int32 hookFunc(struct Hook *hook, Elf32_Handle origHandle,
+	                 GetSOLibMsg *msg);
+
+	  The hook will be called as follows:
+
+	  result = hookFunc(hook, origHandle, msg)
+
+	  If this function returns non-zero, it will end the series.
+
+	  The msg argument is the following structure:
+
+	  struct GetSOLibMsg
+	  {
+	    uint32         StructSize;
+	    Elf32_Handle   SOLibHandle;
+	    CONST_STRPTR   SOLibName;
+	    uint32         reserved;
+	  };
+
+	  The structure members have the following meanings:
+
+	  StructSize
+	    The size of struct GetSOLibMsg in bytes
+
+	  SOLibHandle
+	    The elf handle for the shared object
+
+	  SOLibName
+	    The name of the shared object.
+
+   RESULT
+	This function returns 0 on success and non-zero otherwise. A
+	success means, that the list was completed, and that the hook
+	function always returned 0.
+
+	A non-zero value indicates failure and will be the same
+	value that was returned by the hook function call that
+	caused the scan to be aborted.
+
 elf.library/InitSHLibs                                                       elf.library/InitSHLibs
 
    NAME
-		InitSHLibs -- Initialize the shared object system (V52)
+	InitSHLibs -- Initialize the shared object system (V52)
 
    SYNOPSIS
-		void InitSHLibs(Elf32_Handle ElfHandle, BOOL DoInit);
+	void InitSHLibs(Elf32_Handle ElfHandle, BOOL DoInit);
 
    FUNCTION
- 		This function goes through all loaded libraries of a binary,
- 		executing some actions on each of them depending on circumstances:
+	This function goes through all loaded libraries of a binary,
+	executing some actions on each of them depending on circumstances:
 
- 			- If DoInit == TRUE and a function __shlib_call_constructors exists
- 			  in the shared object, that function is called
- 			- If DoInit == TRUE and the shared object has a DT_INIT function,
- 			  that function is called
- 			- If DoInit == FALSE and a function __shlib_call_destructors exists
- 			  in the shared object, that function is called
- 		    - If DoInit == FALSE and the shared object has a DT_FINI function,
- 			  that function is called
+	- If DoInit == TRUE, call constructor functions specified in the
+	  .ctors or .init_array sections of the shared object
 
- 		ELF library internally keeps track of the shared objects that have been
- 		initialized this way; calling this function multiple times has no
- 		harmful effects and is indeed called internally after DLOpen has been
- 		called from this handle.
+	- If DoInit == TRUE and the shared object has a DT_INIT function,
+	  that function is called
+
+	- If DoInit == FALSE, call destructor functions specified in the
+	  .dtors or .fini_array sections of the shared object
+
+	- If DoInit == FALSE and the shared object has a DT_FINI function,
+	  that function is called
+
+	ELF library internally keeps track of the shared objects that have been
+	initialized this way; calling this function multiple times has no
+	harmful effects and is indeed called internally after DLOpen has been
+	called from this handle.
 
    INPUTS
-       ElfHandle - An ELF root handle. The handle must be of type ET_EXEC,
- 					or this function does nothing.
- 		DoInit	  - A boolean to select whether init or exit functions are
- 					called. See above
+	ElfHandle - An ELF root handle. The handle must be of type ET_EXEC,
+	            or this function does nothing.
+	DoInit	  - A boolean to select whether init or exit functions are
+	            called (see above).
 
    RESULT
-       This function does not return a result
+	This function does not return a result
 
    NOTES
- 		Program startup code should call this function. Usually there is no
- 		need to call this yourself, the startup code should take care of it.
- 		On a program with no shared objects attached, this function does
- 		nothing.
+	Program startup code should call this function. Usually there is no
+	need to call this yourself, the startup code should take care of it.
 
- 		This function is available in elf.library 52.2 or later.
+	On a program with no shared objects attached, this function does
+	nothing.
 
- 		Special note: This function may be called on an elf handle that is
- 		already closed, without reopening it.
+	This function is available in elf.library 52.2 or later.
+
+	Special note: This function may be called on an elf handle that is
+	already closed, without reopening it.
+
+	Prior to version 53.37, any existing  __shlib_call_constructors and
+	__shlib_call_destructors functions were called instead of calling
+	the constructors and destructors directly.
 
    BUGS
+	Until version 53.18 the shared object dependencies were destructed
+	in reverse order.
 
    SEE ALSO
 
@@ -679,22 +774,25 @@ elf.library/UnloadSection
       the image, or NULL on failure.
 
    INPUTS
-      taglist - a taglist, consisting of any number of there currently
+      taglist - a taglist, consisting of any number of these currently
                defined tags:
 
-           OET_Filename - (STRPTR) try to open a disk file with the given name.
+           OET_Filename - (STRPTR) Try to open a disk file with the given name.
                The call will fail if the file does not exist or is not an ELF file.
 
-           OET_FileHandle - (BPTR) try to use an existing file handle. The ELF image
+           OET_FileHandle - (BPTR) Try to use an existing file handle. The ELF image
                must start at the current offset or opening will fail. Opening
                will also fail if no ELF image is found in the file.
 
-           OET_MemoryAddr - (APTR) try to use an existing ELF image in memory.
+           OET_MemoryAddr - (APTR) Try to use an existing ELF image in memory.
 
-           OET_ElfHandle - (Elf32_Handle) try to re-open an existing ELF handle. This
+           OET_ElfHandle - (Elf32_Handle) Try to re-open an existing ELF handle. This
                can be used for example when a different program crashed and a debugger
                wants to examine the crashed program (for example to find the crash
-               address in a .stabs section).
+               address in a .stabs section). The handle will be treated as if the
+               corresponding process is post mortem, unless used in correspondence
+               with OET_ReadOnlyCopy (see below). Handles opened with this tag
+               have to be reclosed with the CET_ReClose tag for CloseElfTags.
 
            All of the above tags are mutually exclusive. A maximum of one of these
            may be defined, or the call will fail. In addition the following
@@ -706,22 +804,32 @@ elf.library/UnloadSection
                four above tags. If you want to make your own handler for that,
                specify a struct Hook here, and read the documentation in
                elf.library/--hooks--.
+
            OET_MEMHook - (struct Hook *) A hook to be invoked when memory should
                be allocated or freed. By default, this maps to AllocMem and FreeMem
                with ELF section flags mapped to their correct MEMF_ flags. For
                special purposes you can override these functions by providing a
                hook. Read the documentation in elf.library/--hooks--.
 
-           OET_Executable - (BOOL) A bool indicating wether X flagged sections
+           OET_Executable - (BOOL) A bool indicating whether X flagged sections
                should be put into Executable memory (TRUE) or not (FALSE). The
                default is to put them into Executable memory.
+
            OET_ReadOnlyCopy - (BOOL) A bool indicating whether the handle
                should be a read-only copy or not. This flag is only valid
-               with OET_ElfHandle. The handle returned is a read-only handle
-               that is a copy (not the original handle), and the user MUST NOT
-               modify anything in this handle, i.e. there must not be any
-               DOS activity on this handle (the file is not reopened) and
-               there must not be any sort of modifications to the handle.
+               with OET_ElfHandle and will in fact copy the handle, so your
+               reference will be the handle returned from this function. The
+               handle returned is not in fact read-only, ie. you will be able
+               to load and relocate sections without problems if needed. But it
+               will ensure, that the filehandle associated with it will be
+               reopened and kept open until it is closed with CloseElfTags.
+               Keep in mind, that the section table is not duplicated, so if
+               you modify the section structure, this will apply to the original
+               handle as well.
+               This tag is relevant to be used with living (non-postmortem)
+               processes for analyzing purposes.
+               The handle returned from this call needs to be closed with the
+               CET_ReClose tag in CloseElfTags.
 
            OET_NoDOS - (BOOL) Only valid with OET_ElfHandle. If specified,
                the file handle will NOT be re-opened, meaning that any attempt

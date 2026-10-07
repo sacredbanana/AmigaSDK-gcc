@@ -1,10 +1,8 @@
 /*
- * $VER: mbuf.h 54.16 (22.08.2022)
- *
  * :ts=8
  *
  * 'Roadshow' -- Amiga TCP/IP stack
- * Copyright © 2001-2016 by Olaf Barthel.
+ * Copyright (C) 2001-2016 by Olaf Barthel.
  * All Rights Reserved.
  *
  * Amiga specific TCP/IP 'C' header files;
@@ -100,7 +98,7 @@ extern "C" {
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-#define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
+#define	MINCLSIZE	(MHLEN+MLEN)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
@@ -206,4 +204,3 @@ struct mbstat {
 /****************************************************************************/
 
 #endif /* _SYS_MBUF_H */
-

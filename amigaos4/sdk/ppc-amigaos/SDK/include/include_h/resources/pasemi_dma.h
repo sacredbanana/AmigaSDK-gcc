@@ -1,6 +1,5 @@
 /* :ts=4
  *
- * $VER: pasemi_dma.h 54.16 (22.08.2022)
  *
  * This file is part of pasemi_dma.
  *

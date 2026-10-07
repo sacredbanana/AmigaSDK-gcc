@@ -2,12 +2,10 @@
 #define USB_USBTAGS_H
 
 /*
-** $VER: usbtags.h 53.29 (10.8.2015)
-**
 ** Defines tag items for various functions
 **
 ** Copyright (c) 2001, Thomas Graff Thoeger
-** Distributed by Hyperion Entertainment CVBA under permission.
+** Distributed by Hyperion Entertainment BV under permission.
 */
 
 #ifndef   UTILITY_TAGITEM_H

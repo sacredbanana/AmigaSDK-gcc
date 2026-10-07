@@ -1,14 +1,17 @@
 #ifndef DOS_NOTIFY_H
 #define DOS_NOTIFY_H
 /*
-**    $VER: notify.h  54.100 (07.09.2020)
+**    $VER: notify.h  54.126 (05.08.2023)
 **
 **    dos notification definitions
 **
 **    Copyright (C) 1985-2009 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
 **
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2010 Hyperion Entertainment BV.
 **        All Rights Reserved.
 **
 */
@@ -103,7 +106,7 @@ struct NotifyRequest
 #define NRB_WAIT_REPLY         3
 #define NRB_NOTIFY_INITIAL     4
 #define NRB_CALL_HOOK          5
-#define NRB_DOS_NOTIFY_ONLY    12 
+#define NRB_DOS_NOTIFY_ONLY    12
 #define NRB_MAGIC              31	/* PRIVATE - Handler use only.*/
 
 
@@ -123,7 +126,7 @@ struct NotifyRequest
 /* New flag for V52.33+ DOS, specifying this flag prevents the use
  * of filesystem supported notification, even if it is available,
  * it forces usage of the dos.library notification function instead.
- * The dos.library notification function supports all three methods 
+ * The dos.library notification function supports all three methods
  * with both file and directory monitoring. */
 #define NRF_DOS_NOTIFY_ONLY   (1UL<<NRB_DOS_NOTIFY_ONLY)
 

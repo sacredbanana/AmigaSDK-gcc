@@ -1,7 +1,6 @@
 #ifndef GADGETS_SPEEDBAR_H
 #define GADGETS_SPEEDBAR_H
 /*
-**    $VER: speedbar.h 54.16 (22.08.2022)
 **
 **    Definitions for the speedbar.gadget BOOPSI class
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 

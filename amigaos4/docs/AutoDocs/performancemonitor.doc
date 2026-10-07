@@ -34,7 +34,7 @@ performancemonitor.resource/Unmark
 	PMCI_CPUCycles      Number of CPU cycles
 	PMCI_Instr          Number of CPU finished instructions
 	PMCI_FPUInstr       Number of instructions completed by FPU
-	PMCI_Tansition      Number of transitions of RTC bit from 0 to 1
+	PMCI_Transition     Number of transitions of RTC bit from 0 to 1
 	PMCI_InstrDisp      Number of CPU instructions dispatched
 	PMCI_EIEIO          Number of eieio instructions completed
 	PMCI_SYNC           Number of sync instructions completed
@@ -73,6 +73,11 @@ performancemonitor.resource/Unmark
 	value      - The initial value of the counter. This is a 31 bit value.
 	             Note that counters always overflow at 0x7fffffff, so to
 	             count lower amount, set the initial value appropriately.
+	             Since V54.61, it is allowed to use a negative value to
+	             directly set the difference with the overflow value.
+	             On PA6T CPU, it is even the only method to set a value
+	             close to the overflow value (that is beyond the 32-bit
+	             range).
 	what       - The item to count. See PerformanceMonitor.resource/Items.
 
    RESULT
@@ -295,6 +300,7 @@ performancemonitor.resource/Unmark
 	      PMMC_BIT8: Pick bit 8
 	      PMMC_BIT12: Pick bit 12
 	      PMMC_BIT16: Pick bit 16
+	    Note: On the PA6T CPU, only PMMC_BIT0 is supported.
 
 	  PMMCT_Threshold:
 	    Some counting items require a threshold value (for example, it's

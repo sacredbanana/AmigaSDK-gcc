@@ -1,20 +1,12 @@
 #ifndef EXPANSION_EXPANSION_H
 #define EXPANSION_EXPANSION_H
 /*
-**    $VER: expansion.h 53.29 (10.8.2015)
+** External definitions for expansion.library
 **
-**    External definitions for expansion.library
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2018,2022 Trevor Dickinson.
 */
 
-#ifndef   UTILITY_TAGITEM_H
 #include <utility/tagitem.h>
-#endif
 
 /****************************************************************************/
 
@@ -49,16 +41,18 @@ enum enADNBits
 
 enum enADNFlags
 {
-    ADNF_STARTPROC = (1<<ADNB_STARTPROC)
+    ADNF_STARTPROC = (1 << ADNB_STARTPROC)
 };
 
 /****************************************************************************/
 
 /* Tag items for GetMachineInfo() */
-#define GMIT_Machine       (TAG_USER + 1)
-#define GMIT_MachineString (TAG_USER + 2)
-#define GMIT_MemorySize    (TAG_USER + 3)
-#define GMIT_Extensions    (TAG_USER + 4)
+#define GMIT_Machine             (TAG_USER + 1)
+#define GMIT_MachineString       (TAG_USER + 2)
+#define GMIT_MemoryAvailable     (TAG_USER + 3)
+#define GMIT_MemorySize          GMIT_MemoryAvailable  // Deprecated alias
+#define GMIT_Extensions          (TAG_USER + 4)
+#define GMIT_TotalPhysicalMemory (TAG_USER + 5)
 
 /* Machine type codes */
 enum enMachineModel
@@ -69,11 +63,12 @@ enum enMachineModel
     MACHINETYPE_AMIGAONE      = 3,
     MACHINETYPE_SAM440	      = 4,
     MACHINETYPE_PEGASOS2      = 5,
-    MACHINETYPE_X1000		  = 6,
-    MACHINETYPE_SAM460		  = 7,
-    MACHINETYPE_CHUNYE		  = 8,	/* Code name, subject to change */
-    MACHINETYPE_X5000_20	  = 9,
-    MACHINETYPE_X5000_40	  = 10
+    MACHINETYPE_X1000         = 6,
+    MACHINETYPE_SAM460        = 7,
+    MACHINETYPE_CHUNYE        = 8,     /* Code name, subject to change */
+    MACHINETYPE_X5000_20      = 9,
+    MACHINETYPE_X5000_40      = 10,
+    MACHINETYPE_A1222         = 11
 };
 
 /****************************************************************************/

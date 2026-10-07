@@ -1,12 +1,14 @@
 #ifndef GADGETS_LISTBROWSER_H
 #define GADGETS_LISTBROWSER_H
 /*
-**    $VER: listbrowser.h 54.16 (22.08.2022)
 **
 **    Definitions for the ListBrowser BOOPSI class
 **
 **    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
 **        All Rights Reserved
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
+**        All Rights Reserved.
 */
 
 /*****************************************************************************/

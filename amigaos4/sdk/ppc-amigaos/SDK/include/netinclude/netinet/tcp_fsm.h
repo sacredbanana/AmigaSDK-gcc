@@ -1,10 +1,8 @@
 /*
- * $VER: tcp_fsm.h 54.16 (22.08.2022)
- *
  * :ts=8
  *
  * 'Roadshow' -- Amiga TCP/IP stack
- * Copyright © 2001-2016 by Olaf Barthel.
+ * Copyright (C) 2001-2016 by Olaf Barthel.
  * All Rights Reserved.
  *
  * Amiga specific TCP/IP 'C' header files;
@@ -76,4 +74,3 @@
 /****************************************************************************/
 
 #endif /* _NETINET_TCP_FSM_H */
-

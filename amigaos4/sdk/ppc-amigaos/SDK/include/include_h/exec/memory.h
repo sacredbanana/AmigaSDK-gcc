@@ -1,15 +1,11 @@
 #ifndef EXEC_MEMORY_H
 #define EXEC_MEMORY_H
 /*
-**    $VER: memory.h 53.29 (10.8.2015)
+** Definitions and structures used by the memory allocation system
 **
-**    Definitions and structures used by the memory allocation system
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_NODES_H
@@ -178,13 +174,11 @@ struct MemHandlerData
     uint32 memh_Flags;        /* Flags (see below) */
 };
 
-#ifdef __OBSOLETE_MEMHANDLER_FLAGS__
-/* With exec.library 51.48 and higher, this flag is not set anymore */
+/* Reactivated in exec 53.72 */
 enum enMemHandlerFlags
 {
     MEMHF_RECYCLE = (1L<<0)  /* 0==First time, 1==recycle */
 };
-#endif
 
 /****** Low Memory handler return values ***************************/
 enum enMemHandlerActions

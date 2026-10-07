@@ -1,15 +1,9 @@
 #ifndef EXEC_INTERFACES_H
 #define EXEC_INTERFACES_H
 /*
-**    $VER: interfaces.h 53.29 (10.8.2015)
+** New-style library interface
 **
-**    New-style library interface
-**
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H

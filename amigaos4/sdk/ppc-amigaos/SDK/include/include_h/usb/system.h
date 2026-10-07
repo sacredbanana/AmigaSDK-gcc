@@ -1,12 +1,11 @@
 #ifndef USB_SYSTEM_H
 #define USB_SYSTEM_H
 /*
-** $VER: system.h 53.34 (09.12.2021)
 **
 ** USB System Software includes
 **
 ** Copyright (c) 2001, Thomas Graff Thoeger
-** Distributed by Hyperion Entertainment CVBA under permission.
+** Distributed by Hyperion Entertainment BV under permission.
 */
 
 #ifndef EXEC_TYPES_H
@@ -83,8 +82,14 @@ struct UsbEndPoint
 **
 */
 
-/* Current HCD API version */
-#define USBHCD_APIVERSION   1
+// HCD API version 2 (from 53.15) - Current HCD API version
+#define USBHCD_APIVERSION_2	2
+
+// HCD API version 1 (before 53.15) - still supported in parallel to version 2
+#define USBHCD_APIVERSION_1	1
+
+// Old USBHCD_APIVERSION constant deprecated to ensure that no V1
+// API HCDs are accidentally compiled with V2 indication.
 
 
 /*
@@ -103,11 +108,14 @@ struct USBIOReq
 	uint16					io_Command;			/* Device command */
 	uint8					io_Flags;
 	int8					io_Error;			/* Error or warning num */
-	uint32					io_Actual;			/* Actual number of bytes transferred */
-	uint32					io_Length;			/* Requested number bytes transferred
-											   If non-zero the USS may use the io_Data pointer for memory accesses */
-	APTR					io_Data;			/* Points to data area.
-											   A non-NULL ptr results in a USB data stage for the request */
+	uint32					io_Actual;			/* Number of bytes actually transferred.
+												   For isochronous endpoint IO this is the number of
+												   transfer setups processed for the operation, unless the
+												   IO request is not using transfer setups (compatibility mode) (53.17) */
+	uint32					io_Length;			/* Number of bytes requested transferred from/to the io_Data buffer.
+											       If non-zero the USS may use the io_Data pointer for memory accesses */
+	APTR					io_Data;			/* Pointer to data buffer for the IO.
+											       A non-NULL ptr results in a USB data stage for the request */
 	uint32					io_Offset;			/* Offset for block structured devices (USS private) */
 
     // *** USB Extension
@@ -116,7 +124,16 @@ struct USBIOReq
 	uint32					io_SetupLength;		/* Bytesize of io_SetupData block. */
 
 	/* -- v53.6 -- */
-	uint32					io_TimeOut;			/* Value in Micro Seconds */
+	uint32					io_TimeOut;			/* Value in microseconds */
+	/* -- v53.18 -- */
+	uint32					io_UsbFlags;		/* USB specific flags for IO operation */
+	uint32					io_TargetFrame;		/* Target frame for isochronous transfers. I.e. the USB frame number at
+												   which the IO request should be started on the USB bus. Ignored unless
+												   io_UsbFlags has USBIOF_ISO_USETARGETFRAME bit set.
+												   When in use, a replied IO will see this field hold frame number of the
+												   first transfer made for the isochronous IO.
+												   io_TargetFrame is only usable with a HCD which maintains a current USB
+												   frame number (see USBGetRawFunctionAttrs() or USBGetRawInterfaceAttrs()) */
 };
 
 /*
@@ -134,8 +151,10 @@ struct USBIOReqHCD
 	uint8					io_Flags;
 	int8					io_Error;			/* Error or warning num */
 
-	uint32					io_Actual;			/* Actual number of bytes transferred */
-	uint32					io_Length;			/* Requested number bytes transferred
+	uint32					io_Actual;			/* Number of bytes actually transferred.
+												   For isochronous endpoints on HCDAPI v2 or greater, this is the number of
+												   transfer setups processed for the IO operation */
+	uint32					io_Length;			/* Number of bytes requested transferred.
 												   If non-zero the HCD may use the io_Data pointer for memory accesses */
 	APTR					io_Data;			/* Points to data area.
 												   Generate USB data stage if non-NULL.
@@ -144,7 +163,6 @@ struct USBIOReqHCD
 
     // *** USB Extension
 	APTR					io_EndPoint;		/* EndPoint reference (HCD's reference) */
-
 	APTR					io_SetupData;		/* Ptr to Control EndPoint SETUP packet data, or NULL for no SETUP */
 	uint32					io_SetupLength;     /* Bytesize of io_SetupData block. */
 
@@ -154,8 +172,95 @@ struct USBIOReqHCD
 	struct USBBusEPDsc *	io_EPDsc;			/* USB Descriptor for EndPoint (NULL for EndPoint 0!!) */
 
 	/* -- v53.5 -- */
-	uint32					io_TimeOut;			/* Value in Micro Seconds */
+	uint32					io_TimeOut;			/* Value in microseconds */
+	/* -- v53.18 -- */
+	uint32					io_UsbFlags;		/* USB specific flags for IO operation */
+	uint32					io_TargetFrame;		/* Target frame for isochronous transfers. I.e. the USB frame number at
+												   which the IO request should be started on the USB bus. Must be ignored
+												   unless io_UsbFlags has USBIOF_ISO_USETARGETFRAME bit set.
+												   For isochronous requests where io_UsbFlags has USBIOF_ISO_USETARGETFRAME bit set
+												   this must be updated by the HCD to the actual frame number of the first
+												   transfer performed for the IO request */
 };
+
+
+
+/*
+** Flags for io_UsbFlags
+*/
+
+#define USBIOF_ISO_USETARGETFRAME	0x00000001	/* Indicates that IO request to isochronous endpoint should
+												   target the USB frame mentioned in io_IsoStartFrame.
+												   Isochronous endpoints have a pre-determined servicing
+												   schedule so the actual target frame will be the first
+												   servicing point at, or after, this USB frame. If not
+												   specified the IO request will target the next available
+												   USB frame where the endpoint is serviced. */
+#define USBIOF_BUFFER_CACHEALIGNED	0x00000002	/* Promises that io_Data points (into) to a buffer which is
+												   allocated while taking CPU cache line size into consideration.
+												   I.e. the io_Data/io_Length buffer is safe to use for DMA
+												   operations even if io_Data is not on a cache line size
+												   aligned memory address and io_Length is not a multiple of
+												   the cache line size.
+												   In other words the underlying buffer extends at least to
+												   the nearest preceeding cache line size aligned memory address
+												   and at least up to the first cache line sized address
+												   at, or following, io_Data + io_Length.
+												   This allows a HCD to optimize its buffer handling with
+												   regards to DMA operations for seemingly unaligned buffer
+												   start and end addresses, but where the underlying buffer is
+												   in fact DMA friendly in size and alignment.
+												   So allocating your buffer to match and setting this flag
+												   may lower the CPU overhead of your IO by the HCD being able
+												   to use DMA more often than it would otherwise be able to. */
+
+/*
+** Isochronous transfer frame data
+**
+** IO requests for Isochronous endpoints must define a set of transfer setups indicating
+** how the entire IO request buffer is to be transfered to/read from the isochronous
+** endpoint. One setup must exist for each transfer on the USB bus (in USB1 one per
+** serviced frame, in USB2 one per serviced microframe of an EndPoint). As such each
+** transfer defined may cover multiple USB bus packets (for high-speed high-bandwidth
+** added in USB2, and burst mode added in USB3), but may never exceed the size of the
+** EndPoint MaxTransferSize (MaxPacketSize * packets_per_transfer)
+*/
+
+/*
+** Structure defining a section of an IO request data buffer to use for transfer to/from
+** an isochronous endpoint within a single USB (micro)frame (frame for USB1 endpoint,
+** microframe for USB2 endpoint).
+**
+** These data are read only for for Function Drivers and Host Controller Drivers alike
+** and can only be modified thru usbsys.device API function calls. Never edit the
+** contents manually - ever!
+*/
+
+struct USBTransferSetup
+{
+    uint32  Offset;	/* Offset into IO request data buffer of buffer for USB (micro)frame.
+                       Must be no further than the target endpoint's MaxTransferSize bytes
+                       from the Offset of the previous UsbTransferSetup in the IO request */
+    uint32  Length; /* Length (byte size) of buffer chunk for USB (micro)frame. Must be no
+                       more than the target endpoint's MaxTransferSize */
+};
+
+/*
+** Structure holding the result of the transfer performed in a given USB (micro)frame.
+** The result matches a single UsbTransferSetup instance, describing its outcome after
+** the transfer has occured.
+**
+** These data are read only for Function Drivers and Host Controller Drivers alike
+** and can only be modified thru usbsys.device API function calls. Never edit the
+** contents manually - ever!
+*/
+
+struct USBTransferResult
+{    
+	uint32  Actual; /* Number of bytes actually transfered */
+    int32   Error; /* USBERR_xxx error of the (micro)frame transfer */
+};
+
 
 /*
 ** USB HCD Query
@@ -177,7 +282,14 @@ struct USBHCDQuery
 **
 */
 
-#define USBCMD_HCDQuery		( CMD_NONSTD + 0 )
+#define USBCMD_HCDQuery		(CMD_NONSTD+0)	/* io_Data points to USBHCDQuery to be filled by HCD */
+#define USBCMD_TRACING		(CMD_NONSTD+1)	/* Control IO tracing of HCD (if supported by HCD).
+                                               io_Data points to USBTracingControlData with IO tracing settings */
+
+struct USBTracingControlData
+{
+	uint8	EnableTracing; /* Non-zero if IO tracing is to be enabled */
+};
 
 /*
 ** Error codes (apart from std. IOERR_xxx codes)
@@ -199,9 +311,14 @@ struct USBHCDQuery
 #define USBERR_ATTACHFAIL		(-19)	/* USB Function attachment failed */
 #define USBERR_NOPOWER			(-20)	/* Not enough power available on the USB bus to support the
 										   attachment or configuration */
-#define USBERR_IOERROR			(-21)	/* HCD's can stumple over IO errors */
-#define USBERR_BADLENGTH		(-22)	/* A structured passed, might be to short */
-#define USBERR_NEWPORTOWNER     (-23)   /* Ownership of the port has been transfered. */
+
+#define USBERR_BADLENGTH		(-22)	/* A bad length was detected in an IO request */
+#define USBERR_NEWPORTOWNER     (-23)   /* Ownership of a hub port has been transfered so port is not reachable. */
+#define USBERR_BADTRANSFERSETUP (-24)   /* The isochronous transfer setup data for an IO request is erroneous */
+#define USBERR_NOTRANSFERSETUP  (-25)	/* An IO request without any transfer setups is sent to an endpoint
+                                           where transfer setups are required for the IO request */
+#define USBERR_INCOMPATIBLEHCD	(-26)	/* An IORequest cannot be supported by the HCD handling the endpoint
+                                           due to it having a too old API version */
 
 #define USBERR_STALL            (-32)	/* USB Device/Interface/EndPoint STALLed on request */
 #define USBERR_XFERFAIL         (-33)	/* Fail to complete USB transfer due to bus error */
@@ -214,6 +331,20 @@ struct USBHCDQuery
                                            success (you actually got the amount of data you
                                            requested from the USB EndPoint. It's right there in
                                            your buffer waiting for you) */
+#define USBERR_FRAMEMISSED		(-37)	/* Target frame for an isochronous transfer has been missed.
+                                           The requested transfer has not taken place. */
+#define USBERR_CHECKRESULTS		(-38)	/* Isochronous transfer results contains errors. Some transfers may
+                                           be OK while others have failed. */
+
+
+/*
+** Return codes from USBSetTransferSetup()
+*/
+
+#define USBISOSETFRAME_OK             0    /* All went well */
+#define USBISOSETFRAME_INDEX_UNKNOWN  1    /* The transfer index requested does not exist in the IO request */
+#define USBISOSETFRAME_OFFSET_INVALID 2    /* The offset specified is invalid - i.e. lies before the previous offset */
+
 
 /*
 ** USB Notification Message
@@ -227,7 +358,7 @@ struct USBNotifyMsg
 	struct Message	Msg;
 	APTR			ObjRef;		/* Receiver's private reference for object in question */
 	uint16			Type;		/* Type of notification */
-	uint16			pad;
+	uint16			Value;		/* A 16 bit value field used for argument passing for some notification types */
 };
 
 /*** Notification types */
@@ -275,6 +406,52 @@ struct USBNotifyMsg
                                            time you will not receive this notification until the USB
                                            stack has been started and is stopped again.
                                            Can only be received by subscription. */
+#define USBNM_TYPE_HUB_RESETPORT	10	/* (53.24) Notification from USB stack to a hub driver that a
+                                           specific hub port should be reset. I.e. detach what is there
+                                           and retry attachment if a device is still connected on the port.
+                                           The notification sent is in fact a USBNotifyHubPortResetMsg.
+                                           Msg.ObjRef is the claimed Function or Interface (which ever the
+                                           hub driver has claimed with the recipient MsgPort) on which
+                                           the hub port should be reset.
+                                           Msg.Value is the zero based hub port number to reset.
+                                           PortFkt is the Fkt which is expected to be reset with the hub
+                                           port. If this is not the Fkt currently attached at the hub
+                                           port when the driver processes the notification it should
+                                           be ignored and thought of as obsolete.
+                                           This notification cannot be subscribed to. */
+#define USBNM_TYPE_FUNCTIONDRIVERCHANGE	12	/* (53.29) Notification that the driver associated with a
+										   Function, or the properties of the driver, has changed.
+										   Issued to all subscribers of this event.
+										   ObjRef is a UsbRawFunction pointer for the Function affected.
+										   Can only be received by subscription */
+#define USBNM_TYPE_INTERFACEDRIVERCHANGE	13	/* (53.29) Notification that the driver associated with an
+										   Interface, or the properties of the driver, has changed.
+										   Issued to all subscribers of this event.
+										   ObjRef is a UsbRawInterface pointer for the Interface affected.
+										   Can only be received by subscription */
+
+
+
+// Extended notification message sent for USBNM_TYPE_HUB_RESETPORT
+struct USBNotifyHubPortResetMsg
+{
+	struct USBNotifyMsg 	Msg; /* Base notification msg */
+	
+	struct UsbRawFunction *	PortFkt; /* The UsbRawFunction expected to be reset at the hub port.
+							            This will be NULL if expecting to reset an empty hub port */
+};
+
+/*
+** Misc data structures
+**
+*/
+
+struct USBVendorProductIDs
+{
+	uint32 VendorID;
+	uint32 ProductIDCount; // Number of entries in the ProductIDs array. Must be zero if ProductIDs is NULL.
+	uint32 *ProductIDs; // Ptr to array of ProductIDs for vendor or NULL. *MUST* contain at least ProductIDCount elements.
+};
 
 /*
 ** USB System tags
@@ -296,10 +473,10 @@ struct USBNotifyMsg
    Also used for querying HCD root bus speed using USBHCGetAttrsA() */
 #define USBA_DeviceSpeed        (TAG_USER+4)
 
-#define USB_SPEED_LOW   (0L) /*    1.5 Mbit/s */
-#define USB_SPEED_FULL  (1L) /*   12   Mbit/s */
-#define USB_SPEED_HIGH  (2L) /*  480   Mbit/s */
-#define USB_SPEED_SUPER (3L) /* 4800   Mbit/s */
+#define USB_SPEED_LOW   (0L) /*    1.5 Mbit/s (USB1) */
+#define USB_SPEED_FULL  (1L) /*   12   Mbit/s (USB1) */
+#define USB_SPEED_HIGH  (2L) /*  480   Mbit/s (USB2) */
+#define USB_SPEED_SUPER (3L) /* 4800   Mbit/s (USB3) */
 
 /* For supplying a Configuration Descriptor (struct USBBusCfgDsc *) */
 #define USBA_ConfigurationDesc  (TAG_USER+5)
@@ -401,6 +578,83 @@ struct USBNotifyMsg
 /* For querying the number of mA that all devices draw from this device.
  * New in V53.9 (uint32) */
 #define USBA_SubtreePower       (TAG_USER+40)
+/* For querying the maximum number of bytes an isochronous or interrupt
+   endpoint can transfer in a single serviced USB (micro)frame. New in V53.14 */
+#define USBA_EP_MaxTransferSize	(TAG_USER+41)
+/* The number of USB frames the HCD will cache ahead of the current USB frame.
+   I.e. how many USB frames into the future scheduling is fixed for
+   isochronous transfers. New in 53.18 */
+#define USBA_HCD_CachedIsochronousFrames	(TAG_USER+42)
+/* For quering the number of transfer a periodic endpoint can perform
+   in each USB Frame in which it is getting serviced. New in V53.18 */
+#define USBA_EP_TransfersPerFrame		 	(TAG_USER+43)
+/* Boolean indicating if a HCD maintains a current USB frame number, and
+   thus supports absolute frame adressing of isochronous endpoint IO (uint32 *).
+   New in V53.18 */
+#define USBA_HCD_MaintainsFrameNumber		(TAG_USER+44)
+/* The maximum number of microframes a periodic EndPoint will have as
+   poll interval. Larger numbers in the endpoint descriptor will be
+   limited to this value. (uint32 *). New in V53.19 */
+#define USBA_HCD_MaxPeriodicPollInterval	(TAG_USER+45)
+/* The poll interval in use for a periodic endpoint, specified in microframes.
+   The value returned by this tag superceedes the value from the endpoint
+   descriptor, in that the HCD may've limited the poll interval to be able
+   to handle the endpoint. The value is always equal to, or lower than, that
+   calculated from the endpoint's descriptor. (uint32 *) New in V53.19 */
+#define USBA_EP_PollInterval	(TAG_USER+46)
+/* For indicating whether a Function being attached to a USB1-speed segment
+   on a higher speed USB bus is positioned below a hub with multiple
+   Transaction Translators available for mapping transactions into the USB1
+   domain. (uint32) new in V53.24 */
+#define USBA_HubHasMultiTT		(TAG_USER+47)
+/* For specifying an endpoint of a USB Function.
+   (struct UsbEndPoint *) new in V53.25 */
+#define USBA_EndPoint			(TAG_USER+48)
+/* For specifying an IO tracing transaction ID
+   (uint32) new in V53.25 */
+#define USBA_TransactionId		(TAG_USER+49)
+/* An IO request command
+   (uint32) new in V53.25 */
+#define USBA_IO_Command			(TAG_USER+50)
+/* Pointer to an IO data buffer.
+   (APTR) new in V53.25 */
+#define USBA_IO_Data			(TAG_USER+51)
+/* Length of an IO data buffer
+   (uint32) new in V53.25 */
+#define USBA_IO_Length			(TAG_USER+52)
+/* Pointer to an IO Setup-phase data buffer.
+   (APTR) new in V53.25 */
+#define USBA_IO_SetupData		(TAG_USER+53)
+/* Length of an IO Setup-phase data buffer.
+   (uint32) new in V53.25 */
+#define USBA_IO_SetupLength		(TAG_USER+54)
+/* An IO error code
+   (int32) new in V53.25 */
+#define USBA_IO_Error			(TAG_USER+55)
+/* Type of the transfer completed in a USB_IOTRACE_POINT_HCDXFER IO trace point.
+   ti_Data is one of the USB_XFERTYPE_ constants. (uint32) new in V35.25 */
+#define USBA_TransferType		(TAG_USER+56)
+/* Length of the transfer completed in a USB_IOTRACE_POINT_HCDXFER IO trace point.
+   (uint32) new in V35.25 */
+#define USBA_TransferLength		(TAG_USER+57)
+/* IO error of the transfer completed in a USB_IOTRACE_POINT_HCDXFER IO trace point.
+   (int32) new in V35.25 */
+#define USBA_TransferError		(TAG_USER+58)
+/* For specifying a USB Function instance
+   (struct UsbRawFunction *) new in V53.25 */
+#define USBA_RawFunction		(TAG_USER+59)
+/* For specifying an array of VendorID/ProductIDs groups
+   The array must be terminated by an instance with zeroed ProductIDs ptr and ProductIDCount.
+   (struct USBVendorProductIDs *) new tag in V53.30 */
+#define USBA_VendorProductIDs	(TAG_USER+60)
+
+
+/*
+** Transfer types as used by USBA_TransferType tag
+*/
+#define USB_XFERTYPE_OUT	0
+#define USB_XFERTYPE_IN		1
+#define USB_XFERTYPE_SETUP	2
 
 /*
 ** USB AutoStarting Function Driver Startup Msg
@@ -454,6 +708,18 @@ struct USBFDStartupMsg
 
 #define USBRES_DEFAULTADDRESS   1L  /* USB bus Default Address.
                                        Object is a struct UsbInterface pointer */
+
+/*
+** USB Function path information
+*/
+
+struct USBFktPathElement
+{
+	struct UsbRawFunction *Hub; // Hub in the path between a Function and its Host Controller
+	int16 Port; // Zero-based port on Hub to which the child topology connects. -1 if hub port is unknown.
+	int16 pad;
+};
+
 
 /****************************************************************************/
 

@@ -2,11 +2,10 @@
 #define PROTO_DOS_H
 
 /*
-**	$Id$
 **
 **	Prototype/inline/pragma header file combo
 **
-**	Copyright (c) 2010 Hyperion Entertainment CVBA.
+**	Copyright (c) 2010 Hyperion Entertainment BV.
 **	All Rights Reserved.
 */
 

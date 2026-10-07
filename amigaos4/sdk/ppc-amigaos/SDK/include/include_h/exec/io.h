@@ -1,15 +1,11 @@
 #ifndef EXEC_IO_H
 #define EXEC_IO_H
 /*
-**    $VER: io.h 53.29 (10.8.2015)
+** Message structures used for device communication
 **
-**    Message structures used for device communication
+** Copyright 1985-2001 Amiga, Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2002-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_PORTS_H

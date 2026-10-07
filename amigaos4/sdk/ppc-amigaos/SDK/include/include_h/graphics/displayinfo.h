@@ -1,7 +1,6 @@
 #ifndef GRAPHICS_DISPLAYINFO_H
 #define GRAPHICS_DISPLAYINFO_H
 /*
-**    $VER: displayinfo.h 54.16 (22.08.2022)
 **
 **    include define file for displayinfo database
 **
@@ -9,6 +8,9 @@
 **        All Rights Reserved
 **
 **    Copyright (c) 2010-2016 Hyperion Entertainment CVBA.
+**        All Rights Reserved.
+**
+**    Copyright (c) 2025 Hyperion Entertainment BV.
 **        All Rights Reserved.
 */
 
@@ -90,10 +92,12 @@ struct DisplayInfo
     uint8 RedBits;          // number of Red bits display supports (V39)
     uint8 GreenBits;        // number of Green bits display supports (V39)
     uint8 BlueBits;         // number of Blue bits display supports (V39)
-    uint8 pad2[4];          // find some use for this.
+    uint8 pad2;             // find some use for this
+    uint16 HorTotal;        // Total pixels of a scanline (V54.254)
+    uint8 pad3;             // find some use for this
     uint8 RTGBoardNum;      // RTG board number this mode belongs to (V53)
     uint32 PixelFormat;     // Pixel format (enPixelFormat) (V54)
-    uint8 pad3[4];          // find some use for this, too. (V54)
+    uint32 PixelClock;      // Pixel Clock - num. of pixels per seconds (V54.254)
     uint32 reserved[2];     // terminator
 };
 

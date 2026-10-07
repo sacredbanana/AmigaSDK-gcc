@@ -1,15 +1,11 @@
 #ifndef UTILITY_DATA_STRUCTURES_H
 #define UTILITY_DATA_STRUCTURES_H
 /*
-**    $VER: data_structures.h 53.29 (10.8.2015)
+** Complex data structures
 **
-**    Complex data structures
+** Copyright 1989-2003 Amiga Inc.
 **
-**    Copyright (C) 1985-2005 Hyperion Entertainment VOF and Amiga, Inc.
-**        All Rights Reserved
-**
-**    Copyright (c) 2010 Hyperion Entertainment CVBA.
-**        All Rights Reserved.
+** Copyright 2003-2019 Trevor Dickinson.
 */
 
 #ifndef   EXEC_TYPES_H
