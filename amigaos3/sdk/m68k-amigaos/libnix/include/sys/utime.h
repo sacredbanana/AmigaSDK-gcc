@@ -1,0 +1,26 @@
+#ifndef _SYS_UTIME_H
+#define _SYS_UTIME_H
+
+/* This is a dummy <sys/utime.h> file, not customized for any
+   particular system.  If there is a utime.h in libc/sys/SYSDIR/sys,
+   it will override this one.  */
+
+#include <time.h> /* for time_t */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct utimbuf
+{
+  time_t actime;
+  time_t modtime; 
+};
+
+__stdargs int utime(const char *filename, const struct utimbuf *times);
+ 
+#ifdef __cplusplus
+};
+#endif
+
+#endif /* _SYS_UTIME_H */

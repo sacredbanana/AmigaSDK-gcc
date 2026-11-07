@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/_types.h>
 #include <stddef.h>
 
 #ifndef	NULL
@@ -27,6 +27,7 @@ __stdargs size_t strcspn(const char *, const char *);
 __stdargs char *strerror(int);
 __stdargs char *strcat(char *, const char *);
 __stdargs char *strncat(char *, const char *, size_t);
+__stdargs size_t strnlen(const char *, size_t);
 __stdargs int strcmp(const char *, const char *);
 __stdargs int strncmp(const char *, const char *, size_t);
 __stdargs char *strncpy(char *, const char *, size_t);
@@ -50,16 +51,30 @@ __stdargs void *memccpy(void *, const void *, int, size_t);
 __stdargs char *rindex(const char *, int);
 __stdargs int strcasecmp(const char *, const char *);
 __stdargs char *strdup(const char *);
+__stdargs char *strndup(const char *, size_t);
 __stdargs void strmode(int, char *);
 __stdargs int strncasecmp(const char *, const char *, size_t);
 __stdargs char *strsep(char **, const char *);
+__stdargs size_t strlcat(char *, const char *, size_t);
+__stdargs void *memmem(const void *, size_t, const void *, size_t);
+/* for swab(); the rest of sys/types.h stays out of string.h */
+#ifndef _SSIZE_T_DECLARED
+typedef _ssize_t ssize_t;
+#define _SSIZE_T_DECLARED
+#endif
 __stdargs void swab(const void *, void *, ssize_t);
 __stdargs int stricmp(const char *, const char *);
 __stdargs int strnicmp(const char *, const char *, size_t);
 
-__stdargs char *concat(const char *, ...);
-
+/* Two strerror_r variants, selected as glibc and newlib do: _GNU_SOURCE
+   gets the GNU one returning the message, otherwise the POSIX one
+   returning an error number. */
+#if __GNU_VISIBLE
 __stdargs char *strerror_r(int errnum, char *buf, size_t buflen);
+#else
+__stdargs int strerror_r(int errnum, char *buf, size_t buflen)
+	__asm__(__ASMNAME("__xpg_strerror_r"));
+#endif
 #endif 
 
 #ifdef __NO_INLINE__
