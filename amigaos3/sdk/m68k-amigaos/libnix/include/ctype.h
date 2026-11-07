@@ -5,7 +5,12 @@
 #include <sys/cdefs.h>
 
 #if __POSIX_VISIBLE >= 200809 || __MISC_VISIBLE || defined (_COMPILING_NEWLIB)
+/* locale_t: newlib renamed <xlocale.h> back to <sys/_locale.h> in 2019 */
+#if __has_include(<sys/_locale.h>)
+#include <sys/_locale.h>
+#else
 #include <xlocale.h>
+#endif
 #endif
 
 _BEGIN_STD_C

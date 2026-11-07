@@ -60,6 +60,10 @@ __stdargs DIR *opendir(const char *dirname);
 __stdargs struct dirent *readdir(DIR *dirp);
 __stdargs void rewinddir(DIR *dirp);
 __stdargs int closedir(DIR *dirp);
+__stdargs int scandir(const char *dirname, struct dirent ***namelist,
+                      int (*select)(const struct dirent *),
+                      int (*compar)(const struct dirent **, const struct dirent **));
+__stdargs int alphasort(const struct dirent **d1, const struct dirent **d2);
 
 #ifdef __cplusplus
 }

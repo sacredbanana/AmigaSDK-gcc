@@ -5,10 +5,12 @@
 
 #ifndef __NO_INLINE__
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && !defined(__MY_INLINE__)
+#ifndef __MY_INLINE__
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #define __MY_INLINE__ static inline
 #else
 #define __MY_INLINE__ extern inline
+#endif
 #endif
 
 __MY_INLINE__ __stdargs void *memmove(void *s1,const void *s2,size_t n)
@@ -80,6 +82,21 @@ __MY_INLINE__ __stdargs char *strlwr(char *s)
 __MY_INLINE__ __stdargs char *stpcpy(char *dst,const char *src)
 {
 	while((*dst++=*src++)){} return(--dst);
+}
+
+__MY_INLINE__ __stdargs size_t strlcpy(char *dst, const char *src, size_t dsize)
+{
+	const char * p = src;
+	size_t len;
+	while (*p)
+		++p;
+	len = p - src;
+	if (dsize) {
+		while (--dsize && *src)
+			*dst++ = *src++;
+		*dst = 0;
+	}
+	return len;
 }
 
 __MY_INLINE__ __stdargs void *mempcpy(void *to, const void *from, size_t sz) {

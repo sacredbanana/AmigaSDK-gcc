@@ -1,7 +1,15 @@
 #ifndef _STDIO_H
 #define _STDIO_H
-#include <string.h>
+#include <stddef.h>
+#include <sys/_types.h>
+/* only __gnuc_va_list: stdio.h must not define va_start and friends */
+#define __need___va_list
 #include <stdarg.h>
+
+#ifndef _SSIZE_T_DECLARED
+typedef _ssize_t ssize_t;
+#define _SSIZE_T_DECLARED
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,7 +105,7 @@ typedef __FILE FILE;
 #ifndef NULL
 #define NULL ((void *)0l)
 #endif
-#define BUFSIZ 65536
+#define BUFSIZ 1024
 #define EOF (-1)
 #define SEEK_SET 0
 #define SEEK_CUR 1
@@ -111,11 +119,11 @@ extern __stdargs FILE *freopen(const char *filename, const char *mode, FILE *str
 extern __stdargs FILE *fdopen(int filedes, const char *mode);
 extern __stdargs int fclose(FILE *stream);
 extern __stdargs int ungetc(int c, FILE *stream);
-extern __stdargs int vsprintf(char *s, const char *format, va_list args);
-extern __stdargs int vfprintf(FILE *stream, const char *format, va_list args);
-extern __stdargs int vsscanf(const char *s, const char *format, va_list args);
-extern __stdargs int vfscanf(FILE *stream, const char *format, va_list args);
-extern __stdargs int vsnprintf(char *s, size_t size, const char *format, va_list args);
+extern __stdargs int vsprintf(char *s, const char *format, __gnuc_va_list args);
+extern __stdargs int vfprintf(FILE *stream, const char *format, __gnuc_va_list args);
+extern __stdargs int vsscanf(const char *s, const char *format, __gnuc_va_list args);
+extern __stdargs int vfscanf(FILE *stream, const char *format, __gnuc_va_list args);
+extern __stdargs int vsnprintf(char *s, size_t size, const char *format, __gnuc_va_list args);
 extern __stdargs int fseek(FILE *stream, long int offset, int whence);
 extern __stdargs char *fgets(char *s, int size, FILE *stream);
 extern __stdargs int fputs(const char *s, FILE *stream);
@@ -164,14 +172,14 @@ extern __stdargs int fgetc(FILE *stream);
 extern __stdargs int fgetpos(FILE *stream, fpos_t *pos);
 extern __stdargs int fileno(FILE *file);
 extern __stdargs int fputc(int c, FILE *stream);
-extern __stdargs int fsetpos(FILE *stream, fpos_t *pos);
+extern __stdargs int fsetpos(FILE *stream, const fpos_t *pos);
 extern __stdargs int getchar();
 extern __stdargs char *gets(char *s);
-extern __stdargs int vprintf(const char *format, va_list args);
+extern __stdargs int vprintf(const char *format, __gnuc_va_list args);
 extern __stdargs int putchar(int c);
-extern __stdargs int vscanf(const char *format, va_list args);
+extern __stdargs int vscanf(const char *format, __gnuc_va_list args);
 extern __stdargs void rewind(FILE *stream);
-extern __stdargs int setbuf(FILE *stream, char *buf);
+extern __stdargs void setbuf(FILE *stream, char *buf);
 #else
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
@@ -201,7 +209,7 @@ __MY_INLINE__ __stdargs int fileno(FILE *file)
 __MY_INLINE__ __stdargs int fputc(int c,FILE *stream)
 {	return putc(c,stream);}
 
-__MY_INLINE__ __stdargs int fsetpos(FILE *stream,fpos_t *pos)
+__MY_INLINE__ __stdargs int fsetpos(FILE *stream,const fpos_t *pos)
 {	return fseek(stream,*pos,SEEK_SET);}
 
 __MY_INLINE__ __stdargs int getchar()
@@ -210,20 +218,20 @@ __MY_INLINE__ __stdargs int getchar()
 __MY_INLINE__ __stdargs char *gets(char *s)
 {	return fgets(s, 0, stdin);}
 
-__MY_INLINE__ __stdargs int vprintf(const char *format,va_list args)
+__MY_INLINE__ __stdargs int vprintf(const char *format,__gnuc_va_list args)
 {	return vfprintf(stdout,format,args);}
 
 __MY_INLINE__ __stdargs int putchar(int c)
 {	return putc(c, stdout);}
 
-__MY_INLINE__ __stdargs int vscanf(const char *format,va_list args)
+__MY_INLINE__ __stdargs int vscanf(const char *format,__gnuc_va_list args)
 {	return vfscanf(stdin,format,args);}
 
 __MY_INLINE__ __stdargs void rewind(FILE *stream)
 {	fseek(stream,0,SEEK_SET);}
 
-__MY_INLINE__ __stdargs int setbuf(FILE *stream,char *buf)
-{	return setvbuf(stream,buf,buf?_IOFBF:_IONBF,BUFSIZ);}
+__MY_INLINE__ __stdargs void setbuf(FILE *stream,char *buf)
+{	setvbuf(stream,buf,buf?_IOFBF:_IONBF,BUFSIZ);}
 #endif
 
 static inline __stdargs int fileno_unlocked(FILE *file) {
@@ -252,7 +260,9 @@ struct _StdFileFx {
 	int __stdargs (*lx_close)(struct _StdFileDes *);
 	int __stdargs (*lx_dup)(struct _StdFileDes *);
 	int __stdargs (*lx_fstat)(struct _StdFileDes *, struct stat *);
-	int __stdargs (*lx_select)(struct _StdFileDes *sfd, int select_cmd, int io_mode, struct fd_set *, unsigned long *);
+	/* the fd_set * is passed as void *, so this header does not depend on
+	   how newlib names the struct behind fd_set */
+	int __stdargs (*lx_select)(struct _StdFileDes *sfd, int select_cmd, int io_mode, void *fdset, unsigned long *);
 };
 
 typedef struct _StdFileDes {
@@ -288,12 +298,30 @@ typedef struct _StdFileDes {
 
 extern __stdargs StdFileDes *_lx_fhfromfd(int fd);
 
-#define L_tmpnam 8
+/* tmpnam() writes "T:tempfile_2_<task>_<count>", up to 35 bytes. */
+#define L_tmpnam 64
+#define TMP_MAX 26
+#define FOPEN_MAX 20
 
 #ifdef __FILENAME_MAX__
 #define FILENAME_MAX    __FILENAME_MAX__
 #else
 #define	FILENAME_MAX	1024
+#endif
+
+#if __LARGEFILE_VISIBLE || __POSIX_VISIBLE >= 200112
+#include <sys/_types.h>
+#ifndef _OFF_T_DECLARED
+typedef __off_t off_t;
+#define _OFF_T_DECLARED
+#endif
+extern __stdargs int fseeko(FILE *stream, off_t offset, int whence);
+extern __stdargs off_t ftello(FILE *stream);
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+extern __stdargs int dprintf(int fd, const char *format, ...);
+extern __stdargs int vdprintf(int fd, const char *format, __gnuc_va_list args);
 #endif
 
 // define inlines for the unlocked stuff
@@ -302,6 +330,16 @@ static inline __stdargs int	getc_unlocked (FILE *f) { return getc(f);}
 static inline __stdargs int	getchar_unlocked (void) { return getchar();}
 static inline __stdargs int	putc_unlocked (int c, FILE *f) { return putc(c, f);}
 static inline __stdargs int	putchar_unlocked (int c) { return putchar(c);}
+#endif
+#if __MISC_VISIBLE
+static inline __stdargs int	fgetc_unlocked (FILE *f) { return fgetc(f);}
+static inline __stdargs int	fputc_unlocked (int c, FILE *f) { return fputc(c, f);}
+static inline __stdargs int	fflush_unlocked (FILE *f) { return fflush(f);}
+static inline __stdargs int	feof_unlocked (FILE *f) { return feof(f);}
+static inline __stdargs int	ferror_unlocked (FILE *f) { return ferror(f);}
+static inline __stdargs void	clearerr_unlocked (FILE *f) { clearerr(f);}
+static inline __stdargs size_t	fread_unlocked (void *p, size_t s, size_t n, FILE *f) { return fread(p, s, n, f);}
+static inline __stdargs size_t	fwrite_unlocked (const void *p, size_t s, size_t n, FILE *f) { return fwrite(p, s, n, f);}
 #endif
 
 #ifdef __cplusplus

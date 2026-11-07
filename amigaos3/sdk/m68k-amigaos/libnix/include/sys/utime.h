@@ -5,11 +5,13 @@
    particular system.  If there is a utime.h in libc/sys/SYSDIR/sys,
    it will override this one.  */
 
+#include <time.h> /* for time_t */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct utimbuf 
+struct utimbuf
 {
   time_t actime;
   time_t modtime; 
