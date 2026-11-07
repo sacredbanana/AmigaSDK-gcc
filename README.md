@@ -20,8 +20,12 @@ Here are the extra included SDKs:
 - MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
 - Amiberry GL SDK (MiniGL V30, OpenGL ES 2.0/3.x) https://github.com/BlitterStudio/amiberry-gl-sdk
   - `ogles2.library` / `ogles3.library`: binary compatible with the PiStorm [ogles2](https://github.com/ladislawv/ogles2) / [ogles3](https://github.com/ladislawv/ogles3) libraries, so programs run on both Amiberry and PiStorm. Use `#include <proto/ogles3.h>` and link with `-logles3`, or `<proto/ogles2.h>` and `-logles2`.
-  - `minigl.library`: Amiberry only (it uses Amiberry's dispatch table). Compile with `-DMINIGL_DISPATCH_ABI_TYPES` and link with `-lminigl_dispatch`.
+  - `minigl.library`: `#include <proto/minigl.h>` and compile with `-DMINIGL_DISPATCH_ABI_TYPES`. Amiberry and PiStorm3D share the same MiniGL 29 ABI, but Amiberry's table has 9 extra buffer-object slots, so choose the import library by target:
+    - `-lminigl` (from PiStorm3D 29.1): runs on PiStorm3D and Amiberry. Do not call the buffer-object functions (`glGenBuffers` … `glUnmapBuffer`), which PiStorm3D 29.1 lacks.
+    - `-lminigl_dispatch` (from Amiberry): adds buffer objects, but `MiniGLOpen` refuses any library without them, including PiStorm3D 29.1.
   - Autodocs: `docs/Autodocs/ogles2.doc`, `ogles3.doc`. Licences and getting-started notes: `docs/Documentation/AmiberryGL`
+- PiStorm3D 29.1 MiniGL import library (`libminigl.a`, see above) https://aminet.net/package/util/libs/PiStorm3D
+  - Licences, SDK notes and FAQ: `docs/Documentation/PiStorm3D`. Not built with `-fbaserel`.
   
 ### AmigaOS 4
 - AmiSSL 5.27 https://aminet.net/package/util/libs/AmiSSL-v5-SDK

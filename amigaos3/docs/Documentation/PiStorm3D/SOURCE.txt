@@ -1,0 +1,19 @@
+PiStorm3D minigl.library 29.1 client SDK
+Release: https://aminet.net/package/util/libs/PiStorm3D  (PiStorm3D.lha, 2026-10-07)
+         sha256 1b304bf952b30ed2fbacc21f305d0a49bdd98329bea10630de6f674212770d61
+Source:  https://github.com/SteffenHaeuser/MiniGL_Library_68k
+
+Only the import library is installed, unchanged from the archive:
+  lib/libminigl.a   (SDK/lib/libminigl.a, sha256 eb64df61288eccc32ec5f938f3d581e87779983c725d2c89a21967f50d3b8140)
+It is built without -fbaserel, so there is no libb/libb32 variant.
+
+The headers are NOT taken from this archive. proto/minigl.h, clib/minigl_protos.h and
+libraries/minigl.h are byte-identical to the Amiberry GL SDK's, and the Amiberry
+libraries/minigl_dispatch.h has the same 208 slots in the same order plus 9 buffer-object
+slots (glGenBuffers ... glUnmapBuffer, slots 208-216) that PiStorm3D 29.1 does not have.
+Compile with -DMINIGL_DISPATCH_ABI_TYPES as for the Amiberry library.
+
+This libminigl.a's MiniGLOpen checks only library version 29 and dispatch ABI 5. It does
+not check the table size (its SDK-README says it does; the shipped object does not), so
+calling a buffer-object function against a PiStorm3D 29.1 library jumps past the end of
+its table. Amiberry's libminigl_dispatch.a refuses any library with fewer than 217 slots.
