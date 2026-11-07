@@ -1,0 +1,60 @@
+SDL2 / SDL3 for AmigaOS 3 (m68k), built from source
+=====================================================
+
+Sources (Steffen Haeuser's 68k ports, the same code as the Aminet SDL_68k package):
+  https://github.com/SteffenHaeuser/SDL2_68k  3632f48dc4d085355954322ae452ecc7b007ebc6 (2026-10-06)
+    libSDL2-amigaos3 0.7.0 (SDL 2.33.0 headers), SDL2_image, SDL2_mixer, SDL2_gfx,
+    SDL2_sound, SDL_net 2.4
+  https://github.com/SteffenHaeuser/SDL3_68k  c82dea042718200eea401e7ed62d88b997bc9fd9 (2026-10-06)
+    SDL 3.4.14, SDL_image 3.4.4, SDL_mixer 3.2, SDL3_gfx, SDL3_sound, SDL_net 3.2
+
+Built with this image's m68k-amigaos-gcc 6.5.0b by the scripts in build/ (run inside
+sacredbanana/amiga-compiler:m68k-amigaos with the two repos in /s and an output dir in /stage).
+
+Runtimes and CPUs
+-----------------
+There is no newlib build (upstream supports only libnix and clib2), so build with
+-noixemul or -mcrt=clib2. Each library is installed for both runtimes and the toolchain's
+multilib directories pick the right one automatically:
+
+  <runtime>/lib/                 68020 + 68881/2 code  (used by -m68030/-m68040/-m68060 and
+                                                        the default; runs on 020-060 with FPU)
+  <runtime>/lib/libm020/libm881/ 68020 + 68881/2 code  (-m68020 -m68881)
+  <runtime>/lib/libm020/         68020, soft float     (-m68020, for machines without an FPU)
+
+Upstream builds for -mcpu=68040 only; 68040-only FPU instructions would crash on a
+68030 + 6888x, so the 68020/6888x build is used for the default directory instead.
+
+Changes from the upstream makefiles
+-----------------------------------
+- SDL_OS3_DEBUG is not defined (it routes SDL_Log to kprintf and needs -ldebug).
+- Core SDL2/SDL3 are compiled with -DMINIGL_DISPATCH_ABI_TYPES, the same MiniGL headers
+  mode as the rest of this SDK, so OpenGL goes through the shared minigl.library.
+- No external codec libraries exist for 68k here, so the add-ons use their built-in
+  decoders only:
+    SDL2_image / SDL3_image: stb_image for PNG and JPEG, plus BMP GIF LBM PCX PNM QOI SVG
+      TGA XCF XPM XV (and ANI for SDL3). No TIFF, WebP, AVIF or JPEG XL.
+    SDL2_mixer: WAV, VOC, AIFF, Ogg Vorbis (stb_vorbis), FLAC (dr_flac), MP3 (minimp3),
+      MIDI (timidity). No MOD.
+    SDL3_mixer: WAV, AIFF, VOC, AU, FLAC (dr_flac), MP3 (dr_mp3), Ogg Vorbis (stb_vorbis),
+      MIDI (timidity).
+    SDL2_sound: WAV AIFF AU VOC RAW, FLAC, MP3, Vorbis, and MOD/S3M/XM/IT through the
+      bundled libmodplug (upstream's makefile never compiled it). No MIDI or Shorten.
+    SDL3_sound: upstream decoder set.
+- SDL_sound's embedded stb_vorbis/dr_flac/dr_mp3/dr_wav/minimp3 symbols are made local
+  (fix-sound.sh) so SDL_sound and SDL_mixer can be linked into the same program.
+
+Linking
+-------
+  m68k-amigaos-gcc -noixemul -m68040 prog.c \
+      -lSDL3_image -lSDL3_mixer -lSDL3_net -lSDL3_gfx -lSDL3_sound -lSDL3 \
+      -lminigl -latomic -lamiga -lm
+
+-lminigl is needed even without OpenGL (SDL's GL backend is always linked); the library
+itself is only opened when a GL window is requested, so programs run without it.
+Use -lminigl (PiStorm3D's import library, runs on PiStorm3D and Amiberry), not
+-lminigl_dispatch, which refuses PiStorm3D 29.1.
+
+The SDL2_gfx port prefixes its API with GFX_ (GFX_pixelColor, ...).
+
+Licences are in licences/ (SDL and the add-ons are zlib-licensed).

@@ -24,6 +24,11 @@ Here are the extra included SDKs:
     - `-lminigl` (from PiStorm3D 29.1): runs on PiStorm3D and Amiberry. Do not call the buffer-object functions (`glGenBuffers` … `glUnmapBuffer`), which PiStorm3D 29.1 lacks.
     - `-lminigl_dispatch` (from Amiberry): adds buffer objects, but `MiniGLOpen` refuses any library without them, including PiStorm3D 29.1.
   - Autodocs: `docs/Autodocs/ogles2.doc`, `ogles3.doc`. Licences and getting-started notes: `docs/Documentation/AmiberryGL`
+- SDL2 (68k port 0.7.0) and SDL3 3.4.14, built from source https://github.com/SteffenHaeuser/SDL2_68k https://github.com/SteffenHaeuser/SDL3_68k
+  - With SDL2_image, SDL2_mixer, SDL2_gfx, SDL2_sound, SDL2_net and SDL3_image, SDL3_mixer, SDL3_gfx, SDL3_sound, SDL3_net, using their built-in decoders (PNG/JPEG via stb_image, Ogg Vorbis, FLAC, MP3, MIDI, MOD in SDL2_sound)
+  - libnix and clib2 only (use `-noixemul` or `-mcrt=clib2`). 68020+FPU builds by default (030 to 060), and a soft-float build picked by `-m68020` for machines without an FPU.
+  - OpenGL through `minigl.library`. Link with e.g. `-lSDL3_image -lSDL3 -lminigl -latomic -lamiga -lm`; programs that never open a GL window run without minigl.library.
+  - Build details, scripts and licences: `docs/Documentation/SDL`
 - PiStorm3D 29.1 MiniGL import library (`libminigl.a`, see above) https://aminet.net/package/util/libs/PiStorm3D
   - Licences, SDK notes and FAQ: `docs/Documentation/PiStorm3D`. Not built with `-fbaserel`.
   
@@ -64,6 +69,7 @@ Here are the extra included SDKs:
   - SDL2_image, SDL2_mixer, SDL2_ttf, SDL2_net, SDL2_gfx and SDL3_image 3.4.9, SDL3_mixer 3.3.0, SDL3_ttf 3.3.0 (no SDL3_net yet)
   - Link glue for the shared `sdl2*.library` / `sdl3*.library` from the [MorphOS-Storage](https://www.morphos-storage.net) packages, which users install. Build with `-noixemul`, e.g. `-lSDL3_image -lSDL3 -lGL`. SDL3 needs MorphOS 3.20.
   - Versions, checksums and licences: `docs/SDL`
+- PowerSDL 16.1 (SDL 1.2.15) link libraries rebuilt for the current SDK, so `-lSDL` and its add-ons (`-lSDL_image`, `_mixer`, `_ttf`, `_net`, `_gfx`, `_sound`, smpeg) link again. Details: `docs/SDL/PowerSDL`
 
 ## Installation
 
