@@ -1,0 +1,411 @@
+Getting started with ogles2.library 1.3 (release 1.3.2)
+=======================================================
+
+How to write, build, debug and ship an AmigaOS 3.x program that draws with
+ogles2.library (OpenGL ES 2.0 on the Raspberry Pi 4's V3D GPU, through
+PiStorm and Emu68), and how to have an AI assistant help with it.
+
+The reference for every call is ogles2.doc (in this drawer). The examples
+in ../examples are complete programs: start from them.
+
+Contents
+  1. What you need
+  2. A first program
+  3. Building
+  4. Windows, screens and input
+  5. Shaders and their binaries
+  6. Performance
+  7. Shipping your program
+  8. When something goes wrong
+  9. Coming from AmigaOS 4, other GLES2 code or desktop OpenGL
+ 10. Working with an AI assistant
+
+
+1. What you need
+----------------
+To run: an Amiga with a PiStorm and a Raspberry Pi 4B or CM4, Emu68,
+AmigaOS 3.x with Picasso96 or CyberGraphX, and a 32-bit RTG screen for
+programs that draw into a window. ogles2.library installed (Install-ogles2)
+or carried by the program (section 7).
+
+To build: one of
+  - bebbo's amiga-gcc (GCC 6.5) with clib2, usually as a cross compiler on
+    Linux or Windows (WSL);
+  - vbcc with the AmigaOS 3 target and the NDK headers.
+and this SDK: include/ and lib/.
+
+On Windows: unpack ogles2-1.3.2-sdk.zip anywhere (no spaces in the path is
+safest for make). Build with amiga-gcc in WSL (or a Windows build of it) or
+with vbcc for Windows. In VS Code, give the C/C++ extension the headers
+for IntelliSense, in .vscode/c_cpp_properties.json:
+    "includePath": [ "<SDK>/include", "<NDK headers>" ],
+    "defines": [ "__AMIGA__", "__mc68000__" ],
+    "compilerPath": ""
+(<NDK headers>: the AmigaOS headers your compiler uses, e.g. amiga-gcc's
+m68k-amigaos/ndk-include, or the NDK's Include_H for vbcc). Copy the built program to
+the Amiga by network share, CF/SD card or a serial or TCP tool of your
+choice.
+
+For shaders: the shader compiler v3dglslc installed on the development
+Amiga (LIBS:v3dglslc, from the archive's Libs/). Your users do not need it
+if you ship your shaders' binaries (section 5).
+
+
+2. A first program
+------------------
+Copy ../examples/triangle.c, triangle_shaders.h and the Makefile into a new
+drawer and build it (section 3). Then change it step by step. Every
+ogles2 program has this shape:
+
+    #include <proto/ogles2.h>
+
+    if (!OGLES2Open())                 /* first: opens the library */
+        ...say so and quit...
+    win = OpenWindowTags(...);         /* your window, with IDCMP */
+    ctx = aglCreateContextTags2(&err,
+              OGLES2_CCT_WINDOW, (ULONG)win,
+              OGLES2_CCT_DEPTH, 24,    /* only if you need depth */
+              TAG_DONE);
+    aglMakeCurrent(ctx);
+
+    ...create shaders, programs, buffers, textures (plain GLES2)...
+
+    while (running) {
+        ...Intuition messages, Ctrl-C...
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        ...draw...
+        aglSwapBuffers();              /* shows the frame */
+    }
+
+    ...delete GL objects...
+    aglDestroyContext(ctx);
+    CloseWindow(win);
+    OGLES2Close();                     /* last; safe if Open failed */
+
+Every GL function of OpenGL ES 2.0 is there with its usual name, through
+<proto/ogles2.h>. They act on the current context (aglMakeCurrent) of your
+program. Free everything on every exit path: the library frees a context's
+objects in aglDestroyContext, but not your window.
+
+
+3. Building
+-----------
+GCC (from the examples' Makefile):
+
+    m68k-amigaos-gcc -O2 -m68020 -m68881 -mcrt=clib2 -fno-builtin \
+        -fbbb=abcfhilmnprsz0 -Wall -I<SDK>/include prog.c \
+        -L<SDK>/lib -logles2 -lm881 -o prog
+
+  -fbbb=abcfhilmnprsz0  bebbo's optimiser without its pass "e", which in
+                        GCC 6.5 drops the rounding of float-to-integer
+                        conversions: (int)255.5f becomes 256. Keep it.
+  -lm881                the maths library for clib2 with -m68881. -lm
+                        links another C library's maths: wrong results
+                        (sqrtf(2) = 0), no warning.
+  -fno-builtin          GCC turns sinf() and cosf() of the same value into
+                        cexpf(), which clib2 lacks.
+
+vbcc:
+
+    vc +aos68k -c99 -cpu=68020 -fpu=68881 -O1 -I<SDK>/include prog.c \
+        <SDK>/lib/ogles2.lib -lamiga -lm881 -o prog
+
+  vbcc needs the NDK headers in its include path (its configuration
+  usually sets it; else add -I<NDK>/include).
+
+The program needs a 68020 and an FPU, which Emu68 always provides.
+OGLES2Open() itself refuses a library older than the headers you built
+with (its function table must be at least as large), so a program built
+with this SDK runs on 1.3 or newer.
+
+
+4. Windows, screens and input
+-----------------------------
+Where a context draws is chosen when it is created:
+
+  OGLES2_CCT_WINDOW, your window
+      The usual choice. Open it on a 32-bit RTG screen (the Workbench, as a
+      rule), with the IDCMP you need. Each aglSwapBuffers copies the frame
+      into the window's inner area. A borderless window at 0,0 that is all
+      of a 32-bit screen of your own (not a public one) gets no copy: the
+      frame is drawn straight into the screen, as with OGLES2_CCT_MODEID
+      (SDL's full screen is such a window). Close the window only after
+      aglDestroyContext.
+      Resizing: on IDCMP_NEWSIZE call
+          aglSetParamsTags2(OGLES2_CCT_WINDOW, (ULONG)win,
+                            OGLES2_CCT_GET_WIDTH, (ULONG)&w,
+                            OGLES2_CCT_GET_HEIGHT, (ULONG)&h, TAG_DONE);
+          glViewport(0, 0, w, h);
+      and use w / h for the projection (cube.c does this).
+      OGLES2_CCT_RESIZE_VIEWPORT is ignored: set the viewport yourself.
+
+  OGLES2_CCT_MODEID, full screen
+      ogles2 opens a screen in that display mode (take one from
+      BestModeID() or an ASL screen-mode requester, a 32-bit RTG mode) and
+      draws straight into it. For input, ask for its backdrop window and
+      switch its messages on:
+          struct Window *iw = NULL;
+          ctx = aglCreateContextTags2(&err, OGLES2_CCT_MODEID, mode,
+                    OGLES2_CCT_PISTORM_GET_WINDOW, (ULONG)&iw, TAG_DONE);
+          ModifyIDCMP(iw, IDCMP_RAWKEY | IDCMP_MOUSEBUTTONS |
+                          IDCMP_MOUSEMOVE);
+      then read iw->UserPort as usual. The pointer is blank there.
+
+  no target tag, a window of ogles2's own
+      640 x 480 (or OGLES2_CCT_PISTORM_WIDTH/_HEIGHT) on the default public
+      screen. It has no close gadget and no IDCMP: fine for a quick test;
+      for input use OGLES2_CCT_PISTORM_GET_WINDOW and ModifyIDCMP as above.
+
+  OGLES2_CCT_BITMAP, your bitmap
+      For drawing off screen; aglSetBitmap changes it.
+
+Other useful tags: OGLES2_CCT_VSYNC (TRUE: no tearing, at most the display's
+rate), OGLES2_CCT_PISTORM_MSAA 4 (4x antialiasing of the window or screen;
+framebuffer objects are not multisampled), OGLES2_CCT_STENCIL 8.
+
+Rendering from a second task: <proto/ogles2.h> calls use the program's one
+current context. A second task calls through OGLES2Dispatch with its own
+context as the first argument (<libraries/ogles2_dispatch.h>); contexts
+that share objects are created with OGLES2_CCT_SHARE_WITH.
+
+
+5. Shaders and their binaries
+-----------------------------
+The GPU runs machine code compiled from your GLSL by Mesa's compiler. On
+the Amiga that compiler is v3dglslc (19 MB), which ogles2 starts by itself
+when a program links a shader pair it has no binary for. Compiling takes
+about 0.2 s per program, plus about 1 s when the compiler starts.
+
+ogles2 finds a program's binary by a hash of the two shader texts, byte
+for byte: <24 hex digits>.v3dp, looked for in a shaders/ drawer beside the
+program (PROGDIR:shaders/), then beside the program (PROGDIR:), then in
+OGLES2Cache: (or T:), else compiled now (ogles2.doc, --shaders--). Ship the
+shader records (<hash>.v3ds) from the cache in shaders/ as well: where a
+compiler is installed, glCompileShader starts it for every shader that has
+no record, binaries or not. Records are looked for in PROGDIR:shaders/
+only, not beside the program.
+
+Rules that follow from it:
+  - Keep shader sources as constant strings (as triangle_shaders.h does).
+    A text built at run time (a number printed into it, a #define added)
+    is a new text with a new hash, which needs the compiler.
+  - Any change to a shader, even a space, needs a new binary.
+  - glBindAttribLocation does not change the hash: bind as you like.
+  - GLSL ES 1.00 only: "precision mediump float;" in fragment shaders,
+    attribute/varying, gl_FragColor, texture2D. No "#version 300 es".
+
+While developing: install v3dglslc; programs compile as they link, and the
+results stay in OGLES2Cache: (assign it: Install-ogles2 offers it).
+
+For release, ship the binaries so users need no compiler:
+  1. Delete your program's .v3dp files from OGLES2Cache: (or all of them).
+  2. Run the program once, through every effect it has, with the compiler
+     installed.
+  3. Copy the new .v3dp and .v3ds files from OGLES2Cache: (sort by date)
+     into a shaders/ drawer beside the program.
+  4. Test without the compiler: rename LIBS:v3dglslc, Avail FLUSH, run.
+     A missing binary fails the link; its shaders' sources are then in
+     T:ogles2_missing_shaders.txt.
+  5. Test with the compiler, from an empty cache: put LIBS:v3dglslc back,
+     delete OGLES2Cache:#?.v3ds (or T:#?.v3ds), Avail FLUSH, run. The
+     compiler must not start (Status lists no v3dglslc): a shader without
+     a record would start it.
+A .v3dw or .v3da file next to a .v3dp (programs that sample float or depth
+textures, or use alpha to coverage) belongs with it: ship it too.
+
+Without an Amiga compiler, binaries can be made on a PC with the source
+distribution's offline compiler (tools/v3dglslc; v3dp/split_shaders.py
+splits T:ogles2_missing_shaders.txt, v3dp/v3dp_hashname.py names the
+files, v3dp/v3ds_record.py writes the shaders' records). It produces the
+same bytes as the Amiga one.
+
+Info logs: with the compiler, glCompileShader reports real errors and
+glGetShaderInfoLog has the compiler's messages. Without it, a shader's
+errors show at glLinkProgram. OGLES2_CCT_DEBUG_SHADER_LOG makes link logs
+describe the compiled code (instructions, threads, spills).
+
+
+6. Performance
+--------------
+The GPU is fast; the 68k side (emulated by Emu68 on the Pi's ARM) is what
+limits most programs: each GL call costs CPU time. So:
+  - Put vertex data in buffer objects (GL_STATIC_DRAW) once, not client
+    arrays every frame; draw indexed (glDrawElements, GL_UNSIGNED_SHORT).
+  - Fewer, larger draws: batch geometry that shares a program and
+    textures; sort by program and texture to change state less often.
+  - Set uniforms only when they change; look up locations once.
+  - Upload textures once; use mipmaps (glGenerateMipmap) for minified
+    textures. S3TC/DXT textures stay compressed on the GPU (a quarter to
+    an eighth of the memory); ETC1 is accepted but decoded when uploaded.
+  - Avoid glReadPixels and glFinish in the frame loop: they wait for the
+    GPU. aglSwapBuffers does not: the CPU builds the next frame while the
+    GPU renders this one.
+  - Ship your shader binaries (section 5): compiling at start costs seconds.
+  - Measure with VSYNC off; switch it on for smooth output when the frame
+    rate is above the display's.
+
+
+7. Shipping your program
+------------------------
+Ship:
+  - your program;
+  - its .v3dp (and .v3dw/.v3da) files, beside it (section 5).
+Optionally, for users who have not installed ogles2:
+  - libs/ogles2.library in your program's drawer. OGLES2Open() uses an
+    installed one first, else the one in your libs/ (or beside the
+    program). It also replaces an installed one that is too old for your
+    program, unless another program is using it at that moment;
+  - libs/v3dglslc, only if your program makes shaders at run time
+    (19 MB; most programs do not need it).
+Licences: your program may have any licence: the import library and the
+headers are MIT. If you ship ogles2.library or v3dglslc, include LICENSE
+and the licences/ drawer of the ogles2 archive: the library is under the
+Hyperion MiniGL Open Source License (AmigaOS only; its source is
+published), the compiler is Mesa (MIT).
+Tell users in your ReadMe: a PiStorm with a Raspberry Pi 4 or CM4, Emu68,
+an RTG system and a 32-bit screen.
+
+
+8. When something goes wrong
+----------------------------
+Look in the log first: T:ogles2.log, or the file you name with
+    SetEnv OGLES2/LogFile RAM:ogles2.log
+It is written when a program ends; OGLES2Log (C:) writes it while one is
+still running. It says why a context, a link or a texture failed.
+
+  OGLES2Open() fails
+      Not installed and not in your drawer; or an older one is in memory
+      and another program is using it (quit that, or Avail FLUSH).
+  aglCreateContext2: OGLES2_CCE_NO_GPU (2)
+      No usable V3D: not a PiStorm with a Pi 4 under Emu68.
+  OGLES2_CCE_NO_DISPLAY (4)
+      The window, screen or bitmap is unusable: most often a screen that
+      is not 32-bit.
+  glLinkProgram fails: "no program binary for this program"
+      No .v3dp for these shaders and no compiler: section 5; the sources
+      are in T:ogles2_missing_shaders.txt.
+  The first start takes a second or two longer
+      The compiler starting: ship the binaries.
+  A black window
+      No aglSwapBuffers; the viewport (glViewport) wrong after a resize; or
+      geometry outside the clip volume (check the matrices).
+  Numbers slightly off (colours 1 too high, maths wrong)
+      Built without -fbbb=abcfhilmnprsz0, or with -lm instead of -lm881.
+  Two GL programs at once
+      Supported, but a hang has been seen with a game left running while
+      another started: avoid it while testing.
+  Changes to the library have no effect
+      The old one is still in memory: Avail FLUSH before running.
+
+glGetError works as on any GLES2; check it after setup code while
+developing.
+
+
+9. Coming from AmigaOS 4, other GLES2 code or desktop OpenGL
+------------------------------------------------------------
+AmigaOS 4 (ogles2.library there): source compiles unchanged. The context
+tags have the same NAMES but different VALUES, so recompile against these
+headers; OS4 binaries do not run. aglCreateContext/aglCreateContextTags
+(deprecated names) are macros for the "2" forms. Tags OS4 has and ogles2
+ignores are listed in ogles2.doc (--deviations--).
+
+Other GLES2 code (Linux, Android, emscripten): the GL part ports as it is;
+replace EGL (or SDL/GLFW window setup) with OGLES2Open, a window and
+aglCreateContextTags2, and eglSwapBuffers with aglSwapBuffers. Make shader
+sources constant (section 5). SDL2/SDL3 ports with ogles2 backends exist
+in the source distribution (ports/).
+
+Desktop OpenGL (immediate mode, fixed function, MiniGL programs): use gl4es
+(ports/gl4es in the source distribution), which translates it to GLES2 on
+ogles2. gl4es writes shaders at run time, so its programs need the
+compiler installed.
+
+Deviations from GLES2 to know: cube maps are always filtered seamlessly;
+with EXT_draw_buffers, gl_FragColor goes to the first buffer only;
+glPolygonMode takes GL_FRONT_AND_BACK only; 32-bit float textures are
+sampled nearest; a half-float colour buffer reads back as clamped bytes.
+Details in ogles2.doc.
+
+
+10. Working with an AI assistant
+--------------------------------
+An assistant knows OpenGL ES 2.0 well, but not this platform: left alone it
+writes EGL or SDL setup, desktop-GL or GLES3 calls, shaders assembled at
+run time, or the wrong compiler flags. Give it the reference and the rules.
+
+Attach (or paste) these files from the SDK:
+  - doc/GettingStarted.txt (this file)
+  - doc/ogles2.doc
+  - include/libraries/ogles2.h
+  - examples/cube.c and examples/cube_shaders.h
+For a bigger project also attach your own Makefile and the files the task
+touches.
+
+The prompt (copy, then fill in the task at the end):
+
+------------------------------------------------------------------------
+I am writing a C program for AmigaOS 3.x (68020 + FPU, running on a PiStorm
+with Emu68 and a Raspberry Pi 4) that draws with ogles2.library: OpenGL ES
+2.0 on the Pi's V3D GPU, with AmigaOS 4's ogles2 API. The attached files
+are the reference: GettingStarted.txt (rules and workflow), ogles2.doc
+(every call, tag, extension and deviation), libraries/ogles2.h (tags,
+errors) and cube.c (a complete program). Follow cube.c's structure.
+
+Rules:
+- C99. Builds with bebbo's m68k-amigaos-gcc 6.5 (-O2 -m68020 -m68881
+  -mcrt=clib2 -fno-builtin -fbbb=abcfhilmnprsz0; link -logles2 -lm881) and
+  with vbcc. No C++ unless I ask. Only AmigaOS 3.x and clib2 functions; no
+  POSIX threads, no SDL, no EGL, no GLUT.
+- Include <proto/ogles2.h>. Call OGLES2Open() first and OGLES2Close() last.
+  GL calls act on the current context (aglMakeCurrent); end each frame with
+  aglSwapBuffers().
+- Context: aglCreateContextTags2() with OGLES2_CCT_WINDOW (my own Intuition
+  window on a 32-bit RTG screen, with the IDCMP I need) or OGLES2_CCT_MODEID
+  (full screen: get the input window with OGLES2_CCT_PISTORM_GET_WINDOW and
+  enable its messages with ModifyIDCMP). OGLES2_CCT_DEPTH 24 when depth is
+  needed. On IDCMP_NEWSIZE pass the window again with
+  aglSetParamsTags2(OGLES2_CCT_WINDOW, ...), read the size with
+  OGLES2_CCT_GET_WIDTH/HEIGHT, set glViewport and the projection.
+- Strict OpenGL ES 2.0 and GLSL ES 1.00 ("precision mediump float;" in
+  fragment shaders; attribute, varying, gl_FragColor, texture2D). Only the
+  extensions ogles2.doc lists, and check GL_EXTENSIONS before using one.
+  No desktop GL, no GLES3 functions, no "#version 300 es".
+- Shaders are constant strings in a header, never assembled at run time:
+  ogles2 finds precompiled binaries by a hash of the exact text.
+- Speed: the 68k CPU is the limit, not the GPU. Vertex and index data in
+  buffer objects created once; glDrawElements with GL_UNSIGNED_SHORT; few
+  draw calls; uniform locations looked up once; no glReadPixels or
+  glFinish in the frame loop.
+- Each frame, handle all Intuition messages (close gadget, keys) and
+  Ctrl-C (SetSignal). Check every allocation and creation; free everything
+  on every exit path (aglDestroyContext before CloseWindow, OGLES2Close
+  last). Print an error message for each failure.
+- Mind the deviations in ogles2.doc (--deviations--).
+- When unsure whether ogles2 supports something, say so instead of
+  guessing; give me the line to check in ogles2.doc or the log.
+
+Task: <describe what to build: what is drawn, the window or screen size,
+the input, what the program loads>
+------------------------------------------------------------------------
+
+Follow-up prompts that work well:
+
+  Porting:   "Port the attached <file> from <EGL/SDL/OS4> to this setup.
+              Keep the GL code; replace the window and context code; turn
+              shaders built at run time into constant strings."
+  Debugging: "The program fails like this: <what you see>. Here are the
+              log (T:ogles2.log) and the code. Find the cause; the log's
+              lines are explained in GettingStarted.txt section 8."
+  Speed:     "This draws at <n> fps at <size>. Reduce the CPU work per
+              frame following GettingStarted.txt section 6; keep the
+              image the same."
+  Review:    "Check the attached code against the rules above: GLES 2.0
+              only, constant shaders, every resource freed on every exit
+              path, all IDCMP messages replied."
+
+Check what comes back before you build it:
+  - only <proto/ogles2.h> for GL, no <GLES2/gl2.h>-only or EGL code;
+  - OGLES2Open() checked, OGLES2Close() at the end;
+  - every IntuiMessage replied (ReplyMsg);
+  - shaders as constant strings with "precision" in fragment shaders;
+  - your build flags unchanged (-fbbb=..., -lm881).

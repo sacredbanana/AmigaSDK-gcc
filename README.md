@@ -16,6 +16,10 @@ Here are the extra included SDKs:
 - magic 5.48 https://github.com/sacredbanana/file
 - MCC_ActionTextEditor 1.0 https://github.com/sacredbanana/MCC_ActionTextEditor
 - MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
+- Amiberry GL SDK (MiniGL V30, OpenGL ES 2.0/3.x) https://github.com/BlitterStudio/amiberry-gl-sdk
+  - `ogles2.library` / `ogles3.library`: binary compatible with the PiStorm [ogles2](https://github.com/ladislawv/ogles2) / [ogles3](https://github.com/ladislawv/ogles3) libraries, so programs run on both Amiberry and PiStorm. Use `#include <proto/ogles3.h>` and link with `-logles3`, or `<proto/ogles2.h>` and `-logles2`.
+  - `minigl.library`: Amiberry only (it uses Amiberry's dispatch table). Compile with `-DMINIGL_DISPATCH_ABI_TYPES` and link with `-lminigl_dispatch`.
+  - Autodocs: `docs/Autodocs/ogles2.doc`, `ogles3.doc`. Licences and getting-started notes: `docs/Documentation/AmiberryGL`
   
 ### AmigaOS 4
 - AmiSSL 5.27 https://aminet.net/package/util/libs/AmiSSL-v5-SDK
