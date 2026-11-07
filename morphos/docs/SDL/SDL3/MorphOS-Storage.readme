@@ -1,0 +1,140 @@
+SDL3 Libraries 3.4.18 Package for version 3.20 or higher of MorphOS system.
+**************************************************************************
+
+SDL3.LIBRARY					3.418	27.10.2026 based on SDL 3.4.18
+SDL3_IMAGE.LIBRARY		3.409	07.10.2026 based on SDL3_IMAGE 3.4.9
+SDL3_MIXER.LIBRARY		3.300	27.10.2026 based on SDL3_MIXER 3.3.0
+SDL3_TTF.LIBRARY			3.300	07.10.2026 based on SDL3_TTF 3.3.0
+SDL3_NET.LIBRARY			-		not included yet (work in progress, coming in a next release)
+
+Library version = SDL version: VERSION = major, REVISION = minor * 100 + micro (SDL 3.4.18 -> 3.418).
+
+Simple DirectMedia Layer
+************************
+
+What is it?
+Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL/Direct3D/Metal/Vulkan. It is used by video playback software, emulators, and popular games including Valve's award winning catalog and many Humble Bundle games.
+
+SDL 3.0 is distributed under the zlib license. This license allows you to use SDL freely in any software.
+
+https://libsdl.org/
+https://wiki.libsdl.org/
+
+
+Installation:
+*************
+
+MorphOS version 3.20 is required to be installed as a minimum.
+Developer: You need  new SDK 3.20!!
+sdl3_ttf.library needs freetype.library 59 and harfbuzz.library 67 (system libraries).
+sdl3_image.library uses system jfif.library, png.library and tiff.library (a missing one only disables its format).
+sdl3_mixer.library uses vorbisfile.library (Ogg Vorbis, and the Ogg container of FLAC and Opus).
+sdl3_mixer.library needs fluidsynth.library 2.601 or newer for MIDI with FluidSynth: install the
+FluidSynth_2.6.1_Library package, available on MorphOS-Storage: https://www.morphos-storage.net/?find=fluidsynth
+Without it, MIDI music is played by Timidity.
+MIDI: timidity files are installed in LIBS:timidity, and the GeneralUser GS SoundFont (S. Christian Collins)
+used by FluidSynth in LIBS:soundfonts/GeneralUser GS v1.471.sf2.
+
+Just double-click on the Install icon and read the incremental instructions.
+
+SDL2 and SDL3 can be installed together: sdl2*.library and sdl3*.library are different libraries.
+
+- WARNING: it's recommended that you have a minimum 64MB graphics video (opengl features)
+(if not, then it is advised that you disable "enhanced display" and reduce your screen resolution of Ambient)
+
+
+SDL3 MorphOS Features:
+**********************
+
+- Shared libraries: a program and the sdl3_* libraries it uses share the same SDL state
+- SDL renderer: OpenGL (TinyGL), Overlay (cgxvideo VLayer) and Software renderer are available
+- Renderer can be chosen in the window menu, or with ENV:SDL3_HINT_RENDER_DRIVER (opengl, overlay, software)
+- Ctrl-C/Break quits programs, also without a window
+- SDL3_image: BMP, GIF, JPG, LBM, PCX, PNG, PNM, QOI, SVG, TGA, TIFF, WEBP, XCF, XPM, XV and animations (GIF, APNG, WEBP, ANI)
+- SDL3_mixer: WAV, AIFF, VOC, AU, MP3, Ogg Vorbis, FLAC, Opus, MOD/XM/S3M/IT (libxmp), MIDI (FluidSynth by
+  fluidsynth.library, Timidity)
+- SDL3_ttf: FreeType and HarfBuzz from the system, SVG/colour emoji fonts
+
+SDL3 MorphOS specific and limitation:
+************************************
+
+- sdl3_ttf: the OpenGL text engine (TTF_CreateGLTextEngine) is not available in the library
+- Programs linked with an old SDL3 SDK (53.x glue) have to be relinked
+- sdl3_mixer MIDI: seeking backwards in a MIDI file (a loop that doesn't start at the beginning) renders the
+  music again from the start: a short gap while it plays. Loops from the start are immediate.
+
+SDL3 MorphOS window menu and settings:
+**************************************
+
+Each SDL3 window has a MorphOS menu (right mouse button):
+- Project: About SDL3, Iconify, Quit
+- Options: Mute Sound, Low CPU Priority,
+           HINT RENDER DRIVER (Default, OpenGL, Software, Overlay),
+           HINT RENDER VSYNC (Default, Enabled, Disabled)
+
+The Options are saved in ENVARC: and are used by all the SDL3 programs:
+- SDL3_HINT_RENDER_DRIVER      opengl, software or overlay (empty: default renderer)
+- SDL3_HINT_RENDER_VSYNC       1 (enabled) or 0 (disabled)
+- SDL3_THREAD_PRIORITY_POLICY  -1: low CPU priority
+They can also be set by hand: setenv SDL3_HINT_RENDER_DRIVER overlay (copy ENV:SDL3_HINT_RENDER_DRIVER
+to ENVARC: to keep it after a reboot).
+Debug: setenv SDL3_HINT_DEBUG 1 prints debug traces in the debug log.
+The other SDL hints (SDL_xxx) are not read from ENV:, only set by the programs (SDL_SetHint).
+
+For developers (MorphOS specific):
+- Window without the MorphOS menu: SDL_CreateWindowWithProperties() with the boolean property
+  "SDL.window.create.morphos.menu" set to false.
+- Use an existing Intuition window: pointer property "morphos.window" (struct Window *).
+- SDL_LoadObject() uses dynload.library: a module is a relocatable object built with
+  gcc -noixemul -G 0 -fno-common -nostdlib -nostartfiles -r x.c -o x.so (no libc inside, it uses the program's).
+  The program: -G 0 at compile and link time, only --strip-debug (the module looks its symbols up), and it
+  must contain every libc function the modules need. Modules see the program's symbols, not sdl3.library's.
+  The old libdll modules (separate executables) are not supported any more.
+
+Developers:
+***********
+
+The SDK replaces the static libraries: libSDL3.a, libSDL3_image.a, libSDL3_mixer.a and libSDL3_ttf.a are
+glue libraries opening the shared libraries. Link with -lSDL3_ttf -lSDL3_mixer -lSDL3_image -lSDL3 -lGL.
+-mresident32 code uses the libb32 versions; the -nc ones open nothing (base set by hand): libSDL3-nc.a is the
+program version (the program opens sdl3.library itself).
+fd/clib/proto/ppcinline headers are included for sdl3.library and the sdl3_* libraries.
+pkg-config files (sdl3, sdl3-image, sdl3-mixer, sdl3-ttf) and CMake package files are included, and libSDL3_test.a.
+CMake: find_package(SDL3 REQUIRED CONFIG) then link SDL3::SDL3 (also SDL3_image::SDL3_image, SDL3_mixer::SDL3_mixer,
+SDL3_ttf::SDL3_ttf, SDL3::SDL3_test, SDL3::Headers). The -static targets are not available, only the shared libraries.
+The Install keeps a static libSDL3*.a already in GG:usr/local/lib: it is renamed libSDL3*_static.a.
+
+Extras:
+*******
+
+testsprite, testgeometry, testgl, testaudioinfo, renderbench, checkkeys, testcontroller (gamepad test and mapping), testautomation (SDL3 test suite),
+showimage, showanim (SDL3_image), testmixer, testaudiodecoder, testspatialization (SDL3_mixer;
+testmixer --simple <file> plays a file once, without the test loops),
+showfont, testapp <font.ttf> (SDL3_ttf).
+
+GameController Readme:
+**********************
+
+SDL3 reads the gamepad mappings from ENV:gamecontrollerdb.txt (same file and format as SDL2, installed by the Install script).
+To create the mapping of your own gamepad: run extras/testcontroller, click on "Setup Mapping",
+press the buttons/axes asked, "Done", then "Copy" (or Ctrl-C) puts the mapping line in the clipboard: add it to ENVARC:gamecontrollerdb.txt
+(and ENV:gamecontrollerdb.txt). Then any SDL2 or SDL3 game can use it.
+
+A MorphOS community sourced database of game controller mappings is available here : https://github.com/BeWorld2018/gamecontrollerdb.txt
+
+Please don't hesitate to participate in adding to this database, so kindly send me your working mapping(s) to add to our database. Thanks !
+
+NOTES:
+******
+
+Thanks to Ilkka Lehtoranta for his sources code (SDL2 2.0.3 and SDL2_image 2.0.0).
+Thanks to Szilard Biro (BSzili) for his help and his major contribution.
+Thanks to Bigfoot for TinyGL upgrade, his help and his contribution.
+Thanks to all members of MorphOS Teams for their patience with me and their indispensable help.
+Thanks to all testers and developers (for libs and contributes)
+
+Feel free to contribute.
+
+BeWorld
+
+BeWorld @ sfr . fr

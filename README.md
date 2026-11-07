@@ -45,6 +45,12 @@ Here are the extra included SDKs:
 - magic 5.48 https://github.com/sacredbanana/file
 - MCC_ActionTextEditor 1.0 https://github.com/sacredbanana/MCC_ActionTextEditor
 - MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
+- SDL2 2.32.10 and SDL3 3.4.18 (newlib, static and shared) https://github.com/AmigaPorts/SDL
+  - Add-ons from [os4depot](https://www.os4depot.net): SDL2_image 2.9.0, SDL2_mixer 2.8.1, SDL2_ttf 2.24.0, SDL2_net 2.2.0, SDL2_gfx 1.0.4, SDL2_sound 1.0.3, SDL3_image 3.4.4, SDL3_mixer 3.2.4, SDL3_ttf 3.2.2, SDL3_gfx 1.0.1, plus the libraries they need: libpng, libjpeg, libtiff, libwebp, zlib, bzip2, FreeType, HarfBuzz, libogg, libvorbis, Opus/opusfile, FLAC, mpg123, libxmp, libmodplug
+  - Installed in `SDK/local/newlib` and `SDK/local/common`, so no `-I`/`-L` flags are needed. SDL2 add-on headers include `"SDL.h"`, so add `-I/opt/amiga/ppc-amigaos/SDK/local/newlib/include/SDL2` (as `sdl2-config --cflags` would).
+  - Static: `-lSDL3`. Shared: `-use-dynld -lSDL3 -athread=native` (ship `libSDL3-3.4.so`). Add `-athread=native` too when linking the mixer or sound add-ons.
+  - Add-on link lines: image `-ltiff -lwebpdemux -lwebpmux -lwebp -lsharpyuv -ljpeg -lpng16 -lz -lpthread`, ttf `-lharfbuzz -lfreetype -lpng16 -lbz2 -lz -lpthread`, mixer `-lxmp -lmodplug -lopusfile -lopus -lvorbisfile -lvorbis -logg -lFLAC -lmpg123 -lstdc++ -lpthread`, each followed by `-lm`.
+  - Versions, checksums and licences: `docs/Documentation/SDL`. The older SDL2 2.30.5 from the base image is still in `/opt/amiga/usr`.
   
 ### MorphOS
 - json-c 0.19 https://github.com/sacredbanana/json-c
@@ -54,6 +60,10 @@ Here are the extra included SDKs:
 - magic 5.48 https://github.com/sacredbanana/file
 - MCC_ActionTextEditor 1.0 https://github.com/sacredbanana/MCC_ActionTextEditor
 - MCC_AudioPlayer 1.0 https://github.com/sacredbanana/MCC_AudioPlayer
+- SDL2 2.32.11 and SDL3 3.4.18 by BeWorld https://github.com/BeWorld2018/SDL
+  - SDL2_image, SDL2_mixer, SDL2_ttf, SDL2_net, SDL2_gfx and SDL3_image 3.4.9, SDL3_mixer 3.3.0, SDL3_ttf 3.3.0 (no SDL3_net yet)
+  - Link glue for the shared `sdl2*.library` / `sdl3*.library` from the [MorphOS-Storage](https://www.morphos-storage.net) packages, which users install. Build with `-noixemul`, e.g. `-lSDL3_image -lSDL3 -lGL`. SDL3 needs MorphOS 3.20.
+  - Versions, checksums and licences: `docs/SDL`
 
 ## Installation
 
