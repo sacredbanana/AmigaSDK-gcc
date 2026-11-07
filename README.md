@@ -1,5 +1,7 @@
 # AmigaSDK-gcc
-This pack contains the AmigaOS 3.2 NDK, AmigaOS 4.1 SDK 54.25, MorphOS 3.20 SDK, plus extra SDKs fixed to work with the GCC compiler.
+This pack contains the AmigaOS 4.1 SDK 54.25, MorphOS 3.20 SDK, plus extra SDKs fixed to work with the GCC compiler.
+
+For AmigaOS 3, the 3.2 NDK and the C runtimes (newlib, clib2, ixemul) come from Bebbo's toolchain itself, so this pack does not duplicate them. It adds the extra SDKs below, a current libnix (`update-libnix.sh`), and json-c/magic built for every runtime and multilib.
 
 Here are the extra included SDKs:
 
